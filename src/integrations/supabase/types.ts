@@ -436,7 +436,7 @@ export type Database = {
       current_agency_id: { Args: never; Returns: string }
     }
     Enums: {
-      app_role: "owner" | "agent" | "assistant"
+      app_role: "owner" | "agent" | "assistant" | "superadmin"
       appointment_status: "scheduled" | "completed" | "cancelled"
       appointment_type: "viewing" | "meeting" | "call" | "other"
       client_type: "buyer" | "seller" | "tenant" | "landlord"
@@ -583,7 +583,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner", "agent", "assistant"],
+      app_role: ["owner", "agent", "assistant", "superadmin"],
       appointment_status: ["scheduled", "completed", "cancelled"],
       appointment_type: ["viewing", "meeting", "call", "other"],
       client_type: ["buyer", "seller", "tenant", "landlord"],
