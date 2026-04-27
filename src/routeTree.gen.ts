@@ -15,6 +15,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppLeadsRouteImport } from './routes/_app/leads'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppClientsRouteImport } from './routes/_app/clients'
+import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties.index'
+import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
+import { Route as AppPropertiesIdExposeRouteImport } from './routes/_app/properties.$id.expose'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -45,6 +48,21 @@ const AppClientsRoute = AppClientsRouteImport.update({
   path: '/clients',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPropertiesIndexRoute = AppPropertiesIndexRouteImport.update({
+  id: '/properties/',
+  path: '/properties/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPropertiesIdRoute = AppPropertiesIdRouteImport.update({
+  id: '/properties/$id',
+  path: '/properties/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPropertiesIdExposeRoute = AppPropertiesIdExposeRouteImport.update({
+  id: '/expose',
+  path: '/expose',
+  getParentRoute: () => AppPropertiesIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +70,9 @@ export interface FileRoutesByFullPath {
   '/clients': typeof AppClientsRoute
   '/dashboard': typeof AppDashboardRoute
   '/leads': typeof AppLeadsRoute
+  '/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/properties/': typeof AppPropertiesIndexRoute
+  '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +80,9 @@ export interface FileRoutesByTo {
   '/clients': typeof AppClientsRoute
   '/dashboard': typeof AppDashboardRoute
   '/leads': typeof AppLeadsRoute
+  '/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/properties': typeof AppPropertiesIndexRoute
+  '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +92,31 @@ export interface FileRoutesById {
   '/_app/clients': typeof AppClientsRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/leads': typeof AppLeadsRoute
+  '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/_app/properties/': typeof AppPropertiesIndexRoute
+  '/_app/properties/$id/expose': typeof AppPropertiesIdExposeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/clients' | '/dashboard' | '/leads'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/clients'
+    | '/dashboard'
+    | '/leads'
+    | '/properties/$id'
+    | '/properties/'
+    | '/properties/$id/expose'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/clients' | '/dashboard' | '/leads'
+  to:
+    | '/'
+    | '/auth'
+    | '/clients'
+    | '/dashboard'
+    | '/leads'
+    | '/properties/$id'
+    | '/properties'
+    | '/properties/$id/expose'
   id:
     | '__root__'
     | '/'
@@ -82,6 +125,9 @@ export interface FileRouteTypes {
     | '/_app/clients'
     | '/_app/dashboard'
     | '/_app/leads'
+    | '/_app/properties/$id'
+    | '/_app/properties/'
+    | '/_app/properties/$id/expose'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -134,19 +180,56 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClientsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/properties/': {
+      id: '/_app/properties/'
+      path: '/properties'
+      fullPath: '/properties/'
+      preLoaderRoute: typeof AppPropertiesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/properties/$id': {
+      id: '/_app/properties/$id'
+      path: '/properties/$id'
+      fullPath: '/properties/$id'
+      preLoaderRoute: typeof AppPropertiesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/properties/$id/expose': {
+      id: '/_app/properties/$id/expose'
+      path: '/expose'
+      fullPath: '/properties/$id/expose'
+      preLoaderRoute: typeof AppPropertiesIdExposeRouteImport
+      parentRoute: typeof AppPropertiesIdRoute
+    }
   }
 }
+
+interface AppPropertiesIdRouteChildren {
+  AppPropertiesIdExposeRoute: typeof AppPropertiesIdExposeRoute
+}
+
+const AppPropertiesIdRouteChildren: AppPropertiesIdRouteChildren = {
+  AppPropertiesIdExposeRoute: AppPropertiesIdExposeRoute,
+}
+
+const AppPropertiesIdRouteWithChildren = AppPropertiesIdRoute._addFileChildren(
+  AppPropertiesIdRouteChildren,
+)
 
 interface AppRouteChildren {
   AppClientsRoute: typeof AppClientsRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppLeadsRoute: typeof AppLeadsRoute
+  AppPropertiesIdRoute: typeof AppPropertiesIdRouteWithChildren
+  AppPropertiesIndexRoute: typeof AppPropertiesIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppClientsRoute: AppClientsRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppLeadsRoute: AppLeadsRoute,
+  AppPropertiesIdRoute: AppPropertiesIdRouteWithChildren,
+  AppPropertiesIndexRoute: AppPropertiesIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
