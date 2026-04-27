@@ -1,0 +1,149 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Plus, Mail, Phone, ArrowRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { leadStatusLabels, leadStatuses, type LeadStatus } from "@/lib/format";
+import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types";
+
+export const Route = createFileRoute("/_app/leads")({ component: LeadsPage });
+
+type Lead = Tables<"leads">;
+
+function LeadsPage() {
+  const qc = useQueryClient();
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ full_name: "", email: "", phone: "", source: "", notes: "" });
+
+  const { data: leads = [] } = useQuery({
+    queryKey: ["leads"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const create = useMutation({
+    mutationFn: async () => {
+      const { data: profile } = await supabase.from("profiles").select("agency_id").eq("id", user!.id).single();
+      const { error } = await supabase.from("leads").insert({
+        ...form, agency_id: profile!.agency_id, owner_id: user!.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Lead erstellt");
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      setOpen(false);
+      setForm({ full_name: "", email: "", phone: "", source: "", notes: "" });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: LeadStatus }) => {
+      const { error } = await supabase.from("leads").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["leads"] }),
+  });
+
+  const convert = useMutation({
+    mutationFn: async (lead: Lead) => {
+      const { data: profile } = await supabase.from("profiles").select("agency_id").eq("id", user!.id).single();
+      const { error } = await supabase.from("clients").insert({
+        agency_id: profile!.agency_id, owner_id: user!.id,
+        full_name: lead.full_name, email: lead.email, phone: lead.phone,
+        notes: lead.notes, client_type: "buyer",
+      });
+      if (error) throw error;
+      await supabase.from("leads").update({ status: "converted" }).eq("id", lead.id);
+    },
+    onSuccess: () => {
+      toast.success("Zu Kunde konvertiert");
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <>
+      <PageHeader
+        title="Leads"
+        description="Pipeline deiner Interessenten"
+        action={
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Neuer Lead</Button></DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Neuer Lead</DialogTitle></DialogHeader>
+              <div className="space-y-3">
+                <div><Label>Name</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+                  <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+                </div>
+                <div><Label>Quelle</Label><Input placeholder="Website, Empfehlung…" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} /></div>
+                <div><Label>Notizen</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => create.mutate()} disabled={!form.full_name || create.isPending}>Speichern</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        }
+      />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        {leadStatuses.map((status) => {
+          const items = leads.filter((l) => l.status === status);
+          return (
+            <div key={status} className="flex flex-col rounded-2xl bg-muted/40 p-3">
+              <div className="mb-3 flex items-center justify-between px-1">
+                <h3 className="text-sm font-semibold">{leadStatusLabels[status]}</h3>
+                <span className="rounded-full bg-background px-2 py-0.5 text-xs text-muted-foreground">{items.length}</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                {items.map((l) => (
+                  <div key={l.id} className="rounded-xl border bg-card p-3 shadow-soft transition hover:shadow-glow">
+                    <p className="font-medium">{l.full_name}</p>
+                    <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
+                      {l.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{l.email}</span>}
+                      {l.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{l.phone}</span>}
+                      {l.source && <span>· {l.source}</span>}
+                    </div>
+                    <div className="mt-3 flex items-center gap-2">
+                      <Select value={l.status} onValueChange={(v) => updateStatus.mutate({ id: l.id, status: v as LeadStatus })}>
+                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {leadStatuses.map((s) => <SelectItem key={s} value={s}>{leadStatusLabels[s]}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      {l.status !== "converted" && (
+                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => convert.mutate(l)} title="Zu Kunde konvertieren">
+                          <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {items.length === 0 && <p className="px-1 py-3 text-xs text-muted-foreground">Keine Leads</p>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
