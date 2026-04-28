@@ -61,7 +61,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/auth" });
+    if (!loading && !user) navigate({ to: "/auth", search: { mode: "signin" } });
   }, [user, loading, navigate]);
 
   if (loading || !user) {
