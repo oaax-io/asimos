@@ -32,7 +32,6 @@ function TeamPage() {
     full_name: "",
     email: "",
     phone: "",
-    password: "",
     role: "agent" as (typeof ROLES)[number],
   });
 
@@ -62,16 +61,17 @@ function TeamPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.full_name.trim() || !form.email.trim() || form.password.length < 6) {
-        throw new Error("Name, E-Mail und Passwort (min. 6 Zeichen) sind erforderlich");
+      if (!form.full_name.trim() || !form.email.trim()) {
+        throw new Error("Name und E-Mail sind erforderlich");
       }
+      const redirectTo = `${window.location.origin}/set-password`;
       const { data, error } = await supabase.functions.invoke("team-create-member", {
         body: {
           full_name: form.full_name.trim(),
           email: form.email.trim(),
           phone: form.phone.trim(),
-          password: form.password,
           role: form.role,
+          redirect_to: redirectTo,
         },
       });
       if (error) throw error;
@@ -79,8 +79,8 @@ function TeamPage() {
       return data;
     },
     onSuccess: () => {
-      toast.success("Mitarbeiter angelegt");
-      setForm({ full_name: "", email: "", phone: "", password: "", role: "agent" });
+      toast.success("Einladung per E-Mail gesendet");
+      setForm({ full_name: "", email: "", phone: "", role: "agent" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["team"] });
     },
@@ -119,23 +119,17 @@ function TeamPage() {
                     <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
                     <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label>Rolle</Label>
-                      <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as (typeof ROLES)[number] })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Initial-Passwort</Label>
-                      <Input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="min. 6 Zeichen" />
-                    </div>
+                  <div>
+                    <Label>Rolle</Label>
+                    <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as (typeof ROLES)[number] })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Der Mitarbeiter erhält die Zugangsdaten von dir und kann sich direkt anmelden.
+                    Der Mitarbeiter erhält eine Einladungs-E-Mail mit einem Link, über den er sein Passwort selbst festlegt.
                   </p>
                 </div>
                 <DialogFooter>

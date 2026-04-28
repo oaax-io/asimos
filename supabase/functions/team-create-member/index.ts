@@ -23,7 +23,6 @@ Deno.serve(async (req) => {
 
     const admin = createClient(url, service);
 
-    // Caller's profile + role
     const { data: callerProfile, error: cpErr } = await admin
       .from("profiles")
       .select("agency_id, role")
@@ -46,31 +45,32 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const email = String(body.email ?? "").trim().toLowerCase();
-    const password = String(body.password ?? "");
     const fullName = String(body.full_name ?? "").trim();
     const phone = String(body.phone ?? "").trim();
     const role = (["owner", "agent", "assistant"].includes(body.role) ? body.role : "agent") as
       | "owner" | "agent" | "assistant";
     const targetAgencyId: string = (isSuper && body.agency_id) ? String(body.agency_id) : callerProfile.agency_id;
+    const redirectTo = String(body.redirect_to ?? "");
 
-    if (!email || !password || password.length < 6) {
-      return json({ error: "E-Mail und Passwort (min. 6 Zeichen) erforderlich" }, 400);
+    if (!email) {
+      return json({ error: "E-Mail erforderlich" }, 400);
+    }
+    if (!redirectTo) {
+      return json({ error: "redirect_to fehlt" }, 400);
     }
 
-    // Create auth user (skip handle_new_user agency creation by setting metadata after — but trigger runs on insert).
-    // The handle_new_user trigger will create a NEW agency. We then move the profile to the caller's agency
-    // and remove the orphan agency.
-    const { data: created, error: createErr } = await admin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name: fullName, agency_name: "__placeholder__" },
+    // Send invitation email — user clicks link and sets their own password
+    const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
+      redirectTo,
+      data: { full_name: fullName, agency_name: "__placeholder__" },
     });
-    if (createErr || !created.user) return json({ error: createErr?.message ?? "Fehler beim Anlegen" }, 400);
+    if (inviteErr || !invited.user) {
+      return json({ error: inviteErr?.message ?? "Einladung konnte nicht gesendet werden" }, 400);
+    }
 
-    const newUserId = created.user.id;
+    const newUserId = invited.user.id;
 
-    // Find the orphan agency the trigger just created
+    // Move profile into target agency with proper role/phone
     const { data: newProfile } = await admin
       .from("profiles")
       .select("agency_id")
@@ -78,7 +78,6 @@ Deno.serve(async (req) => {
       .single();
     const orphanAgencyId = newProfile?.agency_id;
 
-    // Move profile into target agency with proper role/phone
     const { error: updErr } = await admin
       .from("profiles")
       .update({
@@ -90,7 +89,6 @@ Deno.serve(async (req) => {
       .eq("id", newUserId);
     if (updErr) return json({ error: updErr.message }, 400);
 
-    // Delete orphan agency (only if different and unused)
     if (orphanAgencyId && orphanAgencyId !== targetAgencyId) {
       await admin.from("agencies").delete().eq("id", orphanAgencyId);
     }
