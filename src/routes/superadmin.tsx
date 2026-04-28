@@ -24,7 +24,10 @@ type Tab = "overview" | "agencies" | "users" | "roles";
 function SuperadminPage() {
   const { isSuperadmin, loading, user } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>("overview");
+  const { hash } = useLocation();
+  const tabFromHash = ((hash || "").replace(/^#/, "") || "overview") as Tab;
+  const tab: Tab = (["overview","agencies","users","roles"] as Tab[]).includes(tabFromHash) ? tabFromHash : "overview";
+  const setTab = (t: Tab) => navigate({ to: "/superadmin", hash: t });
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth", search: { mode: "signin" } });
