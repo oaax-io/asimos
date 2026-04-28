@@ -157,8 +157,6 @@ function Dashboard() {
 
   return (
     <>
-      <PageHeader title="Dashboard" description="Übersicht über dein Tagesgeschäft" />
-
       <PageHeader
         title="Dashboard"
         description="Übersicht über dein Tagesgeschäft"
