@@ -582,10 +582,24 @@ export type Database = {
         Args: { _token: string }
         Returns: {
           client_name: string
+          completion_percent: number
           dossier_id: string
+          section_additional: Json
+          section_affordability: Json
+          section_customer: Json
+          section_financing: Json
+          section_income: Json
+          section_property_docs: Json
+          section_self_employed: Json
+          section_tax: Json
           status: string
         }[]
       }
+      financing_link_save: {
+        Args: { _completion: number; _payload: Json; _token: string }
+        Returns: undefined
+      }
+      financing_link_submit: { Args: { _token: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
