@@ -2,7 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
-import { isBackendUnavailableError } from "@/lib/backend-errors";
+import { getBackendErrorMessage, isBackendUnavailableError } from "@/lib/backend-errors";
+
+type ServerResult<T> = {
+  data: T;
+  error: string | null;
+  unavailable: boolean;
+};
 
 const leadInputSchema = z.object({
   full_name: z.string().min(1),
@@ -34,38 +40,67 @@ async function getAgencyIdForUser(supabase: any, userId: string) {
     .eq("id", userId)
     .single();
 
-  if (error || !data?.agency_id) {
-    throw new Error("Profil nicht gefunden");
+  if (error) {
+    return {
+      agencyId: null,
+      error: getBackendErrorMessage(error),
+      unavailable: isBackendUnavailableError(error),
+    };
   }
 
-  return data.agency_id as string;
+  if (!data?.agency_id) {
+    return {
+      agencyId: null,
+      error: "Profil nicht gefunden",
+      unavailable: false,
+    };
+  }
+
+  return {
+    agencyId: data.agency_id as string,
+    error: null,
+    unavailable: false,
+  };
 }
 
 export const getLeads = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }): Promise<ServerResult<Database["public"]["Tables"]["leads"]["Row"][]>> => {
     const { data, error } = await context.supabase
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
-      if (isBackendUnavailableError(error)) {
-        return [];
-      }
-      throw new Error(error.message);
+      return {
+        data: [],
+        error: getBackendErrorMessage(error),
+        unavailable: isBackendUnavailableError(error),
+      };
     }
 
-    return data;
+    return {
+      data: data ?? [],
+      error: null,
+      unavailable: false,
+    };
   });
 
 export const addLead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => leadInputSchema.parse(data))
-  .handler(async ({ data, context }) => {
-    const agencyId = await getAgencyIdForUser(context.supabase, context.userId);
+  .handler(async ({ data, context }): Promise<ServerResult<Database["public"]["Tables"]["leads"]["Row"] | null>> => {
+    const agency = await getAgencyIdForUser(context.supabase, context.userId);
+    if (!agency.agencyId) {
+      return {
+        data: null,
+        error: agency.error,
+        unavailable: agency.unavailable,
+      };
+    }
+
     const payload: Database["public"]["Tables"]["leads"]["Insert"] = {
-      agency_id: agencyId,
+      agency_id: agency.agencyId,
       owner_id: context.userId,
       full_name: data.full_name,
       email: data.email,
@@ -80,37 +115,58 @@ export const addLead = createServerFn({ method: "POST" })
       .single();
 
     if (error) {
-      throw new Error(error.message);
+      return {
+        data: null,
+        error: getBackendErrorMessage(error),
+        unavailable: isBackendUnavailableError(error),
+      };
     }
 
-    return createdLead;
+    return {
+      data: createdLead,
+      error: null,
+      unavailable: false,
+    };
   });
 
 export const getClients = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }): Promise<ServerResult<Database["public"]["Tables"]["clients"]["Row"][]>> => {
     const { data, error } = await context.supabase
       .from("clients")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
-      if (isBackendUnavailableError(error)) {
-        return [];
-      }
-      throw new Error(error.message);
+      return {
+        data: [],
+        error: getBackendErrorMessage(error),
+        unavailable: isBackendUnavailableError(error),
+      };
     }
 
-    return data;
+    return {
+      data: data ?? [],
+      error: null,
+      unavailable: false,
+    };
   });
 
 export const addClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => clientInputSchema.parse(data))
-  .handler(async ({ data, context }) => {
-    const agencyId = await getAgencyIdForUser(context.supabase, context.userId);
+  .handler(async ({ data, context }): Promise<ServerResult<Database["public"]["Tables"]["clients"]["Row"] | null>> => {
+    const agency = await getAgencyIdForUser(context.supabase, context.userId);
+    if (!agency.agencyId) {
+      return {
+        data: null,
+        error: agency.error,
+        unavailable: agency.unavailable,
+      };
+    }
+
     const payload: Database["public"]["Tables"]["clients"]["Insert"] = {
-      agency_id: agencyId,
+      agency_id: agency.agencyId,
       owner_id: context.userId,
       full_name: data.full_name,
       email: data.email,
@@ -132,8 +188,16 @@ export const addClient = createServerFn({ method: "POST" })
       .single();
 
     if (error) {
-      throw new Error(error.message);
+      return {
+        data: null,
+        error: getBackendErrorMessage(error),
+        unavailable: isBackendUnavailableError(error),
+      };
     }
 
-    return createdClient;
+    return {
+      data: createdClient,
+      error: null,
+      unavailable: false,
+    };
   });
