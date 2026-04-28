@@ -162,7 +162,7 @@ function TeamPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{m.full_name || m.email}</p>
                     <Badge variant="secondary" className="mt-1">
-                      <Shield className="mr-1 h-3 w-3" />{ROLE_LABELS[(m.role as (typeof ROLES)[number]) ?? "member"] ?? m.role}
+                      <Shield className="mr-1 h-3 w-3" />{ROLE_LABELS[m.role as (typeof ROLES)[number]] ?? m.role}
                     </Badge>
                   </div>
                 </div>
