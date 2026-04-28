@@ -50,30 +50,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateSuperadminStatus("unknown", false);
     }
 
-    for (let attempt = 0; attempt < 1; attempt += 1) {
-      const { data, error } = await supabase.rpc("is_superadmin");
+    const { data, error } = await supabase.rpc("is_superadmin");
 
-      if (requestId !== roleCheckIdRef.current || userRef.current?.id !== currentUser.id) {
-        return;
-      }
-
-      if (!error) {
-        const granted = !!data;
-        updateSuperadminStatus(granted ? "granted" : "denied", granted);
-        return;
-      }
-
-      if (isBackendUnavailableError(error)) {
-        updateSuperadminStatus("denied", false);
-        return;
-      }
-
-      if (attempt < 2) {
-        await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
-      } else {
-        console.warn("Superadmin-Prüfung fehlgeschlagen", error.message);
-      }
+    if (requestId !== roleCheckIdRef.current || userRef.current?.id !== currentUser.id) {
+      return;
     }
+
+    if (!error) {
+      const granted = !!data;
+      updateSuperadminStatus(granted ? "granted" : "denied", granted);
+      return;
+    }
+
+    if (isBackendUnavailableError(error)) {
+      updateSuperadminStatus("denied", false);
+      return;
+    }
+
+    console.warn("Superadmin-Prüfung fehlgeschlagen", error.message);
 
     if (requestId === roleCheckIdRef.current && userRef.current?.id === currentUser.id) {
       // After all retries failed, fall back to "denied" so navigation can proceed.
