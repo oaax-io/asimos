@@ -31,10 +31,9 @@ const endOfToday = () => { const d = new Date(); d.setHours(23,59,59,999); retur
 const sevenDaysAgo = () => { const d = new Date(); d.setDate(d.getDate()-7); return d.toISOString(); };
 
 function unwrap<T>(res: { data: T | null; error: any; count?: number | null }) {
-  if (res.error) {
-    if (isBackendUnavailableError(res.error)) return { data: null, count: 0, unavailable: true };
-    throw res.error;
-  }
+  // Immer werfen – inkl. Backend-Unavailable. Der QueryClient retryed
+  // transiente Backend-Fehler automatisch mit Backoff.
+  if (res.error) throw res.error;
   return { data: res.data, count: res.count ?? 0, unavailable: false };
 }
 
@@ -153,7 +152,10 @@ function Dashboard() {
     },
   });
 
-  const anyError = kpis.error || today.error || pipeline.error || matches.error;
+  // Banner nur bei "echten" Fehlern – transiente Backend-Aussetzer werden
+  // vom QueryClient automatisch retryed und sollen den User nicht alarmieren.
+  const realError = (e: unknown) => e && !isBackendUnavailableError(e);
+  const anyError = realError(kpis.error) || realError(today.error) || realError(pipeline.error) || realError(matches.error);
 
   return (
     <>
