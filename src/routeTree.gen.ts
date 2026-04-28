@@ -9,10 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SuperadminRouteImport } from './routes/superadmin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppSuperadminRouteImport } from './routes/_app/superadmin'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppMatchingRouteImport } from './routes/_app/matching'
 import { Route as AppLeadsRouteImport } from './routes/_app/leads'
@@ -23,6 +23,11 @@ import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties
 import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
 import { Route as AppPropertiesIdExposeRouteImport } from './routes/_app/properties.$id.expose'
 
+const SuperadminRoute = SuperadminRouteImport.update({
+  id: '/superadmin',
+  path: '/superadmin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -36,11 +41,6 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AppSuperadminRoute = AppSuperadminRouteImport.update({
-  id: '/superadmin',
-  path: '/superadmin',
-  getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
@@ -91,13 +91,13 @@ const AppPropertiesIdExposeRoute = AppPropertiesIdExposeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/superadmin': typeof SuperadminRoute
   '/appointments': typeof AppAppointmentsRoute
   '/clients': typeof AppClientsRoute
   '/dashboard': typeof AppDashboardRoute
   '/leads': typeof AppLeadsRoute
   '/matching': typeof AppMatchingRoute
   '/settings': typeof AppSettingsRoute
-  '/superadmin': typeof AppSuperadminRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/properties/': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -105,13 +105,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/superadmin': typeof SuperadminRoute
   '/appointments': typeof AppAppointmentsRoute
   '/clients': typeof AppClientsRoute
   '/dashboard': typeof AppDashboardRoute
   '/leads': typeof AppLeadsRoute
   '/matching': typeof AppMatchingRoute
   '/settings': typeof AppSettingsRoute
-  '/superadmin': typeof AppSuperadminRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/properties': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -121,13 +121,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/superadmin': typeof SuperadminRoute
   '/_app/appointments': typeof AppAppointmentsRoute
   '/_app/clients': typeof AppClientsRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/leads': typeof AppLeadsRoute
   '/_app/matching': typeof AppMatchingRoute
   '/_app/settings': typeof AppSettingsRoute
-  '/_app/superadmin': typeof AppSuperadminRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/_app/properties/': typeof AppPropertiesIndexRoute
   '/_app/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -137,13 +137,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/superadmin'
     | '/appointments'
     | '/clients'
     | '/dashboard'
     | '/leads'
     | '/matching'
     | '/settings'
-    | '/superadmin'
     | '/properties/$id'
     | '/properties/'
     | '/properties/$id/expose'
@@ -151,13 +151,13 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/superadmin'
     | '/appointments'
     | '/clients'
     | '/dashboard'
     | '/leads'
     | '/matching'
     | '/settings'
-    | '/superadmin'
     | '/properties/$id'
     | '/properties'
     | '/properties/$id/expose'
@@ -166,13 +166,13 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/auth'
+    | '/superadmin'
     | '/_app/appointments'
     | '/_app/clients'
     | '/_app/dashboard'
     | '/_app/leads'
     | '/_app/matching'
     | '/_app/settings'
-    | '/_app/superadmin'
     | '/_app/properties/$id'
     | '/_app/properties/'
     | '/_app/properties/$id/expose'
@@ -182,10 +182,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
+  SuperadminRoute: typeof SuperadminRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/superadmin': {
+      id: '/superadmin'
+      path: '/superadmin'
+      fullPath: '/superadmin'
+      preLoaderRoute: typeof SuperadminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -206,13 +214,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_app/superadmin': {
-      id: '/_app/superadmin'
-      path: '/superadmin'
-      fullPath: '/superadmin'
-      preLoaderRoute: typeof AppSuperadminRouteImport
-      parentRoute: typeof AppRoute
     }
     '/_app/settings': {
       id: '/_app/settings'
@@ -299,7 +300,6 @@ interface AppRouteChildren {
   AppLeadsRoute: typeof AppLeadsRoute
   AppMatchingRoute: typeof AppMatchingRoute
   AppSettingsRoute: typeof AppSettingsRoute
-  AppSuperadminRoute: typeof AppSuperadminRoute
   AppPropertiesIdRoute: typeof AppPropertiesIdRouteWithChildren
   AppPropertiesIndexRoute: typeof AppPropertiesIndexRoute
 }
@@ -311,7 +311,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppLeadsRoute: AppLeadsRoute,
   AppMatchingRoute: AppMatchingRoute,
   AppSettingsRoute: AppSettingsRoute,
-  AppSuperadminRoute: AppSuperadminRoute,
   AppPropertiesIdRoute: AppPropertiesIdRouteWithChildren,
   AppPropertiesIndexRoute: AppPropertiesIndexRoute,
 }
@@ -322,6 +321,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
+  SuperadminRoute: SuperadminRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
