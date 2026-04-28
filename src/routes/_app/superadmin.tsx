@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import PageHeader from "@/components/PageHeader";
+import { PageHeader } from "@/components/PageHeader";
 import { formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_app/superadmin")({
@@ -327,7 +327,7 @@ function RolesTab() {
   });
 
   const setRole = useMutation({
-    mutationFn: async ({ userId, role, grant }: { userId: string; role: "superadmin" | "admin" | "agent" | "owner"; grant: boolean }) => {
+    mutationFn: async ({ userId, role, grant }: { userId: string; role: "superadmin" | "agent" | "owner" | "assistant"; grant: boolean }) => {
       const { error } = await supabase.rpc("admin_set_user_role", { _user_id: userId, _role: role, _grant: grant });
       if (error) throw error;
     },
