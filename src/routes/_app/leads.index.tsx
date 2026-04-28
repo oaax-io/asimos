@@ -319,6 +319,85 @@ function LeadsPage() {
         <span className="ml-auto text-sm text-muted-foreground">{filtered.length} von {leads.length}</span>
       </div>
 
+      {/* Bulk-Aktionen Toolbar */}
+      {selected.size > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
+          <span className="text-sm font-medium">
+            {selected.size} Lead{selected.size === 1 ? "" : "s"} ausgewählt
+          </span>
+
+          {/* Zuweisen */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" className="ml-2">
+                <UserCog className="mr-1 h-3.5 w-3.5" />
+                Zuweisen
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuLabel>Mitarbeitenden wählen</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => bulkAssign.mutate({ ids: Array.from(selected), assignedTo: null })}>
+                Niemand (zurücksetzen)
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {employees.map((e) => (
+                <DropdownMenuItem
+                  key={e.id}
+                  onSelect={() => bulkAssign.mutate({ ids: Array.from(selected), assignedTo: e.id })}
+                >
+                  {e.full_name ?? e.email ?? e.id}
+                </DropdownMenuItem>
+              ))}
+              {employees.length === 0 && (
+                <DropdownMenuItem disabled>Keine Mitarbeitenden</DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Status setzen */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline">
+                <MoreHorizontal className="mr-1 h-3.5 w-3.5" />
+                Status setzen
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {leadStatuses.map((s) => (
+                <DropdownMenuItem
+                  key={s}
+                  onSelect={() => bulkStatus.mutate({ ids: Array.from(selected), status: s })}
+                >
+                  <span className={cn("mr-2 inline-block h-2 w-2 rounded-full", leadStatusColors[s].dot)} />
+                  {leadStatusLabels[s]}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Löschen */}
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => {
+              if (confirm(`${selected.size} Lead(s) wirklich löschen?`)) {
+                bulkDelete.mutate(Array.from(selected));
+              }
+            }}
+          >
+            <Trash2 className="mr-1 h-3.5 w-3.5" />
+            Löschen
+          </Button>
+
+          <Button size="sm" variant="ghost" className="ml-auto" onClick={clearSelection}>
+            <X className="mr-1 h-3.5 w-3.5" />
+            Auswahl aufheben
+          </Button>
+        </div>
+      )}
+
       <Tabs defaultValue="list" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
@@ -330,6 +409,13 @@ function LeadsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[44px]">
+                    <Checkbox
+                      checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                      onCheckedChange={toggleAll}
+                      aria-label="Alle auswählen"
+                    />
+                  </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Kontakt</TableHead>
                   <TableHead>Quelle</TableHead>
@@ -339,44 +425,52 @@ function LeadsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((l) => (
-                  <TableRow key={l.id} className="group">
-                    <TableCell className="font-medium">
-                      <Link to="/leads/$id" params={{ id: l.id }} className="hover:text-primary">{l.full_name}</Link>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {l.email && <div className="flex items-center gap-1"><Mail className="h-3 w-3" />{l.email}</div>}
-                      {l.phone && <div className="flex items-center gap-1"><Phone className="h-3 w-3" />{l.phone}</div>}
-                      {!l.email && !l.phone && "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{l.source ?? "—"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{employeeName(l.assigned_to)}</TableCell>
-                    <TableCell>
-                      <Select value={l.status} onValueChange={(v) => updateStatus.mutate({ id: l.id, status: v as LeadStatus })}>
-                        <SelectTrigger className="h-8 w-[150px] text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {leadStatuses.map((s) => <SelectItem key={s} value={s}>{leadStatusLabels[s]}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <EditLeadButton lead={l} employees={employees} />
-                        {l.status !== "converted" && (
-                          <Button size="sm" variant="outline" className="h-8" onClick={() => convert.mutate(l)}>
-                            <ArrowRight className="mr-1 h-3 w-3" />Zu Kunde
+                {filtered.map((l) => {
+                  const isSel = selected.has(l.id);
+                  return (
+                    <TableRow key={l.id} className={cn("group", isSel && "bg-primary/5")}>
+                      <TableCell>
+                        <Checkbox
+                          checked={isSel}
+                          onCheckedChange={() => toggleOne(l.id)}
+                          aria-label={`Lead ${l.full_name} auswählen`}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <Link to="/leads/$id" params={{ id: l.id }} className="hover:text-primary">{l.full_name}</Link>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {l.email && <div className="flex items-center gap-1"><Mail className="h-3 w-3" />{l.email}</div>}
+                        {l.phone && <div className="flex items-center gap-1"><Phone className="h-3 w-3" />{l.phone}</div>}
+                        {!l.email && !l.phone && "—"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{l.source ?? "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{employeeName(l.assigned_to)}</TableCell>
+                      <TableCell>
+                        <StatusDropdown
+                          value={l.status as LeadStatus}
+                          onChange={(s) => updateStatus.mutate({ id: l.id, status: s })}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <EditLeadButton lead={l} employees={employees} />
+                          {l.status !== "converted" && (
+                            <Button size="sm" variant="outline" className="h-8" onClick={() => convert.mutate(l)}>
+                              <ArrowRight className="mr-1 h-3 w-3" />Zu Kunde
+                            </Button>
+                          )}
+                          <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0">
+                            <Link to="/leads/$id" params={{ id: l.id }}><ExternalLink className="h-3.5 w-3.5" /></Link>
                           </Button>
-                        )}
-                        <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0">
-                          <Link to="/leads/$id" params={{ id: l.id }}><ExternalLink className="h-3.5 w-3.5" /></Link>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {filtered.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
                       {leadsQuery.isLoading ? "Leads werden geladen…" : "Keine Leads vorhanden"}
                     </TableCell>
                   </TableRow>
@@ -390,36 +484,58 @@ function LeadsPage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
             {leadStatuses.map((status) => {
               const items = filtered.filter((l) => l.status === status);
+              const c = leadStatusColors[status];
               return (
-                <div key={status} className="flex flex-col rounded-2xl bg-muted/40 p-3">
+                <div key={status} className={cn("flex flex-col rounded-2xl border bg-muted/40 p-3", c.ring)}>
                   <div className="mb-3 flex items-center justify-between px-1">
-                    <h3 className="text-sm font-semibold">{leadStatusLabels[status]}</h3>
-                    <span className="rounded-full bg-background px-2 py-0.5 text-xs text-muted-foreground">{items.length}</span>
+                    <h3 className="flex items-center gap-2 text-sm font-semibold">
+                      <span className={cn("inline-block h-2 w-2 rounded-full", c.dot)} />
+                      {leadStatusLabels[status]}
+                    </h3>
+                    <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium border", c.badge)}>{items.length}</span>
                   </div>
                   <div className="flex flex-col gap-2">
-                    {items.map((l) => (
-                      <div key={l.id} className="rounded-xl border bg-card p-3 shadow-soft transition hover:shadow-glow">
-                        <Link to="/leads/$id" params={{ id: l.id }} className="font-medium hover:text-primary">{l.full_name}</Link>
-                        <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
-                          {l.email && <span className="flex items-center gap-1 truncate"><Mail className="h-3 w-3" />{l.email}</span>}
-                          {l.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{l.phone}</span>}
-                          {l.source && <span>· {l.source}</span>}
-                        </div>
-                        <div className="mt-3 flex items-center gap-2">
-                          <Select value={l.status} onValueChange={(v) => updateStatus.mutate({ id: l.id, status: v as LeadStatus })}>
-                            <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {leadStatuses.map((s) => <SelectItem key={s} value={s}>{leadStatusLabels[s]}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                          {l.status !== "converted" && (
-                            <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => convert.mutate(l)} title="Zu Kunde konvertieren">
-                              <ArrowRight className="h-3 w-3" />
-                            </Button>
+                    {items.map((l) => {
+                      const isSel = selected.has(l.id);
+                      return (
+                        <div
+                          key={l.id}
+                          className={cn(
+                            "rounded-xl border bg-card p-3 shadow-soft transition hover:shadow-glow",
+                            isSel && "ring-2 ring-primary/40"
                           )}
+                        >
+                          <div className="flex items-start gap-2">
+                            <Checkbox
+                              checked={isSel}
+                              onCheckedChange={() => toggleOne(l.id)}
+                              aria-label={`Lead ${l.full_name} auswählen`}
+                              className="mt-0.5"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <Link to="/leads/$id" params={{ id: l.id }} className="font-medium hover:text-primary">{l.full_name}</Link>
+                              <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
+                                {l.email && <span className="flex items-center gap-1 truncate"><Mail className="h-3 w-3" />{l.email}</span>}
+                                {l.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{l.phone}</span>}
+                                {l.source && <span>· {l.source}</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex items-center gap-2">
+                            <StatusDropdown
+                              value={l.status as LeadStatus}
+                              onChange={(s) => updateStatus.mutate({ id: l.id, status: s })}
+                              compact
+                            />
+                            {l.status !== "converted" && (
+                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => convert.mutate(l)} title="Zu Kunde konvertieren">
+                                <ArrowRight className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {items.length === 0 && <p className="px-1 py-3 text-xs text-muted-foreground">Keine Leads</p>}
                   </div>
                 </div>
