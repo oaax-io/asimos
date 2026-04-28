@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
+import { isBackendUnavailableError } from "@/lib/backend-errors";
 
 const leadInputSchema = z.object({
   full_name: z.string().min(1),
@@ -49,6 +50,9 @@ export const getLeads = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false });
 
     if (error) {
+      if (isBackendUnavailableError(error)) {
+        return [];
+      }
       throw new Error(error.message);
     }
 
@@ -91,6 +95,9 @@ export const getClients = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false });
 
     if (error) {
+      if (isBackendUnavailableError(error)) {
+        return [];
+      }
       throw new Error(error.message);
     }
 
