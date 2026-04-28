@@ -47,10 +47,8 @@ function LeadsPage() {
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
       const result = await getLeads({ headers: { authorization: `Bearer ${accessToken}` } });
-      // Backend-Unavailable als Fehler werfen, damit der QueryClient mit
-      // Backoff retryed statt sofort einen leeren Zustand anzuzeigen.
-      if (result.unavailable) throw new Error(result.error ?? "Backend aktuell nicht erreichbar");
-      return result;
+      // Wirft bei Backend-Unavailable -> globaler Retry mit Backoff greift.
+      return unwrapServerResult(result);
     },
     refetchOnReconnect: true,
   });
