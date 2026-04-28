@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import {
   ArrowLeft, Mail, Phone, Trash2, Copy, RefreshCw, Pencil, Link2, FileSignature,
   Calendar, Target, Home, MapPin, Euro, Ruler, BedDouble, Building2, MessageSquare,
-  CalendarPlus, ExternalLink,
+  CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
 } from "lucide-react";
 import {
   clientTypeLabels, formatCurrency, formatDate, formatDateTime,
