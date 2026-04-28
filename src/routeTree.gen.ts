@@ -16,11 +16,18 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FinanzierungTokenRouteImport } from './routes/finanzierung.$token'
 import { Route as AppTeamRouteImport } from './routes/_app/team'
+import { Route as AppTasksRouteImport } from './routes/_app/tasks'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppReservationsRouteImport } from './routes/_app/reservations'
+import { Route as AppMediaRouteImport } from './routes/_app/media'
 import { Route as AppMatchingRouteImport } from './routes/_app/matching'
+import { Route as AppMandatesRouteImport } from './routes/_app/mandates'
 import { Route as AppLeadsRouteImport } from './routes/_app/leads'
+import { Route as AppExposesRouteImport } from './routes/_app/exposes'
+import { Route as AppDocumentsRouteImport } from './routes/_app/documents'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppClientsRouteImport } from './routes/_app/clients'
+import { Route as AppChecklistsRouteImport } from './routes/_app/checklists'
 import { Route as AppAppointmentsRouteImport } from './routes/_app/appointments'
 import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties.index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
@@ -62,9 +69,24 @@ const AppTeamRoute = AppTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTasksRoute = AppTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReservationsRoute = AppReservationsRouteImport.update({
+  id: '/reservations',
+  path: '/reservations',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMediaRoute = AppMediaRouteImport.update({
+  id: '/media',
+  path: '/media',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMatchingRoute = AppMatchingRouteImport.update({
@@ -72,9 +94,24 @@ const AppMatchingRoute = AppMatchingRouteImport.update({
   path: '/matching',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMandatesRoute = AppMandatesRouteImport.update({
+  id: '/mandates',
+  path: '/mandates',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppLeadsRoute = AppLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExposesRoute = AppExposesRouteImport.update({
+  id: '/exposes',
+  path: '/exposes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDocumentsRoute = AppDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -85,6 +122,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
 const AppClientsRoute = AppClientsRouteImport.update({
   id: '/clients',
   path: '/clients',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChecklistsRoute = AppChecklistsRouteImport.update({
+  id: '/checklists',
+  path: '/checklists',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAppointmentsRoute = AppAppointmentsRouteImport.update({
@@ -124,11 +166,18 @@ export interface FileRoutesByFullPath {
   '/oaax': typeof OaaxRoute
   '/set-password': typeof SetPasswordRoute
   '/appointments': typeof AppAppointmentsRoute
+  '/checklists': typeof AppChecklistsRoute
   '/clients': typeof AppClientsRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
+  '/documents': typeof AppDocumentsRoute
+  '/exposes': typeof AppExposesRoute
   '/leads': typeof AppLeadsRoute
+  '/mandates': typeof AppMandatesRoute
   '/matching': typeof AppMatchingRoute
+  '/media': typeof AppMediaRoute
+  '/reservations': typeof AppReservationsRoute
   '/settings': typeof AppSettingsRoute
+  '/tasks': typeof AppTasksRoute
   '/team': typeof AppTeamRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
@@ -143,10 +192,17 @@ export interface FileRoutesByTo {
   '/oaax': typeof OaaxRoute
   '/set-password': typeof SetPasswordRoute
   '/appointments': typeof AppAppointmentsRoute
+  '/checklists': typeof AppChecklistsRoute
   '/dashboard': typeof AppDashboardRoute
+  '/documents': typeof AppDocumentsRoute
+  '/exposes': typeof AppExposesRoute
   '/leads': typeof AppLeadsRoute
+  '/mandates': typeof AppMandatesRoute
   '/matching': typeof AppMatchingRoute
+  '/media': typeof AppMediaRoute
+  '/reservations': typeof AppReservationsRoute
   '/settings': typeof AppSettingsRoute
+  '/tasks': typeof AppTasksRoute
   '/team': typeof AppTeamRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
@@ -163,11 +219,18 @@ export interface FileRoutesById {
   '/oaax': typeof OaaxRoute
   '/set-password': typeof SetPasswordRoute
   '/_app/appointments': typeof AppAppointmentsRoute
+  '/_app/checklists': typeof AppChecklistsRoute
   '/_app/clients': typeof AppClientsRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/documents': typeof AppDocumentsRoute
+  '/_app/exposes': typeof AppExposesRoute
   '/_app/leads': typeof AppLeadsRoute
+  '/_app/mandates': typeof AppMandatesRoute
   '/_app/matching': typeof AppMatchingRoute
+  '/_app/media': typeof AppMediaRoute
+  '/_app/reservations': typeof AppReservationsRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/tasks': typeof AppTasksRoute
   '/_app/team': typeof AppTeamRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
@@ -184,11 +247,18 @@ export interface FileRouteTypes {
     | '/oaax'
     | '/set-password'
     | '/appointments'
+    | '/checklists'
     | '/clients'
     | '/dashboard'
+    | '/documents'
+    | '/exposes'
     | '/leads'
+    | '/mandates'
     | '/matching'
+    | '/media'
+    | '/reservations'
     | '/settings'
+    | '/tasks'
     | '/team'
     | '/finanzierung/$token'
     | '/clients/$id'
@@ -203,10 +273,17 @@ export interface FileRouteTypes {
     | '/oaax'
     | '/set-password'
     | '/appointments'
+    | '/checklists'
     | '/dashboard'
+    | '/documents'
+    | '/exposes'
     | '/leads'
+    | '/mandates'
     | '/matching'
+    | '/media'
+    | '/reservations'
     | '/settings'
+    | '/tasks'
     | '/team'
     | '/finanzierung/$token'
     | '/clients/$id'
@@ -222,11 +299,18 @@ export interface FileRouteTypes {
     | '/oaax'
     | '/set-password'
     | '/_app/appointments'
+    | '/_app/checklists'
     | '/_app/clients'
     | '/_app/dashboard'
+    | '/_app/documents'
+    | '/_app/exposes'
     | '/_app/leads'
+    | '/_app/mandates'
     | '/_app/matching'
+    | '/_app/media'
+    | '/_app/reservations'
     | '/_app/settings'
+    | '/_app/tasks'
     | '/_app/team'
     | '/finanzierung/$token'
     | '/_app/clients/$id'
@@ -296,11 +380,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTeamRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/tasks': {
+      id: '/_app/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof AppTasksRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings': {
       id: '/_app/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reservations': {
+      id: '/_app/reservations'
+      path: '/reservations'
+      fullPath: '/reservations'
+      preLoaderRoute: typeof AppReservationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/media': {
+      id: '/_app/media'
+      path: '/media'
+      fullPath: '/media'
+      preLoaderRoute: typeof AppMediaRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/matching': {
@@ -310,11 +415,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMatchingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/mandates': {
+      id: '/_app/mandates'
+      path: '/mandates'
+      fullPath: '/mandates'
+      preLoaderRoute: typeof AppMandatesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/leads': {
       id: '/_app/leads'
       path: '/leads'
       fullPath: '/leads'
       preLoaderRoute: typeof AppLeadsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/exposes': {
+      id: '/_app/exposes'
+      path: '/exposes'
+      fullPath: '/exposes'
+      preLoaderRoute: typeof AppExposesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/documents': {
+      id: '/_app/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof AppDocumentsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/dashboard': {
@@ -329,6 +455,13 @@ declare module '@tanstack/react-router' {
       path: '/clients'
       fullPath: '/clients'
       preLoaderRoute: typeof AppClientsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/checklists': {
+      id: '/_app/checklists'
+      path: '/checklists'
+      fullPath: '/checklists'
+      preLoaderRoute: typeof AppChecklistsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/appointments': {
@@ -404,11 +537,18 @@ const AppPropertiesIdRouteWithChildren = AppPropertiesIdRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAppointmentsRoute: typeof AppAppointmentsRoute
+  AppChecklistsRoute: typeof AppChecklistsRoute
   AppClientsRoute: typeof AppClientsRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
+  AppDocumentsRoute: typeof AppDocumentsRoute
+  AppExposesRoute: typeof AppExposesRoute
   AppLeadsRoute: typeof AppLeadsRoute
+  AppMandatesRoute: typeof AppMandatesRoute
   AppMatchingRoute: typeof AppMatchingRoute
+  AppMediaRoute: typeof AppMediaRoute
+  AppReservationsRoute: typeof AppReservationsRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppTasksRoute: typeof AppTasksRoute
   AppTeamRoute: typeof AppTeamRoute
   AppPropertiesIdRoute: typeof AppPropertiesIdRouteWithChildren
   AppPropertiesIndexRoute: typeof AppPropertiesIndexRoute
@@ -416,11 +556,18 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAppointmentsRoute: AppAppointmentsRoute,
+  AppChecklistsRoute: AppChecklistsRoute,
   AppClientsRoute: AppClientsRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
+  AppDocumentsRoute: AppDocumentsRoute,
+  AppExposesRoute: AppExposesRoute,
   AppLeadsRoute: AppLeadsRoute,
+  AppMandatesRoute: AppMandatesRoute,
   AppMatchingRoute: AppMatchingRoute,
+  AppMediaRoute: AppMediaRoute,
+  AppReservationsRoute: AppReservationsRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppTasksRoute: AppTasksRoute,
   AppTeamRoute: AppTeamRoute,
   AppPropertiesIdRoute: AppPropertiesIdRouteWithChildren,
   AppPropertiesIndexRoute: AppPropertiesIndexRoute,
