@@ -61,7 +61,7 @@ function SidebarBrand() {
 }
 
 export default function AppLayout({ children }: { children?: ReactNode }) {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, isSuperadmin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
