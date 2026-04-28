@@ -130,6 +130,9 @@ function ClientDetail() {
     retry: false,
   });
 
+  const { data: benchmarkData } = useClientBenchmark(id);
+  const benchmark = benchmarkData?.benchmark ?? null;
+
   const del = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("clients").delete().eq("id", id);
