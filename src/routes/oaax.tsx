@@ -413,59 +413,104 @@ function UsersTab() {
   );
 
   return (
-    <div className="fluent-card">
-      <div className="fl-panel-head">
-        <div>
-          <div className="fl-panel-title">Alle Nutzer</div>
-          <div className="fl-panel-sub">{filtered.length} registriert</div>
+    <>
+      <div className="fluent-card">
+        <div className="fl-panel-head">
+          <div>
+            <div className="fl-panel-title">Alle Nutzer</div>
+            <div className="fl-panel-sub">{filtered.length} registriert</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ position: "relative", width: 240 }}>
+              <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9898A6" }} />
+              <input
+                className="fl-input"
+                style={{ paddingLeft: 30, height: 32 }}
+                placeholder="Name oder E-Mail…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button
+              className="fl-btn fl-btn-primary"
+              style={{ height: 32 }}
+              onClick={() => setCreateOpen(true)}
+            >
+              <Plus size={13} /> Nutzer anlegen
+            </button>
+          </div>
         </div>
-        <div style={{ position: "relative", width: 260 }}>
-          <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9898A6" }} />
-          <input
-            className="fl-input"
-            style={{ paddingLeft: 30, height: 32 }}
-            placeholder="Name oder E-Mail…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
-      <div style={{ overflowX: "auto" }}>
-        <table className="fl-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>E-Mail</th>
-              <th>Agentur</th>
-              <th>Rollen</th>
-              <th>Erstellt</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && <tr><td colSpan={5} style={{ textAlign: "center", color: "#9898A6", padding: 24 }}>Lädt…</td></tr>}
-            {!isLoading && filtered.length === 0 && <tr><td colSpan={5} style={{ textAlign: "center", color: "#9898A6", padding: 24 }}>Keine Nutzer gefunden</td></tr>}
-            {filtered.map((p) => (
-              <tr key={p.id}>
-                <td style={{ fontWeight: 600 }}>{p.full_name ?? "—"}</td>
-                <td style={{ color: "#50505C" }}>{p.email ?? "—"}</td>
-                <td>{agencyMap[p.agency_id] ?? "—"}</td>
-                <td>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                    <span className="fl-badge fl-badge-inactive">{p.role}</span>
-                    {(rolesByUser[p.id] ?? []).map((r) => (
-                      <span key={r} className={`fl-badge ${r === "superadmin" ? "fl-badge-purple" : "fl-badge-blue"}`}>
-                        {r}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td style={{ color: "#50505C" }}>{formatDate(p.created_at)}</td>
+        <div style={{ overflowX: "auto" }}>
+          <table className="fl-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>E-Mail</th>
+                <th>Agentur</th>
+                <th>Rollen</th>
+                <th>Erstellt</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {isLoading && <tr><td colSpan={5} style={{ textAlign: "center", color: "#9898A6", padding: 24 }}>Lädt…</td></tr>}
+              {!isLoading && filtered.length === 0 && <tr><td colSpan={5} style={{ textAlign: "center", color: "#9898A6", padding: 24 }}>Keine Nutzer gefunden</td></tr>}
+              {filtered.map((p) => (
+                <tr key={p.id}>
+                  <td style={{ fontWeight: 600 }}>{p.full_name ?? "—"}</td>
+                  <td style={{ color: "#50505C" }}>{p.email ?? "—"}</td>
+                  <td>{agencyMap[p.agency_id] ?? "—"}</td>
+                  <td>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                      <span className="fl-badge fl-badge-inactive">{p.role}</span>
+                      {(rolesByUser[p.id] ?? []).map((r) => (
+                        <span key={r} className={`fl-badge ${r === "superadmin" ? "fl-badge-purple" : "fl-badge-blue"}`}>
+                          {r}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td style={{ color: "#50505C" }}>{formatDate(p.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Neuen Nutzer anlegen</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={submitCreate} className="space-y-3">
+            <div>
+              <Label htmlFor="cu-name">Name</Label>
+              <Input id="cu-name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} placeholder="Max Mustermann" />
+            </div>
+            <div>
+              <Label htmlFor="cu-agency">Agenturname</Label>
+              <Input id="cu-agency" value={form.agency_name} onChange={(e) => setForm({ ...form, agency_name: e.target.value })} placeholder="Mustermann Immobilien" />
+            </div>
+            <div>
+              <Label htmlFor="cu-email">E-Mail</Label>
+              <Input id="cu-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="user@beispiel.de" />
+            </div>
+            <div>
+              <Label htmlFor="cu-pw">Passwort</Label>
+              <Input id="cu-pw" type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="min. 6 Zeichen" />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>
+                <X className="h-4 w-4" /> Abbrechen
+              </Button>
+              <Button type="submit" disabled={creating}>
+                {creating ? "Lege an…" : <><UserPlus className="h-4 w-4" /> Anlegen</>}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
