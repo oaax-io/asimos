@@ -40,7 +40,7 @@ function ClientsPage() {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
-      return await getClients({ data: { accessToken } });
+      return await getClients({ headers: { authorization: `Bearer ${accessToken}` } });
     },
   });
 
@@ -50,21 +50,23 @@ function ClientsPage() {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
-      return addClient({ data: {
-        accessToken,
-        full_name: form.full_name,
-        email: form.email || null,
-        phone: form.phone || null,
-        client_type: form.client_type,
-        notes: form.notes || null,
-        budget_min: form.budget_min ? Number(form.budget_min) : null,
-        budget_max: form.budget_max ? Number(form.budget_max) : null,
-        rooms_min: form.rooms_min ? Number(form.rooms_min) : null,
-        area_min: form.area_min ? Number(form.area_min) : null,
-        preferred_cities: form.preferred_cities ? form.preferred_cities.split(",").map(s => s.trim()).filter(Boolean) : null,
-        preferred_types: form.preferred_types.length ? form.preferred_types : null,
-        preferred_listing: form.preferred_listing,
-      } });
+      return addClient({
+        headers: { authorization: `Bearer ${accessToken}` },
+        data: {
+          full_name: form.full_name,
+          email: form.email || null,
+          phone: form.phone || null,
+          client_type: form.client_type,
+          notes: form.notes || null,
+          budget_min: form.budget_min ? Number(form.budget_min) : null,
+          budget_max: form.budget_max ? Number(form.budget_max) : null,
+          rooms_min: form.rooms_min ? Number(form.rooms_min) : null,
+          area_min: form.area_min ? Number(form.area_min) : null,
+          preferred_cities: form.preferred_cities ? form.preferred_cities.split(",").map(s => s.trim()).filter(Boolean) : null,
+          preferred_types: form.preferred_types.length ? form.preferred_types : null,
+          preferred_listing: form.preferred_listing,
+        },
+      });
     },
     onSuccess: () => {
       toast.success("Kunde erstellt");
