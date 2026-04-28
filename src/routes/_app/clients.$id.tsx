@@ -336,7 +336,7 @@ function ClientDetail() {
           <Card><CardContent className="p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-lg font-semibold">Termine</h3>
-              <NewAppointmentButton clientId={id} agencyId={client.agency_id} userId={user!.id}
+              <NewAppointmentButton clientId={id} userId={user!.id}
                 onCreated={() => qc.invalidateQueries({ queryKey: ["client_appointments", id] })} />
             </div>
             {appointments.length === 0 ? (
@@ -396,7 +396,6 @@ function ClientDetail() {
         <TabsContent value="financing" className="mt-6">
           <FinancingTab
             clientId={id}
-            agencyId={client.agency_id}
             userId={user!.id}
             dossier={dossier}
             links={links}
@@ -445,8 +444,8 @@ function AppointmentRow({ appt }: { appt: any }) {
 }
 
 function NewAppointmentButton({
-  clientId, agencyId, userId, onCreated,
-}: { clientId: string; agencyId: string; userId: string; onCreated: () => void }) {
+  clientId, userId, onCreated,
+}: { clientId: string; userId: string; onCreated: () => void }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     title: "Besichtigung",
@@ -461,7 +460,7 @@ function NewAppointmentButton({
     mutationFn: async () => {
       if (!form.title || !form.starts_at || !form.ends_at) throw new Error("Titel, Start und Ende sind erforderlich");
       const { error } = await supabase.from("appointments").insert({
-        agency_id: agencyId, owner_id: userId, client_id: clientId,
+        owner_id: userId, client_id: clientId,
         title: form.title, appointment_type: form.appointment_type,
         starts_at: new Date(form.starts_at).toISOString(),
         ends_at: new Date(form.ends_at).toISOString(),
@@ -636,10 +635,9 @@ function generateToken() {
 }
 
 function FinancingTab({
-  clientId, agencyId, userId, dossier, links, onChange,
+  clientId, userId, dossier, links, onChange,
 }: {
   clientId: string;
-  agencyId: string;
   userId: string;
   dossier: any;
   links: any[];
@@ -651,7 +649,7 @@ function FinancingTab({
     if (dossier?.id) return dossier.id;
     const { data, error } = await supabase
       .from("financing_dossiers")
-      .insert({ client_id: clientId, agency_id: agencyId })
+      .insert({ client_id: clientId })
       .select().single();
     if (error) throw error;
     return data.id;
@@ -663,7 +661,7 @@ function FinancingTab({
       const dossierId = await ensureDossier();
       const token = generateToken();
       const { error } = await supabase.from("financing_links").insert({
-        dossier_id: dossierId, agency_id: agencyId, token, created_by: userId,
+        dossier_id: dossierId, token, created_by: userId,
       });
       if (error) throw error;
       toast.success("Link generiert");

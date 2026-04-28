@@ -102,9 +102,7 @@ function LeadDetail() {
   const convert = useMutation({
     mutationFn: async () => {
       const lead = leadQuery.data!;
-      const { data: profile } = await supabase.from("profiles").select("agency_id").eq("id", user!.id).single();
       const { data: created, error } = await supabase.from("clients").insert({
-        agency_id: profile!.agency_id,
         owner_id: user!.id,
         assigned_to: lead.assigned_to,
         full_name: lead.full_name, email: lead.email, phone: lead.phone,

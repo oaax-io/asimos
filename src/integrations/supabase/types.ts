@@ -75,7 +75,7 @@ export type Database = {
       }
       appointments: {
         Row: {
-          agency_id: string
+          agency_id: string | null
           appointment_type: Database["public"]["Enums"]["appointment_type"]
           assigned_to: string | null
           client_id: string | null
@@ -92,7 +92,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          agency_id?: string
+          agency_id?: string | null
           appointment_type?: Database["public"]["Enums"]["appointment_type"]
           assigned_to?: string | null
           client_id?: string | null
@@ -109,7 +109,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          agency_id?: string
+          agency_id?: string | null
           appointment_type?: Database["public"]["Enums"]["appointment_type"]
           assigned_to?: string | null
           client_id?: string | null
@@ -270,7 +270,7 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
-          agency_id: string
+          agency_id: string | null
           area_max: number | null
           area_min: number | null
           assigned_to: string | null
@@ -301,7 +301,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          agency_id?: string
+          agency_id?: string | null
           area_max?: number | null
           area_min?: number | null
           assigned_to?: string | null
@@ -334,7 +334,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
-          agency_id?: string
+          agency_id?: string | null
           area_max?: number | null
           area_min?: number | null
           assigned_to?: string | null
@@ -491,7 +491,7 @@ export type Database = {
       }
       financing_dossiers: {
         Row: {
-          agency_id: string
+          agency_id: string | null
           client_id: string
           completion_percent: number
           created_at: string
@@ -511,7 +511,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          agency_id?: string
+          agency_id?: string | null
           client_id: string
           completion_percent?: number
           created_at?: string
@@ -531,7 +531,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          agency_id?: string
+          agency_id?: string | null
           client_id?: string
           completion_percent?: number
           created_at?: string
@@ -554,7 +554,7 @@ export type Database = {
       }
       financing_links: {
         Row: {
-          agency_id: string
+          agency_id: string | null
           created_at: string
           created_by: string | null
           dossier_id: string
@@ -564,7 +564,7 @@ export type Database = {
           used_at: string | null
         }
         Insert: {
-          agency_id?: string
+          agency_id?: string | null
           created_at?: string
           created_by?: string | null
           dossier_id: string
@@ -574,7 +574,7 @@ export type Database = {
           used_at?: string | null
         }
         Update: {
-          agency_id?: string
+          agency_id?: string | null
           created_at?: string
           created_by?: string | null
           dossier_id?: string
@@ -696,7 +696,7 @@ export type Database = {
       }
       leads: {
         Row: {
-          agency_id: string
+          agency_id: string | null
           assigned_to: string | null
           budget_max: number | null
           budget_min: number | null
@@ -715,7 +715,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          agency_id?: string
+          agency_id?: string | null
           assigned_to?: string | null
           budget_max?: number | null
           budget_min?: number | null
@@ -734,7 +734,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          agency_id?: string
+          agency_id?: string | null
           assigned_to?: string | null
           budget_max?: number | null
           budget_min?: number | null
@@ -855,7 +855,7 @@ export type Database = {
       }
       matches: {
         Row: {
-          agency_id: string
+          agency_id: string | null
           client_id: string
           created_at: string
           id: string
@@ -866,7 +866,7 @@ export type Database = {
           status: Database["public"]["Enums"]["match_status"]
         }
         Insert: {
-          agency_id?: string
+          agency_id?: string | null
           client_id: string
           created_at?: string
           id?: string
@@ -877,7 +877,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["match_status"]
         }
         Update: {
-          agency_id?: string
+          agency_id?: string | null
           client_id?: string
           created_at?: string
           id?: string
@@ -949,7 +949,7 @@ export type Database = {
       }
       profiles: {
         Row: {
-          agency_id: string
+          agency_id: string | null
           avatar_url: string | null
           created_at: string
           email: string | null
@@ -962,7 +962,7 @@ export type Database = {
           user_role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
-          agency_id: string
+          agency_id?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
@@ -975,7 +975,7 @@ export type Database = {
           user_role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
-          agency_id?: string
+          agency_id?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
@@ -1000,7 +1000,7 @@ export type Database = {
       properties: {
         Row: {
           address: string | null
-          agency_id: string
+          agency_id: string | null
           area: number | null
           assigned_to: string | null
           bathrooms: number | null
@@ -1034,7 +1034,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          agency_id?: string
+          agency_id?: string | null
           area?: number | null
           assigned_to?: string | null
           bathrooms?: number | null
@@ -1068,7 +1068,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
-          agency_id?: string
+          agency_id?: string | null
           area?: number | null
           assigned_to?: string | null
           bathrooms?: number | null

@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
 
     const { data: callerProfile, error: cpErr } = await admin
       .from("profiles")
-      .select("agency_id, role")
+      .select("role")
       .eq("id", userData.user.id)
       .single();
     if (cpErr || !callerProfile) return json({ error: "Profil nicht gefunden" }, 400);
@@ -37,10 +37,10 @@ Deno.serve(async (req) => {
       .eq("role", "superadmin")
       .maybeSingle();
     const isSuper = !!superRow;
-    const isOwner = callerProfile.role === "owner";
+    const isOwnerOrAdmin = callerProfile.role === "owner" || callerProfile.role === "admin";
 
-    if (!isSuper && !isOwner) {
-      return json({ error: "Nur Inhaber dürfen Mitarbeiter anlegen" }, 403);
+    if (!isSuper && !isOwnerOrAdmin) {
+      return json({ error: "Nur Inhaber/Admin dürfen Mitarbeiter anlegen" }, 403);
     }
 
     const body = await req.json();
@@ -49,20 +49,15 @@ Deno.serve(async (req) => {
     const phone = String(body.phone ?? "").trim();
     const role = (["owner", "agent", "assistant"].includes(body.role) ? body.role : "agent") as
       | "owner" | "agent" | "assistant";
-    const targetAgencyId: string = (isSuper && body.agency_id) ? String(body.agency_id) : callerProfile.agency_id;
     const redirectTo = String(body.redirect_to ?? "");
 
-    if (!email) {
-      return json({ error: "E-Mail erforderlich" }, 400);
-    }
-    if (!redirectTo) {
-      return json({ error: "redirect_to fehlt" }, 400);
-    }
+    if (!email) return json({ error: "E-Mail erforderlich" }, 400);
+    if (!redirectTo) return json({ error: "redirect_to fehlt" }, 400);
 
     // Send invitation email — user clicks link and sets their own password
     const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
       redirectTo,
-      data: { full_name: fullName, agency_name: "__placeholder__" },
+      data: { full_name: fullName },
     });
     if (inviteErr || !invited.user) {
       return json({ error: inviteErr?.message ?? "Einladung konnte nicht gesendet werden" }, 400);
@@ -70,28 +65,15 @@ Deno.serve(async (req) => {
 
     const newUserId = invited.user.id;
 
-    // Move profile into target agency with proper role/phone
-    const { data: newProfile } = await admin
-      .from("profiles")
-      .select("agency_id")
-      .eq("id", newUserId)
-      .single();
-    const orphanAgencyId = newProfile?.agency_id;
-
     const { error: updErr } = await admin
       .from("profiles")
       .update({
-        agency_id: targetAgencyId,
         role,
         full_name: fullName || email,
         phone: phone || null,
       })
       .eq("id", newUserId);
     if (updErr) return json({ error: updErr.message }, 400);
-
-    if (orphanAgencyId && orphanAgencyId !== targetAgencyId) {
-      await admin.from("agencies").delete().eq("id", orphanAgencyId);
-    }
 
     return json({ ok: true, user_id: newUserId });
   } catch (e) {

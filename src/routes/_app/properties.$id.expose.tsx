@@ -79,7 +79,7 @@ function ExposeWizard() {
     queryKey: ["expose-profile", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("full_name, email, phone, agency_id").eq("id", user!.id).single();
+      const { data } = await supabase.from("profiles").select("full_name, email, phone").eq("id", user!.id).single();
       return data;
     },
   });

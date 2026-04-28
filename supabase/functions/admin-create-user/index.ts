@@ -30,7 +30,6 @@ Deno.serve(async (req) => {
     const email = String(body.email ?? "").trim().toLowerCase();
     const password = String(body.password ?? "");
     const fullName = String(body.full_name ?? "").trim();
-    const agencyName = String(body.agency_name ?? "").trim() || "Meine Agentur";
 
     if (!email || !password || password.length < 6) {
       return json({ error: "E-Mail und Passwort (min. 6 Zeichen) erforderlich" }, 400);
@@ -41,7 +40,7 @@ Deno.serve(async (req) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { full_name: fullName, agency_name: agencyName },
+      user_metadata: { full_name: fullName },
     });
 
     if (createErr) return json({ error: createErr.message }, 400);
