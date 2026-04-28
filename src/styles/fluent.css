@@ -1,0 +1,214 @@
+/* ─────────────────────────────────────────────────────────
+   OAAX Fluent Design (scoped to .fluent-scope)
+───────────────────────────────────────────────────────── */
+
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap");
+
+.fluent-scope {
+  font-family: 'Sora', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 13px;
+  line-height: 1.5;
+
+  --fl-bg:           #F3F3F5;
+  --fl-surface:      #FFFFFF;
+  --fl-surface-1:    #F7F7F9;
+  --fl-surface-2:    #EFEFF2;
+  --fl-surface-3:    #E8E8EC;
+
+  --fl-stroke:        rgba(0,0,0,0.08);
+  --fl-stroke-md:     rgba(0,0,0,0.13);
+  --fl-stroke-strong: rgba(0,0,0,0.18);
+
+  --fl-t1:   #0F0F12;
+  --fl-t2:   #50505C;
+  --fl-t3:   #9898A6;
+  --fl-t4:   #C2C2CC;
+
+  --fl-blue:       #1E9BCF;
+  --fl-blue-1:     #EAF5FB;
+  --fl-blue-2:     #C3E4F4;
+  --fl-blue-3:     rgba(30,155,207,0.12);
+  --fl-blue-text:  #0E6A8E;
+
+  --fl-purple:     #3B387D;
+  --fl-purple-1:   #EEEDF8;
+
+  --fl-green:      #107C41;
+  --fl-green-1:    #E8F5EE;
+
+  --fl-warn:       #C97400;
+  --fl-warn-1:     #FEF5E4;
+
+  --fl-danger:     #D13438;
+  --fl-danger-1:   #FDE7E9;
+
+  --fl-gold:       #B58800;
+  --fl-gold-1:     #FDF5DC;
+
+  --fl-shadow-xs: 0 1px 2px rgba(0,0,0,0.06);
+  --fl-shadow-sm: 0 2px 6px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+  --fl-shadow-md: 0 4px 16px rgba(0,0,0,0.09), 0 2px 4px rgba(0,0,0,0.06);
+  --fl-shadow-lg: 0 8px 28px rgba(0,0,0,0.11), 0 3px 8px rgba(0,0,0,0.07);
+}
+
+.fluent-scope .fl-mono { font-family: 'JetBrains Mono', monospace; }
+.fluent-scope .fl-tabular { font-variant-numeric: tabular-nums; }
+.fluent-scope .fl-label-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--fl-t3);
+}
+
+.fluent-scope ::-webkit-scrollbar       { width: 6px; height: 6px; }
+.fluent-scope ::-webkit-scrollbar-track { background: transparent; }
+.fluent-scope ::-webkit-scrollbar-thumb { background: var(--fl-stroke-strong); border-radius: 3px; }
+
+.fluent-scope .fl-card,
+.fluent-scope .fluent-card {
+  background: var(--fl-surface);
+  border: 1px solid var(--fl-stroke);
+  border-radius: 12px;
+  box-shadow: var(--fl-shadow-sm);
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+.fluent-scope .fl-card:hover,
+.fluent-scope .fluent-card:hover { box-shadow: var(--fl-shadow-md); }
+
+.fluent-scope .fl-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--fl-stroke);
+  background: var(--fl-surface);
+}
+.fluent-scope .fl-panel-title {
+  font-size: 13.5px; font-weight: 700;
+  letter-spacing: -0.2px; color: var(--fl-t1);
+}
+.fluent-scope .fl-panel-sub {
+  font-size: 11px; color: var(--fl-t3); margin-top: 1px;
+}
+
+.fluent-scope .fl-stat-card {
+  background: var(--fl-surface);
+  border: 1px solid var(--fl-stroke);
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: var(--fl-shadow-sm);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  position: relative; overflow: hidden;
+}
+.fluent-scope .fl-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--fl-shadow-md);
+  border-color: var(--fl-stroke-md);
+}
+
+.fluent-scope .fl-badge {
+  display: inline-flex; align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600;
+  padding: 3px 8px; border-radius: 4px; border: 1px solid;
+}
+.fluent-scope .fl-badge-active   { background: var(--fl-green-1); color: var(--fl-green); border-color: rgba(16,124,65,0.2); }
+.fluent-scope .fl-badge-inactive { background: var(--fl-surface-2); color: var(--fl-t2); border-color: var(--fl-stroke-md); }
+.fluent-scope .fl-badge-pending  { background: var(--fl-warn-1);   color: var(--fl-warn);  border-color: rgba(201,116,0,0.2); }
+.fluent-scope .fl-badge-blue     { background: var(--fl-blue-1);   color: var(--fl-blue-text); border-color: var(--fl-blue-2); }
+.fluent-scope .fl-badge-danger   { background: var(--fl-danger-1); color: var(--fl-danger); border-color: rgba(209,52,56,0.2); }
+.fluent-scope .fl-badge-purple   { background: var(--fl-purple-1); color: var(--fl-purple); border-color: rgba(59,56,125,0.2); }
+
+.fluent-scope .fl-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; border-radius: 6px;
+  font-family: 'Sora', sans-serif;
+  font-size: 12.5px; font-weight: 600;
+  cursor: pointer; border: 1px solid transparent;
+  transition: all 0.13s; white-space: nowrap;
+  box-shadow: var(--fl-shadow-xs);
+}
+.fluent-scope .fl-btn-primary {
+  background: var(--fl-blue); color: #fff;
+  border-color: rgba(0,0,0,0.1);
+}
+.fluent-scope .fl-btn-primary:hover { background: #1789b8; transform: translateY(-1px); }
+.fluent-scope .fl-btn-secondary {
+  background: var(--fl-surface); color: var(--fl-t1);
+  border-color: var(--fl-stroke-strong);
+}
+.fluent-scope .fl-btn-secondary:hover { background: var(--fl-surface-1); }
+.fluent-scope .fl-btn-ghost {
+  background: transparent; color: var(--fl-t2);
+  border-color: var(--fl-stroke-md); box-shadow: none;
+}
+.fluent-scope .fl-btn-ghost:hover { background: var(--fl-surface-1); color: var(--fl-t1); }
+.fluent-scope .fl-btn-danger {
+  background: var(--fl-danger); color: #fff;
+  border-color: rgba(0,0,0,0.1);
+}
+.fluent-scope .fl-btn-danger:hover { background: #b32a2e; }
+
+.fluent-scope .fl-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--fl-stroke-md);
+  border-radius: 8px;
+  font-family: 'Sora', sans-serif;
+  font-size: 13px;
+  color: var(--fl-t1);
+  background: var(--fl-surface);
+  outline: none; transition: all 0.15s;
+  box-shadow: var(--fl-shadow-xs);
+}
+.fluent-scope .fl-input:focus {
+  border-color: var(--fl-blue);
+  box-shadow: 0 0 0 3px var(--fl-blue-3), var(--fl-shadow-xs);
+}
+.fluent-scope .fl-input::placeholder { color: var(--fl-t4); }
+
+.fluent-scope .fl-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.fluent-scope .fl-table thead th {
+  text-align: left; padding: 10px 16px;
+  font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--fl-t3); border-bottom: 1px solid var(--fl-stroke);
+  background: var(--fl-surface-1);
+}
+.fluent-scope .fl-table tbody td {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--fl-stroke);
+  color: var(--fl-t1);
+}
+.fluent-scope .fl-table tbody tr:hover td { background: var(--fl-surface-1); }
+.fluent-scope .fl-table tbody tr:last-child td { border-bottom: none; }
+
+.fluent-scope .fl-tabs {
+  display: inline-flex; gap: 2px;
+  background: var(--fl-surface-2); padding: 3px;
+  border-radius: 8px;
+}
+.fluent-scope .fl-tab {
+  padding: 6px 14px; border-radius: 6px;
+  font-size: 12px; font-weight: 500;
+  color: var(--fl-t2); cursor: pointer;
+  border: none; background: transparent;
+  transition: all 0.13s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.fluent-scope .fl-tab:hover { color: var(--fl-t1); }
+.fluent-scope .fl-tab[data-active="true"] {
+  background: var(--fl-surface); color: var(--fl-t1);
+  font-weight: 600; box-shadow: var(--fl-shadow-xs);
+}
+
+.fluent-scope .fl-live-dot {
+  display: inline-block; width: 6px; height: 6px;
+  background: var(--fl-green); border-radius: 50%;
+  animation: fl-pulse 2.5s ease infinite;
+}
+@keyframes fl-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+@keyframes fl-fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.fluent-scope .fl-fade-up { animation: fl-fade-up 0.35s ease both; }
