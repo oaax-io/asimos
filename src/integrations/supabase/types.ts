@@ -397,11 +397,16 @@ export type Database = {
           reserve_ratio: number | null
           reserve_total: number | null
           resident_since: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           salary_net_monthly: number | null
           salary_type: string | null
           salutation: string | null
+          sent_at: string | null
+          status: string
           street: string | null
           street_number: string | null
+          submitted_at: string | null
           tax_id_ch: string | null
           taxes_expense: number | null
           telecom_expense: number | null
@@ -457,11 +462,16 @@ export type Database = {
           reserve_ratio?: number | null
           reserve_total?: number | null
           resident_since?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           salary_net_monthly?: number | null
           salary_type?: string | null
           salutation?: string | null
+          sent_at?: string | null
+          status?: string
           street?: string | null
           street_number?: string | null
+          submitted_at?: string | null
           tax_id_ch?: string | null
           taxes_expense?: number | null
           telecom_expense?: number | null
@@ -517,11 +527,16 @@ export type Database = {
           reserve_ratio?: number | null
           reserve_total?: number | null
           resident_since?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           salary_net_monthly?: number | null
           salary_type?: string | null
           salutation?: string | null
+          sent_at?: string | null
+          status?: string
           street?: string | null
           street_number?: string | null
+          submitted_at?: string | null
           tax_id_ch?: string | null
           taxes_expense?: number | null
           telecom_expense?: number | null
@@ -829,31 +844,37 @@ export type Database = {
       financing_links: {
         Row: {
           agency_id: string | null
+          client_id: string | null
           created_at: string
           created_by: string | null
-          dossier_id: string
+          dossier_id: string | null
           expires_at: string
           id: string
+          link_type: string
           token: string
           used_at: string | null
         }
         Insert: {
           agency_id?: string | null
+          client_id?: string | null
           created_at?: string
           created_by?: string | null
-          dossier_id: string
+          dossier_id?: string | null
           expires_at?: string
           id?: string
+          link_type?: string
           token: string
           used_at?: string | null
         }
         Update: {
           agency_id?: string | null
+          client_id?: string | null
           created_at?: string
           created_by?: string | null
-          dossier_id?: string
+          dossier_id?: string | null
           expires_at?: string
           id?: string
+          link_type?: string
           token?: string
           used_at?: string | null
         }
@@ -870,41 +891,59 @@ export type Database = {
       financing_profiles: {
         Row: {
           approval_status: string | null
+          assigned_to: string | null
           bank_contact: string | null
+          bank_email: string | null
           bank_name: string | null
+          bank_phone: string | null
+          bank_type: string | null
           budget: number | null
           client_id: string
           created_at: string
           equity: number | null
           id: string
           income: number | null
+          internal_notes: string | null
           notes: string | null
+          profile_status: string
           updated_at: string
         }
         Insert: {
           approval_status?: string | null
+          assigned_to?: string | null
           bank_contact?: string | null
+          bank_email?: string | null
           bank_name?: string | null
+          bank_phone?: string | null
+          bank_type?: string | null
           budget?: number | null
           client_id: string
           created_at?: string
           equity?: number | null
           id?: string
           income?: number | null
+          internal_notes?: string | null
           notes?: string | null
+          profile_status?: string
           updated_at?: string
         }
         Update: {
           approval_status?: string | null
+          assigned_to?: string | null
           bank_contact?: string | null
+          bank_email?: string | null
           bank_name?: string | null
+          bank_phone?: string | null
+          bank_type?: string | null
           budget?: number | null
           client_id?: string
           created_at?: string
           equity?: number | null
           id?: string
           income?: number | null
+          internal_notes?: string | null
           notes?: string | null
+          profile_status?: string
           updated_at?: string
         }
         Relationships: [
@@ -1652,6 +1691,23 @@ export type Database = {
       is_manager_or_above: { Args: never; Returns: boolean }
       is_owner_or_admin: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
+      self_disclosure_link_resolve: {
+        Args: { _token: string }
+        Returns: {
+          client_id: string
+          client_name: string
+          disclosure: Json
+          status: string
+        }[]
+      }
+      self_disclosure_link_save: {
+        Args: { _payload: Json; _token: string }
+        Returns: undefined
+      }
+      self_disclosure_link_submit: {
+        Args: { _token: string }
+        Returns: undefined
+      }
       user_can: { Args: { _action: string; _module: string }; Returns: boolean }
     }
     Enums: {
