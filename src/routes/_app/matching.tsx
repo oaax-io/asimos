@@ -38,10 +38,10 @@ function MatchingPage() {
   const matches = useMemo(() => selected ? matchClientToProperties(selected, properties) : [], [selected, properties]);
 
   const save = useMutation({
-    mutationFn: async (m: { property_id: string; score: number }) => {
+    mutationFn: async (m: { property_id: string; score: number; reasons: string[] }) => {
       const { data: profile } = await supabase.from("profiles").select("agency_id").eq("id", user!.id).single();
       const { error } = await supabase.from("matches").upsert({
-        agency_id: profile!.agency_id, client_id: selected!.id, property_id: m.property_id, score: m.score,
+        agency_id: profile!.agency_id, client_id: selected!.id, property_id: m.property_id, score: m.score, reasons: m.reasons, status: "shortlisted",
       }, { onConflict: "client_id,property_id" });
       if (error) throw error;
     },
