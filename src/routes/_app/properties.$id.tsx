@@ -717,3 +717,64 @@ function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: s
     </div>
   );
 }
+
+function ExposeTab({ propertyId }: { propertyId: string }) {
+  const { data: exposes = [], isLoading } = useQuery({
+    queryKey: ["exposes", propertyId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("generated_documents")
+        .select("*")
+        .eq("related_type", "property").eq("related_id", propertyId)
+        .order("created_at", { ascending: false });
+      return (data ?? []).filter((d: any) => (d.variables as any)?.kind === "expose");
+    },
+  });
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-4">
+      <Card><CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
+        <div>
+          <h3 className="font-display text-lg font-semibold">Exposé erstellen</h3>
+          <p className="text-sm text-muted-foreground">Geführter Wizard mit Cover, Galerie, Eckdaten und Vorschau.</p>
+        </div>
+        <Button asChild>
+          <Link to="/properties/$id/expose" params={{ id: propertyId }}>
+            <FileText className="mr-1 h-4 w-4" />Exposé erstellen
+          </Link>
+        </Button>
+      </CardContent></Card>
+
+      <Card><CardContent className="p-6">
+        <h4 className="mb-3 font-semibold">Bisher erstellte Exposés</h4>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Wird geladen…</p>
+        ) : exposes.length === 0 ? (
+          <EmptyState title="Noch keine Exposés" description="Starte den Wizard, um das erste Exposé zu erstellen." />
+        ) : (
+          <div className="space-y-2">
+            {exposes.map((d: any) => (
+              <div key={d.id} className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <p className="text-sm font-medium">{(d.variables as any)?.title ?? "Exposé"}</p>
+                  <p className="text-xs text-muted-foreground">{formatDateTime(d.created_at)}</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setPreviewHtml(d.html_content)}>
+                  <ExternalLink className="mr-1 h-3 w-3" />Ansehen
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent></Card>
+
+      <Dialog open={!!previewHtml} onOpenChange={(o) => !o && setPreviewHtml(null)}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader><DialogTitle>Exposé-Vorschau</DialogTitle></DialogHeader>
+          {previewHtml && <iframe title="Exposé" srcDoc={previewHtml} className="h-[75vh] w-full rounded border" />}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
