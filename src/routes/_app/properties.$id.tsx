@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { PropertyFormDialog, type PropertyFormValues } from "@/components/properties/PropertyFormDialog";
 import { formatCurrency, formatArea, formatDate, formatDateTime, propertyTypeLabels, propertyStatusLabels, listingTypeLabels } from "@/lib/format";
 import { toast } from "sonner";
+import { MatchPanel } from "@/components/matching/MatchPanel";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
@@ -176,7 +177,7 @@ function PropertyDetail() {
             <Button asChild><Link to="/properties/$id/expose" params={{ id }}><FileText className="mr-1 h-4 w-4" />Zum Exposé</Link></Button>
           </CardContent></Card>
         </TabsContent>
-        <TabsContent value="matching"><MatchingTab propertyId={id} /></TabsContent>
+        <TabsContent value="matching" className="mt-4"><MatchPanel direction="property-to-client" property={p} /></TabsContent>
       </Tabs>
     </div>
   );
@@ -714,49 +715,7 @@ function ReservationTab({ propertyId }: { propertyId: string }) {
   );
 }
 
-function MatchingTab({ propertyId }: { propertyId: string }) {
-  const { data: matches = [], isLoading } = useQuery({
-    queryKey: ["matches", "property", propertyId],
-    queryFn: async () => {
-      const { data } = await supabase.from("matches").select("*, clients(id, full_name, email, phone, client_type)").eq("property_id", propertyId).order("score", { ascending: false });
-      return data ?? [];
-    },
-  });
-
-  if (isLoading) return <div className="text-sm text-muted-foreground">Lädt…</div>;
-
-  if (matches.length === 0) {
-    return <EmptyState
-      title="Noch keine Matches"
-      description="Sobald passende Suchprofile vorhanden sind, erscheinen hier Vorschläge."
-      action={<Button asChild variant="outline"><Link to="/matching" search={{ clientId: "" }}>Matching öffnen</Link></Button>}
-    />;
-  }
-
-  return (
-    <div className="space-y-3">
-      {matches.map((m: any) => (
-        <Card key={m.id}><CardContent className="p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="truncate font-medium">{m.clients?.full_name ?? "Unbekannt"}</p>
-              <p className="truncate text-xs text-muted-foreground">{m.clients?.email ?? ""} {m.clients?.phone ? `· ${m.clients.phone}` : ""}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">{Math.round(Number(m.score) * 100)}%</Badge>
-              <Badge variant="outline">{m.status}</Badge>
-              {m.clients?.id && (
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/clients/$id" params={{ id: m.clients.id }}><ExternalLink className="mr-1 h-3 w-3" />Öffnen</Link>
-                </Button>
-              )}
-            </div>
-          </div>
-        </CardContent></Card>
-      ))}
-    </div>
-  );
-}
+// MatchingTab replaced by <MatchPanel direction="property-to-client" />
 
 function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
