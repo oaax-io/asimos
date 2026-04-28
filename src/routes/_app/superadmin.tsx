@@ -44,7 +44,6 @@ function SuperadminPage() {
       <PageHeader
         title="Superadmin"
         description="Verwalte alle Agenturen, Nutzer und Rollen der Plattform."
-        icon={<Shield className="h-6 w-6" />}
       />
       <StatsGrid />
       <Tabs defaultValue="agencies" className="space-y-4">
