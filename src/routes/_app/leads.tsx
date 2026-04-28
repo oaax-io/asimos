@@ -33,7 +33,7 @@ function LeadsPage() {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
-      return (await getLeads({ data: { accessToken } })) as Lead[];
+      return (await getLeads({ headers: { authorization: `Bearer ${accessToken}` } })) as Lead[];
     },
     refetchOnReconnect: true,
   });
@@ -44,14 +44,16 @@ function LeadsPage() {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
-      return addLead({ data: {
-        accessToken,
-        full_name: form.full_name.trim(),
-        email: form.email.trim() || null,
-        phone: form.phone.trim() || null,
-        source: form.source.trim() || null,
-        notes: form.notes.trim() || null,
-      } });
+      return addLead({
+        headers: { authorization: `Bearer ${accessToken}` },
+        data: {
+          full_name: form.full_name.trim(),
+          email: form.email.trim() || null,
+          phone: form.phone.trim() || null,
+          source: form.source.trim() || null,
+          notes: form.notes.trim() || null,
+        },
+      });
     },
     onSuccess: () => {
       toast.success("Lead erstellt – du kannst einen weiteren hinzufügen");
