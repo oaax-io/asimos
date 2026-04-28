@@ -16,6 +16,7 @@ import {
   ArrowLeft, Mail, Phone, Trash2, Copy, RefreshCw, Pencil, Link2, FileSignature,
   Calendar, Target, Home, MapPin, Euro, Ruler, BedDouble, Building2, MessageSquare,
   CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
+  ClipboardList, Heart,
 } from "lucide-react";
 import {
   clientTypeLabels, formatCurrency, formatDate, formatDateTime,
@@ -24,6 +25,10 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { MatchPanel } from "@/components/matching/MatchPanel";
+import { ClientSelfDisclosureTab } from "@/components/clients/ClientSelfDisclosureTab";
+import { ClientRelationshipsTab } from "@/components/clients/ClientRelationshipsTab";
+import { BenchmarkCard, BenchmarkPlaceholder } from "@/components/clients/BenchmarkCard";
+import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetail });
 
