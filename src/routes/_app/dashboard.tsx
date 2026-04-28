@@ -9,8 +9,12 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Building2, Users, UserPlus, CheckSquare, CalendarDays, FileSignature,
-  ArrowRight, Plus, Upload, Sparkles, AlertTriangle, Clock,
+  ArrowRight, Plus, Upload, Sparkles, AlertTriangle, Clock, ChevronDown,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   formatCurrency, formatDateTime, formatDate,
   propertyStatusLabels, propertyTypeLabels, leadStatusLabels,
