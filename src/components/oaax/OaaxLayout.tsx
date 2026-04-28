@@ -48,7 +48,7 @@ function EstatlyMark({ size = 18, white }: { size?: number; white?: boolean }) {
   );
 }
 
-function OaaxSidebar({ collapsed, setCollapsed, activeTab }: { collapsed: boolean; setCollapsed: (v: boolean) => void; activeTab: string }) {
+function OaaxSidebar({ collapsed, setCollapsed, activeTab, activeHash }: { collapsed: boolean; setCollapsed: (v: boolean) => void; activeTab: string; activeHash: string }) {
   const width = collapsed ? 56 : 228;
   return (
     <aside
