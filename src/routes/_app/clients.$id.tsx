@@ -27,7 +27,8 @@ import { useAuth } from "@/lib/auth";
 import { MatchPanel } from "@/components/matching/MatchPanel";
 import { ClientSelfDisclosureTab } from "@/components/clients/ClientSelfDisclosureTab";
 import { ClientRelationshipsTab } from "@/components/clients/ClientRelationshipsTab";
-import { BenchmarkCard, BenchmarkPlaceholder } from "@/components/clients/BenchmarkCard";
+import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
+import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkCard";
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetail });
