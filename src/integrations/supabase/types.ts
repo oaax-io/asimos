@@ -207,12 +207,46 @@ export type Database = {
           },
         ]
       }
+      checklist_templates: {
+        Row: {
+          created_at: string
+          default_related_type: string | null
+          description: string | null
+          id: string
+          items: Json
+          key: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_related_type?: string | null
+          description?: string | null
+          id?: string
+          items?: Json
+          key: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_related_type?: string | null
+          description?: string | null
+          id?: string
+          items?: Json
+          key?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       checklists: {
         Row: {
           created_at: string
           id: string
           related_id: string | null
           related_type: string | null
+          template_key: string | null
           title: string
         }
         Insert: {
@@ -220,6 +254,7 @@ export type Database = {
           id?: string
           related_id?: string | null
           related_type?: string | null
+          template_key?: string | null
           title: string
         }
         Update: {
@@ -227,6 +262,7 @@ export type Database = {
           id?: string
           related_id?: string | null
           related_type?: string | null
+          template_key?: string | null
           title?: string
         }
         Relationships: []
