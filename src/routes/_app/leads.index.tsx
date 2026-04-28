@@ -544,14 +544,13 @@ function LeadsPage() {
             })}
           </div>
         </TabsContent>
-      </Tabs>
 
       {showError ? (
         <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           {queryErrorMessage}
         </div>
       ) : null}
-    </>
+    </Tabs>
   );
 }
 
