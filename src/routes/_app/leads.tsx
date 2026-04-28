@@ -27,16 +27,20 @@ function LeadsPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", source: "", notes: "" });
 
-  const { data: leads = [], error, isLoading } = useQuery({
+  const leadsQuery = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
-      return (await getLeads({ headers: { authorization: `Bearer ${accessToken}` } })) as Lead[];
+      return getLeads({ headers: { authorization: `Bearer ${accessToken}` } });
     },
     refetchOnReconnect: true,
   });
+
+  const leads = leadsQuery.data?.data ?? [];
+  const queryUnavailable = leadsQuery.data?.unavailable ?? false;
+  const queryErrorMessage = leadsQuery.data?.error ?? null;
 
   const create = useMutation({
     mutationFn: async () => {
@@ -44,7 +48,7 @@ function LeadsPage() {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
-      return addLead({
+      const result = await addLead({
         headers: { authorization: `Bearer ${accessToken}` },
         data: {
           full_name: form.full_name.trim(),
@@ -54,6 +58,16 @@ function LeadsPage() {
           notes: form.notes.trim() || null,
         },
       });
+
+      if (result.error || !result.data) {
+        const mutationError = new Error(result.error ?? "Es ist ein unerwarteter Fehler aufgetreten.");
+        if (result.unavailable) {
+          (mutationError as Error & { status?: number }).status = 503;
+        }
+        throw mutationError;
+      }
+
+      return result.data;
     },
     onSuccess: () => {
       toast.success("Lead erstellt – du kannst einen weiteren hinzufügen");
@@ -159,13 +173,13 @@ function LeadsPage() {
           );
         })}
       </div>
-      {error && isBackendUnavailableError(error) ? (
+      {queryUnavailable || (leadsQuery.error && isBackendUnavailableError(leadsQuery.error)) ? (
         <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-          Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden erneut versuchen.
+          {queryErrorMessage ?? "Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden erneut versuchen."}
         </div>
       ) : null}
 
-      {!error && isLoading ? (
+      {!leadsQuery.error && leadsQuery.isLoading ? (
         <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">Leads werden geladen…</div>
       ) : null}
     </>
