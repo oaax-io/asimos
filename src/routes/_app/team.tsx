@@ -17,11 +17,11 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/team")({ component: TeamPage });
 
-const ROLES = ["owner", "admin", "member"] as const;
+const ROLES = ["owner", "agent", "assistant"] as const;
 const ROLE_LABELS: Record<(typeof ROLES)[number], string> = {
   owner: "Inhaber",
-  admin: "Admin",
-  member: "Mitarbeiter",
+  agent: "Makler",
+  assistant: "Assistenz",
 };
 
 function TeamPage() {
