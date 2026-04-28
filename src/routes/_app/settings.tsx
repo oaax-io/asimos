@@ -48,7 +48,7 @@ function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Einstellungen" description="Profil und Agentur" />
+      <PageHeader title="Einstellungen" description="Profil und Firma" />
       <div className="grid max-w-2xl gap-6">
         <Card><CardContent className="space-y-4 p-6">
           <h2 className="font-semibold">Profil</h2>
@@ -58,7 +58,7 @@ function SettingsPage() {
         </CardContent></Card>
 
         <Card><CardContent className="space-y-4 p-6">
-          <h2 className="font-semibold">Agentur</h2>
+          <h2 className="font-semibold">Firma</h2>
           <div><Label>Name</Label><Input value={agency.name} onChange={(e) => setAgency({ name: e.target.value })} /></div>
         </CardContent></Card>
 
