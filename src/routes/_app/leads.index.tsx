@@ -633,3 +633,41 @@ function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] 
     </Dialog>
   );
 }
+
+// Farbiger Status-Badge mit Dropdown zum Wechseln
+function StatusDropdown({
+  value,
+  onChange,
+  compact = false,
+}: {
+  value: LeadStatus;
+  onChange: (s: LeadStatus) => void;
+  compact?: boolean;
+}) {
+  const c = leadStatusColors[value];
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full border px-2.5 font-medium transition hover:opacity-90",
+            compact ? "h-6 text-[11px]" : "h-7 text-xs",
+            c.badge
+          )}
+        >
+          <span className={cn("inline-block h-1.5 w-1.5 rounded-full", c.dot)} />
+          {leadStatusLabels[value]}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        {leadStatuses.map((s) => (
+          <DropdownMenuItem key={s} onSelect={() => onChange(s)}>
+            <span className={cn("mr-2 inline-block h-2 w-2 rounded-full", leadStatusColors[s].dot)} />
+            {leadStatusLabels[s]}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
