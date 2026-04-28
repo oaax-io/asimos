@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, Outlet } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
-  LayoutDashboard, Users, UserPlus, Building2, Calendar, Target, Settings, LogOut, Menu, Search, Shield,
+  LayoutDashboard, Users, UserPlus, Building2, Calendar, Target, Settings, LogOut, Menu, Search, Shield, PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ function NavList({ onClick }: { onClick?: () => void }) {
             onClick={onClick}
             className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
               active
-                ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-soft"
+                ? "bg-primary/15 text-primary shadow-soft"
                 : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
             }`}
           >
@@ -61,6 +61,7 @@ function SidebarBrand() {
 export default function AppLayout({ children }: { children?: ReactNode }) {
   const { user, loading, signOut, isSuperadmin } = useAuth();
   const navigate = useNavigate();
+  const [desktopOpen, setDesktopOpen] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth", search: { mode: "signin" } });
@@ -80,10 +81,12 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-background">
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 border-r bg-sidebar lg:block">
-        <SidebarBrand />
-        <NavList />
-      </aside>
+      {desktopOpen && (
+        <aside className="hidden w-64 shrink-0 border-r bg-sidebar lg:block">
+          <SidebarBrand />
+          <NavList />
+        </aside>
+      )}
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Topbar */}
@@ -97,6 +100,17 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
               <NavList />
             </SheetContent>
           </Sheet>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden lg:inline-flex"
+            onClick={() => setDesktopOpen((o) => !o)}
+            aria-label={desktopOpen ? "Sidebar schließen" : "Sidebar öffnen"}
+          >
+            {desktopOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
+          </Button>
+
 
           <div className="relative hidden max-w-md flex-1 md:block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
