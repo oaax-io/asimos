@@ -33,6 +33,9 @@ function LeadsPage() {
       if (error) throw error;
       return data;
     },
+    refetchOnReconnect: true,
+    refetchInterval: (query) => (isBackendUnavailableError(query.state.error) ? 5000 : false),
+    refetchIntervalInBackground: true,
   });
 
   const create = useMutation({
@@ -158,7 +161,7 @@ function LeadsPage() {
       </div>
       {error && isBackendUnavailableError(error) ? (
         <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-          Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden neu laden oder erneut speichern.
+          Backend aktuell nicht erreichbar. Verbindung wird automatisch erneut aufgebaut.
         </div>
       ) : null}
 
