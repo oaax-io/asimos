@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
-import { getBackendErrorMessage, isBackendUnavailableError } from "@/lib/backend-errors";
+import { getBackendErrorMessage, isBackendUnavailableError, unwrapServerResult } from "@/lib/backend-errors";
 import { toast } from "sonner";
 import { clientTypeLabels, formatCurrency, propertyTypeLabels } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
