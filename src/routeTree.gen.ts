@@ -20,9 +20,9 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppMatchingRouteImport } from './routes/_app/matching'
 import { Route as AppLeadsRouteImport } from './routes/_app/leads'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
-import { Route as AppClientsRouteImport } from './routes/_app/clients'
 import { Route as AppAppointmentsRouteImport } from './routes/_app/appointments'
 import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties.index'
+import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
 import { Route as AppClientsIdRouteImport } from './routes/_app/clients.$id'
 import { Route as AppPropertiesIdExposeRouteImport } from './routes/_app/properties.$id.expose'
@@ -81,11 +81,6 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppClientsRoute = AppClientsRouteImport.update({
-  id: '/clients',
-  path: '/clients',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppAppointmentsRoute = AppAppointmentsRouteImport.update({
   id: '/appointments',
   path: '/appointments',
@@ -96,15 +91,20 @@ const AppPropertiesIndexRoute = AppPropertiesIndexRouteImport.update({
   path: '/properties/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppClientsIndexRoute = AppClientsIndexRouteImport.update({
+  id: '/clients/',
+  path: '/clients/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPropertiesIdRoute = AppPropertiesIdRouteImport.update({
   id: '/properties/$id',
   path: '/properties/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppClientsIdRoute = AppClientsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppClientsRoute,
+  id: '/clients/$id',
+  path: '/clients/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppPropertiesIdExposeRoute = AppPropertiesIdExposeRouteImport.update({
   id: '/expose',
@@ -118,7 +118,6 @@ export interface FileRoutesByFullPath {
   '/oaax': typeof OaaxRoute
   '/set-password': typeof SetPasswordRoute
   '/appointments': typeof AppAppointmentsRoute
-  '/clients': typeof AppClientsRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/leads': typeof AppLeadsRoute
   '/matching': typeof AppMatchingRoute
@@ -127,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/clients/': typeof AppClientsIndexRoute
   '/properties/': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
 }
@@ -136,7 +136,6 @@ export interface FileRoutesByTo {
   '/oaax': typeof OaaxRoute
   '/set-password': typeof SetPasswordRoute
   '/appointments': typeof AppAppointmentsRoute
-  '/clients': typeof AppClientsRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/leads': typeof AppLeadsRoute
   '/matching': typeof AppMatchingRoute
@@ -145,6 +144,7 @@ export interface FileRoutesByTo {
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/clients': typeof AppClientsIndexRoute
   '/properties': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
 }
@@ -156,7 +156,6 @@ export interface FileRoutesById {
   '/oaax': typeof OaaxRoute
   '/set-password': typeof SetPasswordRoute
   '/_app/appointments': typeof AppAppointmentsRoute
-  '/_app/clients': typeof AppClientsRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/leads': typeof AppLeadsRoute
   '/_app/matching': typeof AppMatchingRoute
@@ -165,6 +164,7 @@ export interface FileRoutesById {
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/properties/': typeof AppPropertiesIndexRoute
   '/_app/properties/$id/expose': typeof AppPropertiesIdExposeRoute
 }
@@ -176,7 +176,6 @@ export interface FileRouteTypes {
     | '/oaax'
     | '/set-password'
     | '/appointments'
-    | '/clients'
     | '/dashboard'
     | '/leads'
     | '/matching'
@@ -185,6 +184,7 @@ export interface FileRouteTypes {
     | '/finanzierung/$token'
     | '/clients/$id'
     | '/properties/$id'
+    | '/clients/'
     | '/properties/'
     | '/properties/$id/expose'
   fileRoutesByTo: FileRoutesByTo
@@ -194,7 +194,6 @@ export interface FileRouteTypes {
     | '/oaax'
     | '/set-password'
     | '/appointments'
-    | '/clients'
     | '/dashboard'
     | '/leads'
     | '/matching'
@@ -203,6 +202,7 @@ export interface FileRouteTypes {
     | '/finanzierung/$token'
     | '/clients/$id'
     | '/properties/$id'
+    | '/clients'
     | '/properties'
     | '/properties/$id/expose'
   id:
@@ -213,7 +213,6 @@ export interface FileRouteTypes {
     | '/oaax'
     | '/set-password'
     | '/_app/appointments'
-    | '/_app/clients'
     | '/_app/dashboard'
     | '/_app/leads'
     | '/_app/matching'
@@ -222,6 +221,7 @@ export interface FileRouteTypes {
     | '/finanzierung/$token'
     | '/_app/clients/$id'
     | '/_app/properties/$id'
+    | '/_app/clients/'
     | '/_app/properties/'
     | '/_app/properties/$id/expose'
   fileRoutesById: FileRoutesById
@@ -314,13 +314,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/clients': {
-      id: '/_app/clients'
-      path: '/clients'
-      fullPath: '/clients'
-      preLoaderRoute: typeof AppClientsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/appointments': {
       id: '/_app/appointments'
       path: '/appointments'
@@ -335,6 +328,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPropertiesIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/clients/': {
+      id: '/_app/clients/'
+      path: '/clients'
+      fullPath: '/clients/'
+      preLoaderRoute: typeof AppClientsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/properties/$id': {
       id: '/_app/properties/$id'
       path: '/properties/$id'
@@ -344,10 +344,10 @@ declare module '@tanstack/react-router' {
     }
     '/_app/clients/$id': {
       id: '/_app/clients/$id'
-      path: '/$id'
+      path: '/clients/$id'
       fullPath: '/clients/$id'
       preLoaderRoute: typeof AppClientsIdRouteImport
-      parentRoute: typeof AppClientsRoute
+      parentRoute: typeof AppRoute
     }
     '/_app/properties/$id/expose': {
       id: '/_app/properties/$id/expose'
@@ -358,18 +358,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface AppClientsRouteChildren {
-  AppClientsIdRoute: typeof AppClientsIdRoute
-}
-
-const AppClientsRouteChildren: AppClientsRouteChildren = {
-  AppClientsIdRoute: AppClientsIdRoute,
-}
-
-const AppClientsRouteWithChildren = AppClientsRoute._addFileChildren(
-  AppClientsRouteChildren,
-)
 
 interface AppPropertiesIdRouteChildren {
   AppPropertiesIdExposeRoute: typeof AppPropertiesIdExposeRoute
@@ -385,25 +373,27 @@ const AppPropertiesIdRouteWithChildren = AppPropertiesIdRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAppointmentsRoute: typeof AppAppointmentsRoute
-  AppClientsRoute: typeof AppClientsRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppLeadsRoute: typeof AppLeadsRoute
   AppMatchingRoute: typeof AppMatchingRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTeamRoute: typeof AppTeamRoute
+  AppClientsIdRoute: typeof AppClientsIdRoute
   AppPropertiesIdRoute: typeof AppPropertiesIdRouteWithChildren
+  AppClientsIndexRoute: typeof AppClientsIndexRoute
   AppPropertiesIndexRoute: typeof AppPropertiesIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAppointmentsRoute: AppAppointmentsRoute,
-  AppClientsRoute: AppClientsRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppLeadsRoute: AppLeadsRoute,
   AppMatchingRoute: AppMatchingRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTeamRoute: AppTeamRoute,
+  AppClientsIdRoute: AppClientsIdRoute,
   AppPropertiesIdRoute: AppPropertiesIdRouteWithChildren,
+  AppClientsIndexRoute: AppClientsIndexRoute,
   AppPropertiesIndexRoute: AppPropertiesIndexRoute,
 }
 
@@ -420,3 +410,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
