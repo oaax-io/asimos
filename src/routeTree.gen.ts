@@ -30,6 +30,7 @@ import { Route as AppClientsRouteImport } from './routes/_app/clients'
 import { Route as AppChecklistsRouteImport } from './routes/_app/checklists'
 import { Route as AppAppointmentsRouteImport } from './routes/_app/appointments'
 import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties.index'
+import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads.index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
 import { Route as AppClientsIdRouteImport } from './routes/_app/clients.$id'
@@ -139,6 +140,11 @@ const AppPropertiesIndexRoute = AppPropertiesIndexRouteImport.update({
   path: '/properties/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLeadsIndexRoute = AppLeadsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppLeadsRoute,
+} as any)
 const AppClientsIndexRoute = AppClientsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -171,7 +177,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/documents': typeof AppDocumentsRoute
   '/exposes': typeof AppExposesRoute
-  '/leads': typeof AppLeadsRoute
+  '/leads': typeof AppLeadsRouteWithChildren
   '/mandates': typeof AppMandatesRoute
   '/matching': typeof AppMatchingRoute
   '/media': typeof AppMediaRoute
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/clients/$id': typeof AppClientsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/clients/': typeof AppClientsIndexRoute
+  '/leads/': typeof AppLeadsIndexRoute
   '/properties/': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
 }
@@ -196,7 +203,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/documents': typeof AppDocumentsRoute
   '/exposes': typeof AppExposesRoute
-  '/leads': typeof AppLeadsRoute
   '/mandates': typeof AppMandatesRoute
   '/matching': typeof AppMatchingRoute
   '/media': typeof AppMediaRoute
@@ -208,6 +214,7 @@ export interface FileRoutesByTo {
   '/clients/$id': typeof AppClientsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/clients': typeof AppClientsIndexRoute
+  '/leads': typeof AppLeadsIndexRoute
   '/properties': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
 }
@@ -224,7 +231,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/documents': typeof AppDocumentsRoute
   '/_app/exposes': typeof AppExposesRoute
-  '/_app/leads': typeof AppLeadsRoute
+  '/_app/leads': typeof AppLeadsRouteWithChildren
   '/_app/mandates': typeof AppMandatesRoute
   '/_app/matching': typeof AppMatchingRoute
   '/_app/media': typeof AppMediaRoute
@@ -236,6 +243,7 @@ export interface FileRoutesById {
   '/_app/clients/$id': typeof AppClientsIdRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/_app/clients/': typeof AppClientsIndexRoute
+  '/_app/leads/': typeof AppLeadsIndexRoute
   '/_app/properties/': typeof AppPropertiesIndexRoute
   '/_app/properties/$id/expose': typeof AppPropertiesIdExposeRoute
 }
@@ -264,6 +272,7 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/properties/$id'
     | '/clients/'
+    | '/leads/'
     | '/properties/'
     | '/properties/$id/expose'
   fileRoutesByTo: FileRoutesByTo
@@ -277,7 +286,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/documents'
     | '/exposes'
-    | '/leads'
     | '/mandates'
     | '/matching'
     | '/media'
@@ -289,6 +297,7 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/properties/$id'
     | '/clients'
+    | '/leads'
     | '/properties'
     | '/properties/$id/expose'
   id:
@@ -316,6 +325,7 @@ export interface FileRouteTypes {
     | '/_app/clients/$id'
     | '/_app/properties/$id'
     | '/_app/clients/'
+    | '/_app/leads/'
     | '/_app/properties/'
     | '/_app/properties/$id/expose'
   fileRoutesById: FileRoutesById
@@ -478,6 +488,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPropertiesIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/leads/': {
+      id: '/_app/leads/'
+      path: '/'
+      fullPath: '/leads/'
+      preLoaderRoute: typeof AppLeadsIndexRouteImport
+      parentRoute: typeof AppLeadsRoute
+    }
     '/_app/clients/': {
       id: '/_app/clients/'
       path: '/'
@@ -523,6 +540,18 @@ const AppClientsRouteWithChildren = AppClientsRoute._addFileChildren(
   AppClientsRouteChildren,
 )
 
+interface AppLeadsRouteChildren {
+  AppLeadsIndexRoute: typeof AppLeadsIndexRoute
+}
+
+const AppLeadsRouteChildren: AppLeadsRouteChildren = {
+  AppLeadsIndexRoute: AppLeadsIndexRoute,
+}
+
+const AppLeadsRouteWithChildren = AppLeadsRoute._addFileChildren(
+  AppLeadsRouteChildren,
+)
+
 interface AppPropertiesIdRouteChildren {
   AppPropertiesIdExposeRoute: typeof AppPropertiesIdExposeRoute
 }
@@ -542,7 +571,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppDocumentsRoute: typeof AppDocumentsRoute
   AppExposesRoute: typeof AppExposesRoute
-  AppLeadsRoute: typeof AppLeadsRoute
+  AppLeadsRoute: typeof AppLeadsRouteWithChildren
   AppMandatesRoute: typeof AppMandatesRoute
   AppMatchingRoute: typeof AppMatchingRoute
   AppMediaRoute: typeof AppMediaRoute
@@ -561,7 +590,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppDocumentsRoute: AppDocumentsRoute,
   AppExposesRoute: AppExposesRoute,
-  AppLeadsRoute: AppLeadsRoute,
+  AppLeadsRoute: AppLeadsRouteWithChildren,
   AppMandatesRoute: AppMandatesRoute,
   AppMatchingRoute: AppMatchingRoute,
   AppMediaRoute: AppMediaRoute,

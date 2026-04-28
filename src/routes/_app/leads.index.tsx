@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import { addLead, getLeads } from "@/server/crm.functions";
 
-export const Route = createFileRoute("/_app/leads")({ component: LeadsPage });
+export const Route = createFileRoute("/_app/leads/")({ component: LeadsPage });
 
 type Lead = Tables<"leads">;
 type Profile = { id: string; full_name: string | null; email: string | null };
