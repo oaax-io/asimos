@@ -29,6 +29,8 @@ export const clientTypeLabels = {
   seller: "Verkäufer",
   tenant: "Mieter",
   landlord: "Vermieter",
+  investor: "Investor",
+  other: "Sonstige",
 } as const;
 
 export const propertyStatusLabels = {

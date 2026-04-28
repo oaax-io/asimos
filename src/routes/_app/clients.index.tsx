@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -21,17 +21,25 @@ import { addClient, getClients } from "@/server/crm.functions";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
-const TYPES = ["buyer","seller","tenant","landlord"] as const;
+const TYPES = ["buyer","seller","tenant","landlord","investor","other"] as const;
 const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
+const FINANCING_OPTIONS = ["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"];
+const ALL = "__all__";
+const UNASSIGNED = "__unassigned__";
+const NO_FIN = "__none__";
 
 function ClientsPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>(ALL);
+  const [assignedFilter, setAssignedFilter] = useState<string>(ALL);
+  const [financingFilter, setFinancingFilter] = useState<string>(ALL);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     full_name: "", email: "", phone: "", client_type: "buyer" as typeof TYPES[number],
     notes: "", budget_min: "", budget_max: "", rooms_min: "", area_min: "",
     preferred_cities: "", preferred_types: [] as string[], preferred_listing: "sale" as "sale" | "rent",
+    assigned_to: "", financing_status: "",
   });
 
   const clientsQuery = useQuery({
@@ -44,7 +52,17 @@ function ClientsPage() {
     },
   });
 
+  const employeesQuery = useQuery({
+    queryKey: ["employees"],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("id, full_name, email").eq("is_active", true).order("full_name");
+      return data ?? [];
+    },
+  });
+
   const clients = clientsQuery.data?.data ?? [];
+  const employees = employeesQuery.data ?? [];
+  const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
   const queryUnavailable = clientsQuery.data?.unavailable ?? false;
   const queryErrorMessage = clientsQuery.data?.error ?? null;
 
@@ -80,6 +98,14 @@ function ClientsPage() {
         throw mutationError;
       }
 
+      // Apply employee assignment / financing status post-create
+      if ((form.assigned_to || form.financing_status) && result.data?.id) {
+        await supabase.from("clients").update({
+          assigned_to: form.assigned_to || null,
+          financing_status: form.financing_status || null,
+        }).eq("id", result.data.id);
+      }
+
       return result.data;
     },
     onSuccess: () => {
@@ -90,10 +116,22 @@ function ClientsPage() {
     onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
   });
 
-  const filtered = clients.filter((c) =>
-    !search || c.full_name.toLowerCase().includes(search.toLowerCase()) ||
-    c.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => clients.filter((c: any) => {
+    if (typeFilter !== ALL && c.client_type !== typeFilter) return false;
+    if (assignedFilter !== ALL) {
+      if (assignedFilter === UNASSIGNED && c.assigned_to) return false;
+      if (assignedFilter !== UNASSIGNED && c.assigned_to !== assignedFilter) return false;
+    }
+    if (financingFilter !== ALL) {
+      if (financingFilter === NO_FIN && c.financing_status) return false;
+      if (financingFilter !== NO_FIN && c.financing_status !== financingFilter) return false;
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      if (!c.full_name?.toLowerCase().includes(q) && !c.email?.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  }), [clients, typeFilter, assignedFilter, financingFilter, search]);
 
   return (
     <>
@@ -116,6 +154,26 @@ function ClientsPage() {
                   </div>
                   <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
                   <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+                  <div>
+                    <Label>Zugewiesen an</Label>
+                    <Select value={form.assigned_to || UNASSIGNED} onValueChange={(v) => setForm({ ...form, assigned_to: v === UNASSIGNED ? "" : v })}>
+                      <SelectTrigger><SelectValue placeholder="Niemand" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={UNASSIGNED}>Niemand</SelectItem>
+                        {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Finanzierungsstatus</Label>
+                    <Select value={form.financing_status || NO_FIN} onValueChange={(v) => setForm({ ...form, financing_status: v === NO_FIN ? "" : v })}>
+                      <SelectTrigger><SelectValue placeholder="Keine Angabe" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NO_FIN}>Keine Angabe</SelectItem>
+                        {FINANCING_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="rounded-xl border bg-muted/30 p-4">
@@ -161,9 +219,40 @@ function ClientsPage() {
         }
       />
 
-      <div className="mb-4 relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Kunden suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[220px] max-w-xs flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Kunden suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Typ" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Alle Typen</SelectItem>
+            {TYPES.map((t) => <SelectItem key={t} value={t}>{clientTypeLabels[t]}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={assignedFilter} onValueChange={setAssignedFilter}>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Zugewiesen" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Alle Mitarbeitenden</SelectItem>
+            <SelectItem value={UNASSIGNED}>Nicht zugewiesen</SelectItem>
+            {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={financingFilter} onValueChange={setFinancingFilter}>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Finanzierung" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Alle Finanzierungen</SelectItem>
+            <SelectItem value={NO_FIN}>Keine Angabe</SelectItem>
+            {FINANCING_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        {(typeFilter !== ALL || assignedFilter !== ALL || financingFilter !== ALL || search) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilter(ALL); setAssignedFilter(ALL); setFinancingFilter(ALL); }}>
+            Zurücksetzen
+          </Button>
+        )}
+        <span className="ml-auto text-sm text-muted-foreground">{filtered.length} von {clients.length}</span>
       </div>
 
       {queryUnavailable || (clientsQuery.error && isBackendUnavailableError(clientsQuery.error)) ? (
