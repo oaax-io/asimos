@@ -184,7 +184,7 @@ function ClientsPage() {
             <Card key={c.id} className="transition hover:shadow-glow">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
-                  <Link to="/_app/clients/$id" params={{ id: c.id }} className="flex-1">
+                  <Link to="/clients/$id" params={{ id: c.id }} className="flex-1">
                     <p className="font-semibold hover:text-primary">{c.full_name}</p>
                     <Badge variant="secondary" className="mt-1">{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                   </Link>
@@ -192,7 +192,7 @@ function ClientsPage() {
                     <Target className="h-4 w-4" />
                   </Link>
                 </div>
-                <Link to="/_app/clients/$id" params={{ id: c.id }} className="block">
+                <Link to="/clients/$id" params={{ id: c.id }} className="block">
                   <div className="mt-3 space-y-1 text-sm text-muted-foreground">
                     {c.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{c.email}</p>}
                     {c.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{c.phone}</p>}
