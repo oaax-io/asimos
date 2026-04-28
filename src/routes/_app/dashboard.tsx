@@ -159,6 +159,45 @@ function Dashboard() {
     <>
       <PageHeader title="Dashboard" description="Übersicht über dein Tagesgeschäft" />
 
+      <PageHeader
+        title="Dashboard"
+        description="Übersicht über dein Tagesgeschäft"
+        action={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm">
+                <Plus className="mr-1 h-4 w-4" />
+                Schnellaktionen
+                <ChevronDown className="ml-1 h-4 w-4 opacity-70" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Neu erfassen</DropdownMenuLabel>
+              <DropdownMenuItem asChild>
+                <Link to="/leads"><UserPlus className="mr-2 h-4 w-4" />Lead erfassen</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/clients"><Users className="mr-2 h-4 w-4" />Kunde erfassen</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/properties"><Building2 className="mr-2 h-4 w-4" />Immobilie erfassen</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/appointments"><CalendarDays className="mr-2 h-4 w-4" />Termin erstellen</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/tasks"><CheckSquare className="mr-2 h-4 w-4" />Aufgabe erstellen</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/documents"><Upload className="mr-2 h-4 w-4" />Dokument hochladen</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        }
+      />
+
       {anyError && (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -175,23 +214,6 @@ function Dashboard() {
         <KpiCard icon={CalendarDays} label="Termine heute" value={kpis.data?.todayAppts ?? 0} loading={kpis.isLoading} to="/appointments" />
         <KpiCard icon={FileSignature} label="Reservationen" value={kpis.data?.activeRes ?? 0} hint="Aktiv" loading={kpis.isLoading} to="/reservations" />
       </div>
-
-      {/* Quick actions */}
-      <Card className="mt-6">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Schnellaktionen</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm"><Link to="/leads"><Plus className="mr-1 h-4 w-4" />Lead erfassen</Link></Button>
-            <Button asChild size="sm" variant="secondary"><Link to="/clients"><Plus className="mr-1 h-4 w-4" />Kunde erfassen</Link></Button>
-            <Button asChild size="sm" variant="secondary"><Link to="/properties"><Plus className="mr-1 h-4 w-4" />Immobilie erfassen</Link></Button>
-            <Button asChild size="sm" variant="secondary"><Link to="/appointments"><Plus className="mr-1 h-4 w-4" />Termin erstellen</Link></Button>
-            <Button asChild size="sm" variant="secondary"><Link to="/tasks"><Plus className="mr-1 h-4 w-4" />Aufgabe erstellen</Link></Button>
-            <Button asChild size="sm" variant="outline"><Link to="/documents"><Upload className="mr-1 h-4 w-4" />Dokument hochladen</Link></Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Today panel */}
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
