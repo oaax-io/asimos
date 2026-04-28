@@ -30,3 +30,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local env (publishable keys only — Lovable manages this)
+.env
+.env.local
+.env.*.local
