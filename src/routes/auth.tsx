@@ -46,7 +46,7 @@ function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black p-6">
+    <div className="relative flex min-h-screen items-center justify-center bg-black p-6">
       <div className="w-full max-w-md rounded-3xl border border-primary/40 bg-primary p-8 text-primary-foreground shadow-2xl">
         <div className="mb-8 flex justify-center">
           <img src={logo} alt="ASIMO" className="h-16 w-auto" />
@@ -60,7 +60,7 @@ function AuthPage() {
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="du@beispiel.de"
+              placeholder="mail@asimo.ch"
               className="mt-1 border-white bg-white text-foreground placeholder:text-muted-foreground focus-visible:ring-white"
             />
           </div>
@@ -95,6 +95,10 @@ function AuthPage() {
           </Button>
         </form>
       </div>
+
+      <p className="absolute bottom-6 left-0 right-0 text-center text-xs text-white/60">
+        ASIMO Treuhand AG — SaaS Powered by OAASE
+      </p>
     </div>
   );
 }
