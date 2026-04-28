@@ -168,15 +168,7 @@ function PropertyDetail() {
         <TabsContent value="appointments"><AppointmentsTab propertyId={id} /></TabsContent>
         <TabsContent value="mandate"><MandateTab propertyId={id} /></TabsContent>
         <TabsContent value="reservation"><ReservationTab propertyId={id} /></TabsContent>
-        <TabsContent value="expose">
-          <Card><CardContent className="p-6 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h3 className="font-semibold">Exposé generieren</h3>
-              <p className="text-sm text-muted-foreground">Erstelle ein druckbares Exposé aus den aktuellen Objektdaten.</p>
-            </div>
-            <Button asChild><Link to="/properties/$id/expose" params={{ id }}><FileText className="mr-1 h-4 w-4" />Zum Exposé</Link></Button>
-          </CardContent></Card>
-        </TabsContent>
+        <TabsContent value="expose"><ExposeTab propertyId={id} /></TabsContent>
         <TabsContent value="matching" className="mt-4"><MatchPanel direction="property-to-client" property={p} /></TabsContent>
       </Tabs>
     </div>
