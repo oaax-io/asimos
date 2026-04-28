@@ -52,7 +52,17 @@ function ClientsPage() {
     },
   });
 
+  const employeesQuery = useQuery({
+    queryKey: ["employees"],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("id, full_name, email").eq("is_active", true).order("full_name");
+      return data ?? [];
+    },
+  });
+
   const clients = clientsQuery.data?.data ?? [];
+  const employees = employeesQuery.data ?? [];
+  const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
   const queryUnavailable = clientsQuery.data?.unavailable ?? false;
   const queryErrorMessage = clientsQuery.data?.error ?? null;
 
