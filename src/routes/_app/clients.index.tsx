@@ -98,6 +98,14 @@ function ClientsPage() {
         throw mutationError;
       }
 
+      // Apply employee assignment / financing status post-create
+      if ((form.assigned_to || form.financing_status) && result.data?.id) {
+        await supabase.from("clients").update({
+          assigned_to: form.assigned_to || null,
+          financing_status: form.financing_status || null,
+        }).eq("id", result.data.id);
+      }
+
       return result.data;
     },
     onSuccess: () => {
