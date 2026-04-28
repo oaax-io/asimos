@@ -36,13 +36,22 @@ function ClientsPage() {
 
   const { data: clients = [], error, isLoading } = useQuery({
     queryKey: ["clients"],
-    queryFn: async () => await getClients(),
+    queryFn: async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Nicht angemeldet");
+      return await getClients({ data: { accessToken } });
+    },
   });
 
   const create = useMutation({
     mutationFn: async () => {
       if (!form.full_name.trim()) throw new Error("Name ist erforderlich");
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Nicht angemeldet");
       return addClient({ data: {
+        accessToken,
         full_name: form.full_name,
         email: form.email || null,
         phone: form.phone || null,
