@@ -1,15 +1,19 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+
+type SuperadminStatus = "unknown" | "granted" | "denied";
 
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
   isSuperadmin: boolean;
+  superadminStatus: SuperadminStatus;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, fullName: string, agencyName: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
+  refreshSuperadmin: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -19,46 +23,107 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [superadminStatus, setSuperadminStatus] = useState<SuperadminStatus>("unknown");
+  const userRef = useRef<User | null>(null);
+  const roleCheckIdRef = useRef(0);
+  const superadminStatusRef = useRef<SuperadminStatus>("unknown");
 
-  useEffect(() => {
-    const checkSuperadmin = async (userId: string) => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .eq("role", "superadmin")
-        .maybeSingle();
-      setIsSuperadmin(!!data);
-    };
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        setTimeout(() => { checkSuperadmin(s.user.id); }, 0);
-      } else {
-        setIsSuperadmin(false);
-      }
-    });
-    supabase.auth.getSession().then(async ({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      if (data.session?.user) {
-        await checkSuperadmin(data.session.user.id);
-      }
-      setLoading(false);
-    });
-    return () => sub.subscription.unsubscribe();
+  const updateSuperadminStatus = useCallback((status: SuperadminStatus, granted = false) => {
+    superadminStatusRef.current = status;
+    setSuperadminStatus(status);
+    setIsSuperadmin(granted);
   }, []);
 
+  const refreshSuperadmin = useCallback(async (targetUser?: User | null) => {
+    const currentUser = targetUser ?? userRef.current;
+
+    if (!currentUser) {
+      updateSuperadminStatus("denied", false);
+      return;
+    }
+
+    const requestId = ++roleCheckIdRef.current;
+    updateSuperadminStatus("unknown", false);
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const { data, error } = await supabase.rpc("is_superadmin");
+
+      if (requestId !== roleCheckIdRef.current || userRef.current?.id !== currentUser.id) {
+        return;
+      }
+
+      if (!error) {
+        const granted = !!data;
+        updateSuperadminStatus(granted ? "granted" : "denied", granted);
+        return;
+      }
+
+      if (attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+      } else {
+        console.warn("Superadmin-Prüfung fehlgeschlagen", error.message);
+      }
+    }
+
+    if (requestId === roleCheckIdRef.current && userRef.current?.id === currentUser.id) {
+      updateSuperadminStatus("unknown", false);
+    }
+  }, [updateSuperadminStatus]);
+
+  const applySession = useCallback((nextSession: Session | null) => {
+    const nextUser = nextSession?.user ?? null;
+    const previousUserId = userRef.current?.id ?? null;
+
+    setSession(nextSession);
+    setUser(nextUser);
+    userRef.current = nextUser;
+
+    if (!nextUser) {
+      roleCheckIdRef.current += 1;
+      updateSuperadminStatus("denied", false);
+      return;
+    }
+
+    if (previousUserId === nextUser.id && superadminStatusRef.current !== "unknown") {
+      return;
+    }
+
+    void refreshSuperadmin(nextUser);
+  }, [refreshSuperadmin, updateSuperadminStatus]);
+
+  useEffect(() => {
+    let active = true;
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!active) return;
+      applySession(nextSession);
+      setLoading(false);
+    });
+
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      applySession(data.session);
+      setLoading(false);
+    });
+
+    return () => {
+      active = false;
+      roleCheckIdRef.current += 1;
+      sub.subscription.unsubscribe();
+    };
+  }, [applySession]);
+
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) {
+      applySession(data.session);
+    }
     return { error: error?.message ?? null };
   };
 
   const signUp = async (email: string, password: string, fullName: string, agencyName: string) => {
     const redirectUrl = `${window.location.origin}/`;
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -66,15 +131,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { full_name: fullName, agency_name: agencyName },
       },
     });
+    if (!error && data.session) {
+      applySession(data.session);
+    }
     return { error: error?.message ?? null };
   };
 
   const signOut = async () => {
+    applySession(null);
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isSuperadmin, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isSuperadmin, superadminStatus, signIn, signUp, signOut, refreshSuperadmin }}>
       {children}
     </AuthContext.Provider>
   );
