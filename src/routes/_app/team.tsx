@@ -106,7 +106,7 @@ function TeamPage() {
     <>
       <PageHeader
         title="Team"
-        description="Mitarbeiter deiner Agentur verwalten"
+        description="Mitarbeitende deiner Firma verwalten"
         action={
           canManage ? (
             <Dialog open={open} onOpenChange={setOpen}>

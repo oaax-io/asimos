@@ -88,7 +88,7 @@ function OaaxSidebar({ collapsed, setCollapsed, activeTab, activeHash }: { colla
         {!collapsed && (
           <button
             onClick={() => setCollapsed(true)}
-            title="Sidebar schließen"
+            title="Sidebar einklappen"
             style={{
               width: 24, height: 24, borderRadius: 4,
               background: "rgba(255,255,255,0.08)",
