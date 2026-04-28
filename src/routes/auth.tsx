@@ -68,7 +68,7 @@ function AuthPage() {
       />
       {/* Darken vignette so the form stays readable */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80 pointer-events-none" aria-hidden />
-      <div className="relative z-10 w-full max-w-md rounded-3xl border border-primary/40 bg-primary p-8 text-primary-foreground shadow-2xl">
+      <div className="relative z-10 w-full max-w-md rounded-3xl border border-primary/40 bg-primary/80 backdrop-blur-md p-8 text-primary-foreground shadow-2xl">
         <div className="mb-8 flex justify-center">
           <img src={logo} alt="ASIMO" className="h-16 w-auto" />
         </div>
