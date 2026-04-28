@@ -14,6 +14,7 @@ import { Route as OaaxRouteImport } from './routes/oaax'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SelbstauskunftTokenRouteImport } from './routes/selbstauskunft.$token'
 import { Route as FinanzierungTokenRouteImport } from './routes/finanzierung.$token'
 import { Route as AppTemplatesRouteImport } from './routes/_app/templates'
 import { Route as AppTeamRouteImport } from './routes/_app/team'
@@ -60,6 +61,11 @@ const AppRoute = AppRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SelbstauskunftTokenRoute = SelbstauskunftTokenRouteImport.update({
+  id: '/selbstauskunft/$token',
+  path: '/selbstauskunft/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinanzierungTokenRoute = FinanzierungTokenRouteImport.update({
@@ -199,6 +205,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof AppTeamRoute
   '/templates': typeof AppTemplatesRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
+  '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/leads/$id': typeof AppLeadsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/team': typeof AppTeamRoute
   '/templates': typeof AppTemplatesRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
+  '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/leads/$id': typeof AppLeadsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
@@ -257,6 +265,7 @@ export interface FileRoutesById {
   '/_app/team': typeof AppTeamRoute
   '/_app/templates': typeof AppTemplatesRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
+  '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
   '/_app/leads/$id': typeof AppLeadsIdRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/templates'
     | '/finanzierung/$token'
+    | '/selbstauskunft/$token'
     | '/clients/$id'
     | '/leads/$id'
     | '/properties/$id'
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/templates'
     | '/finanzierung/$token'
+    | '/selbstauskunft/$token'
     | '/clients/$id'
     | '/leads/$id'
     | '/properties/$id'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/_app/team'
     | '/_app/templates'
     | '/finanzierung/$token'
+    | '/selbstauskunft/$token'
     | '/_app/clients/$id'
     | '/_app/leads/$id'
     | '/_app/properties/$id'
@@ -361,6 +373,7 @@ export interface RootRouteChildren {
   OaaxRoute: typeof OaaxRoute
   SetPasswordRoute: typeof SetPasswordRoute
   FinanzierungTokenRoute: typeof FinanzierungTokenRoute
+  SelbstauskunftTokenRoute: typeof SelbstauskunftTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -398,6 +411,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/selbstauskunft/$token': {
+      id: '/selbstauskunft/$token'
+      path: '/selbstauskunft/$token'
+      fullPath: '/selbstauskunft/$token'
+      preLoaderRoute: typeof SelbstauskunftTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/finanzierung/$token': {
@@ -653,6 +673,7 @@ const rootRouteChildren: RootRouteChildren = {
   OaaxRoute: OaaxRoute,
   SetPasswordRoute: SetPasswordRoute,
   FinanzierungTokenRoute: FinanzierungTokenRoute,
+  SelbstauskunftTokenRoute: SelbstauskunftTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
