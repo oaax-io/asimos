@@ -29,7 +29,7 @@ function LeadsPage() {
 
   const { data: leads = [], error, isLoading } = useQuery({
     queryKey: ["leads"],
-    queryFn: async () => getLeads(),
+    queryFn: async () => (await getLeads()) as Lead[],
     refetchOnReconnect: true,
   });
 
