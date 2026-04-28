@@ -78,7 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const applySession = useCallback((nextSession: Session | null) => {
     const nextUser = nextSession?.user ?? null;
-    const previousUserId = userRef.current?.id ?? null;
 
     setSession(nextSession);
     setUser(nextUser);
@@ -90,12 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (previousUserId === nextUser.id && superadminStatusRef.current !== "unknown") {
-      return;
-    }
-
-    void refreshSuperadmin(nextUser);
-  }, [refreshSuperadmin, updateSuperadminStatus]);
+    updateSuperadminStatus("denied", false);
+  }, [updateSuperadminStatus]);
 
   useEffect(() => {
     let active = true;
