@@ -67,7 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (requestId === roleCheckIdRef.current && userRef.current?.id === currentUser.id) {
-      updateSuperadminStatus("unknown", false);
+      // After all retries failed, fall back to "denied" so navigation can proceed.
+      // The user still gets the regular dashboard; superadmin can be re-checked later.
+      updateSuperadminStatus("denied", false);
     }
   }, [updateSuperadminStatus]);
 
