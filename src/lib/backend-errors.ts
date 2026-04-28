@@ -46,3 +46,55 @@ export function getBackendErrorMessage(error: unknown) {
 
   return "Es ist ein unerwarteter Fehler aufgetreten.";
 }
+
+/**
+ * Custom Error-Klasse, die als "Backend Unavailable" erkannt wird.
+ * Wird von isBackendUnavailableError() automatisch erkannt -> globaler Retry greift.
+ */
+export class BackendUnavailableError extends Error {
+  constructor(message?: string) {
+    super(message ?? "Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden erneut versuchen.");
+    this.name = "BackendUnavailableError";
+  }
+}
+
+/**
+ * Wirft den Supabase-Fehler so, dass der globale QueryClient-Retry
+ * Backend-Unavailable-Fehler erkennen und mit Backoff erneut versuchen kann.
+ *
+ * Verwende dies in jedem `useQuery({ queryFn })`, das direkt mit Supabase spricht:
+ *
+ *   const { data, error } = await supabase.from("xyz").select("*");
+ *   throwIfError(error);
+ *   return data ?? [];
+ */
+export function throwIfError(error: unknown): void {
+  if (!error) return;
+  if (isBackendUnavailableError(error)) {
+    throw new BackendUnavailableError(getBackendErrorMessage(error));
+  }
+  throw error;
+}
+
+/**
+ * Konvertiert ein ServerResult ({ data, error, unavailable }) in entweder
+ * geworfenen Fehler oder die enthaltenen Daten. Damit funktionieren die
+ * automatischen Retries der `useQuery`-Aufrufe von `createServerFn`-Resultaten.
+ *
+ * Verwendung:
+ *   const result = await getLeads({ headers: ... });
+ *   return unwrapServerResult(result); // wirft bei unavailable, sonst data
+ */
+export function unwrapServerResult<T>(result: {
+  data: T;
+  error: string | null;
+  unavailable: boolean;
+}): T {
+  if (result.unavailable) {
+    throw new BackendUnavailableError(result.error ?? undefined);
+  }
+  if (result.error) {
+    throw new Error(result.error);
+  }
+  return result.data;
+}
