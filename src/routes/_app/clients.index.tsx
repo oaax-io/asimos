@@ -259,9 +259,9 @@ function ClientsPage() {
         <span className="ml-auto text-sm text-muted-foreground">{filtered.length} von {clients.length}</span>
       </div>
 
-      {queryUnavailable || (clientsQuery.error && isBackendUnavailableError(clientsQuery.error)) ? (
-        <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-          {queryErrorMessage ?? "Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden neu laden oder erneut speichern."}
+      {showError ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          {queryErrorMessage}
         </div>
       ) : null}
 
