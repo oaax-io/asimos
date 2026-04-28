@@ -23,6 +23,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppClientsRouteImport } from './routes/_app/clients'
 import { Route as AppAppointmentsRouteImport } from './routes/_app/appointments'
 import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties.index'
+import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
 import { Route as AppClientsIdRouteImport } from './routes/_app/clients.$id'
 import { Route as AppPropertiesIdExposeRouteImport } from './routes/_app/properties.$id.expose'
@@ -96,6 +97,11 @@ const AppPropertiesIndexRoute = AppPropertiesIndexRouteImport.update({
   path: '/properties/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppClientsIndexRoute = AppClientsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppClientsRoute,
+} as any)
 const AppPropertiesIdRoute = AppPropertiesIdRouteImport.update({
   id: '/properties/$id',
   path: '/properties/$id',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/clients/': typeof AppClientsIndexRoute
   '/properties/': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
 }
@@ -136,7 +143,6 @@ export interface FileRoutesByTo {
   '/oaax': typeof OaaxRoute
   '/set-password': typeof SetPasswordRoute
   '/appointments': typeof AppAppointmentsRoute
-  '/clients': typeof AppClientsRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/leads': typeof AppLeadsRoute
   '/matching': typeof AppMatchingRoute
@@ -145,6 +151,7 @@ export interface FileRoutesByTo {
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/clients': typeof AppClientsIndexRoute
   '/properties': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
 }
@@ -165,6 +172,7 @@ export interface FileRoutesById {
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/properties/': typeof AppPropertiesIndexRoute
   '/_app/properties/$id/expose': typeof AppPropertiesIdExposeRoute
 }
@@ -185,6 +193,7 @@ export interface FileRouteTypes {
     | '/finanzierung/$token'
     | '/clients/$id'
     | '/properties/$id'
+    | '/clients/'
     | '/properties/'
     | '/properties/$id/expose'
   fileRoutesByTo: FileRoutesByTo
@@ -194,7 +203,6 @@ export interface FileRouteTypes {
     | '/oaax'
     | '/set-password'
     | '/appointments'
-    | '/clients'
     | '/dashboard'
     | '/leads'
     | '/matching'
@@ -203,6 +211,7 @@ export interface FileRouteTypes {
     | '/finanzierung/$token'
     | '/clients/$id'
     | '/properties/$id'
+    | '/clients'
     | '/properties'
     | '/properties/$id/expose'
   id:
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/finanzierung/$token'
     | '/_app/clients/$id'
     | '/_app/properties/$id'
+    | '/_app/clients/'
     | '/_app/properties/'
     | '/_app/properties/$id/expose'
   fileRoutesById: FileRoutesById
@@ -335,6 +345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPropertiesIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/clients/': {
+      id: '/_app/clients/'
+      path: '/'
+      fullPath: '/clients/'
+      preLoaderRoute: typeof AppClientsIndexRouteImport
+      parentRoute: typeof AppClientsRoute
+    }
     '/_app/properties/$id': {
       id: '/_app/properties/$id'
       path: '/properties/$id'
@@ -361,10 +378,12 @@ declare module '@tanstack/react-router' {
 
 interface AppClientsRouteChildren {
   AppClientsIdRoute: typeof AppClientsIdRoute
+  AppClientsIndexRoute: typeof AppClientsIndexRoute
 }
 
 const AppClientsRouteChildren: AppClientsRouteChildren = {
   AppClientsIdRoute: AppClientsIdRoute,
+  AppClientsIndexRoute: AppClientsIndexRoute,
 }
 
 const AppClientsRouteWithChildren = AppClientsRoute._addFileChildren(
