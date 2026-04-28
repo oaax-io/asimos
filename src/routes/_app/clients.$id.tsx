@@ -246,7 +246,20 @@ function ClientDetail() {
             <FileSignature className="mr-1.5 h-4 w-4" />Finanzierung
             {dossier && <Badge variant="secondary" className="ml-2">{dossier.completion_percent}%</Badge>}
           </TabsTrigger>
+          <TabsTrigger value="tasks"><CheckSquare className="mr-1.5 h-4 w-4" />Aufgaben</TabsTrigger>
+          <TabsTrigger value="documents"><FileText className="mr-1.5 h-4 w-4" />Dokumente</TabsTrigger>
+          <TabsTrigger value="activity"><Activity className="mr-1.5 h-4 w-4" />Notizen/Aktivität</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="tasks" className="mt-6">
+          <ClientTasksTab clientId={id} userId={user!.id} />
+        </TabsContent>
+        <TabsContent value="documents" className="mt-6">
+          <ClientDocumentsTab clientId={id} userId={user!.id} />
+        </TabsContent>
+        <TabsContent value="activity" className="mt-6">
+          <ClientActivityTab clientId={id} userId={user!.id} notes={client.notes} />
+        </TabsContent>
 
         {/* Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
