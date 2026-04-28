@@ -21,17 +21,25 @@ import { addClient, getClients } from "@/server/crm.functions";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
-const TYPES = ["buyer","seller","tenant","landlord"] as const;
+const TYPES = ["buyer","seller","tenant","landlord","investor","other"] as const;
 const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
+const FINANCING_OPTIONS = ["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"];
+const ALL = "__all__";
+const UNASSIGNED = "__unassigned__";
+const NO_FIN = "__none__";
 
 function ClientsPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>(ALL);
+  const [assignedFilter, setAssignedFilter] = useState<string>(ALL);
+  const [financingFilter, setFinancingFilter] = useState<string>(ALL);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     full_name: "", email: "", phone: "", client_type: "buyer" as typeof TYPES[number],
     notes: "", budget_min: "", budget_max: "", rooms_min: "", area_min: "",
     preferred_cities: "", preferred_types: [] as string[], preferred_listing: "sale" as "sale" | "rent",
+    assigned_to: "", financing_status: "",
   });
 
   const clientsQuery = useQuery({
