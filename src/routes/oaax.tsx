@@ -11,7 +11,7 @@ import { OaaxLayout } from "@/components/oaax/OaaxLayout";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/format";
 
-export const Route = createFileRoute("/superadmin")({
+export const Route = createFileRoute("/oaax")({
   component: SuperadminPage,
 });
 
