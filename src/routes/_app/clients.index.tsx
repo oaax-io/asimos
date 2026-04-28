@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { clientTypeLabels, formatCurrency, propertyTypeLabels } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 import { addClient, getClients } from "@/server/crm.functions";
+import { ClientWizard } from "@/components/clients/ClientWizard";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
@@ -143,85 +144,13 @@ function ClientsPage() {
         title="Kunden"
         description="Alle Käufer, Verkäufer, Mieter und Vermieter"
         action={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Neuer Kunde</Button></DialogTrigger>
-            <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-              <DialogHeader><DialogTitle>Neuer Kunde</DialogTitle></DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Name</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
-                  <div><Label>Typ</Label>
-                    <Select value={form.client_type} onValueChange={(v: any) => setForm({ ...form, client_type: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{TYPES.map(t => <SelectItem key={t} value={t}>{clientTypeLabels[t]}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-                  <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-                  <div>
-                    <Label>Zugewiesen an</Label>
-                    <Select value={form.assigned_to || UNASSIGNED} onValueChange={(v) => setForm({ ...form, assigned_to: v === UNASSIGNED ? "" : v })}>
-                      <SelectTrigger><SelectValue placeholder="Niemand" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={UNASSIGNED}>Niemand</SelectItem>
-                        {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Finanzierungsstatus</Label>
-                    <Select value={form.financing_status || NO_FIN} onValueChange={(v) => setForm({ ...form, financing_status: v === NO_FIN ? "" : v })}>
-                      <SelectTrigger><SelectValue placeholder="Keine Angabe" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={NO_FIN}>Keine Angabe</SelectItem>
-                        {FINANCING_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border bg-muted/30 p-4">
-                  <p className="mb-3 text-sm font-semibold">Suchprofil</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><Label>Vermarktung</Label>
-                      <Select value={form.preferred_listing} onValueChange={(v: any) => setForm({ ...form, preferred_listing: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent><SelectItem value="sale">Kauf</SelectItem><SelectItem value="rent">Miete</SelectItem></SelectContent>
-                      </Select>
-                    </div>
-                    <div><Label>Städte (Komma-getrennt)</Label><Input placeholder="Berlin, Potsdam" value={form.preferred_cities} onChange={(e) => setForm({ ...form, preferred_cities: e.target.value })} /></div>
-                    <div><Label>Budget min (€)</Label><Input type="number" value={form.budget_min} onChange={(e) => setForm({ ...form, budget_min: e.target.value })} /></div>
-                    <div><Label>Budget max (€)</Label><Input type="number" value={form.budget_max} onChange={(e) => setForm({ ...form, budget_max: e.target.value })} /></div>
-                    <div><Label>Zimmer min</Label><Input type="number" value={form.rooms_min} onChange={(e) => setForm({ ...form, rooms_min: e.target.value })} /></div>
-                    <div><Label>Fläche min (m²)</Label><Input type="number" value={form.area_min} onChange={(e) => setForm({ ...form, area_min: e.target.value })} /></div>
-                  </div>
-                  <div className="mt-3">
-                    <Label>Bevorzugte Objekttypen</Label>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {PROP_TYPES.map(t => {
-                        const sel = form.preferred_types.includes(t);
-                        return (
-                          <button type="button" key={t} onClick={() => setForm({
-                            ...form,
-                            preferred_types: sel ? form.preferred_types.filter(x => x !== t) : [...form.preferred_types, t],
-                          })} className={`rounded-full border px-3 py-1 text-xs transition ${sel ? "border-primary bg-primary text-primary-foreground" : "bg-background"}`}>
-                            {propertyTypeLabels[t]}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                <div><Label>Notizen</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-              </div>
-              <DialogFooter>
-                <Button onClick={() => create.mutate()} disabled={!form.full_name || create.isPending}>Speichern</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" />Neuer Kunde
+          </Button>
         }
       />
+
+      <ClientWizard open={open} onOpenChange={setOpen} />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] max-w-xs flex-1">
