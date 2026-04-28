@@ -37,7 +37,7 @@ function NavList({ onClick }: { onClick?: () => void }) {
             onClick={onClick}
             className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
               active
-                ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-soft"
+                ? "bg-primary/15 text-primary shadow-soft"
                 : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
             }`}
           >
