@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { z } from "zod";
 import logo from "@/assets/logo-asimo.png";
+import bgNight from "@/assets/login-bg-night.jpg";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -46,7 +47,10 @@ function AuthPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-black p-6">
+    <div
+      className="relative flex min-h-screen items-center justify-center bg-black p-6 bg-cover bg-center"
+      style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.85)), url(${bgNight})` }}
+    >
       <div className="w-full max-w-md rounded-3xl border border-primary/40 bg-primary p-8 text-primary-foreground shadow-2xl">
         <div className="mb-8 flex justify-center">
           <img src={logo} alt="ASIMO" className="h-16 w-auto" />
