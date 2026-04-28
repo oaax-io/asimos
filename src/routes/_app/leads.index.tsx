@@ -363,9 +363,9 @@ function LeadsPage() {
         </TabsContent>
       </Tabs>
 
-      {queryUnavailable || (leadsQuery.error && isBackendUnavailableError(leadsQuery.error)) ? (
-        <div className="mt-4 rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-          {queryErrorMessage ?? "Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden erneut versuchen."}
+      {showError ? (
+        <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          {queryErrorMessage}
         </div>
       ) : null}
     </>
