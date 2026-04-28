@@ -285,6 +285,7 @@ function ClientDetail() {
 
         {/* Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
+          {benchmark ? <BenchmarkCard benchmark={benchmark} /> : <BenchmarkPlaceholder />}
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardContent className="p-6">
