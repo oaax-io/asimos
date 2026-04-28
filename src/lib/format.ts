@@ -37,6 +37,8 @@ export const clientTypeLabels = {
 
 export const propertyStatusLabels = {
   draft: "Entwurf",
+  preparation: "Vorbereitung",
+  active: "Aktiv",
   available: "Verfügbar",
   reserved: "Reserviert",
   sold: "Verkauft",
