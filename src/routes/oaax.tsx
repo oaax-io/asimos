@@ -22,7 +22,7 @@ type RoleRow = { id: string; user_id: string; role: string; created_at: string }
 type Tab = "overview" | "agencies" | "users" | "roles";
 
 function SuperadminPage() {
-  const { isSuperadmin, loading, user } = useAuth();
+  const { isSuperadmin, loading, user, superadminStatus, refreshSuperadmin } = useAuth();
   const navigate = useNavigate();
   const { hash } = useLocation();
   const tabFromHash = ((hash || "").replace(/^#/, "") || "overview") as Tab;
@@ -31,15 +31,25 @@ function SuperadminPage() {
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth", search: { mode: "signin" } });
-    else if (!loading && user && !isSuperadmin) navigate({ to: "/dashboard" });
-  }, [user, isSuperadmin, loading, navigate]);
+    else if (!loading && user && superadminStatus === "denied" && !isSuperadmin) navigate({ to: "/dashboard" });
+  }, [user, isSuperadmin, superadminStatus, loading, navigate]);
 
-  if (loading || !isSuperadmin) {
+  useEffect(() => {
+    if (user && superadminStatus === "unknown") {
+      void refreshSuperadmin();
+    }
+  }, [user, superadminStatus, refreshSuperadmin]);
+
+  if (loading || !user || superadminStatus === "unknown") {
     return (
       <div className="fluent-scope flex h-screen items-center justify-center" style={{ background: "#F3F3F5" }}>
         <div className="h-8 w-8 animate-spin rounded-full border-2" style={{ borderColor: "#3B387D", borderTopColor: "transparent" }} />
       </div>
     );
+  }
+
+  if (!isSuperadmin) {
+    return null;
   }
 
   const breadcrumb = [{ label: tab === "overview" ? "Dashboard" : tab === "agencies" ? "Agenturen" : tab === "users" ? "Nutzer" : "Rollen" }];
