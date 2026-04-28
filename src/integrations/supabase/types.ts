@@ -454,6 +454,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_stats: {
+        Args: never
+        Returns: {
+          agencies_count: number
+          appointments_count: number
+          clients_count: number
+          leads_count: number
+          properties_count: number
+          users_count: number
+        }[]
+      }
+      admin_set_user_role: {
+        Args: {
+          _grant: boolean
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
       current_agency_id: { Args: never; Returns: string }
       has_role: {
         Args: {
