@@ -37,6 +37,15 @@ function unwrap<T>(res: { data: T | null; error: any; count?: number | null }) {
   return { data: res.data, count: res.count ?? 0, unavailable: false };
 }
 
+// Einzelne KPI-Query: liefert null bei Fehler, damit eine kaputte Sub-Query
+// nicht alle 6 KPIs blockiert. Transiente Backend-Fehler werden trotzdem
+// vom QueryClient via Throw-and-Retry abgefangen (siehe useQuery unten).
+function settledCount(res: PromiseSettledResult<{ count: number | null; error: any }>): number | null {
+  if (res.status === "rejected") return null;
+  if (res.value.error) return null;
+  return res.value.count ?? 0;
+}
+
 // ---------- KPI ----------
 function KpiCard({ icon: Icon, label, value, hint, accent, loading, to }: {
   icon: any; label: string; value: number | string; hint?: string;
@@ -70,7 +79,9 @@ function Dashboard() {
   const kpis = useQuery({
     queryKey: ["dashboard", "kpis"],
     queryFn: async () => {
-      const [newLeads, clients, activeProps, openTasks, todayAppts, activeRes] = await Promise.all([
+      // allSettled: jede KPI lädt unabhängig. Wenn z.B. "matches" 503 wirft,
+      // sehen wir trotzdem Leads/Kunden/Immobilien.
+      const results = await Promise.allSettled([
         supabase.from("leads").select("id", { count: "exact", head: true }).gte("created_at", sevenDaysAgo()),
         supabase.from("clients").select("id", { count: "exact", head: true }),
         supabase.from("properties").select("id", { count: "exact", head: true }).in("status", ["available", "active", "preparation"]),
@@ -80,14 +91,15 @@ function Dashboard() {
         supabase.from("reservations").select("id", { count: "exact", head: true })
           .in("status", ["draft", "sent", "signed"]),
       ]);
-      return {
-        newLeads: unwrap(newLeads).count,
-        clients: unwrap(clients).count,
-        activeProps: unwrap(activeProps).count,
-        openTasks: unwrap(openTasks).count,
-        todayAppts: unwrap(todayAppts).count,
-        activeRes: unwrap(activeRes).count,
-      };
+      const [newLeads, clients, activeProps, openTasks, todayAppts, activeRes] = results.map(settledCount);
+
+      // Wenn ALLE failed -> werfen, damit Retry greift. Sonst partielles Ergebnis.
+      if (results.every((r) => r.status === "rejected" || (r as any).value?.error)) {
+        const firstError = (results.find((r) => r.status === "rejected") as any)?.reason
+          ?? (results.find((r) => r.status === "fulfilled" && (r as any).value?.error) as any)?.value?.error;
+        throw firstError ?? new Error("Backend aktuell nicht erreichbar");
+      }
+      return { newLeads, clients, activeProps, openTasks, todayAppts, activeRes };
     },
   });
 
@@ -205,12 +217,12 @@ function Dashboard() {
 
       {/* KPI cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <KpiCard icon={UserPlus} label="Neue Leads" value={kpis.data?.newLeads ?? 0} hint="Letzte 7 Tage" loading={kpis.isLoading} to="/leads" />
-        <KpiCard icon={Users} label="Aktive Kunden" value={kpis.data?.clients ?? 0} loading={kpis.isLoading} to="/clients" />
-        <KpiCard icon={Building2} label="Aktive Immobilien" value={kpis.data?.activeProps ?? 0} loading={kpis.isLoading} to="/properties" />
-        <KpiCard icon={CheckSquare} label="Offene Aufgaben" value={kpis.data?.openTasks ?? 0} loading={kpis.isLoading} to="/tasks" />
-        <KpiCard icon={CalendarDays} label="Termine heute" value={kpis.data?.todayAppts ?? 0} loading={kpis.isLoading} to="/appointments" />
-        <KpiCard icon={FileSignature} label="Reservationen" value={kpis.data?.activeRes ?? 0} hint="Aktiv" loading={kpis.isLoading} to="/reservations" />
+        <KpiCard icon={UserPlus} label="Neue Leads" value={kpis.data?.newLeads ?? "—"} hint="Letzte 7 Tage" loading={kpis.isLoading} to="/leads" />
+        <KpiCard icon={Users} label="Aktive Kunden" value={kpis.data?.clients ?? "—"} loading={kpis.isLoading} to="/clients" />
+        <KpiCard icon={Building2} label="Aktive Immobilien" value={kpis.data?.activeProps ?? "—"} loading={kpis.isLoading} to="/properties" />
+        <KpiCard icon={CheckSquare} label="Offene Aufgaben" value={kpis.data?.openTasks ?? "—"} loading={kpis.isLoading} to="/tasks" />
+        <KpiCard icon={CalendarDays} label="Termine heute" value={kpis.data?.todayAppts ?? "—"} loading={kpis.isLoading} to="/appointments" />
+        <KpiCard icon={FileSignature} label="Reservationen" value={kpis.data?.activeRes ?? "—"} hint="Aktiv" loading={kpis.isLoading} to="/reservations" />
       </div>
 
       {/* Today panel */}

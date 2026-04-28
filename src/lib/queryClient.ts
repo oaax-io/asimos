@@ -5,17 +5,25 @@ export function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 30_000,
+        // Daten 60s als frisch behandeln und 5min im Cache halten – damit
+        // Navigation zwischen Seiten ohne erneute Requests funktioniert,
+        // selbst wenn das Backend kurz wackelt.
+        staleTime: 60_000,
+        gcTime: 5 * 60_000,
         refetchOnWindowFocus: false,
+        refetchOnReconnect: true,
+        // Letzte erfolgreiche Daten weiter anzeigen, während im Hintergrund
+        // refetched wird – kein "leeres Dashboard" während eines Aussetzers.
+        placeholderData: (prev: unknown) => prev,
         // Backend-Unavailable (503, Recovery, Schema-Cache) sind transient:
-        // mehrfach mit exponentiellem Backoff retryen, bevor wir den User mit
-        // einer Fehlermeldung belasten. Andere Fehler nur einmal.
+        // bis zu 8x mit exponentiellem Backoff retryen, gedeckelt bei 10s.
+        // Andere Fehler nur einmal.
         retry: (failureCount, error) => {
-          if (isBackendUnavailableError(error)) return failureCount < 5;
+          if (isBackendUnavailableError(error)) return failureCount < 8;
           return failureCount < 1;
         },
         retryDelay: (attemptIndex) =>
-          Math.min(1000 * 2 ** attemptIndex, 8000),
+          Math.min(1000 * 2 ** attemptIndex, 10_000),
       },
       mutations: {
         retry: false,
