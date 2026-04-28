@@ -47,10 +47,27 @@ function AuthPage() {
   };
 
   return (
-    <div
-      className="relative flex min-h-screen items-center justify-center bg-black p-6 bg-cover bg-center"
-      style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.85)), url(${bgNight})` }}
-    >
+    <div className="relative flex min-h-screen items-center justify-center bg-black p-6 overflow-hidden">
+      {/* Base dark night image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${bgNight})`, filter: "brightness(0.55)" }}
+        aria-hidden
+      />
+      {/* Glowing windows layer (same image, screen-blended, pulsing) */}
+      <div
+        className="absolute inset-0 bg-cover bg-center mix-blend-screen animate-window-glow pointer-events-none"
+        style={{ backgroundImage: `url(${bgNight})` }}
+        aria-hidden
+      />
+      {/* Subtle flicker layer for life */}
+      <div
+        className="absolute inset-0 bg-cover bg-center mix-blend-screen animate-window-flicker pointer-events-none"
+        style={{ backgroundImage: `url(${bgNight})`, filter: "brightness(1.3) saturate(1.3)" }}
+        aria-hidden
+      />
+      {/* Darken vignette so the form stays readable */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80 pointer-events-none" aria-hidden />
       <div className="w-full max-w-md rounded-3xl border border-primary/40 bg-primary p-8 text-primary-foreground shadow-2xl">
         <div className="mb-8 flex justify-center">
           <img src={logo} alt="ASIMO" className="h-16 w-auto" />
