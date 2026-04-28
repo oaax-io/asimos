@@ -1,11 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 import { getBackendErrorMessage, isBackendUnavailableError } from "@/lib/backend-errors";
 
 type ServerResult<T> = {
   data: T;
+  error: string | null;
+  unavailable: boolean;
+};
+
+type UserScopeResult = {
+  agencyId: string | null;
+  isSuperadmin: boolean;
   error: string | null;
   unavailable: boolean;
 };
@@ -33,31 +41,54 @@ const clientInputSchema = z.object({
   preferred_listing: z.enum(["sale", "rent"]).nullable(),
 });
 
-async function getAgencyIdForUser(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("agency_id")
-    .eq("id", userId)
-    .single();
+function toServerError<T>(fallbackData: T, error: unknown): ServerResult<T> {
+  console.error("CRM server function error", error);
 
-  if (error) {
+  return {
+    data: fallbackData,
+    error: getBackendErrorMessage(error),
+    unavailable: isBackendUnavailableError(error),
+  };
+}
+
+async function getUserScope(userId: string): Promise<UserScopeResult> {
+  const [{ data: profile, error: profileError }, { data: superadminRole, error: roleError }] = await Promise.all([
+    supabaseAdmin.from("profiles").select("agency_id").eq("id", userId).maybeSingle(),
+    supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).eq("role", "superadmin").maybeSingle(),
+  ]);
+
+  if (profileError) {
+    const error = toServerError<null>(null, profileError);
     return {
       agencyId: null,
-      error: getBackendErrorMessage(error),
-      unavailable: isBackendUnavailableError(error),
+      isSuperadmin: false,
+      error: error.error,
+      unavailable: error.unavailable,
     };
   }
 
-  if (!data?.agency_id) {
+  if (roleError) {
+    const error = toServerError<null>(null, roleError);
+    return {
+      agencyId: profile?.agency_id ?? null,
+      isSuperadmin: false,
+      error: error.error,
+      unavailable: error.unavailable,
+    };
+  }
+
+  if (!profile?.agency_id) {
     return {
       agencyId: null,
+      isSuperadmin: false,
       error: "Profil nicht gefunden",
       unavailable: false,
     };
   }
 
   return {
-    agencyId: data.agency_id as string,
+    agencyId: profile.agency_id,
+    isSuperadmin: Boolean(superadminRole),
     error: null,
     unavailable: false,
   };
@@ -66,17 +97,24 @@ async function getAgencyIdForUser(supabase: any, userId: string) {
 export const getLeads = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<ServerResult<Database["public"]["Tables"]["leads"]["Row"][]>> => {
-    const { data, error } = await context.supabase
-      .from("leads")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
+    const scope = await getUserScope(context.userId);
+    if (!scope.agencyId) {
       return {
         data: [],
-        error: getBackendErrorMessage(error),
-        unavailable: isBackendUnavailableError(error),
+        error: scope.error,
+        unavailable: scope.unavailable,
       };
+    }
+
+    let query = supabaseAdmin.from("leads").select("*").order("created_at", { ascending: false });
+    if (!scope.isSuperadmin) {
+      query = query.eq("agency_id", scope.agencyId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      return toServerError([], error);
     }
 
     return {
@@ -90,17 +128,17 @@ export const addLead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => leadInputSchema.parse(data))
   .handler(async ({ data, context }): Promise<ServerResult<Database["public"]["Tables"]["leads"]["Row"] | null>> => {
-    const agency = await getAgencyIdForUser(context.supabase, context.userId);
-    if (!agency.agencyId) {
+    const scope = await getUserScope(context.userId);
+    if (!scope.agencyId) {
       return {
         data: null,
-        error: agency.error,
-        unavailable: agency.unavailable,
+        error: scope.error,
+        unavailable: scope.unavailable,
       };
     }
 
     const payload: Database["public"]["Tables"]["leads"]["Insert"] = {
-      agency_id: agency.agencyId,
+      agency_id: scope.agencyId,
       owner_id: context.userId,
       full_name: data.full_name,
       email: data.email,
@@ -108,18 +146,15 @@ export const addLead = createServerFn({ method: "POST" })
       source: data.source,
       notes: data.notes,
     };
-    const { data: createdLead, error } = await context.supabase
+
+    const { data: createdLead, error } = await supabaseAdmin
       .from("leads")
       .insert(payload)
       .select("*")
       .single();
 
     if (error) {
-      return {
-        data: null,
-        error: getBackendErrorMessage(error),
-        unavailable: isBackendUnavailableError(error),
-      };
+      return toServerError(null, error);
     }
 
     return {
@@ -132,17 +167,24 @@ export const addLead = createServerFn({ method: "POST" })
 export const getClients = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<ServerResult<Database["public"]["Tables"]["clients"]["Row"][]>> => {
-    const { data, error } = await context.supabase
-      .from("clients")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
+    const scope = await getUserScope(context.userId);
+    if (!scope.agencyId) {
       return {
         data: [],
-        error: getBackendErrorMessage(error),
-        unavailable: isBackendUnavailableError(error),
+        error: scope.error,
+        unavailable: scope.unavailable,
       };
+    }
+
+    let query = supabaseAdmin.from("clients").select("*").order("created_at", { ascending: false });
+    if (!scope.isSuperadmin) {
+      query = query.eq("agency_id", scope.agencyId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      return toServerError([], error);
     }
 
     return {
@@ -156,17 +198,17 @@ export const addClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => clientInputSchema.parse(data))
   .handler(async ({ data, context }): Promise<ServerResult<Database["public"]["Tables"]["clients"]["Row"] | null>> => {
-    const agency = await getAgencyIdForUser(context.supabase, context.userId);
-    if (!agency.agencyId) {
+    const scope = await getUserScope(context.userId);
+    if (!scope.agencyId) {
       return {
         data: null,
-        error: agency.error,
-        unavailable: agency.unavailable,
+        error: scope.error,
+        unavailable: scope.unavailable,
       };
     }
 
     const payload: Database["public"]["Tables"]["clients"]["Insert"] = {
-      agency_id: agency.agencyId,
+      agency_id: scope.agencyId,
       owner_id: context.userId,
       full_name: data.full_name,
       email: data.email,
@@ -181,18 +223,15 @@ export const addClient = createServerFn({ method: "POST" })
       preferred_types: data.preferred_types,
       preferred_listing: data.preferred_listing,
     };
-    const { data: createdClient, error } = await context.supabase
+
+    const { data: createdClient, error } = await supabaseAdmin
       .from("clients")
       .insert(payload)
       .select("*")
       .single();
 
     if (error) {
-      return {
-        data: null,
-        error: getBackendErrorMessage(error),
-        unavailable: isBackendUnavailableError(error),
-      };
+      return toServerError(null, error);
     }
 
     return {
