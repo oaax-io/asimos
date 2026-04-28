@@ -31,10 +31,9 @@ const endOfToday = () => { const d = new Date(); d.setHours(23,59,59,999); retur
 const sevenDaysAgo = () => { const d = new Date(); d.setDate(d.getDate()-7); return d.toISOString(); };
 
 function unwrap<T>(res: { data: T | null; error: any; count?: number | null }) {
-  if (res.error) {
-    if (isBackendUnavailableError(res.error)) return { data: null, count: 0, unavailable: true };
-    throw res.error;
-  }
+  // Immer werfen – inkl. Backend-Unavailable. Der QueryClient retryed
+  // transiente Backend-Fehler automatisch mit Backoff.
+  if (res.error) throw res.error;
   return { data: res.data, count: res.count ?? 0, unavailable: false };
 }
 
