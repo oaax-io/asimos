@@ -5,6 +5,7 @@ const BACKEND_UNAVAILABLE_PATTERNS = [
   "no connection to the server",
   "the database system is not accepting connections",
   "the database system is in recovery mode",
+  "backend aktuell nicht erreichbar",
   "pgrst000",
   "pgrst001",
   "pgrst002",
