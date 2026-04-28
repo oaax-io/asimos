@@ -683,16 +683,45 @@ export type Database = {
         | "admin"
       appointment_status: "scheduled" | "completed" | "cancelled"
       appointment_type: "viewing" | "meeting" | "call" | "other"
-      client_type: "buyer" | "seller" | "tenant" | "landlord"
+      client_type:
+        | "buyer"
+        | "seller"
+        | "tenant"
+        | "landlord"
+        | "investor"
+        | "other"
+      document_type:
+        | "client_document"
+        | "property_document"
+        | "contract"
+        | "mandate"
+        | "reservation"
+        | "financing"
+        | "media"
+        | "other"
       financing_status: "draft" | "submitted" | "reviewed"
-      lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
+      lead_status:
+        | "new"
+        | "contacted"
+        | "qualified"
+        | "converted"
+        | "lost"
+        | "viewing_planned"
       listing_type: "sale" | "rent"
+      mandate_status:
+        | "draft"
+        | "sent"
+        | "signed"
+        | "active"
+        | "expired"
+        | "cancelled"
       match_status:
         | "suggested"
         | "contacted"
         | "interested"
         | "rejected"
         | "converted"
+        | "shortlisted"
       property_status:
         | "draft"
         | "available"
@@ -700,7 +729,25 @@ export type Database = {
         | "sold"
         | "rented"
         | "archived"
-      property_type: "apartment" | "house" | "commercial" | "land" | "other"
+        | "preparation"
+        | "active"
+      property_type:
+        | "apartment"
+        | "house"
+        | "commercial"
+        | "land"
+        | "other"
+        | "parking"
+        | "mixed_use"
+      reservation_status:
+        | "draft"
+        | "sent"
+        | "signed"
+        | "cancelled"
+        | "converted"
+      task_priority: "low" | "normal" | "high" | "urgent"
+      task_status: "open" | "in_progress" | "waiting" | "done" | "cancelled"
+      user_role: "owner" | "admin" | "agent" | "assistant" | "backoffice"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -839,16 +886,49 @@ export const Constants = {
       ],
       appointment_status: ["scheduled", "completed", "cancelled"],
       appointment_type: ["viewing", "meeting", "call", "other"],
-      client_type: ["buyer", "seller", "tenant", "landlord"],
+      client_type: [
+        "buyer",
+        "seller",
+        "tenant",
+        "landlord",
+        "investor",
+        "other",
+      ],
+      document_type: [
+        "client_document",
+        "property_document",
+        "contract",
+        "mandate",
+        "reservation",
+        "financing",
+        "media",
+        "other",
+      ],
       financing_status: ["draft", "submitted", "reviewed"],
-      lead_status: ["new", "contacted", "qualified", "converted", "lost"],
+      lead_status: [
+        "new",
+        "contacted",
+        "qualified",
+        "converted",
+        "lost",
+        "viewing_planned",
+      ],
       listing_type: ["sale", "rent"],
+      mandate_status: [
+        "draft",
+        "sent",
+        "signed",
+        "active",
+        "expired",
+        "cancelled",
+      ],
       match_status: [
         "suggested",
         "contacted",
         "interested",
         "rejected",
         "converted",
+        "shortlisted",
       ],
       property_status: [
         "draft",
@@ -857,8 +937,22 @@ export const Constants = {
         "sold",
         "rented",
         "archived",
+        "preparation",
+        "active",
       ],
-      property_type: ["apartment", "house", "commercial", "land", "other"],
+      property_type: [
+        "apartment",
+        "house",
+        "commercial",
+        "land",
+        "other",
+        "parking",
+        "mixed_use",
+      ],
+      reservation_status: ["draft", "sent", "signed", "cancelled", "converted"],
+      task_priority: ["low", "normal", "high", "urgent"],
+      task_status: ["open", "in_progress", "waiting", "done", "cancelled"],
+      user_role: ["owner", "admin", "agent", "assistant", "backoffice"],
     },
   },
 } as const
