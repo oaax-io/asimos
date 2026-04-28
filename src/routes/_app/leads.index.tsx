@@ -148,9 +148,7 @@ function LeadsPage() {
 
   const convert = useMutation({
     mutationFn: async (lead: Lead) => {
-      const { data: profile } = await supabase.from("profiles").select("agency_id").eq("id", user!.id).single();
       const { data: created, error } = await supabase.from("clients").insert({
-        agency_id: profile!.agency_id,
         owner_id: user!.id,
         assigned_to: lead.assigned_to,
         full_name: lead.full_name,

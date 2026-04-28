@@ -68,11 +68,9 @@ function AppointmentsPage() {
     mutationFn: async () => {
       if (!form.title.trim()) throw new Error("Titel ist erforderlich");
       if (!form.starts_at) throw new Error("Startzeit ist erforderlich");
-      const { data: profile } = await supabase.from("profiles").select("agency_id").eq("id", user!.id).single();
       const startIso = new Date(form.starts_at).toISOString();
       const endIso = form.ends_at ? new Date(form.ends_at).toISOString() : new Date(new Date(form.starts_at).getTime() + 60 * 60 * 1000).toISOString();
       const { error } = await supabase.from("appointments").insert({
-        agency_id: profile!.agency_id,
         owner_id: user!.id,
         title: form.title.trim(),
         appointment_type: form.appointment_type as any,

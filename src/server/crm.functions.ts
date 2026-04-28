@@ -11,12 +11,7 @@ type ServerResult<T> = {
   unavailable: boolean;
 };
 
-type UserScopeResult = {
-  agencyId: string | null;
-  isSuperadmin: boolean;
-  error: string | null;
-  unavailable: boolean;
-};
+// Single-company mode: no agency scoping. Authenticated users access all CRM data.
 
 const leadInputSchema = z.object({
   full_name: z.string().min(1),
@@ -51,94 +46,23 @@ function toServerError<T>(fallbackData: T, error: unknown): ServerResult<T> {
   };
 }
 
-async function getUserScope(userId: string): Promise<UserScopeResult> {
-  const [{ data: profile, error: profileError }, { data: superadminRole, error: roleError }] = await Promise.all([
-    supabaseAdmin.from("profiles").select("agency_id").eq("id", userId).maybeSingle(),
-    supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).eq("role", "superadmin").maybeSingle(),
-  ]);
-
-  if (profileError) {
-    const error = toServerError<null>(null, profileError);
-    return {
-      agencyId: null,
-      isSuperadmin: false,
-      error: error.error,
-      unavailable: error.unavailable,
-    };
-  }
-
-  if (roleError) {
-    const error = toServerError<null>(null, roleError);
-    return {
-      agencyId: profile?.agency_id ?? null,
-      isSuperadmin: false,
-      error: error.error,
-      unavailable: error.unavailable,
-    };
-  }
-
-  if (!profile?.agency_id) {
-    return {
-      agencyId: null,
-      isSuperadmin: false,
-      error: "Profil nicht gefunden",
-      unavailable: false,
-    };
-  }
-
-  return {
-    agencyId: profile.agency_id,
-    isSuperadmin: Boolean(superadminRole),
-    error: null,
-    unavailable: false,
-  };
-}
-
 export const getLeads = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<ServerResult<Database["public"]["Tables"]["leads"]["Row"][]>> => {
-    const scope = await getUserScope(context.userId);
-    if (!scope.agencyId) {
-      return {
-        data: [],
-        error: scope.error,
-        unavailable: scope.unavailable,
-      };
-    }
+  .handler(async (): Promise<ServerResult<Database["public"]["Tables"]["leads"]["Row"][]>> => {
+    const { data, error } = await supabaseAdmin
+      .from("leads")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-    let query = supabaseAdmin.from("leads").select("*").order("created_at", { ascending: false });
-    if (!scope.isSuperadmin) {
-      query = query.eq("agency_id", scope.agencyId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      return toServerError([], error);
-    }
-
-    return {
-      data: data ?? [],
-      error: null,
-      unavailable: false,
-    };
+    if (error) return toServerError([], error);
+    return { data: data ?? [], error: null, unavailable: false };
   });
 
 export const addLead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => leadInputSchema.parse(data))
   .handler(async ({ data, context }): Promise<ServerResult<Database["public"]["Tables"]["leads"]["Row"] | null>> => {
-    const scope = await getUserScope(context.userId);
-    if (!scope.agencyId) {
-      return {
-        data: null,
-        error: scope.error,
-        unavailable: scope.unavailable,
-      };
-    }
-
     const payload: Database["public"]["Tables"]["leads"]["Insert"] = {
-      agency_id: scope.agencyId,
       owner_id: context.userId,
       full_name: data.full_name,
       email: data.email,
@@ -153,62 +77,27 @@ export const addLead = createServerFn({ method: "POST" })
       .select("*")
       .single();
 
-    if (error) {
-      return toServerError(null, error);
-    }
-
-    return {
-      data: createdLead,
-      error: null,
-      unavailable: false,
-    };
+    if (error) return toServerError(null, error);
+    return { data: createdLead, error: null, unavailable: false };
   });
 
 export const getClients = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<ServerResult<Database["public"]["Tables"]["clients"]["Row"][]>> => {
-    const scope = await getUserScope(context.userId);
-    if (!scope.agencyId) {
-      return {
-        data: [],
-        error: scope.error,
-        unavailable: scope.unavailable,
-      };
-    }
+  .handler(async (): Promise<ServerResult<Database["public"]["Tables"]["clients"]["Row"][]>> => {
+    const { data, error } = await supabaseAdmin
+      .from("clients")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-    let query = supabaseAdmin.from("clients").select("*").order("created_at", { ascending: false });
-    if (!scope.isSuperadmin) {
-      query = query.eq("agency_id", scope.agencyId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      return toServerError([], error);
-    }
-
-    return {
-      data: data ?? [],
-      error: null,
-      unavailable: false,
-    };
+    if (error) return toServerError([], error);
+    return { data: data ?? [], error: null, unavailable: false };
   });
 
 export const addClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => clientInputSchema.parse(data))
   .handler(async ({ data, context }): Promise<ServerResult<Database["public"]["Tables"]["clients"]["Row"] | null>> => {
-    const scope = await getUserScope(context.userId);
-    if (!scope.agencyId) {
-      return {
-        data: null,
-        error: scope.error,
-        unavailable: scope.unavailable,
-      };
-    }
-
     const payload: Database["public"]["Tables"]["clients"]["Insert"] = {
-      agency_id: scope.agencyId,
       owner_id: context.userId,
       full_name: data.full_name,
       email: data.email,
@@ -230,13 +119,6 @@ export const addClient = createServerFn({ method: "POST" })
       .select("*")
       .single();
 
-    if (error) {
-      return toServerError(null, error);
-    }
-
-    return {
-      data: createdClient,
-      error: null,
-      unavailable: false,
-    };
+    if (error) return toServerError(null, error);
+    return { data: createdClient, error: null, unavailable: false };
   });

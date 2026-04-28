@@ -141,10 +141,7 @@ export function MatchPanel(props: PanelProps) {
 
   const upsert = useMutation({
     mutationFn: async (input: { otherId: string; score: number; reasons: string[]; status: MatchStatus }) => {
-      const { data: profile } = await supabase
-        .from("profiles").select("agency_id").eq("id", user!.id).single();
       const payload = {
-        agency_id: profile!.agency_id,
         client_id: isClientView ? props.client!.id : input.otherId,
         property_id: isClientView ? input.otherId : props.property!.id,
         score: input.score,
