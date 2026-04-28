@@ -1,12 +1,34 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   createClientForUser,
   createLeadForUser,
   listClientsForUser,
   listLeadsForUser,
 } from "./crm.server";
+
+const authTokenSchema = z.object({ accessToken: z.string().min(1) });
+
+async function getUserIdFromAccessToken(accessToken: string) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+
+  if (!supabaseUrl || !publishableKey) {
+    throw new Error("Authentifizierung ist derzeit nicht verfügbar.");
+  }
+
+  const authClient = createClient(supabaseUrl, publishableKey, {
+    auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
+  });
+
+  const { data, error } = await authClient.auth.getUser(accessToken);
+  if (error || !data.user) {
+    throw new Error("Nicht angemeldet");
+  }
+
+  return data.user.id;
+}
 
 const leadInputSchema = z.object({
   full_name: z.string().min(1),
@@ -31,28 +53,28 @@ const clientInputSchema = z.object({
   preferred_listing: z.string().nullable(),
 });
 
-export const getLeads = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    return listLeadsForUser(context.userId);
+export const getLeads = createServerFn({ method: "POST" })
+  .inputValidator((data) => authTokenSchema.parse(data))
+  .handler(async ({ data }) => {
+    return listLeadsForUser(await getUserIdFromAccessToken(data.accessToken));
   });
 
 export const addLead = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data) => leadInputSchema.parse(data))
-  .handler(async ({ context, data }) => {
-    return createLeadForUser(context.userId, data);
+  .inputValidator((data) => authTokenSchema.merge(leadInputSchema).parse(data))
+  .handler(async ({ data }) => {
+    const { accessToken, ...payload } = data;
+    return createLeadForUser(await getUserIdFromAccessToken(accessToken), payload);
   });
 
-export const getClients = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    return listClientsForUser(context.userId);
+export const getClients = createServerFn({ method: "POST" })
+  .inputValidator((data) => authTokenSchema.parse(data))
+  .handler(async ({ data }) => {
+    return listClientsForUser(await getUserIdFromAccessToken(data.accessToken));
   });
 
 export const addClient = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data) => clientInputSchema.parse(data))
-  .handler(async ({ context, data }) => {
-    return createClientForUser(context.userId, data);
+  .inputValidator((data) => authTokenSchema.merge(clientInputSchema).parse(data))
+  .handler(async ({ data }) => {
+    const { accessToken, ...payload } = data;
+    return createClientForUser(await getUserIdFromAccessToken(accessToken), payload);
   });
