@@ -53,11 +53,12 @@ function PropertiesPage() {
   const create = useMutation({
     mutationFn: async (form: Partial<PropertyFormValues>) => {
       const { data: profile } = await supabase.from("profiles").select("agency_id").eq("id", user!.id).single();
-      const { error } = await supabase.from("properties").insert({
+      const payload: any = {
+        ...form,
         agency_id: profile!.agency_id,
         owner_id: user!.id,
-        ...form,
-      });
+      };
+      const { error } = await supabase.from("properties").insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
