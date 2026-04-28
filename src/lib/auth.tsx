@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const userRef = useRef<User | null>(null);
   const roleCheckIdRef = useRef(0);
   const superadminStatusRef = useRef<SuperadminStatus>("unknown");
+  const bootstrappedRef = useRef(false);
 
   const updateSuperadminStatus = useCallback((status: SuperadminStatus, granted = false) => {
     superadminStatusRef.current = status;
@@ -97,11 +98,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!active) return;
       applySession(nextSession);
-      setLoading(false);
+      if (bootstrappedRef.current) {
+        setLoading(false);
+      }
     });
 
     void supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
+      bootstrappedRef.current = true;
       applySession(data.session);
       setLoading(false);
     });
