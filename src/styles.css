@@ -163,4 +163,25 @@
     background-clip: text;
     color: transparent;
   }
+
+  @keyframes window-glow {
+    0%, 100% { opacity: 0.35; filter: brightness(1) saturate(1); }
+    50%      { opacity: 0.85; filter: brightness(1.6) saturate(1.4); }
+  }
+  .animate-window-glow {
+    animation: window-glow 4.5s ease-in-out infinite;
+  }
+
+  @keyframes window-flicker {
+    0%, 100% { opacity: 0.5; }
+    42%      { opacity: 0.55; }
+    45%      { opacity: 0.3; }
+    47%      { opacity: 0.6; }
+    70%      { opacity: 0.5; }
+    72%      { opacity: 0.35; }
+    74%      { opacity: 0.55; }
+  }
+  .animate-window-flicker {
+    animation: window-flicker 7s ease-in-out infinite;
+  }
 }
