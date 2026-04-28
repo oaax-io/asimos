@@ -35,13 +35,15 @@ function ClientDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { data: client, isLoading } = useQuery({
+  const { data: client, isLoading, error: clientError, refetch } = useQuery({
     queryKey: ["client", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("*").eq("id", id).single();
+      const { data, error } = await supabase.from("clients").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error("Kunde nicht gefunden");
       return data;
     },
+    retry: 2,
   });
 
   const { data: dossier } = useQuery({
