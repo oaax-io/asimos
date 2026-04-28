@@ -267,6 +267,280 @@ export type Database = {
         }
         Relationships: []
       }
+      client_children: {
+        Row: {
+          birth_date: string | null
+          client_id: string
+          created_at: string
+          full_name: string | null
+          gender: string | null
+          id: string
+          is_shared_child: boolean
+          sort_order: number
+        }
+        Insert: {
+          birth_date?: string | null
+          client_id: string
+          created_at?: string
+          full_name?: string | null
+          gender?: string | null
+          id?: string
+          is_shared_child?: boolean
+          sort_order?: number
+        }
+        Update: {
+          birth_date?: string | null
+          client_id?: string
+          created_at?: string
+          full_name?: string | null
+          gender?: string | null
+          id?: string
+          is_shared_child?: boolean
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_children_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_relationships: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          related_client_id: string
+          relationship_type: Database["public"]["Enums"]["client_relationship_type"]
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          related_client_id: string
+          relationship_type?: Database["public"]["Enums"]["client_relationship_type"]
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          related_client_id?: string
+          relationship_type?: Database["public"]["Enums"]["client_relationship_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_relationships_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_relationships_related_client_id_fkey"
+            columns: ["related_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_self_disclosures: {
+        Row: {
+          additional_income: number | null
+          advisor_id: string | null
+          alimony_expense: number | null
+          annual_net_salary: number | null
+          benchmark_status: string | null
+          birth_country: string | null
+          birth_date: string | null
+          birth_name: string | null
+          birth_place: string | null
+          city: string | null
+          client_id: string
+          country: string | null
+          created_at: string
+          credit_expense: number | null
+          disclosure_date: string | null
+          disclosure_place: string | null
+          email: string | null
+          employed_as: string | null
+          employed_since: string | null
+          employer_address: string | null
+          employer_name: string | null
+          employer_phone: string | null
+          employment_status: string | null
+          first_name: string | null
+          health_insurance_expense: number | null
+          id: string
+          income_job_two: number | null
+          income_rental: number | null
+          internal_notes: string | null
+          last_name: string | null
+          leasing_expense: number | null
+          life_insurance_expense: number | null
+          living_costs_expense: number | null
+          marital_status: string | null
+          miscellaneous_expense: number | null
+          mobile: string | null
+          mortgage_expense: number | null
+          nationality: string | null
+          phone: string | null
+          postal_code: string | null
+          property_insurance_expense: number | null
+          rent_expense: number | null
+          reserve_ratio: number | null
+          reserve_total: number | null
+          resident_since: string | null
+          salary_net_monthly: number | null
+          salary_type: string | null
+          salutation: string | null
+          street: string | null
+          street_number: string | null
+          tax_id_ch: string | null
+          taxes_expense: number | null
+          telecom_expense: number | null
+          title: string | null
+          total_expenses_monthly: number | null
+          total_income_monthly: number | null
+          updated_at: string
+          utilities_expense: number | null
+        }
+        Insert: {
+          additional_income?: number | null
+          advisor_id?: string | null
+          alimony_expense?: number | null
+          annual_net_salary?: number | null
+          benchmark_status?: string | null
+          birth_country?: string | null
+          birth_date?: string | null
+          birth_name?: string | null
+          birth_place?: string | null
+          city?: string | null
+          client_id: string
+          country?: string | null
+          created_at?: string
+          credit_expense?: number | null
+          disclosure_date?: string | null
+          disclosure_place?: string | null
+          email?: string | null
+          employed_as?: string | null
+          employed_since?: string | null
+          employer_address?: string | null
+          employer_name?: string | null
+          employer_phone?: string | null
+          employment_status?: string | null
+          first_name?: string | null
+          health_insurance_expense?: number | null
+          id?: string
+          income_job_two?: number | null
+          income_rental?: number | null
+          internal_notes?: string | null
+          last_name?: string | null
+          leasing_expense?: number | null
+          life_insurance_expense?: number | null
+          living_costs_expense?: number | null
+          marital_status?: string | null
+          miscellaneous_expense?: number | null
+          mobile?: string | null
+          mortgage_expense?: number | null
+          nationality?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          property_insurance_expense?: number | null
+          rent_expense?: number | null
+          reserve_ratio?: number | null
+          reserve_total?: number | null
+          resident_since?: string | null
+          salary_net_monthly?: number | null
+          salary_type?: string | null
+          salutation?: string | null
+          street?: string | null
+          street_number?: string | null
+          tax_id_ch?: string | null
+          taxes_expense?: number | null
+          telecom_expense?: number | null
+          title?: string | null
+          total_expenses_monthly?: number | null
+          total_income_monthly?: number | null
+          updated_at?: string
+          utilities_expense?: number | null
+        }
+        Update: {
+          additional_income?: number | null
+          advisor_id?: string | null
+          alimony_expense?: number | null
+          annual_net_salary?: number | null
+          benchmark_status?: string | null
+          birth_country?: string | null
+          birth_date?: string | null
+          birth_name?: string | null
+          birth_place?: string | null
+          city?: string | null
+          client_id?: string
+          country?: string | null
+          created_at?: string
+          credit_expense?: number | null
+          disclosure_date?: string | null
+          disclosure_place?: string | null
+          email?: string | null
+          employed_as?: string | null
+          employed_since?: string | null
+          employer_address?: string | null
+          employer_name?: string | null
+          employer_phone?: string | null
+          employment_status?: string | null
+          first_name?: string | null
+          health_insurance_expense?: number | null
+          id?: string
+          income_job_two?: number | null
+          income_rental?: number | null
+          internal_notes?: string | null
+          last_name?: string | null
+          leasing_expense?: number | null
+          life_insurance_expense?: number | null
+          living_costs_expense?: number | null
+          marital_status?: string | null
+          miscellaneous_expense?: number | null
+          mobile?: string | null
+          mortgage_expense?: number | null
+          nationality?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          property_insurance_expense?: number | null
+          rent_expense?: number | null
+          reserve_ratio?: number | null
+          reserve_total?: number | null
+          resident_since?: string | null
+          salary_net_monthly?: number | null
+          salary_type?: string | null
+          salutation?: string | null
+          street?: string | null
+          street_number?: string | null
+          tax_id_ch?: string | null
+          taxes_expense?: number | null
+          telecom_expense?: number | null
+          title?: string | null
+          total_expenses_monthly?: number | null
+          total_income_monthly?: number | null
+          updated_at?: string
+          utilities_expense?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_self_disclosures_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -1391,6 +1665,11 @@ export type Database = {
         | "admin"
       appointment_status: "scheduled" | "completed" | "cancelled"
       appointment_type: "viewing" | "meeting" | "call" | "other"
+      client_relationship_type:
+        | "spouse"
+        | "co_applicant"
+        | "co_investor"
+        | "other"
       client_type:
         | "buyer"
         | "seller"
@@ -1594,6 +1873,12 @@ export const Constants = {
       ],
       appointment_status: ["scheduled", "completed", "cancelled"],
       appointment_type: ["viewing", "meeting", "call", "other"],
+      client_relationship_type: [
+        "spouse",
+        "co_applicant",
+        "co_investor",
+        "other",
+      ],
       client_type: [
         "buyer",
         "seller",
