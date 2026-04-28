@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import logoAsimo from "@/assets/logo-asimo-real-estate.png";
 
 const baseNav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -51,11 +52,8 @@ function NavList({ onClick }: { onClick?: () => void }) {
 
 function SidebarBrand() {
   return (
-    <Link to="/dashboard" className="flex items-center gap-2 px-5 py-5">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-brand text-primary-foreground shadow-glow">
-        <Building2 className="h-5 w-5" />
-      </div>
-      <span className="font-display text-lg font-bold">Estatly</span>
+    <Link to="/dashboard" className="flex items-center justify-center px-5 py-6">
+      <img src={logoAsimo} alt="ASIMO Real Estate" className="h-10 w-auto" />
     </Link>
   );
 }
