@@ -13,14 +13,15 @@ interface OaaxLayoutProps {
   breadcrumb?: { label: string; href?: string }[];
 }
 
-const NAV = [
+type NavItem = { label: string; icon: typeof LayoutDashboard; to: "/superadmin" | "/settings"; hash?: string };
+const NAV: { section: string; items: NavItem[] }[] = [
   {
     section: "Übersicht",
     items: [
-      { label: "Dashboard",    icon: LayoutDashboard, to: "/superadmin",        end: true },
-      { label: "Agenturen",    icon: Building2,        to: "/superadmin/agencies" },
-      { label: "Nutzer",       icon: Users,            to: "/superadmin/users" },
-      { label: "Rollen",       icon: ShieldCheck,      to: "/superadmin/roles" },
+      { label: "Dashboard", icon: LayoutDashboard, to: "/superadmin", hash: "overview" },
+      { label: "Agenturen", icon: Building2,        to: "/superadmin", hash: "agencies" },
+      { label: "Nutzer",    icon: Users,            to: "/superadmin", hash: "users" },
+      { label: "Rollen",    icon: ShieldCheck,      to: "/superadmin", hash: "roles" },
     ],
   },
   {
