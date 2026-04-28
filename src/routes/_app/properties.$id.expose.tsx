@@ -29,14 +29,9 @@ function ExposePage() {
 
       <div className="mx-auto max-w-3xl rounded-2xl border bg-card p-10 shadow-soft print:border-0 print:shadow-none">
         <header className="mb-8 flex items-center justify-between border-b pb-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-brand text-primary-foreground">
-              <Building2 className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-display font-bold">Estatly</p>
-              <p className="text-xs text-muted-foreground">Immobilienexposé</p>
-            </div>
+          <div>
+            <p className="font-display font-bold">ASIMO Real Estate</p>
+            <p className="text-xs text-muted-foreground">Immobilienexposé</p>
           </div>
           <p className="text-xs text-muted-foreground">{new Date().toLocaleDateString("de-DE")}</p>
         </header>
@@ -82,7 +77,7 @@ function ExposePage() {
         ) : null}
 
         <footer className="mt-10 border-t pt-6 text-center text-xs text-muted-foreground">
-          Erstellt mit Estatly · Alle Angaben ohne Gewähr.
+          Erstellt mit ASIMO Real Estate · Alle Angaben ohne Gewähr.
         </footer>
       </div>
     </div>

@@ -69,7 +69,7 @@ function SuperadminPage() {
           <span className="fl-label-mono">Plattform · Multi-Tenant</span>
         </div>
         <p style={{ fontSize: 13, color: "#50505C", margin: "4px 0 0" }}>
-          Verwalte alle Agenturen, Nutzer und Rollen der Estatly-Plattform.
+          Verwalte alle Agenturen, Nutzer und Rollen der ASIMO-Plattform.
         </p>
       </div>
 
