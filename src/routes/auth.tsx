@@ -27,10 +27,14 @@ const signupSchema = signinSchema.extend({
 function AuthPage() {
   const { mode } = Route.useSearch();
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user, isSuperadmin, superadminStatus } = useAuth();
   const isSignup = mode === "signup";
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", fullName: "", agencyName: "" });
+
+  if (user && !loading) {
+    navigate({ to: isSuperadmin && superadminStatus === "granted" ? "/oaax" : "/dashboard" });
+  }
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,13 +46,11 @@ function AuthPage() {
         const { error } = await signUp(form.email, form.password, form.fullName, form.agencyName);
         if (error) { toast.error(error); return; }
         toast.success("Konto erstellt! Du wirst angemeldet…");
-        navigate({ to: "/dashboard" });
       } else {
         const r = signinSchema.safeParse({ email: form.email, password: form.password });
         if (!r.success) { toast.error(r.error.issues[0].message); return; }
         const { error } = await signIn(form.email, form.password);
         if (error) { toast.error(error); return; }
-        navigate({ to: "/dashboard" });
       }
     } finally { setLoading(false); }
   };
