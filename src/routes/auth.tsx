@@ -60,7 +60,7 @@ function AuthPage() {
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="du@beispiel.de"
+              placeholder="mail@asimo.ch"
               className="mt-1 border-white bg-white text-foreground placeholder:text-muted-foreground focus-visible:ring-white"
             />
           </div>
