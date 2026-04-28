@@ -138,45 +138,104 @@ function LeadsPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {leadStatuses.map((status) => {
-          const items = leads.filter((l) => l.status === status);
-          return (
-            <div key={status} className="flex flex-col rounded-2xl bg-muted/40 p-3">
-              <div className="mb-3 flex items-center justify-between px-1">
-                <h3 className="text-sm font-semibold">{leadStatusLabels[status]}</h3>
-                <span className="rounded-full bg-background px-2 py-0.5 text-xs text-muted-foreground">{items.length}</span>
-              </div>
-              <div className="flex flex-col gap-2">
-                {items.map((l) => (
-                  <div key={l.id} className="rounded-xl border bg-card p-3 shadow-soft transition hover:shadow-glow">
-                    <p className="font-medium">{l.full_name}</p>
-                    <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
-                      {l.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{l.email}</span>}
-                      {l.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{l.phone}</span>}
-                      {l.source && <span>· {l.source}</span>}
-                    </div>
-                    <div className="mt-3 flex items-center gap-2">
+      <Tabs defaultValue="kanban" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="kanban"><LayoutGrid className="mr-1 h-4 w-4" />Kanban</TabsTrigger>
+          <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="kanban">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {leadStatuses.map((status) => {
+              const items = leads.filter((l) => l.status === status);
+              return (
+                <div key={status} className="flex flex-col rounded-2xl bg-muted/40 p-3">
+                  <div className="mb-3 flex items-center justify-between px-1">
+                    <h3 className="text-sm font-semibold">{leadStatusLabels[status]}</h3>
+                    <span className="rounded-full bg-background px-2 py-0.5 text-xs text-muted-foreground">{items.length}</span>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {items.map((l) => (
+                      <div key={l.id} className="rounded-xl border bg-card p-3 shadow-soft transition hover:shadow-glow">
+                        <p className="font-medium">{l.full_name}</p>
+                        <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
+                          {l.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{l.email}</span>}
+                          {l.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{l.phone}</span>}
+                          {l.source && <span>· {l.source}</span>}
+                        </div>
+                        <div className="mt-3 flex items-center gap-2">
+                          <Select value={l.status} onValueChange={(v) => updateStatus.mutate({ id: l.id, status: v as LeadStatus })}>
+                            <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {leadStatuses.map((s) => <SelectItem key={s} value={s}>{leadStatusLabels[s]}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          {l.status !== "converted" && (
+                            <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => convert.mutate(l)} title="Zu Kunde konvertieren">
+                              <ArrowRight className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {items.length === 0 && <p className="px-1 py-3 text-xs text-muted-foreground">Keine Leads</p>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="list">
+          <div className="rounded-xl border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>E-Mail</TableHead>
+                  <TableHead>Telefon</TableHead>
+                  <TableHead>Quelle</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leads.map((l) => (
+                  <TableRow key={l.id}>
+                    <TableCell className="font-medium">{l.full_name}</TableCell>
+                    <TableCell className="text-muted-foreground">{l.email ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{l.phone ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{l.source ?? "—"}</TableCell>
+                    <TableCell>
                       <Select value={l.status} onValueChange={(v) => updateStatus.mutate({ id: l.id, status: v as LeadStatus })}>
-                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-8 w-[150px] text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {leadStatuses.map((s) => <SelectItem key={s} value={s}>{leadStatusLabels[s]}</SelectItem>)}
                         </SelectContent>
                       </Select>
+                    </TableCell>
+                    <TableCell className="text-right">
                       {l.status !== "converted" && (
-                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => convert.mutate(l)} title="Zu Kunde konvertieren">
-                          <ArrowRight className="h-3 w-3" />
+                        <Button size="sm" variant="outline" className="h-8" onClick={() => convert.mutate(l)}>
+                          <ArrowRight className="mr-1 h-3 w-3" />Zu Kunde
                         </Button>
                       )}
-                    </div>
-                  </div>
+                    </TableCell>
+                  </TableRow>
                 ))}
-                {items.length === 0 && <p className="px-1 py-3 text-xs text-muted-foreground">Keine Leads</p>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                {leads.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
+                      Keine Leads vorhanden
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+      </Tabs>
+
       {queryUnavailable || (leadsQuery.error && isBackendUnavailableError(leadsQuery.error)) ? (
         <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
           {queryErrorMessage ?? "Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden erneut versuchen."}
