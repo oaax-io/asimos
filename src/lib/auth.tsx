@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { isBackendUnavailableError } from "@/lib/backend-errors";
 
 type SuperadminStatus = "unknown" | "granted" | "denied";
 
@@ -44,9 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const requestId = ++roleCheckIdRef.current;
-    updateSuperadminStatus("unknown", false);
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (superadminStatusRef.current === "unknown") {
+      updateSuperadminStatus("unknown", false);
+    }
+
+    for (let attempt = 0; attempt < 1; attempt += 1) {
       const { data, error } = await supabase.rpc("is_superadmin");
 
       if (requestId !== roleCheckIdRef.current || userRef.current?.id !== currentUser.id) {
@@ -56,6 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!error) {
         const granted = !!data;
         updateSuperadminStatus(granted ? "granted" : "denied", granted);
+        return;
+      }
+
+      if (isBackendUnavailableError(error)) {
+        updateSuperadminStatus("denied", false);
         return;
       }
 
