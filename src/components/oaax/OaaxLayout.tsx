@@ -373,7 +373,8 @@ function OaaxTopbar({ breadcrumb }: { breadcrumb?: { label: string; href?: strin
 }
 
 export function OaaxLayout({ children, breadcrumb }: OaaxLayoutProps) {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
+  const activeHash = (hash || "overview").replace(/^#/, "") || "overview";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem("oaax_sidebar_collapsed") === "true"; } catch { return false; }
@@ -387,7 +388,7 @@ export function OaaxLayout({ children, breadcrumb }: OaaxLayoutProps) {
     <div className="fluent-scope flex h-screen overflow-hidden" style={{ background: "#F3F3F5" }}>
       {/* Desktop sidebar */}
       <div className="hidden lg:flex h-full shrink-0">
-        <OaaxSidebar collapsed={collapsed} setCollapsed={setCollapsed} activeTab={pathname} />
+        <OaaxSidebar collapsed={collapsed} setCollapsed={setCollapsed} activeTab={pathname} activeHash={activeHash} />
       </div>
 
       {/* Mobile sidebar */}
@@ -395,7 +396,7 @@ export function OaaxLayout({ children, breadcrumb }: OaaxLayoutProps) {
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="relative z-10 h-full w-[228px]">
-            <OaaxSidebar collapsed={false} setCollapsed={() => setMobileOpen(false)} activeTab={pathname} />
+            <OaaxSidebar collapsed={false} setCollapsed={() => setMobileOpen(false)} activeTab={pathname} activeHash={activeHash} />
           </div>
         </div>
       )}
