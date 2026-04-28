@@ -53,7 +53,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          agency_id: string
+          agency_id?: string
           appointment_type?: Database["public"]["Enums"]["appointment_type"]
           client_id?: string | null
           created_at?: string
@@ -130,7 +130,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          agency_id: string
+          agency_id?: string
           area_max?: number | null
           area_min?: number | null
           budget_max?: number | null
@@ -183,6 +183,30 @@ export type Database = {
           },
         ]
       }
+      company: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       financing_dossiers: {
         Row: {
           agency_id: string
@@ -205,7 +229,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          agency_id: string
+          agency_id?: string
           client_id: string
           completion_percent?: number
           created_at?: string
@@ -258,7 +282,7 @@ export type Database = {
           used_at: string | null
         }
         Insert: {
-          agency_id: string
+          agency_id?: string
           created_at?: string
           created_by?: string | null
           dossier_id: string
@@ -302,7 +326,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          agency_id: string
+          agency_id?: string
           created_at?: string
           email?: string | null
           full_name: string
@@ -349,7 +373,7 @@ export type Database = {
           status: Database["public"]["Enums"]["match_status"]
         }
         Insert: {
-          agency_id: string
+          agency_id?: string
           client_id: string
           created_at?: string
           id?: string
@@ -391,6 +415,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      module_permissions: {
+        Row: {
+          can_create: boolean
+          can_delete: boolean
+          can_edit_all: boolean
+          can_edit_own: boolean
+          can_view: boolean
+          id: string
+          module: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_edit_all?: boolean
+          can_edit_own?: boolean
+          can_view?: boolean
+          id?: string
+          module: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          can_create?: boolean
+          can_delete?: boolean
+          can_edit_all?: boolean
+          can_edit_own?: boolean
+          can_view?: boolean
+          id?: string
+          module?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -465,7 +525,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          agency_id: string
+          agency_id?: string
           area?: number | null
           bathrooms?: number | null
           city?: string | null
@@ -607,7 +667,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
+      is_manager_or_above: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
+      user_can: { Args: { _action: string; _module: string }; Returns: boolean }
     }
     Enums: {
       app_role:
