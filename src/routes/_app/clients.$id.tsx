@@ -523,7 +523,7 @@ function EditClientDialog({ client, onSaved }: { client: any; onSaved: () => voi
         rooms_min: form.rooms_min ? Number(form.rooms_min) : null,
         area_min: form.area_min ? Number(form.area_min) : null,
         preferred_cities: form.preferred_cities ? form.preferred_cities.split(",").map((s: string) => s.trim()).filter(Boolean) : null,
-        preferred_types: form.preferred_types.length ? form.preferred_types : null,
+        preferred_types: form.preferred_types.length ? (form.preferred_types as Array<"apartment" | "house" | "commercial" | "land" | "other">) : null,
         preferred_listing: form.preferred_listing,
       }).eq("id", client.id);
       if (error) throw error;
