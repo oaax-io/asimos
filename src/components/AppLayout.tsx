@@ -23,7 +23,7 @@ function NavList({ onClick }: { onClick?: () => void }) {
   const { pathname } = useLocation();
   const { isSuperadmin } = useAuth();
   const items = isSuperadmin
-    ? [...baseNav, { to: "/superadmin", label: "Superadmin", icon: Shield } as const]
+    ? [...baseNav, { to: "/oaax", label: "OAAX Admin", icon: Shield } as const]
     : baseNav;
   return (
     <nav className="flex flex-col gap-1 p-3">
@@ -61,7 +61,7 @@ function SidebarBrand() {
 }
 
 export default function AppLayout({ children }: { children?: ReactNode }) {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, isSuperadmin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -116,6 +116,23 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Mein Konto</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {user.email && <div className="px-2 pb-1 text-xs text-muted-foreground truncate">{user.email}</div>}
+                {isSuperadmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                      Wechseln zu
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate({ to: "/oaax" })}>
+                      <Shield className="mr-2 h-4 w-4 text-primary" />
+                      <span className="flex-1">OAAX Admin Center</span>
+                      <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-primary">
+                        Admin
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}><Settings className="mr-2 h-4 w-4" />Einstellungen</DropdownMenuItem>
                 <DropdownMenuItem onClick={async () => { await signOut(); navigate({ to: "/" }); }}>
                   <LogOut className="mr-2 h-4 w-4" />Abmelden

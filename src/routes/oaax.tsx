@@ -11,7 +11,7 @@ import { OaaxLayout } from "@/components/oaax/OaaxLayout";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/format";
 
-export const Route = createFileRoute("/superadmin")({
+export const Route = createFileRoute("/oaax")({
   component: SuperadminPage,
 });
 
@@ -27,7 +27,7 @@ function SuperadminPage() {
   const { hash } = useLocation();
   const tabFromHash = ((hash || "").replace(/^#/, "") || "overview") as Tab;
   const tab: Tab = (["overview","agencies","users","roles"] as Tab[]).includes(tabFromHash) ? tabFromHash : "overview";
-  const setTab = (t: Tab) => navigate({ to: "/superadmin", hash: t });
+  const setTab = (t: Tab) => navigate({ to: "/oaax", hash: t });
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth", search: { mode: "signin" } });
