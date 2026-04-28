@@ -51,7 +51,7 @@ function PropertiesPage() {
   const cities = useMemo(() => Array.from(new Set(properties.map(p => p.city).filter(Boolean))) as string[], [properties]);
 
   const create = useMutation({
-    mutationFn: async (form: any) => {
+    mutationFn: async (form: Partial<PropertyFormValues>) => {
       const { data: profile } = await supabase.from("profiles").select("agency_id").eq("id", user!.id).single();
       const { error } = await supabase.from("properties").insert({
         agency_id: profile!.agency_id,
