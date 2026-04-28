@@ -19,7 +19,7 @@ import { clientTypeLabels, formatCurrency, propertyTypeLabels } from "@/lib/form
 import { EmptyState } from "@/components/EmptyState";
 import { addClient, getClients } from "@/server/crm.functions";
 
-export const Route = createFileRoute("/_app/clients")({ component: ClientsPage });
+export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
 const TYPES = ["buyer","seller","tenant","landlord"] as const;
 const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
