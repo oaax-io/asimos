@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FinanzierungTokenRouteImport } from './routes/finanzierung.$token'
+import { Route as AppTemplatesRouteImport } from './routes/_app/templates'
 import { Route as AppTeamRouteImport } from './routes/_app/team'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
@@ -65,6 +66,11 @@ const FinanzierungTokenRoute = FinanzierungTokenRouteImport.update({
   id: '/finanzierung/$token',
   path: '/finanzierung/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppTemplatesRoute = AppTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppTeamRoute = AppTeamRouteImport.update({
   id: '/team',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRoute
   '/tasks': typeof AppTasksRoute
   '/team': typeof AppTeamRoute
+  '/templates': typeof AppTemplatesRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/leads/$id': typeof AppLeadsIdRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/tasks': typeof AppTasksRoute
   '/team': typeof AppTeamRoute
+  '/templates': typeof AppTemplatesRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/leads/$id': typeof AppLeadsIdRoute
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tasks': typeof AppTasksRoute
   '/_app/team': typeof AppTeamRoute
+  '/_app/templates': typeof AppTemplatesRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
   '/_app/leads/$id': typeof AppLeadsIdRoute
@@ -277,6 +286,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/team'
+    | '/templates'
     | '/finanzierung/$token'
     | '/clients/$id'
     | '/leads/$id'
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tasks'
     | '/team'
+    | '/templates'
     | '/finanzierung/$token'
     | '/clients/$id'
     | '/leads/$id'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/tasks'
     | '/_app/team'
+    | '/_app/templates'
     | '/finanzierung/$token'
     | '/_app/clients/$id'
     | '/_app/leads/$id'
@@ -394,6 +406,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/finanzierung/$token'
       preLoaderRoute: typeof FinanzierungTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/templates': {
+      id: '/_app/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof AppTemplatesRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/team': {
       id: '/_app/team'
@@ -600,6 +619,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppTasksRoute: typeof AppTasksRoute
   AppTeamRoute: typeof AppTeamRoute
+  AppTemplatesRoute: typeof AppTemplatesRoute
   AppPropertiesIdRoute: typeof AppPropertiesIdRouteWithChildren
   AppPropertiesIndexRoute: typeof AppPropertiesIndexRoute
 }
@@ -619,6 +639,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppTasksRoute: AppTasksRoute,
   AppTeamRoute: AppTeamRoute,
+  AppTemplatesRoute: AppTemplatesRoute,
   AppPropertiesIdRoute: AppPropertiesIdRouteWithChildren,
   AppPropertiesIndexRoute: AppPropertiesIndexRoute,
 }
