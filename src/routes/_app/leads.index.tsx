@@ -66,18 +66,18 @@ function LeadsPage() {
     },
   });
 
-  const leads = leadsQuery.data?.data ?? [];
+  const leads = leadsQuery.data ?? [];
   const employees = employeesQuery.data ?? [];
   const employeeMap = useMemo(() => new Map(employees.map((e) => [e.id, e])), [employees]);
 
   const sources = useMemo(() => {
     const set = new Set<string>();
-    leads.forEach((l) => { if (l.source) set.add(l.source); });
+    leads.forEach((l: Lead) => { if (l.source) set.add(l.source); });
     return Array.from(set).sort();
   }, [leads]);
 
   const filtered = useMemo(() => {
-    return leads.filter((l) => {
+    return leads.filter((l: Lead) => {
       if (statusFilter !== ALL && l.status !== statusFilter) return false;
       if (sourceFilter !== ALL && l.source !== sourceFilter) return false;
       if (assignedFilter !== ALL) {
@@ -96,8 +96,10 @@ function LeadsPage() {
     });
   }, [leads, statusFilter, sourceFilter, assignedFilter, search]);
 
-  const queryUnavailable = leadsQuery.data?.unavailable ?? false;
-  const queryErrorMessage = leadsQuery.data?.error ?? null;
+  // Banner nur bei "echten" Fehlern – Backend-Unavailable wird automatisch retryed.
+  const queryError = leadsQuery.error;
+  const showError = queryError && !isBackendUnavailableError(queryError);
+  const queryErrorMessage = showError ? getBackendErrorMessage(queryError) : null;
 
   const create = useMutation({
     mutationFn: async () => {
