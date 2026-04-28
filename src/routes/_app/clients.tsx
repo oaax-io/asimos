@@ -155,25 +155,27 @@ function ClientsPage() {
             <Card key={c.id} className="transition hover:shadow-glow">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold">{c.full_name}</p>
+                  <Link to="/clients/$id" params={{ id: c.id }} className="flex-1">
+                    <p className="font-semibold hover:text-primary">{c.full_name}</p>
                     <Badge variant="secondary" className="mt-1">{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
-                  </div>
+                  </Link>
                   <Link to="/matching" search={{ clientId: c.id }} className="rounded-lg border p-2 text-primary transition hover:bg-accent" title="Matching">
                     <Target className="h-4 w-4" />
                   </Link>
                 </div>
-                <div className="mt-3 space-y-1 text-sm text-muted-foreground">
-                  {c.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{c.email}</p>}
-                  {c.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{c.phone}</p>}
-                </div>
-                {(c.budget_max || c.preferred_cities?.length) && (
-                  <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
-                    {c.budget_max && <p>Budget: bis {formatCurrency(Number(c.budget_max))}</p>}
-                    {c.preferred_cities?.length ? <p>Städte: {c.preferred_cities.join(", ")}</p> : null}
-                    {c.rooms_min ? <p>Zimmer ab: {c.rooms_min}</p> : null}
+                <Link to="/clients/$id" params={{ id: c.id }} className="block">
+                  <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                    {c.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{c.email}</p>}
+                    {c.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{c.phone}</p>}
                   </div>
-                )}
+                  {(c.budget_max || c.preferred_cities?.length) && (
+                    <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
+                      {c.budget_max && <p>Budget: bis {formatCurrency(Number(c.budget_max))}</p>}
+                      {c.preferred_cities?.length ? <p>Städte: {c.preferred_cities.join(", ")}</p> : null}
+                      {c.rooms_min ? <p>Zimmer ab: {c.rooms_min}</p> : null}
+                    </div>
+                  )}
+                </Link>
               </CardContent>
             </Card>
           ))}
