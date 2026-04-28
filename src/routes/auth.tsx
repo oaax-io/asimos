@@ -61,7 +61,7 @@ function AuthPage() {
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               placeholder="du@beispiel.de"
-              className="mt-1 border-white/30 bg-white/10 text-primary-foreground placeholder:text-primary-foreground/50 focus-visible:ring-white/50"
+              className="mt-1 border-white bg-white text-foreground placeholder:text-muted-foreground focus-visible:ring-white"
             />
           </div>
           <div>
@@ -72,7 +72,7 @@ function AuthPage() {
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               placeholder="••••••••"
-              className="mt-1 border-white/30 bg-white/10 text-primary-foreground placeholder:text-primary-foreground/50 focus-visible:ring-white/50"
+              className="mt-1 border-white bg-white text-foreground placeholder:text-muted-foreground focus-visible:ring-white"
             />
           </div>
 
