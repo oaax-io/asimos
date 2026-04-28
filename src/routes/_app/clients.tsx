@@ -17,6 +17,7 @@ import { getBackendErrorMessage, isBackendUnavailableError } from "@/lib/backend
 import { toast } from "sonner";
 import { clientTypeLabels, formatCurrency, propertyTypeLabels } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
+import { addClient, getClients } from "@/server/crm.functions";
 
 export const Route = createFileRoute("/_app/clients")({ component: ClientsPage });
 
@@ -25,7 +26,6 @@ const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
 
 function ClientsPage() {
   const qc = useQueryClient();
-  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -37,21 +37,21 @@ function ClientsPage() {
   const { data: clients = [], error, isLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Nicht angemeldet");
+      return await getClients({ data: { accessToken } });
     },
   });
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error("Nicht angemeldet");
       if (!form.full_name.trim()) throw new Error("Name ist erforderlich");
-      const { data: profile, error: pErr } = await supabase.from("profiles").select("agency_id").eq("id", user.id).single();
-      if (pErr || !profile) throw new Error(pErr?.message || "Profil nicht gefunden");
-      const { error } = await supabase.from("clients").insert({
-        agency_id: profile.agency_id,
-        owner_id: user.id,
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Nicht angemeldet");
+      return addClient({ data: {
+        accessToken,
         full_name: form.full_name,
         email: form.email || null,
         phone: form.phone || null,
@@ -62,10 +62,9 @@ function ClientsPage() {
         rooms_min: form.rooms_min ? Number(form.rooms_min) : null,
         area_min: form.area_min ? Number(form.area_min) : null,
         preferred_cities: form.preferred_cities ? form.preferred_cities.split(",").map(s => s.trim()).filter(Boolean) : null,
-        preferred_types: form.preferred_types.length ? (form.preferred_types as any) : null,
+        preferred_types: form.preferred_types.length ? form.preferred_types : null,
         preferred_listing: form.preferred_listing,
-      });
-      if (error) throw error;
+      } });
     },
     onSuccess: () => {
       toast.success("Kunde erstellt");
