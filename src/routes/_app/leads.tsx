@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,62 @@ import type { Tables } from "@/integrations/supabase/types";
 export const Route = createFileRoute("/_app/leads")({ component: LeadsPage });
 
 type Lead = Tables<"leads">;
+type PendingLead = Pick<Lead, "full_name" | "email" | "phone" | "source" | "notes"> & { tempId: string; created_at: string };
 
 function LeadsPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", source: "", notes: "" });
+  const [pendingLeads, setPendingLeads] = useState<PendingLead[]>([]);
+  const syncInFlightRef = useRef(false);
+
+  const pendingStorageKey = user ? `pending-leads:${user.id}` : null;
+
+  const persistPendingLeads = useCallback((items: PendingLead[]) => {
+    setPendingLeads(items);
+    if (!pendingStorageKey) return;
+    if (items.length === 0) {
+      localStorage.removeItem(pendingStorageKey);
+      return;
+    }
+    localStorage.setItem(pendingStorageKey, JSON.stringify(items));
+  }, [pendingStorageKey]);
+
+  const enqueuePendingLead = useCallback((values: typeof form) => {
+    const item: PendingLead = {
+      tempId: `pending-${crypto.randomUUID()}`,
+      created_at: new Date().toISOString(),
+      full_name: values.full_name.trim(),
+      email: values.email.trim() || null,
+      phone: values.phone.trim() || null,
+      source: values.source.trim() || null,
+      notes: values.notes.trim() || null,
+    };
+
+    persistPendingLeads([item, ...pendingLeads]);
+    return item;
+  }, [pendingLeads, persistPendingLeads]);
+
+  useEffect(() => {
+    if (!pendingStorageKey) {
+      setPendingLeads([]);
+      return;
+    }
+
+    const raw = localStorage.getItem(pendingStorageKey);
+    if (!raw) {
+      setPendingLeads([]);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as PendingLead[];
+      setPendingLeads(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setPendingLeads([]);
+    }
+  }, [pendingStorageKey]);
 
   const { data: leads = [], error, isLoading } = useQuery({
     queryKey: ["leads"],
@@ -34,9 +84,57 @@ function LeadsPage() {
       return data;
     },
     refetchOnReconnect: true,
-    refetchInterval: (query) => (isBackendUnavailableError(query.state.error) ? 5000 : false),
-    refetchIntervalInBackground: true,
   });
+
+  const syncPendingLeads = useCallback(async () => {
+    if (!user || pendingLeads.length === 0 || syncInFlightRef.current) return;
+
+    syncInFlightRef.current = true;
+
+    try {
+      const { data: profile, error: pErr } = await supabase.from("profiles").select("agency_id").eq("id", user.id).single();
+      if (pErr) throw pErr;
+
+      const payload = pendingLeads.map((lead) => ({
+        full_name: lead.full_name,
+        email: lead.email,
+        phone: lead.phone,
+        source: lead.source,
+        notes: lead.notes,
+        agency_id: profile.agency_id,
+        owner_id: user.id,
+      }));
+
+      const { error: insertError } = await supabase.from("leads").insert(payload);
+      if (insertError) throw insertError;
+
+      persistPendingLeads([]);
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      toast.success(`${payload.length} lokal gespeicherte Leads wurden synchronisiert`);
+    } catch (syncError) {
+      if (!isBackendUnavailableError(syncError)) {
+        toast.error(getBackendErrorMessage(syncError));
+      }
+    } finally {
+      syncInFlightRef.current = false;
+    }
+  }, [pendingLeads, persistPendingLeads, qc, user]);
+
+  useEffect(() => {
+    if (!error && pendingLeads.length > 0) {
+      void syncPendingLeads();
+    }
+  }, [error, pendingLeads.length, syncPendingLeads]);
+
+  useEffect(() => {
+    const onReconnect = () => void syncPendingLeads();
+    window.addEventListener("online", onReconnect);
+    window.addEventListener("focus", onReconnect);
+    return () => {
+      window.removeEventListener("online", onReconnect);
+      window.removeEventListener("focus", onReconnect);
+    };
+  }, [syncPendingLeads]);
 
   const create = useMutation({
     mutationFn: async () => {
@@ -60,7 +158,16 @@ function LeadsPage() {
       qc.invalidateQueries({ queryKey: ["leads"] });
       setForm({ full_name: "", email: "", phone: "", source: "", notes: "" });
     },
-    onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
+    onError: (e: unknown) => {
+      if (isBackendUnavailableError(e)) {
+        enqueuePendingLead(form);
+        setForm({ full_name: "", email: "", phone: "", source: "", notes: "" });
+        toast.success("Lead lokal gespeichert und wird automatisch synchronisiert, sobald das Backend wieder stabil ist");
+        return;
+      }
+
+      toast.error(getBackendErrorMessage(e));
+    },
   });
 
   const updateStatus = useMutation({
@@ -120,6 +227,12 @@ function LeadsPage() {
         }
       />
 
+      {pendingLeads.length > 0 ? (
+        <div className="mb-4 rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+          {pendingLeads.length} Lead{pendingLeads.length === 1 ? " ist" : "s sind"} lokal zwischengespeichert und werden automatisch synchronisiert.
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
         {leadStatuses.map((status) => {
           const items = leads.filter((l) => l.status === status);
@@ -161,7 +274,7 @@ function LeadsPage() {
       </div>
       {error && isBackendUnavailableError(error) ? (
         <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-          Backend aktuell nicht erreichbar. Verbindung wird automatisch erneut aufgebaut.
+          Backend aktuell nicht erreichbar. Neue Leads werden lokal zwischengespeichert und später automatisch übertragen.
         </div>
       ) : null}
 
