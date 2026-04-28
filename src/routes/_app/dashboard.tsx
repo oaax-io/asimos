@@ -7,6 +7,7 @@ import { Building2, Users, UserPlus, Calendar, ArrowRight, TrendingUp } from "lu
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDateTime, propertyTypeLabels, propertyStatusLabels } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { isBackendUnavailableError } from "@/lib/backend-errors";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -41,6 +42,19 @@ function Dashboard() {
         supabase.from("properties").select("id, status", { count: "exact" }),
         supabase.from("appointments").select("id, starts_at").gte("starts_at", new Date().toISOString()).order("starts_at").limit(5),
       ]);
+
+      const errors = [leads.error, clients.error, properties.error, appts.error].filter(Boolean);
+      if (errors.some((error) => isBackendUnavailableError(error))) {
+        return {
+          leads: 0,
+          clients: 0,
+          properties: 0,
+          available: 0,
+          upcoming: [],
+          unavailable: true,
+        };
+      }
+
       const available = (properties.data || []).filter(p => p.status === "available").length;
       return {
         leads: leads.count ?? 0,
@@ -48,6 +62,7 @@ function Dashboard() {
         properties: properties.count ?? 0,
         available,
         upcoming: appts.data ?? [],
+        unavailable: false,
       };
     },
   });
@@ -55,7 +70,10 @@ function Dashboard() {
   const recentProps = useQuery({
     queryKey: ["recent-properties"],
     queryFn: async () => {
-      const { data } = await supabase.from("properties").select("*").order("created_at", { ascending: false }).limit(4);
+      const { data, error } = await supabase.from("properties").select("*").order("created_at", { ascending: false }).limit(4);
+      if (error && isBackendUnavailableError(error)) {
+        return [];
+      }
       return data ?? [];
     },
   });
@@ -63,6 +81,12 @@ function Dashboard() {
   return (
     <>
       <PageHeader title="Dashboard" description="Überblick über deine Aktivitäten" />
+
+      {stats.data?.unavailable ? (
+        <div className="mb-4 rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+          Backend aktuell nicht erreichbar. Die Übersicht wird automatisch wieder geladen, sobald die Verbindung stabil ist.
+        </div>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={UserPlus} label="Leads" value={stats.data?.leads ?? "—"} hint="Gesamt" />
