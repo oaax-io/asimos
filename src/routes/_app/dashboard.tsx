@@ -152,7 +152,10 @@ function Dashboard() {
     },
   });
 
-  const anyError = kpis.error || today.error || pipeline.error || matches.error;
+  // Banner nur bei "echten" Fehlern – transiente Backend-Aussetzer werden
+  // vom QueryClient automatisch retryed und sollen den User nicht alarmieren.
+  const realError = (e: unknown) => e && !isBackendUnavailableError(e);
+  const anyError = realError(kpis.error) || realError(today.error) || realError(pipeline.error) || realError(matches.error);
 
   return (
     <>
