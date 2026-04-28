@@ -33,7 +33,7 @@ function AuthPage() {
   const [form, setForm] = useState({ email: "", password: "", fullName: "", agencyName: "" });
 
   useEffect(() => {
-    if (user && !loading) {
+    if (user && !loading && superadminStatus !== "unknown") {
       navigate({ to: isSuperadmin && superadminStatus === "granted" ? "/oaax" : "/dashboard" });
     }
   }, [user, loading, isSuperadmin, superadminStatus, navigate]);
