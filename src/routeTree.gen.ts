@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FinanzierungTokenRouteImport } from './routes/finanzierung.$token'
+import { Route as AppTeamRouteImport } from './routes/_app/team'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppMatchingRouteImport } from './routes/_app/matching'
 import { Route as AppLeadsRouteImport } from './routes/_app/leads'
@@ -48,6 +49,11 @@ const FinanzierungTokenRoute = FinanzierungTokenRouteImport.update({
   id: '/finanzierung/$token',
   path: '/finanzierung/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppTeamRoute = AppTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/leads': typeof AppLeadsRoute
   '/matching': typeof AppMatchingRoute
   '/settings': typeof AppSettingsRoute
+  '/team': typeof AppTeamRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/leads': typeof AppLeadsRoute
   '/matching': typeof AppMatchingRoute
   '/settings': typeof AppSettingsRoute
+  '/team': typeof AppTeamRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/_app/leads': typeof AppLeadsRoute
   '/_app/matching': typeof AppMatchingRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/team': typeof AppTeamRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/matching'
     | '/settings'
+    | '/team'
     | '/finanzierung/$token'
     | '/clients/$id'
     | '/properties/$id'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/matching'
     | '/settings'
+    | '/team'
     | '/finanzierung/$token'
     | '/clients/$id'
     | '/properties/$id'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/_app/leads'
     | '/_app/matching'
     | '/_app/settings'
+    | '/_app/team'
     | '/finanzierung/$token'
     | '/_app/clients/$id'
     | '/_app/properties/$id'
@@ -246,6 +258,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/finanzierung/$token'
       preLoaderRoute: typeof FinanzierungTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/team': {
+      id: '/_app/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof AppTeamRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/settings': {
       id: '/_app/settings'
@@ -351,6 +370,7 @@ interface AppRouteChildren {
   AppLeadsRoute: typeof AppLeadsRoute
   AppMatchingRoute: typeof AppMatchingRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppTeamRoute: typeof AppTeamRoute
   AppPropertiesIdRoute: typeof AppPropertiesIdRouteWithChildren
   AppPropertiesIndexRoute: typeof AppPropertiesIndexRoute
 }
@@ -362,6 +382,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLeadsRoute: AppLeadsRoute,
   AppMatchingRoute: AppMatchingRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppTeamRoute: AppTeamRoute,
   AppPropertiesIdRoute: AppPropertiesIdRouteWithChildren,
   AppPropertiesIndexRoute: AppPropertiesIndexRoute,
 }
