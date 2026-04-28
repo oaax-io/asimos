@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, Mail, Phone, Target } from "lucide-react";
@@ -25,7 +26,6 @@ const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
 
 function ClientsPage() {
   const qc = useQueryClient();
-  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
