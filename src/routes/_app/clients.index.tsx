@@ -49,9 +49,8 @@ function ClientsPage() {
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
       const result = await getClients({ headers: { authorization: `Bearer ${accessToken}` } });
-      // Backend-Unavailable als Fehler werfen, damit der QueryClient retryed.
-      if (result.unavailable) throw new Error(result.error ?? "Backend aktuell nicht erreichbar");
-      return result;
+      // Wirft bei Backend-Unavailable -> globaler Retry mit Backoff greift.
+      return unwrapServerResult(result);
     },
   });
 
@@ -63,11 +62,13 @@ function ClientsPage() {
     },
   });
 
-  const clients = clientsQuery.data?.data ?? [];
+  const clients = clientsQuery.data ?? [];
   const employees = employeesQuery.data ?? [];
   const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
-  const queryUnavailable = clientsQuery.data?.unavailable ?? false;
-  const queryErrorMessage = clientsQuery.data?.error ?? null;
+
+  // Banner nur bei "echten" Fehlern – Backend-Unavailable wird automatisch retryed.
+  const showError = clientsQuery.error && !isBackendUnavailableError(clientsQuery.error);
+  const queryErrorMessage = showError ? getBackendErrorMessage(clientsQuery.error) : null;
 
   const create = useMutation({
     mutationFn: async () => {
