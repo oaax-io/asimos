@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { formatCurrency, formatArea, propertyTypeLabels, propertyStatusLabels, listingTypeLabels } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
-import { PropertyFormDialog } from "@/components/properties/PropertyFormDialog";
+import { PropertyFormDialog, type PropertyFormValues } from "@/components/properties/PropertyFormDialog";
 
 export const Route = createFileRoute("/_app/properties/")({ component: PropertiesPage });
 
