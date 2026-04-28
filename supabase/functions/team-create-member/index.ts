@@ -38,10 +38,10 @@ Deno.serve(async (req) => {
       .eq("role", "superadmin")
       .maybeSingle();
     const isSuper = !!superRow;
-    const isOwnerOrAdmin = callerProfile.role === "owner" || callerProfile.role === "admin";
+    const isOwner = callerProfile.role === "owner";
 
-    if (!isSuper && !isOwnerOrAdmin) {
-      return json({ error: "Nur Inhaber/Admins dürfen Mitarbeiter anlegen" }, 403);
+    if (!isSuper && !isOwner) {
+      return json({ error: "Nur Inhaber dürfen Mitarbeiter anlegen" }, 403);
     }
 
     const body = await req.json();
@@ -49,8 +49,8 @@ Deno.serve(async (req) => {
     const password = String(body.password ?? "");
     const fullName = String(body.full_name ?? "").trim();
     const phone = String(body.phone ?? "").trim();
-    const role = (["owner", "admin", "member"].includes(body.role) ? body.role : "member") as
-      | "owner" | "admin" | "member";
+    const role = (["owner", "agent", "assistant"].includes(body.role) ? body.role : "agent") as
+      | "owner" | "agent" | "assistant";
     const targetAgencyId: string = (isSuper && body.agency_id) ? String(body.agency_id) : callerProfile.agency_id;
 
     if (!email || !password || password.length < 6) {
