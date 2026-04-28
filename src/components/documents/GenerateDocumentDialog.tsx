@@ -65,16 +65,17 @@ export function GenerateDocumentDialog({
     mutationFn: async () => {
       if (!selected) throw new Error("Bitte Vorlage wählen");
       const fullHtml = wrapHtmlDocument(selected.name, html);
+      const insertPayload = {
+        template_id: selected.id,
+        related_type: documentType,
+        related_id: relatedId,
+        html_content: fullHtml,
+        variables: JSON.parse(JSON.stringify(context)),
+        created_by: user?.id ?? null,
+      };
       const { data, error } = await supabase
         .from("generated_documents")
-        .insert({
-          template_id: selected.id,
-          related_type: documentType,
-          related_id: relatedId,
-          html_content: fullHtml,
-          variables: context as unknown as Record<string, unknown>,
-          created_by: user?.id ?? null,
-        })
+        .insert(insertPayload)
         .select("id")
         .single();
       if (error) throw error;
