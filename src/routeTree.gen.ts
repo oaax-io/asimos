@@ -33,6 +33,7 @@ import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties
 import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads.index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
+import { Route as AppLeadsIdRouteImport } from './routes/_app/leads.$id'
 import { Route as AppClientsIdRouteImport } from './routes/_app/clients.$id'
 import { Route as AppPropertiesIdExposeRouteImport } from './routes/_app/properties.$id.expose'
 
@@ -155,6 +156,11 @@ const AppPropertiesIdRoute = AppPropertiesIdRouteImport.update({
   path: '/properties/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLeadsIdRoute = AppLeadsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppLeadsRoute,
+} as any)
 const AppClientsIdRoute = AppClientsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -187,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof AppTeamRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
+  '/leads/$id': typeof AppLeadsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/clients/': typeof AppClientsIndexRoute
   '/leads/': typeof AppLeadsIndexRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/team': typeof AppTeamRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
+  '/leads/$id': typeof AppLeadsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/clients': typeof AppClientsIndexRoute
   '/leads': typeof AppLeadsIndexRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/_app/team': typeof AppTeamRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
+  '/_app/leads/$id': typeof AppLeadsIdRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/leads/': typeof AppLeadsIndexRoute
@@ -270,6 +279,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/finanzierung/$token'
     | '/clients/$id'
+    | '/leads/$id'
     | '/properties/$id'
     | '/clients/'
     | '/leads/'
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/finanzierung/$token'
     | '/clients/$id'
+    | '/leads/$id'
     | '/properties/$id'
     | '/clients'
     | '/leads'
@@ -323,6 +334,7 @@ export interface FileRouteTypes {
     | '/_app/team'
     | '/finanzierung/$token'
     | '/_app/clients/$id'
+    | '/_app/leads/$id'
     | '/_app/properties/$id'
     | '/_app/clients/'
     | '/_app/leads/'
@@ -509,6 +521,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPropertiesIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/leads/$id': {
+      id: '/_app/leads/$id'
+      path: '/$id'
+      fullPath: '/leads/$id'
+      preLoaderRoute: typeof AppLeadsIdRouteImport
+      parentRoute: typeof AppLeadsRoute
+    }
     '/_app/clients/$id': {
       id: '/_app/clients/$id'
       path: '/$id'
@@ -541,10 +560,12 @@ const AppClientsRouteWithChildren = AppClientsRoute._addFileChildren(
 )
 
 interface AppLeadsRouteChildren {
+  AppLeadsIdRoute: typeof AppLeadsIdRoute
   AppLeadsIndexRoute: typeof AppLeadsIndexRoute
 }
 
 const AppLeadsRouteChildren: AppLeadsRouteChildren = {
+  AppLeadsIdRoute: AppLeadsIdRoute,
   AppLeadsIndexRoute: AppLeadsIndexRoute,
 }
 
