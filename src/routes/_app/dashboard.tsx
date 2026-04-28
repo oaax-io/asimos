@@ -75,7 +75,7 @@ function Dashboard() {
         supabase.from("appointments").select("id", { count: "exact", head: true })
           .gte("starts_at", startOfToday()).lte("starts_at", endOfToday()),
         supabase.from("reservations").select("id", { count: "exact", head: true })
-          .in("status", ["draft", "active", "pending", "confirmed"]),
+          .in("status", ["draft", "sent", "signed"]),
       ]);
       return {
         newLeads: unwrap(newLeads).count,
