@@ -16,33 +16,48 @@ function SettingsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [profile, setProfile] = useState({ full_name: "", phone: "" });
-  const [agency, setAgency] = useState({ name: "" });
+  const [companyName, setCompanyName] = useState("");
 
   const { data } = useQuery({
     queryKey: ["me"],
     queryFn: async () => {
-      const { data: p } = await supabase.from("profiles").select("*, agencies(*)").eq("id", user!.id).single();
+      const { data: p } = await supabase.from("profiles").select("*").eq("id", user!.id).single();
       return p;
+    },
+  });
+
+  const { data: companyData } = useQuery({
+    queryKey: ["company"],
+    queryFn: async () => {
+      const { data } = await supabase.from("company").select("name").limit(1).single();
+      return data;
     },
   });
 
   useEffect(() => {
     if (data) {
       setProfile({ full_name: data.full_name ?? "", phone: data.phone ?? "" });
-      setAgency({ name: (data as any).agencies?.name ?? "" });
     }
   }, [data]);
+
+  useEffect(() => {
+    if (companyData) {
+      setCompanyName(companyData.name ?? "");
+    }
+  }, [companyData]);
 
   const save = useMutation({
     mutationFn: async () => {
       const { error: e1 } = await supabase.from("profiles").update(profile).eq("id", user!.id);
       if (e1) throw e1;
-      if (data?.agency_id) {
-        const { error: e2 } = await supabase.from("agencies").update({ name: agency.name }).eq("id", data.agency_id);
-        if (e2) throw e2;
-      }
+      const { error: e2 } = await supabase.from("company").update({ name: companyName }).eq("id", true);
+      if (e2) throw e2;
     },
-    onSuccess: () => { toast.success("Gespeichert"); qc.invalidateQueries({ queryKey: ["me"] }); },
+    onSuccess: () => {
+      toast.success("Gespeichert");
+      qc.invalidateQueries({ queryKey: ["me"] });
+      qc.invalidateQueries({ queryKey: ["company"] });
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -59,7 +74,7 @@ function SettingsPage() {
 
         <Card><CardContent className="space-y-4 p-6">
           <h2 className="font-semibold">Firma</h2>
-          <div><Label>Name</Label><Input value={agency.name} onChange={(e) => setAgency({ name: e.target.value })} /></div>
+          <div><Label>Name</Label><Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} /></div>
         </CardContent></Card>
 
         <div><Button onClick={() => save.mutate()} disabled={save.isPending}>Speichern</Button></div>

@@ -38,21 +38,22 @@ function TeamPage() {
   const meQuery = useQuery({
     queryKey: ["me-team"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("agency_id, role").eq("id", user!.id).single();
+      const { data, error } = await supabase.from("profiles").select("role").eq("id", user!.id).single();
       if (error) throw error;
       return data;
     },
     enabled: !!user,
   });
 
-  const canManage = isSuperadmin || meQuery.data?.role === "owner";
+  const canManage = isSuperadmin || meQuery.data?.role === "owner" || meQuery.data?.role === "admin";
 
   const teamQuery = useQuery({
-    queryKey: ["team", meQuery.data?.agency_id],
+    queryKey: ["team"],
     queryFn: async () => {
-      let q = supabase.from("profiles").select("id, full_name, email, phone, role, created_at").order("created_at", { ascending: true });
-      if (!isSuperadmin && meQuery.data?.agency_id) q = q.eq("agency_id", meQuery.data.agency_id);
-      const { data, error } = await q;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, phone, role, created_at")
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return data ?? [];
     },
