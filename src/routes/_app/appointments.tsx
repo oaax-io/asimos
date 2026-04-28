@@ -157,8 +157,8 @@ function AppointmentsPage() {
         clients={clients}
         properties={properties}
         employees={employees}
-        onSave={(patch) => update.mutate({ id: editing.id, patch }, { onSuccess: () => { toast.success("Aktualisiert"); setEditId(null); } })}
-        onDelete={() => { if (confirm("Termin wirklich löschen?")) remove.mutate(editing.id); }}
+        onSave={(patch: any) => editing && update.mutate({ id: editing.id, patch }, { onSuccess: () => { toast.success("Aktualisiert"); setEditId(null); } })}
+        onDelete={() => { if (editing && confirm("Termin wirklich löschen?")) remove.mutate(editing.id); }}
       />
     </>
   );
