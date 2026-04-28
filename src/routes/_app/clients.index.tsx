@@ -116,10 +116,22 @@ function ClientsPage() {
     onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
   });
 
-  const filtered = clients.filter((c) =>
-    !search || c.full_name.toLowerCase().includes(search.toLowerCase()) ||
-    c.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => clients.filter((c: any) => {
+    if (typeFilter !== ALL && c.client_type !== typeFilter) return false;
+    if (assignedFilter !== ALL) {
+      if (assignedFilter === UNASSIGNED && c.assigned_to) return false;
+      if (assignedFilter !== UNASSIGNED && c.assigned_to !== assignedFilter) return false;
+    }
+    if (financingFilter !== ALL) {
+      if (financingFilter === NO_FIN && c.financing_status) return false;
+      if (financingFilter !== NO_FIN && c.financing_status !== financingFilter) return false;
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      if (!c.full_name?.toLowerCase().includes(q) && !c.email?.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  }), [clients, typeFilter, assignedFilter, financingFilter, search]);
 
   return (
     <>
@@ -187,9 +199,40 @@ function ClientsPage() {
         }
       />
 
-      <div className="mb-4 relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Kunden suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[220px] max-w-xs flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Kunden suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Typ" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Alle Typen</SelectItem>
+            {TYPES.map((t) => <SelectItem key={t} value={t}>{clientTypeLabels[t]}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={assignedFilter} onValueChange={setAssignedFilter}>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Zugewiesen" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Alle Mitarbeitenden</SelectItem>
+            <SelectItem value={UNASSIGNED}>Nicht zugewiesen</SelectItem>
+            {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={financingFilter} onValueChange={setFinancingFilter}>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Finanzierung" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Alle Finanzierungen</SelectItem>
+            <SelectItem value={NO_FIN}>Keine Angabe</SelectItem>
+            {FINANCING_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        {(typeFilter !== ALL || assignedFilter !== ALL || financingFilter !== ALL || search) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilter(ALL); setAssignedFilter(ALL); setFinancingFilter(ALL); }}>
+            Zurücksetzen
+          </Button>
+        )}
+        <span className="ml-auto text-sm text-muted-foreground">{filtered.length} von {clients.length}</span>
       </div>
 
       {queryUnavailable || (clientsQuery.error && isBackendUnavailableError(clientsQuery.error)) ? (
