@@ -244,7 +244,9 @@ function LeadsPage() {
   };
 
   return (
+    <>
     <Tabs defaultValue="list" className="w-full">
+
       <PageHeader
         title="Leads"
         description="Pipeline deiner Interessenten"
@@ -545,12 +547,14 @@ function LeadsPage() {
           </div>
         </TabsContent>
 
-      {showError ? (
-        <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-          {queryErrorMessage}
-        </div>
-      ) : null}
     </Tabs>
+
+    {showError ? (
+      <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+        {queryErrorMessage}
+      </div>
+    ) : null}
+    </>
   );
 }
 
