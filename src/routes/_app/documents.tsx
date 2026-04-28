@@ -77,15 +77,16 @@ function DocumentsPage() {
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ["documents"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("documents")
-        .select("*, uploader:profiles!documents_uploaded_by_fkey(full_name)")
-        .order("created_at", { ascending: false });
-      if (error) {
-        const { data: fallback } = await supabase.from("documents").select("*").order("created_at", { ascending: false });
-        return fallback ?? [];
+      const { data, error } = await supabase.from("documents").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      const docs = data ?? [];
+      const uploaderIds = Array.from(new Set(docs.map((d) => d.uploaded_by).filter(Boolean) as string[]));
+      let uploaders: Record<string, string> = {};
+      if (uploaderIds.length > 0) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name").in("id", uploaderIds);
+        uploaders = Object.fromEntries((profs ?? []).map((p) => [p.id, p.full_name ?? ""]));
       }
-      return data ?? [];
+      return docs.map((d) => ({ ...d, uploader: d.uploaded_by ? { full_name: uploaders[d.uploaded_by] } : null }));
     },
   });
 
