@@ -34,6 +34,13 @@ function ClientDetail() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [loadTimedOut, setLoadTimedOut] = useState(false);
+
+  useEffect(() => {
+    setLoadTimedOut(false);
+    const timeout = window.setTimeout(() => setLoadTimedOut(true), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [id]);
 
   const { data: client, isLoading, isError, error: clientError, refetch } = useQuery({
     queryKey: ["client", id],
@@ -47,6 +54,16 @@ function ClientDetail() {
     retryDelay: 600,
   });
 
+  useEffect(() => {
+    if (!isLoading || isError || client) {
+      setLoadTimedOut(false);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setLoadTimedOut(true), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [client, id, isError, isLoading]);
+
   const { data: dossier } = useQuery({
     queryKey: ["financing_dossier", id],
     queryFn: async () => {
@@ -55,6 +72,7 @@ function ClientDetail() {
       if (error) throw error;
       return data;
     },
+    retry: false,
   });
 
   const { data: links = [] } = useQuery({
@@ -67,6 +85,7 @@ function ClientDetail() {
       if (error) throw error;
       return data;
     },
+    retry: false,
   });
 
   const { data: appointments = [] } = useQuery({
@@ -78,6 +97,7 @@ function ClientDetail() {
       if (error) throw error;
       return data;
     },
+    retry: false,
   });
 
   const { data: matches = [] } = useQuery({
@@ -91,6 +111,7 @@ function ClientDetail() {
       if (error) throw error;
       return data as any[];
     },
+    retry: false,
   });
 
   const { data: ownProperties = [] } = useQuery({
@@ -102,6 +123,7 @@ function ClientDetail() {
       if (error) throw error;
       return data;
     },
+    retry: false,
   });
 
   const del = useMutation({
@@ -113,7 +135,7 @@ function ClientDetail() {
     onError: (e: any) => toast.error(e.message ?? "Fehler beim Löschen"),
   });
 
-  if (isLoading && !isError) return <div className="text-sm text-muted-foreground">Lädt…</div>;
+  if (isLoading && !isError && !loadTimedOut) return <div className="text-sm text-muted-foreground">Lädt…</div>;
   if (clientError || !client) {
     return (
       <div className="space-y-4">
