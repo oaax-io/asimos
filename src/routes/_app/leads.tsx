@@ -53,9 +53,8 @@ function LeadsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Lead erstellt");
+      toast.success("Lead erstellt – du kannst einen weiteren hinzufügen");
       qc.invalidateQueries({ queryKey: ["leads"] });
-      setOpen(false);
       setForm({ full_name: "", email: "", phone: "", source: "", notes: "" });
     },
     onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
@@ -107,8 +106,11 @@ function LeadsPage() {
                 <div><Label>Quelle</Label><Input placeholder="Website, Empfehlung…" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} /></div>
                 <div><Label>Notizen</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
               </div>
-              <DialogFooter>
-                <Button onClick={() => create.mutate()} disabled={!form.full_name || create.isPending}>Speichern</Button>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
+                <Button onClick={() => create.mutate()} disabled={!form.full_name || create.isPending}>
+                  {create.isPending ? "Speichern…" : "Speichern & weiteren hinzufügen"}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
