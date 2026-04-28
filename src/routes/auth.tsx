@@ -1,12 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { z } from "zod";
+import logo from "@/assets/logo-asimo.png";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -25,6 +26,7 @@ function AuthPage() {
   const { signIn, user, isSuperadmin, superadminStatus } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
+  const [stayLoggedIn, setStayLoggedIn] = useState(true);
 
   useEffect(() => {
     if (user && superadminStatus !== "unknown") {
@@ -44,25 +46,13 @@ function AuthPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black p-6">
-      {/* Ambient glow */}
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-primary/30 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-40 right-1/4 h-[400px] w-[400px] rounded-full bg-primary/20 blur-3xl" />
-
-      <div className="relative w-full max-w-md rounded-3xl border border-primary/40 bg-gradient-brand p-8 text-primary-foreground shadow-2xl shadow-primary/30 backdrop-blur-xl">
-        <div className="mb-8 flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur">
-            <Building2 className="h-5 w-5" />
-          </div>
-          <span className="font-display text-xl font-bold">Estatly</span>
+    <div className="flex min-h-screen items-center justify-center bg-black p-6">
+      <div className="w-full max-w-md rounded-3xl border border-primary/40 bg-primary p-8 text-primary-foreground shadow-2xl">
+        <div className="mb-8 flex justify-center">
+          <img src={logo} alt="ASIMO" className="h-16 w-auto" />
         </div>
 
-        <h1 className="font-display text-3xl font-bold">Willkommen zurück</h1>
-        <p className="mt-2 text-sm text-primary-foreground/80">
-          Melde dich an, um fortzufahren.
-        </p>
-
-        <form onSubmit={onSubmit} className="mt-8 space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <Label htmlFor="email" className="text-primary-foreground">E-Mail</Label>
             <Input
@@ -85,19 +75,25 @@ function AuthPage() {
               className="mt-1 border-white/30 bg-white/10 text-primary-foreground placeholder:text-primary-foreground/50 focus-visible:ring-white/50"
             />
           </div>
+
+          <label className="flex items-center gap-2 text-sm text-primary-foreground/90 cursor-pointer">
+            <Checkbox
+              checked={stayLoggedIn}
+              onCheckedChange={(v) => setStayLoggedIn(Boolean(v))}
+              className="border-white/50 data-[state=checked]:bg-black data-[state=checked]:text-primary"
+            />
+            Angemeldet bleiben
+          </label>
+
           <Button
             type="submit"
             size="lg"
             disabled={loading}
             className="w-full bg-black text-primary hover:bg-black/90 shadow-lg"
           >
-            {loading ? "Bitte warten…" : "Anmelden"}
+            {loading ? "Bitte warten…" : "Login"}
           </Button>
         </form>
-
-        <p className="mt-6 text-center text-xs text-primary-foreground/70">
-          Konten werden vom Administrator angelegt.
-        </p>
       </div>
     </div>
   );
