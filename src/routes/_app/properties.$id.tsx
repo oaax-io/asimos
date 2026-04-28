@@ -177,7 +177,7 @@ function PropertyDetail() {
             <Button asChild><Link to="/properties/$id/expose" params={{ id }}><FileText className="mr-1 h-4 w-4" />Zum Exposé</Link></Button>
           </CardContent></Card>
         </TabsContent>
-        <TabsContent value="matching"><MatchingTab propertyId={id} /></TabsContent>
+        <TabsContent value="matching" className="mt-4"><MatchPanel direction="property-to-client" property={p} /></TabsContent>
       </Tabs>
     </div>
   );
