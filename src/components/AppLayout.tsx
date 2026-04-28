@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, Outlet } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import {
-  LayoutDashboard, Users, UserPlus, Building2, Calendar, Target, Settings, LogOut, Menu, Search,
+  LayoutDashboard, Users, UserPlus, Building2, Calendar, Target, Settings, LogOut, Menu, Search, Shield,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-const nav = [
+const baseNav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/leads", label: "Leads", icon: UserPlus },
   { to: "/clients", label: "Kunden", icon: Users },
@@ -21,9 +21,13 @@ const nav = [
 
 function NavList({ onClick }: { onClick?: () => void }) {
   const { pathname } = useLocation();
+  const { isSuperadmin } = useAuth();
+  const items = isSuperadmin
+    ? [...baseNav, { to: "/superadmin", label: "Superadmin", icon: Shield } as const]
+    : baseNav;
   return (
     <nav className="flex flex-col gap-1 p-3">
-      {nav.map((n) => {
+      {items.map((n) => {
         const active = pathname.startsWith(n.to);
         return (
           <Link
@@ -61,7 +65,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/auth" });
+    if (!loading && !user) navigate({ to: "/auth", search: { mode: "signin" } });
   }, [user, loading, navigate]);
 
   if (loading || !user) {

@@ -34,7 +34,7 @@ function Landing() {
           <span className="font-display text-lg font-bold">Estatly</span>
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild variant="ghost"><Link to="/auth">Anmelden</Link></Button>
+          <Button asChild variant="ghost"><Link to="/auth" search={{ mode: "signin" }}>Anmelden</Link></Button>
           <Button asChild><Link to="/auth" search={{ mode: "signup" }}>Kostenlos starten</Link></Button>
         </div>
       </header>
@@ -55,7 +55,7 @@ function Landing() {
             <Button asChild size="lg" className="shadow-glow">
               <Link to="/auth" search={{ mode: "signup" }}>Jetzt starten</Link>
             </Button>
-            <Button asChild size="lg" variant="outline"><Link to="/auth">Anmelden</Link></Button>
+            <Button asChild size="lg" variant="outline"><Link to="/auth" search={{ mode: "signin" }}>Anmelden</Link></Button>
           </div>
         </div>
 

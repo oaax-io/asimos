@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSuperadminRouteImport } from './routes/_app/superadmin'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppMatchingRouteImport } from './routes/_app/matching'
 import { Route as AppLeadsRouteImport } from './routes/_app/leads'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSuperadminRoute = AppSuperadminRouteImport.update({
+  id: '/superadmin',
+  path: '/superadmin',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/leads': typeof AppLeadsRoute
   '/matching': typeof AppMatchingRoute
   '/settings': typeof AppSettingsRoute
+  '/superadmin': typeof AppSuperadminRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/properties/': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/leads': typeof AppLeadsRoute
   '/matching': typeof AppMatchingRoute
   '/settings': typeof AppSettingsRoute
+  '/superadmin': typeof AppSuperadminRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/properties': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/_app/leads': typeof AppLeadsRoute
   '/_app/matching': typeof AppMatchingRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/superadmin': typeof AppSuperadminRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/_app/properties/': typeof AppPropertiesIndexRoute
   '/_app/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/matching'
     | '/settings'
+    | '/superadmin'
     | '/properties/$id'
     | '/properties/'
     | '/properties/$id/expose'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/matching'
     | '/settings'
+    | '/superadmin'
     | '/properties/$id'
     | '/properties'
     | '/properties/$id/expose'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/_app/leads'
     | '/_app/matching'
     | '/_app/settings'
+    | '/_app/superadmin'
     | '/_app/properties/$id'
     | '/_app/properties/'
     | '/_app/properties/$id/expose'
@@ -194,6 +206,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/superadmin': {
+      id: '/_app/superadmin'
+      path: '/superadmin'
+      fullPath: '/superadmin'
+      preLoaderRoute: typeof AppSuperadminRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/settings': {
       id: '/_app/settings'
@@ -280,6 +299,7 @@ interface AppRouteChildren {
   AppLeadsRoute: typeof AppLeadsRoute
   AppMatchingRoute: typeof AppMatchingRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppSuperadminRoute: typeof AppSuperadminRoute
   AppPropertiesIdRoute: typeof AppPropertiesIdRouteWithChildren
   AppPropertiesIndexRoute: typeof AppPropertiesIndexRoute
 }
@@ -291,6 +311,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLeadsRoute: AppLeadsRoute,
   AppMatchingRoute: AppMatchingRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppSuperadminRoute: AppSuperadminRoute,
   AppPropertiesIdRoute: AppPropertiesIdRouteWithChildren,
   AppPropertiesIndexRoute: AppPropertiesIndexRoute,
 }
@@ -305,3 +326,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
