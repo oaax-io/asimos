@@ -1,14 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, CheckCircle2, Circle, Clock, AlertCircle, Search } from "lucide-react";
+import { Plus, CheckCircle2, Circle, Clock, AlertCircle, Search, Trash2, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,117 +20,213 @@ import { formatDateTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_app/tasks")({ component: TasksPage });
 
-const STATUS_LABELS = { open: "Offen", in_progress: "In Arbeit", done: "Erledigt", cancelled: "Abgebrochen" } as const;
-const PRIORITY_LABELS = { low: "Niedrig", normal: "Normal", high: "Hoch", urgent: "Dringend" } as const;
+const STATUSES = ["open","in_progress","waiting","done","cancelled"] as const;
+const PRIORITIES = ["low","normal","high","urgent"] as const;
 
-const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline"> = {
-  open: "outline", in_progress: "default", done: "secondary", cancelled: "secondary",
+const STATUS_LABELS: Record<typeof STATUSES[number], string> = {
+  open: "Offen", in_progress: "In Arbeit", waiting: "Wartet", done: "Erledigt", cancelled: "Abgebrochen",
+};
+const PRIORITY_LABELS: Record<typeof PRIORITIES[number], string> = {
+  low: "Niedrig", normal: "Normal", high: "Hoch", urgent: "Dringend",
+};
+const PRIORITY_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
+  low: "outline", normal: "secondary", high: "default", urgent: "destructive",
+};
+const RELATED_TYPES = ["client","property","mandate","reservation","lead"] as const;
+const RELATED_LABELS: Record<typeof RELATED_TYPES[number], string> = {
+  client: "Kunde", property: "Immobilie", mandate: "Mandat", reservation: "Reservation", lead: "Lead",
+};
+
+const emptyForm = {
+  title: "", description: "", status: "open", priority: "normal",
+  due_date: "", assigned_to: "", related_type: "none", related_id: "",
 };
 
 function TasksPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [form, setForm] = useState({
-    title: "", description: "", status: "open", priority: "normal", due_date: "",
-  });
+  const [fStatus, setFStatus] = useState("active");
+  const [fPriority, setFPriority] = useState("all");
+  const [fAssignee, setFAssignee] = useState("all");
+  const [fDue, setFDue] = useState("all");
+  const [form, setForm] = useState({ ...emptyForm });
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["tasks"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("tasks").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("tasks").select("*").order("due_date", { ascending: true, nullsFirst: false });
       if (error) throw error;
       return data ?? [];
     },
   });
+  const { data: employees = [] } = useQuery({
+    queryKey: ["employees"],
+    queryFn: async () => (await supabase.from("profiles").select("id, full_name, email").eq("is_active", true)).data ?? [],
+  });
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients-min"],
+    queryFn: async () => (await supabase.from("clients").select("id, full_name").order("full_name")).data ?? [],
+  });
+  const { data: properties = [] } = useQuery({
+    queryKey: ["properties-min"],
+    queryFn: async () => (await supabase.from("properties").select("id, title").order("title")).data ?? [],
+  });
+  const { data: leads = [] } = useQuery({
+    queryKey: ["leads-min"],
+    queryFn: async () => (await supabase.from("leads").select("id, full_name").order("full_name")).data ?? [],
+  });
+  const { data: mandates = [] } = useQuery({
+    queryKey: ["mandates-min"],
+    queryFn: async () => (await supabase.from("mandates").select("id, status, properties(title)").order("created_at", { ascending: false })).data ?? [],
+  });
+  const { data: reservations = [] } = useQuery({
+    queryKey: ["reservations-min"],
+    queryFn: async () => (await supabase.from("reservations").select("id, status, properties(title)").order("created_at", { ascending: false })).data ?? [],
+  });
+
+  const optionsFor = (type: string) => {
+    switch (type) {
+      case "client": return clients.map((c: any) => ({ id: c.id, label: c.full_name }));
+      case "property": return properties.map((p: any) => ({ id: p.id, label: p.title }));
+      case "lead": return leads.map((l: any) => ({ id: l.id, label: l.full_name }));
+      case "mandate": return mandates.map((m: any) => ({ id: m.id, label: `${m.properties?.title ?? "Mandat"} · ${m.status}` }));
+      case "reservation": return reservations.map((r: any) => ({ id: r.id, label: `${r.properties?.title ?? "Reservation"} · ${r.status}` }));
+      default: return [];
+    }
+  };
 
   const create = useMutation({
     mutationFn: async () => {
       if (!form.title.trim()) throw new Error("Titel ist erforderlich");
-      const { error } = await supabase.from("tasks").insert({
+      const payload: any = {
         title: form.title.trim(),
         description: form.description.trim() || null,
-        status: form.status as "open",
-        priority: form.priority as "normal",
-        due_date: form.due_date || null,
-        created_by: user?.id,
-        assigned_to: user?.id,
-      });
+        status: form.status,
+        priority: form.priority,
+        due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
+        created_by: user?.id ?? null,
+        assigned_to: form.assigned_to || user?.id || null,
+        related_type: form.related_type !== "none" ? form.related_type : null,
+        related_id: form.related_type !== "none" && form.related_id ? form.related_id : null,
+      };
+      const { error } = await supabase.from("tasks").insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Aufgabe erstellt");
       qc.invalidateQueries({ queryKey: ["tasks"] });
-      setForm({ title: "", description: "", status: "open", priority: "normal", due_date: "" });
+      setForm({ ...emptyForm });
       setOpen(false);
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from("tasks").update({ status: status as "open" }).eq("id", id);
+  const update = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: any }) => {
+      const { error } = await supabase.from("tasks").update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onError: (e: Error) => toast.error(e.message),
   });
 
-  const filtered = useMemo(() => tasks.filter((t) => {
-    if (statusFilter !== "all" && t.status !== statusFilter) return false;
-    if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false;
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("tasks").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Aufgabe gelöscht");
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+      setEditId(null);
+    },
+  });
+
+  const now = Date.now();
+  const filtered = useMemo(() => tasks.filter((t: any) => {
+    if (search && !`${t.title} ${t.description ?? ""}`.toLowerCase().includes(search.toLowerCase())) return false;
+    if (fStatus === "active" && (t.status === "done" || t.status === "cancelled")) return false;
+    if (fStatus !== "all" && fStatus !== "active" && t.status !== fStatus) return false;
+    if (fPriority !== "all" && t.priority !== fPriority) return false;
+    if (fAssignee === "me" && t.assigned_to !== user?.id) return false;
+    if (fAssignee !== "all" && fAssignee !== "me" && t.assigned_to !== fAssignee) return false;
+    if (fDue !== "all") {
+      if (!t.due_date) return fDue === "none";
+      const due = new Date(t.due_date).getTime();
+      const startToday = new Date(); startToday.setHours(0,0,0,0);
+      const endToday = startToday.getTime() + 86400000;
+      const endWeek = startToday.getTime() + 7 * 86400000;
+      if (fDue === "overdue" && (due >= now || t.status === "done" || t.status === "cancelled")) return false;
+      if (fDue === "today" && (due < startToday.getTime() || due >= endToday)) return false;
+      if (fDue === "week" && (due < startToday.getTime() || due >= endWeek)) return false;
+      if (fDue === "none") return false;
+    }
     return true;
-  }), [tasks, statusFilter, search]);
+  }), [tasks, search, fStatus, fPriority, fAssignee, fDue, now, user?.id]);
+
+  const editing = tasks.find((t: any) => t.id === editId);
 
   return (
     <>
       <PageHeader
         title="Aufgaben"
         description="Persönliche und teamübergreifende To-dos"
-        action={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Neue Aufgabe</Button></DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Neue Aufgabe</DialogTitle></DialogHeader>
-              <div className="space-y-3">
-                <div><Label>Titel</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-                <div><Label>Beschreibung</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Priorität</Label>
-                    <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(PRIORITY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Fällig am</Label>
-                    <Input type="datetime-local" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
-                <Button onClick={() => create.mutate()} disabled={create.isPending}>Speichern</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        }
+        action={<Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Aufgabe</Button>}
       />
 
-      <div className="mb-4 flex flex-wrap gap-3">
-        <div className="relative max-w-sm flex-1">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Neue Aufgabe</DialogTitle>
+            <DialogDescription>Erfasse To-dos und ordne sie Kunden, Immobilien oder Mandaten zu.</DialogDescription>
+          </DialogHeader>
+          <TaskForm form={form} setForm={setForm} employees={employees} optionsFor={optionsFor} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
+            <Button onClick={() => create.mutate()} disabled={create.isPending}>Erstellen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <div className="mb-4 grid gap-3 md:grid-cols-2 lg:grid-cols-6">
+        <div className="relative lg:col-span-2">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder="Aufgaben suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44"><SelectValue placeholder="Status" /></SelectTrigger>
+        <Select value={fStatus} onValueChange={setFStatus}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
+            <SelectItem value="active">Aktiv</SelectItem>
             <SelectItem value="all">Alle Status</SelectItem>
-            {Object.entries(STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+            {STATUSES.map(s => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={fPriority} onValueChange={setFPriority}>
+          <SelectTrigger><SelectValue placeholder="Priorität" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Prioritäten</SelectItem>
+            {PRIORITIES.map(p => <SelectItem key={p} value={p}>{PRIORITY_LABELS[p]}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={fAssignee} onValueChange={setFAssignee}>
+          <SelectTrigger><SelectValue placeholder="Zuständig" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Mitarbeiter</SelectItem>
+            <SelectItem value="me">Mir zugewiesen</SelectItem>
+            {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={fDue} onValueChange={setFDue}>
+          <SelectTrigger><SelectValue placeholder="Fälligkeit" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Fristen</SelectItem>
+            <SelectItem value="overdue">Überfällig</SelectItem>
+            <SelectItem value="today">Heute</SelectItem>
+            <SelectItem value="week">Diese Woche</SelectItem>
+            <SelectItem value="none">Ohne Frist</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -138,42 +235,56 @@ function TasksPage() {
         <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">Aufgaben werden geladen…</div>
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Keine Aufgaben"
-          description="Erstelle deine erste Aufgabe, um den Überblick über offene To-dos zu behalten."
+          title={tasks.length === 0 ? "Keine Aufgaben" : "Keine Treffer"}
+          description={tasks.length === 0
+            ? "Erstelle deine erste Aufgabe, um den Überblick über offene To-dos zu behalten."
+            : "Passe die Filter an oder leere die Suche."}
+          action={tasks.length === 0 ? <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Aufgabe erstellen</Button> : undefined}
         />
       ) : (
-        <div className="grid gap-3">
-          {filtered.map((t) => {
+        <div className="grid gap-2">
+          {filtered.map((t: any) => {
+            const overdue = t.due_date && new Date(t.due_date).getTime() < now && t.status !== "done" && t.status !== "cancelled";
             const Icon = t.status === "done" ? CheckCircle2 : t.status === "in_progress" ? Clock : t.priority === "urgent" ? AlertCircle : Circle;
+            const assignee = employees.find((e: any) => e.id === t.assigned_to);
             return (
-              <Card key={t.id} className="transition hover:shadow-soft">
+              <Card
+                key={t.id}
+                className={`cursor-pointer transition hover:shadow-soft ${overdue ? "border-destructive/40 bg-destructive/5" : ""}`}
+                onClick={() => setEditId(t.id)}
+              >
                 <CardContent className="flex items-start gap-3 p-4">
                   <button
                     type="button"
-                    onClick={() => updateStatus.mutate({ id: t.id, status: t.status === "done" ? "open" : "done" })}
+                    onClick={(e) => { e.stopPropagation(); update.mutate({ id: t.id, patch: { status: t.status === "done" ? "open" : "done" } }); }}
                     className="mt-0.5"
                   >
-                    <Icon className={`h-5 w-5 ${t.status === "done" ? "text-success" : "text-muted-foreground"}`} />
+                    <Icon className={`h-5 w-5 ${t.status === "done" ? "text-success" : overdue ? "text-destructive" : "text-muted-foreground"}`} />
                   </button>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className={`font-medium ${t.status === "done" ? "text-muted-foreground line-through" : ""}`}>{t.title}</h3>
-                      <Badge variant={STATUS_VARIANTS[t.status]}>{STATUS_LABELS[t.status as keyof typeof STATUS_LABELS]}</Badge>
                       {t.priority !== "normal" && (
-                        <Badge variant={t.priority === "urgent" ? "destructive" : "outline"}>
-                          {PRIORITY_LABELS[t.priority as keyof typeof PRIORITY_LABELS]}
-                        </Badge>
+                        <Badge variant={PRIORITY_VARIANTS[t.priority]}>{PRIORITY_LABELS[t.priority as keyof typeof PRIORITY_LABELS]}</Badge>
                       )}
+                      {t.related_type && (
+                        <Badge variant="outline" className="text-xs">{RELATED_LABELS[t.related_type as keyof typeof RELATED_LABELS] ?? t.related_type}</Badge>
+                      )}
+                      {overdue && <Badge variant="destructive" className="text-xs">Überfällig</Badge>}
                     </div>
-                    {t.description && <p className="mt-1 text-sm text-muted-foreground">{t.description}</p>}
-                    {t.due_date && (
-                      <p className="mt-1 text-xs text-muted-foreground">Fällig: {formatDateTime(t.due_date)}</p>
-                    )}
+                    {t.description && <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{t.description}</p>}
+                    <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      {t.due_date && <span className={overdue ? "text-destructive font-medium" : ""}>Fällig: {formatDateTime(t.due_date)}</span>}
+                      {assignee && <span>· {(assignee as any).full_name || (assignee as any).email}</span>}
+                    </div>
                   </div>
-                  <Select value={t.status} onValueChange={(v) => updateStatus.mutate({ id: t.id, status: v })}>
-                    <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
+                  <Select
+                    value={t.status}
+                    onValueChange={(v) => update.mutate({ id: t.id, patch: { status: v } })}
+                  >
+                    <SelectTrigger className="h-8 w-32 text-xs" onClick={(e) => e.stopPropagation()}><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {Object.entries(STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                      {STATUSES.map(s => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </CardContent>
@@ -182,6 +293,147 @@ function TasksPage() {
           })}
         </div>
       )}
+
+      <TaskEditDrawer
+        task={editing}
+        open={!!editId}
+        onClose={() => setEditId(null)}
+        employees={employees}
+        optionsFor={optionsFor}
+        onSave={(patch) => update.mutate({ id: editing!.id, patch }, { onSuccess: () => { toast.success("Aufgabe aktualisiert"); setEditId(null); } })}
+        onDelete={() => { if (confirm("Aufgabe wirklich löschen?")) remove.mutate(editing!.id); }}
+      />
     </>
+  );
+}
+
+function TaskForm({
+  form, setForm, employees, optionsFor,
+}: { form: any; setForm: (f: any) => void; employees: any[]; optionsFor: (t: string) => { id: string; label: string }[] }) {
+  return (
+    <div className="space-y-3">
+      <div><Label>Titel *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+      <div><Label>Beschreibung</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <Label>Status</Label>
+          <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Priorität</Label>
+          <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{PRIORITIES.map(p => <SelectItem key={p} value={p}>{PRIORITY_LABELS[p]}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Fällig am</Label>
+          <Input type="datetime-local" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <Label>Zuständig</Label>
+          <Select value={form.assigned_to || "none"} onValueChange={(v) => setForm({ ...form, assigned_to: v === "none" ? "" : v })}>
+            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Niemand</SelectItem>
+              {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Bezug</Label>
+          <Select value={form.related_type} onValueChange={(v) => setForm({ ...form, related_type: v, related_id: "" })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Kein Bezug</SelectItem>
+              {RELATED_TYPES.map(r => <SelectItem key={r} value={r}>{RELATED_LABELS[r]}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Verknüpfung</Label>
+          <Select value={form.related_id || "none"} onValueChange={(v) => setForm({ ...form, related_id: v === "none" ? "" : v })} disabled={form.related_type === "none"}>
+            <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">—</SelectItem>
+              {optionsFor(form.related_type).map(o => <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TaskEditDrawer({
+  task, open, onClose, employees, optionsFor, onSave, onDelete,
+}: {
+  task: any; open: boolean; onClose: () => void;
+  employees: any[]; optionsFor: (t: string) => { id: string; label: string }[];
+  onSave: (patch: any) => void; onDelete: () => void;
+}) {
+  const [form, setForm] = useState<any>({ ...emptyForm });
+
+  useEffect(() => {
+    if (task) {
+      setForm({
+        title: task.title ?? "",
+        description: task.description ?? "",
+        status: task.status ?? "open",
+        priority: task.priority ?? "normal",
+        due_date: task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : "",
+        assigned_to: task.assigned_to ?? "",
+        related_type: task.related_type ?? "none",
+        related_id: task.related_id ?? "",
+      });
+    }
+  }, [task]);
+
+  const relatedHref = useMemo(() => {
+    if (!task?.related_id || !task?.related_type) return null;
+    if (task.related_type === "client") return `/clients/${task.related_id}`;
+    if (task.related_type === "property") return `/properties/${task.related_id}`;
+    if (task.related_type === "lead") return `/leads/${task.related_id}`;
+    return null;
+  }, [task]);
+
+  return (
+    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+        <SheetHeader>
+          <SheetTitle>Aufgabe bearbeiten</SheetTitle>
+          <SheetDescription>Aktualisiere Details, ändere Status oder weise neu zu.</SheetDescription>
+        </SheetHeader>
+        <div className="my-4">
+          <TaskForm form={form} setForm={setForm} employees={employees} optionsFor={optionsFor} />
+        </div>
+        {relatedHref && (
+          <Button variant="outline" asChild className="mb-4 w-full">
+            <Link to={relatedHref as any}><ExternalLink className="mr-1 h-4 w-4" />Verknüpften Eintrag öffnen</Link>
+          </Button>
+        )}
+        <SheetFooter className="flex-row justify-between gap-2">
+          <Button variant="outline" onClick={onDelete}><Trash2 className="mr-1 h-4 w-4" />Löschen</Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={onClose}>Schliessen</Button>
+            <Button onClick={() => onSave({
+              title: form.title.trim(),
+              description: form.description.trim() || null,
+              status: form.status,
+              priority: form.priority,
+              due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
+              assigned_to: form.assigned_to || null,
+              related_type: form.related_type !== "none" ? form.related_type : null,
+              related_id: form.related_type !== "none" && form.related_id ? form.related_id : null,
+            })} disabled={!form.title.trim()}>Speichern</Button>
+          </div>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
