@@ -154,6 +154,26 @@ function ClientsPage() {
                   </div>
                   <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
                   <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+                  <div>
+                    <Label>Zugewiesen an</Label>
+                    <Select value={form.assigned_to || UNASSIGNED} onValueChange={(v) => setForm({ ...form, assigned_to: v === UNASSIGNED ? "" : v })}>
+                      <SelectTrigger><SelectValue placeholder="Niemand" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={UNASSIGNED}>Niemand</SelectItem>
+                        {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Finanzierungsstatus</Label>
+                    <Select value={form.financing_status || NO_FIN} onValueChange={(v) => setForm({ ...form, financing_status: v === NO_FIN ? "" : v })}>
+                      <SelectTrigger><SelectValue placeholder="Keine Angabe" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NO_FIN}>Keine Angabe</SelectItem>
+                        {FINANCING_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="rounded-xl border bg-muted/30 p-4">
