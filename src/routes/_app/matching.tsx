@@ -98,7 +98,7 @@ function MatchingPage() {
                       {reasons.map(r => <span key={r} className="rounded-full bg-accent/60 px-2 py-0.5 text-[11px] text-accent-foreground">{r}</span>)}
                     </div>
                     <div className="mt-4 flex gap-2">
-                      <Button size="sm" className="flex-1" onClick={() => save.mutate({ property_id: p.id, score })}>Vormerken</Button>
+                      <Button size="sm" className="flex-1" onClick={() => save.mutate({ property_id: p.id, score, reasons })}>Vormerken</Button>
                       <Button size="sm" variant="outline" asChild><Link to="/properties/$id" params={{ id: p.id }}><ExternalLink className="h-4 w-4" /></Link></Button>
                     </div>
                   </CardContent>
