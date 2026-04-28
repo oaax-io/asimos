@@ -1,4 +1,4 @@
-export type PropertyType = "apartment" | "house" | "commercial" | "land" | "other";
+export type PropertyType = "apartment" | "house" | "commercial" | "land" | "parking" | "mixed_use" | "other";
 export type ListingType = "sale" | "rent";
 
 export const propertyTypeLabels: Record<PropertyType, string> = {
@@ -6,6 +6,8 @@ export const propertyTypeLabels: Record<PropertyType, string> = {
   house: "Haus",
   commercial: "Gewerbe",
   land: "Grundstück",
+  parking: "Parkplatz",
+  mixed_use: "Mischnutzung",
   other: "Sonstiges",
 };
 
