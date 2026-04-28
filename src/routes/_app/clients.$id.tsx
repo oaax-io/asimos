@@ -35,13 +35,15 @@ function ClientDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { data: client, isLoading } = useQuery({
+  const { data: client, isLoading, error: clientError, refetch } = useQuery({
     queryKey: ["client", id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("*").eq("id", id).single();
+      const { data, error } = await supabase.from("clients").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error("Kunde nicht gefunden");
       return data;
     },
+    retry: 2,
   });
 
   const { data: dossier } = useQuery({
@@ -110,7 +112,21 @@ function ClientDetail() {
     onError: (e: any) => toast.error(e.message ?? "Fehler beim Löschen"),
   });
 
-  if (isLoading || !client) return <div className="text-sm text-muted-foreground">Lädt…</div>;
+  if (isLoading) return <div className="text-sm text-muted-foreground">Lädt…</div>;
+  if (clientError || !client) {
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" asChild><Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link></Button>
+        <Card><CardContent className="p-6">
+          <h2 className="font-display text-lg font-semibold">Kunde konnte nicht geladen werden</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {(clientError as any)?.message ?? "Datenbank derzeit nicht erreichbar. Bitte gleich erneut versuchen."}
+          </p>
+          <Button className="mt-4" onClick={() => refetch()}><RefreshCw className="mr-1.5 h-4 w-4" />Erneut versuchen</Button>
+        </CardContent></Card>
+      </div>
+    );
+  }
 
   const isSeller = client.client_type === "seller" || client.client_type === "landlord";
   const upcoming = appointments.filter((a: any) => new Date(a.starts_at) >= new Date());
