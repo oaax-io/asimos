@@ -134,10 +134,8 @@ function Dashboard() {
         .select("id, score, status, reasons, client_id, property_id")
         .order("score", { ascending: false })
         .limit(5);
-      if (error) {
-        if (isBackendUnavailableError(error)) return [];
-        throw error;
-      }
+      // Wirft auch bei Backend-Unavailable -> globaler Retry mit Backoff greift.
+      if (error) throw error;
       const list = data ?? [];
       if (list.length === 0) return [];
       const clientIds = [...new Set(list.map((m: any) => m.client_id).filter(Boolean))];
