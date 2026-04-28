@@ -316,36 +316,17 @@ function ClientDetail() {
         <TabsContent value="matches" className="mt-6">
           <Card><CardContent className="p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-display text-lg font-semibold">Passende Objekte</h3>
-              <Button size="sm" asChild>
+              <div>
+                <h3 className="font-display text-lg font-semibold">Passende Objekte</h3>
+                <p className="text-xs text-muted-foreground">Auf Basis von Suchprofil, Budget, Lage und Eckdaten.</p>
+              </div>
+              <Button size="sm" variant="outline" asChild>
                 <Link to="/matching" search={{ clientId: id }}>
-                  <Target className="mr-1.5 h-4 w-4" />Matching öffnen
+                  <Target className="mr-1.5 h-4 w-4" />Matching-Übersicht
                 </Link>
               </Button>
             </div>
-            {matches.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Noch keine Matches. Starte das Matching, um passende Objekte zu finden.</p>
-            ) : (
-              <div className="space-y-2">
-                {matches.map((m: any) => (
-                  <Link
-                    key={m.id} to="/properties/$id" params={{ id: m.property_id }}
-                    className="flex items-center justify-between rounded-xl border p-4 transition hover:border-primary hover:shadow-glow"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium">{m.properties?.title ?? "Objekt"}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {m.properties?.city ?? "—"} · {m.properties?.price ? formatCurrency(Number(m.properties.price)) : "—"}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant="secondary">{Math.round(Number(m.score))}%</Badge>
-                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
+            <MatchPanel direction="client-to-property" client={client} />
           </CardContent></Card>
         </TabsContent>
 
