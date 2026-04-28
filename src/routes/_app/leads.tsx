@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,7 @@ function LeadsPage() {
 
     persistPendingLeads([item, ...pendingLeads]);
     return item;
-  }, [form, pendingLeads, persistPendingLeads]);
+  }, [pendingLeads, persistPendingLeads]);
 
   useEffect(() => {
     if (!pendingStorageKey) {
@@ -158,7 +158,16 @@ function LeadsPage() {
       qc.invalidateQueries({ queryKey: ["leads"] });
       setForm({ full_name: "", email: "", phone: "", source: "", notes: "" });
     },
-    onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
+    onError: (e: unknown) => {
+      if (isBackendUnavailableError(e)) {
+        enqueuePendingLead(form);
+        setForm({ full_name: "", email: "", phone: "", source: "", notes: "" });
+        toast.success("Lead lokal gespeichert und wird automatisch synchronisiert, sobald das Backend wieder stabil ist");
+        return;
+      }
+
+      toast.error(getBackendErrorMessage(e));
+    },
   });
 
   const updateStatus = useMutation({
@@ -218,6 +227,12 @@ function LeadsPage() {
         }
       />
 
+      {pendingLeads.length > 0 ? (
+        <div className="mb-4 rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+          {pendingLeads.length} Lead{pendingLeads.length === 1 ? " ist" : "s sind"} lokal zwischengespeichert und werden automatisch synchronisiert.
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
         {leadStatuses.map((status) => {
           const items = leads.filter((l) => l.status === status);
@@ -259,7 +274,7 @@ function LeadsPage() {
       </div>
       {error && isBackendUnavailableError(error) ? (
         <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-          Backend aktuell nicht erreichbar. Verbindung wird automatisch erneut aufgebaut.
+          Backend aktuell nicht erreichbar. Neue Leads werden lokal zwischengespeichert und später automatisch übertragen.
         </div>
       ) : null}
 
