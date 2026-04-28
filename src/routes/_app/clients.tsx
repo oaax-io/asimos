@@ -44,10 +44,13 @@ function ClientsPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      const { data: profile } = await supabase.from("profiles").select("agency_id").eq("id", user!.id).single();
+      if (!user) throw new Error("Nicht angemeldet");
+      if (!form.full_name.trim()) throw new Error("Name ist erforderlich");
+      const { data: profile, error: pErr } = await supabase.from("profiles").select("agency_id").eq("id", user.id).single();
+      if (pErr || !profile) throw new Error(pErr?.message || "Profil nicht gefunden");
       const { error } = await supabase.from("clients").insert({
-        agency_id: profile!.agency_id,
-        owner_id: user!.id,
+        agency_id: profile.agency_id,
+        owner_id: user.id,
         full_name: form.full_name,
         email: form.email || null,
         phone: form.phone || null,
