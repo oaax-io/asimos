@@ -244,7 +244,9 @@ function LeadsPage() {
   };
 
   return (
+    <>
     <Tabs defaultValue="list" className="w-full">
+
       <PageHeader
         title="Leads"
         description="Pipeline deiner Interessenten"
