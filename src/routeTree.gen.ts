@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as OaaxRouteImport } from './routes/oaax'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
@@ -26,6 +27,11 @@ import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$i
 import { Route as AppClientsIdRouteImport } from './routes/_app/clients.$id'
 import { Route as AppPropertiesIdExposeRouteImport } from './routes/_app/properties.$id.expose'
 
+const SetPasswordRoute = SetPasswordRouteImport.update({
+  id: '/set-password',
+  path: '/set-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OaaxRoute = OaaxRouteImport.update({
   id: '/oaax',
   path: '/oaax',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/oaax': typeof OaaxRoute
+  '/set-password': typeof SetPasswordRoute
   '/appointments': typeof AppAppointmentsRoute
   '/clients': typeof AppClientsRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/oaax': typeof OaaxRoute
+  '/set-password': typeof SetPasswordRoute
   '/appointments': typeof AppAppointmentsRoute
   '/clients': typeof AppClientsRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
@@ -146,6 +154,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/oaax': typeof OaaxRoute
+  '/set-password': typeof SetPasswordRoute
   '/_app/appointments': typeof AppAppointmentsRoute
   '/_app/clients': typeof AppClientsRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/oaax'
+    | '/set-password'
     | '/appointments'
     | '/clients'
     | '/dashboard'
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/oaax'
+    | '/set-password'
     | '/appointments'
     | '/clients'
     | '/dashboard'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/auth'
     | '/oaax'
+    | '/set-password'
     | '/_app/appointments'
     | '/_app/clients'
     | '/_app/dashboard'
@@ -219,11 +231,19 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   OaaxRoute: typeof OaaxRoute
+  SetPasswordRoute: typeof SetPasswordRoute
   FinanzierungTokenRoute: typeof FinanzierungTokenRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/set-password': {
+      id: '/set-password'
+      path: '/set-password'
+      fullPath: '/set-password'
+      preLoaderRoute: typeof SetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/oaax': {
       id: '/oaax'
       path: '/oaax'
@@ -394,8 +414,18 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   OaaxRoute: OaaxRoute,
+  SetPasswordRoute: SetPasswordRoute,
   FinanzierungTokenRoute: FinanzierungTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
