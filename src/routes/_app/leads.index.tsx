@@ -244,11 +244,16 @@ function LeadsPage() {
   };
 
   return (
-    <>
+    <Tabs defaultValue="list" className="w-full">
       <PageHeader
         title="Leads"
         description="Pipeline deiner Interessenten"
         action={
+          <>
+            <TabsList>
+              <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
+              <TabsTrigger value="kanban"><LayoutGrid className="mr-1 h-4 w-4" />Kanban</TabsTrigger>
+            </TabsList>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Neuer Lead</Button></DialogTrigger>
             <DialogContent>
@@ -280,11 +285,12 @@ function LeadsPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </>
         }
       />
 
-      {/* Filters */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      {/* Filters – direkt über der Liste */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1 max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder="Suchen (Name, E-Mail, Telefon)…" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -398,11 +404,6 @@ function LeadsPage() {
         </div>
       )}
 
-      <Tabs defaultValue="list" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
-          <TabsTrigger value="kanban"><LayoutGrid className="mr-1 h-4 w-4" />Kanban</TabsTrigger>
-        </TabsList>
 
         <TabsContent value="list">
           <div className="rounded-xl border bg-card">
@@ -543,14 +544,13 @@ function LeadsPage() {
             })}
           </div>
         </TabsContent>
-      </Tabs>
 
       {showError ? (
         <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           {queryErrorMessage}
         </div>
       ) : null}
-    </>
+    </Tabs>
   );
 }
 
