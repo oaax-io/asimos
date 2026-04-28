@@ -33,7 +33,7 @@ function TeamPage() {
     email: "",
     phone: "",
     password: "",
-    role: "member" as (typeof ROLES)[number],
+    role: "agent" as (typeof ROLES)[number],
   });
 
   const meQuery = useQuery({
@@ -46,7 +46,7 @@ function TeamPage() {
     enabled: !!user,
   });
 
-  const canManage = isSuperadmin || meQuery.data?.role === "owner" || meQuery.data?.role === "admin";
+  const canManage = isSuperadmin || meQuery.data?.role === "owner";
 
   const teamQuery = useQuery({
     queryKey: ["team", meQuery.data?.agency_id],
@@ -80,7 +80,7 @@ function TeamPage() {
     },
     onSuccess: () => {
       toast.success("Mitarbeiter angelegt");
-      setForm({ full_name: "", email: "", phone: "", password: "", role: "member" });
+      setForm({ full_name: "", email: "", phone: "", password: "", role: "agent" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["team"] });
     },
