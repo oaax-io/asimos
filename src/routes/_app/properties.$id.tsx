@@ -729,7 +729,7 @@ function MatchingTab({ propertyId }: { propertyId: string }) {
     return <EmptyState
       title="Noch keine Matches"
       description="Sobald passende Suchprofile vorhanden sind, erscheinen hier Vorschläge."
-      action={<Button asChild variant="outline"><Link to="/matching">Matching öffnen</Link></Button>}
+      action={<Button asChild variant="outline"><Link to="/matching" search={{ clientId: "" }}>Matching öffnen</Link></Button>}
     />;
   }
 
