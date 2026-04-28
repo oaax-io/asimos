@@ -69,13 +69,42 @@ export function ClientSelfDisclosureTab({ clientId }: Props) {
   const { data, isLoading } = useQuery({
     queryKey: ["client_self_disclosure", clientId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: disc, error } = await supabase
         .from("client_self_disclosures")
         .select("*")
         .eq("client_id", clientId)
         .maybeSingle();
       if (error) throw error;
-      return (data ?? null) as DisclosureRow | null;
+
+      // Prefill aus clients, wenn noch keine Selbstauskunft existiert
+      if (!disc) {
+        const { data: client } = await supabase
+          .from("clients")
+          .select("full_name, email, phone, address, postal_code, city, country")
+          .eq("id", clientId)
+          .maybeSingle();
+        if (client) {
+          const parts = (client.full_name ?? "").trim().split(/\s+/);
+          const first = parts.length > 1 ? parts.slice(0, -1).join(" ") : (parts[0] ?? "");
+          const last = parts.length > 1 ? parts[parts.length - 1] : "";
+          const addr = (client.address ?? "").trim();
+          const m = addr.match(/^(.*?)(\s+\d+\w?)$/);
+          const street = m ? m[1].trim() : addr;
+          const street_number = m ? m[2].trim() : "";
+          return {
+            first_name: first,
+            last_name: last,
+            email: client.email ?? "",
+            phone: client.phone ?? "",
+            street,
+            street_number,
+            postal_code: client.postal_code ?? "",
+            city: client.city ?? "",
+            country: client.country ?? "CH",
+          } as DisclosureRow;
+        }
+      }
+      return (disc ?? null) as DisclosureRow | null;
     },
   });
 
