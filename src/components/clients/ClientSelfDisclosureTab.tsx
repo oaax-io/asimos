@@ -87,7 +87,10 @@ export function ClientSelfDisclosureTab({ clientId }: Props) {
 
   const set = (k: string, v: unknown) => setForm((p) => ({ ...p, [k]: v }));
 
-  const benchmark = useMemo(() => calculateBenchmark(form), [form]);
+  const benchmark = useMemo(
+    () => calculateBenchmark(form as Record<string, number | string | null>),
+    [form],
+  );
 
   const save = useMutation({
     mutationFn: async () => {
