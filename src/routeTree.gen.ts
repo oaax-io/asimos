@@ -13,6 +13,7 @@ import { Route as OaaxRouteImport } from './routes/oaax'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FinanzierungTokenRouteImport } from './routes/finanzierung.$token'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppMatchingRouteImport } from './routes/_app/matching'
 import { Route as AppLeadsRouteImport } from './routes/_app/leads'
@@ -21,6 +22,7 @@ import { Route as AppClientsRouteImport } from './routes/_app/clients'
 import { Route as AppAppointmentsRouteImport } from './routes/_app/appointments'
 import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties.index'
 import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
+import { Route as AppClientsIdRouteImport } from './routes/_app/clients.$id'
 import { Route as AppPropertiesIdExposeRouteImport } from './routes/_app/properties.$id.expose'
 
 const OaaxRoute = OaaxRouteImport.update({
@@ -40,6 +42,11 @@ const AppRoute = AppRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FinanzierungTokenRoute = FinanzierungTokenRouteImport.update({
+  id: '/finanzierung/$token',
+  path: '/finanzierung/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
@@ -82,6 +89,11 @@ const AppPropertiesIdRoute = AppPropertiesIdRouteImport.update({
   path: '/properties/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppClientsIdRoute = AppClientsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppClientsRoute,
+} as any)
 const AppPropertiesIdExposeRoute = AppPropertiesIdExposeRouteImport.update({
   id: '/expose',
   path: '/expose',
@@ -93,11 +105,13 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/oaax': typeof OaaxRoute
   '/appointments': typeof AppAppointmentsRoute
-  '/clients': typeof AppClientsRoute
+  '/clients': typeof AppClientsRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/leads': typeof AppLeadsRoute
   '/matching': typeof AppMatchingRoute
   '/settings': typeof AppSettingsRoute
+  '/finanzierung/$token': typeof FinanzierungTokenRoute
+  '/clients/$id': typeof AppClientsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/properties/': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -107,11 +121,13 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/oaax': typeof OaaxRoute
   '/appointments': typeof AppAppointmentsRoute
-  '/clients': typeof AppClientsRoute
+  '/clients': typeof AppClientsRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/leads': typeof AppLeadsRoute
   '/matching': typeof AppMatchingRoute
   '/settings': typeof AppSettingsRoute
+  '/finanzierung/$token': typeof FinanzierungTokenRoute
+  '/clients/$id': typeof AppClientsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/properties': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -123,11 +139,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/oaax': typeof OaaxRoute
   '/_app/appointments': typeof AppAppointmentsRoute
-  '/_app/clients': typeof AppClientsRoute
+  '/_app/clients': typeof AppClientsRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/leads': typeof AppLeadsRoute
   '/_app/matching': typeof AppMatchingRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/finanzierung/$token': typeof FinanzierungTokenRoute
+  '/_app/clients/$id': typeof AppClientsIdRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/_app/properties/': typeof AppPropertiesIndexRoute
   '/_app/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -144,6 +162,8 @@ export interface FileRouteTypes {
     | '/leads'
     | '/matching'
     | '/settings'
+    | '/finanzierung/$token'
+    | '/clients/$id'
     | '/properties/$id'
     | '/properties/'
     | '/properties/$id/expose'
@@ -158,6 +178,8 @@ export interface FileRouteTypes {
     | '/leads'
     | '/matching'
     | '/settings'
+    | '/finanzierung/$token'
+    | '/clients/$id'
     | '/properties/$id'
     | '/properties'
     | '/properties/$id/expose'
@@ -173,6 +195,8 @@ export interface FileRouteTypes {
     | '/_app/leads'
     | '/_app/matching'
     | '/_app/settings'
+    | '/finanzierung/$token'
+    | '/_app/clients/$id'
     | '/_app/properties/$id'
     | '/_app/properties/'
     | '/_app/properties/$id/expose'
@@ -183,6 +207,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   OaaxRoute: typeof OaaxRoute
+  FinanzierungTokenRoute: typeof FinanzierungTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -213,6 +238,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/finanzierung/$token': {
+      id: '/finanzierung/$token'
+      path: '/finanzierung/$token'
+      fullPath: '/finanzierung/$token'
+      preLoaderRoute: typeof FinanzierungTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/settings': {
@@ -271,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPropertiesIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/clients/$id': {
+      id: '/_app/clients/$id'
+      path: '/$id'
+      fullPath: '/clients/$id'
+      preLoaderRoute: typeof AppClientsIdRouteImport
+      parentRoute: typeof AppClientsRoute
+    }
     '/_app/properties/$id/expose': {
       id: '/_app/properties/$id/expose'
       path: '/expose'
@@ -280,6 +319,18 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AppClientsRouteChildren {
+  AppClientsIdRoute: typeof AppClientsIdRoute
+}
+
+const AppClientsRouteChildren: AppClientsRouteChildren = {
+  AppClientsIdRoute: AppClientsIdRoute,
+}
+
+const AppClientsRouteWithChildren = AppClientsRoute._addFileChildren(
+  AppClientsRouteChildren,
+)
 
 interface AppPropertiesIdRouteChildren {
   AppPropertiesIdExposeRoute: typeof AppPropertiesIdExposeRoute
@@ -295,7 +346,7 @@ const AppPropertiesIdRouteWithChildren = AppPropertiesIdRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAppointmentsRoute: typeof AppAppointmentsRoute
-  AppClientsRoute: typeof AppClientsRoute
+  AppClientsRoute: typeof AppClientsRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppLeadsRoute: typeof AppLeadsRoute
   AppMatchingRoute: typeof AppMatchingRoute
@@ -306,7 +357,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAppointmentsRoute: AppAppointmentsRoute,
-  AppClientsRoute: AppClientsRoute,
+  AppClientsRoute: AppClientsRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppLeadsRoute: AppLeadsRoute,
   AppMatchingRoute: AppMatchingRoute,
@@ -322,6 +373,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   OaaxRoute: OaaxRoute,
+  FinanzierungTokenRoute: FinanzierungTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
