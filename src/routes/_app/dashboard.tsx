@@ -268,7 +268,7 @@ function Dashboard() {
             Matching-Vorschläge
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/matching">Alle <ArrowRight className="ml-1 h-3 w-3" /></Link>
+            <Link to="/matching" search={{ clientId: "" }}>Alle <ArrowRight className="ml-1 h-3 w-3" /></Link>
           </Button>
         </CardHeader>
         <CardContent>
