@@ -29,14 +29,23 @@ function LeadsPage() {
 
   const { data: leads = [], error, isLoading } = useQuery({
     queryKey: ["leads"],
-    queryFn: async () => (await getLeads()) as Lead[],
+    queryFn: async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Nicht angemeldet");
+      return (await getLeads({ data: { accessToken } })) as Lead[];
+    },
     refetchOnReconnect: true,
   });
 
   const create = useMutation({
     mutationFn: async () => {
       if (!form.full_name.trim()) throw new Error("Name ist erforderlich");
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Nicht angemeldet");
       return addLead({ data: {
+        accessToken,
         full_name: form.full_name.trim(),
         email: form.email.trim() || null,
         phone: form.phone.trim() || null,
