@@ -236,57 +236,37 @@ function ClientDetail() {
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="matches">
-            <Target className="mr-1.5 h-4 w-4" />Matches
-            {matches.length > 0 && <Badge variant="secondary" className="ml-2">{matches.length}</Badge>}
+          <TabsTrigger value="consulting">
+            <MessageSquare className="mr-1.5 h-4 w-4" />Beratung & Aktivität
+            {appointments.length > 0 && (
+              <Badge variant="secondary" className="ml-2">{appointments.length}</Badge>
+            )}
           </TabsTrigger>
-          <TabsTrigger value="appointments">
-            <Calendar className="mr-1.5 h-4 w-4" />Termine
-            {appointments.length > 0 && <Badge variant="secondary" className="ml-2">{appointments.length}</Badge>}
-          </TabsTrigger>
-          {isSeller && (
-            <TabsTrigger value="properties">
-              <Building2 className="mr-1.5 h-4 w-4" />Objekte
-              {ownProperties.length > 0 && <Badge variant="secondary" className="ml-2">{ownProperties.length}</Badge>}
-            </TabsTrigger>
-          )}
           <TabsTrigger value="financing">
-            <FileSignature className="mr-1.5 h-4 w-4" />Finanzierung
-            {dossier && <Badge variant="secondary" className="ml-2">{dossier.completion_percent}%</Badge>}
+            <FileSignature className="mr-1.5 h-4 w-4" />Finanzierung & Selbstauskunft
+            {dossier && (
+              <Badge variant="secondary" className="ml-2">{dossier.completion_percent}%</Badge>
+            )}
           </TabsTrigger>
-          <TabsTrigger value="disclosure">
-            <ClipboardList className="mr-1.5 h-4 w-4" />Selbstauskunft
-            {benchmark && <Badge variant="secondary" className="ml-2">{Math.round(benchmark.reserveRatio)}%</Badge>}
+          <TabsTrigger value="search">
+            <Target className="mr-1.5 h-4 w-4" />Suchprofil & Matching
+            {matches.length > 0 && (
+              <Badge variant="secondary" className="ml-2">{matches.length}</Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="relationships">
             <Heart className="mr-1.5 h-4 w-4" />Beziehungen
           </TabsTrigger>
-          <TabsTrigger value="tasks"><CheckSquare className="mr-1.5 h-4 w-4" />Aufgaben</TabsTrigger>
-          <TabsTrigger value="documents"><FileText className="mr-1.5 h-4 w-4" />Dokumente</TabsTrigger>
-          <TabsTrigger value="activity"><Activity className="mr-1.5 h-4 w-4" />Notizen/Aktivität</TabsTrigger>
+          <TabsTrigger value="documents">
+            <FileText className="mr-1.5 h-4 w-4" />Dokumente
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="disclosure" className="mt-6">
-          <ClientSelfDisclosureTab clientId={id} />
-        </TabsContent>
-        <TabsContent value="relationships" className="mt-6">
-          <ClientRelationshipsTab clientId={id} />
-        </TabsContent>
-        <TabsContent value="tasks" className="mt-6">
-          <ClientTasksTab clientId={id} userId={user!.id} />
-        </TabsContent>
-        <TabsContent value="documents" className="mt-6">
-          <ClientDocumentsTab clientId={id} userId={user!.id} />
-        </TabsContent>
-        <TabsContent value="activity" className="mt-6">
-          <ClientActivityTab clientId={id} userId={user!.id} notes={client.notes} />
-        </TabsContent>
-
-        {/* Übersicht */}
+        {/* 1. Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
-          {benchmark ? <BenchmarkCard benchmark={benchmark} /> : <BenchmarkPlaceholder />}
+          <BenchmarkOrPlaceholder benchmark={benchmark} />
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardContent className="p-6">
@@ -325,7 +305,6 @@ function ClientDetail() {
             </Card>
           </div>
 
-          {/* Nächster Termin */}
           {upcoming.length > 0 && (
             <Card>
               <CardContent className="p-6">
@@ -336,8 +315,102 @@ function ClientDetail() {
           )}
         </TabsContent>
 
-        {/* Matches */}
-        <TabsContent value="matches" className="mt-6">
+        {/* 2. Beratung & Aktivität */}
+        <TabsContent value="consulting" className="mt-6">
+          <Tabs defaultValue="appointments">
+            <TabsList>
+              <TabsTrigger value="appointments">
+                <Calendar className="mr-1.5 h-4 w-4" />Termine
+              </TabsTrigger>
+              <TabsTrigger value="tasks">
+                <CheckSquare className="mr-1.5 h-4 w-4" />Aufgaben
+              </TabsTrigger>
+              <TabsTrigger value="activity">
+                <Activity className="mr-1.5 h-4 w-4" />Notizen & Aktivität
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="appointments" className="mt-4 space-y-4">
+              <Card><CardContent className="p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="font-display text-lg font-semibold">Termine</h3>
+                  <NewAppointmentButton clientId={id} userId={user!.id}
+                    onCreated={() => qc.invalidateQueries({ queryKey: ["client_appointments", id] })} />
+                </div>
+                {appointments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Noch keine Termine. Lege den ersten Termin an.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {upcoming.length > 0 && (
+                      <div>
+                        <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Bevorstehend</p>
+                        <div className="space-y-2">
+                          {upcoming.map((a: any) => <AppointmentRow key={a.id} appt={a} />)}
+                        </div>
+                      </div>
+                    )}
+                    {past.length > 0 && (
+                      <div>
+                        <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Vergangen</p>
+                        <div className="space-y-2">
+                          {past.map((a: any) => <AppointmentRow key={a.id} appt={a} />)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent></Card>
+            </TabsContent>
+            <TabsContent value="tasks" className="mt-4">
+              <ClientTasksTab clientId={id} userId={user!.id} />
+            </TabsContent>
+            <TabsContent value="activity" className="mt-4">
+              <ClientActivityTab clientId={id} userId={user!.id} notes={client.notes} />
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
+
+        {/* 3. Finanzierung & Selbstauskunft */}
+        <TabsContent value="financing" className="mt-6">
+          <div className="space-y-4">
+            <BenchmarkOrPlaceholder benchmark={benchmark} compact />
+            <Tabs defaultValue="disclosure">
+              <TabsList>
+                <TabsTrigger value="disclosure">
+                  <ClipboardList className="mr-1.5 h-4 w-4" />Selbstauskunft
+                </TabsTrigger>
+                <TabsTrigger value="dossier">
+                  <FileSignature className="mr-1.5 h-4 w-4" />Finanzierungs-Dossier
+                  {dossier && (
+                    <Badge variant="secondary" className="ml-2">{dossier.completion_percent}%</Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="disclosure" className="mt-4 space-y-4">
+                <SelfDisclosureLinkCard
+                  clientId={id}
+                  clientEmail={client.email}
+                  userId={user!.id}
+                />
+                <ClientSelfDisclosureTab clientId={id} />
+              </TabsContent>
+              <TabsContent value="dossier" className="mt-4">
+                <FinancingTab
+                  clientId={id}
+                  userId={user!.id}
+                  dossier={dossier}
+                  links={links}
+                  onChange={() => {
+                    qc.invalidateQueries({ queryKey: ["financing_dossier", id] });
+                    qc.invalidateQueries({ queryKey: ["financing_links"] });
+                  }}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </TabsContent>
+
+        {/* 4. Suchprofil & Matching */}
+        <TabsContent value="search" className="mt-6 space-y-4">
           <Card><CardContent className="p-6">
             <div className="mb-4 flex items-center justify-between">
               <div>
@@ -350,46 +423,15 @@ function ClientDetail() {
                 </Link>
               </Button>
             </div>
-            <MatchPanel direction="client-to-property" client={client} />
-          </CardContent></Card>
-        </TabsContent>
-
-        {/* Termine */}
-        <TabsContent value="appointments" className="mt-6 space-y-4">
-          <Card><CardContent className="p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-display text-lg font-semibold">Termine</h3>
-              <NewAppointmentButton clientId={id} userId={user!.id}
-                onCreated={() => qc.invalidateQueries({ queryKey: ["client_appointments", id] })} />
-            </div>
-            {appointments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Noch keine Termine. Lege den ersten Termin an.</p>
-            ) : (
-              <div className="space-y-4">
-                {upcoming.length > 0 && (
-                  <div>
-                    <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Bevorstehend</p>
-                    <div className="space-y-2">
-                      {upcoming.map((a: any) => <AppointmentRow key={a.id} appt={a} />)}
-                    </div>
-                  </div>
-                )}
-                {past.length > 0 && (
-                  <div>
-                    <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Vergangen</p>
-                    <div className="space-y-2">
-                      {past.map((a: any) => <AppointmentRow key={a.id} appt={a} />)}
-                    </div>
-                  </div>
-                )}
+            {benchmark && (benchmark.status === "tight" || benchmark.status === "critical") && (
+              <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+                Hinweis: Finanz-Benchmark ist «{benchmark.status === "tight" ? "knapp" : "kritisch"}». Tragfähigkeit vor Vermittlung prüfen.
               </div>
             )}
+            <MatchPanel direction="client-to-property" client={client} />
           </CardContent></Card>
-        </TabsContent>
 
-        {/* Eigene Objekte (Verkäufer/Vermieter) */}
-        {isSeller && (
-          <TabsContent value="properties" className="mt-6">
+          {isSeller && (
             <Card><CardContent className="p-6">
               <h3 className="mb-4 font-display text-lg font-semibold">Eigene Objekte</h3>
               {ownProperties.length === 0 ? (
@@ -412,24 +454,53 @@ function ClientDetail() {
                 </div>
               )}
             </CardContent></Card>
-          </TabsContent>
-        )}
+          )}
+        </TabsContent>
 
-        {/* Finanzierung */}
-        <TabsContent value="financing" className="mt-6">
-          <FinancingTab
-            clientId={id}
-            userId={user!.id}
-            dossier={dossier}
-            links={links}
-            onChange={() => {
-              qc.invalidateQueries({ queryKey: ["financing_dossier", id] });
-              qc.invalidateQueries({ queryKey: ["financing_links"] });
-            }}
-          />
+        {/* 5. Beziehungen */}
+        <TabsContent value="relationships" className="mt-6">
+          <ClientRelationshipsTab clientId={id} />
+        </TabsContent>
+
+        {/* 6. Dokumente */}
+        <TabsContent value="documents" className="mt-6">
+          <ClientDocumentsTab clientId={id} userId={user!.id} />
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function BenchmarkOrPlaceholder({
+  benchmark,
+  compact,
+}: {
+  benchmark: any;
+  compact?: boolean;
+}) {
+  if (benchmark) {
+    return <BenchmarkCard benchmark={benchmark} variant={compact ? "compact" : "full"} />;
+  }
+  return (
+    <Card className="border-dashed">
+      <CardContent className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <ClipboardList className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="font-medium">Finanz-Benchmark noch leer</p>
+            <p className="text-sm text-muted-foreground">
+              Selbstauskunft erfassen – die Reservequote wird live berechnet.
+            </p>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground sm:text-right">
+          Wechsle zum Tab «Finanzierung & Selbstauskunft»,<br className="hidden sm:inline" />
+          um Einnahmen und Ausgaben zu erfassen oder einen externen Link zu senden.
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
