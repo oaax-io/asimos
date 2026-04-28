@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
+import { getBackendErrorMessage, isBackendUnavailableError } from "@/lib/backend-errors";
 import { toast } from "sonner";
 import { clientTypeLabels, formatCurrency, propertyTypeLabels } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
@@ -33,7 +34,7 @@ function ClientsPage() {
     preferred_cities: "", preferred_types: [] as string[], preferred_listing: "sale" as "sale" | "rent",
   });
 
-  const { data: clients = [] } = useQuery({
+  const { data: clients = [], error, isLoading } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
@@ -71,7 +72,7 @@ function ClientsPage() {
       qc.invalidateQueries({ queryKey: ["clients"] });
       setOpen(false);
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
   });
 
   const filtered = clients.filter(c =>
@@ -150,7 +151,17 @@ function ClientsPage() {
         <Input className="pl-9" placeholder="Kunden suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
-      {filtered.length === 0 ? (
+      {error && isBackendUnavailableError(error) ? (
+        <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+          Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden neu laden oder erneut speichern.
+        </div>
+      ) : null}
+
+      {!error && isLoading ? (
+        <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">Kunden werden geladen…</div>
+      ) : null}
+
+      {filtered.length === 0 && !error && !isLoading ? (
         <EmptyState title="Noch keine Kunden" description="Lege deinen ersten Kunden an, um Suchprofile zu erfassen und Matches zu erhalten." />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
