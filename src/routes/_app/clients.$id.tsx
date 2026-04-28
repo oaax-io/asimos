@@ -23,6 +23,7 @@ import {
 } from "@/lib/format";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { MatchPanel } from "@/components/matching/MatchPanel";
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetail });
 
