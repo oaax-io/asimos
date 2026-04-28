@@ -48,7 +48,10 @@ function ClientsPage() {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
-      return await getClients({ headers: { authorization: `Bearer ${accessToken}` } });
+      const result = await getClients({ headers: { authorization: `Bearer ${accessToken}` } });
+      // Backend-Unavailable als Fehler werfen, damit der QueryClient retryed.
+      if (result.unavailable) throw new Error(result.error ?? "Backend aktuell nicht erreichbar");
+      return result;
     },
   });
 
