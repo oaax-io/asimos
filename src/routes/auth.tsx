@@ -17,7 +17,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 const signinSchema = z.object({
-  email: z.string().email("Ungültige E-Mail"),
+  email: z.string().trim().email("Ungültige E-Mail").transform((value) => value.toLowerCase()),
   password: z.string().min(6, "Mindestens 6 Zeichen"),
 });
 
@@ -40,7 +40,7 @@ function AuthPage() {
     try {
       const r = signinSchema.safeParse(form);
       if (!r.success) { toast.error(r.error.issues[0].message); return; }
-      const { error } = await signIn(form.email, form.password);
+      const { error } = await signIn(r.data.email, form.password);
       if (error) { toast.error(error); return; }
     } finally { setLoading(false); }
   };
@@ -61,6 +61,10 @@ function AuthPage() {
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               placeholder="mail@asimo.ch"
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               className="mt-1 border-white bg-white text-foreground placeholder:text-muted-foreground focus-visible:ring-white"
             />
           </div>
