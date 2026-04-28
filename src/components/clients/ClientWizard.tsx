@@ -158,7 +158,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       const owner_id = userData.user?.id ?? null;
 
       // 1) Insert client
-      const { data: client, error: clientErr } = await supabase.from("clients").insert({
+      const clientPayload: any = {
         full_name: fullName,
         email: form.email || null,
         phone: form.phone || form.mobile || null,
