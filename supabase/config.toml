@@ -2,3 +2,6 @@ project_id = "zawkhtkyaucsrhqqlviv"
 
 [functions.admin-create-user]
 verify_jwt = true
+
+[functions.team-create-member]
+verify_jwt = true
