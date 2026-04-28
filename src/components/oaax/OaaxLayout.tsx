@@ -134,13 +134,15 @@ function OaaxSidebar({ collapsed, setCollapsed, activeTab, activeHash }: { colla
               </div>
             )}
             {group.items.map((item) => {
-              const isActive =
-                item.end ? activeTab === item.to : activeTab.startsWith(item.to);
+              const isActive = item.hash
+                ? activeTab === item.to && activeHash === item.hash
+                : activeTab === item.to;
               const Icon = item.icon;
               return (
                 <Link
-                  key={item.to}
+                  key={`${item.to}-${item.hash ?? ""}`}
                   to={item.to}
+                  hash={item.hash}
                   title={collapsed ? item.label : undefined}
                   style={{
                     display: "flex", alignItems: "center",
