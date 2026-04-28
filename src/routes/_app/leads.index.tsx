@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { leadStatusLabels, leadStatuses, type LeadStatus } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
-import { getBackendErrorMessage, isBackendUnavailableError } from "@/lib/backend-errors";
+import { getBackendErrorMessage, isBackendUnavailableError, throwIfError, unwrapServerResult } from "@/lib/backend-errors";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import { addLead, getLeads } from "@/server/crm.functions";
