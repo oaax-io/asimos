@@ -34,7 +34,7 @@ function ClientsPage() {
     preferred_cities: "", preferred_types: [] as string[], preferred_listing: "sale" as "sale" | "rent",
   });
 
-  const { data: clients = [], error, isLoading } = useQuery({
+  const clientsQuery = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -44,13 +44,17 @@ function ClientsPage() {
     },
   });
 
+  const clients = clientsQuery.data?.data ?? [];
+  const queryUnavailable = clientsQuery.data?.unavailable ?? false;
+  const queryErrorMessage = clientsQuery.data?.error ?? null;
+
   const create = useMutation({
     mutationFn: async () => {
       if (!form.full_name.trim()) throw new Error("Name ist erforderlich");
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
-      return addClient({
+      const result = await addClient({
         headers: { authorization: `Bearer ${accessToken}` },
         data: {
           full_name: form.full_name,
@@ -67,6 +71,16 @@ function ClientsPage() {
           preferred_listing: form.preferred_listing,
         },
       });
+
+      if (result.error || !result.data) {
+        const mutationError = new Error(result.error ?? "Es ist ein unerwarteter Fehler aufgetreten.");
+        if (result.unavailable) {
+          (mutationError as Error & { status?: number }).status = 503;
+        }
+        throw mutationError;
+      }
+
+      return result.data;
     },
     onSuccess: () => {
       toast.success("Kunde erstellt");
@@ -76,7 +90,7 @@ function ClientsPage() {
     onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
   });
 
-  const filtered = clients.filter(c =>
+  const filtered = clients.filter((c) =>
     !search || c.full_name.toLowerCase().includes(search.toLowerCase()) ||
     c.email?.toLowerCase().includes(search.toLowerCase())
   );
@@ -152,17 +166,17 @@ function ClientsPage() {
         <Input className="pl-9" placeholder="Kunden suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
-      {error && isBackendUnavailableError(error) ? (
+      {queryUnavailable || (clientsQuery.error && isBackendUnavailableError(clientsQuery.error)) ? (
         <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-          Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden neu laden oder erneut speichern.
+          {queryErrorMessage ?? "Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden neu laden oder erneut speichern."}
         </div>
       ) : null}
 
-      {!error && isLoading ? (
+      {!clientsQuery.error && clientsQuery.isLoading ? (
         <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">Kunden werden geladen…</div>
       ) : null}
 
-      {filtered.length === 0 && !error && !isLoading ? (
+      {filtered.length === 0 && !clientsQuery.error && !clientsQuery.isLoading ? (
         <EmptyState title="Noch keine Kunden" description="Lege deinen ersten Kunden an, um Suchprofile zu erfassen und Matches zu erhalten." />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
