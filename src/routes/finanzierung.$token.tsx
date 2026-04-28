@@ -392,7 +392,7 @@ function FinancingSection({ data, onChange }: { data: any; onChange: (k: string,
                     />
                   </td>
                   <td className="p-2 text-right text-xs text-muted-foreground">
-                    {c.pct((c.equity as any)[r.key.replace("equity", "").charAt(0).toLowerCase() + r.key.replace("equity", "").slice(1)] ?? 0).toFixed(0)}%
+                    {c.pct(Number(data?.[r.key]) || 0).toFixed(0)}%
                   </td>
                 </tr>
               ))}
