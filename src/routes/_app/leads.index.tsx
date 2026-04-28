@@ -183,10 +183,64 @@ function LeadsPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // ----- Bulk-Aktionen -----
+  const bulkAssign = useMutation({
+    mutationFn: async ({ ids, assignedTo }: { ids: string[]; assignedTo: string | null }) => {
+      const { error } = await supabase.from("leads").update({ assigned_to: assignedTo }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(`${vars.ids.length} Lead(s) zugewiesen`);
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      clearSelection();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const bulkStatus = useMutation({
+    mutationFn: async ({ ids, status }: { ids: string[]; status: LeadStatus }) => {
+      const { error } = await supabase.from("leads").update({ status }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(`Status für ${vars.ids.length} Lead(s) geändert`);
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      clearSelection();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const bulkDelete = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("leads").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, ids) => {
+      toast.success(`${ids.length} Lead(s) gelöscht`);
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      clearSelection();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const employeeName = (id: string | null) => {
     if (!id) return "—";
     const p = employeeMap.get(id);
     return p?.full_name ?? p?.email ?? "—";
+  };
+
+  // Auswahl auf gefilterte Leads beschränken
+  const filteredIds = useMemo(() => filtered.map((l) => l.id), [filtered]);
+  const selectedInView = filteredIds.filter((id) => selected.has(id));
+  const allSelected = filteredIds.length > 0 && selectedInView.length === filteredIds.length;
+  const someSelected = selectedInView.length > 0 && !allSelected;
+  const toggleAll = () => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allSelected) filteredIds.forEach((id) => next.delete(id));
+      else filteredIds.forEach((id) => next.add(id));
+      return next;
+    });
   };
 
   return (
