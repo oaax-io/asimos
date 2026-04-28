@@ -20,6 +20,7 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppMatchingRouteImport } from './routes/_app/matching'
 import { Route as AppLeadsRouteImport } from './routes/_app/leads'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppClientsRouteImport } from './routes/_app/clients'
 import { Route as AppAppointmentsRouteImport } from './routes/_app/appointments'
 import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties.index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
@@ -81,6 +82,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppClientsRoute = AppClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAppointmentsRoute = AppAppointmentsRouteImport.update({
   id: '/appointments',
   path: '/appointments',
@@ -92,9 +98,9 @@ const AppPropertiesIndexRoute = AppPropertiesIndexRouteImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 const AppClientsIndexRoute = AppClientsIndexRouteImport.update({
-  id: '/clients/',
-  path: '/clients/',
-  getParentRoute: () => AppRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppClientsRoute,
 } as any)
 const AppPropertiesIdRoute = AppPropertiesIdRouteImport.update({
   id: '/properties/$id',
@@ -102,9 +108,9 @@ const AppPropertiesIdRoute = AppPropertiesIdRouteImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 const AppClientsIdRoute = AppClientsIdRouteImport.update({
-  id: '/clients/$id',
-  path: '/clients/$id',
-  getParentRoute: () => AppRoute,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppClientsRoute,
 } as any)
 const AppPropertiesIdExposeRoute = AppPropertiesIdExposeRouteImport.update({
   id: '/expose',
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/oaax': typeof OaaxRoute
   '/set-password': typeof SetPasswordRoute
   '/appointments': typeof AppAppointmentsRoute
+  '/clients': typeof AppClientsRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
   '/leads': typeof AppLeadsRoute
   '/matching': typeof AppMatchingRoute
@@ -156,6 +163,7 @@ export interface FileRoutesById {
   '/oaax': typeof OaaxRoute
   '/set-password': typeof SetPasswordRoute
   '/_app/appointments': typeof AppAppointmentsRoute
+  '/_app/clients': typeof AppClientsRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/leads': typeof AppLeadsRoute
   '/_app/matching': typeof AppMatchingRoute
@@ -176,6 +184,7 @@ export interface FileRouteTypes {
     | '/oaax'
     | '/set-password'
     | '/appointments'
+    | '/clients'
     | '/dashboard'
     | '/leads'
     | '/matching'
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/oaax'
     | '/set-password'
     | '/_app/appointments'
+    | '/_app/clients'
     | '/_app/dashboard'
     | '/_app/leads'
     | '/_app/matching'
@@ -314,6 +324,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/clients': {
+      id: '/_app/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof AppClientsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/appointments': {
       id: '/_app/appointments'
       path: '/appointments'
@@ -330,10 +347,10 @@ declare module '@tanstack/react-router' {
     }
     '/_app/clients/': {
       id: '/_app/clients/'
-      path: '/clients'
+      path: '/'
       fullPath: '/clients/'
       preLoaderRoute: typeof AppClientsIndexRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppClientsRoute
     }
     '/_app/properties/$id': {
       id: '/_app/properties/$id'
@@ -344,10 +361,10 @@ declare module '@tanstack/react-router' {
     }
     '/_app/clients/$id': {
       id: '/_app/clients/$id'
-      path: '/clients/$id'
+      path: '/$id'
       fullPath: '/clients/$id'
       preLoaderRoute: typeof AppClientsIdRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppClientsRoute
     }
     '/_app/properties/$id/expose': {
       id: '/_app/properties/$id/expose'
@@ -358,6 +375,20 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AppClientsRouteChildren {
+  AppClientsIdRoute: typeof AppClientsIdRoute
+  AppClientsIndexRoute: typeof AppClientsIndexRoute
+}
+
+const AppClientsRouteChildren: AppClientsRouteChildren = {
+  AppClientsIdRoute: AppClientsIdRoute,
+  AppClientsIndexRoute: AppClientsIndexRoute,
+}
+
+const AppClientsRouteWithChildren = AppClientsRoute._addFileChildren(
+  AppClientsRouteChildren,
+)
 
 interface AppPropertiesIdRouteChildren {
   AppPropertiesIdExposeRoute: typeof AppPropertiesIdExposeRoute
@@ -373,27 +404,25 @@ const AppPropertiesIdRouteWithChildren = AppPropertiesIdRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppAppointmentsRoute: typeof AppAppointmentsRoute
+  AppClientsRoute: typeof AppClientsRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
   AppLeadsRoute: typeof AppLeadsRoute
   AppMatchingRoute: typeof AppMatchingRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTeamRoute: typeof AppTeamRoute
-  AppClientsIdRoute: typeof AppClientsIdRoute
   AppPropertiesIdRoute: typeof AppPropertiesIdRouteWithChildren
-  AppClientsIndexRoute: typeof AppClientsIndexRoute
   AppPropertiesIndexRoute: typeof AppPropertiesIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppAppointmentsRoute: AppAppointmentsRoute,
+  AppClientsRoute: AppClientsRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
   AppLeadsRoute: AppLeadsRoute,
   AppMatchingRoute: AppMatchingRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTeamRoute: AppTeamRoute,
-  AppClientsIdRoute: AppClientsIdRoute,
   AppPropertiesIdRoute: AppPropertiesIdRouteWithChildren,
-  AppClientsIndexRoute: AppClientsIndexRoute,
   AppPropertiesIndexRoute: AppPropertiesIndexRoute,
 }
 
