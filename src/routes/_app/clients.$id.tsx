@@ -16,6 +16,7 @@ import {
   ArrowLeft, Mail, Phone, Trash2, Copy, RefreshCw, Pencil, Link2, FileSignature,
   Calendar, Target, Home, MapPin, Euro, Ruler, BedDouble, Building2, MessageSquare,
   CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
+  ClipboardList, Heart,
 } from "lucide-react";
 import {
   clientTypeLabels, formatCurrency, formatDate, formatDateTime,
@@ -24,6 +25,10 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { MatchPanel } from "@/components/matching/MatchPanel";
+import { ClientSelfDisclosureTab } from "@/components/clients/ClientSelfDisclosureTab";
+import { ClientRelationshipsTab } from "@/components/clients/ClientRelationshipsTab";
+import { BenchmarkCard, BenchmarkPlaceholder } from "@/components/clients/BenchmarkCard";
+import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetail });
 
@@ -124,6 +129,9 @@ function ClientDetail() {
     },
     retry: false,
   });
+
+  const { data: benchmarkData } = useClientBenchmark(id);
+  const benchmark = benchmarkData?.benchmark ?? null;
 
   const del = useMutation({
     mutationFn: async () => {
@@ -247,11 +255,24 @@ function ClientDetail() {
             <FileSignature className="mr-1.5 h-4 w-4" />Finanzierung
             {dossier && <Badge variant="secondary" className="ml-2">{dossier.completion_percent}%</Badge>}
           </TabsTrigger>
+          <TabsTrigger value="disclosure">
+            <ClipboardList className="mr-1.5 h-4 w-4" />Selbstauskunft
+            {benchmark && <Badge variant="secondary" className="ml-2">{Math.round(benchmark.reserveRatio)}%</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="relationships">
+            <Heart className="mr-1.5 h-4 w-4" />Beziehungen
+          </TabsTrigger>
           <TabsTrigger value="tasks"><CheckSquare className="mr-1.5 h-4 w-4" />Aufgaben</TabsTrigger>
           <TabsTrigger value="documents"><FileText className="mr-1.5 h-4 w-4" />Dokumente</TabsTrigger>
           <TabsTrigger value="activity"><Activity className="mr-1.5 h-4 w-4" />Notizen/Aktivität</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="disclosure" className="mt-6">
+          <ClientSelfDisclosureTab clientId={id} />
+        </TabsContent>
+        <TabsContent value="relationships" className="mt-6">
+          <ClientRelationshipsTab clientId={id} />
+        </TabsContent>
         <TabsContent value="tasks" className="mt-6">
           <ClientTasksTab clientId={id} userId={user!.id} />
         </TabsContent>
@@ -264,6 +285,7 @@ function ClientDetail() {
 
         {/* Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
+          {benchmark ? <BenchmarkCard benchmark={benchmark} /> : <BenchmarkPlaceholder />}
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardContent className="p-6">
