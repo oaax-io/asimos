@@ -13,15 +13,15 @@ interface OaaxLayoutProps {
   breadcrumb?: { label: string; href?: string }[];
 }
 
-type NavItem = { label: string; icon: typeof LayoutDashboard; to: "/superadmin" | "/settings"; hash?: string };
+type NavItem = { label: string; icon: typeof LayoutDashboard; to: "/oaax" | "/settings"; hash?: string };
 const NAV: { section: string; items: NavItem[] }[] = [
   {
     section: "Übersicht",
     items: [
-      { label: "Dashboard", icon: LayoutDashboard, to: "/superadmin", hash: "overview" },
-      { label: "Agenturen", icon: Building2,        to: "/superadmin", hash: "agencies" },
-      { label: "Nutzer",    icon: Users,            to: "/superadmin", hash: "users" },
-      { label: "Rollen",    icon: ShieldCheck,      to: "/superadmin", hash: "roles" },
+      { label: "Dashboard", icon: LayoutDashboard, to: "/oaax", hash: "overview" },
+      { label: "Agenturen", icon: Building2,        to: "/oaax", hash: "agencies" },
+      { label: "Nutzer",    icon: Users,            to: "/oaax", hash: "users" },
+      { label: "Rollen",    icon: ShieldCheck,      to: "/oaax", hash: "roles" },
     ],
   },
   {
@@ -324,7 +324,7 @@ function OaaxTopbar({ breadcrumb }: { breadcrumb?: { label: string; href?: strin
                   </span>
                 </div>
                 {[
-                  { label: "Admin Center", to: "/superadmin", color: "#3B387D" },
+                  { label: "Admin Center", to: "/oaax", color: "#3B387D" },
                   { label: "App",          to: "/dashboard",  color: "#1E9BCF" },
                   { label: "Einstellungen",to: "/settings",   color: "#107C41" },
                 ].map((item) => (

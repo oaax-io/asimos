@@ -23,7 +23,7 @@ function NavList({ onClick }: { onClick?: () => void }) {
   const { pathname } = useLocation();
   const { isSuperadmin } = useAuth();
   const items = isSuperadmin
-    ? [...baseNav, { to: "/superadmin", label: "Superadmin", icon: Shield } as const]
+    ? [...baseNav, { to: "/oaax", label: "Superadmin", icon: Shield } as const]
     : baseNav;
   return (
     <nav className="flex flex-col gap-1 p-3">
