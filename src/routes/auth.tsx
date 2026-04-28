@@ -95,6 +95,10 @@ function AuthPage() {
           </Button>
         </form>
       </div>
+
+      <p className="absolute bottom-6 left-0 right-0 text-center text-xs text-white/60">
+        ASIMO Treuhand AG — SaaS Powered by OAASE
+      </p>
     </div>
   );
 }
