@@ -36,9 +36,18 @@ function LeadsPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      const { data: profile } = await supabase.from("profiles").select("agency_id").eq("id", user!.id).single();
+      if (!user) throw new Error("Nicht angemeldet");
+      if (!form.full_name.trim()) throw new Error("Name ist erforderlich");
+      const { data: profile, error: pErr } = await supabase.from("profiles").select("agency_id").eq("id", user.id).single();
+      if (pErr || !profile) throw new Error(pErr?.message || "Profil nicht gefunden");
       const { error } = await supabase.from("leads").insert({
-        ...form, agency_id: profile!.agency_id, owner_id: user!.id,
+        full_name: form.full_name.trim(),
+        email: form.email.trim() || null,
+        phone: form.phone.trim() || null,
+        source: form.source.trim() || null,
+        notes: form.notes.trim() || null,
+        agency_id: profile.agency_id,
+        owner_id: user.id,
       });
       if (error) throw error;
     },
