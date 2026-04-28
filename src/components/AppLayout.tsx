@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, Outlet } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  LayoutDashboard, Users, UserPlus, Building2, Calendar, Target, Settings, LogOut, Menu, Search, Shield, PanelLeftClose, PanelLeftOpen,
+  LayoutDashboard, Users, UserPlus, Building2, Calendar, Target, Settings, LogOut, Menu, Search, Shield, PanelLeftClose, PanelLeftOpen, Users2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ const baseNav = [
   { to: "/properties", label: "Immobilien", icon: Building2 },
   { to: "/matching", label: "Matching", icon: Target },
   { to: "/appointments", label: "Termine", icon: Calendar },
+  { to: "/team", label: "Team", icon: Users2 },
 ] as const;
 
 function NavList({ onClick }: { onClick?: () => void }) {
