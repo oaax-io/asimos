@@ -1,38 +1,36 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Plus, MapPin, Bed, Maximize, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { formatCurrency, formatArea, propertyTypeLabels, propertyStatusLabels, listingTypeLabels } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
+import { PropertyFormDialog, type PropertyFormValues } from "@/components/properties/PropertyFormDialog";
 
 export const Route = createFileRoute("/_app/properties/")({ component: PropertiesPage });
 
-const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
-const STATUSES = ["draft","available","reserved","sold","rented","archived"] as const;
+const PROP_TYPES = ["apartment","house","commercial","land","parking","mixed_use","other"] as const;
+const STATUSES = ["draft","preparation","active","available","reserved","sold","rented","archived"] as const;
 
 function PropertiesPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [form, setForm] = useState({
-    title: "", description: "", property_type: "apartment", listing_type: "sale", status: "available",
-    price: "", rooms: "", bathrooms: "", area: "", year_built: "", energy_class: "",
-    address: "", city: "", postal_code: "", features: "", image_url: "",
-  });
+  const [fStatus, setFStatus] = useState<string>("all");
+  const [fType, setFType] = useState<string>("all");
+  const [fListing, setFListing] = useState<string>("all");
+  const [fCity, setFCity] = useState<string>("all");
+  const [fAssigned, setFAssigned] = useState<string>("all");
 
-  const { data: properties = [] } = useQuery({
+  const { data: properties = [], isLoading } = useQuery({
     queryKey: ["properties"],
     queryFn: async () => {
       const { data, error } = await supabase.from("properties").select("*").order("created_at", { ascending: false });
@@ -41,28 +39,26 @@ function PropertiesPage() {
     },
   });
 
+  const { data: employees = [] } = useQuery({
+    queryKey: ["employees"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("id, full_name, email").eq("is_active", true);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const cities = useMemo(() => Array.from(new Set(properties.map(p => p.city).filter(Boolean))) as string[], [properties]);
+
   const create = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (form: Partial<PropertyFormValues>) => {
       const { data: profile } = await supabase.from("profiles").select("agency_id").eq("id", user!.id).single();
-      const { error } = await supabase.from("properties").insert({
-        agency_id: profile!.agency_id, owner_id: user!.id,
-        title: form.title,
-        description: form.description || null,
-        property_type: form.property_type as any,
-        listing_type: form.listing_type as any,
-        status: form.status as any,
-        price: form.price ? Number(form.price) : null,
-        rooms: form.rooms ? Number(form.rooms) : null,
-        bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
-        area: form.area ? Number(form.area) : null,
-        year_built: form.year_built ? Number(form.year_built) : null,
-        energy_class: form.energy_class || null,
-        address: form.address || null,
-        city: form.city || null,
-        postal_code: form.postal_code || null,
-        features: form.features ? form.features.split(",").map(s => s.trim()).filter(Boolean) : null,
-        images: form.image_url ? [form.image_url] : null,
-      });
+      const payload: any = {
+        ...form,
+        agency_id: profile!.agency_id,
+        owner_id: user!.id,
+      };
+      const { error } = await supabase.from("properties").insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -73,77 +69,89 @@ function PropertiesPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const filtered = properties.filter(p =>
-    !search || p.title.toLowerCase().includes(search.toLowerCase()) ||
-    p.city?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = properties.filter(p => {
+    if (search && !(`${p.title} ${p.city ?? ""} ${p.address ?? ""}`.toLowerCase().includes(search.toLowerCase()))) return false;
+    if (fStatus !== "all" && p.status !== fStatus) return false;
+    if (fType !== "all" && p.property_type !== fType) return false;
+    if (fListing !== "all" && p.listing_type !== fListing) return false;
+    if (fCity !== "all" && p.city !== fCity) return false;
+    if (fAssigned !== "all" && p.assigned_to !== fAssigned) return false;
+    return true;
+  });
 
   return (
     <>
       <PageHeader
         title="Immobilien"
-        description="Dein Immobilienportfolio"
+        description="Dein Immobilienportfolio im Überblick"
         action={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button></DialogTrigger>
-            <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-              <DialogHeader><DialogTitle>Neue Immobilie</DialogTitle></DialogHeader>
-              <div className="space-y-4">
-                <div><Label>Titel</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Helle 3-Zimmer-Wohnung mit Balkon" /></div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div><Label>Typ</Label>
-                    <Select value={form.property_type} onValueChange={(v) => setForm({ ...form, property_type: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{PROP_TYPES.map(t => <SelectItem key={t} value={t}>{propertyTypeLabels[t]}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label>Vermarktung</Label>
-                    <Select value={form.listing_type} onValueChange={(v) => setForm({ ...form, listing_type: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent><SelectItem value="sale">Kauf</SelectItem><SelectItem value="rent">Miete</SelectItem></SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label>Status</Label>
-                    <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{propertyStatusLabels[s]}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-4 gap-3">
-                  <div><Label>Preis (€)</Label><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} /></div>
-                  <div><Label>Fläche (m²)</Label><Input type="number" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} /></div>
-                  <div><Label>Zimmer</Label><Input type="number" step="0.5" value={form.rooms} onChange={(e) => setForm({ ...form, rooms: e.target.value })} /></div>
-                  <div><Label>Bäder</Label><Input type="number" value={form.bathrooms} onChange={(e) => setForm({ ...form, bathrooms: e.target.value })} /></div>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="col-span-2"><Label>Adresse</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
-                  <div><Label>PLZ</Label><Input value={form.postal_code} onChange={(e) => setForm({ ...form, postal_code: e.target.value })} /></div>
-                  <div className="col-span-2"><Label>Stadt</Label><Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
-                  <div><Label>Baujahr</Label><Input type="number" value={form.year_built} onChange={(e) => setForm({ ...form, year_built: e.target.value })} /></div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Energieklasse</Label><Input value={form.energy_class} onChange={(e) => setForm({ ...form, energy_class: e.target.value })} placeholder="A, B, C…" /></div>
-                  <div><Label>Bild-URL</Label><Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://…" /></div>
-                </div>
-                <div><Label>Ausstattung (Komma-getrennt)</Label><Input value={form.features} onChange={(e) => setForm({ ...form, features: e.target.value })} placeholder="Balkon, Aufzug, Einbauküche" /></div>
-                <div><Label>Beschreibung</Label><Textarea rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-              </div>
-              <DialogFooter>
-                <Button onClick={() => create.mutate()} disabled={!form.title || create.isPending}>Speichern</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button>
         }
       />
 
-      <div className="mb-4 relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Suchen nach Titel oder Stadt…" value={search} onChange={(e) => setSearch(e.target.value)} />
+      <PropertyFormDialog
+        open={open}
+        onOpenChange={setOpen}
+        employees={employees}
+        onSubmit={(form) => create.mutate(form)}
+        submitting={create.isPending}
+      />
+
+      <div className="mb-4 grid gap-3 md:grid-cols-2 lg:grid-cols-6">
+        <div className="relative lg:col-span-2">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        <Select value={fStatus} onValueChange={setFStatus}>
+          <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Status</SelectItem>
+            {STATUSES.map(s => <SelectItem key={s} value={s}>{propertyStatusLabels[s]}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={fType} onValueChange={setFType}>
+          <SelectTrigger><SelectValue placeholder="Typ" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Typen</SelectItem>
+            {PROP_TYPES.map(t => <SelectItem key={t} value={t}>{propertyTypeLabels[t]}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={fListing} onValueChange={setFListing}>
+          <SelectTrigger><SelectValue placeholder="Vermarktung" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Kauf & Miete</SelectItem>
+            <SelectItem value="sale">Kauf</SelectItem>
+            <SelectItem value="rent">Miete</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={fCity} onValueChange={setFCity}>
+          <SelectTrigger><SelectValue placeholder="Stadt" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Städte</SelectItem>
+            {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={fAssigned} onValueChange={setFAssigned}>
+          <SelectTrigger><SelectValue placeholder="Zuständig" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Mitarbeiter</SelectItem>
+            {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
-      {filtered.length === 0 ? (
-        <EmptyState title="Noch keine Immobilien" description="Erfasse dein erstes Objekt — Titel, Adresse, Preis und Bild reichen zum Start." />
+      {isLoading ? (
+        <div className="text-sm text-muted-foreground">Lädt…</div>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          title={properties.length === 0 ? "Noch keine Immobilien" : "Keine Treffer"}
+          description={properties.length === 0
+            ? "Erfasse dein erstes Objekt — Titel, Adresse, Preis und Bild reichen zum Start."
+            : "Passe die Filter an oder leere die Suche."}
+          action={properties.length === 0 ? (
+            <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button>
+          ) : undefined}
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((p) => (
@@ -165,10 +173,13 @@ function PropertiesPage() {
                   <MapPin className="h-3 w-3" />{[p.address, p.city].filter(Boolean).join(", ") || "—"}
                 </p>
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="font-display text-lg font-bold">{formatCurrency(p.price ? Number(p.price) : null)}</span>
+                  <span className="font-display text-lg font-bold">
+                    {formatCurrency(p.listing_type === "rent" ? (p.rent ? Number(p.rent) : null) : (p.price ? Number(p.price) : null))}
+                    {p.listing_type === "rent" && p.rent ? <span className="text-xs font-normal text-muted-foreground"> /Mt.</span> : null}
+                  </span>
                   <div className="flex gap-3 text-xs text-muted-foreground">
                     {p.rooms && <span className="flex items-center gap-1"><Bed className="h-3 w-3" />{p.rooms}</span>}
-                    {p.area && <span className="flex items-center gap-1"><Maximize className="h-3 w-3" />{formatArea(Number(p.area))}</span>}
+                    {(p.living_area || p.area) && <span className="flex items-center gap-1"><Maximize className="h-3 w-3" />{formatArea(Number(p.living_area || p.area))}</span>}
                   </div>
                 </div>
               </div>
