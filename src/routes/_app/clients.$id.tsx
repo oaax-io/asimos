@@ -38,8 +38,6 @@ function ClientDetail() {
 
   useEffect(() => {
     setLoadTimedOut(false);
-    const timeout = window.setTimeout(() => setLoadTimedOut(true), 2500);
-    return () => window.clearTimeout(timeout);
   }, [id]);
 
   const { data: client, isLoading, isError, error: clientError, refetch } = useQuery({
