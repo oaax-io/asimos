@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { isBackendUnavailableError } from "@/lib/backend-errors";
 
 type SuperadminStatus = "unknown" | "granted" | "denied";
 
@@ -44,27 +45,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const requestId = ++roleCheckIdRef.current;
-    updateSuperadminStatus("unknown", false);
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      const { data, error } = await supabase.rpc("is_superadmin");
-
-      if (requestId !== roleCheckIdRef.current || userRef.current?.id !== currentUser.id) {
-        return;
-      }
-
-      if (!error) {
-        const granted = !!data;
-        updateSuperadminStatus(granted ? "granted" : "denied", granted);
-        return;
-      }
-
-      if (attempt < 2) {
-        await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
-      } else {
-        console.warn("Superadmin-Prüfung fehlgeschlagen", error.message);
-      }
+    if (superadminStatusRef.current === "unknown") {
+      updateSuperadminStatus("unknown", false);
     }
+
+    const { data, error } = await supabase.rpc("is_superadmin");
+
+    if (requestId !== roleCheckIdRef.current || userRef.current?.id !== currentUser.id) {
+      return;
+    }
+
+    if (!error) {
+      const granted = !!data;
+      updateSuperadminStatus(granted ? "granted" : "denied", granted);
+      return;
+    }
+
+    if (isBackendUnavailableError(error)) {
+      updateSuperadminStatus("denied", false);
+      return;
+    }
+
+    console.warn("Superadmin-Prüfung fehlgeschlagen", error.message);
 
     if (requestId === roleCheckIdRef.current && userRef.current?.id === currentUser.id) {
       // After all retries failed, fall back to "denied" so navigation can proceed.
@@ -75,7 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const applySession = useCallback((nextSession: Session | null) => {
     const nextUser = nextSession?.user ?? null;
-    const previousUserId = userRef.current?.id ?? null;
 
     setSession(nextSession);
     setUser(nextUser);
@@ -87,12 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (previousUserId === nextUser.id && superadminStatusRef.current !== "unknown") {
-      return;
-    }
-
-    void refreshSuperadmin(nextUser);
-  }, [refreshSuperadmin, updateSuperadminStatus]);
+    updateSuperadminStatus("denied", false);
+  }, [updateSuperadminStatus]);
 
   useEffect(() => {
     let active = true;

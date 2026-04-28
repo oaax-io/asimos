@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { leadStatusLabels, leadStatuses, type LeadStatus } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
+import { getBackendErrorMessage, isBackendUnavailableError } from "@/lib/backend-errors";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -25,7 +26,7 @@ function LeadsPage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", source: "", notes: "" });
 
-  const { data: leads = [] } = useQuery({
+  const { data: leads = [], error, isLoading } = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
       const { data, error } = await supabase.from("leads").select("*").order("created_at", { ascending: false });
@@ -57,7 +58,7 @@ function LeadsPage() {
       setOpen(false);
       setForm({ full_name: "", email: "", phone: "", source: "", notes: "" });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
   });
 
   const updateStatus = useMutation({
@@ -153,6 +154,15 @@ function LeadsPage() {
           );
         })}
       </div>
+      {error && isBackendUnavailableError(error) ? (
+        <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
+          Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden neu laden oder erneut speichern.
+        </div>
+      ) : null}
+
+      {!error && isLoading ? (
+        <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">Leads werden geladen…</div>
+      ) : null}
     </>
   );
 }
