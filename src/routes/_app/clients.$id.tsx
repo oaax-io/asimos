@@ -781,3 +781,256 @@ function FinancingTab({
     </div>
   );
 }
+
+function ClientTasksTab({ clientId, userId }: { clientId: string; userId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ title: "", description: "", due_date: "", priority: "normal" });
+
+  const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ["client_tasks", clientId],
+    queryFn: async () => {
+      const { data } = await supabase.from("tasks").select("*")
+        .eq("related_type", "client").eq("related_id", clientId)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const create = useMutation({
+    mutationFn: async () => {
+      if (!form.title.trim()) throw new Error("Titel erforderlich");
+      const { error } = await supabase.from("tasks").insert({
+        title: form.title.trim(), description: form.description || null,
+        due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
+        priority: form.priority as any,
+        related_type: "client", related_id: clientId, created_by: userId,
+      });
+      if (error) throw error;
+      await supabase.from("activity_logs").insert({
+        actor_id: userId, action: `Aufgabe erstellt: ${form.title.trim()}`,
+        related_type: "client", related_id: clientId,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Aufgabe erstellt");
+      setOpen(false); setForm({ title: "", description: "", due_date: "", priority: "normal" });
+      qc.invalidateQueries({ queryKey: ["client_tasks", clientId] });
+      qc.invalidateQueries({ queryKey: ["client_activity", clientId] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const toggle = useMutation({
+    mutationFn: async (t: any) => {
+      const { error } = await supabase.from("tasks")
+        .update({ status: t.status === "done" ? "open" : "done" }).eq("id", t.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["client_tasks", clientId] }),
+  });
+
+  return (
+    <Card><CardContent className="p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="font-display text-lg font-semibold">Aufgaben</h3>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <Button size="sm" onClick={() => setOpen(true)}><Plus className="mr-1.5 h-4 w-4" />Neue Aufgabe</Button>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Neue Aufgabe</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div><Label>Titel</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+              <div><Label>Beschreibung</Label><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Fällig</Label><Input type="datetime-local" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} /></div>
+                <div>
+                  <Label>Priorität</Label>
+                  <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Niedrig</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="high">Hoch</SelectItem>
+                      <SelectItem value="urgent">Dringend</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <DialogFooter><Button onClick={() => create.mutate()} disabled={!form.title || create.isPending}>Speichern</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+      {isLoading ? <p className="text-sm text-muted-foreground">Lädt…</p>
+        : tasks.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine Aufgaben für diesen Kunden.</p>
+        : <div className="space-y-2">
+            {tasks.map((t: any) => (
+              <div key={t.id} className="flex items-start gap-3 rounded-xl border p-3">
+                <button onClick={() => toggle.mutate(t)} className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded border ${t.status === "done" ? "bg-primary border-primary text-primary-foreground" : ""}`}>
+                  {t.status === "done" && <CheckSquare className="h-3 w-3" />}
+                </button>
+                <div className="flex-1">
+                  <p className={`text-sm font-medium ${t.status === "done" ? "line-through text-muted-foreground" : ""}`}>{t.title}</p>
+                  {t.description && <p className="mt-0.5 text-xs text-muted-foreground">{t.description}</p>}
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    {t.due_date && <span>Fällig: {formatDate(t.due_date)}</span>}
+                    {t.priority && <Badge variant="outline" className="text-[10px]">{t.priority}</Badge>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>}
+    </CardContent></Card>
+  );
+}
+
+function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ file_name: "", file_url: "", document_type: "other", notes: "" });
+
+  const { data: docs = [], isLoading } = useQuery({
+    queryKey: ["client_documents", clientId],
+    queryFn: async () => {
+      const { data } = await supabase.from("documents").select("*")
+        .eq("related_type", "client").eq("related_id", clientId)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const create = useMutation({
+    mutationFn: async () => {
+      if (!form.file_url.trim()) throw new Error("URL erforderlich");
+      const { error } = await supabase.from("documents").insert({
+        file_url: form.file_url.trim(), file_name: form.file_name || null,
+        document_type: form.document_type as any, notes: form.notes || null,
+        related_type: "client", related_id: clientId, uploaded_by: userId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Dokument hinzugefügt");
+      setOpen(false); setForm({ file_name: "", file_url: "", document_type: "other", notes: "" });
+      qc.invalidateQueries({ queryKey: ["client_documents", clientId] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Card><CardContent className="p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="font-display text-lg font-semibold">Dokumente</h3>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <Button size="sm" onClick={() => setOpen(true)}><Plus className="mr-1.5 h-4 w-4" />Dokument hinzufügen</Button>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Dokument hinzufügen</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div><Label>Name</Label><Input value={form.file_name} onChange={(e) => setForm({ ...form, file_name: e.target.value })} /></div>
+              <div><Label>URL / Link</Label><Input value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })} /></div>
+              <div>
+                <Label>Typ</Label>
+                <Select value={form.document_type} onValueChange={(v) => setForm({ ...form, document_type: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="contract">Vertrag</SelectItem>
+                    <SelectItem value="id">Ausweis</SelectItem>
+                    <SelectItem value="financing">Finanzierung</SelectItem>
+                    <SelectItem value="expose">Exposé</SelectItem>
+                    <SelectItem value="other">Sonstige</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Notizen</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+            </div>
+            <DialogFooter><Button onClick={() => create.mutate()} disabled={!form.file_url || create.isPending}>Speichern</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+      {isLoading ? <p className="text-sm text-muted-foreground">Lädt…</p>
+        : docs.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine Dokumente.</p>
+        : <div className="space-y-2">
+            {docs.map((d: any) => (
+              <a key={d.id} href={d.file_url} target="_blank" rel="noreferrer"
+                className="flex items-center justify-between gap-3 rounded-xl border p-3 transition hover:border-primary hover:bg-accent/30">
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{d.file_name ?? d.file_url}</p>
+                    <p className="text-xs text-muted-foreground">{d.document_type} · {formatDate(d.created_at)}</p>
+                  </div>
+                </div>
+                <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </a>
+            ))}
+          </div>}
+    </CardContent></Card>
+  );
+}
+
+function ClientActivityTab({ clientId, userId, notes }: { clientId: string; userId: string; notes: string | null }) {
+  const qc = useQueryClient();
+  const [note, setNote] = useState("");
+
+  const { data: activity = [], isLoading } = useQuery({
+    queryKey: ["client_activity", clientId],
+    queryFn: async () => {
+      const { data } = await supabase.from("activity_logs").select("*")
+        .eq("related_type", "client").eq("related_id", clientId)
+        .order("created_at", { ascending: false }).limit(100);
+      return data ?? [];
+    },
+  });
+
+  const addNote = useMutation({
+    mutationFn: async () => {
+      if (!note.trim()) throw new Error("Notiz darf nicht leer sein");
+      const { error } = await supabase.from("activity_logs").insert({
+        actor_id: userId, action: note.trim(),
+        related_type: "client", related_id: clientId, metadata: { type: "note" },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Notiz hinzugefügt"); setNote("");
+      qc.invalidateQueries({ queryKey: ["client_activity", clientId] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-4">
+      {notes && (
+        <Card><CardContent className="p-6">
+          <h3 className="mb-2 font-display text-lg font-semibold">Stammnotiz</h3>
+          <p className="whitespace-pre-wrap text-sm text-muted-foreground">{notes}</p>
+        </CardContent></Card>
+      )}
+      <Card><CardContent className="p-6">
+        <h3 className="mb-3 font-display text-lg font-semibold">Notiz hinzufügen</h3>
+        <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Was ist passiert?" />
+        <div className="mt-3 flex justify-end">
+          <Button size="sm" onClick={() => addNote.mutate()} disabled={!note.trim() || addNote.isPending}>
+            <Plus className="mr-1.5 h-4 w-4" />Speichern
+          </Button>
+        </div>
+      </CardContent></Card>
+      <Card><CardContent className="p-6">
+        <h3 className="mb-4 font-display text-lg font-semibold">Aktivitätsverlauf</h3>
+        {isLoading ? <p className="text-sm text-muted-foreground">Lädt…</p>
+          : activity.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine Aktivität.</p>
+          : <div className="space-y-3">
+              {activity.map((a: any) => (
+                <div key={a.id} className="flex items-start gap-3 rounded-xl border p-3">
+                  <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm">{a.action}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{formatDateTime(a.created_at)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>}
+      </CardContent></Card>
+    </div>
+  );
+}
