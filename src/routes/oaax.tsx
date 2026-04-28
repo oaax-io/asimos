@@ -3,13 +3,17 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Building2, Users, UserPlus, Trash2, Search, ShieldCheck, ShieldOff,
-  RefreshCcw, Home, Calendar,
+  RefreshCcw, Home, Calendar, Plus, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { OaaxLayout } from "@/components/oaax/OaaxLayout";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/oaax")({
   component: SuperadminPage,
@@ -338,7 +342,12 @@ function AgenciesTab() {
 
 // ─── Users ──────────────────────────────────────
 function UsersTab() {
+  const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({ email: "", password: "", full_name: "", agency_name: "" });
+
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
@@ -347,6 +356,30 @@ function UsersTab() {
       return data as Profile[];
     },
   });
+
+  const submitCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.email || form.password.length < 6) {
+      toast.error("E-Mail und Passwort (min. 6 Zeichen) erforderlich");
+      return;
+    }
+    setCreating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-create-user", { body: form });
+      if (error) throw error;
+      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
+      toast.success("Nutzer angelegt");
+      setCreateOpen(false);
+      setForm({ email: "", password: "", full_name: "", agency_name: "" });
+      qc.invalidateQueries({ queryKey: ["admin-profiles"] });
+      qc.invalidateQueries({ queryKey: ["admin-stats"] });
+      qc.invalidateQueries({ queryKey: ["admin-agencies"] });
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setCreating(false);
+    }
+  };
   const { data: agencies } = useQuery({
     queryKey: ["admin-agencies-min"],
     queryFn: async () => {
