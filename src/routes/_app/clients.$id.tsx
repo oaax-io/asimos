@@ -35,7 +35,7 @@ function ClientDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { data: client, isLoading, error: clientError, refetch } = useQuery({
+  const { data: client, isLoading, isError, error: clientError, refetch } = useQuery({
     queryKey: ["client", id],
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("*").eq("id", id).maybeSingle();
@@ -43,7 +43,8 @@ function ClientDetail() {
       if (!data) throw new Error("Kunde nicht gefunden");
       return data;
     },
-    retry: 2,
+    retry: 1,
+    retryDelay: 600,
   });
 
   const { data: dossier } = useQuery({
@@ -112,7 +113,7 @@ function ClientDetail() {
     onError: (e: any) => toast.error(e.message ?? "Fehler beim Löschen"),
   });
 
-  if (isLoading) return <div className="text-sm text-muted-foreground">Lädt…</div>;
+  if (isLoading && !isError) return <div className="text-sm text-muted-foreground">Lädt…</div>;
   if (clientError || !client) {
     return (
       <div className="space-y-4">
