@@ -183,6 +183,110 @@ export type Database = {
           },
         ]
       }
+      financing_dossiers: {
+        Row: {
+          agency_id: string
+          client_id: string
+          completion_percent: number
+          created_at: string
+          id: string
+          section_additional: Json
+          section_affordability: Json
+          section_customer: Json
+          section_financing: Json
+          section_income: Json
+          section_property_docs: Json
+          section_quality_check: Json
+          section_rejection_reasons: Json
+          section_self_employed: Json
+          section_tax: Json
+          status: Database["public"]["Enums"]["financing_status"]
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          client_id: string
+          completion_percent?: number
+          created_at?: string
+          id?: string
+          section_additional?: Json
+          section_affordability?: Json
+          section_customer?: Json
+          section_financing?: Json
+          section_income?: Json
+          section_property_docs?: Json
+          section_quality_check?: Json
+          section_rejection_reasons?: Json
+          section_self_employed?: Json
+          section_tax?: Json
+          status?: Database["public"]["Enums"]["financing_status"]
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          client_id?: string
+          completion_percent?: number
+          created_at?: string
+          id?: string
+          section_additional?: Json
+          section_affordability?: Json
+          section_customer?: Json
+          section_financing?: Json
+          section_income?: Json
+          section_property_docs?: Json
+          section_quality_check?: Json
+          section_rejection_reasons?: Json
+          section_self_employed?: Json
+          section_tax?: Json
+          status?: Database["public"]["Enums"]["financing_status"]
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      financing_links: {
+        Row: {
+          agency_id: string
+          created_at: string
+          created_by: string | null
+          dossier_id: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          created_by?: string | null
+          dossier_id: string
+          expires_at?: string
+          id?: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financing_links_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "financing_dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           agency_id: string
@@ -474,6 +578,14 @@ export type Database = {
         Returns: undefined
       }
       current_agency_id: { Args: never; Returns: string }
+      financing_link_resolve: {
+        Args: { _token: string }
+        Returns: {
+          client_name: string
+          dossier_id: string
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -488,6 +600,7 @@ export type Database = {
       appointment_status: "scheduled" | "completed" | "cancelled"
       appointment_type: "viewing" | "meeting" | "call" | "other"
       client_type: "buyer" | "seller" | "tenant" | "landlord"
+      financing_status: "draft" | "submitted" | "reviewed"
       lead_status: "new" | "contacted" | "qualified" | "converted" | "lost"
       listing_type: "sale" | "rent"
       match_status:
@@ -635,6 +748,7 @@ export const Constants = {
       appointment_status: ["scheduled", "completed", "cancelled"],
       appointment_type: ["viewing", "meeting", "call", "other"],
       client_type: ["buyer", "seller", "tenant", "landlord"],
+      financing_status: ["draft", "submitted", "reviewed"],
       lead_status: ["new", "contacted", "qualified", "converted", "lost"],
       listing_type: ["sale", "rent"],
       match_status: [
