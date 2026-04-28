@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
-import { getBackendErrorMessage, isBackendUnavailableError } from "@/lib/backend-errors";
+import { getBackendErrorMessage, isBackendUnavailableError, unwrapServerResult } from "@/lib/backend-errors";
 import { toast } from "sonner";
 import { clientTypeLabels, formatCurrency, propertyTypeLabels } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
@@ -49,9 +49,8 @@ function ClientsPage() {
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
       const result = await getClients({ headers: { authorization: `Bearer ${accessToken}` } });
-      // Backend-Unavailable als Fehler werfen, damit der QueryClient retryed.
-      if (result.unavailable) throw new Error(result.error ?? "Backend aktuell nicht erreichbar");
-      return result;
+      // Wirft bei Backend-Unavailable -> globaler Retry mit Backoff greift.
+      return unwrapServerResult(result);
     },
   });
 
@@ -63,11 +62,13 @@ function ClientsPage() {
     },
   });
 
-  const clients = clientsQuery.data?.data ?? [];
+  const clients = clientsQuery.data ?? [];
   const employees = employeesQuery.data ?? [];
   const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
-  const queryUnavailable = clientsQuery.data?.unavailable ?? false;
-  const queryErrorMessage = clientsQuery.data?.error ?? null;
+
+  // Banner nur bei "echten" Fehlern – Backend-Unavailable wird automatisch retryed.
+  const showError = clientsQuery.error && !isBackendUnavailableError(clientsQuery.error);
+  const queryErrorMessage = showError ? getBackendErrorMessage(clientsQuery.error) : null;
 
   const create = useMutation({
     mutationFn: async () => {
@@ -258,9 +259,9 @@ function ClientsPage() {
         <span className="ml-auto text-sm text-muted-foreground">{filtered.length} von {clients.length}</span>
       </div>
 
-      {queryUnavailable || (clientsQuery.error && isBackendUnavailableError(clientsQuery.error)) ? (
-        <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-          {queryErrorMessage ?? "Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden neu laden oder erneut speichern."}
+      {showError ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          {queryErrorMessage}
         </div>
       ) : null}
 

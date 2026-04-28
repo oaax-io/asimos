@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { leadStatusLabels, leadStatuses, type LeadStatus } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
-import { getBackendErrorMessage, isBackendUnavailableError } from "@/lib/backend-errors";
+import { getBackendErrorMessage, isBackendUnavailableError, throwIfError, unwrapServerResult } from "@/lib/backend-errors";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import { addLead, getLeads } from "@/server/crm.functions";
@@ -47,10 +47,8 @@ function LeadsPage() {
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
       const result = await getLeads({ headers: { authorization: `Bearer ${accessToken}` } });
-      // Backend-Unavailable als Fehler werfen, damit der QueryClient mit
-      // Backoff retryed statt sofort einen leeren Zustand anzuzeigen.
-      if (result.unavailable) throw new Error(result.error ?? "Backend aktuell nicht erreichbar");
-      return result;
+      // Wirft bei Backend-Unavailable -> globaler Retry mit Backoff greift.
+      return unwrapServerResult(result);
     },
     refetchOnReconnect: true,
   });
@@ -63,23 +61,23 @@ function LeadsPage() {
         .select("id, full_name, email")
         .eq("is_active", true)
         .order("full_name");
-      if (error && !isBackendUnavailableError(error)) throw error;
+      throwIfError(error);
       return (data ?? []) as Profile[];
     },
   });
 
-  const leads = leadsQuery.data?.data ?? [];
+  const leads = leadsQuery.data ?? [];
   const employees = employeesQuery.data ?? [];
   const employeeMap = useMemo(() => new Map(employees.map((e) => [e.id, e])), [employees]);
 
   const sources = useMemo(() => {
     const set = new Set<string>();
-    leads.forEach((l) => { if (l.source) set.add(l.source); });
+    leads.forEach((l: Lead) => { if (l.source) set.add(l.source); });
     return Array.from(set).sort();
   }, [leads]);
 
   const filtered = useMemo(() => {
-    return leads.filter((l) => {
+    return leads.filter((l: Lead) => {
       if (statusFilter !== ALL && l.status !== statusFilter) return false;
       if (sourceFilter !== ALL && l.source !== sourceFilter) return false;
       if (assignedFilter !== ALL) {
@@ -98,8 +96,10 @@ function LeadsPage() {
     });
   }, [leads, statusFilter, sourceFilter, assignedFilter, search]);
 
-  const queryUnavailable = leadsQuery.data?.unavailable ?? false;
-  const queryErrorMessage = leadsQuery.data?.error ?? null;
+  // Banner nur bei "echten" Fehlern – Backend-Unavailable wird automatisch retryed.
+  const queryError = leadsQuery.error;
+  const showError = queryError && !isBackendUnavailableError(queryError);
+  const queryErrorMessage = showError ? getBackendErrorMessage(queryError) : null;
 
   const create = useMutation({
     mutationFn: async () => {
@@ -363,9 +363,9 @@ function LeadsPage() {
         </TabsContent>
       </Tabs>
 
-      {queryUnavailable || (leadsQuery.error && isBackendUnavailableError(leadsQuery.error)) ? (
-        <div className="mt-4 rounded-xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-          {queryErrorMessage ?? "Backend aktuell nicht erreichbar. Bitte in wenigen Sekunden erneut versuchen."}
+      {showError ? (
+        <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          {queryErrorMessage}
         </div>
       ) : null}
     </>
