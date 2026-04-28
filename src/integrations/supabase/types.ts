@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          related_id: string | null
+          related_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          related_id?: string | null
+          related_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          related_id?: string | null
+          related_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agencies: {
         Row: {
           created_at: string
@@ -39,6 +77,7 @@ export type Database = {
         Row: {
           agency_id: string
           appointment_type: Database["public"]["Enums"]["appointment_type"]
+          assigned_to: string | null
           client_id: string | null
           created_at: string
           ends_at: string
@@ -55,6 +94,7 @@ export type Database = {
         Insert: {
           agency_id?: string
           appointment_type?: Database["public"]["Enums"]["appointment_type"]
+          assigned_to?: string | null
           client_id?: string | null
           created_at?: string
           ends_at: string
@@ -71,6 +111,7 @@ export type Database = {
         Update: {
           agency_id?: string
           appointment_type?: Database["public"]["Enums"]["appointment_type"]
+          assigned_to?: string | null
           client_id?: string | null
           created_at?: string
           ends_at?: string
@@ -93,6 +134,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "appointments_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "appointments_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
@@ -108,43 +156,140 @@ export type Database = {
           },
         ]
       }
+      checklist_items: {
+        Row: {
+          assigned_to: string | null
+          checklist_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          is_done: boolean
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          checklist_id: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_done?: boolean
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          assigned_to?: string | null
+          checklist_id?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_done?: boolean
+          sort_order?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklists: {
+        Row: {
+          created_at: string
+          id: string
+          related_id: string | null
+          related_type: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          related_id?: string | null
+          related_type?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          related_id?: string | null
+          related_type?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
+          address: string | null
           agency_id: string
           area_max: number | null
           area_min: number | null
+          assigned_to: string | null
           budget_max: number | null
           budget_min: number | null
+          city: string | null
           client_type: Database["public"]["Enums"]["client_type"]
+          country: string | null
           created_at: string
           email: string | null
+          equity: number | null
+          financing_status: string | null
           full_name: string
           id: string
           notes: string | null
           owner_id: string | null
           phone: string | null
+          postal_code: string | null
           preferred_cities: string[] | null
           preferred_listing: Database["public"]["Enums"]["listing_type"] | null
+          preferred_locations: string[] | null
+          preferred_property_types:
+            | Database["public"]["Enums"]["property_type"][]
+            | null
           preferred_types: Database["public"]["Enums"]["property_type"][] | null
           rooms_min: number | null
           updated_at: string
         }
         Insert: {
+          address?: string | null
           agency_id?: string
           area_max?: number | null
           area_min?: number | null
+          assigned_to?: string | null
           budget_max?: number | null
           budget_min?: number | null
+          city?: string | null
           client_type?: Database["public"]["Enums"]["client_type"]
+          country?: string | null
           created_at?: string
           email?: string | null
+          equity?: number | null
+          financing_status?: string | null
           full_name: string
           id?: string
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
+          postal_code?: string | null
           preferred_cities?: string[] | null
           preferred_listing?: Database["public"]["Enums"]["listing_type"] | null
+          preferred_locations?: string[] | null
+          preferred_property_types?:
+            | Database["public"]["Enums"]["property_type"][]
+            | null
           preferred_types?:
             | Database["public"]["Enums"]["property_type"][]
             | null
@@ -152,21 +297,32 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
           agency_id?: string
           area_max?: number | null
           area_min?: number | null
+          assigned_to?: string | null
           budget_max?: number | null
           budget_min?: number | null
+          city?: string | null
           client_type?: Database["public"]["Enums"]["client_type"]
+          country?: string | null
           created_at?: string
           email?: string | null
+          equity?: number | null
+          financing_status?: string | null
           full_name?: string
           id?: string
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
+          postal_code?: string | null
           preferred_cities?: string[] | null
           preferred_listing?: Database["public"]["Enums"]["listing_type"] | null
+          preferred_locations?: string[] | null
+          preferred_property_types?:
+            | Database["public"]["Enums"]["property_type"][]
+            | null
           preferred_types?:
             | Database["public"]["Enums"]["property_type"][]
             | null
@@ -179,6 +335,13 @@ export type Database = {
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -206,6 +369,89 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      document_templates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          type: Database["public"]["Enums"]["document_type"]
+          updated_at: string
+          variables: Json
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          type?: Database["public"]["Enums"]["document_type"]
+          updated_at?: string
+          variables?: Json
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          type?: Database["public"]["Enums"]["document_type"]
+          updated_at?: string
+          variables?: Json
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          created_at: string
+          document_type: Database["public"]["Enums"]["document_type"]
+          file_name: string | null
+          file_url: string
+          id: string
+          mime_type: string | null
+          notes: string | null
+          related_id: string
+          related_type: string
+          size_bytes: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_type?: Database["public"]["Enums"]["document_type"]
+          file_name?: string | null
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          related_id: string
+          related_type: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_type?: Database["public"]["Enums"]["document_type"]
+          file_name?: string | null
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          related_id?: string
+          related_type?: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       financing_dossiers: {
         Row: {
@@ -311,42 +557,161 @@ export type Database = {
           },
         ]
       }
+      financing_profiles: {
+        Row: {
+          approval_status: string | null
+          bank_contact: string | null
+          bank_name: string | null
+          budget: number | null
+          client_id: string
+          created_at: string
+          equity: number | null
+          id: string
+          income: number | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          approval_status?: string | null
+          bank_contact?: string | null
+          bank_name?: string | null
+          budget?: number | null
+          client_id: string
+          created_at?: string
+          equity?: number | null
+          id?: string
+          income?: number | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approval_status?: string | null
+          bank_contact?: string | null
+          bank_name?: string | null
+          budget?: number | null
+          client_id?: string
+          created_at?: string
+          equity?: number | null
+          id?: string
+          income?: number | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financing_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generated_documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          file_url: string | null
+          html_content: string | null
+          id: string
+          related_id: string | null
+          related_type: string | null
+          template_id: string | null
+          variables: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          file_url?: string | null
+          html_content?: string | null
+          id?: string
+          related_id?: string | null
+          related_type?: string | null
+          template_id?: string | null
+          variables?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          file_url?: string | null
+          html_content?: string | null
+          id?: string
+          related_id?: string | null
+          related_type?: string | null
+          template_id?: string | null
+          variables?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_documents_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_documents_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           agency_id: string
+          assigned_to: string | null
+          budget_max: number | null
+          budget_min: number | null
+          converted_client_id: string | null
           created_at: string
           email: string | null
           full_name: string
           id: string
+          interest_type: string | null
           notes: string | null
           owner_id: string | null
           phone: string | null
+          preferred_location: string | null
           source: string | null
           status: Database["public"]["Enums"]["lead_status"]
           updated_at: string
         }
         Insert: {
           agency_id?: string
+          assigned_to?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          converted_client_id?: string | null
           created_at?: string
           email?: string | null
           full_name: string
           id?: string
+          interest_type?: string | null
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
+          preferred_location?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
         }
         Update: {
           agency_id?: string
+          assigned_to?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          converted_client_id?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
           id?: string
+          interest_type?: string | null
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
+          preferred_location?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           updated_at?: string
@@ -359,6 +724,97 @@ export type Database = {
             referencedRelation: "agencies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "leads_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_converted_client_id_fkey"
+            columns: ["converted_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mandates: {
+        Row: {
+          client_id: string | null
+          commission_model: string | null
+          commission_value: number | null
+          created_at: string
+          generated_document_id: string | null
+          id: string
+          notes: string | null
+          property_id: string | null
+          status: Database["public"]["Enums"]["mandate_status"]
+          template_id: string | null
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          commission_model?: string | null
+          commission_value?: number | null
+          created_at?: string
+          generated_document_id?: string | null
+          id?: string
+          notes?: string | null
+          property_id?: string | null
+          status?: Database["public"]["Enums"]["mandate_status"]
+          template_id?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          commission_model?: string | null
+          commission_value?: number | null
+          created_at?: string
+          generated_document_id?: string | null
+          id?: string
+          notes?: string | null
+          property_id?: string | null
+          status?: Database["public"]["Enums"]["mandate_status"]
+          template_id?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mandates_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mandates_generated_document_id_fkey"
+            columns: ["generated_document_id"]
+            isOneToOne: false
+            referencedRelation: "generated_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mandates_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mandates_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
         ]
       }
       matches: {
@@ -369,6 +825,7 @@ export type Database = {
           id: string
           notes: string | null
           property_id: string
+          reasons: Json | null
           score: number
           status: Database["public"]["Enums"]["match_status"]
         }
@@ -379,6 +836,7 @@ export type Database = {
           id?: string
           notes?: string | null
           property_id: string
+          reasons?: Json | null
           score?: number
           status?: Database["public"]["Enums"]["match_status"]
         }
@@ -389,6 +847,7 @@ export type Database = {
           id?: string
           notes?: string | null
           property_id?: string
+          reasons?: Json | null
           score?: number
           status?: Database["public"]["Enums"]["match_status"]
         }
@@ -460,9 +919,11 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          is_active: boolean
           phone: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
+          user_role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
           agency_id: string
@@ -471,9 +932,11 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          is_active?: boolean
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
+          user_role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
           agency_id?: string
@@ -482,9 +945,11 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
+          user_role?: Database["public"]["Enums"]["user_role"]
         }
         Relationships: [
           {
@@ -501,6 +966,7 @@ export type Database = {
           address: string | null
           agency_id: string
           area: number | null
+          assigned_to: string | null
           bathrooms: number | null
           city: string | null
           country: string | null
@@ -508,18 +974,25 @@ export type Database = {
           description: string | null
           energy_class: string | null
           features: string[] | null
+          floor: number | null
           id: string
           images: string[] | null
+          internal_notes: string | null
           listing_type: Database["public"]["Enums"]["listing_type"]
+          living_area: number | null
+          owner_client_id: string | null
           owner_id: string | null
           plot_area: number | null
           postal_code: string | null
           price: number | null
           property_type: Database["public"]["Enums"]["property_type"]
+          renovated_at: number | null
+          rent: number | null
           rooms: number | null
           seller_client_id: string | null
           status: Database["public"]["Enums"]["property_status"]
           title: string
+          total_floors: number | null
           updated_at: string
           year_built: number | null
         }
@@ -527,6 +1000,7 @@ export type Database = {
           address?: string | null
           agency_id?: string
           area?: number | null
+          assigned_to?: string | null
           bathrooms?: number | null
           city?: string | null
           country?: string | null
@@ -534,18 +1008,25 @@ export type Database = {
           description?: string | null
           energy_class?: string | null
           features?: string[] | null
+          floor?: number | null
           id?: string
           images?: string[] | null
+          internal_notes?: string | null
           listing_type?: Database["public"]["Enums"]["listing_type"]
+          living_area?: number | null
+          owner_client_id?: string | null
           owner_id?: string | null
           plot_area?: number | null
           postal_code?: string | null
           price?: number | null
           property_type?: Database["public"]["Enums"]["property_type"]
+          renovated_at?: number | null
+          rent?: number | null
           rooms?: number | null
           seller_client_id?: string | null
           status?: Database["public"]["Enums"]["property_status"]
           title: string
+          total_floors?: number | null
           updated_at?: string
           year_built?: number | null
         }
@@ -553,6 +1034,7 @@ export type Database = {
           address?: string | null
           agency_id?: string
           area?: number | null
+          assigned_to?: string | null
           bathrooms?: number | null
           city?: string | null
           country?: string | null
@@ -560,18 +1042,25 @@ export type Database = {
           description?: string | null
           energy_class?: string | null
           features?: string[] | null
+          floor?: number | null
           id?: string
           images?: string[] | null
+          internal_notes?: string | null
           listing_type?: Database["public"]["Enums"]["listing_type"]
+          living_area?: number | null
+          owner_client_id?: string | null
           owner_id?: string | null
           plot_area?: number | null
           postal_code?: string | null
           price?: number | null
           property_type?: Database["public"]["Enums"]["property_type"]
+          renovated_at?: number | null
+          rent?: number | null
           rooms?: number | null
           seller_client_id?: string | null
           status?: Database["public"]["Enums"]["property_status"]
           title?: string
+          total_floors?: number | null
           updated_at?: string
           year_built?: number | null
         }
@@ -584,10 +1073,192 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "properties_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_owner_client_id_fkey"
+            columns: ["owner_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "properties_seller_client_id_fkey"
             columns: ["seller_client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_media: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_name: string | null
+          file_type: string | null
+          file_url: string
+          id: string
+          is_cover: boolean
+          property_id: string
+          sort_order: number
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          is_cover?: boolean
+          property_id: string
+          sort_order?: number
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          is_cover?: boolean
+          property_id?: string
+          sort_order?: number
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_media_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reservations: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          generated_document_id: string | null
+          id: string
+          notes: string | null
+          property_id: string | null
+          reservation_fee: number | null
+          status: Database["public"]["Enums"]["reservation_status"]
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          generated_document_id?: string | null
+          id?: string
+          notes?: string | null
+          property_id?: string | null
+          reservation_fee?: number | null
+          status?: Database["public"]["Enums"]["reservation_status"]
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          generated_document_id?: string | null
+          id?: string
+          notes?: string | null
+          property_id?: string | null
+          reservation_fee?: number | null
+          status?: Database["public"]["Enums"]["reservation_status"]
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_generated_document_id_fkey"
+            columns: ["generated_document_id"]
+            isOneToOne: false
+            referencedRelation: "generated_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reservations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: Database["public"]["Enums"]["task_priority"]
+          related_id: string | null
+          related_type: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          related_id?: string | null
+          related_type?: string | null
+          status?: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["task_priority"]
+          related_id?: string | null
+          related_type?: string | null
+          status?: Database["public"]["Enums"]["task_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -669,6 +1340,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_manager_or_above: { Args: never; Returns: boolean }
+      is_owner_or_admin: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       user_can: { Args: { _action: string; _module: string }; Returns: boolean }
     }
