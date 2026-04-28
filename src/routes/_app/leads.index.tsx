@@ -43,6 +43,17 @@ function LeadsPage() {
   const [sourceFilter, setSourceFilter] = useState<string>(ALL);
   const [assignedFilter, setAssignedFilter] = useState<string>(ALL);
 
+  // Bulk-Selection
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const toggleOne = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const clearSelection = () => setSelected(new Set());
+
   const leadsQuery = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
