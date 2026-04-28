@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,9 +32,11 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", fullName: "", agencyName: "" });
 
-  if (user && !loading) {
-    navigate({ to: isSuperadmin && superadminStatus === "granted" ? "/oaax" : "/dashboard" });
-  }
+  useEffect(() => {
+    if (user && !loading) {
+      navigate({ to: isSuperadmin && superadminStatus === "granted" ? "/oaax" : "/dashboard" });
+    }
+  }, [user, loading, isSuperadmin, superadminStatus, navigate]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
