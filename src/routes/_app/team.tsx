@@ -32,7 +32,6 @@ function TeamPage() {
     full_name: "",
     email: "",
     phone: "",
-    password: "",
     role: "agent" as (typeof ROLES)[number],
   });
 
@@ -62,16 +61,17 @@ function TeamPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.full_name.trim() || !form.email.trim() || form.password.length < 6) {
-        throw new Error("Name, E-Mail und Passwort (min. 6 Zeichen) sind erforderlich");
+      if (!form.full_name.trim() || !form.email.trim()) {
+        throw new Error("Name und E-Mail sind erforderlich");
       }
+      const redirectTo = `${window.location.origin}/set-password`;
       const { data, error } = await supabase.functions.invoke("team-create-member", {
         body: {
           full_name: form.full_name.trim(),
           email: form.email.trim(),
           phone: form.phone.trim(),
-          password: form.password,
           role: form.role,
+          redirect_to: redirectTo,
         },
       });
       if (error) throw error;
@@ -79,8 +79,8 @@ function TeamPage() {
       return data;
     },
     onSuccess: () => {
-      toast.success("Mitarbeiter angelegt");
-      setForm({ full_name: "", email: "", phone: "", password: "", role: "agent" });
+      toast.success("Einladung per E-Mail gesendet");
+      setForm({ full_name: "", email: "", phone: "", role: "agent" });
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["team"] });
     },
