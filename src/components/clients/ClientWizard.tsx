@@ -180,11 +180,13 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
           : null,
         preferred_types: form.preferred_types.length ? form.preferred_types : null,
         preferred_listing: form.preferred_listing,
-      }).select("id").single();
+      };
+      const { data: client, error: clientErr } = await supabase
+        .from("clients").insert(clientPayload).select("id").single();
       if (clientErr) throw clientErr;
 
       // 2) Insert self-disclosure (non-blocking — log but don't fail)
-      const disclosurePayload: Record<string, unknown> = {
+      const disclosurePayload: any = {
         client_id: client.id,
         salutation: form.salutation || null,
         first_name: form.first_name || null,
