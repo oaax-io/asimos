@@ -45,7 +45,7 @@ export function BankAccountsManager() {
         .order("is_default", { ascending: false })
         .order("label");
       if (error) throw error;
-      return (data ?? []) as BankAccount[];
+      return ((data ?? []) as unknown) as BankAccount[];
     },
   });
 
