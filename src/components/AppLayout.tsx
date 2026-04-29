@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Users, UserPlus, Building2, Calendar, Target,
   Settings, LogOut, Search, Shield, Users2, CheckSquare, FileText,
   Image as ImageIcon, ListChecks, FileSignature, FileCheck2, FileBadge, FileLock2,
+  Banknote,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ const NAV_GROUPS = [
       { to: "/clients", label: "Kunden", icon: Users },
       { to: "/properties", label: "Immobilien", icon: Building2 },
       { to: "/matching", label: "Matching", icon: Target },
+      { to: "/financing", label: "Finanzierungen", icon: Banknote },
       { to: "/appointments", label: "Termine", icon: Calendar },
       { to: "/tasks", label: "Aufgaben", icon: CheckSquare },
     ],
