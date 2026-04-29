@@ -716,21 +716,262 @@ function Step7Equipment({ d, update }: { d: WizardData; update: (p: Partial<Wiza
   );
 }
 
+function detectKindFromFile(file: File): string {
+  if (file.type.startsWith("image/")) return "image";
+  if (file.type.startsWith("video/")) return "video";
+  const n = file.name.toLowerCase();
+  if (n.includes("grundriss") || n.includes("floor")) return "floor_plan";
+  return "other";
+}
+
+function getMediaPublicUrl(path: string) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+}
+
 function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
+  const [tab, setTab] = useState<"upload" | "library">("upload");
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const library = useQuery({
+    queryKey: ["wizard_media_library"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("property_media")
+        .select("id, file_url, file_name, file_type, title, properties(title)")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      return data ?? [];
+    },
+    enabled: tab === "library",
+  });
+
+  const ensureCover = (list: WizardMedia[]): WizardMedia[] => {
+    if (list.length === 0) return list;
+    if (list.some((m) => m.is_cover)) return list;
+    return list.map((m, i) => ({ ...m, is_cover: i === 0 }));
+  };
+
+  const handleFiles = async (files: File[]) => {
+    if (files.length === 0) return;
+    setUploading(true);
+    try {
+      const uploaded: WizardMedia[] = [];
+      for (const file of files) {
+        const ext = file.name.split(".").pop() ?? "bin";
+        const path = `_wizard/${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage.from("media").upload(path, file, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+        });
+        if (error) throw error;
+        uploaded.push({
+          file_url: path,
+          file_name: file.name,
+          file_type: detectKindFromFile(file),
+          title: null,
+          is_cover: false,
+          source: "upload",
+        });
+      }
+      update({ media: ensureCover([...d.media, ...uploaded]) });
+      toast.success(`${uploaded.length} Datei(en) hochgeladen`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload fehlgeschlagen");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    void handleFiles(files);
+  };
+
+  const togglePick = (item: any) => {
+    const exists = d.media.find((m) => m.library_media_id === item.id);
+    if (exists) {
+      update({ media: ensureCover(d.media.filter((m) => m.library_media_id !== item.id)) });
+    } else {
+      update({
+        media: ensureCover([
+          ...d.media,
+          {
+            file_url: item.file_url,
+            file_name: item.file_name,
+            file_type: item.file_type,
+            title: item.title,
+            is_cover: false,
+            source: "library",
+            library_media_id: item.id,
+          },
+        ]),
+      });
+    }
+  };
+
+  const setCover = (idx: number) => {
+    update({ media: d.media.map((m, i) => ({ ...m, is_cover: i === idx })) });
+  };
+  const removeAt = (idx: number) => {
+    update({ media: ensureCover(d.media.filter((_, i) => i !== idx)) });
+  };
+
   return (
-    <div className="space-y-4">
-      <div>
-        <Label>Hauptbild-URL</Label>
-        <Input value={d.image_url} onChange={(e) => update({ image_url: e.target.value })} placeholder="https://…" />
-        <p className="mt-1 text-xs text-muted-foreground">Weitere Bilder, Grundrisse und Dokumente kannst du nach dem Erstellen über die Tabs Medien & Dokumente hochladen.</p>
+    <div className="space-y-5">
+      <div className="flex gap-2 rounded-xl border bg-muted/30 p-1">
+        <button
+          type="button"
+          onClick={() => setTab("upload")}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition",
+            tab === "upload" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Upload className="h-4 w-4" /> Neue Bilder hochladen
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("library")}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition",
+            tab === "library" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Library className="h-4 w-4" /> Aus Mediathek wählen
+        </button>
       </div>
-      <div>
-        <Label>Beschreibung</Label>
-        <Textarea rows={4} value={d.description} onChange={(e) => update({ description: e.target.value })} placeholder="Kurze Objektbeschreibung für Exposé und Inserate" />
-      </div>
-      <div>
-        <Label>Interne Notizen</Label>
-        <Textarea rows={3} value={d.internal_notes} onChange={(e) => update({ internal_notes: e.target.value })} placeholder="Nur intern sichtbar" />
+
+      {tab === "upload" && (
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          className={cn(
+            "flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-10 text-center transition",
+            dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/20",
+          )}
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Upload className="h-6 w-6" />
+          </div>
+          <p className="font-medium">Dateien hierhin ziehen oder auswählen</p>
+          <p className="text-xs text-muted-foreground">Bilder, Videos oder Grundrisse · mehrere Dateien möglich</p>
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept="image/*,video/*,.pdf"
+            className="hidden"
+            onChange={(e) => { void handleFiles(Array.from(e.target.files ?? [])); if (fileRef.current) fileRef.current.value = ""; }}
+          />
+          <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading} className="mt-2">
+            {uploading ? "Wird hochgeladen…" : "Dateien auswählen"}
+          </Button>
+        </div>
+      )}
+
+      {tab === "library" && (
+        <div className="rounded-2xl border bg-muted/20 p-3">
+          {library.isLoading ? (
+            <p className="p-4 text-sm text-muted-foreground">Wird geladen…</p>
+          ) : (library.data ?? []).length === 0 ? (
+            <p className="p-4 text-sm text-muted-foreground">Mediathek ist leer.</p>
+          ) : (
+            <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
+              {(library.data ?? []).map((item: any) => {
+                const picked = !!d.media.find((m) => m.library_media_id === item.id);
+                const url = getMediaPublicUrl(item.file_url);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => togglePick(item)}
+                    className={cn(
+                      "group relative aspect-square overflow-hidden rounded-lg border-2 bg-card transition",
+                      picked ? "border-primary ring-2 ring-primary/30" : "border-transparent hover:border-primary/40",
+                    )}
+                  >
+                    {url ? (
+                      <img src={url} alt={item.title ?? ""} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-muted">
+                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
+                    {picked && (
+                      <div className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <Check className="h-3.5 w-3.5" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {d.media.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Ausgewählte Medien ({d.media.length})</Label>
+            <p className="text-xs text-muted-foreground">Klicke auf den Stern, um das Coverbild zu setzen.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+            {d.media.map((m, idx) => {
+              const url = getMediaPublicUrl(m.file_url);
+              return (
+                <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg border bg-card">
+                  {m.file_type === "image" || !m.file_type ? (
+                    url ? <img src={url} alt={m.title ?? ""} className="h-full w-full object-cover" /> : (
+                      <div className="flex h-full w-full items-center justify-center bg-muted"><ImageIcon className="h-6 w-6 text-muted-foreground" /></div>
+                    )
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center bg-muted text-xs text-muted-foreground">
+                      <ImageIcon className="h-6 w-6" />
+                      <span className="mt-1 capitalize">{m.file_type}</span>
+                    </div>
+                  )}
+                  {m.is_cover && (
+                    <Badge className="absolute left-1 top-1 bg-primary text-primary-foreground">
+                      <Star className="mr-1 h-3 w-3" /> Cover
+                    </Badge>
+                  )}
+                  {m.source === "library" && (
+                    <Badge variant="secondary" className="absolute bottom-1 left-1 text-[10px]">Mediathek</Badge>
+                  )}
+                  <div className="absolute right-1 top-1 flex flex-col gap-1 opacity-0 transition group-hover:opacity-100">
+                    {!m.is_cover && (
+                      <Button type="button" size="icon" variant="secondary" className="h-7 w-7 bg-background/90" onClick={() => setCover(idx)} title="Als Cover setzen">
+                        <Star className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <Button type="button" size="icon" variant="secondary" className="h-7 w-7 bg-background/90" onClick={() => removeAt(idx)} title="Entfernen">
+                      <X className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-3 pt-2">
+        <div>
+          <Label>Beschreibung</Label>
+          <Textarea rows={3} value={d.description} onChange={(e) => update({ description: e.target.value })} placeholder="Kurze Objektbeschreibung für Exposé und Inserate" />
+        </div>
+        <div>
+          <Label>Interne Notizen</Label>
+          <Textarea rows={2} value={d.internal_notes} onChange={(e) => update({ internal_notes: e.target.value })} placeholder="Nur intern sichtbar" />
+        </div>
       </div>
     </div>
   );
