@@ -434,6 +434,11 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
           </ul>
         </CardContent></Card>
       )}
+
+      <div className="pt-4">
+        <h3 className="mb-3 font-display text-lg font-semibold">Generierte Dokumente</h3>
+        <GeneratedDocumentsTable filterRelatedType="property" filterRelatedId={propertyId} />
+      </div>
     </div>
   );
 }
