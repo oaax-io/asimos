@@ -283,30 +283,43 @@ export function FinancingQuickCheckWizard({
           ))}
         </div>
 
-        {/* 1. Finanzierungsart */}
+        {/* 1. Finanzierungsart (Multi-Select) */}
         {step === 1 && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {(Object.keys(FINANCING_TYPE_LABELS) as FinancingType[]).map((t) => {
-              const Icon = TYPE_ICONS[t];
-              const active = financingType === t;
-              return (
-                <Card
-                  key={t}
-                  onClick={() => setFinancingType(t)}
-                  className={`cursor-pointer p-4 transition ${active ? "border-primary ring-2 ring-primary/30" : "hover:border-primary/40"}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`rounded-lg p-2 ${active ? "bg-primary/15" : "bg-muted"}`}>
-                      <Icon className="h-5 w-5" />
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Mehrere Bausteine kombinierbar (z. B. Kauf + Renovation, Aufstockung + Renovation).
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(Object.keys(FINANCING_TYPE_LABELS) as FinancingType[]).map((t) => {
+                const Icon = TYPE_ICONS[t];
+                const active = modules.includes(t);
+                return (
+                  <Card
+                    key={t}
+                    onClick={() => toggleModule(t)}
+                    className={`cursor-pointer p-4 transition ${active ? "border-primary ring-2 ring-primary/30" : "hover:border-primary/40"}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`rounded-lg p-2 ${active ? "bg-primary/15" : "bg-muted"}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{FINANCING_TYPE_LABELS[t]}</p>
+                        <p className="text-xs text-muted-foreground">{FINANCING_TYPE_DESCRIPTIONS[t]}</p>
+                      </div>
+                      {active && <CheckCircle2 className="h-4 w-4 text-primary mt-1" />}
                     </div>
-                    <div>
-                      <p className="font-medium">{FINANCING_TYPE_LABELS[t]}</p>
-                      <p className="text-xs text-muted-foreground">{FINANCING_TYPE_DESCRIPTIONS[t]}</p>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+                  </Card>
+                );
+              })}
+            </div>
+            {modules.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {modules.map((m) => (
+                  <Badge key={m} variant="secondary">{FINANCING_TYPE_LABELS[m]}</Badge>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
