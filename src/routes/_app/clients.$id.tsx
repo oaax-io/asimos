@@ -745,12 +745,6 @@ function EditClientDialog({ client, onSaved }: { client: any; onSaved: () => voi
   );
 }
 
-function generateToken() {
-  const arr = new Uint8Array(24);
-  crypto.getRandomValues(arr);
-  return Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
 function FinancingTab({
   clientId, dossiers, onChange,
 }: {
