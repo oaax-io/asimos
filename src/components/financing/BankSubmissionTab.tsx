@@ -42,7 +42,7 @@ export function BankSubmissionTab({ dossierId }: { dossierId: string }) {
 
   const saveMutation = useMutation({
     mutationFn: async (patch: Record<string, any>) => {
-      const { error } = await supabase.from("financing_dossiers").update(patch).eq("id", dossierId);
+      const { error } = await supabase.from("financing_dossiers").update(patch as any).eq("id", dossierId);
       if (error) throw error;
     },
     onSuccess: () => {
