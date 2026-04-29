@@ -30,6 +30,7 @@ import { ClientRelationshipsTab } from "@/components/clients/ClientRelationships
 import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
 import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkCard";
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
+import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetail });
 
