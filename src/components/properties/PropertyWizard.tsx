@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, Check, Plus, Trash2, Home, Building2, Building, Briefcase, TreePine, Car, Layers } from "lucide-react";
+import {
+  ArrowLeft, ArrowRight, Check, Plus, Trash2,
+  Home, Building2, Building, Briefcase, TreePine, Car, Layers,
+  Box, Boxes, Layers3, Upload, ImageIcon, Star, X, Library,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { propertyStatusLabels } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 /* -------------------- Typen -------------------- */
 
@@ -20,14 +25,30 @@ type Structure = "single" | "building" | "unit_in_building";
 type Marketing = "sale" | "rent" | "off_market";
 
 const PROP_TYPES = [
-  { v: "house",       label: "Einfamilienhaus", icon: Home },
-  { v: "mixed_use",   label: "Mehrfamilienhaus", icon: Building2 },
-  { v: "apartment",   label: "Wohnung", icon: Building },
-  { v: "commercial",  label: "Gewerbe", icon: Briefcase },
-  { v: "land",        label: "Grundstück", icon: TreePine },
-  { v: "parking",     label: "Parkplatz / Garage", icon: Car },
-  { v: "other",       label: "Sonstige", icon: Layers },
+  { v: "house",       label: "Einfamilienhaus",     desc: "Freistehendes Haus für eine Familie",       icon: Home },
+  { v: "mixed_use",   label: "Mehrfamilienhaus",    desc: "Liegenschaft mit mehreren Wohneinheiten",   icon: Building2 },
+  { v: "apartment",   label: "Wohnung",             desc: "Eigentumswohnung oder Mietwohnung",         icon: Building },
+  { v: "commercial",  label: "Gewerbe",             desc: "Büro-, Verkaufs- oder Lagerflächen",        icon: Briefcase },
+  { v: "land",        label: "Grundstück",          desc: "Bauland, Landwirtschafts- oder Restland",   icon: TreePine },
+  { v: "parking",     label: "Parkplatz / Garage",  desc: "Einzelner Stellplatz oder Garagenbox",      icon: Car },
+  { v: "other",       label: "Sonstige",            desc: "Sonstige Objektart",                        icon: Layers },
 ] as const;
+
+const STRUCTURES: { v: Structure; label: string; desc: string; icon: any }[] = [
+  { v: "single",            label: "Einzelobjekt",                         desc: "Ein eigenständiges Objekt ohne Untereinheiten.",                  icon: Box },
+  { v: "building",          label: "Liegenschaft mit mehreren Einheiten",  desc: "Mehrfamilienhaus oder Gebäude mit mehreren Einheiten.",           icon: Boxes },
+  { v: "unit_in_building",  label: "Einheit innerhalb einer Liegenschaft", desc: "Diese Einheit gehört zu einem bereits erfassten Gebäude.",        icon: Layers3 },
+];
+
+export type WizardMedia = {
+  file_url: string;            // Storage-Pfad (z. B. _wizard/abc.jpg) oder bestehender Pfad aus Mediathek
+  file_name: string | null;
+  file_type: string | null;    // image | video | floor_plan | other
+  title: string | null;
+  is_cover: boolean;
+  source: "upload" | "library"; // library = Verknüpfung zu bestehendem Asset
+  library_media_id?: string | null;
+};
 
 const STATUSES = ["draft","preparation","active","available","reserved","sold","rented","archived"] as const;
 
@@ -95,6 +116,7 @@ export type WizardData = {
   image_url: string;
   description: string;
   internal_notes: string;
+  media: WizardMedia[];
   // Schritt 9
   units: Unit[];
 };
@@ -144,6 +166,7 @@ const empty: WizardData = {
   image_url: "",
   description: "",
   internal_notes: "",
+  media: [],
   units: [],
 };
 
@@ -152,6 +175,7 @@ const empty: WizardData = {
 export type WizardSubmit = {
   property: Record<string, any>;
   units: Record<string, any>[];
+  media: WizardMedia[];
 };
 
 function buildFeatures(d: WizardData): string[] {
@@ -215,7 +239,11 @@ export function buildSubmitPayload(d: WizardData): WizardSubmit {
     description: [d.description, d.location_description ? `\n\nLage: ${d.location_description}` : ""].filter(Boolean).join("") || null,
     internal_notes: d.internal_notes || null,
     features: buildFeatures(d),
-    images: d.image_url ? [d.image_url] : null,
+    images: (() => {
+      const cover = d.media.find((m) => m.is_cover) ?? d.media[0];
+      if (cover) return [cover.file_url];
+      return d.image_url ? [d.image_url] : null;
+    })(),
   };
 
   const units = isMfh
@@ -242,7 +270,7 @@ export function buildSubmitPayload(d: WizardData): WizardSubmit {
       }))
     : [];
 
-  return { property, units };
+  return { property, units, media: d.media };
 }
 
 /* -------------------- Wizard-Komponente -------------------- */
@@ -344,7 +372,7 @@ export function PropertyWizard({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-4xl overflow-hidden p-0">
+      <DialogContent className="max-h-[95vh] w-[95vw] max-w-5xl overflow-hidden p-0">
         <DialogHeader className="border-b p-6 pb-4">
           <DialogTitle className="font-display text-xl">Neue Immobilie</DialogTitle>
           <DialogDescription>
@@ -364,7 +392,7 @@ export function PropertyWizard({
           </div>
         </DialogHeader>
 
-        <div className="max-h-[60vh] overflow-y-auto p-6">
+        <div className="max-h-[68vh] overflow-y-auto p-6">
           {step === 0 && <Step1Type d={d} update={update} />}
           {step === 1 && <Step2Structure d={d} update={update} buildings={buildings.data ?? []} />}
           {step === 2 && <Step3Basics d={d} update={update} owners={owners.data ?? []} employees={employees.data ?? []} />}
@@ -403,55 +431,90 @@ export function PropertyWizard({
 
 function Step1Type({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
   return (
-    <div className="space-y-4">
-      <h3 className="font-semibold">Welche Objektart erfasst du?</h3>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {PROP_TYPES.map(({ v, label, icon: Icon }) => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => update({ property_type: v })}
-            className={cn(
-              "flex flex-col items-center gap-2 rounded-xl border p-5 text-sm transition hover:border-primary hover:bg-accent",
-              d.property_type === v && "border-primary bg-primary/5 ring-2 ring-primary/30"
-            )}
-          >
-            <Icon className="h-7 w-7 text-primary" />
-            <span className="font-medium">{label}</span>
-          </button>
-        ))}
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-lg font-semibold">Welche Objektart erfasst du?</h3>
+        <p className="text-sm text-muted-foreground">Wähle die passende Kategorie. Du kannst sie später anpassen.</p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {PROP_TYPES.map(({ v, label, desc, icon: Icon }) => {
+          const selected = d.property_type === v;
+          return (
+            <button
+              key={v}
+              type="button"
+              onClick={() => update({ property_type: v })}
+              className={cn(
+                "group relative flex h-full flex-col items-start gap-3 rounded-2xl border-2 bg-card p-5 text-left transition",
+                "hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md",
+                selected ? "border-primary bg-primary/5 shadow-md" : "border-border",
+              )}
+            >
+              <div className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-xl transition",
+                selected ? "bg-primary text-primary-foreground" : "bg-muted text-foreground group-hover:bg-primary/10 group-hover:text-primary",
+              )}>
+                <Icon className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="font-semibold leading-tight">{label}</div>
+                <p className="mt-1 text-xs leading-snug text-muted-foreground">{desc}</p>
+              </div>
+              {selected && (
+                <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <Check className="h-3.5 w-3.5" />
+                </div>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 function Step2Structure({ d, update, buildings }: { d: WizardData; update: (p: Partial<WizardData>) => void; buildings: any[] }) {
-  const opts: { v: Structure; label: string; desc: string }[] = [
-    { v: "single", label: "Einzelobjekt", desc: "Ein eigenständiges Objekt ohne Untereinheiten." },
-    { v: "building", label: "Liegenschaft mit mehreren Einheiten", desc: "Mehrfamilienhaus oder Gebäude mit Wohnungen/Gewerbeeinheiten." },
-    { v: "unit_in_building", label: "Einheit innerhalb bestehender Liegenschaft", desc: "Diese Wohnung gehört zu einem bereits erfassten Gebäude." },
-  ];
   return (
-    <div className="space-y-4">
-      <h3 className="font-semibold">Wie ist das Objekt strukturiert?</h3>
-      <div className="space-y-2">
-        {opts.map(o => (
-          <button
-            key={o.v}
-            type="button"
-            onClick={() => update({ structure: o.v })}
-            className={cn(
-              "w-full rounded-xl border p-4 text-left transition hover:border-primary hover:bg-accent",
-              d.structure === o.v && "border-primary bg-primary/5 ring-2 ring-primary/30"
-            )}
-          >
-            <div className="font-medium">{o.label}</div>
-            <p className="text-sm text-muted-foreground">{o.desc}</p>
-          </button>
-        ))}
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-lg font-semibold">Wie ist das Objekt strukturiert?</h3>
+        <p className="text-sm text-muted-foreground">Wir blenden danach nur die relevanten Felder ein.</p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {STRUCTURES.map(({ v, label, desc, icon: Icon }) => {
+          const selected = d.structure === v;
+          return (
+            <button
+              key={v}
+              type="button"
+              onClick={() => update({ structure: v })}
+              className={cn(
+                "group relative flex h-full flex-col gap-3 rounded-2xl border-2 bg-card p-5 text-left transition",
+                "hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md",
+                selected ? "border-primary bg-primary/5 shadow-md" : "border-border",
+              )}
+            >
+              <div className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-xl transition",
+                selected ? "bg-primary text-primary-foreground" : "bg-muted text-foreground group-hover:bg-primary/10 group-hover:text-primary",
+              )}>
+                <Icon className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="font-semibold leading-tight">{label}</div>
+                <p className="mt-1 text-xs leading-snug text-muted-foreground">{desc}</p>
+              </div>
+              {selected && (
+                <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <Check className="h-3.5 w-3.5" />
+                </div>
+              )}
+            </button>
+          );
+        })}
       </div>
       {d.structure === "unit_in_building" && (
-        <div className="rounded-lg border bg-muted/30 p-3">
+        <div className="rounded-xl border bg-muted/30 p-4">
           <Label>Übergeordnete Liegenschaft</Label>
           <Select value={d.parent_property_id ?? ""} onValueChange={(v) => update({ parent_property_id: v || null })}>
             <SelectTrigger className="mt-1"><SelectValue placeholder="Liegenschaft wählen" /></SelectTrigger>
@@ -653,21 +716,262 @@ function Step7Equipment({ d, update }: { d: WizardData; update: (p: Partial<Wiza
   );
 }
 
+function detectKindFromFile(file: File): string {
+  if (file.type.startsWith("image/")) return "image";
+  if (file.type.startsWith("video/")) return "video";
+  const n = file.name.toLowerCase();
+  if (n.includes("grundriss") || n.includes("floor")) return "floor_plan";
+  return "other";
+}
+
+function getMediaPublicUrl(path: string) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+}
+
 function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
+  const [tab, setTab] = useState<"upload" | "library">("upload");
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const library = useQuery({
+    queryKey: ["wizard_media_library"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("property_media")
+        .select("id, file_url, file_name, file_type, title, properties(title)")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      return data ?? [];
+    },
+    enabled: tab === "library",
+  });
+
+  const ensureCover = (list: WizardMedia[]): WizardMedia[] => {
+    if (list.length === 0) return list;
+    if (list.some((m) => m.is_cover)) return list;
+    return list.map((m, i) => ({ ...m, is_cover: i === 0 }));
+  };
+
+  const handleFiles = async (files: File[]) => {
+    if (files.length === 0) return;
+    setUploading(true);
+    try {
+      const uploaded: WizardMedia[] = [];
+      for (const file of files) {
+        const ext = file.name.split(".").pop() ?? "bin";
+        const path = `_wizard/${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage.from("media").upload(path, file, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+        });
+        if (error) throw error;
+        uploaded.push({
+          file_url: path,
+          file_name: file.name,
+          file_type: detectKindFromFile(file),
+          title: null,
+          is_cover: false,
+          source: "upload",
+        });
+      }
+      update({ media: ensureCover([...d.media, ...uploaded]) });
+      toast.success(`${uploaded.length} Datei(en) hochgeladen`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload fehlgeschlagen");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    void handleFiles(files);
+  };
+
+  const togglePick = (item: any) => {
+    const exists = d.media.find((m) => m.library_media_id === item.id);
+    if (exists) {
+      update({ media: ensureCover(d.media.filter((m) => m.library_media_id !== item.id)) });
+    } else {
+      update({
+        media: ensureCover([
+          ...d.media,
+          {
+            file_url: item.file_url,
+            file_name: item.file_name,
+            file_type: item.file_type,
+            title: item.title,
+            is_cover: false,
+            source: "library",
+            library_media_id: item.id,
+          },
+        ]),
+      });
+    }
+  };
+
+  const setCover = (idx: number) => {
+    update({ media: d.media.map((m, i) => ({ ...m, is_cover: i === idx })) });
+  };
+  const removeAt = (idx: number) => {
+    update({ media: ensureCover(d.media.filter((_, i) => i !== idx)) });
+  };
+
   return (
-    <div className="space-y-4">
-      <div>
-        <Label>Hauptbild-URL</Label>
-        <Input value={d.image_url} onChange={(e) => update({ image_url: e.target.value })} placeholder="https://…" />
-        <p className="mt-1 text-xs text-muted-foreground">Weitere Bilder, Grundrisse und Dokumente kannst du nach dem Erstellen über die Tabs Medien & Dokumente hochladen.</p>
+    <div className="space-y-5">
+      <div className="flex gap-2 rounded-xl border bg-muted/30 p-1">
+        <button
+          type="button"
+          onClick={() => setTab("upload")}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition",
+            tab === "upload" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Upload className="h-4 w-4" /> Neue Bilder hochladen
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("library")}
+          className={cn(
+            "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition",
+            tab === "library" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Library className="h-4 w-4" /> Aus Mediathek wählen
+        </button>
       </div>
-      <div>
-        <Label>Beschreibung</Label>
-        <Textarea rows={4} value={d.description} onChange={(e) => update({ description: e.target.value })} placeholder="Kurze Objektbeschreibung für Exposé und Inserate" />
-      </div>
-      <div>
-        <Label>Interne Notizen</Label>
-        <Textarea rows={3} value={d.internal_notes} onChange={(e) => update({ internal_notes: e.target.value })} placeholder="Nur intern sichtbar" />
+
+      {tab === "upload" && (
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          className={cn(
+            "flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-10 text-center transition",
+            dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/20",
+          )}
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Upload className="h-6 w-6" />
+          </div>
+          <p className="font-medium">Dateien hierhin ziehen oder auswählen</p>
+          <p className="text-xs text-muted-foreground">Bilder, Videos oder Grundrisse · mehrere Dateien möglich</p>
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept="image/*,video/*,.pdf"
+            className="hidden"
+            onChange={(e) => { void handleFiles(Array.from(e.target.files ?? [])); if (fileRef.current) fileRef.current.value = ""; }}
+          />
+          <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading} className="mt-2">
+            {uploading ? "Wird hochgeladen…" : "Dateien auswählen"}
+          </Button>
+        </div>
+      )}
+
+      {tab === "library" && (
+        <div className="rounded-2xl border bg-muted/20 p-3">
+          {library.isLoading ? (
+            <p className="p-4 text-sm text-muted-foreground">Wird geladen…</p>
+          ) : (library.data ?? []).length === 0 ? (
+            <p className="p-4 text-sm text-muted-foreground">Mediathek ist leer.</p>
+          ) : (
+            <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
+              {(library.data ?? []).map((item: any) => {
+                const picked = !!d.media.find((m) => m.library_media_id === item.id);
+                const url = getMediaPublicUrl(item.file_url);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => togglePick(item)}
+                    className={cn(
+                      "group relative aspect-square overflow-hidden rounded-lg border-2 bg-card transition",
+                      picked ? "border-primary ring-2 ring-primary/30" : "border-transparent hover:border-primary/40",
+                    )}
+                  >
+                    {url ? (
+                      <img src={url} alt={item.title ?? ""} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-muted">
+                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
+                    {picked && (
+                      <div className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <Check className="h-3.5 w-3.5" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {d.media.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Ausgewählte Medien ({d.media.length})</Label>
+            <p className="text-xs text-muted-foreground">Klicke auf den Stern, um das Coverbild zu setzen.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+            {d.media.map((m, idx) => {
+              const url = getMediaPublicUrl(m.file_url);
+              return (
+                <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg border bg-card">
+                  {m.file_type === "image" || !m.file_type ? (
+                    url ? <img src={url} alt={m.title ?? ""} className="h-full w-full object-cover" /> : (
+                      <div className="flex h-full w-full items-center justify-center bg-muted"><ImageIcon className="h-6 w-6 text-muted-foreground" /></div>
+                    )
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center bg-muted text-xs text-muted-foreground">
+                      <ImageIcon className="h-6 w-6" />
+                      <span className="mt-1 capitalize">{m.file_type}</span>
+                    </div>
+                  )}
+                  {m.is_cover && (
+                    <Badge className="absolute left-1 top-1 bg-primary text-primary-foreground">
+                      <Star className="mr-1 h-3 w-3" /> Cover
+                    </Badge>
+                  )}
+                  {m.source === "library" && (
+                    <Badge variant="secondary" className="absolute bottom-1 left-1 text-[10px]">Mediathek</Badge>
+                  )}
+                  <div className="absolute right-1 top-1 flex flex-col gap-1 opacity-0 transition group-hover:opacity-100">
+                    {!m.is_cover && (
+                      <Button type="button" size="icon" variant="secondary" className="h-7 w-7 bg-background/90" onClick={() => setCover(idx)} title="Als Cover setzen">
+                        <Star className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <Button type="button" size="icon" variant="secondary" className="h-7 w-7 bg-background/90" onClick={() => removeAt(idx)} title="Entfernen">
+                      <X className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-3 pt-2">
+        <div>
+          <Label>Beschreibung</Label>
+          <Textarea rows={3} value={d.description} onChange={(e) => update({ description: e.target.value })} placeholder="Kurze Objektbeschreibung für Exposé und Inserate" />
+        </div>
+        <div>
+          <Label>Interne Notizen</Label>
+          <Textarea rows={2} value={d.internal_notes} onChange={(e) => update({ internal_notes: e.target.value })} placeholder="Nur intern sichtbar" />
+        </div>
       </div>
     </div>
   );
@@ -778,6 +1082,7 @@ function Step10Summary({ d, owners, employees }: { d: WizardData; owners: any[];
     ["Eigentümer", owner?.full_name ?? "—"],
     ["Zuständig", emp?.full_name || emp?.email || "—"],
     ["Einheiten", d.units.length ? String(d.units.length) : "—"],
+    ["Medien", d.media.length ? `${d.media.length} Datei(en)${d.media.find(m => m.is_cover) ? " · Cover gesetzt" : ""}` : "—"],
   ];
   return (
     <div className="space-y-4">
