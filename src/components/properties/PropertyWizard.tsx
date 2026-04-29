@@ -175,6 +175,7 @@ const empty: WizardData = {
 export type WizardSubmit = {
   property: Record<string, any>;
   units: Record<string, any>[];
+  media: WizardMedia[];
 };
 
 function buildFeatures(d: WizardData): string[] {
