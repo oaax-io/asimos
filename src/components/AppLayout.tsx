@@ -54,6 +54,7 @@ const NAV_GROUPS = [
   },
 ] as const;
 
+
 function AppSidebar() {
   const { pathname } = useLocation();
   const { state } = useSidebar();
