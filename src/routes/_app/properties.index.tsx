@@ -55,7 +55,7 @@ function PropertiesPage() {
       const propPayload = { ...payload.property, owner_id: user!.id };
       const { data: created, error } = await supabase
         .from("properties")
-        .insert(propPayload)
+        .insert(propPayload as any)
         .select("id")
         .single();
       if (error) throw error;
@@ -65,7 +65,7 @@ function PropertiesPage() {
           owner_id: user!.id,
           parent_property_id: created.id,
         }));
-        const { error: uErr } = await supabase.from("properties").insert(unitsPayload);
+        const { error: uErr } = await supabase.from("properties").insert(unitsPayload as any);
         if (uErr) throw uErr;
       }
       return created;
