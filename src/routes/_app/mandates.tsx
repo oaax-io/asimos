@@ -22,8 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDate } from "@/lib/format";
-import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
-import type { TemplateContext } from "@/lib/document-templates";
+import { DocumentWizard } from "@/components/documents/DocumentWizard";
 
 export const Route = createFileRoute("/_app/mandates")({ component: MandatesPage });
 
@@ -104,10 +103,8 @@ function MandatesPage() {
     queryKey: ["properties-min"],
     queryFn: async () => (await supabase.from("properties").select("id, title").order("title")).data ?? [],
   });
-  const { data: company } = useQuery({
-    queryKey: ["company"],
-    queryFn: async () => (await supabase.from("company").select("name").maybeSingle()).data,
-  });
+
+
 
   const create = useMutation({
     mutationFn: async () => {
@@ -160,20 +157,8 @@ function MandatesPage() {
     setPreviewHtml(data?.html_content ?? "<p>Kein Inhalt</p>");
   };
 
-  const buildContext = (m: MandateRow): TemplateContext => ({
-    client: m.clients ?? undefined,
-    property: m.properties ?? undefined,
-    mandate: {
-      commission_model: m.commission_model === "percent" ? "Prozent" : "Pauschal",
-      commission_value:
-        m.commission_value != null
-          ? `${m.commission_value}${m.commission_model === "percent" ? " %" : " CHF"}`
-          : null,
-      valid_from: m.valid_from,
-      valid_until: m.valid_until,
-    },
-    company: company ?? undefined,
-  });
+
+
 
   const filtered = useMemo(
     () =>
@@ -406,12 +391,25 @@ function MandatesPage() {
       )}
 
       {genFor && (
-        <GenerateDocumentDialog
+        <DocumentWizard
           open={!!genFor}
           onOpenChange={(o) => !o && setGenFor(null)}
-          documentType="mandate"
+          kind="mandate"
+          defaultClientId={genFor.client_id ?? undefined}
+          defaultPropertyId={genFor.property_id ?? undefined}
+          relatedType="mandate"
           relatedId={genFor.id}
-          context={buildContext(genFor)}
+          extraContext={{
+            mandate: {
+              commission_model: genFor.commission_model === "percent" ? "Prozent" : "Pauschal",
+              commission_value:
+                genFor.commission_value != null
+                  ? `${genFor.commission_value}${genFor.commission_model === "percent" ? " %" : " CHF"}`
+                  : null,
+              valid_from: genFor.valid_from,
+              valid_until: genFor.valid_until,
+            },
+          }}
         />
       )}
 

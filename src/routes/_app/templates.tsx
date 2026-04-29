@@ -23,8 +23,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import {
   AVAILABLE_VARIABLES,
-  DEFAULT_MANDATE_TEMPLATE,
-  DEFAULT_RESERVATION_TEMPLATE,
+  defaultTemplateForType,
   renderTemplate,
   wrapHtmlDocument,
 } from "@/lib/document-templates";
@@ -32,8 +31,11 @@ import {
 export const Route = createFileRoute("/_app/templates")({ component: TemplatesPage });
 
 const TYPE_LABELS: Record<string, string> = {
-  mandate: "Mandat",
+  mandate: "Mandat (exklusiv)",
+  mandate_partial: "Mandat (teilexklusiv)",
   reservation: "Reservation",
+  reservation_receipt: "Reservations-Quittung",
+  nda: "NDA / Vertraulichkeit",
   contract: "Vertrag",
   expose: "Exposé",
   other: "Sonstiges",
@@ -50,7 +52,7 @@ type FormState = {
 const EMPTY: FormState = {
   name: "",
   type: "mandate",
-  content: DEFAULT_MANDATE_TEMPLATE,
+  content: defaultTemplateForType("mandate"),
   is_active: true,
 };
 
@@ -130,14 +132,11 @@ function TemplatesPage() {
 
   const handleTypeChange = (v: string) => {
     setForm((prev) => {
-      const wasDefault =
-        prev.content === DEFAULT_MANDATE_TEMPLATE || prev.content === DEFAULT_RESERVATION_TEMPLATE || !prev.content;
-      let nextContent = prev.content;
-      if (wasDefault) {
-        nextContent =
-          v === "reservation" ? DEFAULT_RESERVATION_TEMPLATE : v === "mandate" ? DEFAULT_MANDATE_TEMPLATE : prev.content;
-      }
-      return { ...prev, type: v, content: nextContent };
+      const allDefaults = ["mandate", "mandate_partial", "reservation", "reservation_receipt", "nda"]
+        .map((t) => defaultTemplateForType(t));
+      const wasDefault = !prev.content || allDefaults.includes(prev.content);
+      const next = defaultTemplateForType(v);
+      return { ...prev, type: v, content: wasDefault && next ? next : prev.content };
     });
   };
 

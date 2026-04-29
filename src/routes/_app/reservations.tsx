@@ -22,8 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDate, formatCurrency } from "@/lib/format";
-import { GenerateDocumentDialog } from "@/components/documents/GenerateDocumentDialog";
-import type { TemplateContext } from "@/lib/document-templates";
+import { DocumentWizard } from "@/components/documents/DocumentWizard";
 
 export const Route = createFileRoute("/_app/reservations")({ component: ReservationsPage });
 
@@ -98,10 +97,8 @@ function ReservationsPage() {
     queryKey: ["properties-min"],
     queryFn: async () => (await supabase.from("properties").select("id, title").order("title")).data ?? [],
   });
-  const { data: company } = useQuery({
-    queryKey: ["company"],
-    queryFn: async () => (await supabase.from("company").select("name").maybeSingle()).data,
-  });
+
+
 
   const create = useMutation({
     mutationFn: async () => {
@@ -144,12 +141,8 @@ function ReservationsPage() {
     setPreviewHtml(data?.html_content ?? "<p>Kein Inhalt</p>");
   };
 
-  const buildContext = (r: ReservationRow): TemplateContext => ({
-    client: r.clients ?? undefined,
-    property: r.properties ?? undefined,
-    reservation: { reservation_fee: r.reservation_fee, valid_until: r.valid_until },
-    company: company ?? undefined,
-  });
+
+
 
   const filtered = useMemo(
     () =>
@@ -344,12 +337,20 @@ function ReservationsPage() {
       )}
 
       {genFor && (
-        <GenerateDocumentDialog
+        <DocumentWizard
           open={!!genFor}
           onOpenChange={(o) => !o && setGenFor(null)}
-          documentType="reservation"
+          kind="reservation"
+          defaultClientId={genFor.client_id ?? undefined}
+          defaultPropertyId={genFor.property_id ?? undefined}
+          relatedType="reservation"
           relatedId={genFor.id}
-          context={buildContext(genFor)}
+          extraContext={{
+            reservation: {
+              reservation_fee: genFor.reservation_fee,
+              valid_until: genFor.valid_until,
+            },
+          }}
         />
       )}
 
