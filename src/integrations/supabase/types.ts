@@ -156,6 +156,51 @@ export type Database = {
           },
         ]
       }
+      bank_accounts: {
+        Row: {
+          account_holder: string | null
+          bank_name: string | null
+          bic: string | null
+          created_at: string
+          iban: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          label: string
+          notes: string | null
+          purpose: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_holder?: string | null
+          bank_name?: string | null
+          bic?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          label: string
+          notes?: string | null
+          purpose?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_holder?: string | null
+          bank_name?: string | null
+          bic?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          label?: string
+          notes?: string | null
+          purpose?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       checklist_items: {
         Row: {
           assigned_to: string | null
@@ -673,54 +718,108 @@ export type Database = {
       }
       company: {
         Row: {
+          address: string | null
           agency_id: string
+          city: string | null
+          commercial_register: string | null
+          country: string | null
           created_at: string
+          default_place: string | null
+          default_signatory_name: string | null
+          default_signatory_role: string | null
+          email: string | null
           id: boolean
+          legal_name: string | null
+          logo_url: string | null
           name: string
+          phone: string | null
+          postal_code: string | null
+          uid_number: string | null
           updated_at: string
+          website: string | null
         }
         Insert: {
+          address?: string | null
           agency_id: string
+          city?: string | null
+          commercial_register?: string | null
+          country?: string | null
           created_at?: string
+          default_place?: string | null
+          default_signatory_name?: string | null
+          default_signatory_role?: string | null
+          email?: string | null
           id?: boolean
+          legal_name?: string | null
+          logo_url?: string | null
           name?: string
+          phone?: string | null
+          postal_code?: string | null
+          uid_number?: string | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
+          address?: string | null
           agency_id?: string
+          city?: string | null
+          commercial_register?: string | null
+          country?: string | null
           created_at?: string
+          default_place?: string | null
+          default_signatory_name?: string | null
+          default_signatory_role?: string | null
+          email?: string | null
           id?: boolean
+          legal_name?: string | null
+          logo_url?: string | null
           name?: string
+          phone?: string | null
+          postal_code?: string | null
+          uid_number?: string | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
       document_templates: {
         Row: {
+          category: string | null
           content: string
           created_at: string
+          default_variables: Json
+          description: string | null
           id: string
           is_active: boolean
+          is_system: boolean
           name: string
           type: Database["public"]["Enums"]["document_type"]
           updated_at: string
           variables: Json
         }
         Insert: {
+          category?: string | null
           content: string
           created_at?: string
+          default_variables?: Json
+          description?: string | null
           id?: string
           is_active?: boolean
+          is_system?: boolean
           name: string
           type?: Database["public"]["Enums"]["document_type"]
           updated_at?: string
           variables?: Json
         }
         Update: {
+          category?: string | null
           content?: string
           created_at?: string
+          default_variables?: Json
+          description?: string | null
           id?: string
           is_active?: boolean
+          is_system?: boolean
           name?: string
           type?: Database["public"]["Enums"]["document_type"]
           updated_at?: string
@@ -960,34 +1059,64 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          document_type: string | null
+          esign_envelope_id: string | null
+          esign_provider: string | null
+          esign_signed_at: string | null
+          esign_status: string | null
+          esign_url: string | null
           file_url: string | null
           html_content: string | null
           id: string
+          recipients: Json
           related_id: string | null
           related_type: string | null
+          sent_at: string | null
+          status: string
           template_id: string | null
+          title: string | null
           variables: Json
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          document_type?: string | null
+          esign_envelope_id?: string | null
+          esign_provider?: string | null
+          esign_signed_at?: string | null
+          esign_status?: string | null
+          esign_url?: string | null
           file_url?: string | null
           html_content?: string | null
           id?: string
+          recipients?: Json
           related_id?: string | null
           related_type?: string | null
+          sent_at?: string | null
+          status?: string
           template_id?: string | null
+          title?: string | null
           variables?: Json
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          document_type?: string | null
+          esign_envelope_id?: string | null
+          esign_provider?: string | null
+          esign_signed_at?: string | null
+          esign_status?: string | null
+          esign_url?: string | null
           file_url?: string | null
           html_content?: string | null
           id?: string
+          recipients?: Json
           related_id?: string | null
           related_type?: string | null
+          sent_at?: string | null
+          status?: string
           template_id?: string | null
+          title?: string | null
           variables?: Json
         }
         Relationships: [
@@ -1257,6 +1386,54 @@ export type Database = {
           module?: string
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      nda_agreements: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          generated_document_id: string | null
+          id: string
+          nda_type: string
+          notes: string | null
+          property_id: string | null
+          status: string
+          template_id: string | null
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          generated_document_id?: string | null
+          id?: string
+          nda_type?: string
+          notes?: string | null
+          property_id?: string | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          generated_document_id?: string | null
+          id?: string
+          nda_type?: string
+          notes?: string | null
+          property_id?: string | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
         }
         Relationships: []
       }
@@ -1742,6 +1919,9 @@ export type Database = {
         | "financing"
         | "media"
         | "other"
+        | "nda"
+        | "reservation_receipt"
+        | "mandate_partial"
       financing_status: "draft" | "submitted" | "reviewed"
       lead_status:
         | "new"
@@ -1952,6 +2132,9 @@ export const Constants = {
         "financing",
         "media",
         "other",
+        "nda",
+        "reservation_receipt",
+        "mandate_partial",
       ],
       financing_status: ["draft", "submitted", "reviewed"],
       lead_status: [
