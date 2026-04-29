@@ -3,7 +3,7 @@ import { useEffect, type ReactNode } from "react";
 import {
   LayoutDashboard, Users, UserPlus, Building2, Calendar, Target,
   Settings, LogOut, Search, Shield, Users2, CheckSquare, FileText,
-  Image as ImageIcon, ListChecks, FileSignature, FileCheck2, FileBadge, FileCode2, FileLock2,
+  Image as ImageIcon, ListChecks, FileSignature, FileCheck2, FileBadge, FileLock2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
