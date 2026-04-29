@@ -71,16 +71,20 @@ function ClientDetail() {
     return () => window.clearTimeout(timeout);
   }, [client, id, isError, isLoading]);
 
-  const { data: dossier } = useQuery({
-    queryKey: ["financing_dossier", id],
+  const { data: dossiers = [] } = useQuery({
+    queryKey: ["client_financing_dossiers", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financing_dossiers").select("*").eq("client_id", id).maybeSingle();
+        .from("financing_dossiers").select("*").eq("client_id", id)
+        .order("updated_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
     retry: false,
   });
+
+  // Erstes/aktuelles Dossier (für Hero-KPI und Selbstauskunft-Link)
+  const dossier = dossiers[0] ?? null;
 
   const { data: links = [] } = useQuery({
     queryKey: ["financing_links", dossier?.id],
