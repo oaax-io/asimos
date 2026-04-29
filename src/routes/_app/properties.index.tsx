@@ -68,6 +68,19 @@ function PropertiesPage() {
         const { error: uErr } = await supabase.from("properties").insert(unitsPayload as any);
         if (uErr) throw uErr;
       }
+      if (payload.media.length > 0 && created?.id) {
+        const mediaRows = payload.media.map((m, i) => ({
+          property_id: created.id,
+          file_url: m.file_url,
+          file_name: m.file_name,
+          file_type: m.file_type,
+          title: m.title,
+          is_cover: m.is_cover,
+          sort_order: i + 1,
+        }));
+        const { error: mErr } = await supabase.from("property_media").insert(mediaRows as any);
+        if (mErr) throw mErr;
+      }
       return created;
     },
     onSuccess: () => {
