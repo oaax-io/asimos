@@ -419,7 +419,7 @@ export function FinancingQuickCheckWizard({
         {step === 5 && (
           <div className="space-y-3">
             <div className="text-sm text-muted-foreground">
-              Felder für: <span className="font-medium text-foreground">{FINANCING_TYPE_LABELS[financingType]}</span>
+              Felder für: <span className="font-medium text-foreground">{modulesLabel}</span>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {fields
