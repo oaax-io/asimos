@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { FinancingEditorDialog } from "@/components/clients/FinancingEditorDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -771,6 +772,7 @@ function FinancingTab({
   onChange: () => void;
 }) {
   const [generating, setGenerating] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   const ensureDossier = async (): Promise<string> => {
     if (dossier?.id) return dossier.id;
@@ -800,11 +802,11 @@ function FinancingTab({
     }
   };
 
-  const handleSelfFill = async () => {
+  const handleEdit = async () => {
     try {
       await ensureDossier();
+      setEditorOpen(true);
       onChange();
-      toast.info("Bearbeitung folgt in Schritt 2");
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -820,17 +822,22 @@ function FinancingTab({
 
   if (!dossier) {
     return (
-      <Card><CardContent className="p-8 text-center">
-        <FileSignature className="mx-auto h-10 w-10 text-muted-foreground" />
-        <h3 className="mt-4 font-display text-lg font-semibold">Noch keine Finanzierungsangaben</h3>
-        <p className="mt-1 text-sm text-muted-foreground">Wie möchtest du starten?</p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Button onClick={handleSelfFill}><Pencil className="mr-1.5 h-4 w-4" />Selbst ausfüllen</Button>
-          <Button variant="outline" onClick={handleGenerateLink} disabled={generating}>
-            <Link2 className="mr-1.5 h-4 w-4" />Link für Kunden generieren
-          </Button>
-        </div>
-      </CardContent></Card>
+      <>
+        <Card><CardContent className="p-8 text-center">
+          <FileSignature className="mx-auto h-10 w-10 text-muted-foreground" />
+          <h3 className="mt-4 font-display text-lg font-semibold">Noch keine Selbstauskunft vorhanden</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Wie möchtest du starten?</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Button onClick={handleGenerateLink} disabled={generating}>
+              <Link2 className="mr-1.5 h-4 w-4" />Link generieren
+            </Button>
+            <Button variant="outline" onClick={handleEdit}>
+              <Pencil className="mr-1.5 h-4 w-4" />Selbst ausfüllen
+            </Button>
+          </div>
+        </CardContent></Card>
+        <FinancingEditorDialog open={editorOpen} onOpenChange={setEditorOpen} clientId={clientId} onSaved={onChange} />
+      </>
     );
   }
 
@@ -853,7 +860,7 @@ function FinancingTab({
             {submittedDate && <p className="mt-2 text-sm text-muted-foreground">Ausgefüllt am {submittedDate}</p>}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSelfFill}><Pencil className="mr-1.5 h-4 w-4" />Bearbeiten</Button>
+            <Button variant="outline" onClick={handleEdit}><Pencil className="mr-1.5 h-4 w-4" />Bearbeiten</Button>
             <Button variant="outline" onClick={handleGenerateLink} disabled={generating}>
               <RefreshCw className="mr-1.5 h-4 w-4" />Neu generieren (Link)
             </Button>
@@ -885,6 +892,7 @@ function FinancingTab({
           </p>
         </CardContent></Card>
       )}
+      <FinancingEditorDialog open={editorOpen} onOpenChange={setEditorOpen} clientId={clientId} onSaved={onChange} />
     </div>
   );
 }
