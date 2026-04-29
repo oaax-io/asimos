@@ -879,11 +879,42 @@ export type Database = {
       }
       financing_dossiers: {
         Row: {
+          affordability_ratio: number | null
           agency_id: string | null
+          amortisation_yearly: number | null
+          ancillary_costs_yearly: number | null
+          bank_contact: string | null
+          bank_email: string | null
+          bank_name: string | null
+          bank_type: string | null
+          calculated_interest_rate: number | null
           client_id: string
           completion_percent: number
           created_at: string
+          dossier_status:
+            | Database["public"]["Enums"]["financing_dossier_status"]
+            | null
+          financing_type: Database["public"]["Enums"]["financing_type"] | null
+          gross_income_yearly: number | null
           id: string
+          internal_notes: string | null
+          loan_to_value_ratio: number | null
+          own_funds_gift: number | null
+          own_funds_inheritance: number | null
+          own_funds_liquid: number | null
+          own_funds_pension_fund: number | null
+          own_funds_pillar_3a: number | null
+          own_funds_private_loan: number | null
+          own_funds_total: number | null
+          own_funds_vested_benefits: number | null
+          property_id: string | null
+          purchase_price: number | null
+          quick_check_reasons: Json | null
+          quick_check_status:
+            | Database["public"]["Enums"]["financing_quick_check_status"]
+            | null
+          renovation_costs: number | null
+          requested_mortgage: number | null
           section_additional: Json
           section_affordability: Json
           section_customer: Json
@@ -896,14 +927,47 @@ export type Database = {
           section_tax: Json
           status: Database["public"]["Enums"]["financing_status"]
           submitted_at: string | null
+          title: string | null
+          total_investment: number | null
           updated_at: string
         }
         Insert: {
+          affordability_ratio?: number | null
           agency_id?: string | null
+          amortisation_yearly?: number | null
+          ancillary_costs_yearly?: number | null
+          bank_contact?: string | null
+          bank_email?: string | null
+          bank_name?: string | null
+          bank_type?: string | null
+          calculated_interest_rate?: number | null
           client_id: string
           completion_percent?: number
           created_at?: string
+          dossier_status?:
+            | Database["public"]["Enums"]["financing_dossier_status"]
+            | null
+          financing_type?: Database["public"]["Enums"]["financing_type"] | null
+          gross_income_yearly?: number | null
           id?: string
+          internal_notes?: string | null
+          loan_to_value_ratio?: number | null
+          own_funds_gift?: number | null
+          own_funds_inheritance?: number | null
+          own_funds_liquid?: number | null
+          own_funds_pension_fund?: number | null
+          own_funds_pillar_3a?: number | null
+          own_funds_private_loan?: number | null
+          own_funds_total?: number | null
+          own_funds_vested_benefits?: number | null
+          property_id?: string | null
+          purchase_price?: number | null
+          quick_check_reasons?: Json | null
+          quick_check_status?:
+            | Database["public"]["Enums"]["financing_quick_check_status"]
+            | null
+          renovation_costs?: number | null
+          requested_mortgage?: number | null
           section_additional?: Json
           section_affordability?: Json
           section_customer?: Json
@@ -916,14 +980,47 @@ export type Database = {
           section_tax?: Json
           status?: Database["public"]["Enums"]["financing_status"]
           submitted_at?: string | null
+          title?: string | null
+          total_investment?: number | null
           updated_at?: string
         }
         Update: {
+          affordability_ratio?: number | null
           agency_id?: string | null
+          amortisation_yearly?: number | null
+          ancillary_costs_yearly?: number | null
+          bank_contact?: string | null
+          bank_email?: string | null
+          bank_name?: string | null
+          bank_type?: string | null
+          calculated_interest_rate?: number | null
           client_id?: string
           completion_percent?: number
           created_at?: string
+          dossier_status?:
+            | Database["public"]["Enums"]["financing_dossier_status"]
+            | null
+          financing_type?: Database["public"]["Enums"]["financing_type"] | null
+          gross_income_yearly?: number | null
           id?: string
+          internal_notes?: string | null
+          loan_to_value_ratio?: number | null
+          own_funds_gift?: number | null
+          own_funds_inheritance?: number | null
+          own_funds_liquid?: number | null
+          own_funds_pension_fund?: number | null
+          own_funds_pillar_3a?: number | null
+          own_funds_private_loan?: number | null
+          own_funds_total?: number | null
+          own_funds_vested_benefits?: number | null
+          property_id?: string | null
+          purchase_price?: number | null
+          quick_check_reasons?: Json | null
+          quick_check_status?:
+            | Database["public"]["Enums"]["financing_quick_check_status"]
+            | null
+          renovation_costs?: number | null
+          requested_mortgage?: number | null
           section_additional?: Json
           section_affordability?: Json
           section_customer?: Json
@@ -936,6 +1033,8 @@ export type Database = {
           section_tax?: Json
           status?: Database["public"]["Enums"]["financing_status"]
           submitted_at?: string | null
+          title?: string | null
+          total_investment?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -1989,7 +2088,28 @@ export type Database = {
         | "nda"
         | "reservation_receipt"
         | "mandate_partial"
+      financing_dossier_status:
+        | "draft"
+        | "quick_check"
+        | "documents_missing"
+        | "ready_for_bank"
+        | "submitted_to_bank"
+        | "approved"
+        | "rejected"
+        | "cancelled"
+      financing_quick_check_status:
+        | "realistic"
+        | "critical"
+        | "not_financeable"
+        | "incomplete"
       financing_status: "draft" | "submitted" | "reviewed"
+      financing_type:
+        | "purchase"
+        | "renovation"
+        | "increase"
+        | "refinance"
+        | "new_build"
+        | "mortgage_increase"
       lead_status:
         | "new"
         | "contacted"
@@ -2203,7 +2323,31 @@ export const Constants = {
         "reservation_receipt",
         "mandate_partial",
       ],
+      financing_dossier_status: [
+        "draft",
+        "quick_check",
+        "documents_missing",
+        "ready_for_bank",
+        "submitted_to_bank",
+        "approved",
+        "rejected",
+        "cancelled",
+      ],
+      financing_quick_check_status: [
+        "realistic",
+        "critical",
+        "not_financeable",
+        "incomplete",
+      ],
       financing_status: ["draft", "submitted", "reviewed"],
+      financing_type: [
+        "purchase",
+        "renovation",
+        "increase",
+        "refinance",
+        "new_build",
+        "mortgage_increase",
+      ],
       lead_status: [
         "new",
         "contacted",

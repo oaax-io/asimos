@@ -35,9 +35,11 @@ import { Route as AppChecklistsRouteImport } from './routes/_app/checklists'
 import { Route as AppAppointmentsRouteImport } from './routes/_app/appointments'
 import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties.index'
 import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads.index'
+import { Route as AppFinancingIndexRouteImport } from './routes/_app/financing.index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
 import { Route as AppLeadsIdRouteImport } from './routes/_app/leads.$id'
+import { Route as AppFinancingIdRouteImport } from './routes/_app/financing.$id'
 import { Route as AppClientsIdRouteImport } from './routes/_app/clients.$id'
 import { Route as AppPropertiesIdExposeRouteImport } from './routes/_app/properties.$id.expose'
 
@@ -170,6 +172,11 @@ const AppLeadsIndexRoute = AppLeadsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppLeadsRoute,
 } as any)
+const AppFinancingIndexRoute = AppFinancingIndexRouteImport.update({
+  id: '/financing/',
+  path: '/financing/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppClientsIndexRoute = AppClientsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -184,6 +191,11 @@ const AppLeadsIdRoute = AppLeadsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AppLeadsRoute,
+} as any)
+const AppFinancingIdRoute = AppFinancingIdRouteImport.update({
+  id: '/financing/$id',
+  path: '/financing/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppClientsIdRoute = AppClientsIdRouteImport.update({
   id: '/$id',
@@ -221,9 +233,11 @@ export interface FileRoutesByFullPath {
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
+  '/financing/$id': typeof AppFinancingIdRoute
   '/leads/$id': typeof AppLeadsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/clients/': typeof AppClientsIndexRoute
+  '/financing/': typeof AppFinancingIndexRoute
   '/leads/': typeof AppLeadsIndexRoute
   '/properties/': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -251,9 +265,11 @@ export interface FileRoutesByTo {
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
+  '/financing/$id': typeof AppFinancingIdRoute
   '/leads/$id': typeof AppLeadsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/clients': typeof AppClientsIndexRoute
+  '/financing': typeof AppFinancingIndexRoute
   '/leads': typeof AppLeadsIndexRoute
   '/properties': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -285,9 +301,11 @@ export interface FileRoutesById {
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
+  '/_app/financing/$id': typeof AppFinancingIdRoute
   '/_app/leads/$id': typeof AppLeadsIdRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/_app/clients/': typeof AppClientsIndexRoute
+  '/_app/financing/': typeof AppFinancingIndexRoute
   '/_app/leads/': typeof AppLeadsIndexRoute
   '/_app/properties/': typeof AppPropertiesIndexRoute
   '/_app/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -319,9 +337,11 @@ export interface FileRouteTypes {
     | '/finanzierung/$token'
     | '/selbstauskunft/$token'
     | '/clients/$id'
+    | '/financing/$id'
     | '/leads/$id'
     | '/properties/$id'
     | '/clients/'
+    | '/financing/'
     | '/leads/'
     | '/properties/'
     | '/properties/$id/expose'
@@ -349,9 +369,11 @@ export interface FileRouteTypes {
     | '/finanzierung/$token'
     | '/selbstauskunft/$token'
     | '/clients/$id'
+    | '/financing/$id'
     | '/leads/$id'
     | '/properties/$id'
     | '/clients'
+    | '/financing'
     | '/leads'
     | '/properties'
     | '/properties/$id/expose'
@@ -382,9 +404,11 @@ export interface FileRouteTypes {
     | '/finanzierung/$token'
     | '/selbstauskunft/$token'
     | '/_app/clients/$id'
+    | '/_app/financing/$id'
     | '/_app/leads/$id'
     | '/_app/properties/$id'
     | '/_app/clients/'
+    | '/_app/financing/'
     | '/_app/leads/'
     | '/_app/properties/'
     | '/_app/properties/$id/expose'
@@ -584,6 +608,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLeadsIndexRouteImport
       parentRoute: typeof AppLeadsRoute
     }
+    '/_app/financing/': {
+      id: '/_app/financing/'
+      path: '/financing'
+      fullPath: '/financing/'
+      preLoaderRoute: typeof AppFinancingIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/clients/': {
       id: '/_app/clients/'
       path: '/'
@@ -604,6 +635,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/leads/$id'
       preLoaderRoute: typeof AppLeadsIdRouteImport
       parentRoute: typeof AppLeadsRoute
+    }
+    '/_app/financing/$id': {
+      id: '/_app/financing/$id'
+      path: '/financing/$id'
+      fullPath: '/financing/$id'
+      preLoaderRoute: typeof AppFinancingIdRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/clients/$id': {
       id: '/_app/clients/$id'
@@ -680,7 +718,9 @@ interface AppRouteChildren {
   AppTasksRoute: typeof AppTasksRoute
   AppTeamRoute: typeof AppTeamRoute
   AppTemplatesRoute: typeof AppTemplatesRoute
+  AppFinancingIdRoute: typeof AppFinancingIdRoute
   AppPropertiesIdRoute: typeof AppPropertiesIdRouteWithChildren
+  AppFinancingIndexRoute: typeof AppFinancingIndexRoute
   AppPropertiesIndexRoute: typeof AppPropertiesIndexRoute
 }
 
@@ -702,7 +742,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppTasksRoute: AppTasksRoute,
   AppTeamRoute: AppTeamRoute,
   AppTemplatesRoute: AppTemplatesRoute,
+  AppFinancingIdRoute: AppFinancingIdRoute,
   AppPropertiesIdRoute: AppPropertiesIdRouteWithChildren,
+  AppFinancingIndexRoute: AppFinancingIndexRoute,
   AppPropertiesIndexRoute: AppPropertiesIndexRoute,
 }
 
