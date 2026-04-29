@@ -110,11 +110,11 @@ export function FinancingEditorDialog({ open, onOpenChange, clientId, onSaved }:
       if (fin?.id) {
         const { error } = await supabase
           .from("financing_profiles")
-          .update(finPayload)
+          .update(finPayload as any)
           .eq("id", fin.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("financing_profiles").insert(finPayload);
+        const { error } = await supabase.from("financing_profiles").insert(finPayload as any);
         if (error) throw error;
       }
     },
