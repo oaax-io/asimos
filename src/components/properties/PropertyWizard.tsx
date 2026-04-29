@@ -239,7 +239,11 @@ export function buildSubmitPayload(d: WizardData): WizardSubmit {
     description: [d.description, d.location_description ? `\n\nLage: ${d.location_description}` : ""].filter(Boolean).join("") || null,
     internal_notes: d.internal_notes || null,
     features: buildFeatures(d),
-    images: d.image_url ? [d.image_url] : null,
+    images: (() => {
+      const cover = d.media.find((m) => m.is_cover) ?? d.media[0];
+      if (cover) return [cover.file_url];
+      return d.image_url ? [d.image_url] : null;
+    })(),
   };
 
   const units = isMfh
