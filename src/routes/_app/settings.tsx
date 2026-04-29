@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { CompanyProfileForm } from "@/components/settings/CompanyProfileForm";
 import { BankAccountsManager } from "@/components/settings/BankAccountsManager";
+import { FileCode2, ExternalLink, Tags, FileSignature } from "lucide-react";
 
 export const Route = createFileRoute("/_app/settings")({ component: SettingsPage });
 
@@ -46,12 +47,15 @@ function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Einstellungen" description="Profil, Firma, Bankkonten" />
+      <PageHeader title="Einstellungen" description="Profil, Firma, Bankkonten, Vorlagen" />
       <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="profile">Mein Profil</TabsTrigger>
-          <TabsTrigger value="company">Firma</TabsTrigger>
+          <TabsTrigger value="company">Firmenprofile</TabsTrigger>
           <TabsTrigger value="banks">Bankkonten</TabsTrigger>
+          <TabsTrigger value="templates">Dokumentvorlagen</TabsTrigger>
+          <TabsTrigger value="categories">Dokumentkategorien</TabsTrigger>
+          <TabsTrigger value="esign">PDF / E-Sign</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -74,6 +78,81 @@ function SettingsPage() {
 
         <TabsContent value="banks">
           <div className="max-w-3xl"><BankAccountsManager /></div>
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <Card className="max-w-3xl">
+            <CardContent className="space-y-4 p-6">
+              <div className="flex items-center gap-3">
+                <FileCode2 className="h-5 w-5 text-primary" />
+                <div>
+                  <h2 className="text-lg font-semibold">Dokumentvorlagen</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Verwalte HTML-Vorlagen für Mandate, Reservationen, NDAs und Exposés.
+                  </p>
+                </div>
+              </div>
+              <Button asChild>
+                <Link to="/templates">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Vorlagen öffnen
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="categories">
+          <Card className="max-w-3xl">
+            <CardContent className="space-y-3 p-6">
+              <div className="flex items-center gap-3">
+                <Tags className="h-5 w-5 text-primary" />
+                <div>
+                  <h2 className="text-lg font-semibold">Dokumentkategorien</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Vordefinierte Typen im Dokumentencenter:
+                  </p>
+                </div>
+              </div>
+              <ul className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                <li>• Vertrag</li>
+                <li>• Exposé</li>
+                <li>• Ausweis</li>
+                <li>• Rechnung</li>
+                <li>• Energieausweis</li>
+                <li>• Grundriss</li>
+                <li>• Kontoauszug</li>
+                <li>• Steuerunterlage</li>
+                <li>• Sonstiges</li>
+              </ul>
+              <p className="text-xs text-muted-foreground">
+                Eigene Kategorien können später ergänzt werden, sobald wir das Schema dafür öffnen.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="esign">
+          <Card className="max-w-3xl">
+            <CardContent className="space-y-3 p-6">
+              <div className="flex items-center gap-3">
+                <FileSignature className="h-5 w-5 text-primary" />
+                <div>
+                  <h2 className="text-lg font-semibold">PDF / E-Sign</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Status der Dokumentauslieferung und elektronischen Signatur.
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                <p><strong>PDF-Export:</strong> Browser-Print aktiv. Server-PDF-Funktion vorbereitet (Stub).</p>
+                <p className="mt-2"><strong>E-Sign:</strong> Architektur bereit für Skribble und DocuSign. Noch kein Anbieter aktiv.</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Sobald ein Anbieter ausgewählt ist, werden API-Keys über die Lovable Cloud Secrets verwaltet.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </>
