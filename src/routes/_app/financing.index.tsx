@@ -58,7 +58,7 @@ function FinancingPage() {
       <PageHeader
         title="Finanzierungen"
         description="Übersicht aller Finanzierungs-Dossiers"
-        actions={
+        action={
           <Button onClick={() => setWizardOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> Quick Check starten
           </Button>
@@ -94,7 +94,6 @@ function FinancingPage() {
         <p className="text-sm text-muted-foreground">Laden…</p>
       ) : filtered.length === 0 ? (
         <EmptyState
-          icon={Banknote}
           title="Noch keine Finanzierung"
           description="Starte mit einem Quick Check für einen Kunden."
           action={<Button onClick={() => setWizardOpen(true)}><Plus className="mr-2 h-4 w-4" />Quick Check starten</Button>}
