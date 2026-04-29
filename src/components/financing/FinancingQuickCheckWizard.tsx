@@ -48,7 +48,7 @@ export function FinancingQuickCheckWizard({
 }: Props) {
   const qc = useQueryClient();
   const [step, setStep] = useState(1);
-  const [financingType, setFinancingType] = useState<FinancingType>("purchase");
+  const [modules, setModules] = useState<FinancingType[]>(["purchase"]);
   const [dataSource, setDataSource] = useState<DataSource>(
     defaultPropertyId ? "existing_property" : "existing_property"
   );
@@ -61,12 +61,23 @@ export function FinancingQuickCheckWizard({
   const [amortisation, setAmortisation] = useState("");
 
   const TOTAL_STEPS = 7;
-  const fields = FIELDS_BY_TYPE[financingType];
+  const fields = useMemo(() => fieldsForModules(modules), [modules]);
+  const primaryType: FinancingType = modules[0] ?? "purchase";
+
+  const toggleModule = (m: FinancingType) => {
+    setModules((prev) => {
+      if (prev.includes(m)) {
+        const next = prev.filter((x) => x !== m);
+        return next.length ? next : prev; // mind. 1 erforderlich
+      }
+      return [...prev, m];
+    });
+  };
 
   useEffect(() => {
     if (!open) {
       setStep(1);
-      setFinancingType("purchase");
+      setModules(["purchase"]);
       setDataSource(defaultPropertyId ? "existing_property" : "existing_property");
       setClientId(defaultClientId ?? "");
       setPropertyId(defaultPropertyId ?? "");
@@ -78,16 +89,16 @@ export function FinancingQuickCheckWizard({
     }
   }, [open, defaultClientId, defaultPropertyId]);
 
-  // Felder zurücksetzen bei Typwechsel (nicht relevante leeren)
+  // Felder zurücksetzen bei Modulwechsel (nicht relevante leeren)
   useEffect(() => {
     setForm((prev) => {
-      const allowed = new Set(fields.map((f) => f.key));
+      const allowed = new Set<FieldKey>(fields.map((f) => f.key));
       const next: DynamicForm = {};
-      for (const k of allowed) next[k] = prev[k] ?? "";
+      allowed.forEach((k) => { next[k] = prev[k] ?? ""; });
       return next;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [financingType]);
+  }, [modules.join("|")]);
 
   const clientsQuery = useQuery({
     queryKey: ["financing_wizard_clients"],
