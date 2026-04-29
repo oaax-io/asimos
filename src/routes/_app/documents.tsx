@@ -201,8 +201,8 @@ function DocumentsPage() {
   return (
     <>
       <PageHeader
-        title="Dokumente"
-        description="Zentrale Ablage für Verträge, Ausweise und weitere Unterlagen"
+        title="Dokumentencenter"
+        description="Hochgeladene und generierte Dokumente an einem Ort"
         action={
           <Dialog
             open={open}
