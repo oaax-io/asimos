@@ -244,7 +244,7 @@ function LeadsPage() {
   };
 
   return (
-    <>
+    <div>
     <Tabs defaultValue="list" className="w-full">
 
       <PageHeader
@@ -554,7 +554,7 @@ function LeadsPage() {
         {queryErrorMessage}
       </div>
     ) : null}
-    </>
+    </div>
   );
 }
 
