@@ -131,20 +131,19 @@ export function FinancingQuickCheckWizard({
     if (!selectedProperty) return;
     setForm((f) => {
       const next = { ...f };
+      const set = new Set(modules);
       if (selectedProperty.price) {
-        if (financingType === "purchase" && !next.purchase_price) {
+        if (set.has("purchase") && !next.purchase_price) {
           next.purchase_price = String(selectedProperty.price);
-        } else if (
-          ["renovation", "increase", "refinance", "mortgage_increase"].includes(financingType) &&
-          !next.property_value
-        ) {
+        }
+        if (!set.has("purchase") && !set.has("new_build") && !next.property_value) {
           next.property_value = String(selectedProperty.price);
         }
       }
       return next;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propertyId, financingType]);
+  }, [propertyId, modules.join("|")]);
 
   // Auto-Übernahme aus Selbstauskunft
   useEffect(() => {
@@ -164,7 +163,7 @@ export function FinancingQuickCheckWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
 
-  const computed = useMemo(() => computeFinancing(financingType, form), [financingType, form]);
+  const computed = useMemo(() => computeFinancingMulti(modules, form), [modules, form]);
 
   const result = useMemo(() => calcQuickCheck({
     purchase_price: computed.reference_value,
@@ -179,33 +178,38 @@ export function FinancingQuickCheckWizard({
     amortisation_yearly: toNumOrNull(amortisation),
   }), [computed, form, calcRate, ancillary, amortisation]);
 
+  const moduleLabel = (m: FinancingType) => FINANCING_TYPE_LABELS[m];
+  const modulesLabel = modules.map(moduleLabel).join(" + ");
+
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!clientId) throw new Error("Bitte Kunden auswählen");
 
-      // Nur Felder befüllen, die zur Finanzierungsart gehören
-      const allowed = new Set(fields.map((f) => f.key));
+      // Nur Felder befüllen, die zur Modul-Kombination gehören
+      const allowed = new Set<FieldKey>(fields.map((f) => f.key));
       const fieldVal = (k: FieldKey) => (allowed.has(k) ? toNumOrNull(form[k]) : null);
       const txtVal = (k: FieldKey) => (allowed.has(k) ? (form[k] || null) : null);
 
       const payload: any = {
         client_id: clientId,
         property_id: dataSource === "existing_property" ? (propertyId || null) : null,
-        financing_type: financingType,
+        financing_type: primaryType,
+        financing_modules: modules,
         data_source: dataSource,
         property_snapshot: dataSource === "quick_entry" ? snapshot : {},
-        title: `${FINANCING_TYPE_LABELS[financingType]}${selectedClient ? " – " + selectedClient.full_name : ""}`,
+        title: `${modulesLabel}${selectedClient ? " – " + selectedClient.full_name : ""}`,
 
-        // Kategorie-spezifische Felder
+        // Modul-spezifische Felder
         purchase_price: fieldVal("purchase_price"),
+        purchase_additional_costs: fieldVal("purchase_additional_costs"),
         renovation_costs: fieldVal("renovation_costs"),
+        renovation_description: txtVal("renovation_description"),
+        renovation_value_increase: fieldVal("renovation_value_increase"),
         property_value: fieldVal("property_value"),
         existing_mortgage: fieldVal("existing_mortgage"),
         requested_mortgage: fieldVal("requested_mortgage"),
         requested_increase: fieldVal("requested_increase"),
-        new_total_mortgage: ["renovation", "increase", "mortgage_increase"].includes(financingType)
-          ? (toNumOrNull(form.existing_mortgage) ?? 0) + (toNumOrNull(form.requested_increase) ?? 0)
-          : null,
+        new_total_mortgage: computed.new_total_mortgage || null,
         land_price: fieldVal("land_price"),
         construction_costs: fieldVal("construction_costs"),
         construction_additional_costs: fieldVal("construction_additional_costs"),
@@ -229,6 +233,7 @@ export function FinancingQuickCheckWizard({
         quick_check_reasons: result.reasons,
         dossier_status: "quick_check" as const,
       };
+
 
       const { data, error } = await supabase
         .from("financing_dossiers")
