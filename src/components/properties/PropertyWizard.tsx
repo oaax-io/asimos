@@ -166,6 +166,7 @@ const empty: WizardData = {
   image_url: "",
   description: "",
   internal_notes: "",
+  media: [],
   units: [],
 };
 
