@@ -46,6 +46,20 @@ function PropertyDetail() {
     },
   });
 
+  const { data: statusFlags } = useQuery({
+    queryKey: ["property_status_flags", id],
+    queryFn: async () => {
+      const [m, n] = await Promise.all([
+        supabase.from("mandates").select("id,status").eq("property_id", id).in("status", ["active", "signed"]).limit(1),
+        supabase.from("nda_agreements").select("id").eq("property_id", id).limit(1),
+      ]);
+      return {
+        hasActiveMandate: (m.data?.length ?? 0) > 0,
+        hasNda: (n.data?.length ?? 0) > 0,
+      };
+    },
+  });
+
   const update = useMutation({
     mutationFn: async (values: Partial<PropertyFormValues>) => {
       const { error } = await supabase.from("properties").update(values as any).eq("id", id);
