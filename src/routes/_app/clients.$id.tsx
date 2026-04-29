@@ -892,6 +892,7 @@ function FinancingTab({
           </p>
         </CardContent></Card>
       )}
+      <FinancingEditorDialog open={editorOpen} onOpenChange={setEditorOpen} clientId={clientId} onSaved={onChange} />
     </div>
   );
 }
