@@ -17,6 +17,7 @@ import { PropertyFormDialog, type PropertyFormValues } from "@/components/proper
 import { formatCurrency, formatArea, formatDate, formatDateTime, propertyTypeLabels, propertyStatusLabels, listingTypeLabels } from "@/lib/format";
 import { toast } from "sonner";
 import { MatchPanel } from "@/components/matching/MatchPanel";
+import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
