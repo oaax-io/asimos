@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, Check, Plus, Trash2, Home, Building2, Building, Briefcase, TreePine, Car, Layers } from "lucide-react";
+import {
+  ArrowLeft, ArrowRight, Check, Plus, Trash2,
+  Home, Building2, Building, Briefcase, TreePine, Car, Layers,
+  Box, Boxes, Layers3, Upload, ImageIcon, Star, X, Library,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { propertyStatusLabels } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 /* -------------------- Typen -------------------- */
 
@@ -20,14 +25,30 @@ type Structure = "single" | "building" | "unit_in_building";
 type Marketing = "sale" | "rent" | "off_market";
 
 const PROP_TYPES = [
-  { v: "house",       label: "Einfamilienhaus", icon: Home },
-  { v: "mixed_use",   label: "Mehrfamilienhaus", icon: Building2 },
-  { v: "apartment",   label: "Wohnung", icon: Building },
-  { v: "commercial",  label: "Gewerbe", icon: Briefcase },
-  { v: "land",        label: "Grundstück", icon: TreePine },
-  { v: "parking",     label: "Parkplatz / Garage", icon: Car },
-  { v: "other",       label: "Sonstige", icon: Layers },
+  { v: "house",       label: "Einfamilienhaus",     desc: "Freistehendes Haus für eine Familie",       icon: Home },
+  { v: "mixed_use",   label: "Mehrfamilienhaus",    desc: "Liegenschaft mit mehreren Wohneinheiten",   icon: Building2 },
+  { v: "apartment",   label: "Wohnung",             desc: "Eigentumswohnung oder Mietwohnung",         icon: Building },
+  { v: "commercial",  label: "Gewerbe",             desc: "Büro-, Verkaufs- oder Lagerflächen",        icon: Briefcase },
+  { v: "land",        label: "Grundstück",          desc: "Bauland, Landwirtschafts- oder Restland",   icon: TreePine },
+  { v: "parking",     label: "Parkplatz / Garage",  desc: "Einzelner Stellplatz oder Garagenbox",      icon: Car },
+  { v: "other",       label: "Sonstige",            desc: "Sonstige Objektart",                        icon: Layers },
 ] as const;
+
+const STRUCTURES: { v: Structure; label: string; desc: string; icon: any }[] = [
+  { v: "single",            label: "Einzelobjekt",                         desc: "Ein eigenständiges Objekt ohne Untereinheiten.",                  icon: Box },
+  { v: "building",          label: "Liegenschaft mit mehreren Einheiten",  desc: "Mehrfamilienhaus oder Gebäude mit mehreren Einheiten.",           icon: Boxes },
+  { v: "unit_in_building",  label: "Einheit innerhalb einer Liegenschaft", desc: "Diese Einheit gehört zu einem bereits erfassten Gebäude.",        icon: Layers3 },
+];
+
+export type WizardMedia = {
+  file_url: string;            // Storage-Pfad (z. B. _wizard/abc.jpg) oder bestehender Pfad aus Mediathek
+  file_name: string | null;
+  file_type: string | null;    // image | video | floor_plan | other
+  title: string | null;
+  is_cover: boolean;
+  source: "upload" | "library"; // library = Verknüpfung zu bestehendem Asset
+  library_media_id?: string | null;
+};
 
 const STATUSES = ["draft","preparation","active","available","reserved","sold","rented","archived"] as const;
 
