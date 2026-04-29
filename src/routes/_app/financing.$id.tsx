@@ -12,6 +12,11 @@ import {
   FINANCING_TYPE_LABELS, DOSSIER_STATUS_LABELS, QUICK_CHECK_LABELS,
   type FinancingType, type DossierStatus, type QuickCheckStatus,
 } from "@/lib/financing";
+import { FinancingSelfDisclosureTab } from "@/components/financing/FinancingSelfDisclosureTab";
+import { UbsChecklistTab } from "@/components/financing/UbsChecklistTab";
+import { FinancingDocumentsTab } from "@/components/financing/FinancingDocumentsTab";
+import { BankSubmissionTab } from "@/components/financing/BankSubmissionTab";
+import { DossierQualityCard } from "@/components/financing/DossierQualityCard";
 
 export const Route = createFileRoute("/_app/financing/$id")({ component: FinancingDetailPage });
 
