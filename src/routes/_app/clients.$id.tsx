@@ -199,7 +199,22 @@ function ClientDetail() {
       <div className="mb-6 rounded-2xl border bg-gradient-to-br from-primary/5 via-background to-background p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <Badge variant="secondary">{clientTypeLabels[client.client_type as keyof typeof clientTypeLabels]}</Badge>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">{clientTypeLabels[client.client_type as keyof typeof clientTypeLabels]}</Badge>
+              {clientStatusFlags?.selfDisclosureSubmitted && (
+                <Badge className="bg-emerald-600 hover:bg-emerald-600">Selbstauskunft eingereicht</Badge>
+              )}
+              {clientStatusFlags?.financing && (
+                clientStatusFlags.financing.approval_status === "approved" || clientStatusFlags.financing.profile_status === "complete" ? (
+                  <Badge className="bg-emerald-600 hover:bg-emerald-600">Finanzierung bereit</Badge>
+                ) : (
+                  <Badge className="bg-amber-500 hover:bg-amber-500">Finanzierung in Prüfung</Badge>
+                )
+              )}
+              {clientStatusFlags?.hasActiveReservation && (
+                <Badge className="bg-amber-500 hover:bg-amber-500">Aktive Reservation</Badge>
+              )}
+            </div>
             <h1 className="mt-2 font-display text-3xl font-bold">{client.full_name}</h1>
             <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
               {client.email && (
