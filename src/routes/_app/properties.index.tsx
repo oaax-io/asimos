@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { formatCurrency, formatArea, propertyTypeLabels, propertyStatusLabels, listingTypeLabels } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
-import { PropertyFormDialog, type PropertyFormValues } from "@/components/properties/PropertyFormDialog";
+import { PropertyWizard, type WizardSubmit } from "@/components/properties/PropertyWizard";
 
 export const Route = createFileRoute("/_app/properties/")({ component: PropertiesPage });
 
@@ -51,13 +51,24 @@ function PropertiesPage() {
   const cities = useMemo(() => Array.from(new Set(properties.map(p => p.city).filter(Boolean))) as string[], [properties]);
 
   const create = useMutation({
-    mutationFn: async (form: Partial<PropertyFormValues>) => {
-      const payload: any = {
-        ...form,
-        owner_id: user!.id,
-      };
-      const { error } = await supabase.from("properties").insert(payload);
+    mutationFn: async (payload: WizardSubmit) => {
+      const propPayload = { ...payload.property, owner_id: user!.id };
+      const { data: created, error } = await supabase
+        .from("properties")
+        .insert(propPayload as any)
+        .select("id")
+        .single();
       if (error) throw error;
+      if (payload.units.length > 0 && created?.id) {
+        const unitsPayload = payload.units.map((u) => ({
+          ...u,
+          owner_id: user!.id,
+          parent_property_id: created.id,
+        }));
+        const { error: uErr } = await supabase.from("properties").insert(unitsPayload as any);
+        if (uErr) throw uErr;
+      }
+      return created;
     },
     onSuccess: () => {
       toast.success("Immobilie erstellt");
@@ -87,11 +98,10 @@ function PropertiesPage() {
         }
       />
 
-      <PropertyFormDialog
+      <PropertyWizard
         open={open}
         onOpenChange={setOpen}
-        employees={employees}
-        onSubmit={(form) => create.mutate(form)}
+        onSubmit={(payload) => create.mutate(payload)}
         submitting={create.isPending}
       />
 
