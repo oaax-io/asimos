@@ -467,7 +467,7 @@ export function FinancingQuickCheckWizard({
         {step === 7 && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <SumRow label="Finanzierungsart" value={FINANCING_TYPE_LABELS[financingType]} />
+              <SumRow label="Module" value={modulesLabel} />
               <SumRow label="Datenbasis" value={dataSource === "existing_property" ? "Bestehende Immobilie" : "Schnellprüfung"} />
               <SumRow label="Kunde" value={selectedClient?.full_name ?? "—"} />
               <SumRow label="Immobilie" value={dataSource === "existing_property" ? (selectedProperty?.title ?? "Keine") : (snapshot.title || "—")} />
