@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, FileText, Download, Search, Trash2, Upload, ExternalLink } from "lucide-react";
+import { FileText, Download, Search, Trash2, Upload, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,10 +12,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDate } from "@/lib/format";
+import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 
 export const Route = createFileRoute("/_app/documents")({ component: DocumentsPage });
 
@@ -199,8 +201,8 @@ function DocumentsPage() {
   return (
     <>
       <PageHeader
-        title="Dokumente"
-        description="Zentrale Ablage für Verträge, Ausweise und weitere Unterlagen"
+        title="Dokumentencenter"
+        description="Hochgeladene und generierte Dokumente an einem Ort"
         action={
           <Dialog
             open={open}
@@ -309,115 +311,129 @@ function DocumentsPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap gap-3">
-        <div className="relative max-w-sm flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="pl-9"
-            placeholder="Dokumente suchen…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Typ" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Typen</SelectItem>
-            {Object.entries(TYPE_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>
-                {v}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={relatedFilter} onValueChange={setRelatedFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Verknüpfung" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Verknüpfungen</SelectItem>
-            {Object.entries(RELATED_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>
-                {v}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
-      {isLoading ? (
-        <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
-          Dokumente werden geladen…
-        </div>
-      ) : filtered.length === 0 ? (
-        <EmptyState
-          title="Keine Dokumente"
-          description="Lade dein erstes Dokument hoch, um es hier zu sehen."
-        />
-      ) : (
-        <div className="rounded-xl border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Typ</TableHead>
-                <TableHead>Verknüpfung</TableHead>
-                <TableHead>Grösse</TableHead>
-                <TableHead>Hochgeladen von</TableHead>
-                <TableHead>Datum</TableHead>
-                <TableHead className="text-right">Aktionen</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((d) => {
-                const uploader = (d as { uploader?: { full_name?: string } }).uploader;
-                return (
-                  <TableRow key={d.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <span className="truncate">{d.file_name ?? "Unbenannt"}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {TYPE_LABELS[d.document_type as keyof typeof TYPE_LABELS]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {RELATED_LABELS[d.related_type ?? ""] ?? d.related_type}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{formatBytes(d.size_bytes)}</TableCell>
-                    <TableCell className="text-muted-foreground">{uploader?.full_name ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{formatDate(d.created_at)}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => openDocument(d)} title="Öffnen">
-                        {d.file_url?.startsWith("http") ? (
-                          <ExternalLink className="h-4 w-4" />
-                        ) : (
-                          <Download className="h-4 w-4" />
-                        )}
-                      </Button>
-                      {canDelete && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => remove.mutate({ id: d.id, file_url: d.file_url })}
-                          title="Löschen"
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      )}
-                    </TableCell>
+      <Tabs defaultValue="uploaded" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="uploaded">Hochgeladene Dokumente</TabsTrigger>
+          <TabsTrigger value="generated">Generierte Dokumente</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="uploaded" className="space-y-4">
+          <div className="flex flex-wrap gap-3">
+            <div className="relative max-w-sm flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Dokumente suchen…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Typ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Typen</SelectItem>
+                {Object.entries(TYPE_LABELS).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>
+                    {v}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={relatedFilter} onValueChange={setRelatedFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Verknüpfung" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Verknüpfungen</SelectItem>
+                {Object.entries(RELATED_LABELS).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>
+                    {v}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {isLoading ? (
+            <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+              Dokumente werden geladen…
+            </div>
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              title="Keine Dokumente"
+              description="Lade dein erstes Dokument hoch, um es hier zu sehen."
+            />
+          ) : (
+            <div className="rounded-xl border bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Typ</TableHead>
+                    <TableHead>Verknüpfung</TableHead>
+                    <TableHead>Grösse</TableHead>
+                    <TableHead>Hochgeladen von</TableHead>
+                    <TableHead>Datum</TableHead>
+                    <TableHead className="text-right">Aktionen</TableHead>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((d) => {
+                    const uploader = (d as { uploader?: { full_name?: string } }).uploader;
+                    return (
+                      <TableRow key={d.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <span className="truncate">{d.file_name ?? "Unbenannt"}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {TYPE_LABELS[d.document_type as keyof typeof TYPE_LABELS]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {RELATED_LABELS[d.related_type ?? ""] ?? d.related_type}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{formatBytes(d.size_bytes)}</TableCell>
+                        <TableCell className="text-muted-foreground">{uploader?.full_name ?? "—"}</TableCell>
+                        <TableCell className="text-muted-foreground">{formatDate(d.created_at)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" onClick={() => openDocument(d)} title="Öffnen">
+                            {d.file_url?.startsWith("http") ? (
+                              <ExternalLink className="h-4 w-4" />
+                            ) : (
+                              <Download className="h-4 w-4" />
+                            )}
+                          </Button>
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => remove.mutate({ id: d.id, file_url: d.file_url })}
+                              title="Löschen"
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="generated">
+          <GeneratedDocumentsTable />
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

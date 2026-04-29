@@ -3,7 +3,7 @@ import { useEffect, type ReactNode } from "react";
 import {
   LayoutDashboard, Users, UserPlus, Building2, Calendar, Target,
   Settings, LogOut, Search, Shield, Users2, CheckSquare, FileText,
-  Image as ImageIcon, ListChecks, FileSignature, FileCheck2, FileBadge, FileCode2, FileLock2,
+  Image as ImageIcon, ListChecks, FileSignature, FileCheck2, FileBadge, FileLock2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -43,8 +43,6 @@ const NAV_GROUPS = [
       { to: "/reservations", label: "Reservationen", icon: FileCheck2 },
       { to: "/ndas", label: "NDAs", icon: FileLock2 },
       { to: "/exposes", label: "Exposés", icon: FileBadge },
-      { to: "/generated-documents", label: "Generierte Dokumente", icon: FileCheck2 },
-      { to: "/templates", label: "Vorlagen", icon: FileCode2 },
     ],
   },
   {
