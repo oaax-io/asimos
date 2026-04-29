@@ -87,19 +87,6 @@ function ClientDetail() {
   // Erstes/aktuelles Dossier (für Hero-KPI und Selbstauskunft-Link)
   const dossier = dossiers[0] ?? null;
 
-  const { data: links = [] } = useQuery({
-    queryKey: ["financing_links", dossier?.id],
-    enabled: !!dossier?.id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("financing_links").select("*").eq("dossier_id", dossier!.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    retry: false,
-  });
-
   const { data: appointments = [] } = useQuery({
     queryKey: ["client_appointments", id],
     queryFn: async () => {
