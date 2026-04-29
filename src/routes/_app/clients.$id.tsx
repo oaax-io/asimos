@@ -132,7 +132,23 @@ function ClientDetail() {
     retry: false,
   });
 
-  const { data: benchmarkData } = useClientBenchmark(id);
+  const { data: clientStatusFlags } = useQuery({
+    queryKey: ["client_status_flags", id],
+    queryFn: async () => {
+      const [sd, fp, rv] = await Promise.all([
+        supabase.from("client_self_disclosures").select("status").eq("client_id", id).in("status", ["submitted", "reviewed"]).limit(1),
+        supabase.from("financing_profiles").select("profile_status,approval_status").eq("client_id", id).maybeSingle(),
+        supabase.from("reservations").select("id,status").eq("client_id", id).in("status", ["sent", "signed"]).limit(1),
+      ]);
+      return {
+        selfDisclosureSubmitted: (sd.data?.length ?? 0) > 0,
+        financing: fp.data ?? null,
+        hasActiveReservation: (rv.data?.length ?? 0) > 0,
+      };
+    },
+    retry: false,
+  });
+
   const benchmark = benchmarkData?.benchmark ?? null;
 
   const del = useMutation({
