@@ -474,32 +474,47 @@ function Step1Type({ d, update }: { d: WizardData; update: (p: Partial<WizardDat
 }
 
 function Step2Structure({ d, update, buildings }: { d: WizardData; update: (p: Partial<WizardData>) => void; buildings: any[] }) {
-  const opts: { v: Structure; label: string; desc: string }[] = [
-    { v: "single", label: "Einzelobjekt", desc: "Ein eigenständiges Objekt ohne Untereinheiten." },
-    { v: "building", label: "Liegenschaft mit mehreren Einheiten", desc: "Mehrfamilienhaus oder Gebäude mit Wohnungen/Gewerbeeinheiten." },
-    { v: "unit_in_building", label: "Einheit innerhalb bestehender Liegenschaft", desc: "Diese Wohnung gehört zu einem bereits erfassten Gebäude." },
-  ];
   return (
-    <div className="space-y-4">
-      <h3 className="font-semibold">Wie ist das Objekt strukturiert?</h3>
-      <div className="space-y-2">
-        {opts.map(o => (
-          <button
-            key={o.v}
-            type="button"
-            onClick={() => update({ structure: o.v })}
-            className={cn(
-              "w-full rounded-xl border p-4 text-left transition hover:border-primary hover:bg-accent",
-              d.structure === o.v && "border-primary bg-primary/5 ring-2 ring-primary/30"
-            )}
-          >
-            <div className="font-medium">{o.label}</div>
-            <p className="text-sm text-muted-foreground">{o.desc}</p>
-          </button>
-        ))}
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-lg font-semibold">Wie ist das Objekt strukturiert?</h3>
+        <p className="text-sm text-muted-foreground">Wir blenden danach nur die relevanten Felder ein.</p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {STRUCTURES.map(({ v, label, desc, icon: Icon }) => {
+          const selected = d.structure === v;
+          return (
+            <button
+              key={v}
+              type="button"
+              onClick={() => update({ structure: v })}
+              className={cn(
+                "group relative flex h-full flex-col gap-3 rounded-2xl border-2 bg-card p-5 text-left transition",
+                "hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md",
+                selected ? "border-primary bg-primary/5 shadow-md" : "border-border",
+              )}
+            >
+              <div className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-xl transition",
+                selected ? "bg-primary text-primary-foreground" : "bg-muted text-foreground group-hover:bg-primary/10 group-hover:text-primary",
+              )}>
+                <Icon className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="font-semibold leading-tight">{label}</div>
+                <p className="mt-1 text-xs leading-snug text-muted-foreground">{desc}</p>
+              </div>
+              {selected && (
+                <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <Check className="h-3.5 w-3.5" />
+                </div>
+              )}
+            </button>
+          );
+        })}
       </div>
       {d.structure === "unit_in_building" && (
-        <div className="rounded-lg border bg-muted/30 p-3">
+        <div className="rounded-xl border bg-muted/30 p-4">
           <Label>Übergeordnete Liegenschaft</Label>
           <Select value={d.parent_property_id ?? ""} onValueChange={(v) => update({ parent_property_id: v || null })}>
             <SelectTrigger className="mt-1"><SelectValue placeholder="Liegenschaft wählen" /></SelectTrigger>
