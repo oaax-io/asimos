@@ -121,7 +121,6 @@ function GeneratedDocumentsPage() {
       <PageHeader
         title="Generierte Dokumente"
         description="Alle aus Vorlagen erstellten Dokumente – Status, Versand und E-Signatur."
-        icon={FileText}
       />
 
       <div className="flex flex-wrap items-center gap-2">
@@ -158,7 +157,6 @@ function GeneratedDocumentsPage() {
         <p className="text-sm text-muted-foreground">Lädt…</p>
       ) : filtered.length === 0 ? (
         <EmptyState
-          icon={FileText}
           title="Noch keine generierten Dokumente"
           description="Erstelle ein Dokument aus einem Mandat, einer Reservation oder NDA."
         />
