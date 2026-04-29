@@ -946,15 +946,23 @@ export type Database = {
           calculated_interest_rate: number | null
           client_id: string
           completion_percent: number
+          construction_additional_costs: number | null
+          construction_costs: number | null
           created_at: string
+          current_bank: string | null
+          data_source: string | null
           dossier_status:
             | Database["public"]["Enums"]["financing_dossier_status"]
             | null
+          existing_mortgage: number | null
           financing_type: Database["public"]["Enums"]["financing_type"] | null
           gross_income_yearly: number | null
           id: string
+          interest_rate_expiry: string | null
           internal_notes: string | null
+          land_price: number | null
           loan_to_value_ratio: number | null
+          new_total_mortgage: number | null
           own_funds_gift: number | null
           own_funds_inheritance: number | null
           own_funds_liquid: number | null
@@ -964,12 +972,15 @@ export type Database = {
           own_funds_total: number | null
           own_funds_vested_benefits: number | null
           property_id: string | null
+          property_snapshot: Json | null
+          property_value: number | null
           purchase_price: number | null
           quick_check_reasons: Json | null
           quick_check_status:
             | Database["public"]["Enums"]["financing_quick_check_status"]
             | null
           renovation_costs: number | null
+          requested_increase: number | null
           requested_mortgage: number | null
           section_additional: Json
           section_affordability: Json
@@ -1003,15 +1014,23 @@ export type Database = {
           calculated_interest_rate?: number | null
           client_id: string
           completion_percent?: number
+          construction_additional_costs?: number | null
+          construction_costs?: number | null
           created_at?: string
+          current_bank?: string | null
+          data_source?: string | null
           dossier_status?:
             | Database["public"]["Enums"]["financing_dossier_status"]
             | null
+          existing_mortgage?: number | null
           financing_type?: Database["public"]["Enums"]["financing_type"] | null
           gross_income_yearly?: number | null
           id?: string
+          interest_rate_expiry?: string | null
           internal_notes?: string | null
+          land_price?: number | null
           loan_to_value_ratio?: number | null
+          new_total_mortgage?: number | null
           own_funds_gift?: number | null
           own_funds_inheritance?: number | null
           own_funds_liquid?: number | null
@@ -1021,12 +1040,15 @@ export type Database = {
           own_funds_total?: number | null
           own_funds_vested_benefits?: number | null
           property_id?: string | null
+          property_snapshot?: Json | null
+          property_value?: number | null
           purchase_price?: number | null
           quick_check_reasons?: Json | null
           quick_check_status?:
             | Database["public"]["Enums"]["financing_quick_check_status"]
             | null
           renovation_costs?: number | null
+          requested_increase?: number | null
           requested_mortgage?: number | null
           section_additional?: Json
           section_affordability?: Json
@@ -1060,15 +1082,23 @@ export type Database = {
           calculated_interest_rate?: number | null
           client_id?: string
           completion_percent?: number
+          construction_additional_costs?: number | null
+          construction_costs?: number | null
           created_at?: string
+          current_bank?: string | null
+          data_source?: string | null
           dossier_status?:
             | Database["public"]["Enums"]["financing_dossier_status"]
             | null
+          existing_mortgage?: number | null
           financing_type?: Database["public"]["Enums"]["financing_type"] | null
           gross_income_yearly?: number | null
           id?: string
+          interest_rate_expiry?: string | null
           internal_notes?: string | null
+          land_price?: number | null
           loan_to_value_ratio?: number | null
+          new_total_mortgage?: number | null
           own_funds_gift?: number | null
           own_funds_inheritance?: number | null
           own_funds_liquid?: number | null
@@ -1078,12 +1108,15 @@ export type Database = {
           own_funds_total?: number | null
           own_funds_vested_benefits?: number | null
           property_id?: string | null
+          property_snapshot?: Json | null
+          property_value?: number | null
           purchase_price?: number | null
           quick_check_reasons?: Json | null
           quick_check_status?:
             | Database["public"]["Enums"]["financing_quick_check_status"]
             | null
           renovation_costs?: number | null
+          requested_increase?: number | null
           requested_mortgage?: number | null
           section_additional?: Json
           section_affordability?: Json
