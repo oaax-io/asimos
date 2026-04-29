@@ -19,7 +19,7 @@ import {
   calcQuickCheck, type FinancingType, type QuickCheckStatus,
 } from "@/lib/financing";
 import {
-  FIELDS_BY_TYPE, computeFinancing, toNumOrNull,
+  fieldsForModules, computeFinancingMulti, toNumOrNull,
   type DynamicForm, type FieldKey,
 } from "@/lib/financing-fields";
 import { formatCurrency } from "@/lib/format";
