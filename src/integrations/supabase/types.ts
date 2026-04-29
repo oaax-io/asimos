@@ -877,6 +877,59 @@ export type Database = {
           },
         ]
       }
+      financing_checklist_items: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          dossier_id: string
+          id: string
+          is_present: boolean
+          item_key: string
+          label: string
+          note: string | null
+          section: Database["public"]["Enums"]["financing_checklist_section"]
+          sort_order: number
+          status: Database["public"]["Enums"]["financing_checklist_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          dossier_id: string
+          id?: string
+          is_present?: boolean
+          item_key: string
+          label: string
+          note?: string | null
+          section: Database["public"]["Enums"]["financing_checklist_section"]
+          sort_order?: number
+          status?: Database["public"]["Enums"]["financing_checklist_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          dossier_id?: string
+          id?: string
+          is_present?: boolean
+          item_key?: string
+          label?: string
+          note?: string | null
+          section?: Database["public"]["Enums"]["financing_checklist_section"]
+          sort_order?: number
+          status?: Database["public"]["Enums"]["financing_checklist_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financing_checklist_items_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "financing_dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financing_dossiers: {
         Row: {
           affordability_ratio: number | null
@@ -884,8 +937,11 @@ export type Database = {
           amortisation_yearly: number | null
           ancillary_costs_yearly: number | null
           bank_contact: string | null
+          bank_decision_at: string | null
           bank_email: string | null
           bank_name: string | null
+          bank_notes: string | null
+          bank_phone: string | null
           bank_type: string | null
           calculated_interest_rate: number | null
           client_id: string
@@ -927,6 +983,7 @@ export type Database = {
           section_tax: Json
           status: Database["public"]["Enums"]["financing_status"]
           submitted_at: string | null
+          submitted_to_bank_at: string | null
           title: string | null
           total_investment: number | null
           updated_at: string
@@ -937,8 +994,11 @@ export type Database = {
           amortisation_yearly?: number | null
           ancillary_costs_yearly?: number | null
           bank_contact?: string | null
+          bank_decision_at?: string | null
           bank_email?: string | null
           bank_name?: string | null
+          bank_notes?: string | null
+          bank_phone?: string | null
           bank_type?: string | null
           calculated_interest_rate?: number | null
           client_id: string
@@ -980,6 +1040,7 @@ export type Database = {
           section_tax?: Json
           status?: Database["public"]["Enums"]["financing_status"]
           submitted_at?: string | null
+          submitted_to_bank_at?: string | null
           title?: string | null
           total_investment?: number | null
           updated_at?: string
@@ -990,8 +1051,11 @@ export type Database = {
           amortisation_yearly?: number | null
           ancillary_costs_yearly?: number | null
           bank_contact?: string | null
+          bank_decision_at?: string | null
           bank_email?: string | null
           bank_name?: string | null
+          bank_notes?: string | null
+          bank_phone?: string | null
           bank_type?: string | null
           calculated_interest_rate?: number | null
           client_id?: string
@@ -1033,6 +1097,7 @@ export type Database = {
           section_tax?: Json
           status?: Database["public"]["Enums"]["financing_status"]
           submitted_at?: string | null
+          submitted_to_bank_at?: string | null
           title?: string | null
           total_investment?: number | null
           updated_at?: string
@@ -2088,6 +2153,22 @@ export type Database = {
         | "nda"
         | "reservation_receipt"
         | "mandate_partial"
+      financing_checklist_section:
+        | "customer"
+        | "financing_structure"
+        | "property_docs"
+        | "income_employment"
+        | "tax"
+        | "self_employed"
+        | "affordability"
+        | "additional_check"
+        | "submission_quality"
+        | "rejection_reasons"
+      financing_checklist_status:
+        | "open"
+        | "present"
+        | "missing"
+        | "not_relevant"
       financing_dossier_status:
         | "draft"
         | "quick_check"
@@ -2322,6 +2403,24 @@ export const Constants = {
         "nda",
         "reservation_receipt",
         "mandate_partial",
+      ],
+      financing_checklist_section: [
+        "customer",
+        "financing_structure",
+        "property_docs",
+        "income_employment",
+        "tax",
+        "self_employed",
+        "affordability",
+        "additional_check",
+        "submission_quality",
+        "rejection_reasons",
+      ],
+      financing_checklist_status: [
+        "open",
+        "present",
+        "missing",
+        "not_relevant",
       ],
       financing_dossier_status: [
         "draft",

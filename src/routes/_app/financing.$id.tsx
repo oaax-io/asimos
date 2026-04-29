@@ -12,6 +12,11 @@ import {
   FINANCING_TYPE_LABELS, DOSSIER_STATUS_LABELS, QUICK_CHECK_LABELS,
   type FinancingType, type DossierStatus, type QuickCheckStatus,
 } from "@/lib/financing";
+import { FinancingSelfDisclosureTab } from "@/components/financing/FinancingSelfDisclosureTab";
+import { UbsChecklistTab } from "@/components/financing/UbsChecklistTab";
+import { FinancingDocumentsTab } from "@/components/financing/FinancingDocumentsTab";
+import { BankSubmissionTab } from "@/components/financing/BankSubmissionTab";
+import { DossierQualityCard } from "@/components/financing/DossierQualityCard";
 
 export const Route = createFileRoute("/_app/financing/$id")({ component: FinancingDetailPage });
 
@@ -114,21 +119,8 @@ function FinancingDetailPage() {
                 {dossier.properties?.city && <p className="text-xs text-muted-foreground">{dossier.properties.city}</p>}
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-4 space-y-2">
-                <h3 className="font-semibold">Bank</h3>
-                <p className="text-sm">{dossier.bank_name || "—"}</p>
-                {dossier.bank_contact && <p className="text-xs text-muted-foreground">{dossier.bank_contact}</p>}
-                {dossier.bank_email && <p className="text-xs text-muted-foreground">{dossier.bank_email}</p>}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 space-y-2">
-                <h3 className="font-semibold">Interne Notizen</h3>
-                <p className="text-sm whitespace-pre-wrap">{dossier.internal_notes || "—"}</p>
-              </CardContent>
-            </Card>
           </div>
+          <DossierQualityCard dossierId={dossier.id} dossier={dossier} />
         </TabsContent>
 
         <TabsContent value="quickcheck" className="space-y-3">
@@ -166,21 +158,27 @@ function FinancingDetailPage() {
         </TabsContent>
 
         <TabsContent value="disclosure">
-          <p className="text-sm text-muted-foreground">
-            Selbstauskunft wird in einer kommenden Phase hier integriert. Aktuell verfügbar in der Kunden-Detailseite.
-          </p>
+          <FinancingSelfDisclosureTab
+            dossierId={dossier.id}
+            clientId={dossier.client_id}
+            clientEmail={dossier.clients?.email}
+          />
         </TabsContent>
         <TabsContent value="ubs">
-          <p className="text-sm text-muted-foreground">UBS Checkliste folgt in Phase 2.</p>
+          <UbsChecklistTab dossierId={dossier.id} />
         </TabsContent>
         <TabsContent value="documents">
-          <p className="text-sm text-muted-foreground">Dokumentenverwaltung folgt in Phase 2.</p>
+          <FinancingDocumentsTab
+            dossierId={dossier.id}
+            clientId={dossier.client_id}
+            propertyId={dossier.property_id}
+          />
         </TabsContent>
         <TabsContent value="bank">
-          <p className="text-sm text-muted-foreground">Bank-Einreichung folgt in Phase 2.</p>
+          <BankSubmissionTab dossierId={dossier.id} />
         </TabsContent>
         <TabsContent value="activity">
-          <p className="text-sm text-muted-foreground">Aktivitätenverlauf folgt in Phase 2.</p>
+          <p className="text-sm text-muted-foreground">Aktivitätenverlauf folgt in einer späteren Phase.</p>
         </TabsContent>
       </Tabs>
     </div>
