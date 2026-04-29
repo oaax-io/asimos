@@ -17,6 +17,7 @@ import { UbsChecklistTab } from "@/components/financing/UbsChecklistTab";
 import { FinancingDocumentsTab } from "@/components/financing/FinancingDocumentsTab";
 import { BankSubmissionTab } from "@/components/financing/BankSubmissionTab";
 import { DossierQualityCard } from "@/components/financing/DossierQualityCard";
+import { FinancingQuickCheckActions } from "@/components/financing/FinancingQuickCheckActions";
 
 export const Route = createFileRoute("/_app/financing/$id")({ component: FinancingDetailPage });
 
@@ -124,6 +125,16 @@ function FinancingDetailPage() {
         </TabsContent>
 
         <TabsContent value="quickcheck" className="space-y-3">
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="font-semibold mb-3">Bericht & Aktionen</h3>
+              <FinancingQuickCheckActions
+                dossierId={dossier.id}
+                dossier={dossier}
+                showWorkflowButtons={false}
+              />
+            </CardContent>
+          </Card>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <KV label="Kaufpreis" value={fmt(dossier.purchase_price)} />
             <KV label="Renovationskosten" value={fmt(dossier.renovation_costs)} />
