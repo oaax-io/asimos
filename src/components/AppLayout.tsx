@@ -43,8 +43,6 @@ const NAV_GROUPS = [
       { to: "/reservations", label: "Reservationen", icon: FileCheck2 },
       { to: "/ndas", label: "NDAs", icon: FileLock2 },
       { to: "/exposes", label: "Exposés", icon: FileBadge },
-      { to: "/generated-documents", label: "Generierte Dokumente", icon: FileCheck2 },
-      { to: "/templates", label: "Vorlagen", icon: FileCode2 },
     ],
   },
   {
