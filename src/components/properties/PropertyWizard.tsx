@@ -116,6 +116,7 @@ export type WizardData = {
   image_url: string;
   description: string;
   internal_notes: string;
+  media: WizardMedia[];
   // Schritt 9
   units: Unit[];
 };
