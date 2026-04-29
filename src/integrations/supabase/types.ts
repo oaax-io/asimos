@@ -1493,33 +1493,53 @@ export type Database = {
           agency_id: string | null
           area: number | null
           assigned_to: string | null
+          availability_date: string | null
+          balcony_area: number | null
           bathrooms: number | null
+          building_type: string | null
+          cellar_available: boolean | null
           city: string | null
+          condition: string | null
           country: string | null
           created_at: string
           description: string | null
           energy_class: string | null
+          energy_source: string | null
           features: string[] | null
           floor: number | null
+          garden_area: number | null
+          heating_type: string | null
           id: string
           images: string[] | null
+          internal_minimum_price: number | null
           internal_notes: string | null
+          is_unit: boolean
           listing_type: Database["public"]["Enums"]["listing_type"]
           living_area: number | null
+          marketing_type: string | null
           owner_client_id: string | null
           owner_id: string | null
+          parent_property_id: string | null
+          parking_spaces: number | null
           plot_area: number | null
           postal_code: string | null
           price: number | null
           property_type: Database["public"]["Enums"]["property_type"]
           renovated_at: number | null
           rent: number | null
+          reservation_amount_default: number | null
           rooms: number | null
           seller_client_id: string | null
           status: Database["public"]["Enums"]["property_status"]
+          terrace_area: number | null
           title: string
           total_floors: number | null
+          unit_floor: string | null
+          unit_number: string | null
+          unit_status: string | null
+          unit_type: string | null
           updated_at: string
+          usable_area: number | null
           year_built: number | null
         }
         Insert: {
@@ -1527,33 +1547,53 @@ export type Database = {
           agency_id?: string | null
           area?: number | null
           assigned_to?: string | null
+          availability_date?: string | null
+          balcony_area?: number | null
           bathrooms?: number | null
+          building_type?: string | null
+          cellar_available?: boolean | null
           city?: string | null
+          condition?: string | null
           country?: string | null
           created_at?: string
           description?: string | null
           energy_class?: string | null
+          energy_source?: string | null
           features?: string[] | null
           floor?: number | null
+          garden_area?: number | null
+          heating_type?: string | null
           id?: string
           images?: string[] | null
+          internal_minimum_price?: number | null
           internal_notes?: string | null
+          is_unit?: boolean
           listing_type?: Database["public"]["Enums"]["listing_type"]
           living_area?: number | null
+          marketing_type?: string | null
           owner_client_id?: string | null
           owner_id?: string | null
+          parent_property_id?: string | null
+          parking_spaces?: number | null
           plot_area?: number | null
           postal_code?: string | null
           price?: number | null
           property_type?: Database["public"]["Enums"]["property_type"]
           renovated_at?: number | null
           rent?: number | null
+          reservation_amount_default?: number | null
           rooms?: number | null
           seller_client_id?: string | null
           status?: Database["public"]["Enums"]["property_status"]
+          terrace_area?: number | null
           title: string
           total_floors?: number | null
+          unit_floor?: string | null
+          unit_number?: string | null
+          unit_status?: string | null
+          unit_type?: string | null
           updated_at?: string
+          usable_area?: number | null
           year_built?: number | null
         }
         Update: {
@@ -1561,33 +1601,53 @@ export type Database = {
           agency_id?: string | null
           area?: number | null
           assigned_to?: string | null
+          availability_date?: string | null
+          balcony_area?: number | null
           bathrooms?: number | null
+          building_type?: string | null
+          cellar_available?: boolean | null
           city?: string | null
+          condition?: string | null
           country?: string | null
           created_at?: string
           description?: string | null
           energy_class?: string | null
+          energy_source?: string | null
           features?: string[] | null
           floor?: number | null
+          garden_area?: number | null
+          heating_type?: string | null
           id?: string
           images?: string[] | null
+          internal_minimum_price?: number | null
           internal_notes?: string | null
+          is_unit?: boolean
           listing_type?: Database["public"]["Enums"]["listing_type"]
           living_area?: number | null
+          marketing_type?: string | null
           owner_client_id?: string | null
           owner_id?: string | null
+          parent_property_id?: string | null
+          parking_spaces?: number | null
           plot_area?: number | null
           postal_code?: string | null
           price?: number | null
           property_type?: Database["public"]["Enums"]["property_type"]
           renovated_at?: number | null
           rent?: number | null
+          reservation_amount_default?: number | null
           rooms?: number | null
           seller_client_id?: string | null
           status?: Database["public"]["Enums"]["property_status"]
+          terrace_area?: number | null
           title?: string
           total_floors?: number | null
+          unit_floor?: string | null
+          unit_number?: string | null
+          unit_status?: string | null
+          unit_type?: string | null
           updated_at?: string
+          usable_area?: number | null
           year_built?: number | null
         }
         Relationships: [
@@ -1610,6 +1670,13 @@ export type Database = {
             columns: ["owner_client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_parent_property_id_fkey"
+            columns: ["parent_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
           {
