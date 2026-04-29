@@ -771,6 +771,7 @@ function FinancingTab({
   onChange: () => void;
 }) {
   const [generating, setGenerating] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   const ensureDossier = async (): Promise<string> => {
     if (dossier?.id) return dossier.id;
@@ -800,11 +801,11 @@ function FinancingTab({
     }
   };
 
-  const handleSelfFill = async () => {
+  const handleEdit = async () => {
     try {
       await ensureDossier();
+      setEditorOpen(true);
       onChange();
-      toast.info("Bearbeitung folgt in Schritt 2");
     } catch (e: any) {
       toast.error(e.message);
     }
