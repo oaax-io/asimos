@@ -256,12 +256,12 @@ export function FinancingQuickCheckWizard({
   }, [fields, form]);
 
   const canNext = () => {
-    if (step === 1) return !!financingType;
+    if (step === 1) return modules.length > 0;
     if (step === 2) return !!dataSource;
     if (step === 3) return !!clientId;
     if (step === 4) {
       if (dataSource === "quick_entry") return !!snapshot.title;
-      return true; // Immobilie optional
+      return true;
     }
     if (step === 5) return requiredFilled;
     if (step === 6) return (toNumOrNull(form.gross_income_yearly) ?? 0) > 0;
