@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FinancingEditorDialog } from "@/components/clients/FinancingEditorDialog";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  ArrowLeft, Mail, Phone, Trash2, Copy, RefreshCw, Pencil, Link2, FileSignature,
+  ArrowLeft, Mail, Phone, Trash2, RefreshCw, Pencil, FileSignature,
   Calendar, Target, Home, MapPin, Euro, Ruler, BedDouble, Building2, MessageSquare,
   CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
   ClipboardList, Heart,
@@ -32,6 +32,7 @@ import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
 import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkCard";
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
+import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetail });
 
@@ -71,29 +72,20 @@ function ClientDetail() {
     return () => window.clearTimeout(timeout);
   }, [client, id, isError, isLoading]);
 
-  const { data: dossier } = useQuery({
-    queryKey: ["financing_dossier", id],
+  const { data: dossiers = [] } = useQuery({
+    queryKey: ["client_financing_dossiers", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financing_dossiers").select("*").eq("client_id", id).maybeSingle();
+        .from("financing_dossiers").select("*").eq("client_id", id)
+        .order("updated_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
     retry: false,
   });
 
-  const { data: links = [] } = useQuery({
-    queryKey: ["financing_links", dossier?.id],
-    enabled: !!dossier?.id,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("financing_links").select("*").eq("dossier_id", dossier!.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    retry: false,
-  });
+  // Erstes/aktuelles Dossier (für Hero-KPI und Selbstauskunft-Link)
+  const dossier = dossiers[0] ?? null;
 
   const { data: appointments = [] } = useQuery({
     queryKey: ["client_appointments", id],
@@ -430,12 +422,9 @@ function ClientDetail() {
               <TabsContent value="dossier" className="mt-4">
                 <FinancingTab
                   clientId={id}
-                  userId={user!.id}
-                  dossier={dossier}
-                  links={links}
+                  dossiers={dossiers}
                   onChange={() => {
-                    qc.invalidateQueries({ queryKey: ["financing_dossier", id] });
-                    qc.invalidateQueries({ queryKey: ["financing_links"] });
+                    qc.invalidateQueries({ queryKey: ["client_financing_dossiers", id] });
                   }}
                 />
               </TabsContent>
@@ -756,143 +745,103 @@ function EditClientDialog({ client, onSaved }: { client: any; onSaved: () => voi
   );
 }
 
-function generateToken() {
-  const arr = new Uint8Array(24);
-  crypto.getRandomValues(arr);
-  return Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
 function FinancingTab({
-  clientId, userId, dossier, links, onChange,
+  clientId, dossiers, onChange,
 }: {
   clientId: string;
-  userId: string;
-  dossier: any;
-  links: any[];
+  dossiers: any[];
   onChange: () => void;
 }) {
-  const [generating, setGenerating] = useState(false);
-  const [editorOpen, setEditorOpen] = useState(false);
-
-  const ensureDossier = async (): Promise<string> => {
-    if (dossier?.id) return dossier.id;
-    const { data, error } = await supabase
-      .from("financing_dossiers")
-      .insert({ client_id: clientId })
-      .select().single();
-    if (error) throw error;
-    return data.id;
-  };
-
-  const handleGenerateLink = async () => {
-    setGenerating(true);
-    try {
-      const dossierId = await ensureDossier();
-      const token = generateToken();
-      const { error } = await supabase.from("financing_links").insert({
-        dossier_id: dossierId, token, created_by: userId,
-      });
-      if (error) throw error;
-      toast.success("Link generiert");
-      onChange();
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const handleEdit = async () => {
-    try {
-      await ensureDossier();
-      setEditorOpen(true);
-      onChange();
-    } catch (e: any) {
-      toast.error(e.message);
-    }
-  };
-
-  const copyLink = (token: string) => {
-    const url = `${window.location.origin}/finanzierung/${token}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Link kopiert");
-  };
-
-  const activeLink = links.find(l => !l.used_at && new Date(l.expires_at) > new Date());
-
-  if (!dossier) {
-    return (
-      <>
-        <Card><CardContent className="p-8 text-center">
-          <FileSignature className="mx-auto h-10 w-10 text-muted-foreground" />
-          <h3 className="mt-4 font-display text-lg font-semibold">Noch keine Selbstauskunft vorhanden</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Wie möchtest du starten?</p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Button onClick={handleGenerateLink} disabled={generating}>
-              <Link2 className="mr-1.5 h-4 w-4" />Link generieren
-            </Button>
-            <Button variant="outline" onClick={handleEdit}>
-              <Pencil className="mr-1.5 h-4 w-4" />Selbst ausfüllen
-            </Button>
-          </div>
-        </CardContent></Card>
-        <FinancingEditorDialog open={editorOpen} onOpenChange={setEditorOpen} clientId={clientId} onSaved={onChange} />
-      </>
-    );
-  }
-
-  const isComplete = dossier.completion_percent >= 100;
-  const submittedDate = dossier.submitted_at ? new Date(dossier.submitted_at).toLocaleDateString("de-DE") : null;
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
-      <Card><CardContent className="p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="p-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2">
-              <Badge className={isComplete ? "bg-emerald-600 hover:bg-emerald-600" : "bg-orange-500 hover:bg-orange-500"}>
-                {isComplete ? "Vollständig" : "Unvollständig"}
-              </Badge>
-              <Badge variant="outline">
-                {dossier.status === "draft" ? "Entwurf" : dossier.status === "submitted" ? "Eingereicht" : "Geprüft"}
-              </Badge>
-            </div>
-            {submittedDate && <p className="mt-2 text-sm text-muted-foreground">Ausgefüllt am {submittedDate}</p>}
+            <h3 className="font-display text-lg font-semibold">Finanzierungs-Dossiers</h3>
+            <p className="text-sm text-muted-foreground">
+              Zentrale Finanzierungen für diesen Kunden. Jedes Dossier kann
+              Quick Check, Selbstauskunft, Dokumente und Bank-Einreichung enthalten.
+            </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleEdit}><Pencil className="mr-1.5 h-4 w-4" />Bearbeiten</Button>
-            <Button variant="outline" onClick={handleGenerateLink} disabled={generating}>
-              <RefreshCw className="mr-1.5 h-4 w-4" />Neu generieren (Link)
+            <Button onClick={() => setWizardOpen(true)}>
+              <Plus className="mr-1.5 h-4 w-4" />Neues Finanzierungsdossier
             </Button>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="mt-6">
-          <div className="mb-2 flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Vollständigkeit</span>
-            <span className="font-medium">{dossier.completion_percent}%</span>
-          </div>
-          <Progress value={dossier.completion_percent} />
+      {dossiers.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <FileSignature className="mx-auto h-10 w-10 text-muted-foreground" />
+            <h3 className="mt-4 font-display text-lg font-semibold">Noch kein Finanzierungsdossier</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Starte einen Quick Check, um die Finanzierbarkeit für diesen Kunden zu prüfen.
+            </p>
+            <div className="mt-6">
+              <Button onClick={() => setWizardOpen(true)}>
+                <Plus className="mr-1.5 h-4 w-4" />Quick Check starten
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-3">
+          {dossiers.map((d: any) => (
+            <Card key={d.id} className="transition hover:shadow-md">
+              <CardContent className="flex flex-wrap items-start gap-4 p-4">
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium truncate">
+                      {d.title || `Dossier vom ${formatDate(d.created_at)}`}
+                    </p>
+                    {d.financing_type && (
+                      <Badge variant="secondary">{d.financing_type}</Badge>
+                    )}
+                    <Badge variant="outline">
+                      {d.dossier_status ?? "draft"}
+                    </Badge>
+                    {d.quick_check_status && (
+                      <Badge variant="outline">{d.quick_check_status}</Badge>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    {d.requested_mortgage != null && <span>Hypothek: {formatCurrency(Number(d.requested_mortgage))}</span>}
+                    {d.loan_to_value_ratio != null && <span>Belehnung: {Number(d.loan_to_value_ratio).toFixed(1)}%</span>}
+                    {d.affordability_ratio != null && <span>Tragbarkeit: {Number(d.affordability_ratio).toFixed(1)}%</span>}
+                    {d.bank_name && <span>Bank: {d.bank_name}</span>}
+                    <span>Aktualisiert {formatDate(d.updated_at)}</span>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate({ to: "/financing/$id", params: { id: d.id } })}
+                  >
+                    <Pencil className="mr-1.5 h-4 w-4" />Bearbeiten
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </CardContent></Card>
-
-      {activeLink && (
-        <Card><CardContent className="p-6">
-          <p className="text-xs uppercase text-muted-foreground">Aktiver Kundenlink</p>
-          <div className="mt-2 flex items-center gap-2">
-            <code className="flex-1 truncate rounded-lg border bg-muted/50 px-3 py-2 text-xs">
-              {window.location.origin}/finanzierung/{activeLink.token}
-            </code>
-            <Button size="icon" variant="outline" onClick={() => copyLink(activeLink.token)}>
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Gültig bis {new Date(activeLink.expires_at).toLocaleDateString("de-DE")}
-          </p>
-        </CardContent></Card>
       )}
-      <FinancingEditorDialog open={editorOpen} onOpenChange={setEditorOpen} clientId={clientId} onSaved={onChange} />
+
+      <FinancingQuickCheckWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        defaultClientId={clientId}
+        onCreated={(id: string) => {
+          setWizardOpen(false);
+          onChange();
+          navigate({ to: "/financing/$id", params: { id } });
+        }}
+      />
     </div>
   );
 }

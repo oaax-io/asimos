@@ -32,18 +32,44 @@ export function DossierQualityCard({ dossierId, dossier }: Props) {
 
   const stats = checklistStats(rows);
   const qcStatus = dossier.quick_check_status as QuickCheckStatus | null;
+  const dossierStatus = dossier.dossier_status as DossierStatus | null;
   const ltv = Number(dossier.loan_to_value_ratio ?? 0);
   const affordability = Number(dossier.affordability_ratio ?? 0);
   const equityOk = ltv > 0 && ltv <= 80;
   const affordabilityOk = affordability > 0 && affordability <= 33;
+  const hasMandatoryFinancials =
+    Number(dossier.requested_mortgage ?? 0) > 0 &&
+    Number(dossier.total_investment ?? 0) > 0 &&
+    Number(dossier.gross_income_yearly ?? 0) > 0;
 
   const risks: string[] = [];
   if (!equityOk && ltv > 0) risks.push(`Belehnung ${ltv.toFixed(1)}% (über 80%)`);
   if (!affordabilityOk && affordability > 0) risks.push(`Tragbarkeit ${affordability.toFixed(1)}% (über 33%)`);
   if (qcStatus === "not_financeable") risks.push("Quick Check: nicht finanzierbar");
   if (qcStatus === "critical") risks.push("Quick Check: kritisch");
+  if (!hasMandatoryFinancials) risks.push("Pflichtdaten unvollständig (Hypothek, Investition, Einkommen)");
 
   const verdict: Verdict = computeVerdict(stats.requiredPercent, qcStatus, equityOk, affordabilityOk);
+
+  // Button-Gating
+  let blockReason: string | null = null;
+  if (qcStatus === "not_financeable") {
+    blockReason = "Dieses Dossier erfüllt die Mindestkriterien aktuell nicht und sollte nicht an die Bank eingereicht werden.";
+  } else if (qcStatus === "critical") {
+    blockReason = "Dieses Dossier ist kritisch. Bitte Tragbarkeit, Eigenmittel oder fehlende Unterlagen prüfen, bevor es an die Bank geht.";
+  } else if (qcStatus === "incomplete" || !qcStatus) {
+    blockReason = "Es fehlen noch Angaben für eine vollständige Vorprüfung.";
+  } else if (!hasMandatoryFinancials) {
+    blockReason = "Pflichtdaten fehlen: Hypothek, Gesamtinvestition und Bruttoeinkommen sind erforderlich.";
+  } else if (dossierStatus === "rejected" || dossierStatus === "cancelled") {
+    blockReason = "Dossier ist abgelehnt oder storniert und kann nicht an die Bank gesendet werden.";
+  } else if (stats.requiredPercent < 60) {
+    blockReason = "Mindestpflichtpunkte der Checkliste sind noch nicht erfüllt.";
+  }
+  const canMarkReady =
+    !blockReason &&
+    qcStatus === "realistic" &&
+    dossierStatus !== "ready_for_bank";
 
   const markReady = useMutation({
     mutationFn: async () => {
@@ -90,9 +116,21 @@ export function DossierQualityCard({ dossierId, dossier }: Props) {
           </div>
         )}
 
+        {blockReason && (
+          <div className="rounded-lg border border-amber-300/50 bg-amber-50/40 p-3 text-sm text-amber-700">
+            {blockReason}
+          </div>
+        )}
+
+        {dossierStatus === "ready_for_bank" && (
+          <div className="rounded-lg border border-emerald-300/50 bg-emerald-50/40 p-3 text-sm text-emerald-700">
+            Dieses Dossier ist bereits als bereit für Bank markiert.
+          </div>
+        )}
+
         <Button
           onClick={() => markReady.mutate()}
-          disabled={verdict === "do_not_submit" || markReady.isPending || dossier.dossier_status === "ready_for_bank"}
+          disabled={!canMarkReady || markReady.isPending}
           className="w-full"
         >
           Bereit für Bank markieren
