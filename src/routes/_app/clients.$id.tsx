@@ -32,6 +32,7 @@ import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
 import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkCard";
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
+import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetail });
 
@@ -854,7 +855,7 @@ function FinancingTab({
         open={wizardOpen}
         onOpenChange={setWizardOpen}
         defaultClientId={clientId}
-        onCreated={(id) => {
+        onCreated={(id: string) => {
           setWizardOpen(false);
           onChange();
           navigate({ to: "/financing/$id", params: { id } });
