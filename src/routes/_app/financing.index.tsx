@@ -33,10 +33,23 @@ function FinancingPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("financing_dossiers")
-        .select("*, clients:client_id(id, full_name), properties:property_id(id, title, city)")
+        .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      const rows = data ?? [];
+      const clientIds = Array.from(new Set(rows.map((r: any) => r.client_id).filter(Boolean)));
+      const propIds = Array.from(new Set(rows.map((r: any) => r.property_id).filter(Boolean)));
+      const [{ data: clients = [] }, { data: props = [] }] = await Promise.all([
+        clientIds.length
+          ? supabase.from("clients").select("id, full_name").in("id", clientIds)
+          : Promise.resolve({ data: [] as any[] }),
+        propIds.length
+          ? supabase.from("properties").select("id, title, city").in("id", propIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+      const cMap = new Map((clients ?? []).map((c: any) => [c.id, c]));
+      const pMap = new Map((props ?? []).map((p: any) => [p.id, p]));
+      return rows.map((r: any) => ({ ...r, clients: cMap.get(r.client_id), properties: pMap.get(r.property_id) }));
     },
   });
 

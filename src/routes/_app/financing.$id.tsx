@@ -24,11 +24,20 @@ function FinancingDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("financing_dossiers")
-        .select("*, clients:client_id(id, full_name, email, phone), properties:property_id(id, title, city, price)")
+        .select("*")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      if (!data) return null;
+      const [clientRes, propRes] = await Promise.all([
+        data.client_id
+          ? supabase.from("clients").select("id, full_name, email, phone").eq("id", data.client_id).maybeSingle()
+          : Promise.resolve({ data: null }),
+        data.property_id
+          ? supabase.from("properties").select("id, title, city, price").eq("id", data.property_id).maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+      return { ...data, clients: clientRes.data, properties: propRes.data } as any;
     },
   });
 
