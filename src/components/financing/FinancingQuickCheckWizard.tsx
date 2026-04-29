@@ -19,7 +19,7 @@ import {
   calcQuickCheck, type FinancingType, type QuickCheckStatus,
 } from "@/lib/financing";
 import {
-  FIELDS_BY_TYPE, computeFinancing, toNumOrNull,
+  fieldsForModules, computeFinancingMulti, toNumOrNull,
   type DynamicForm, type FieldKey,
 } from "@/lib/financing-fields";
 import { formatCurrency } from "@/lib/format";
@@ -48,7 +48,7 @@ export function FinancingQuickCheckWizard({
 }: Props) {
   const qc = useQueryClient();
   const [step, setStep] = useState(1);
-  const [financingType, setFinancingType] = useState<FinancingType>("purchase");
+  const [modules, setModules] = useState<FinancingType[]>(["purchase"]);
   const [dataSource, setDataSource] = useState<DataSource>(
     defaultPropertyId ? "existing_property" : "existing_property"
   );
@@ -61,12 +61,23 @@ export function FinancingQuickCheckWizard({
   const [amortisation, setAmortisation] = useState("");
 
   const TOTAL_STEPS = 7;
-  const fields = FIELDS_BY_TYPE[financingType];
+  const fields = useMemo(() => fieldsForModules(modules), [modules]);
+  const primaryType: FinancingType = modules[0] ?? "purchase";
+
+  const toggleModule = (m: FinancingType) => {
+    setModules((prev) => {
+      if (prev.includes(m)) {
+        const next = prev.filter((x) => x !== m);
+        return next.length ? next : prev; // mind. 1 erforderlich
+      }
+      return [...prev, m];
+    });
+  };
 
   useEffect(() => {
     if (!open) {
       setStep(1);
-      setFinancingType("purchase");
+      setModules(["purchase"]);
       setDataSource(defaultPropertyId ? "existing_property" : "existing_property");
       setClientId(defaultClientId ?? "");
       setPropertyId(defaultPropertyId ?? "");
@@ -78,16 +89,16 @@ export function FinancingQuickCheckWizard({
     }
   }, [open, defaultClientId, defaultPropertyId]);
 
-  // Felder zurücksetzen bei Typwechsel (nicht relevante leeren)
+  // Felder zurücksetzen bei Modulwechsel (nicht relevante leeren)
   useEffect(() => {
     setForm((prev) => {
-      const allowed = new Set(fields.map((f) => f.key));
+      const allowed = new Set<FieldKey>(fields.map((f) => f.key));
       const next: DynamicForm = {};
-      for (const k of allowed) next[k] = prev[k] ?? "";
+      allowed.forEach((k) => { next[k] = prev[k] ?? ""; });
       return next;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [financingType]);
+  }, [modules.join("|")]);
 
   const clientsQuery = useQuery({
     queryKey: ["financing_wizard_clients"],
@@ -120,20 +131,19 @@ export function FinancingQuickCheckWizard({
     if (!selectedProperty) return;
     setForm((f) => {
       const next = { ...f };
+      const set = new Set(modules);
       if (selectedProperty.price) {
-        if (financingType === "purchase" && !next.purchase_price) {
+        if (set.has("purchase") && !next.purchase_price) {
           next.purchase_price = String(selectedProperty.price);
-        } else if (
-          ["renovation", "increase", "refinance", "mortgage_increase"].includes(financingType) &&
-          !next.property_value
-        ) {
+        }
+        if (!set.has("purchase") && !set.has("new_build") && !next.property_value) {
           next.property_value = String(selectedProperty.price);
         }
       }
       return next;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propertyId, financingType]);
+  }, [propertyId, modules.join("|")]);
 
   // Auto-Übernahme aus Selbstauskunft
   useEffect(() => {
@@ -153,7 +163,7 @@ export function FinancingQuickCheckWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
 
-  const computed = useMemo(() => computeFinancing(financingType, form), [financingType, form]);
+  const computed = useMemo(() => computeFinancingMulti(modules, form), [modules, form]);
 
   const result = useMemo(() => calcQuickCheck({
     purchase_price: computed.reference_value,
@@ -168,33 +178,38 @@ export function FinancingQuickCheckWizard({
     amortisation_yearly: toNumOrNull(amortisation),
   }), [computed, form, calcRate, ancillary, amortisation]);
 
+  const moduleLabel = (m: FinancingType) => FINANCING_TYPE_LABELS[m];
+  const modulesLabel = modules.map(moduleLabel).join(" + ");
+
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!clientId) throw new Error("Bitte Kunden auswählen");
 
-      // Nur Felder befüllen, die zur Finanzierungsart gehören
-      const allowed = new Set(fields.map((f) => f.key));
+      // Nur Felder befüllen, die zur Modul-Kombination gehören
+      const allowed = new Set<FieldKey>(fields.map((f) => f.key));
       const fieldVal = (k: FieldKey) => (allowed.has(k) ? toNumOrNull(form[k]) : null);
       const txtVal = (k: FieldKey) => (allowed.has(k) ? (form[k] || null) : null);
 
       const payload: any = {
         client_id: clientId,
         property_id: dataSource === "existing_property" ? (propertyId || null) : null,
-        financing_type: financingType,
+        financing_type: primaryType,
+        financing_modules: modules,
         data_source: dataSource,
         property_snapshot: dataSource === "quick_entry" ? snapshot : {},
-        title: `${FINANCING_TYPE_LABELS[financingType]}${selectedClient ? " – " + selectedClient.full_name : ""}`,
+        title: `${modulesLabel}${selectedClient ? " – " + selectedClient.full_name : ""}`,
 
-        // Kategorie-spezifische Felder
+        // Modul-spezifische Felder
         purchase_price: fieldVal("purchase_price"),
+        purchase_additional_costs: fieldVal("purchase_additional_costs"),
         renovation_costs: fieldVal("renovation_costs"),
+        renovation_description: txtVal("renovation_description"),
+        renovation_value_increase: fieldVal("renovation_value_increase"),
         property_value: fieldVal("property_value"),
         existing_mortgage: fieldVal("existing_mortgage"),
         requested_mortgage: fieldVal("requested_mortgage"),
         requested_increase: fieldVal("requested_increase"),
-        new_total_mortgage: ["renovation", "increase", "mortgage_increase"].includes(financingType)
-          ? (toNumOrNull(form.existing_mortgage) ?? 0) + (toNumOrNull(form.requested_increase) ?? 0)
-          : null,
+        new_total_mortgage: computed.new_total_mortgage || null,
         land_price: fieldVal("land_price"),
         construction_costs: fieldVal("construction_costs"),
         construction_additional_costs: fieldVal("construction_additional_costs"),
@@ -219,6 +234,7 @@ export function FinancingQuickCheckWizard({
         dossier_status: "quick_check" as const,
       };
 
+
       const { data, error } = await supabase
         .from("financing_dossiers")
         .insert(payload)
@@ -240,12 +256,12 @@ export function FinancingQuickCheckWizard({
   }, [fields, form]);
 
   const canNext = () => {
-    if (step === 1) return !!financingType;
+    if (step === 1) return modules.length > 0;
     if (step === 2) return !!dataSource;
     if (step === 3) return !!clientId;
     if (step === 4) {
       if (dataSource === "quick_entry") return !!snapshot.title;
-      return true; // Immobilie optional
+      return true;
     }
     if (step === 5) return requiredFilled;
     if (step === 6) return (toNumOrNull(form.gross_income_yearly) ?? 0) > 0;
@@ -267,30 +283,43 @@ export function FinancingQuickCheckWizard({
           ))}
         </div>
 
-        {/* 1. Finanzierungsart */}
+        {/* 1. Finanzierungsart (Multi-Select) */}
         {step === 1 && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {(Object.keys(FINANCING_TYPE_LABELS) as FinancingType[]).map((t) => {
-              const Icon = TYPE_ICONS[t];
-              const active = financingType === t;
-              return (
-                <Card
-                  key={t}
-                  onClick={() => setFinancingType(t)}
-                  className={`cursor-pointer p-4 transition ${active ? "border-primary ring-2 ring-primary/30" : "hover:border-primary/40"}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`rounded-lg p-2 ${active ? "bg-primary/15" : "bg-muted"}`}>
-                      <Icon className="h-5 w-5" />
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Mehrere Bausteine kombinierbar (z. B. Kauf + Renovation, Aufstockung + Renovation).
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(Object.keys(FINANCING_TYPE_LABELS) as FinancingType[]).map((t) => {
+                const Icon = TYPE_ICONS[t];
+                const active = modules.includes(t);
+                return (
+                  <Card
+                    key={t}
+                    onClick={() => toggleModule(t)}
+                    className={`cursor-pointer p-4 transition ${active ? "border-primary ring-2 ring-primary/30" : "hover:border-primary/40"}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`rounded-lg p-2 ${active ? "bg-primary/15" : "bg-muted"}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{FINANCING_TYPE_LABELS[t]}</p>
+                        <p className="text-xs text-muted-foreground">{FINANCING_TYPE_DESCRIPTIONS[t]}</p>
+                      </div>
+                      {active && <CheckCircle2 className="h-4 w-4 text-primary mt-1" />}
                     </div>
-                    <div>
-                      <p className="font-medium">{FINANCING_TYPE_LABELS[t]}</p>
-                      <p className="text-xs text-muted-foreground">{FINANCING_TYPE_DESCRIPTIONS[t]}</p>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+                  </Card>
+                );
+              })}
+            </div>
+            {modules.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {modules.map((m) => (
+                  <Badge key={m} variant="secondary">{FINANCING_TYPE_LABELS[m]}</Badge>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -390,7 +419,7 @@ export function FinancingQuickCheckWizard({
         {step === 5 && (
           <div className="space-y-3">
             <div className="text-sm text-muted-foreground">
-              Felder für: <span className="font-medium text-foreground">{FINANCING_TYPE_LABELS[financingType]}</span>
+              Felder für: <span className="font-medium text-foreground">{modulesLabel}</span>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {fields
@@ -438,7 +467,7 @@ export function FinancingQuickCheckWizard({
         {step === 7 && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 text-sm">
-              <SumRow label="Finanzierungsart" value={FINANCING_TYPE_LABELS[financingType]} />
+              <SumRow label="Module" value={modulesLabel} />
               <SumRow label="Datenbasis" value={dataSource === "existing_property" ? "Bestehende Immobilie" : "Schnellprüfung"} />
               <SumRow label="Kunde" value={selectedClient?.full_name ?? "—"} />
               <SumRow label="Immobilie" value={dataSource === "existing_property" ? (selectedProperty?.title ?? "Keine") : (snapshot.title || "—")} />

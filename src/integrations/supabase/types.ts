@@ -955,6 +955,7 @@ export type Database = {
             | Database["public"]["Enums"]["financing_dossier_status"]
             | null
           existing_mortgage: number | null
+          financing_modules: string[]
           financing_type: Database["public"]["Enums"]["financing_type"] | null
           gross_income_yearly: number | null
           id: string
@@ -974,12 +975,15 @@ export type Database = {
           property_id: string | null
           property_snapshot: Json | null
           property_value: number | null
+          purchase_additional_costs: number | null
           purchase_price: number | null
           quick_check_reasons: Json | null
           quick_check_status:
             | Database["public"]["Enums"]["financing_quick_check_status"]
             | null
           renovation_costs: number | null
+          renovation_description: string | null
+          renovation_value_increase: number | null
           requested_increase: number | null
           requested_mortgage: number | null
           section_additional: Json
@@ -998,6 +1002,11 @@ export type Database = {
           title: string | null
           total_investment: number | null
           updated_at: string
+          valuation_external_id: string | null
+          valuation_price_per_sqm: number | null
+          valuation_provider: string | null
+          valuation_result: Json | null
+          valuation_status: string | null
         }
         Insert: {
           affordability_ratio?: number | null
@@ -1023,6 +1032,7 @@ export type Database = {
             | Database["public"]["Enums"]["financing_dossier_status"]
             | null
           existing_mortgage?: number | null
+          financing_modules?: string[]
           financing_type?: Database["public"]["Enums"]["financing_type"] | null
           gross_income_yearly?: number | null
           id?: string
@@ -1042,12 +1052,15 @@ export type Database = {
           property_id?: string | null
           property_snapshot?: Json | null
           property_value?: number | null
+          purchase_additional_costs?: number | null
           purchase_price?: number | null
           quick_check_reasons?: Json | null
           quick_check_status?:
             | Database["public"]["Enums"]["financing_quick_check_status"]
             | null
           renovation_costs?: number | null
+          renovation_description?: string | null
+          renovation_value_increase?: number | null
           requested_increase?: number | null
           requested_mortgage?: number | null
           section_additional?: Json
@@ -1066,6 +1079,11 @@ export type Database = {
           title?: string | null
           total_investment?: number | null
           updated_at?: string
+          valuation_external_id?: string | null
+          valuation_price_per_sqm?: number | null
+          valuation_provider?: string | null
+          valuation_result?: Json | null
+          valuation_status?: string | null
         }
         Update: {
           affordability_ratio?: number | null
@@ -1091,6 +1109,7 @@ export type Database = {
             | Database["public"]["Enums"]["financing_dossier_status"]
             | null
           existing_mortgage?: number | null
+          financing_modules?: string[]
           financing_type?: Database["public"]["Enums"]["financing_type"] | null
           gross_income_yearly?: number | null
           id?: string
@@ -1110,12 +1129,15 @@ export type Database = {
           property_id?: string | null
           property_snapshot?: Json | null
           property_value?: number | null
+          purchase_additional_costs?: number | null
           purchase_price?: number | null
           quick_check_reasons?: Json | null
           quick_check_status?:
             | Database["public"]["Enums"]["financing_quick_check_status"]
             | null
           renovation_costs?: number | null
+          renovation_description?: string | null
+          renovation_value_increase?: number | null
           requested_increase?: number | null
           requested_mortgage?: number | null
           section_additional?: Json
@@ -1134,6 +1156,11 @@ export type Database = {
           title?: string | null
           total_investment?: number | null
           updated_at?: string
+          valuation_external_id?: string | null
+          valuation_price_per_sqm?: number | null
+          valuation_provider?: string | null
+          valuation_result?: Json | null
+          valuation_status?: string | null
         }
         Relationships: []
       }
