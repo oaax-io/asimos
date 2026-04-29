@@ -270,7 +270,7 @@ export function buildSubmitPayload(d: WizardData): WizardSubmit {
       }))
     : [];
 
-  return { property, units };
+  return { property, units, media: d.media };
 }
 
 /* -------------------- Wizard-Komponente -------------------- */
