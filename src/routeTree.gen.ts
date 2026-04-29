@@ -39,6 +39,7 @@ import { Route as AppFinancingIndexRouteImport } from './routes/_app/financing.i
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
 import { Route as AppLeadsIdRouteImport } from './routes/_app/leads.$id'
+import { Route as AppFinancingIdRouteImport } from './routes/_app/financing.$id'
 import { Route as AppClientsIdRouteImport } from './routes/_app/clients.$id'
 import { Route as AppPropertiesIdExposeRouteImport } from './routes/_app/properties.$id.expose'
 
@@ -191,6 +192,11 @@ const AppLeadsIdRoute = AppLeadsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AppLeadsRoute,
 } as any)
+const AppFinancingIdRoute = AppFinancingIdRouteImport.update({
+  id: '/financing/$id',
+  path: '/financing/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppClientsIdRoute = AppClientsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
+  '/financing/$id': typeof AppFinancingIdRoute
   '/leads/$id': typeof AppLeadsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/clients/': typeof AppClientsIndexRoute
@@ -258,6 +265,7 @@ export interface FileRoutesByTo {
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
+  '/financing/$id': typeof AppFinancingIdRoute
   '/leads/$id': typeof AppLeadsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/clients': typeof AppClientsIndexRoute
@@ -293,6 +301,7 @@ export interface FileRoutesById {
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
+  '/_app/financing/$id': typeof AppFinancingIdRoute
   '/_app/leads/$id': typeof AppLeadsIdRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/_app/clients/': typeof AppClientsIndexRoute
@@ -328,6 +337,7 @@ export interface FileRouteTypes {
     | '/finanzierung/$token'
     | '/selbstauskunft/$token'
     | '/clients/$id'
+    | '/financing/$id'
     | '/leads/$id'
     | '/properties/$id'
     | '/clients/'
@@ -359,6 +369,7 @@ export interface FileRouteTypes {
     | '/finanzierung/$token'
     | '/selbstauskunft/$token'
     | '/clients/$id'
+    | '/financing/$id'
     | '/leads/$id'
     | '/properties/$id'
     | '/clients'
@@ -393,6 +404,7 @@ export interface FileRouteTypes {
     | '/finanzierung/$token'
     | '/selbstauskunft/$token'
     | '/_app/clients/$id'
+    | '/_app/financing/$id'
     | '/_app/leads/$id'
     | '/_app/properties/$id'
     | '/_app/clients/'
@@ -624,6 +636,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLeadsIdRouteImport
       parentRoute: typeof AppLeadsRoute
     }
+    '/_app/financing/$id': {
+      id: '/_app/financing/$id'
+      path: '/financing/$id'
+      fullPath: '/financing/$id'
+      preLoaderRoute: typeof AppFinancingIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/clients/$id': {
       id: '/_app/clients/$id'
       path: '/$id'
@@ -699,6 +718,7 @@ interface AppRouteChildren {
   AppTasksRoute: typeof AppTasksRoute
   AppTeamRoute: typeof AppTeamRoute
   AppTemplatesRoute: typeof AppTemplatesRoute
+  AppFinancingIdRoute: typeof AppFinancingIdRoute
   AppPropertiesIdRoute: typeof AppPropertiesIdRouteWithChildren
   AppFinancingIndexRoute: typeof AppFinancingIndexRoute
   AppPropertiesIndexRoute: typeof AppPropertiesIndexRoute
@@ -722,6 +742,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTasksRoute: AppTasksRoute,
   AppTeamRoute: AppTeamRoute,
   AppTemplatesRoute: AppTemplatesRoute,
+  AppFinancingIdRoute: AppFinancingIdRoute,
   AppPropertiesIdRoute: AppPropertiesIdRouteWithChildren,
   AppFinancingIndexRoute: AppFinancingIndexRoute,
   AppPropertiesIndexRoute: AppPropertiesIndexRoute,
