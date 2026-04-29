@@ -1082,6 +1082,7 @@ function Step10Summary({ d, owners, employees }: { d: WizardData; owners: any[];
     ["Eigentümer", owner?.full_name ?? "—"],
     ["Zuständig", emp?.full_name || emp?.email || "—"],
     ["Einheiten", d.units.length ? String(d.units.length) : "—"],
+    ["Medien", d.media.length ? `${d.media.length} Datei(en)${d.media.find(m => m.is_cover) ? " · Cover gesetzt" : ""}` : "—"],
   ];
   return (
     <div className="space-y-4">
