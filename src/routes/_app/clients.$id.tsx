@@ -434,12 +434,9 @@ function ClientDetail() {
               <TabsContent value="dossier" className="mt-4">
                 <FinancingTab
                   clientId={id}
-                  userId={user!.id}
-                  dossier={dossier}
-                  links={links}
+                  dossiers={dossiers}
                   onChange={() => {
-                    qc.invalidateQueries({ queryKey: ["financing_dossier", id] });
-                    qc.invalidateQueries({ queryKey: ["financing_links"] });
+                    qc.invalidateQueries({ queryKey: ["client_financing_dossiers", id] });
                   }}
                 />
               </TabsContent>
