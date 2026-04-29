@@ -826,7 +826,7 @@ function FinancingTab({
         <h3 className="mt-4 font-display text-lg font-semibold">Noch keine Finanzierungsangaben</h3>
         <p className="mt-1 text-sm text-muted-foreground">Wie möchtest du starten?</p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Button onClick={handleSelfFill}><Pencil className="mr-1.5 h-4 w-4" />Selbst ausfüllen</Button>
+          <Button onClick={handleEdit}><Pencil className="mr-1.5 h-4 w-4" />Selbst ausfüllen</Button>
           <Button variant="outline" onClick={handleGenerateLink} disabled={generating}>
             <Link2 className="mr-1.5 h-4 w-4" />Link für Kunden generieren
           </Button>
@@ -854,7 +854,7 @@ function FinancingTab({
             {submittedDate && <p className="mt-2 text-sm text-muted-foreground">Ausgefüllt am {submittedDate}</p>}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSelfFill}><Pencil className="mr-1.5 h-4 w-4" />Bearbeiten</Button>
+            <Button variant="outline" onClick={handleEdit}><Pencil className="mr-1.5 h-4 w-4" />Bearbeiten</Button>
             <Button variant="outline" onClick={handleGenerateLink} disabled={generating}>
               <RefreshCw className="mr-1.5 h-4 w-4" />Neu generieren (Link)
             </Button>
