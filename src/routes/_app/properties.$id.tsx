@@ -136,6 +136,9 @@ function PropertyDetail() {
             <Badge>{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
             <Badge variant="secondary">{propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels]}</Badge>
             <Badge variant="outline">{listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}</Badge>
+            {p.status === "reserved" && <Badge className="bg-amber-500 hover:bg-amber-500">Aktive Reservation</Badge>}
+            {statusFlags?.hasActiveMandate && <Badge className="bg-emerald-600 hover:bg-emerald-600">Aktives Mandat</Badge>}
+            {statusFlags?.hasNda && <Badge variant="outline" className="border-primary/50 text-primary">NDA vorhanden</Badge>}
           </div>
           <h1 className="font-display text-2xl font-bold leading-tight">{p.title}</h1>
           <p className="flex items-center gap-1 text-sm text-muted-foreground">
