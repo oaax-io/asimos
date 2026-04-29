@@ -431,23 +431,43 @@ export function PropertyWizard({
 
 function Step1Type({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
   return (
-    <div className="space-y-4">
-      <h3 className="font-semibold">Welche Objektart erfasst du?</h3>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {PROP_TYPES.map(({ v, label, icon: Icon }) => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => update({ property_type: v })}
-            className={cn(
-              "flex flex-col items-center gap-2 rounded-xl border p-5 text-sm transition hover:border-primary hover:bg-accent",
-              d.property_type === v && "border-primary bg-primary/5 ring-2 ring-primary/30"
-            )}
-          >
-            <Icon className="h-7 w-7 text-primary" />
-            <span className="font-medium">{label}</span>
-          </button>
-        ))}
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-lg font-semibold">Welche Objektart erfasst du?</h3>
+        <p className="text-sm text-muted-foreground">Wähle die passende Kategorie. Du kannst sie später anpassen.</p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {PROP_TYPES.map(({ v, label, desc, icon: Icon }) => {
+          const selected = d.property_type === v;
+          return (
+            <button
+              key={v}
+              type="button"
+              onClick={() => update({ property_type: v })}
+              className={cn(
+                "group relative flex h-full flex-col items-start gap-3 rounded-2xl border-2 bg-card p-5 text-left transition",
+                "hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md",
+                selected ? "border-primary bg-primary/5 shadow-md" : "border-border",
+              )}
+            >
+              <div className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-xl transition",
+                selected ? "bg-primary text-primary-foreground" : "bg-muted text-foreground group-hover:bg-primary/10 group-hover:text-primary",
+              )}>
+                <Icon className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="font-semibold leading-tight">{label}</div>
+                <p className="mt-1 text-xs leading-snug text-muted-foreground">{desc}</p>
+              </div>
+              {selected && (
+                <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <Check className="h-3.5 w-3.5" />
+                </div>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
