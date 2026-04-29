@@ -35,6 +35,7 @@ import { Route as AppChecklistsRouteImport } from './routes/_app/checklists'
 import { Route as AppAppointmentsRouteImport } from './routes/_app/appointments'
 import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties.index'
 import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads.index'
+import { Route as AppFinancingIndexRouteImport } from './routes/_app/financing.index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
 import { Route as AppLeadsIdRouteImport } from './routes/_app/leads.$id'
@@ -170,6 +171,11 @@ const AppLeadsIndexRoute = AppLeadsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppLeadsRoute,
 } as any)
+const AppFinancingIndexRoute = AppFinancingIndexRouteImport.update({
+  id: '/financing/',
+  path: '/financing/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppClientsIndexRoute = AppClientsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -224,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/leads/$id': typeof AppLeadsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/clients/': typeof AppClientsIndexRoute
+  '/financing/': typeof AppFinancingIndexRoute
   '/leads/': typeof AppLeadsIndexRoute
   '/properties/': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -254,6 +261,7 @@ export interface FileRoutesByTo {
   '/leads/$id': typeof AppLeadsIdRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/clients': typeof AppClientsIndexRoute
+  '/financing': typeof AppFinancingIndexRoute
   '/leads': typeof AppLeadsIndexRoute
   '/properties': typeof AppPropertiesIndexRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -288,6 +296,7 @@ export interface FileRoutesById {
   '/_app/leads/$id': typeof AppLeadsIdRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/_app/clients/': typeof AppClientsIndexRoute
+  '/_app/financing/': typeof AppFinancingIndexRoute
   '/_app/leads/': typeof AppLeadsIndexRoute
   '/_app/properties/': typeof AppPropertiesIndexRoute
   '/_app/properties/$id/expose': typeof AppPropertiesIdExposeRoute
@@ -322,6 +331,7 @@ export interface FileRouteTypes {
     | '/leads/$id'
     | '/properties/$id'
     | '/clients/'
+    | '/financing/'
     | '/leads/'
     | '/properties/'
     | '/properties/$id/expose'
@@ -352,6 +362,7 @@ export interface FileRouteTypes {
     | '/leads/$id'
     | '/properties/$id'
     | '/clients'
+    | '/financing'
     | '/leads'
     | '/properties'
     | '/properties/$id/expose'
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '/_app/leads/$id'
     | '/_app/properties/$id'
     | '/_app/clients/'
+    | '/_app/financing/'
     | '/_app/leads/'
     | '/_app/properties/'
     | '/_app/properties/$id/expose'
@@ -584,6 +596,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLeadsIndexRouteImport
       parentRoute: typeof AppLeadsRoute
     }
+    '/_app/financing/': {
+      id: '/_app/financing/'
+      path: '/financing'
+      fullPath: '/financing/'
+      preLoaderRoute: typeof AppFinancingIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/clients/': {
       id: '/_app/clients/'
       path: '/'
@@ -681,6 +700,7 @@ interface AppRouteChildren {
   AppTeamRoute: typeof AppTeamRoute
   AppTemplatesRoute: typeof AppTemplatesRoute
   AppPropertiesIdRoute: typeof AppPropertiesIdRouteWithChildren
+  AppFinancingIndexRoute: typeof AppFinancingIndexRoute
   AppPropertiesIndexRoute: typeof AppPropertiesIndexRoute
 }
 
@@ -703,6 +723,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTeamRoute: AppTeamRoute,
   AppTemplatesRoute: AppTemplatesRoute,
   AppPropertiesIdRoute: AppPropertiesIdRouteWithChildren,
+  AppFinancingIndexRoute: AppFinancingIndexRoute,
   AppPropertiesIndexRoute: AppPropertiesIndexRoute,
 }
 
