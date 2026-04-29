@@ -1022,7 +1022,7 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
         </Dialog>
       </div>
       {isLoading ? <p className="text-sm text-muted-foreground">Lädt…</p>
-        : docs.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine Dokumente.</p>
+        : docs.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine hochgeladenen Dokumente.</p>
         : <div className="space-y-2">
             {docs.map((d: any) => (
               <a key={d.id} href={d.file_url} target="_blank" rel="noreferrer"
@@ -1038,6 +1038,11 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
               </a>
             ))}
           </div>}
+
+      <div className="mt-8">
+        <h3 className="mb-3 font-display text-lg font-semibold">Generierte Dokumente</h3>
+        <GeneratedDocumentsTable filterRelatedType="client" filterRelatedId={clientId} />
+      </div>
     </CardContent></Card>
   );
 }
