@@ -116,9 +116,21 @@ export function DossierQualityCard({ dossierId, dossier }: Props) {
           </div>
         )}
 
+        {blockReason && (
+          <div className="rounded-lg border border-amber-300/50 bg-amber-50/40 p-3 text-sm text-amber-700">
+            {blockReason}
+          </div>
+        )}
+
+        {dossierStatus === "ready_for_bank" && (
+          <div className="rounded-lg border border-emerald-300/50 bg-emerald-50/40 p-3 text-sm text-emerald-700">
+            Dieses Dossier ist bereits als bereit für Bank markiert.
+          </div>
+        )}
+
         <Button
           onClick={() => markReady.mutate()}
-          disabled={verdict === "do_not_submit" || markReady.isPending || dossier.dossier_status === "ready_for_bank"}
+          disabled={!canMarkReady || markReady.isPending}
           className="w-full"
         >
           Bereit für Bank markieren
