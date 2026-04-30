@@ -161,7 +161,9 @@ export function DocumentTemplatesManager() {
   };
 
   const insertVariable = (key: string) => {
-    setForm((prev) => ({ ...prev, content: `${prev.content}{{${key}}}` }));
+    const label = (AVAILABLE_VARIABLES.find((v) => v.key === key)?.label ?? key).replace(/^★\s*/, "");
+    const chip = `<span data-variable="${key}" data-label="${label.replace(/"/g, "&quot;")}">{{${key}}}</span>`;
+    setForm((prev) => ({ ...prev, content: `${prev.content}${chip}` }));
   };
 
   const showPreview = () => {
