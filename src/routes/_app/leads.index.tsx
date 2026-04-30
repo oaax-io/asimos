@@ -116,14 +116,14 @@ function LeadsPage() {
   }, [leads, statusFilter, sourceFilter, assignedFilter, search]);
 
   // Pagination (Liste)
-  const PAGE_SIZE = 20;
+  const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [search, statusFilter, sourceFilter, assignedFilter]);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  useEffect(() => { setPage(1); }, [search, statusFilter, sourceFilter, assignedFilter, pageSize]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const paginated = useMemo(
-    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
-    [filtered, currentPage],
+    () => filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filtered, currentPage, pageSize],
   );
 
   // Banner nur bei "echten" Fehlern – Backend-Unavailable wird automatisch retryed.
@@ -514,9 +514,19 @@ function LeadsPage() {
           </div>
           {filtered.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
-              <span>
-                Zeige {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} von {filtered.length}
-              </span>
+              <div className="flex items-center gap-2">
+                <span>
+                  Zeige {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)} von {filtered.length}
+                </span>
+                <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+                  <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="20">20 / Seite</SelectItem>
+                    <SelectItem value="50">50 / Seite</SelectItem>
+                    <SelectItem value="100">100 / Seite</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
                   Zurück
