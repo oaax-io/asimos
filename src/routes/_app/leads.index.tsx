@@ -512,6 +512,22 @@ function LeadsPage() {
               </TableBody>
             </Table>
           </div>
+          {filtered.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+              <span>
+                Zeige {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} von {filtered.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
+                  Zurück
+                </Button>
+                <span>Seite {currentPage} / {totalPages}</span>
+                <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>
+                  Weiter
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="kanban">
