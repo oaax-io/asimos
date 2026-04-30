@@ -25,8 +25,8 @@ import {
   Eye,
   Send,
   FileText,
-  Printer,
 } from "lucide-react";
+import { GeneratePdfButton } from "@/components/documents/GeneratePdfButton";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -221,15 +221,6 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
-  const printPreview = () => {
-    const w = window.open("", "_blank");
-    if (!w) return;
-    w.document.write(previewHtml);
-    w.document.close();
-    w.focus();
-    setTimeout(() => w.print(), 300);
-  };
 
   const canNext = (() => {
     if (step === 0) return !!mandateType;
@@ -460,9 +451,12 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Eye className="size-4" /> Live-Vorschau
                 </div>
-                <Button variant="outline" size="sm" onClick={printPreview} disabled={!previewHtml}>
-                  <Printer className="mr-2 size-4" /> Drucken / PDF
-                </Button>
+                <GeneratePdfButton
+                  html={previewHtml}
+                  title={mandateType === "exclusive" ? "Maklermandat (exklusiv)" : "Maklermandat (teilexklusiv)"}
+                  variant="outline"
+                  size="sm"
+                />
               </div>
               {previewHtml ? (
                 <iframe
@@ -517,9 +511,11 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
                   <Check className="mr-2 size-4" />
                   {create.isPending ? "Wird gespeichert…" : "Mandat speichern"}
                 </Button>
-                <Button variant="outline" onClick={printPreview} disabled={!previewHtml}>
-                  <Printer className="mr-2 size-4" /> PDF generieren
-                </Button>
+                <GeneratePdfButton
+                  html={previewHtml}
+                  title={mandateType === "exclusive" ? "Maklermandat (exklusiv)" : "Maklermandat (teilexklusiv)"}
+                  variant="outline"
+                />
                 <Button
                   variant="outline"
                   onClick={() => toast.info("Versand-Funktion folgt (E-Sign-Integration vorbereitet)")}
