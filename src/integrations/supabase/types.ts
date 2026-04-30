@@ -1873,12 +1873,15 @@ export type Database = {
           heating_type: string | null
           id: string
           images: string[] | null
+          import_batch_id: string | null
+          import_source: string | null
           internal_minimum_price: number | null
           internal_notes: string | null
           is_unit: boolean
           listing_type: Database["public"]["Enums"]["listing_type"]
           living_area: number | null
           marketing_type: string | null
+          old_crm_id: string | null
           owner_client_id: string | null
           owner_id: string | null
           parent_property_id: string | null
@@ -1887,6 +1890,7 @@ export type Database = {
           postal_code: string | null
           price: number | null
           property_type: Database["public"]["Enums"]["property_type"]
+          raw_import: Json | null
           renovated_at: number | null
           rent: number | null
           reservation_amount_default: number | null
@@ -1927,12 +1931,15 @@ export type Database = {
           heating_type?: string | null
           id?: string
           images?: string[] | null
+          import_batch_id?: string | null
+          import_source?: string | null
           internal_minimum_price?: number | null
           internal_notes?: string | null
           is_unit?: boolean
           listing_type?: Database["public"]["Enums"]["listing_type"]
           living_area?: number | null
           marketing_type?: string | null
+          old_crm_id?: string | null
           owner_client_id?: string | null
           owner_id?: string | null
           parent_property_id?: string | null
@@ -1941,6 +1948,7 @@ export type Database = {
           postal_code?: string | null
           price?: number | null
           property_type?: Database["public"]["Enums"]["property_type"]
+          raw_import?: Json | null
           renovated_at?: number | null
           rent?: number | null
           reservation_amount_default?: number | null
@@ -1981,12 +1989,15 @@ export type Database = {
           heating_type?: string | null
           id?: string
           images?: string[] | null
+          import_batch_id?: string | null
+          import_source?: string | null
           internal_minimum_price?: number | null
           internal_notes?: string | null
           is_unit?: boolean
           listing_type?: Database["public"]["Enums"]["listing_type"]
           living_area?: number | null
           marketing_type?: string | null
+          old_crm_id?: string | null
           owner_client_id?: string | null
           owner_id?: string | null
           parent_property_id?: string | null
@@ -1995,6 +2006,7 @@ export type Database = {
           postal_code?: string | null
           price?: number | null
           property_type?: Database["public"]["Enums"]["property_type"]
+          raw_import?: Json | null
           renovated_at?: number | null
           rent?: number | null
           reservation_amount_default?: number | null
