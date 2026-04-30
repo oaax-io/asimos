@@ -336,6 +336,18 @@ function getValue(ctx: TemplateContext, path: string): string {
     return isFlat ? "" : "display:none";
   }
 
+  // Mark the selected percent option, e.g. {{commission.mark_3}} renders ✕ when 3% is selected
+  if (path.startsWith("commission.mark_")) {
+    const target = path.slice("commission.mark_".length).replace(/_/g, ".");
+    const targetNum = parseFloat(target);
+    const model = String((ctx as any).mandate?.commission_model ?? "").toLowerCase();
+    const isPercent = /prozent|percent|%/.test(model);
+    if (!isPercent) return "";
+    const raw = String((ctx as any).mandate?.commission_value ?? "");
+    const valNum = parseFloat(raw.replace(",", "."));
+    return Number.isFinite(valNum) && Number.isFinite(targetNum) && Math.abs(valNum - targetNum) < 0.001 ? "✕" : "";
+  }
+
   // Derived name parts (split full_name into Vorname / Name)
   if (path === "client.first_name" || path === "client.last_name" || path === "client_first_name" || path === "client_last_name") {
     const { first, last } = splitName(ctx.client?.full_name ?? "");
