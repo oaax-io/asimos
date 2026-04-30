@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { formatDate } from "@/lib/format";
 import { DocumentWizard } from "@/components/documents/DocumentWizard";
 import { DocumentPreviewDialog } from "@/components/documents/DocumentPreviewDialog";
+import { MandateWizard } from "@/components/mandates/MandateWizard";
 
 export const Route = createFileRoute("/_app/mandates")({ component: MandatesPage });
 
