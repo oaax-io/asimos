@@ -1017,16 +1017,17 @@ function wrapAsimoSkin(args: {
   .a-clear { clear: both; }
 
   .a-signatures {
-    margin-top: 28px;
+    margin-top: 24px;
     padding-top: 14px;
     border-top: 1px solid var(--asimo-rule);
+    width: calc(50% - 11px);
     display: block;
     break-inside: avoid;
     page-break-inside: avoid;
     break-before: avoid;
     page-break-before: avoid;
   }
-  .a-sig { margin-top: 26px; break-inside: avoid; max-width: 360px; }
+  .a-sig { margin-top: 22px; break-inside: avoid; }
   .a-sig .line { border-bottom: 1px solid #111; height: 26px; }
   .a-sig .label { font-size: 8.5pt; color: var(--asimo-muted); margin-top: 4px; }
 
