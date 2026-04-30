@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { CompanyProfileForm } from "@/components/settings/CompanyProfileForm";
 import { BankAccountsManager } from "@/components/settings/BankAccountsManager";
+import { BrandkitForm } from "@/components/settings/BrandkitForm";
 import { FileCode2, ExternalLink, Tags, FileSignature } from "lucide-react";
 
 export const Route = createFileRoute("/_app/settings")({ component: SettingsPage });
@@ -52,6 +53,7 @@ function SettingsPage() {
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="profile">Mein Profil</TabsTrigger>
           <TabsTrigger value="company">Firmenprofile</TabsTrigger>
+          <TabsTrigger value="brandkit">Brandkit</TabsTrigger>
           <TabsTrigger value="banks">Bankkonten</TabsTrigger>
           <TabsTrigger value="templates">Dokumentvorlagen</TabsTrigger>
           <TabsTrigger value="categories">Dokumentkategorien</TabsTrigger>
@@ -74,6 +76,10 @@ function SettingsPage() {
 
         <TabsContent value="company">
           <div className="max-w-3xl"><CompanyProfileForm /></div>
+        </TabsContent>
+
+        <TabsContent value="brandkit">
+          <BrandkitForm />
         </TabsContent>
 
         <TabsContent value="banks">
