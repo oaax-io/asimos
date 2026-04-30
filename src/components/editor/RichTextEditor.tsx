@@ -159,7 +159,7 @@ export function RichTextEditor({ value, onChange, variables, className }: RichTe
 
   return (
     <div className={cn("space-y-2", className)}>
-      <Toolbar editor={editor} />
+      <Toolbar editor={editor} variables={variables} />
       <EditorContent editor={editor} />
     </div>
   );
