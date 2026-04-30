@@ -22,8 +22,9 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
  * back to the existing window.print() flow.
  */
 
-const PDF_TIMEOUT_MS = 10_000;
-const BUCKET = "generated-documents";
+const PDF_TIMEOUT_MS = 30_000;
+const BUCKET = "documents";
+const PDF_PROVIDER = "railway-puppeteer";
 
 export const renderDocumentPdf = createServerFn({ method: "POST" })
   .inputValidator((input: { html: string; title?: string; documentId?: string | null }) => {
