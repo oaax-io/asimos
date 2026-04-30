@@ -325,7 +325,7 @@ function PropertiesPage() {
         />
       ) : view === "grid" ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((p: any) => {
+          {paginated.map((p: any) => {
             const isSel = selected.has(p.id);
             return (
               <div key={p.id} className={`group relative overflow-hidden rounded-2xl border bg-card shadow-soft transition hover:shadow-glow ${isSel ? "ring-2 ring-primary" : ""}`}>
