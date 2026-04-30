@@ -435,7 +435,7 @@ export function PropertyWizard({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[95vh] w-[95vw] max-w-5xl overflow-hidden p-0">
         <DialogHeader className="border-b p-6 pb-4">
-          <DialogTitle className="font-display text-xl">Neue Immobilie</DialogTitle>
+          <DialogTitle className="font-display text-xl">{mode === "edit" ? "Immobilie bearbeiten" : "Neue Immobilie"}</DialogTitle>
           <DialogDescription>
             Schritt {visibleSteps.findIndex(s => s.idx === step) + 1} von {visibleSteps.length} · {STEPS[step]}
           </DialogDescription>
