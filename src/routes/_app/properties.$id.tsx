@@ -113,12 +113,12 @@ function PropertyDetail() {
         </div>
       </div>
 
-      <PropertyFormDialog
+      <PropertyWizard
         open={editOpen}
         onOpenChange={setEditOpen}
-        employees={employees as any}
-        initial={p as any}
-        onSubmit={(v) => update.mutate(v)}
+        mode="edit"
+        initial={p}
+        onSubmit={(payload) => update.mutate(payload)}
         submitting={update.isPending}
       />
 
