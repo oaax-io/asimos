@@ -864,12 +864,6 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
     enabled: tab === "library",
   });
 
-  const ensureCover = (list: WizardMedia[]): WizardMedia[] => {
-    if (list.length === 0) return list;
-    if (list.some((m) => m.is_cover)) return list;
-    return list.map((m, i) => ({ ...m, is_cover: i === 0 }));
-  };
-
   const handleFiles = async (files: File[]) => {
     if (files.length === 0) return;
     setUploading(true);
@@ -893,7 +887,7 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
           source: "upload",
         });
       }
-      update({ media: ensureCover([...d.media, ...uploaded]) });
+      update({ media: ensureWizardCover([...d.media, ...uploaded]) });
       toast.success(`${uploaded.length} Datei(en) hochgeladen`);
     } catch (e: any) {
       toast.error(e.message ?? "Upload fehlgeschlagen");
@@ -912,10 +906,10 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
   const togglePick = (item: any) => {
     const exists = d.media.find((m) => m.library_media_id === item.id);
     if (exists) {
-      update({ media: ensureCover(d.media.filter((m) => m.library_media_id !== item.id)) });
+      update({ media: ensureWizardCover(d.media.filter((m) => m.library_media_id !== item.id)) });
     } else {
       update({
-        media: ensureCover([
+        media: ensureWizardCover([
           ...d.media,
           {
             file_url: item.file_url,
@@ -935,7 +929,7 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
     update({ media: d.media.map((m, i) => ({ ...m, is_cover: i === idx })) });
   };
   const removeAt = (idx: number) => {
-    update({ media: ensureCover(d.media.filter((_, i) => i !== idx)) });
+    update({ media: ensureWizardCover(d.media.filter((_, i) => i !== idx)) });
   };
 
   return (
