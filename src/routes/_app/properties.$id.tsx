@@ -400,12 +400,12 @@ function MediaTab({ propertyId, cover }: { propertyId: string; cover?: string | 
           )}
           {media.map((m: any) => (
             <div key={m.id} className="group relative aspect-[4/3] overflow-hidden rounded-xl border bg-muted">
-              {m.file_url?.match(/\.(jpe?g|png|webp|gif|avif)$/i) ? (
-                <img src={m.file_url} alt={m.title ?? ""} className="h-full w-full object-cover" />
+              {m.file_type === "image" || m.file_url?.match(/\.(jpe?g|png|webp|gif|avif|jfif)$/i) ? (
+                <img src={getMediaPublicUrl(m.file_url)} alt={m.title ?? ""} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
                   <ImageIcon className="h-6 w-6" />
-                  <a href={m.file_url} target="_blank" rel="noreferrer" className="underline">Datei öffnen</a>
+                  <a href={getMediaPublicUrl(m.file_url)} target="_blank" rel="noreferrer" className="underline">Datei öffnen</a>
                 </div>
               )}
               <button onClick={() => del.mutate(m.id)} className="absolute right-2 top-2 rounded-md bg-background/80 p-1 opacity-0 transition group-hover:opacity-100">
