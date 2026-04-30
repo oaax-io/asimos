@@ -383,7 +383,7 @@ function PropertiesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((p: any) => {
+              {paginated.map((p: any) => {
                 const emp = p.assigned_to ? (employeeMap.get(p.assigned_to) as any) : null;
                 const isArchived = p.status === "archived";
                 return (
