@@ -296,20 +296,29 @@ const DATE_KEYS = new Set([
 ]);
 
 function getValue(ctx: TemplateContext, path: string): string {
-  // Checkbox helpers: {{check.<key>}} returns ☑ or ☐ depending on overrides.checks
+  // Checkbox helpers
   if (path.startsWith("check.")) {
     const key = path.slice("check.".length);
     const map = (ctx as TemplateContext & { checks?: Record<string, boolean> }).checks ?? {};
     return map[key] ? "☑" : "☐";
   }
 
-  // Brand alias resolution: {{logo_url}} → ctx.brand.logo_url (with default fallback)
+  // Flat alias → resolve through the nested path
+  if (FLAT_ALIASES[path]) {
+    return resolveNested(ctx, FLAT_ALIASES[path]);
+  }
+
+  // Brand alias resolution
   if (BRAND_ALIASES[path]) {
     const key = BRAND_ALIASES[path];
     const v = ctx.brand?.[key] ?? DEFAULT_BRAND[key];
     return v ? String(v) : "";
   }
 
+  return resolveNested(ctx, path);
+}
+
+function resolveNested(ctx: TemplateContext, path: string): string {
   const parts = path.split(".");
   let cur: unknown = ctx;
   for (const p of parts) {
@@ -356,10 +365,10 @@ export function findMissingVariables(template: string, ctx: TemplateContext): st
   });
   const missing: string[] = [];
   for (const path of used) {
-    // Brand aliases & checkbox helpers are always resolvable → skip
     if (BRAND_ALIASES[path]) continue;
     if (path.startsWith("check.")) continue;
-    if (!getValue(ctx, path)) missing.push(path);
+    const resolved = FLAT_ALIASES[path] ?? path;
+    if (!resolveNested(ctx, resolved)) missing.push(path);
   }
   return missing;
 }
