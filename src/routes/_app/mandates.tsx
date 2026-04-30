@@ -62,15 +62,6 @@ function MandatesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [genFor, setGenFor] = useState<MandateRow | null>(null);
   const [previewFor, setPreviewFor] = useState<MandateRow | null>(null);
-  const [form, setForm] = useState({
-    client_id: "",
-    property_id: "",
-    commission_model: "percent",
-    commission_value: "",
-    valid_from: "",
-    valid_until: "",
-    notes: "",
-  });
 
   const { data: mandates = [], isLoading } = useQuery<MandateRow[]>({
     queryKey: ["mandates"],
@@ -86,48 +77,6 @@ function MandatesPage() {
     },
   });
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ["clients-min"],
-    queryFn: async () => (await supabase.from("clients").select("id, full_name").order("full_name")).data ?? [],
-  });
-  const { data: properties = [] } = useQuery({
-    queryKey: ["properties-min"],
-    queryFn: async () => (await supabase.from("properties").select("id, title").order("title")).data ?? [],
-  });
-
-
-
-  const create = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("mandates").insert({
-        client_id: form.client_id || null,
-        property_id: form.property_id || null,
-        commission_model: form.commission_model,
-        commission_value: form.commission_value ? Number(form.commission_value) : null,
-        valid_from: form.valid_from || null,
-        valid_until: form.valid_until || null,
-        notes: form.notes.trim() || null,
-        status: "draft",
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Mandat erstellt");
-      qc.invalidateQueries({ queryKey: ["mandates"] });
-      setForm({
-        client_id: "",
-        property_id: "",
-        commission_model: "percent",
-        commission_value: "",
-        valid_from: "",
-        valid_until: "",
-        notes: "",
-      });
-      setOpen(false);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase
@@ -138,7 +87,6 @@ function MandatesPage() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["mandates"] }),
   });
-
 
 
 
