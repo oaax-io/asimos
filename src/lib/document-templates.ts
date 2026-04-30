@@ -936,26 +936,32 @@ function wrapAsimoSkin(args: {
 <style>
   @page {
     size: A4;
-    margin: 16mm 14mm 22mm 14mm;
+    margin: 16mm 14mm 20mm 14mm;
     @bottom-left {
-      content: "${companyName.replace(/"/g, '\\"')} — ${title.replace(/"/g, '\\"').replace(/</g, "&lt;")}";
+      content: "${companyName.replace(/"/g, '\\"')}";
       font-family: ${font};
       font-size: 8pt;
       color: #6b7280;
-      padding-top: 4mm;
-      border-top: 1px solid #d6d6d6;
-      width: 100%;
-      vertical-align: top;
+      letter-spacing: 0.02em;
+      vertical-align: bottom;
+      padding-bottom: 6mm;
+    }
+    @bottom-center {
+      content: "${title.replace(/"/g, '\\"').replace(/</g, "&lt;")}";
+      font-family: ${font};
+      font-size: 8pt;
+      color: #9ca3af;
+      vertical-align: bottom;
+      padding-bottom: 6mm;
     }
     @bottom-right {
-      content: "Seite " counter(page) " von " counter(pages);
+      content: "Seite " counter(page) " / " counter(pages);
       font-family: ${font};
       font-size: 8pt;
-      color: #6b7280;
-      padding-top: 4mm;
-      border-top: 1px solid #d6d6d6;
-      vertical-align: top;
+      color: ${accent};
       font-weight: 600;
+      vertical-align: bottom;
+      padding-bottom: 6mm;
     }
   }
   :root {
