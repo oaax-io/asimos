@@ -417,6 +417,29 @@ function ClientsPage() {
         </div>
       )}
 
+      {filtered.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span>
+              Zeige {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)} von {filtered.length}
+            </span>
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+              <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="20">20 / Seite</SelectItem>
+                <SelectItem value="50">50 / Seite</SelectItem>
+                <SelectItem value="100">100 / Seite</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Zurück</Button>
+            <span>Seite {currentPage} / {totalPages}</span>
+            <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Weiter</Button>
+          </div>
+        </div>
+      )}
+
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
