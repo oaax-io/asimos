@@ -115,6 +115,17 @@ function LeadsPage() {
     });
   }, [leads, statusFilter, sourceFilter, assignedFilter, search]);
 
+  // Pagination (Liste)
+  const PAGE_SIZE = 20;
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [search, statusFilter, sourceFilter, assignedFilter]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage],
+  );
+
   // Banner nur bei "echten" Fehlern – Backend-Unavailable wird automatisch retryed.
   const queryError = leadsQuery.error;
   const showError = queryError && !isBackendUnavailableError(queryError);
