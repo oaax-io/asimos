@@ -30,6 +30,7 @@ type Profile = { id: string; full_name: string | null; email: string | null };
 
 const ALL = "__all__";
 const UNASSIGNED = "__unassigned__";
+const LEAD_SOURCES = ["Eigenlead", "Website", "Empfehlung", "Tiktok", "Instagram", "Facebook"] as const;
 
 function LeadsPage() {
   const qc = useQueryClient();
