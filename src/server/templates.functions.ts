@@ -22,28 +22,38 @@ export const seedAsimoTemplates = createServerFn({ method: "POST" }).handler(asy
       .maybeSingle();
 
     if (!existing) {
-      // Check if any default already exists for this type
+      const { data: inserted, error } = await supabaseAdmin
+        .from("document_templates")
+        .insert({
+          name: tpl.name,
+          type: tpl.type as never,
+          category: tpl.category,
+          description: tpl.description,
+          content: tpl.content,
+          layout_type: "contract",
+          is_system: true,
+          is_active: true,
+          is_default: false,
+          variables: {},
+          default_variables: {},
+        })
+        .select("id")
+        .single();
+      if (error) throw new Error(`Seed insert failed for ${tpl.name}: ${error.message}`);
+
+      // Promote to default only if no default exists for this type yet
       const { data: anyDefault } = await supabaseAdmin
         .from("document_templates")
         .select("id")
         .eq("type", tpl.type as never)
         .eq("is_default", true)
         .maybeSingle();
-
-      const { error } = await supabaseAdmin.from("document_templates").insert({
-        name: tpl.name,
-        type: tpl.type as never,
-        category: tpl.category,
-        description: tpl.description,
-        content: tpl.content,
-        layout_type: "contract",
-        is_system: true,
-        is_active: true,
-        is_default: !anyDefault,
-        variables: {},
-        default_variables: {},
-      });
-      if (error) throw new Error(`Seed insert failed for ${tpl.name}: ${error.message}`);
+      if (!anyDefault && inserted) {
+        await supabaseAdmin
+          .from("document_templates")
+          .update({ is_default: true })
+          .eq("id", inserted.id);
+      }
       results.push({ name: tpl.name, type: tpl.type, action: "inserted" });
     } else if (existing.content !== tpl.content) {
       const { error } = await supabaseAdmin
