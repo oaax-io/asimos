@@ -139,7 +139,18 @@ export function GeneratePdfButton({
         }
       }
 
-      const res = await renderPdf({ data: { html, title, documentId: documentId ?? null } });
+      const res = await renderPdf({
+        data: {
+          html,
+          title,
+          documentId: documentId ?? null,
+          fileName: downloadName,
+          documentType: documentType ?? null,
+          clientName: clientName ?? null,
+          propertyTitle: propertyTitle ?? null,
+          companyName: companyName ?? null,
+        },
+      });
       if (res.ok && res.fileUrl) {
         // Proxy bytes via server to bypass adblockers blocking the storage domain.
         const blob = res.path ? await loadAsBlob(res.path) : null;
