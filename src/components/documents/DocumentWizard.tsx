@@ -47,6 +47,11 @@ const KIND_LABELS: Record<DocumentKind, string> = {
   nda: "Vertraulichkeitsvereinbarung (NDA)",
 };
 
+const TEMPLATE_NAME_HINTS: Partial<Record<DocumentKind, string>> = {
+  mandate: "Exklusiv",
+  mandate_partial: "Teilexklusiv",
+};
+
 const STEPS = ["Vorlage", "Daten prüfen", "Vorschau & speichern"] as const;
 
 export function DocumentWizard({
@@ -75,12 +80,19 @@ export function DocumentWizard({
     queryKey: ["templates-by-kind", dbType],
     enabled: open,
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("document_templates")
         .select("*")
         .eq("type", dbType as any)
         .eq("is_active", true)
         .order("name");
+
+      const nameHint = TEMPLATE_NAME_HINTS[kind];
+      if (nameHint) {
+        query = query.ilike("name", `%${nameHint}%`);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data ?? [];
     },
