@@ -936,7 +936,7 @@ function wrapAsimoSkin(args: {
 <style>
   @page {
     size: A4;
-    margin: 16mm 14mm 20mm 14mm;
+    margin: 12mm 12mm 16mm 12mm;
     @bottom-left {
       content: "${companyName.replace(/"/g, '\\"')}";
       font-family: ${font};
