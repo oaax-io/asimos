@@ -2207,6 +2207,7 @@ export type Database = {
         | "landlord"
         | "investor"
         | "other"
+        | "owner"
       document_type:
         | "client_document"
         | "property_document"
@@ -2456,6 +2457,7 @@ export const Constants = {
         "landlord",
         "investor",
         "other",
+        "owner",
       ],
       document_type: [
         "client_document",

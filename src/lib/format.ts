@@ -43,6 +43,7 @@ export const leadStatusColors: Record<LeadStatus, {
 export const clientTypeLabels = {
   buyer: "Käufer",
   seller: "Verkäufer",
+  owner: "Eigentümer",
   tenant: "Mieter",
   landlord: "Vermieter",
   investor: "Investor",

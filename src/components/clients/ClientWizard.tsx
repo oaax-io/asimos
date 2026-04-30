@@ -20,7 +20,7 @@ import {
   salutationOptions, benchmarkLabels, benchmarkColors,
 } from "@/lib/self-disclosure";
 
-const TYPES = ["buyer", "seller", "tenant", "landlord", "investor", "other"] as const;
+const TYPES = ["buyer", "seller", "owner", "tenant", "landlord", "investor", "other"] as const;
 const PROP_TYPES = ["apartment", "house", "commercial", "land", "other"] as const;
 
 interface Props {
