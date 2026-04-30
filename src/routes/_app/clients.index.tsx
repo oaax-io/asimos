@@ -39,7 +39,7 @@ function ClientsPage() {
   const [assignedFilter, setAssignedFilter] = useState<string>(ALL);
   const [financingFilter, setFinancingFilter] = useState<string>(ALL);
   const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
-  const [view, setView] = useState<ViewMode>("grid");
+  const [view, setView] = useState<ViewMode>("list");
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
