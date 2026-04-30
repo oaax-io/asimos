@@ -130,16 +130,68 @@ export const DEFAULT_BRAND = {
   footer_html: "",
 } as const;
 
-// Top-level alias keys (so templates can write {{logo_url}} instead of {{brand.logo_url}})
+// Brand top-level aliases (so templates can write {{logo_url}} instead of {{brand.logo_url}})
 const BRAND_ALIASES: Record<string, keyof NonNullable<TemplateContext["brand"]>> = {
-  company_name: "company_name",
-  company_address: "company_address",
-  company_email: "company_email",
-  company_website: "company_website",
   logo_url: "logo_url",
   primary_color: "primary_color",
   secondary_color: "secondary_color",
   font_family: "font_family",
+};
+
+// Flat aliases — short, friendly names that map onto nested context paths.
+// Lets non-technical users write {{client_name}}, {{property_address}}, {{company_name}} etc.
+const FLAT_ALIASES: Record<string, string> = {
+  // Client
+  client_name: "client.full_name",
+  client_address: "client.address",
+  client_postal_code: "client.postal_code",
+  client_city: "client.city",
+  client_email: "client.email",
+  client_phone: "client.phone",
+  client_salutation: "client.salutation",
+  // Partner
+  partner_name: "partner.full_name",
+  partner_address: "partner.address",
+  // Property
+  property_title: "property.title",
+  property_address: "property.address",
+  property_postal_code: "property.postal_code",
+  property_city: "property.city",
+  property_price: "property.price",
+  property_rent: "property.rent",
+  property_rooms: "property.rooms",
+  property_living_area: "property.living_area",
+  property_plot_area: "property.plot_area",
+  property_year_built: "property.year_built",
+  // Owner
+  owner_name: "owner.full_name",
+  owner_address: "owner.address",
+  // Mandate / Reservation / NDA
+  commission_value: "mandate.commission_value",
+  commission_model: "mandate.commission_model",
+  valid_from: "mandate.valid_from",
+  valid_until: "mandate.valid_until",
+  reservation_fee: "reservation.reservation_fee",
+  payment_deadline: "reservation.payment_deadline",
+  // Company / Brand
+  company_name: "company.name",
+  company_legal_name: "company.legal_name",
+  company_address: "company.address",
+  company_postal_code: "company.postal_code",
+  company_city: "company.city",
+  company_email: "company.email",
+  company_phone: "company.phone",
+  company_website: "company.website",
+  company_uid: "company.uid_number",
+  signatory_name: "company.default_signatory_name",
+  signatory_role: "company.default_signatory_role",
+  place: "place",
+  date: "today",
+  // Bank
+  bank_name: "bank.bank_name",
+  bank_iban: "bank.iban",
+  bank_bic: "bank.bic",
+  bank_holder: "bank.account_holder",
 };
 
 
