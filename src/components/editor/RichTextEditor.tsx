@@ -274,6 +274,36 @@ function Toolbar({ editor }: { editor: Editor }) {
       <ToolBtn title="Wiederherstellen" disabled={!editor.can().redo()} onClick={() => editor.chain().focus().redo().run()}>
         <Redo2 className="h-4 w-4" />
       </ToolBtn>
+      <div className="mx-1 h-6 w-px bg-border" />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button type="button" size="sm" variant="outline" className="h-8 gap-1" title="Variable einfügen">
+            <Braces className="h-4 w-4" />
+            Variable
+            <ChevronDown className="h-3 w-3 opacity-60" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="max-h-[400px] w-64 overflow-y-auto">
+          {groupOrder.map((group, idx) => (
+            <div key={group}>
+              {idx > 0 && <DropdownMenuSeparator />}
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {group}
+              </DropdownMenuLabel>
+              {grouped[group].map((v) => (
+                <DropdownMenuItem
+                  key={v.key}
+                  onSelect={() => insertVariableIntoEditor(editor, v.key, v.label.replace(/^★\s*/, ""))}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <span className="truncate">{v.label}</span>
+                  <code className="ml-2 text-[10px] text-muted-foreground">{`{{${v.key}}}`}</code>
+                </DropdownMenuItem>
+              ))}
+            </div>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
