@@ -1102,8 +1102,7 @@ export const DEFAULT_MANDATE_ASIMO_EXCLUSIVE = `<!--skin:asimo-->
       <strong>{{company.legal_name}}</strong><br/>
       {{company.address}}<br/>
       {{company.postal_code}} {{company.city}}<br/>
-      vertreten durch: {{company.default_signatory_name}}<br/>
-      {{company.email}} · {{company.phone}}<br/>
+      vertreten durch: {{agent.full_name}}<br/>
       <span style="color:#6b7280;">(nachfolgend „Auftragnehmer")</span>
     </div>
   </div>
