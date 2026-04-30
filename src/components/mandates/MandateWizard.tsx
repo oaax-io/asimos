@@ -457,8 +457,10 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
                 <GeneratePdfButton
                   html={previewHtml}
                   title={mandateType === "exclusive" ? "Maklermandat (exklusiv)" : "Maklermandat (teilexklusiv)"}
+                  documentId={createdDocumentId}
                   variant="outline"
                   size="sm"
+                  disabled={!createdDocumentId}
                 />
               </div>
               {previewHtml ? (
