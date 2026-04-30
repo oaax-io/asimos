@@ -1217,7 +1217,7 @@ export const DEFAULT_MANDATE_ASIMO_EXCLUSIVE = `<!--skin:asimo-->
     </div>
 
     <div class="a-section" style="{{mandate.show_term}}">
-      <h4>Vertragslaufzeit</h4>
+      <h4 class="sub">6.1 Vertragslaufzeit</h4>
       <p>Dieses Mandat ist gültig vom <strong>{{mandate.valid_from}}</strong> bis zum <strong>{{mandate.valid_until}}</strong>.</p>
     </div>
 
