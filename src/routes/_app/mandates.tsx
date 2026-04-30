@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDate } from "@/lib/format";
 import { DocumentWizard } from "@/components/documents/DocumentWizard";
+import { DocumentPreviewDialog } from "@/components/documents/DocumentPreviewDialog";
 
 export const Route = createFileRoute("/_app/mandates")({ component: MandatesPage });
 
@@ -70,7 +71,7 @@ function MandatesPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [genFor, setGenFor] = useState<MandateRow | null>(null);
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewFor, setPreviewFor] = useState<MandateRow | null>(null);
   const [form, setForm] = useState({
     client_id: "",
     property_id: "",
@@ -148,14 +149,6 @@ function MandatesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["mandates"] }),
   });
 
-  const showGenerated = async (docId: string) => {
-    const { data } = await supabase
-      .from("generated_documents")
-      .select("html_content")
-      .eq("id", docId)
-      .maybeSingle();
-    setPreviewHtml(data?.html_content ?? "<p>Kein Inhalt</p>");
-  };
 
 
 
@@ -352,14 +345,10 @@ function MandatesPage() {
                     {m.valid_until ? formatDate(m.valid_until) : "offen"}
                   </TableCell>
                   <TableCell>
-                    {m.generated_document_id ? (
-                      <Button variant="ghost" size="sm" onClick={() => showGenerated(m.generated_document_id!)}>
-                        <Eye className="mr-1 h-3.5 w-3.5" />
-                        Ansehen
-                      </Button>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
+                    <Button variant="ghost" size="sm" onClick={() => setPreviewFor(m)}>
+                      <Eye className="mr-1 h-3.5 w-3.5" />
+                      {m.generated_document_id ? "Ansehen" : "Vorschau"}
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <Select value={m.status} onValueChange={(v) => updateStatus.mutate({ id: m.id, status: v })}>
@@ -413,18 +402,27 @@ function MandatesPage() {
         />
       )}
 
-      <Dialog open={!!previewHtml} onOpenChange={(o) => !o && setPreviewHtml(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Generiertes Dokument</DialogTitle>
-          </DialogHeader>
-          <iframe
-            title="Dokument"
-            srcDoc={previewHtml ?? ""}
-            className="h-[70vh] w-full rounded-md border bg-white"
-          />
-        </DialogContent>
-      </Dialog>
+      {previewFor && (
+        <DocumentPreviewDialog
+          open={!!previewFor}
+          onOpenChange={(o) => !o && setPreviewFor(null)}
+          generatedDocumentId={previewFor.generated_document_id}
+          kind="mandate"
+          clientId={previewFor.client_id}
+          propertyId={previewFor.property_id}
+          extraContext={{
+            mandate: {
+              commission_model: previewFor.commission_model === "percent" ? "Prozent" : "Pauschal",
+              commission_value:
+                previewFor.commission_value != null
+                  ? `${previewFor.commission_value}${previewFor.commission_model === "percent" ? " %" : " CHF"}`
+                  : null,
+              valid_from: previewFor.valid_from,
+              valid_until: previewFor.valid_until,
+            },
+          }}
+        />
+      )}
     </>
   );
 }
