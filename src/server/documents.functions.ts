@@ -66,14 +66,16 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), PDF_TIMEOUT_MS);
     try {
-      const res = await fetch(serviceUrl, {
+      const endpoint = serviceUrl.replace(/\/+$/, "") + "/render-pdf";
+      const res = await fetch(endpoint, {
         method: "POST",
         signal: controller.signal,
         headers: {
           "Content-Type": "application/json",
+          "x-pdf-token": serviceToken,
           "x-api-key": serviceToken,
         },
-        body: JSON.stringify({ html: data.html, filename }),
+        body: JSON.stringify({ html: data.html, title: data.title, filename }),
       });
       if (!res.ok) {
         const text = await safeText(res);
