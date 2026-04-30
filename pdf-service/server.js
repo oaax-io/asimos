@@ -9,23 +9,25 @@ if (!TOKEN) {
   process.exit(1);
 }
 
-// Defensive: if the env points to a non-existent Chrome path (e.g. legacy
-// /usr/bin/google-chrome on the puppeteer base image), drop it so puppeteer
-// falls back to its bundled Chromium discovered via puppeteer.executablePath().
-const envExec = process.env.PUPPETEER_EXECUTABLE_PATH;
-if (envExec && !existsSync(envExec)) {
-  console.warn(
-    `[pdf] PUPPETEER_EXECUTABLE_PATH=${envExec} does not exist — ignoring and using bundled Chromium`,
-  );
-  delete process.env.PUPPETEER_EXECUTABLE_PATH;
-}
-
 let resolvedExecutablePath = null;
 try {
   resolvedExecutablePath = puppeteer.executablePath();
   console.log(`[pdf] using Chromium at ${resolvedExecutablePath}`);
 } catch (err) {
   console.warn("[pdf] could not resolve puppeteer.executablePath():", err?.message);
+}
+
+const envExec = process.env.PUPPETEER_EXECUTABLE_PATH;
+if (envExec) {
+  if (existsSync(envExec)) {
+    resolvedExecutablePath = envExec;
+    console.log(`[pdf] using configured Chromium at ${envExec}`);
+  } else {
+    console.warn(
+      `[pdf] PUPPETEER_EXECUTABLE_PATH=${envExec} does not exist — ignoring and using bundled Chromium`,
+    );
+    delete process.env.PUPPETEER_EXECUTABLE_PATH;
+  }
 }
 
 // Single shared browser instance across requests (each request gets its own page)
