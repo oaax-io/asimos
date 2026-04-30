@@ -1215,6 +1215,11 @@ export const DEFAULT_MANDATE_ASIMO_EXCLUSIVE = `<!--skin:asimo-->
       <p>Dieses Mandat tritt mit Unterzeichnung in Kraft und ist unbefristet. Es kann von beiden Parteien mit einer Kündigungsfrist von drei Monaten zum Monatsende gekündigt werden. Es entstehen für den Auftraggeber während der Vertragslaufzeit keine Gebühren.</p>
     </div>
 
+    <div class="a-section" style="{{mandate.show_term}}">
+      <h4>Vertragslaufzeit</h4>
+      <p>Dieses Mandat ist gültig vom <strong>{{mandate.valid_from}}</strong> bis zum <strong>{{mandate.valid_until}}</strong>.</p>
+    </div>
+
     <div class="a-section">
       <h4>7. Schlussbestimmungen</h4>
       <p>Änderungen und Ergänzungen dieses Mandats bedürfen der Schriftform. Sollte eine Bestimmung dieses Mandats unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.</p>
