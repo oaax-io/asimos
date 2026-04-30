@@ -20,6 +20,11 @@ const KIND_LABELS: Record<DocumentKind, string> = {
   nda: "Vertraulichkeitsvereinbarung (NDA)",
 };
 
+const TEMPLATE_NAME_HINTS: Partial<Record<DocumentKind, string>> = {
+  mandate: "Exklusiv",
+  mandate_partial: "Teilexklusiv",
+};
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -65,15 +70,35 @@ export function DocumentPreviewDialog({
         propertyId: propertyId ?? undefined,
         overrides: extraContext,
       });
-      // Try active template first
-      const { data: tpl } = await supabase
-        .from("document_templates")
-        .select("content")
-        .eq("type", kind! as any)
-        .eq("is_active", true)
-        .order("name")
-        .limit(1)
-        .maybeSingle();
+      // Try the intended active template first (important when multiple active mandate templates exist)
+      const nameHint = TEMPLATE_NAME_HINTS[kind!];
+      let tpl: { content: string | null } | null = null;
+
+      if (nameHint) {
+        const { data } = await supabase
+          .from("document_templates")
+          .select("content")
+          .eq("type", kind! as any)
+          .eq("is_active", true)
+          .ilike("name", `%${nameHint}%`)
+          .order("name")
+          .limit(1)
+          .maybeSingle();
+        tpl = data;
+      }
+
+      if (!tpl) {
+        const { data } = await supabase
+          .from("document_templates")
+          .select("content")
+          .eq("type", kind! as any)
+          .eq("is_active", true)
+          .order("name")
+          .limit(1)
+          .maybeSingle();
+        tpl = data;
+      }
+
       const content = tpl?.content ?? defaultTemplateForType(kind!);
       return wrapHtmlDocument(KIND_LABELS[kind!], renderTemplate(content, ctx), ctx.brand);
     },
