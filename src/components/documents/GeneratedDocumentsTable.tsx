@@ -236,6 +236,7 @@ export function GeneratedDocumentsTable({
                           html={r.html_content}
                           title={r.title ?? "Dokument"}
                           documentId={r.id}
+                          documentType={r.document_type ?? null}
                           onPrintFallback={() => printDoc(r)}
                           variant="ghost"
                         />
