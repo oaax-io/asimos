@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Mail, Phone, ArrowRight, Search, Pencil, ExternalLink, LayoutGrid, List as ListIcon, Trash2, UserCog, MoreHorizontal, X } from "lucide-react";
+import { Plus, Mail, Phone, ArrowRight, Search, Pencil, ExternalLink, LayoutGrid, List as ListIcon, Trash2, UserCog, MoreHorizontal, X, Upload } from "lucide-react";
+import { LeadImportSourceDialog } from "@/components/leads/LeadImportSourceDialog";
+import { LeadImportWizard } from "@/components/leads/LeadImportWizard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +39,8 @@ function LeadsPage() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", source: "", notes: "", assigned_to: "" });
+  const [importSourceOpen, setImportSourceOpen] = useState(false);
+  const [importWizardVariant, setImportWizardVariant] = useState<"csv" | "casaone" | null>(null);
 
   // Filters
   const [search, setSearch] = useState("");
