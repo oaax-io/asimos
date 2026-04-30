@@ -17,6 +17,26 @@ export type ResolveInput = {
 export async function resolveDocumentContext(input: ResolveInput): Promise<TemplateContext> {
   const ctx: TemplateContext = {};
 
+  // Brand settings (latest row, optional)
+  const { data: brand } = await supabase
+    .from("brand_settings" as any)
+    .select("*")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (brand) {
+    ctx.brand = {
+      company_name: (brand as any).company_name,
+      company_address: (brand as any).company_address,
+      company_email: (brand as any).company_email,
+      company_website: (brand as any).company_website,
+      logo_url: (brand as any).logo_url,
+      primary_color: (brand as any).primary_color,
+      secondary_color: (brand as any).secondary_color,
+      font_family: (brand as any).font_family,
+    };
+  }
+
   // Company (singleton)
   const { data: company } = await supabase.from("company").select("*").maybeSingle();
   if (company) {
