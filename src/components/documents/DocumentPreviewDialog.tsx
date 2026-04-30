@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
+import { GeneratePdfButton } from "@/components/documents/GeneratePdfButton";
 import {
   defaultTemplateForType,
   renderTemplate,
@@ -103,9 +104,17 @@ export function DocumentPreviewDialog({
         <DialogHeader>
           <div className="flex items-center justify-between gap-3 pr-8">
             <DialogTitle>{title}</DialogTitle>
-            <Button variant="outline" size="sm" onClick={printIt} disabled={!html}>
-              <Printer className="mr-2 size-4" /> Drucken / PDF
-            </Button>
+            <div className="flex gap-2">
+              <GeneratePdfButton
+                html={html}
+                title={title}
+                documentId={generatedDocumentId ?? null}
+                onPrintFallback={printIt}
+              />
+              <Button variant="ghost" size="sm" onClick={printIt} disabled={!html}>
+                <Printer className="mr-2 size-4" /> Drucken
+              </Button>
+            </div>
           </div>
         </DialogHeader>
         {!html && (liveLoading || (!!generatedDocumentId && savedHtml === undefined)) ? (
