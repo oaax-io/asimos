@@ -979,9 +979,11 @@ function wrapAsimoSkin(args: {
 
   .a-section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 10px; }
   .a-section h4 { font-size: 10.5pt; font-weight: 700; color: var(--asimo-accent); margin: 8px 0 4px; }
-  .a-section p { margin: 0 0 6px; text-align: justify; hyphens: auto; -webkit-hyphens: auto; font-size: 9.5pt; line-height: 1.5; }
+  .a-section p { margin: 0 0 5px; text-align: justify; hyphens: auto; -webkit-hyphens: auto; font-size: 9pt; line-height: 1.45; }
   .commission-row { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; font-size: 9pt; align-items: center; }
   .commission-row .pauschal-val { border-bottom: 1px solid #111; padding: 0 8px; min-width: 80px; display: inline-block; font-weight: 600; }
+  .a-body-cols { column-count: 2; column-gap: 22px; column-fill: balance; }
+  .a-body-cols .a-section:first-child { margin-top: 0; }
 
   .a-signatures { margin-top: 16px; break-inside: avoid; }
   .a-sig { margin-top: 18px; }
