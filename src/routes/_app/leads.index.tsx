@@ -459,7 +459,7 @@ function LeadsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((l) => {
+                {paginated.map((l) => {
                   const isSel = selected.has(l.id);
                   return (
                     <TableRow key={l.id} className={cn("group", isSel && "bg-primary/5")}>
