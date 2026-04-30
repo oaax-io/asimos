@@ -352,9 +352,9 @@ export function DocumentWizard({
                   html={previewHtml}
                   title={KIND_LABELS[kind]}
                   documentType={kind}
-                  clientName={finalContext.client?.full_name ?? null}
-                  propertyTitle={finalContext.property?.title ?? null}
-                  companyName={finalContext.company?.name ?? finalContext.brand?.company_name ?? null}
+                  clientName={finalContext?.client?.full_name ?? null}
+                  propertyTitle={finalContext?.property?.title ?? null}
+                  companyName={finalContext?.company?.name ?? finalContext?.brand?.company_name ?? null}
                   onPrintFallback={printPreview}
                   variant="outline"
                 />
