@@ -148,7 +148,7 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
           file_url: storagePath,
           pdf_url: storagePath,
           pdf_generated_at: new Date().toISOString(),
-          pdf_provider: "puppeteer",
+          pdf_provider: PDF_PROVIDER,
           status: "ready",
         })
         .eq("id", data.documentId);
