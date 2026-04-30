@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, Eye, Send, Printer } from "lucide-react";
+import { Search, Eye, Send } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { SendDocumentDialog } from "@/components/documents/SendDocumentDialog";
 import { GeneratePdfButton } from "@/components/documents/GeneratePdfButton";
