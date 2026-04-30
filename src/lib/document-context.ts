@@ -34,6 +34,8 @@ export async function resolveDocumentContext(input: ResolveInput): Promise<Templ
       primary_color: (brand as any).primary_color,
       secondary_color: (brand as any).secondary_color,
       font_family: (brand as any).font_family,
+      header_html: (brand as any).header_html,
+      footer_html: (brand as any).footer_html,
     };
   }
 
