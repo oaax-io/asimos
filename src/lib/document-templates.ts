@@ -99,9 +99,44 @@ export type TemplateContext = {
     bic?: string | null;
     purpose?: string | null;
   } | null;
+  brand?: {
+    company_name?: string | null;
+    company_address?: string | null;
+    company_email?: string | null;
+    company_website?: string | null;
+    logo_url?: string | null;
+    primary_color?: string | null;
+    secondary_color?: string | null;
+    font_family?: string | null;
+  } | null;
   today?: string;
   place?: string;
 };
+
+// Default brand fallback (ASIMO)
+export const DEFAULT_BRAND = {
+  company_name: "ASIMO",
+  company_address: "",
+  company_email: "",
+  company_website: "",
+  logo_url: "",
+  primary_color: "#324642",
+  secondary_color: "#6A9387",
+  font_family: "Helvetica Neue, Arial, sans-serif",
+} as const;
+
+// Top-level alias keys (so templates can write {{logo_url}} instead of {{brand.logo_url}})
+const BRAND_ALIASES: Record<string, keyof NonNullable<TemplateContext["brand"]>> = {
+  company_name: "company_name",
+  company_address: "company_address",
+  company_email: "company_email",
+  company_website: "company_website",
+  logo_url: "logo_url",
+  primary_color: "primary_color",
+  secondary_color: "secondary_color",
+  font_family: "font_family",
+};
+
 
 export const AVAILABLE_VARIABLES = [
   // Client
