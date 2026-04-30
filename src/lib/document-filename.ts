@@ -75,7 +75,7 @@ function formatDate(date: Date | string | null | undefined): string {
 
 export function documentTypeLabel(type: DocumentTypeKey | null | undefined): string {
   if (!type) return DOCUMENT_LABELS.other;
-  return DOCUMENT_LABELS[type] ?? sanitizeForFilename(type) || DOCUMENT_LABELS.other;
+  return DOCUMENT_LABELS[type] ?? (sanitizeForFilename(type) || DOCUMENT_LABELS.other);
 }
 
 export type BuildDocumentFileNameInput = {
