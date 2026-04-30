@@ -64,7 +64,7 @@ export function GenerateDocumentDialog({
   const generate = useMutation({
     mutationFn: async () => {
       if (!selected) throw new Error("Bitte Vorlage wählen");
-      const fullHtml = wrapHtmlDocument(selected.name, html);
+      const fullHtml = wrapHtmlDocument(selected.name, html, context.brand);
       const insertPayload = {
         template_id: selected.id,
         related_type: documentType,
