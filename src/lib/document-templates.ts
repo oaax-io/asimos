@@ -309,12 +309,30 @@ const DATE_KEYS = new Set([
   "today",
 ]);
 
+function splitName(full: string): { first: string; last: string } {
+  const t = (full ?? "").trim().replace(/\s+/g, " ");
+  if (!t) return { first: "", last: "" };
+  const parts = t.split(" ");
+  if (parts.length === 1) return { first: parts[0], last: "" };
+  return { first: parts[0], last: parts.slice(1).join(" ") };
+}
+
 function getValue(ctx: TemplateContext, path: string): string {
   // Checkbox helpers
   if (path.startsWith("check.")) {
     const key = path.slice("check.".length);
     const map = (ctx as TemplateContext & { checks?: Record<string, boolean> }).checks ?? {};
     return map[key] ? "☑" : "☐";
+  }
+
+  // Derived name parts (split full_name into Vorname / Name)
+  if (path === "client.first_name" || path === "client.last_name" || path === "client_first_name" || path === "client_last_name") {
+    const { first, last } = splitName(ctx.client?.full_name ?? "");
+    return path.endsWith("first_name") ? first : last;
+  }
+  if (path === "partner.first_name" || path === "partner.last_name") {
+    const { first, last } = splitName((ctx as any).partner?.full_name ?? "");
+    return path.endsWith("first_name") ? first : last;
   }
 
   // Flat alias → resolve through the nested path
@@ -1073,23 +1091,23 @@ export const DEFAULT_MANDATE_ASIMO_EXCLUSIVE = `<!--skin:asimo-->
   <div>
     <div class="a-zwischen">zwischen</div>
     <div class="a-party-l">
-      {{company.legal_name}}<br/>
+      <strong>{{company.legal_name}}</strong><br/>
       {{company.address}}<br/>
       {{company.postal_code}} {{company.city}}<br/>
+      vertreten durch: {{company.default_signatory_name}}<br/>
+      {{company.email}} · {{company.phone}}<br/>
       <span style="color:#6b7280;">(nachfolgend „Auftragnehmer")</span>
     </div>
   </div>
   <div>
     <div class="a-parties-r-label">und (nachfolgend: <strong>Auftraggeber</strong>)</div>
     <div class="a-formgrid">
-      <div class="lbl">Firma</div><div class="val">{{client.full_name}}</div>
-      <div class="lbl">Ort/PLZ</div><div class="val">{{client.postal_code}} {{client.city}}</div>
-      <div class="lbl">Vorname</div><div class="val"></div>
-      <div class="lbl">Telefon</div><div class="val">{{client.phone}}</div>
-      <div class="lbl">Name</div><div class="val"></div>
-      <div class="lbl">E-Mail</div><div class="val">{{client.email}}</div>
+      <div class="lbl">Vorname</div><div class="val">{{client.first_name}}</div>
+      <div class="lbl">Name</div><div class="val">{{client.last_name}}</div>
       <div class="lbl">Strasse + Nr.</div><div class="val">{{client.address}}</div>
-      <div class="lbl">UID</div><div class="val">--</div>
+      <div class="lbl">Ort/PLZ</div><div class="val">{{client.postal_code}} {{client.city}}</div>
+      <div class="lbl">Telefon</div><div class="val">{{client.phone}}</div>
+      <div class="lbl">E-Mail</div><div class="val">{{client.email}}</div>
     </div>
   </div>
 </div>
