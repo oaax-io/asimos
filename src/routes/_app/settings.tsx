@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +13,8 @@ import { toast } from "sonner";
 import { CompanyProfileForm } from "@/components/settings/CompanyProfileForm";
 import { BankAccountsManager } from "@/components/settings/BankAccountsManager";
 import { BrandkitForm } from "@/components/settings/BrandkitForm";
-import { FileCode2, ExternalLink, Tags, FileSignature } from "lucide-react";
+import { DocumentTemplatesManager } from "@/components/settings/DocumentTemplatesManager";
+import { Tags, FileSignature } from "lucide-react";
 
 export const Route = createFileRoute("/_app/settings")({ component: SettingsPage });
 
