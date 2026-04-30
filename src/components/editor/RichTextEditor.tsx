@@ -193,7 +193,13 @@ function ToolBtn({
   );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function Toolbar({ editor, variables }: { editor: Editor; variables: Variable[] }) {
+  const grouped = variables.reduce<Record<string, Variable[]>>((acc, v) => {
+    const g = v.group ?? "Allgemein";
+    (acc[g] ??= []).push(v);
+    return acc;
+  }, {});
+  const groupOrder = Object.keys(grouped);
   return (
     <div className="flex flex-wrap items-center gap-1 rounded-md border bg-muted/30 p-1">
       <ToolBtn title="Fett" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
