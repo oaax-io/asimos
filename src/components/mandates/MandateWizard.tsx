@@ -451,9 +451,12 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Eye className="size-4" /> Live-Vorschau
                 </div>
-                <Button variant="outline" size="sm" onClick={printPreview} disabled={!previewHtml}>
-                  <Printer className="mr-2 size-4" /> Drucken / PDF
-                </Button>
+                <GeneratePdfButton
+                  html={previewHtml}
+                  title={mandateType === "exclusive" ? "Maklermandat (exklusiv)" : "Maklermandat (teilexklusiv)"}
+                  variant="outline"
+                  size="sm"
+                />
               </div>
               {previewHtml ? (
                 <iframe
@@ -508,9 +511,11 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
                   <Check className="mr-2 size-4" />
                   {create.isPending ? "Wird gespeichert…" : "Mandat speichern"}
                 </Button>
-                <Button variant="outline" onClick={printPreview} disabled={!previewHtml}>
-                  <Printer className="mr-2 size-4" /> PDF generieren
-                </Button>
+                <GeneratePdfButton
+                  html={previewHtml}
+                  title={mandateType === "exclusive" ? "Maklermandat (exklusiv)" : "Maklermandat (teilexklusiv)"}
+                  variant="outline"
+                />
                 <Button
                   variant="outline"
                   onClick={() => toast.info("Versand-Funktion folgt (E-Sign-Integration vorbereitet)")}
