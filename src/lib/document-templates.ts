@@ -387,11 +387,20 @@ export function findMissingVariables(template: string, ctx: TemplateContext): st
   return missing;
 }
 
+/**
+ * Detect a skin marker in template body. Templates can opt into an alternate
+ * visual skin by including `<!--skin:asimo-->` at the top.
+ */
+export function pickSkin(bodyHtml: string): "default" | "asimo" {
+  if (/<!--\s*skin:asimo\s*-->/i.test(bodyHtml)) return "asimo";
+  return "default";
+}
+
 export function wrapHtmlDocument(
   title: string,
   bodyHtml: string,
   brand?: TemplateContext["brand"] | null,
-  options?: { customCss?: string | null },
+  options?: { customCss?: string | null; skin?: "default" | "asimo" | "auto" },
 ): string {
   const b = { ...DEFAULT_BRAND, ...(brand ?? {}) };
   const primary = b.primary_color || DEFAULT_BRAND.primary_color;
@@ -399,6 +408,12 @@ export function wrapHtmlDocument(
   const font = b.font_family || DEFAULT_BRAND.font_family;
   const companyName = escapeAttr(b.company_name || "");
   const customCss = (options?.customCss ?? "").toString();
+  const skinOpt = options?.skin ?? "auto";
+  const skin = skinOpt === "auto" ? pickSkin(bodyHtml) : skinOpt;
+
+  if (skin === "asimo") {
+    return wrapAsimoSkin({ title, bodyHtml, brand: b, font, customCss });
+  }
 
   const headerHtml = b.header_html
     ? b.header_html
@@ -877,7 +892,7 @@ export const DEFAULT_NDA_TEMPLATE = `<h1>Vertraulichkeitsvereinbarung (NDA)</h1>
 export function defaultTemplateForType(type: string): string {
   switch (type) {
     case "mandate":
-      return DEFAULT_MANDATE_TEMPLATE;
+      return DEFAULT_MANDATE_ASIMO_EXCLUSIVE;
     case "mandate_partial":
       return DEFAULT_MANDATE_PARTIAL_TEMPLATE;
     case "reservation":
@@ -890,3 +905,228 @@ export function defaultTemplateForType(type: string): string {
       return "";
   }
 }
+
+/* ============================================================
+ * ASIMO SKIN — pixel-faithful re-creation of ASIMO PDFs
+ * Triggered by `<!--skin:asimo-->` marker at top of template body.
+ * ============================================================ */
+
+function wrapAsimoSkin(args: {
+  title: string;
+  bodyHtml: string;
+  brand: NonNullable<TemplateContext["brand"]>;
+  font: string;
+  customCss: string;
+}): string {
+  const { title, bodyHtml, brand, font, customCss } = args;
+  const accent = "#C8932E"; // ASIMO ocker/bronze
+  const accentSoft = "#F8F1E3";
+  const companyName = escapeAttr(brand.company_name || "ASIMO");
+  const logoUrl = brand.logo_url ? escapeAttr(brand.logo_url) : "";
+  const website = brand.company_website
+    ? escapeAttr(brand.company_website.replace(/^https?:\/\//, ""))
+    : "";
+  const email = brand.company_email ? escapeAttr(brand.company_email) : "";
+
+  return `<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<title>${title.replace(/</g, "&lt;")}</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm 22mm 14mm; }
+  :root {
+    --asimo-accent: ${accent};
+    --asimo-accent-soft: ${accentSoft};
+    --asimo-text: #1a1a1a;
+    --asimo-muted: #6b7280;
+    --asimo-rule: #d6d6d6;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: #fff; margin: 0; padding: 0; }
+  body {
+    font-family: ${font};
+    color: var(--asimo-text);
+    line-height: 1.45;
+    font-size: 9.5pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .a-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .a-title { font-size: 22pt; font-weight: 800; color: #111; letter-spacing: -0.01em; margin: 0; line-height: 1.1; }
+  .a-title .sub { font-weight: 400; color: #111; }
+  .a-logo { height: 38px; width: auto; display: block; }
+  .a-parties {
+    display: grid; grid-template-columns: 200px 1fr; gap: 16px; margin-bottom: 16px;
+    border-left: 3px solid var(--asimo-accent); padding-left: 14px;
+  }
+  .a-zwischen { font-weight: 700; color: #111; font-size: 10pt; margin-bottom: 6px; }
+  .a-party-l { font-size: 9pt; line-height: 1.4; color: #111; }
+  .a-parties-r-label { font-size: 10pt; margin-bottom: 6px; color: #111; }
+  .a-formgrid { display: grid; grid-template-columns: 90px 1fr 90px 1fr; column-gap: 10px; row-gap: 0; }
+  .a-formgrid .lbl { font-size: 8.5pt; color: #111; font-weight: 600; padding: 6px 0 4px; border-bottom: 1px solid var(--asimo-rule); }
+  .a-formgrid .val { font-size: 9.5pt; color: #111; padding: 6px 0 4px; border-bottom: 1px solid var(--asimo-rule); min-height: 18px; }
+
+  .a-objekt { border: 1px dashed var(--asimo-accent); border-radius: 8px; padding: 12px 14px; margin: 0 0 14px; page-break-inside: avoid; }
+  .a-objekt h3 { font-size: 13pt; font-weight: 800; color: #111; margin: 0 0 10px; }
+  .a-objekt .a-formgrid { grid-template-columns: 110px 1fr; }
+  .a-objekt .lbl.highlight { background: var(--asimo-accent-soft); padding-left: 6px; border-bottom-color: var(--asimo-accent); }
+
+  .a-checks-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 12px; font-size: 9pt; color: #111; margin-bottom: 10px; }
+  .a-check { white-space: nowrap; }
+  .bx { display: inline-block; width: 10px; height: 10px; border: 1px solid #111; margin-right: 5px; vertical-align: middle; line-height: 10px; text-align: center; font-size: 8pt; }
+  .bx.on { background: #111; color: #fff; }
+
+  .a-section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 10px; }
+  .a-section h4 { font-size: 10.5pt; font-weight: 700; color: var(--asimo-accent); margin: 8px 0 4px; }
+  .a-section p { margin: 0 0 5px; text-align: justify; hyphens: auto; -webkit-hyphens: auto; font-size: 9pt; line-height: 1.45; }
+  .commission-row { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; font-size: 9pt; align-items: center; }
+  .commission-row .pauschal-val { border-bottom: 1px solid #111; padding: 0 8px; min-width: 80px; display: inline-block; font-weight: 600; }
+  .a-body-cols { column-count: 2; column-gap: 22px; column-fill: balance; }
+  .a-body-cols .a-section:first-child { margin-top: 0; }
+
+  .a-signatures { margin-top: 16px; break-inside: avoid; }
+  .a-sig { margin-top: 18px; }
+  .a-sig .line { border-bottom: 1px solid #111; height: 22px; }
+  .a-sig .label { font-size: 8.5pt; color: var(--asimo-muted); margin-top: 3px; }
+
+  .a-footer { position: fixed; bottom: 6mm; left: 14mm; right: 14mm; display: flex; justify-content: space-between; align-items: center; font-size: 8pt; color: var(--asimo-muted); border-top: 1px solid var(--asimo-rule); padding-top: 6px; }
+  .a-foot-left { display: flex; align-items: center; gap: 8px; }
+  .a-foot-left img { height: 12px; }
+  .a-foot-mark { font-weight: 700; color: #111; font-size: 9pt; letter-spacing: 0.05em; }
+  .a-pagenum { display: inline-flex; align-items: center; gap: 8px; }
+  .a-pagenum .dot { width: 16px; height: 16px; border-radius: 50%; background: #111; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 8pt; font-weight: 700; }
+
+  ${customCss || ""}
+</style>
+</head>
+<body>
+${bodyHtml}
+<div class="a-footer">
+  <div class="a-foot-left">
+    ${logoUrl ? `<img src="${logoUrl}" alt="${companyName}" />` : `<span class="a-foot-mark">${companyName}</span>`}
+    <span>– ${companyName} | ${title.replace(/</g, "&lt;")}</span>
+  </div>
+  <div class="a-pagenum">
+    ${email ? `<span>${email}</span>` : ""}${email && website ? ` <span>·</span> ` : ""}${website ? `<span>${website}</span>` : ""}
+    <span class="dot">1</span>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+export const DEFAULT_MANDATE_ASIMO_EXCLUSIVE = `<!--skin:asimo-->
+<div class="a-header">
+  <h1 class="a-title">Maklermandat <span class="sub">/ Exklusiv</span></h1>
+  <img src="{{logo_url}}" alt="{{company_name}}" class="a-logo" />
+</div>
+
+<div class="a-parties">
+  <div>
+    <div class="a-zwischen">zwischen</div>
+    <div class="a-party-l">
+      {{company.legal_name}}<br/>
+      {{company.address}}<br/>
+      {{company.postal_code}} {{company.city}}<br/>
+      <span style="color:#6b7280;">(nachfolgend „Auftragnehmer")</span>
+    </div>
+  </div>
+  <div>
+    <div class="a-parties-r-label">und (nachfolgend: <strong>Auftraggeber</strong>)</div>
+    <div class="a-formgrid">
+      <div class="lbl">Firma</div><div class="val">{{client.full_name}}</div>
+      <div class="lbl">Ort/PLZ</div><div class="val">{{client.postal_code}} {{client.city}}</div>
+      <div class="lbl">Vorname</div><div class="val"></div>
+      <div class="lbl">Telefon</div><div class="val">{{client.phone}}</div>
+      <div class="lbl">Name</div><div class="val"></div>
+      <div class="lbl">E-Mail</div><div class="val">{{client.email}}</div>
+      <div class="lbl">Strasse + Nr.</div><div class="val">{{client.address}}</div>
+      <div class="lbl">UID</div><div class="val">--</div>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 22px;">
+  <div>
+    <div class="a-objekt">
+      <h3>Objektart / Bezeichnung</h3>
+      <div class="a-checks-row">
+        <span class="a-check"><span class="bx on">✕</span>MFH</span>
+        <span class="a-check"><span class="bx"></span>EFH</span>
+        <span class="a-check"><span class="bx"></span>Wohnung</span>
+        <span class="a-check"><span class="bx"></span>Gewerbeimmobilie</span>
+        <span class="a-check"><span class="bx"></span>Reihenhaus</span>
+        <span class="a-check"><span class="bx"></span>Doppelhaus</span>
+        <span class="a-check"><span class="bx"></span>Grundstück</span>
+        <span class="a-check"><span class="bx"></span>Garagen-/Stellplatz</span>
+      </div>
+      <div class="a-formgrid">
+        <div class="lbl">Strasse + Nr.</div><div class="val">{{property.address}}</div>
+        <div class="lbl">Ort/PLZ</div><div class="val">{{property.postal_code}} {{property.city}}</div>
+        <div class="lbl highlight">Verkaufspreis</div><div class="val"><strong>{{property.price}}</strong></div>
+      </div>
+    </div>
+
+    <div class="a-section">
+      <h4>1. Mandatumfang</h4>
+      <p>Der Immobilienmakler wird beauftragt, die oben genannte Immobilie zu verkaufen. Der Makler verpflichtet sich, alle erforderlichen Massnahmen zur Vermarktung der Immobilie zu ergreifen, einschliesslich der Erstellung von Exposés, der Durchführung von Besichtigungen und der Verhandlung mit potenziellen Käufern.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>2. Provision</h4>
+      <p>Der Verkäufer verpflichtet sich, dem Immobilienmakler eine Provision (wie unten angekreuzt in Prozent oder Pauschal) des Verkaufspreises zu zahlen, die bei erfolgreichem Abschluss des Kaufvertrages fällig wird. Die Provision ist zur Zahlung fällig, sobald der notarielle Kaufvertrag zwischen Käufer und Verkäufer beurkundet worden ist. Der Auftraggeber hat das Recht, die Immobilie selbst zu verkaufen, ohne dass dabei eine Provision geschuldet wird, sofern die Auftragnehmerin mit einer möglichen Kundschaft noch keine Reservation abgeschlossen ist.</p>
+      <div class="commission-row">
+        <span><span class="bx"></span>2.5%</span>
+        <span><span class="bx"></span>3%</span>
+        <span><span class="bx"></span>4%</span>
+        <span><span class="bx"></span>5%</span>
+        <span><span class="bx on">✕</span>Pauschalbetrag:</span>
+        <span class="pauschal-val">CHF {{commission_value}}</span>
+      </div>
+    </div>
+
+    <div class="a-section">
+      <h4>3. Provisionsschutz</h4>
+      <p>Kommt es nach Auflösen des Vertrags innerhalb von zwei Jahren zu einem Geschäftsabschluss mit einem Interessenten, der auf die Kontakte und Bemühungen des Auftragnehmers zurückzuführen ist, ist die volle Provision geschuldet.</p>
+    </div>
+  </div>
+
+  <div>
+    <div class="a-section">
+      <h4>4. Exklusivität</h4>
+      <p>Der Verkäufer gewährt dem Makler das alleinige und exklusive Recht, die Immobilie zu verkaufen. Der Auftraggeber verpflichtet sich, keine weiteren Makler mit der Vermarktung der Immobilie zu beauftragen und den Verkauf der Immobilie nicht selbst durchzuführen oder durch Dritte vornehmen zu lassen, solange dieses Mandat besteht.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>5. Rücktritt</h4>
+      <p>Sollte sich der Verkäufer vor Abschluss des Verkaufs vom Mandat zurückziehen, wird eine Pauschalentschädigung in Höhe von CHF 5'000 für den bereits entstandenen Bearbeitungs- und Marketingaufwand fällig.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>6. Dauer des Mandats</h4>
+      <p>Dieses Mandat tritt mit Unterzeichnung in Kraft und ist unbefristet. Es kann von beiden Parteien mit einer Kündigungsfrist von drei Monaten zum Monatsende gekündigt werden. Es entstehen für den Auftraggeber während der Vertragslaufzeit keine Gebühren.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>7. Schlussbestimmungen</h4>
+      <p>Änderungen und Ergänzungen dieses Mandats bedürfen der Schriftform. Sollte eine Bestimmung dieses Mandats unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.</p>
+    </div>
+
+    <div class="a-signatures">
+      <div class="a-sig">
+        <div class="line"></div>
+        <div class="label">Ort und Datum</div>
+      </div>
+      <div class="a-sig">
+        <div class="line"></div>
+        <div class="label">Unterschrift Auftraggeber (Verkäufer)</div>
+      </div>
+      <div class="a-sig">
+        <div class="line"></div>
+        <div class="label">Unterschrift Auftragsnehmer ({{company.name}})</div>
+      </div>
+    </div>
+  </div>
+</div>
+`;
