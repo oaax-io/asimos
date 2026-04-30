@@ -108,6 +108,8 @@ export type TemplateContext = {
     primary_color?: string | null;
     secondary_color?: string | null;
     font_family?: string | null;
+    header_html?: string | null;
+    footer_html?: string | null;
   } | null;
   today?: string;
   place?: string;
