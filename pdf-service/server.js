@@ -38,12 +38,12 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-app.post("/", async (req, res) => {
+async function renderPdf(req, res) {
   const t0 = Date.now();
-  if (req.header("x-api-key") !== TOKEN) {
+  if (req.header("x-pdf-token") !== TOKEN && req.header("x-api-key") !== TOKEN) {
     return res.status(401).json({ error: "invalid_api_key" });
   }
-  const { html, filename } = req.body ?? {};
+  const { html, filename, title } = req.body ?? {};
   if (typeof html !== "string" || !html.length) {
     return res.status(400).json({ error: "missing_html" });
   }
