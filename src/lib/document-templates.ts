@@ -1027,16 +1027,6 @@ function wrapAsimoSkin(args: {
 </head>
 <body>
 ${bodyHtml}
-<div class="a-footer">
-  <div class="a-foot-left">
-    ${logoUrl ? `<img src="${logoUrl}" alt="${companyName}" />` : `<span class="a-foot-mark">${companyName}</span>`}
-    <span>– ${companyName} | ${title.replace(/</g, "&lt;")}</span>
-  </div>
-  <div class="a-pagenum">
-    ${email ? `<span>${email}</span>` : ""}${email && website ? ` <span>·</span> ` : ""}${website ? `<span>${website}</span>` : ""}
-    <span class="dot">1</span>
-  </div>
-</div>
 </body>
 </html>`;
 }
