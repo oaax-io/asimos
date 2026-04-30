@@ -147,7 +147,7 @@ export function GeneratePdfButton({
 
   return (
     <>
-      <Button variant={variant} size={size} onClick={handle} disabled={loading || !html}>
+      <Button variant={variant} size={size} onClick={handle} disabled={disabled || loading || !html}>
         {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <FileDown className="mr-2 size-4" />}
         {loading ? "Wird erstellt…" : "PDF generieren"}
       </Button>
