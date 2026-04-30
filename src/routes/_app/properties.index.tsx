@@ -39,7 +39,7 @@ function PropertiesPage() {
   const [fCity, setFCity] = useState<string>("all");
   const [fAssigned, setFAssigned] = useState<string>("all");
   const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
-  const [view, setView] = useState<ViewMode>("grid");
+  const [view, setView] = useState<ViewMode>("list");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
 
