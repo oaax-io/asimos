@@ -1036,7 +1036,10 @@ function wrapAsimoSkin(args: {
   .a-section h4 { font-size: 9.5pt; font-weight: 700; color: var(--asimo-accent); margin: 6px 0 3px; }
   .a-section p { margin: 0 0 4px; text-align: justify; hyphens: auto; -webkit-hyphens: auto; font-size: 8.25pt; line-height: 1.38; }
   .commission-row { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-top: 5px; font-size: 8.25pt; align-items: center; }
-  .commission-row .pauschal-val { border-bottom: 1px solid #111; padding: 0 8px; min-width: 70px; display: inline-block; font-weight: 600; }
+  .commission-grid { display: grid; grid-template-columns: repeat(2, max-content); gap: 4px 18px; margin-top: 6px; font-size: 8.25pt; }
+  .commission-pauschal { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 8.25pt; }
+  .c-opt { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .pauschal-val { border-bottom: 1px solid #111; padding: 0 8px; min-width: 90px; display: inline-block; font-weight: 600; }
   .a-two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
   .a-two-cols > div > .a-section:first-child,
   .a-two-cols > div > .a-objekt:first-child { margin-top: 0; }
