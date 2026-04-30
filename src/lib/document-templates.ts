@@ -111,6 +111,7 @@ export type TemplateContext = {
     header_html?: string | null;
     footer_html?: string | null;
   } | null;
+  checks?: Record<string, boolean>;
   today?: string;
   place?: string;
 };
