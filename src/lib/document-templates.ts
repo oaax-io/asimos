@@ -308,10 +308,10 @@ export function wrapHtmlDocument(
   const primary = b.primary_color || DEFAULT_BRAND.primary_color;
   const secondary = b.secondary_color || DEFAULT_BRAND.secondary_color;
   const font = b.font_family || DEFAULT_BRAND.font_family;
+  const companyName = escapeAttr(b.company_name || "");
   const logoBlock = b.logo_url
-    ? `<img src="${escapeAttr(b.logo_url)}" alt="${escapeAttr(b.company_name || "")}" style="height:56px;width:auto;display:block;" />`
-    : `<div style="font-weight:700;font-size:18px;color:${primary};">${escapeAttr(b.company_name || "")}</div>`;
-  const footerBlock = `${escapeAttr(b.company_name || "")}${b.company_address ? " · " + escapeAttr(b.company_address) : ""}${b.company_email ? " · " + escapeAttr(b.company_email) : ""}${b.company_website ? " · " + escapeAttr(b.company_website) : ""}`;
+    ? `<img src="${escapeAttr(b.logo_url)}" alt="${companyName}" style="height:50px;width:auto;display:block;" />`
+    : `<div style="font-weight:700;font-size:18px;color:var(--brand-primary);">${companyName}</div>`;
 
   return `<!doctype html>
 <html lang="de">
@@ -322,35 +322,41 @@ export function wrapHtmlDocument(
   @page { size: A4; margin: 24mm; }
   :root { --brand-primary: ${primary}; --brand-secondary: ${secondary}; }
   body { font-family: ${font}; color: #111; line-height: 1.55; max-width: 780px; margin: 32px auto; padding: 0 24px; background: #fff; }
-  .brand-header { display:flex; align-items:center; justify-content:space-between; padding-bottom:16px; border-bottom:2px solid ${primary}; margin-bottom:24px; }
-  .brand-header .meta { text-align:right; font-size:11px; color:#555; line-height:1.4; }
-  h1 { font-size: 22px; margin: 0 0 8px; color: ${primary}; }
-  h2 { font-size: 16px; margin: 24px 0 8px; color: ${primary}; border-left: 3px solid ${secondary}; padding-left: 8px; }
+  .brand-header { display:flex; align-items:center; justify-content:space-between; padding-bottom:16px; border-bottom:2px solid var(--brand-primary); margin-bottom:24px; }
+  .brand-header .meta { text-align:right; font-size:12px; color:#555; line-height:1.4; }
+  h1 { font-size: 22px; margin: 0 0 8px; color: var(--brand-primary); }
+  h2 { font-size: 16px; margin: 24px 0 8px; color: var(--brand-primary); border-left: 4px solid var(--brand-secondary); padding-left: 8px; }
+  h3 { font-size: 14px; margin: 16px 0 6px; color: var(--brand-primary); }
   p { margin: 8px 0; }
-  strong { color: ${primary}; }
-  hr { border: 0; border-top: 1px solid ${secondary}33; margin: 24px 0; }
+  strong { color: var(--brand-primary); }
+  hr { border: 0; border-top: 1px solid var(--brand-secondary); opacity: 0.3; margin: 24px 0; }
   table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid ${secondary}33; font-size: 14px; }
-  th { color: ${primary}; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--brand-secondary); font-size: 14px; }
+  th { color: var(--brand-primary); }
+  .box { border-left: 4px solid var(--brand-secondary); padding: 8px 12px; margin: 12px 0; background: rgba(0,0,0,0.02); }
   .muted { color: #666; font-size: 12px; }
   .signature { margin-top: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-  .signature div { border-top: 1px solid ${primary}; padding-top: 6px; font-size: 12px; }
-  .brand-footer { margin-top: 48px; padding-top: 12px; border-top: 1px solid ${secondary}66; color:#666; font-size: 11px; text-align:center; }
+  .signature div { border-top: 1px solid var(--brand-primary); padding-top: 6px; font-size: 12px; }
+  .brand-footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--brand-secondary); font-size: 10px; color:#666; text-align:center; }
   @media print {
     body { margin: 0; padding: 0; max-width: none; }
   }
 </style>
 </head>
 <body>
-<div class="brand-header">
+<div class="brand-header" style="display:flex; justify-content:space-between; align-items:center;">
   <div>${logoBlock}</div>
-  <div class="meta">
+  <div class="meta" style="text-align:right; font-size:12px;">
+    ${companyName}<br/>
     ${escapeAttr(b.company_address || "")}<br/>
-    ${escapeAttr(b.company_email || "")} ${b.company_website ? "· " + escapeAttr(b.company_website) : ""}
+    ${escapeAttr(b.company_email || "")}<br/>
+    ${escapeAttr(b.company_website || "")}
   </div>
 </div>
 ${bodyHtml}
-<div class="brand-footer">${footerBlock}</div>
+<div class="brand-footer" style="margin-top:40px; font-size:10px; color:#666;">
+  ${companyName} | ${escapeAttr(b.company_website || "")}
+</div>
 </body>
 </html>`;
 }
