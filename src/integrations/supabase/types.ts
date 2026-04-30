@@ -605,6 +605,7 @@ export type Database = {
         Row: {
           address: string | null
           agency_id: string | null
+          archived_at: string | null
           area_max: number | null
           area_min: number | null
           assigned_to: string | null
@@ -619,6 +620,7 @@ export type Database = {
           financing_status: string | null
           full_name: string
           id: string
+          is_archived: boolean
           notes: string | null
           owner_id: string | null
           phone: string | null
@@ -636,6 +638,7 @@ export type Database = {
         Insert: {
           address?: string | null
           agency_id?: string | null
+          archived_at?: string | null
           area_max?: number | null
           area_min?: number | null
           assigned_to?: string | null
@@ -650,6 +653,7 @@ export type Database = {
           financing_status?: string | null
           full_name: string
           id?: string
+          is_archived?: boolean
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
@@ -669,6 +673,7 @@ export type Database = {
         Update: {
           address?: string | null
           agency_id?: string | null
+          archived_at?: string | null
           area_max?: number | null
           area_min?: number | null
           assigned_to?: string | null
@@ -683,6 +688,7 @@ export type Database = {
           financing_status?: string | null
           full_name?: string
           id?: string
+          is_archived?: boolean
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
