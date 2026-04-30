@@ -32,6 +32,15 @@ import {
   Code as CodeIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, Braces } from "lucide-react";
 
 // ----- Variable chip node -----
 // Renders {{key}} as a styled, atomic, non-editable chip in the editor.
@@ -98,7 +107,7 @@ function preprocessHtml(html: string, labelLookup: (key: string) => string | und
   });
 }
 
-type Variable = { key: string; label: string };
+type Variable = { key: string; label: string; group?: string };
 
 interface RichTextEditorProps {
   value: string;
