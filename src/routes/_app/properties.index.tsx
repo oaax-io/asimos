@@ -25,6 +25,12 @@ export const Route = createFileRoute("/_app/properties/")({ component: Propertie
 const PROP_TYPES = ["apartment","house","commercial","land","parking","mixed_use","other"] as const;
 const STATUSES = ["draft","preparation","active","available","reserved","sold","rented","archived"] as const;
 
+function getMediaPublicUrl(path?: string | null) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+}
+
 type ViewMode = "grid" | "list";
 
 function PropertiesPage() {
@@ -344,7 +350,7 @@ function PropertiesPage() {
                 <Link to="/properties/$id" params={{ id: p.id }} className="block">
                   <div className="aspect-[4/3] overflow-hidden bg-muted">
                     {p.images?.[0] ? (
-                      <img src={p.images[0]} alt={p.title} className="h-full w-full object-cover transition group-hover:scale-105" />
+                      <img src={getMediaPublicUrl(p.images[0])} alt={p.title} className="h-full w-full object-cover transition group-hover:scale-105" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">Kein Bild</div>
                     )}
