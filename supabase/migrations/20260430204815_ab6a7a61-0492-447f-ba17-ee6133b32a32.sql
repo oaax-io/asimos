@@ -1,0 +1,1 @@
+DELETE FROM public.document_templates WHERE is_system = true AND type IN ('mandate','mandate_partial','reservation','nda');
