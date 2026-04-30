@@ -325,6 +325,17 @@ function getValue(ctx: TemplateContext, path: string): string {
     return map[key] ? "☑" : "☐";
   }
 
+  // Commission model display helpers (used to show/hide blocks in templates)
+  // {{commission.show_percent}} → "" if percent selected, otherwise "display:none"
+  // {{commission.show_flat}}    → "" if flat (Pauschal) selected, otherwise "display:none"
+  if (path === "commission.show_percent" || path === "commission.show_flat") {
+    const model = String((ctx as any).mandate?.commission_model ?? "").toLowerCase();
+    const isFlat = /pauschal|flat|fixed|chf/.test(model);
+    const isPercent = /prozent|percent|%/.test(model) || (!isFlat && model !== "");
+    if (path === "commission.show_percent") return isPercent ? "" : "display:none";
+    return isFlat ? "" : "display:none";
+  }
+
   // Derived name parts (split full_name into Vorname / Name)
   if (path === "client.first_name" || path === "client.last_name" || path === "client_first_name" || path === "client_last_name") {
     const { first, last } = splitName(ctx.client?.full_name ?? "");
