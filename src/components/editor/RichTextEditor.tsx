@@ -3,10 +3,10 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
-import Table from "@tiptap/extension-table";
-import TableRow from "@tiptap/extension-table-row";
-import TableHeader from "@tiptap/extension-table-header";
-import TableCell from "@tiptap/extension-table-cell";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableCell } from "@tiptap/extension-table-cell";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -35,14 +35,16 @@ import { cn } from "@/lib/utils";
 
 // ----- Variable chip node -----
 // Renders {{key}} as a styled, atomic, non-editable chip in the editor.
-const VariableChipView = ({ node }: { node: { attrs: { name: string; label?: string } } }) => {
+const VariableChipView = (props: { node: { attrs: Record<string, unknown> } }) => {
+  const name = String(props.node.attrs.name ?? "");
+  const label = props.node.attrs.label ? String(props.node.attrs.label) : name;
   return (
     <NodeViewWrapper
       as="span"
       className="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary mx-0.5 align-middle select-none"
-      data-variable={node.attrs.name}
+      data-variable={name}
     >
-      {node.attrs.label ?? node.attrs.name}
+      {label}
     </NodeViewWrapper>
   );
 };
