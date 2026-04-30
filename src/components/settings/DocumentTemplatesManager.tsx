@@ -277,104 +277,90 @@ export function DocumentTemplatesManager() {
           }
         />
       ) : (
-        <>
-          {/* Standard-Vorlage pro Dokumenttyp */}
-          <div className="rounded-xl border bg-muted/20 p-4">
-            <h3 className="text-sm font-semibold">Standardvorlagen</h3>
-            <p className="mb-3 text-xs text-muted-foreground">
-              Wähle pro Dokumenttyp die Vorlage, die beim Generieren standardmäßig vorausgewählt wird.
-            </p>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {Object.entries(TYPE_LABELS).map(([typeKey, typeLabel]) => {
-                const ofType = templates.filter((x) => x.type === typeKey && x.is_active);
-                if (ofType.length === 0) return null;
-                const current = ofType.find((x) => (x as { is_default?: boolean }).is_default)?.id ?? "";
-                return (
-                  <div key={typeKey} className="space-y-1">
-                    <Label className="text-xs">{typeLabel}</Label>
-                    <Select
-                      value={current}
-                      onValueChange={(id) => setDefault.mutate(id)}
-                      disabled={setDefault.isPending}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="– keine –" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ofType.map((x) => (
-                          <SelectItem key={x.id} value={x.id}>
-                            {x.name}
-                            {(x as { is_system?: boolean }).is_system ? " (System)" : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {templates.map((t) => {
+            const isSystem = (t as { is_system?: boolean }).is_system === true;
+            const isDefault = (t as { is_default?: boolean }).is_default === true;
+            const sameTypeActive = templates.filter((x) => x.type === t.type && x.is_active);
+            const currentDefaultId =
+              sameTypeActive.find((x) => (x as { is_default?: boolean }).is_default)?.id ?? "";
+            return (
+              <div key={t.id} className={`rounded-xl border bg-card p-4 shadow-soft ${isDefault ? "ring-1 ring-primary" : ""}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <FileCode2 className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="font-medium">{t.name}</h3>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {templates.map((t) => {
-              const isSystem = (t as { is_system?: boolean }).is_system === true;
-              const isDefault = (t as { is_default?: boolean }).is_default === true;
-              return (
-                <div key={t.id} className={`rounded-xl border bg-card p-4 shadow-soft ${isDefault ? "ring-1 ring-primary" : ""}`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <FileCode2 className="h-4 w-4 text-muted-foreground" />
-                      <h3 className="font-medium">{t.name}</h3>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-1">
-                      {isDefault && (
-                        <Badge className="gap-1"><Star className="h-3 w-3" />Standard</Badge>
-                      )}
-                      {isSystem && (
-                        <Badge variant="outline" className="gap-1"><Lock className="h-3 w-3" />System</Badge>
-                      )}
-                      <Badge variant={t.is_active ? "default" : "secondary"}>{t.is_active ? "Aktiv" : "Inaktiv"}</Badge>
-                    </div>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{TYPE_LABELS[t.type] ?? t.type}</p>
-                  <div className="mt-3 line-clamp-3 text-xs text-muted-foreground">
-                    {t.content.replace(/<[^>]+>/g, " ").slice(0, 200)}…
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" onClick={() => previewTemplate(t)}>
-                      <Eye className="mr-1 h-4 w-4" />
-                      Ansehen
-                    </Button>
-                    {!isSystem && (
-                      <Button size="sm" variant="outline" onClick={() => startEdit(t)}>
-                        Bearbeiten
-                      </Button>
+                  <div className="flex flex-wrap items-center gap-1">
+                    {isDefault && (
+                      <Badge className="gap-1"><Star className="h-3 w-3" />Standard</Badge>
                     )}
+                    {isSystem && (
+                      <Badge variant="outline" className="gap-1"><Lock className="h-3 w-3" />System</Badge>
+                    )}
+                    <Badge variant={t.is_active ? "default" : "secondary"}>{t.is_active ? "Aktiv" : "Inaktiv"}</Badge>
+                  </div>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{TYPE_LABELS[t.type] ?? t.type}</p>
+                <div className="mt-3 line-clamp-3 text-xs text-muted-foreground">
+                  {t.content.replace(/<[^>]+>/g, " ").slice(0, 200)}…
+                </div>
+
+                <div className="mt-3 space-y-1">
+                  <Label className="text-xs text-muted-foreground">Standardvorlage für diesen Typ</Label>
+                  <Select
+                    value={currentDefaultId}
+                    onValueChange={(id) => setDefault.mutate(id)}
+                    disabled={setDefault.isPending || sameTypeActive.length === 0}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="– keine –" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sameTypeActive.map((x) => (
+                        <SelectItem key={x.id} value={x.id}>
+                          {x.name}
+                          {(x as { is_system?: boolean }).is_system ? " (System)" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => previewTemplate(t)}>
+                    <Eye className="mr-1 h-4 w-4" />
+                    Ansehen
+                  </Button>
+                  {!isSystem && (
+                    <Button size="sm" variant="outline" onClick={() => startEdit(t)}>
+                      Bearbeiten
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => duplicate.mutate(t)}
+                    disabled={duplicate.isPending}
+                  >
+                    <Copy className="mr-1 h-4 w-4" />
+                    Kopieren
+                  </Button>
+                  {!isSystem && (
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => duplicate.mutate(t)}
-                      disabled={duplicate.isPending}
+                      onClick={() => remove.mutate(t.id)}
+                      className="ml-auto text-destructive hover:text-destructive"
                     >
-                      <Copy className="mr-1 h-4 w-4" />
-                      Kopieren
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                    {!isSystem && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => remove.mutate(t.id)}
-                        className="ml-auto text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        </>
+              </div>
+            );
+          })}
+        </div>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
