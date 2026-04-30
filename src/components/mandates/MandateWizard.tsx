@@ -25,8 +25,8 @@ import {
   Eye,
   Send,
   FileText,
-  Printer,
 } from "lucide-react";
+import { GeneratePdfButton } from "@/components/documents/GeneratePdfButton";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -221,15 +221,6 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
-  const printPreview = () => {
-    const w = window.open("", "_blank");
-    if (!w) return;
-    w.document.write(previewHtml);
-    w.document.close();
-    w.focus();
-    setTimeout(() => w.print(), 300);
-  };
 
   const canNext = (() => {
     if (step === 0) return !!mandateType;
