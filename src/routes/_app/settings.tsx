@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +13,8 @@ import { toast } from "sonner";
 import { CompanyProfileForm } from "@/components/settings/CompanyProfileForm";
 import { BankAccountsManager } from "@/components/settings/BankAccountsManager";
 import { BrandkitForm } from "@/components/settings/BrandkitForm";
-import { FileCode2, ExternalLink, Tags, FileSignature } from "lucide-react";
+import { DocumentTemplatesManager } from "@/components/settings/DocumentTemplatesManager";
+import { Tags, FileSignature } from "lucide-react";
 
 export const Route = createFileRoute("/_app/settings")({ component: SettingsPage });
 
@@ -87,25 +88,7 @@ function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="templates">
-          <Card className="max-w-3xl">
-            <CardContent className="space-y-4 p-6">
-              <div className="flex items-center gap-3">
-                <FileCode2 className="h-5 w-5 text-primary" />
-                <div>
-                  <h2 className="text-lg font-semibold">Dokumentvorlagen</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Verwalte HTML-Vorlagen für Mandate, Reservationen, NDAs und Exposés.
-                  </p>
-                </div>
-              </div>
-              <Button asChild>
-                <Link to="/templates">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Vorlagen öffnen
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <DocumentTemplatesManager />
         </TabsContent>
 
         <TabsContent value="categories">
