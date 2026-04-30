@@ -212,14 +212,15 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
         .update({ generated_document_id: doc.id })
         .eq("id", mandate.id);
 
-      return mandate.id as string;
+      return { mandateId: mandate.id as string, documentId: doc.id as string };
     },
-    onSuccess: (id) => {
-      toast.success("Mandat erstellt");
+    onSuccess: ({ mandateId, documentId }) => {
+      toast.success("Mandat gespeichert – PDF kann jetzt generiert werden");
+      setCreatedDocumentId(documentId);
       qc.invalidateQueries({ queryKey: ["mandates"] });
       qc.invalidateQueries({ queryKey: ["generated-documents"] });
-      onCreated?.(id);
-      onOpenChange(false);
+      qc.invalidateQueries({ queryKey: ["documents"] });
+      onCreated?.(mandateId);
     },
     onError: (e: Error) => toast.error(e.message),
   });
