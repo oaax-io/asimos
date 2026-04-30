@@ -1340,6 +1340,9 @@ export type Database = {
           file_url: string | null
           html_content: string | null
           id: string
+          pdf_generated_at: string | null
+          pdf_provider: string | null
+          pdf_url: string | null
           recipients: Json
           related_id: string | null
           related_type: string | null
@@ -1361,6 +1364,9 @@ export type Database = {
           file_url?: string | null
           html_content?: string | null
           id?: string
+          pdf_generated_at?: string | null
+          pdf_provider?: string | null
+          pdf_url?: string | null
           recipients?: Json
           related_id?: string | null
           related_type?: string | null
@@ -1382,6 +1388,9 @@ export type Database = {
           file_url?: string | null
           html_content?: string | null
           id?: string
+          pdf_generated_at?: string | null
+          pdf_provider?: string | null
+          pdf_url?: string | null
           recipients?: Json
           related_id?: string | null
           related_type?: string | null
