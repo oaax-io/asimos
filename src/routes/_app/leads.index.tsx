@@ -293,7 +293,7 @@ function LeadsPage() {
               </div>
               <DialogFooter className="gap-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
-                <Button onClick={() => create.mutate()} disabled={!form.full_name || create.isPending}>
+                <Button onClick={() => create.mutate()} disabled={!form.full_name.trim() || !form.email.trim() || !form.phone.trim() || create.isPending}>
                   {create.isPending ? "Speichern…" : "Speichern"}
                 </Button>
               </DialogFooter>
