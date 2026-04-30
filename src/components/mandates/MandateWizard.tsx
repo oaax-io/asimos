@@ -70,6 +70,7 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
   const [commissionValue, setCommissionValue] = useState<string>("3");
   const [validFrom, setValidFrom] = useState<string>("");
   const [validUntil, setValidUntil] = useState<string>("");
+  const [createdDocumentId, setCreatedDocumentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -81,6 +82,7 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
       setCommissionValue("3");
       setValidFrom("");
       setValidUntil("");
+      setCreatedDocumentId(null);
     }
   }, [open]);
 
@@ -210,14 +212,15 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
         .update({ generated_document_id: doc.id })
         .eq("id", mandate.id);
 
-      return mandate.id as string;
+      return { mandateId: mandate.id as string, documentId: doc.id as string };
     },
-    onSuccess: (id) => {
-      toast.success("Mandat erstellt");
+    onSuccess: ({ mandateId, documentId }) => {
+      toast.success("Mandat gespeichert – PDF kann jetzt generiert werden");
+      setCreatedDocumentId(documentId);
       qc.invalidateQueries({ queryKey: ["mandates"] });
       qc.invalidateQueries({ queryKey: ["generated-documents"] });
-      onCreated?.(id);
-      onOpenChange(false);
+      qc.invalidateQueries({ queryKey: ["documents"] });
+      onCreated?.(mandateId);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -454,8 +457,10 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
                 <GeneratePdfButton
                   html={previewHtml}
                   title={mandateType === "exclusive" ? "Maklermandat (exklusiv)" : "Maklermandat (teilexklusiv)"}
+                  documentId={createdDocumentId}
                   variant="outline"
                   size="sm"
+                  disabled={!createdDocumentId}
                 />
               </div>
               {previewHtml ? (
@@ -506,23 +511,40 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
               <div className="flex flex-wrap gap-2">
                 <Button
                   onClick={() => create.mutate()}
-                  disabled={create.isPending}
+                  disabled={create.isPending || !!createdDocumentId}
                 >
                   <Check className="mr-2 size-4" />
-                  {create.isPending ? "Wird gespeichert…" : "Mandat speichern"}
+                  {createdDocumentId
+                    ? "Mandat gespeichert"
+                    : create.isPending
+                    ? "Wird gespeichert…"
+                    : "Mandat speichern"}
                 </Button>
                 <GeneratePdfButton
                   html={previewHtml}
                   title={mandateType === "exclusive" ? "Maklermandat (exklusiv)" : "Maklermandat (teilexklusiv)"}
+                  documentId={createdDocumentId}
                   variant="outline"
+                  disabled={!createdDocumentId}
                 />
                 <Button
                   variant="outline"
                   onClick={() => toast.info("Versand-Funktion folgt (E-Sign-Integration vorbereitet)")}
+                  disabled={!createdDocumentId}
                 >
                   <Send className="mr-2 size-4" /> Senden
                 </Button>
+                {createdDocumentId && (
+                  <Button variant="ghost" onClick={() => onOpenChange(false)}>
+                    Schliessen
+                  </Button>
+                )}
               </div>
+              {!createdDocumentId && (
+                <p className="text-xs text-muted-foreground">
+                  Speichere das Mandat zuerst, danach kannst du das PDF generieren und es erscheint im Dokumentencenter.
+                </p>
+              )}
             </div>
           )}
         </div>

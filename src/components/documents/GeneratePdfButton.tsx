@@ -23,6 +23,7 @@ type Props = {
   onPrintFallback?: () => void;
   size?: "sm" | "default";
   variant?: "default" | "outline" | "ghost";
+  disabled?: boolean;
 };
 
 /**
@@ -36,6 +37,7 @@ export function GeneratePdfButton({
   onPrintFallback,
   size = "sm",
   variant = "outline",
+  disabled = false,
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -145,7 +147,7 @@ export function GeneratePdfButton({
 
   return (
     <>
-      <Button variant={variant} size={size} onClick={handle} disabled={loading || !html}>
+      <Button variant={variant} size={size} onClick={handle} disabled={disabled || loading || !html}>
         {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <FileDown className="mr-2 size-4" />}
         {loading ? "Wird erstellt…" : "PDF generieren"}
       </Button>
