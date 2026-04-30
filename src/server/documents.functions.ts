@@ -79,14 +79,90 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
     }
 
     const id = data.documentId ?? crypto.randomUUID();
+
+    // Enrich missing filename inputs from the database when we have a documentId.
+    let clientName = data.clientName;
+    let propertyTitle = data.propertyTitle;
+    let companyName = data.companyName;
+    let documentType = data.documentType;
+    if (data.documentId && (!clientName || !propertyTitle || !companyName || !documentType)) {
+      try {
+        const { data: gdoc } = await supabaseAdmin
+          .from("generated_documents")
+          .select("document_type, related_type, related_id")
+          .eq("id", data.documentId)
+          .maybeSingle();
+        if (gdoc) {
+          documentType = documentType ?? gdoc.document_type ?? null;
+          // Resolve client / property from the related record
+          if (!clientName || !propertyTitle) {
+            const rt = gdoc.related_type;
+            const rid = gdoc.related_id;
+            if (rt && rid) {
+              const tableMap: Record<string, string> = {
+                mandate: "mandates",
+                reservation: "reservations",
+                nda: "ndas",
+              };
+              const table = tableMap[rt];
+              if (table) {
+                const { data: rel } = await supabaseAdmin
+                  .from(table as never)
+                  .select("client_id, property_id")
+                  .eq("id", rid)
+                  .maybeSingle();
+                const relRow = rel as { client_id?: string; property_id?: string } | null;
+                if (relRow?.client_id && !clientName) {
+                  const { data: c } = await supabaseAdmin
+                    .from("clients")
+                    .select("full_name")
+                    .eq("id", relRow.client_id)
+                    .maybeSingle();
+                  clientName = c?.full_name ?? null;
+                }
+                if (relRow?.property_id && !propertyTitle) {
+                  const { data: p } = await supabaseAdmin
+                    .from("properties")
+                    .select("title")
+                    .eq("id", relRow.property_id)
+                    .maybeSingle();
+                  propertyTitle = p?.title ?? null;
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn(`[pdf] enrichment failed: ${(e as Error).message}`);
+      }
+    }
+    if (!companyName) {
+      try {
+        const { data: brand } = await supabaseAdmin
+          .from("brand_settings" as never)
+          .select("company_name")
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const brandRow = brand as { company_name?: string } | null;
+        if (brandRow?.company_name) companyName = brandRow.company_name;
+        if (!companyName) {
+          const { data: company } = await supabaseAdmin.from("company").select("name").maybeSingle();
+          if (company?.name) companyName = company.name;
+        }
+      } catch (e) {
+        console.warn(`[pdf] company lookup failed: ${(e as Error).message}`);
+      }
+    }
+
     const filename =
       data.fileName ??
       buildDocumentFileName({
-        company: data.companyName,
-        documentType: data.documentType,
-        documentLabel: !data.documentType ? data.title : null,
-        clientName: data.clientName,
-        propertyTitle: data.propertyTitle,
+        company: companyName,
+        documentType,
+        documentLabel: !documentType ? data.title : null,
+        clientName,
+        propertyTitle,
         documentId: id,
       });
     const storagePath = `generated/${filename}`;
