@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, Eye, Send, Printer } from "lucide-react";
+import { Search, Eye, Send } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { SendDocumentDialog } from "@/components/documents/SendDocumentDialog";
 import { GeneratePdfButton } from "@/components/documents/GeneratePdfButton";
@@ -234,14 +234,11 @@ export function GeneratedDocumentsTable({
                         </Button>
                         <GeneratePdfButton
                           html={r.html_content}
-                          title={r.title ?? undefined}
+                          title={r.title ?? "Dokument"}
                           documentId={r.id}
                           onPrintFallback={() => printDoc(r)}
                           variant="ghost"
                         />
-                        <Button variant="ghost" size="icon" title="Drucken" onClick={() => printDoc(r)}>
-                          <Printer className="size-4" />
-                        </Button>
                         <Button variant="ghost" size="icon" title="Senden" onClick={() => setSendDoc(r)}>
                           <Send className="size-4" />
                         </Button>

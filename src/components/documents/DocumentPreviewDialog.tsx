@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
 import { GeneratePdfButton } from "@/components/documents/GeneratePdfButton";
 import {
   defaultTemplateForType,
@@ -110,10 +108,8 @@ export function DocumentPreviewDialog({
                 title={title}
                 documentId={generatedDocumentId ?? null}
                 onPrintFallback={printIt}
+                variant="default"
               />
-              <Button variant="ghost" size="sm" onClick={printIt} disabled={!html}>
-                <Printer className="mr-2 size-4" /> Drucken
-              </Button>
             </div>
           </div>
         </DialogHeader>
