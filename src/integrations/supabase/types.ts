@@ -847,6 +847,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          is_default: boolean
           is_system: boolean
           layout_type: string
           name: string
@@ -864,6 +865,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_default?: boolean
           is_system?: boolean
           layout_type?: string
           name: string
@@ -881,6 +883,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_default?: boolean
           is_system?: boolean
           layout_type?: string
           name?: string
@@ -2249,6 +2252,10 @@ export type Database = {
       }
       self_disclosure_link_submit: {
         Args: { _token: string }
+        Returns: undefined
+      }
+      set_default_template: {
+        Args: { _template_id: string }
         Returns: undefined
       }
       user_can: { Args: { _action: string; _module: string }; Returns: boolean }
