@@ -34,6 +34,9 @@ const app = express();
 app.use(express.json({ limit: "10mb" }));
 
 app.get("/healthz", (_req, res) => res.json({ ok: true }));
+app.get("/health", (_req, res) => {
+  res.json({ ok: true });
+});
 
 app.post("/", async (req, res) => {
   const t0 = Date.now();
