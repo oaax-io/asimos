@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, MapPin, Bed, Maximize, Search, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X } from "lucide-react";
+import { Plus, MapPin, Bed, Maximize, Search, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Upload } from "lucide-react";
+import { PropertyImportDialog } from "@/components/properties/PropertyImportDialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ function PropertiesPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [fStatus, setFStatus] = useState<string>("all");
   const [fType, setFType] = useState<string>("all");
@@ -208,6 +210,7 @@ function PropertiesPage() {
                 <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
               </TabsList>
             </Tabs>
+            <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-1 h-4 w-4" />Immobilien importieren</Button>
             <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button>
           </div>
         }
@@ -218,6 +221,12 @@ function PropertiesPage() {
         onOpenChange={setOpen}
         onSubmit={(payload) => create.mutate(payload)}
         submitting={create.isPending}
+      />
+
+      <PropertyImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={() => qc.invalidateQueries({ queryKey: ["properties"] })}
       />
 
       <div className="mb-4 grid gap-3 md:grid-cols-2 lg:grid-cols-7">
