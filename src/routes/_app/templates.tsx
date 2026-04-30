@@ -71,7 +71,37 @@ function TemplatesPage() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      const rows = data ?? [];
+
+      // Auto-seed system defaults the first time (idempotent: only inserts when missing)
+      const seedTypes: { type: string; name: string }[] = [
+        { type: "mandate", name: "Maklermandat (Exklusiv) – Standard" },
+        { type: "mandate_partial", name: "Maklermandat (Teilexklusiv) – Standard" },
+        { type: "reservation", name: "Reservationsvereinbarung – Standard" },
+        { type: "nda", name: "NDA / Vertraulichkeit – Standard" },
+      ];
+      const missing = seedTypes.filter(
+        (s) => !rows.some((r) => r.type === s.type && (r as { is_system?: boolean }).is_system),
+      );
+      if (missing.length > 0) {
+        const inserts = missing
+          .map((s) => ({
+            name: s.name,
+            type: s.type as "other",
+            content: defaultTemplateForType(s.type),
+            is_active: true,
+            is_system: true,
+          }))
+          .filter((r) => r.content);
+        if (inserts.length > 0) {
+          const { data: inserted } = await supabase
+            .from("document_templates")
+            .insert(inserts)
+            .select("*");
+          if (inserted) return [...inserted, ...rows];
+        }
+      }
+      return rows;
     },
   });
 
