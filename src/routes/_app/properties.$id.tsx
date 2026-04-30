@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/EmptyState";
-import { PropertyFormDialog, type PropertyFormValues } from "@/components/properties/PropertyFormDialog";
+import { PropertyWizard, type WizardSubmit } from "@/components/properties/PropertyWizard";
 import { formatCurrency, formatArea, formatDate, formatDateTime, propertyTypeLabels, propertyStatusLabels, listingTypeLabels } from "@/lib/format";
 import { toast } from "sonner";
 import { MatchPanel } from "@/components/matching/MatchPanel";
@@ -61,8 +61,8 @@ function PropertyDetail() {
   });
 
   const update = useMutation({
-    mutationFn: async (values: Partial<PropertyFormValues>) => {
-      const { error } = await supabase.from("properties").update(values as any).eq("id", id);
+    mutationFn: async (payload: WizardSubmit) => {
+      const { error } = await supabase.from("properties").update(payload.property as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -113,12 +113,12 @@ function PropertyDetail() {
         </div>
       </div>
 
-      <PropertyFormDialog
+      <PropertyWizard
         open={editOpen}
         onOpenChange={setEditOpen}
-        employees={employees as any}
-        initial={p as any}
-        onSubmit={(v) => update.mutate(v)}
+        mode="edit"
+        initial={p}
+        onSubmit={(payload) => update.mutate(payload)}
         submitting={update.isPending}
       />
 

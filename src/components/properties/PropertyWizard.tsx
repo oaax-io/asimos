@@ -288,20 +288,81 @@ const STEPS = [
   "Zusammenfassung",
 ];
 
+function hydrateFromProperty(p: any): WizardData {
+  if (!p) return { ...empty };
+  const features: string[] = Array.isArray(p.features) ? p.features : [];
+  const known = new Set(["Balkon","Terrasse","Garten","Lift","Garage","Parkplatz","Keller"]);
+  const extra = features.filter((f) => !known.has(f)).join(", ");
+  const str = (v: any) => (v === null || v === undefined ? "" : String(v));
+  const isUnit = !!p.is_unit;
+  const isMfh = p.property_type === "mixed_use" || p.building_type === "multi_family";
+  return {
+    ...empty,
+    property_type: p.property_type ?? "house",
+    structure: isUnit ? "unit_in_building" : isMfh ? "building" : "single",
+    parent_property_id: p.parent_property_id ?? null,
+    title: p.title ?? "",
+    marketing_type: (p.marketing_type as any) ?? (p.listing_type === "rent" ? "rent" : "sale"),
+    listing_type: (p.listing_type as any) ?? "sale",
+    status: p.status ?? "draft",
+    owner_client_id: p.owner_client_id ?? p.seller_client_id ?? null,
+    assigned_to: p.assigned_to ?? null,
+    address: p.address ?? "",
+    postal_code: p.postal_code ?? "",
+    city: p.city ?? "",
+    country: p.country ?? "CH",
+    floor: str(p.floor),
+    location_description: "",
+    living_area: str(p.living_area ?? p.area),
+    usable_area: str(p.usable_area),
+    plot_area: str(p.plot_area),
+    rooms: str(p.rooms),
+    bathrooms: str(p.bathrooms),
+    total_floors: str(p.total_floors),
+    year_built: str(p.year_built),
+    renovated_at: str(p.renovated_at),
+    price: str(p.price),
+    rent: str(p.rent),
+    ancillary_costs: "",
+    reservation_amount_default: str(p.reservation_amount_default),
+    internal_minimum_price: str(p.internal_minimum_price),
+    commission_model: "",
+    commission_value: "",
+    has_balcony: features.includes("Balkon"),
+    has_terrace: features.includes("Terrasse"),
+    has_garden: features.includes("Garten"),
+    has_lift: features.includes("Lift"),
+    has_garage: features.includes("Garage"),
+    has_parking: features.includes("Parkplatz"),
+    cellar_available: features.includes("Keller"),
+    heating_type: p.heating_type ?? "",
+    energy_source: p.energy_source ?? "",
+    energy_class: p.energy_class ?? "",
+    features_extra: extra,
+    image_url: Array.isArray(p.images) ? (p.images[0] ?? "") : "",
+    description: p.description ?? "",
+    internal_notes: p.internal_notes ?? "",
+    media: [],
+    units: [],
+  };
+}
+
 export function PropertyWizard({
-  open, onOpenChange, onSubmit, submitting,
+  open, onOpenChange, onSubmit, submitting, initial, mode = "create",
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onSubmit: (payload: WizardSubmit) => void;
   submitting?: boolean;
+  initial?: any;
+  mode?: "create" | "edit";
 }) {
   const [step, setStep] = useState(0);
-  const [d, setD] = useState<WizardData>({ ...empty });
+  const [d, setD] = useState<WizardData>(() => initial ? hydrateFromProperty(initial) : { ...empty });
 
   useEffect(() => {
-    if (open) { setStep(0); setD({ ...empty }); }
-  }, [open]);
+    if (open) { setStep(0); setD(initial ? hydrateFromProperty(initial) : { ...empty }); }
+  }, [open, initial]);
 
   const isMfh = d.property_type === "mixed_use" || d.structure === "building";
   const showUnitsStep = isMfh;
@@ -374,7 +435,7 @@ export function PropertyWizard({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[95vh] w-[95vw] max-w-5xl overflow-hidden p-0">
         <DialogHeader className="border-b p-6 pb-4">
-          <DialogTitle className="font-display text-xl">Neue Immobilie</DialogTitle>
+          <DialogTitle className="font-display text-xl">{mode === "edit" ? "Immobilie bearbeiten" : "Neue Immobilie"}</DialogTitle>
           <DialogDescription>
             Schritt {visibleSteps.findIndex(s => s.idx === step) + 1} von {visibleSteps.length} · {STEPS[step]}
           </DialogDescription>
@@ -418,7 +479,7 @@ export function PropertyWizard({
             </Button>
           ) : (
             <Button onClick={finish} disabled={!canProceed || submitting}>
-              <Check className="mr-1 h-4 w-4" /> Immobilie speichern
+              <Check className="mr-1 h-4 w-4" /> {mode === "edit" ? "Änderungen speichern" : "Immobilie speichern"}
             </Button>
           )}
         </div>
