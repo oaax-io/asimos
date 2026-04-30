@@ -354,7 +354,7 @@ function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((c: any) => {
+              {paginated.map((c: any) => {
                 const emp = c.assigned_to ? (employeeMap.get(c.assigned_to) as any) : null;
                 return (
                   <TableRow key={c.id} data-state={selected.has(c.id) ? "selected" : undefined}>
