@@ -934,7 +934,30 @@ function wrapAsimoSkin(args: {
 <meta charset="utf-8" />
 <title>${title.replace(/</g, "&lt;")}</title>
 <style>
-  @page { size: A4; margin: 16mm 14mm 22mm 14mm; }
+  @page {
+    size: A4;
+    margin: 16mm 14mm 22mm 14mm;
+    @bottom-left {
+      content: "${companyName.replace(/"/g, '\\"')} — ${title.replace(/"/g, '\\"').replace(/</g, "&lt;")}";
+      font-family: ${font};
+      font-size: 8pt;
+      color: #6b7280;
+      padding-top: 4mm;
+      border-top: 1px solid #d6d6d6;
+      width: 100%;
+      vertical-align: top;
+    }
+    @bottom-right {
+      content: "Seite " counter(page) " von " counter(pages);
+      font-family: ${font};
+      font-size: 8pt;
+      color: #6b7280;
+      padding-top: 4mm;
+      border-top: 1px solid #d6d6d6;
+      vertical-align: top;
+      font-weight: 600;
+    }
+  }
   :root {
     --asimo-accent: ${accent};
     --asimo-accent-soft: ${accentSoft};
