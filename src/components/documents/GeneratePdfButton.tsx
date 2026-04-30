@@ -23,6 +23,7 @@ type Props = {
   onPrintFallback?: () => void;
   size?: "sm" | "default";
   variant?: "default" | "outline" | "ghost";
+  disabled?: boolean;
 };
 
 /**
@@ -36,6 +37,7 @@ export function GeneratePdfButton({
   onPrintFallback,
   size = "sm",
   variant = "outline",
+  disabled = false,
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
