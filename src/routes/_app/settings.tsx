@@ -88,25 +88,7 @@ function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="templates">
-          <Card className="max-w-3xl">
-            <CardContent className="space-y-4 p-6">
-              <div className="flex items-center gap-3">
-                <FileCode2 className="h-5 w-5 text-primary" />
-                <div>
-                  <h2 className="text-lg font-semibold">Dokumentvorlagen</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Verwalte HTML-Vorlagen für Mandate, Reservationen, NDAs und Exposés.
-                  </p>
-                </div>
-              </div>
-              <Button asChild>
-                <Link to="/templates">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Vorlagen öffnen
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <DocumentTemplatesManager />
         </TabsContent>
 
         <TabsContent value="categories">
