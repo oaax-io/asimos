@@ -55,45 +55,38 @@ export function DocumentTemplatesManager() {
   const [previewHtml, setPreviewHtml] = useState("");
   const [form, setForm] = useState<FormState>(EMPTY);
 
+  // One-shot ASIMO seeder: ensures all ASIMO system templates exist & are up-to-date.
+  useEffect(() => {
+    seedAsimoTemplates()
+      .then(() => qc.invalidateQueries({ queryKey: ["all-document-templates"] }))
+      .catch((err) => console.error("ASIMO seed failed", err));
+  }, [qc]);
+
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["all-document-templates"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("document_templates")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("type")
+        .order("is_default", { ascending: false })
+        .order("name");
       if (error) throw error;
-      const rows = data ?? [];
-
-      const seedTypes: { type: string; name: string }[] = [
-        { type: "mandate", name: "Maklermandat (Exklusiv) – Standard" },
-        { type: "mandate_partial", name: "Maklermandat (Teilexklusiv) – Standard" },
-        { type: "reservation", name: "Reservationsvereinbarung – Standard" },
-        { type: "nda", name: "NDA / Vertraulichkeit – Standard" },
-      ];
-      const missing = seedTypes.filter(
-        (s) => !rows.some((r) => r.type === s.type && (r as { is_system?: boolean }).is_system),
-      );
-      if (missing.length > 0) {
-        const inserts = missing
-          .map((s) => ({
-            name: s.name,
-            type: s.type as "other",
-            content: defaultTemplateForType(s.type),
-            is_active: true,
-            is_system: true,
-          }))
-          .filter((r) => r.content);
-        if (inserts.length > 0) {
-          const { data: inserted } = await supabase
-            .from("document_templates")
-            .insert(inserts)
-            .select("*");
-          if (inserted) return [...inserted, ...rows];
-        }
-      }
-      return rows;
+      return data ?? [];
     },
+  });
+
+  const setDefault = useMutation({
+    mutationFn: async (templateId: string) => {
+      await setDefaultTemplate({ data: { templateId } });
+    },
+    onSuccess: () => {
+      toast.success("Standardvorlage aktualisiert");
+      qc.invalidateQueries({ queryKey: ["all-document-templates"] });
+      qc.invalidateQueries({ queryKey: ["templates-by-kind"] });
+      qc.invalidateQueries({ queryKey: ["document-templates"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const save = useMutation({
