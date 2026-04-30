@@ -196,6 +196,20 @@ const FLAT_ALIASES: Record<string, string> = {
 
 
 export const AVAILABLE_VARIABLES = [
+  // Kurz-Aliase (empfohlen)
+  { key: "client_name", label: "★ Kundenname", group: "Kurz" },
+  { key: "client_address", label: "★ Kundenadresse", group: "Kurz" },
+  { key: "property_title", label: "★ Objektbezeichnung", group: "Kurz" },
+  { key: "property_address", label: "★ Objektadresse", group: "Kurz" },
+  { key: "property_price", label: "★ Verkaufspreis", group: "Kurz" },
+  { key: "company_name", label: "★ Firmenname", group: "Kurz" },
+  { key: "company_address", label: "★ Firmenadresse", group: "Kurz" },
+  { key: "commission_value", label: "★ Provision", group: "Kurz" },
+  { key: "valid_from", label: "★ Gültig ab", group: "Kurz" },
+  { key: "valid_until", label: "★ Gültig bis", group: "Kurz" },
+  { key: "signatory_name", label: "★ Unterzeichner", group: "Kurz" },
+  { key: "place", label: "★ Ort", group: "Kurz" },
+  { key: "date", label: "★ Datum", group: "Kurz" },
   // Client
   { key: "client.full_name", label: "Kunde – Name", group: "Kunde" },
   { key: "client.salutation", label: "Kunde – Anrede", group: "Kunde" },
