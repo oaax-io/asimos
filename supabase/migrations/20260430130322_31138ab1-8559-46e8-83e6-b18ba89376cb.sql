@@ -1,0 +1,1 @@
+ALTER TABLE public.mandates ADD COLUMN IF NOT EXISTS mandate_type text NOT NULL DEFAULT 'exclusive';

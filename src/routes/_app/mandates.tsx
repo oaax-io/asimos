@@ -6,24 +6,14 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, FileSignature, FileText, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDate } from "@/lib/format";
 import { DocumentWizard } from "@/components/documents/DocumentWizard";
 import { DocumentPreviewDialog } from "@/components/documents/DocumentPreviewDialog";
+import { MandateWizard } from "@/components/mandates/MandateWizard";
 
 export const Route = createFileRoute("/_app/mandates")({ component: MandatesPage });
 
@@ -72,15 +62,6 @@ function MandatesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [genFor, setGenFor] = useState<MandateRow | null>(null);
   const [previewFor, setPreviewFor] = useState<MandateRow | null>(null);
-  const [form, setForm] = useState({
-    client_id: "",
-    property_id: "",
-    commission_model: "percent",
-    commission_value: "",
-    valid_from: "",
-    valid_until: "",
-    notes: "",
-  });
 
   const { data: mandates = [], isLoading } = useQuery<MandateRow[]>({
     queryKey: ["mandates"],
@@ -96,48 +77,6 @@ function MandatesPage() {
     },
   });
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ["clients-min"],
-    queryFn: async () => (await supabase.from("clients").select("id, full_name").order("full_name")).data ?? [],
-  });
-  const { data: properties = [] } = useQuery({
-    queryKey: ["properties-min"],
-    queryFn: async () => (await supabase.from("properties").select("id, title").order("title")).data ?? [],
-  });
-
-
-
-  const create = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("mandates").insert({
-        client_id: form.client_id || null,
-        property_id: form.property_id || null,
-        commission_model: form.commission_model,
-        commission_value: form.commission_value ? Number(form.commission_value) : null,
-        valid_from: form.valid_from || null,
-        valid_until: form.valid_until || null,
-        notes: form.notes.trim() || null,
-        status: "draft",
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Mandat erstellt");
-      qc.invalidateQueries({ queryKey: ["mandates"] });
-      setForm({
-        client_id: "",
-        property_id: "",
-        commission_model: "percent",
-        commission_value: "",
-        valid_from: "",
-        valid_until: "",
-        notes: "",
-      });
-      setOpen(false);
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase
@@ -148,7 +87,6 @@ function MandatesPage() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["mandates"] }),
   });
-
 
 
 
@@ -173,111 +111,14 @@ function MandatesPage() {
         title="Mandate"
         description="Maklerverträge mit Eigentümern und Käufern"
         action={
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-1 h-4 w-4" />
-                Neues Mandat
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Neues Mandat</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Eigentümer / Kunde</Label>
-                    <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Auswählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clients.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.full_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Immobilie</Label>
-                    <Select value={form.property_id} onValueChange={(v) => setForm({ ...form, property_id: v })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Auswählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {properties.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Provisionsmodell</Label>
-                    <Select
-                      value={form.commission_model}
-                      onValueChange={(v) => setForm({ ...form, commission_model: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="percent">Prozent</SelectItem>
-                        <SelectItem value="fixed">Pauschal</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Wert</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={form.commission_value}
-                      onChange={(e) => setForm({ ...form, commission_value: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Gültig ab</Label>
-                    <Input
-                      type="date"
-                      value={form.valid_from}
-                      onChange={(e) => setForm({ ...form, valid_from: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Gültig bis</Label>
-                    <Input
-                      type="date"
-                      value={form.valid_until}
-                      onChange={(e) => setForm({ ...form, valid_until: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label>Notizen</Label>
-                  <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>
-                  Abbrechen
-                </Button>
-                <Button onClick={() => create.mutate()} disabled={create.isPending}>
-                  Speichern
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={() => setOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" />
+            Neues Mandat
+          </Button>
         }
       />
+
+      <MandateWizard open={open} onOpenChange={setOpen} />
 
       <div className="mb-4 flex flex-wrap gap-3">
         <div className="relative max-w-sm flex-1">
