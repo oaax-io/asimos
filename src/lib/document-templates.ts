@@ -1031,14 +1031,15 @@ function wrapAsimoSkin(args: {
   .a-sig { margin-top: 14px; break-inside: avoid; }
   .a-sig .line {
     border-bottom: 1px dashed #c4c4c4;
-    height: 18px;
+    height: 22px;
     position: relative;
+    padding-left: 16px;
   }
   .a-sig .line::before {
     content: "›";
     position: absolute;
     left: 0;
-    bottom: -3px;
+    bottom: 6px;
     font-size: 11pt;
     color: var(--asimo-accent);
     line-height: 1;
