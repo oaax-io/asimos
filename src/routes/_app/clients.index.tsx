@@ -4,20 +4,21 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Mail, Phone, Target } from "lucide-react";
+import { Plus, Search, Mail, Phone, Target, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/lib/auth";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { getBackendErrorMessage, isBackendUnavailableError, unwrapServerResult } from "@/lib/backend-errors";
 import { toast } from "sonner";
-import { clientTypeLabels, formatCurrency, propertyTypeLabels } from "@/lib/format";
+import { clientTypeLabels, formatCurrency } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
-import { addClient, getClients } from "@/server/crm.functions";
+import { getClients } from "@/server/crm.functions";
 import { ClientWizard } from "@/components/clients/ClientWizard";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
@@ -29,19 +30,19 @@ const ALL = "__all__";
 const UNASSIGNED = "__unassigned__";
 const NO_FIN = "__none__";
 
+type ViewMode = "grid" | "list";
+
 function ClientsPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>(ALL);
   const [assignedFilter, setAssignedFilter] = useState<string>(ALL);
   const [financingFilter, setFinancingFilter] = useState<string>(ALL);
+  const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
+  const [view, setView] = useState<ViewMode>("grid");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    full_name: "", email: "", phone: "", client_type: "buyer" as typeof TYPES[number],
-    notes: "", budget_min: "", budget_max: "", rooms_min: "", area_min: "",
-    preferred_cities: "", preferred_types: [] as string[], preferred_listing: "sale" as "sale" | "rent",
-    assigned_to: "", financing_status: "",
-  });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const clientsQuery = useQuery({
     queryKey: ["clients"],
@@ -50,7 +51,6 @@ function ClientsPage() {
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
       const result = await getClients({ headers: { authorization: `Bearer ${accessToken}` } });
-      // Wirft bei Backend-Unavailable -> globaler Retry mit Backoff greift.
       return unwrapServerResult(result);
     },
   });
@@ -67,61 +67,12 @@ function ClientsPage() {
   const employees = employeesQuery.data ?? [];
   const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
 
-  // Banner nur bei "echten" Fehlern – Backend-Unavailable wird automatisch retryed.
   const showError = clientsQuery.error && !isBackendUnavailableError(clientsQuery.error);
   const queryErrorMessage = showError ? getBackendErrorMessage(clientsQuery.error) : null;
 
-  const create = useMutation({
-    mutationFn: async () => {
-      if (!form.full_name.trim()) throw new Error("Name ist erforderlich");
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-      if (!accessToken) throw new Error("Nicht angemeldet");
-      const result = await addClient({
-        headers: { authorization: `Bearer ${accessToken}` },
-        data: {
-          full_name: form.full_name,
-          email: form.email || null,
-          phone: form.phone || null,
-          client_type: form.client_type,
-          notes: form.notes || null,
-          budget_min: form.budget_min ? Number(form.budget_min) : null,
-          budget_max: form.budget_max ? Number(form.budget_max) : null,
-          rooms_min: form.rooms_min ? Number(form.rooms_min) : null,
-          area_min: form.area_min ? Number(form.area_min) : null,
-          preferred_cities: form.preferred_cities ? form.preferred_cities.split(",").map(s => s.trim()).filter(Boolean) : null,
-          preferred_types: form.preferred_types.length ? form.preferred_types : null,
-          preferred_listing: form.preferred_listing,
-        },
-      });
-
-      if (result.error || !result.data) {
-        const mutationError = new Error(result.error ?? "Es ist ein unerwarteter Fehler aufgetreten.");
-        if (result.unavailable) {
-          (mutationError as Error & { status?: number }).status = 503;
-        }
-        throw mutationError;
-      }
-
-      // Apply employee assignment / financing status post-create
-      if ((form.assigned_to || form.financing_status) && result.data?.id) {
-        await supabase.from("clients").update({
-          assigned_to: form.assigned_to || null,
-          financing_status: form.financing_status || null,
-        }).eq("id", result.data.id);
-      }
-
-      return result.data;
-    },
-    onSuccess: () => {
-      toast.success("Kunde erstellt");
-      qc.invalidateQueries({ queryKey: ["clients"] });
-      setOpen(false);
-    },
-    onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
-  });
-
   const filtered = useMemo(() => clients.filter((c: any) => {
+    if (archivedFilter === "active" && c.is_archived) return false;
+    if (archivedFilter === "archived" && !c.is_archived) return false;
     if (typeFilter !== ALL && c.client_type !== typeFilter) return false;
     if (assignedFilter !== ALL) {
       if (assignedFilter === UNASSIGNED && c.assigned_to) return false;
@@ -136,7 +87,76 @@ function ClientsPage() {
       if (!c.full_name?.toLowerCase().includes(q) && !c.email?.toLowerCase().includes(q)) return false;
     }
     return true;
-  }), [clients, typeFilter, assignedFilter, financingFilter, search]);
+  }), [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, search]);
+
+  const toggleOne = (id: string) => setSelected((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const allFilteredSelected = filtered.length > 0 && filtered.every((c: any) => selected.has(c.id));
+  const toggleAll = () => setSelected((prev) => {
+    if (allFilteredSelected) {
+      const next = new Set(prev);
+      filtered.forEach((c: any) => next.delete(c.id));
+      return next;
+    }
+    const next = new Set(prev);
+    filtered.forEach((c: any) => next.add(c.id));
+    return next;
+  });
+  const clearSelection = () => setSelected(new Set());
+
+  const assign = useMutation({
+    mutationFn: async (assignedTo: string | null) => {
+      const ids = Array.from(selected);
+      if (!ids.length) return;
+      const { error } = await supabase.from("clients").update({ assigned_to: assignedTo }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Zuweisung aktualisiert");
+      qc.invalidateQueries({ queryKey: ["clients"] });
+      clearSelection();
+    },
+    onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
+  });
+
+  const archive = useMutation({
+    mutationFn: async (archive: boolean) => {
+      const ids = Array.from(selected);
+      if (!ids.length) return;
+      const { error } = await supabase.from("clients").update({
+        is_archived: archive,
+        archived_at: archive ? new Date().toISOString() : null,
+      }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_, archived) => {
+      toast.success(archived ? "Kunden archiviert" : "Kunden wiederhergestellt");
+      qc.invalidateQueries({ queryKey: ["clients"] });
+      clearSelection();
+    },
+    onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
+  });
+
+  const remove = useMutation({
+    mutationFn: async () => {
+      const ids = Array.from(selected);
+      if (!ids.length) return;
+      const { error } = await supabase.from("clients").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Kunden gelöscht");
+      qc.invalidateQueries({ queryKey: ["clients"] });
+      clearSelection();
+      setConfirmDelete(false);
+    },
+    onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
+  });
+
+  const selectionCount = selected.size;
 
   return (
     <>
@@ -144,9 +164,17 @@ function ClientsPage() {
         title="Kunden"
         description="Alle Käufer, Verkäufer, Mieter und Vermieter"
         action={
-          <Button onClick={() => setOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" />Neuer Kunde
-          </Button>
+          <div className="flex items-center gap-2">
+            <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>
+              <TabsList>
+                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />Kacheln</TabsTrigger>
+                <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Button onClick={() => setOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" />Neuer Kunde
+            </Button>
+          </div>
         }
       />
 
@@ -180,6 +208,14 @@ function ClientsPage() {
             {FINANCING_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={archivedFilter} onValueChange={(v) => setArchivedFilter(v as typeof archivedFilter)}>
+          <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Aktiv</SelectItem>
+            <SelectItem value="archived">Archiviert</SelectItem>
+            <SelectItem value="all">Alle</SelectItem>
+          </SelectContent>
+        </Select>
         {(typeFilter !== ALL || assignedFilter !== ALL || financingFilter !== ALL || search) && (
           <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilter(ALL); setAssignedFilter(ALL); setFinancingFilter(ALL); }}>
             Zurücksetzen
@@ -187,6 +223,46 @@ function ClientsPage() {
         )}
         <span className="ml-auto text-sm text-muted-foreground">{filtered.length} von {clients.length}</span>
       </div>
+
+      {selectionCount > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-accent/40 p-3">
+          <span className="text-sm font-medium">{selectionCount} ausgewählt</span>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline"><UserCog className="mr-1 h-4 w-4" />Zuweisen</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
+                <DropdownMenuLabel>Mitarbeitende</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => assign.mutate(null)}>
+                  <X className="mr-2 h-4 w-4" />Zuweisung entfernen
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {employees.map((e: any) => (
+                  <DropdownMenuItem key={e.id} onClick={() => assign.mutate(e.id)}>
+                    {e.full_name ?? e.email}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {archivedFilter === "archived" ? (
+              <Button size="sm" variant="outline" onClick={() => archive.mutate(false)}>
+                <ArchiveRestore className="mr-1 h-4 w-4" />Wiederherstellen
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => archive.mutate(true)}>
+                <Archive className="mr-1 h-4 w-4" />Archivieren
+              </Button>
+            )}
+            <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(true)}>
+              <Trash2 className="mr-1 h-4 w-4" />Löschen
+            </Button>
+            <Button size="sm" variant="ghost" onClick={clearSelection}>
+              <X className="mr-1 h-4 w-4" />Auswahl aufheben
+            </Button>
+          </div>
+        </div>
+      )}
 
       {showError ? (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -199,39 +275,153 @@ function ClientsPage() {
       ) : null}
 
       {filtered.length === 0 && !clientsQuery.error && !clientsQuery.isLoading ? (
-        <EmptyState title="Noch keine Kunden" description="Lege deinen ersten Kunden an, um Suchprofile zu erfassen und Matches zu erhalten." />
-      ) : (
+        <EmptyState title="Keine Kunden" description="Lege deinen ersten Kunden an oder ändere die Filter." />
+      ) : view === "grid" ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((c) => (
-            <Card key={c.id} className="transition hover:shadow-glow">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <Link to="/clients/$id" params={{ id: c.id }} className="flex-1">
-                    <p className="font-semibold hover:text-primary">{c.full_name}</p>
-                    <Badge variant="secondary" className="mt-1">{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
-                  </Link>
-                  <Link to="/matching" search={{ clientId: c.id }} className="rounded-lg border p-2 text-primary transition hover:bg-accent" title="Matching">
-                    <Target className="h-4 w-4" />
-                  </Link>
-                </div>
-                <Link to="/clients/$id" params={{ id: c.id }} className="block">
-                  <div className="mt-3 space-y-1 text-sm text-muted-foreground">
-                    {c.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{c.email}</p>}
-                    {c.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{c.phone}</p>}
-                  </div>
-                  {(c.budget_max || c.preferred_cities?.length) && (
-                    <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
-                      {c.budget_max && <p>Budget: bis {formatCurrency(Number(c.budget_max))}</p>}
-                      {c.preferred_cities?.length ? <p>Städte: {c.preferred_cities.join(", ")}</p> : null}
-                      {c.rooms_min ? <p>Zimmer ab: {c.rooms_min}</p> : null}
+          {filtered.map((c: any) => {
+            const isSel = selected.has(c.id);
+            return (
+              <Card key={c.id} className={`transition hover:shadow-glow ${isSel ? "ring-2 ring-primary" : ""}`}>
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <Checkbox
+                        checked={isSel}
+                        onCheckedChange={() => toggleOne(c.id)}
+                        aria-label="Auswählen"
+                        className="mt-1"
+                      />
+                      <Link to="/clients/$id" params={{ id: c.id }} className="flex-1 min-w-0">
+                        <p className="font-semibold hover:text-primary truncate">{c.full_name}</p>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          <Badge variant="secondary">{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
+                          {c.is_archived && <Badge variant="outline">Archiviert</Badge>}
+                          {c.assigned_to && employeeMap.get(c.assigned_to) && (
+                            <Badge variant="outline" className="text-xs">
+                              {(employeeMap.get(c.assigned_to) as any).full_name ?? (employeeMap.get(c.assigned_to) as any).email}
+                            </Badge>
+                          )}
+                        </div>
+                      </Link>
                     </div>
-                  )}
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
+                    <Link to="/matching" search={{ clientId: c.id }} className="rounded-lg border p-2 text-primary transition hover:bg-accent" title="Matching">
+                      <Target className="h-4 w-4" />
+                    </Link>
+                  </div>
+                  <Link to="/clients/$id" params={{ id: c.id }} className="block">
+                    <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                      {c.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{c.email}</p>}
+                      {c.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{c.phone}</p>}
+                    </div>
+                    {(c.budget_max || c.preferred_cities?.length) && (
+                      <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
+                        {c.budget_max && <p>Budget: bis {formatCurrency(Number(c.budget_max))}</p>}
+                        {c.preferred_cities?.length ? <p>Städte: {c.preferred_cities.join(", ")}</p> : null}
+                        {c.rooms_min ? <p>Zimmer ab: {c.rooms_min}</p> : null}
+                      </div>
+                    )}
+                  </Link>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-xl border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAll} aria-label="Alle auswählen" />
+                </TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Typ</TableHead>
+                <TableHead>Kontakt</TableHead>
+                <TableHead>Zugewiesen</TableHead>
+                <TableHead>Finanzierung</TableHead>
+                <TableHead className="w-10"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((c: any) => {
+                const emp = c.assigned_to ? (employeeMap.get(c.assigned_to) as any) : null;
+                return (
+                  <TableRow key={c.id} data-state={selected.has(c.id) ? "selected" : undefined}>
+                    <TableCell>
+                      <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} aria-label="Auswählen" />
+                    </TableCell>
+                    <TableCell>
+                      <Link to="/clients/$id" params={{ id: c.id }} className="font-medium hover:text-primary">
+                        {c.full_name}
+                      </Link>
+                      {c.is_archived && <Badge variant="outline" className="ml-2">Archiviert</Badge>}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      <div className="space-y-0.5">
+                        {c.email && <div>{c.email}</div>}
+                        {c.phone && <div>{c.phone}</div>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
+                    <TableCell className="text-sm">{c.financing_status ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link to="/clients/$id" params={{ id: c.id }}>Öffnen</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to="/matching" search={{ clientId: c.id }}>Matching</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {c.is_archived ? (
+                            <DropdownMenuItem onClick={() => { setSelected(new Set([c.id])); archive.mutate(false); }}>
+                              <ArchiveRestore className="mr-2 h-4 w-4" />Wiederherstellen
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onClick={() => { setSelected(new Set([c.id])); archive.mutate(true); }}>
+                              <Archive className="mr-2 h-4 w-4" />Archivieren
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => { setSelected(new Set([c.id])); setConfirmDelete(true); }}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />Löschen
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       )}
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kunden löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectionCount} Kunde{selectionCount === 1 ? "" : "n"} werden unwiderruflich gelöscht. Verknüpfte Daten können verloren gehen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => remove.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
