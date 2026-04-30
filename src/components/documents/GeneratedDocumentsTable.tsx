@@ -234,14 +234,11 @@ export function GeneratedDocumentsTable({
                         </Button>
                         <GeneratePdfButton
                           html={r.html_content}
-                          title={r.title ?? undefined}
+                          title={r.title ?? "Dokument"}
                           documentId={r.id}
                           onPrintFallback={() => printDoc(r)}
                           variant="ghost"
                         />
-                        <Button variant="ghost" size="icon" title="Drucken" onClick={() => printDoc(r)}>
-                          <Printer className="size-4" />
-                        </Button>
                         <Button variant="ghost" size="icon" title="Senden" onClick={() => setSendDoc(r)}>
                           <Send className="size-4" />
                         </Button>
