@@ -14,11 +14,20 @@ import {
 import { FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getDocumentPdfUrl, renderDocumentPdf, fetchDocumentPdfBytes } from "@/server/documents.functions";
+import { buildDocumentFileName, type DocumentTypeKey } from "@/lib/document-filename";
 
 type Props = {
   html: string | null | undefined;
   title?: string;
   documentId?: string | null;
+  /** Document type used for the filename label (e.g. mandate, reservation, nda). */
+  documentType?: DocumentTypeKey | null;
+  /** Customer / client name used in filename. */
+  clientName?: string | null;
+  /** Property title used as fallback when there is no client. */
+  propertyTitle?: string | null;
+  /** Company name used in filename. Falls back to "Dokument" if missing. */
+  companyName?: string | null;
   /** Browser-print fallback when server PDF is unavailable */
   onPrintFallback?: () => void;
   size?: "sm" | "default";
@@ -34,6 +43,10 @@ export function GeneratePdfButton({
   html,
   title,
   documentId,
+  documentType,
+  clientName,
+  propertyTitle,
+  companyName,
   onPrintFallback,
   size = "sm",
   variant = "outline",
@@ -46,7 +59,14 @@ export function GeneratePdfButton({
   const getPdfUrl = useServerFn(getDocumentPdfUrl);
   const fetchBytes = useServerFn(fetchDocumentPdfBytes);
 
-  const downloadName = `${(title ?? "Dokument").trim() || "Dokument"}.pdf`;
+  const downloadName = buildDocumentFileName({
+    company: companyName,
+    documentType,
+    documentLabel: !documentType ? title : null,
+    clientName,
+    propertyTitle,
+    documentId,
+  });
 
   const triggerDownload = (url: string) => {
     const link = document.createElement("a");
@@ -119,7 +139,18 @@ export function GeneratePdfButton({
         }
       }
 
-      const res = await renderPdf({ data: { html, title, documentId: documentId ?? null } });
+      const res = await renderPdf({
+        data: {
+          html,
+          title,
+          documentId: documentId ?? null,
+          fileName: downloadName,
+          documentType: documentType ?? null,
+          clientName: clientName ?? null,
+          propertyTitle: propertyTitle ?? null,
+          companyName: companyName ?? null,
+        },
+      });
       if (res.ok && res.fileUrl) {
         // Proxy bytes via server to bypass adblockers blocking the storage domain.
         const blob = res.path ? await loadAsBlob(res.path) : null;
