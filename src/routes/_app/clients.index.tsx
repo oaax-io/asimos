@@ -289,7 +289,7 @@ function ClientsPage() {
         <EmptyState title="Keine Kunden" description="Lege deinen ersten Kunden an oder ändere die Filter." />
       ) : view === "grid" ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((c: any) => {
+          {paginated.map((c: any) => {
             const isSel = selected.has(c.id);
             return (
               <Card key={c.id} className={`transition hover:shadow-glow ${isSel ? "ring-2 ring-primary" : ""}`}>
