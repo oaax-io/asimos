@@ -242,6 +242,31 @@ export const getDocumentPdfUrl = createServerFn({ method: "POST" })
     return { ok: !!signed?.signedUrl, fileUrl: signed?.signedUrl ?? null };
   });
 
+/**
+ * Fetch a generated PDF as base64 — proxies the bytes through the server so the
+ * client never has to load the Supabase storage domain directly (which is often
+ * blocked by adblockers / ERR_BLOCKED_BY_CLIENT).
+ */
+export const fetchDocumentPdfBytes = createServerFn({ method: "POST" })
+  .inputValidator((input: { path: string }) => {
+    if (!input?.path || typeof input.path !== "string") throw new Error("path is required");
+    return { path: input.path };
+  })
+  .handler(async ({ data }) => {
+    const { data: file, error } = await supabaseAdmin.storage.from(BUCKET).download(data.path);
+    if (error || !file) {
+      return { ok: false as const, base64: null as string | null, message: error?.message ?? "not_found" };
+    }
+    const buf = new Uint8Array(await file.arrayBuffer());
+    // Convert to base64 in chunks (avoid stack overflow on large files)
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let i = 0; i < buf.length; i += chunkSize) {
+      binary += String.fromCharCode(...buf.subarray(i, i + chunkSize));
+    }
+    return { ok: true as const, base64: btoa(binary), message: null as string | null };
+  });
+
 function slugify(s: string): string {
   return s
     .toLowerCase()

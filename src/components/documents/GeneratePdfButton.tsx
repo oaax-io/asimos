@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { getDocumentPdfUrl, renderDocumentPdf } from "@/server/documents.functions";
+import { getDocumentPdfUrl, renderDocumentPdf, fetchDocumentPdfBytes } from "@/server/documents.functions";
 
 type Props = {
   html: string | null | undefined;
@@ -38,20 +38,30 @@ export function GeneratePdfButton({
   variant = "outline",
 }: Props) {
   const [loading, setLoading] = useState(false);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [fallbackReason, setFallbackReason] = useState<string | null>(null);
   const renderPdf = useServerFn(renderDocumentPdf);
   const getPdfUrl = useServerFn(getDocumentPdfUrl);
+  const fetchBytes = useServerFn(fetchDocumentPdfBytes);
 
-  const openPdf = (url: string) => {
+  const downloadName = `${(title ?? "Dokument").trim() || "Dokument"}.pdf`;
+
+  const triggerDownload = (url: string) => {
     const link = document.createElement("a");
     link.href = url;
-    link.target = "_blank";
+    link.download = downloadName;
     link.rel = "noreferrer";
-    link.download = `${(title ?? "Dokument").trim() || "Dokument"}.pdf`;
     document.body.appendChild(link);
     link.click();
     link.remove();
+  };
+
+  const base64ToBlobUrl = (b64: string): string => {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: "application/pdf" });
+    return URL.createObjectURL(blob);
   };
 
   const triggerPrint = () => {
@@ -73,6 +83,17 @@ export function GeneratePdfButton({
     setFallbackReason(reason);
   };
 
+  /** Try to load PDF bytes via server proxy → return a blob URL. */
+  const loadAsBlob = async (path: string): Promise<string | null> => {
+    try {
+      const res = await fetchBytes({ data: { path } });
+      if (res.ok && res.base64) return base64ToBlobUrl(res.base64);
+    } catch (err) {
+      console.warn("[pdf] proxy download failed", err);
+    }
+    return null;
+  };
+
   const handle = async () => {
     if (!html) {
       toast.error("Kein Inhalt zum Generieren");
@@ -80,11 +101,17 @@ export function GeneratePdfButton({
     }
     setLoading(true);
     try {
+      // Existing PDF?
       if (documentId) {
         const existing = await getPdfUrl({ data: { documentId } });
         if (existing.ok && existing.fileUrl) {
-          setFileUrl(existing.fileUrl);
-          openPdf(existing.fileUrl);
+          // existing.fileUrl is a signed Supabase URL → may be blocked.
+          // Always proxy the bytes through the server.
+          const path = new URL(existing.fileUrl).pathname.split("/object/sign/" + "documents/")[1]?.split("?")[0];
+          const blob = path ? await loadAsBlob(path) : null;
+          const finalUrl = blob ?? existing.fileUrl;
+          setBlobUrl(finalUrl);
+          triggerDownload(finalUrl);
           toast.success("PDF geöffnet");
           return;
         }
@@ -92,9 +119,12 @@ export function GeneratePdfButton({
 
       const res = await renderPdf({ data: { html, title, documentId: documentId ?? null } });
       if (res.ok && res.fileUrl) {
-        setFileUrl(res.fileUrl);
+        // Proxy bytes via server to bypass adblockers blocking the storage domain.
+        const blob = res.path ? await loadAsBlob(res.path) : null;
+        const finalUrl = blob ?? res.fileUrl;
+        setBlobUrl(finalUrl);
         toast.success("PDF wurde erstellt");
-        openPdf(res.fileUrl);
+        triggerDownload(finalUrl);
       } else {
         requestPrintFallback("message" in res ? res.message : undefined);
       }
@@ -105,9 +135,9 @@ export function GeneratePdfButton({
     }
   };
 
-  if (fileUrl) {
+  if (blobUrl) {
     return (
-      <Button variant={variant} size={size} onClick={() => openPdf(fileUrl)}>
+      <Button variant={variant} size={size} onClick={() => triggerDownload(blobUrl)}>
         <FileDown className="mr-2 size-4" /> PDF herunterladen
       </Button>
     );
