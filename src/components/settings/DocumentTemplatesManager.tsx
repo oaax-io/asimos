@@ -135,6 +135,38 @@ export function DocumentTemplatesManager() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const duplicate = useMutation({
+    mutationFn: async (t: { name: string; type: string; content: string; is_active: boolean }) => {
+      const { data, error } = await supabase
+        .from("document_templates")
+        .insert({
+          name: `${t.name} (Kopie)`,
+          type: t.type as "other",
+          content: t.content,
+          is_active: t.is_active,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success("Vorlage kopiert");
+      qc.invalidateQueries({ queryKey: ["all-document-templates"] });
+      if (data) {
+        setForm({
+          id: data.id,
+          name: data.name,
+          type: data.type,
+          content: data.content,
+          is_active: data.is_active,
+        });
+        setOpen(true);
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const startNew = () => {
     setForm(EMPTY);
     setOpen(true);
@@ -142,6 +174,34 @@ export function DocumentTemplatesManager() {
   const startEdit = (t: { id: string; name: string; type: string; content: string; is_active: boolean }) => {
     setForm({ id: t.id, name: t.name, type: t.type, content: t.content, is_active: t.is_active });
     setOpen(true);
+  };
+
+  const previewTemplate = (t: { name: string; content: string }) => {
+    const sampleCtx = {
+      client: {
+        full_name: "Anna Müller",
+        address: "Bahnhofstrasse 12",
+        postal_code: "8001",
+        city: "Zürich",
+        email: "anna@example.ch",
+        phone: "+41 79 123 45 67",
+      },
+      property: {
+        title: "Loft mit Seesicht",
+        address: "Seestrasse 88",
+        postal_code: "8800",
+        city: "Thalwil",
+        price: 1850000,
+        rent: null,
+        rooms: 4.5,
+        living_area: 142,
+      },
+      mandate: { commission_model: "Prozent", commission_value: 3, valid_from: "2026-05-01", valid_until: "2026-11-01" },
+      reservation: { reservation_fee: 25000, valid_until: "2026-06-15" },
+      company: { name: "ASIMOS Immobilien AG" },
+    };
+    setPreviewHtml(wrapHtmlDocument(t.name || "Vorschau", renderTemplate(t.content, sampleCtx)));
+    setPreviewOpen(true);
   };
 
   const handleTypeChange = (v: string) => {
