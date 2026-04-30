@@ -25,7 +25,7 @@ const clientInputSchema = z.object({
   full_name: z.string().min(1),
   email: z.string().trim().nullable(),
   phone: z.string().trim().nullable(),
-  client_type: z.enum(["buyer", "seller", "tenant", "landlord"]),
+  client_type: z.enum(["buyer", "seller", "owner", "tenant", "landlord", "investor", "other"]),
   notes: z.string().trim().nullable(),
   budget_min: z.number().nullable(),
   budget_max: z.number().nullable(),
