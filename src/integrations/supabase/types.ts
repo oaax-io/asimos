@@ -209,6 +209,8 @@ export type Database = {
           company_website: string | null
           created_at: string
           font_family: string | null
+          footer_html: string | null
+          header_html: string | null
           id: string
           logo_url: string | null
           primary_color: string | null
@@ -222,6 +224,8 @@ export type Database = {
           company_website?: string | null
           created_at?: string
           font_family?: string | null
+          footer_html?: string | null
+          header_html?: string | null
           id?: string
           logo_url?: string | null
           primary_color?: string | null
@@ -235,6 +239,8 @@ export type Database = {
           company_website?: string | null
           created_at?: string
           font_family?: string | null
+          footer_html?: string | null
+          header_html?: string | null
           id?: string
           logo_url?: string | null
           primary_color?: string | null
@@ -832,42 +838,51 @@ export type Database = {
       }
       document_templates: {
         Row: {
+          allow_custom_css: boolean
           category: string | null
           content: string
           created_at: string
+          custom_css: string | null
           default_variables: Json
           description: string | null
           id: string
           is_active: boolean
           is_system: boolean
+          layout_type: string
           name: string
           type: Database["public"]["Enums"]["document_type"]
           updated_at: string
           variables: Json
         }
         Insert: {
+          allow_custom_css?: boolean
           category?: string | null
           content: string
           created_at?: string
+          custom_css?: string | null
           default_variables?: Json
           description?: string | null
           id?: string
           is_active?: boolean
           is_system?: boolean
+          layout_type?: string
           name: string
           type?: Database["public"]["Enums"]["document_type"]
           updated_at?: string
           variables?: Json
         }
         Update: {
+          allow_custom_css?: boolean
           category?: string | null
           content?: string
           created_at?: string
+          custom_css?: string | null
           default_variables?: Json
           description?: string | null
           id?: string
           is_active?: boolean
           is_system?: boolean
+          layout_type?: string
           name?: string
           type?: Database["public"]["Enums"]["document_type"]
           updated_at?: string

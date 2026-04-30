@@ -108,7 +108,10 @@ export type TemplateContext = {
     primary_color?: string | null;
     secondary_color?: string | null;
     font_family?: string | null;
+    header_html?: string | null;
+    footer_html?: string | null;
   } | null;
+  checks?: Record<string, boolean>;
   today?: string;
   place?: string;
 };
@@ -123,6 +126,8 @@ export const DEFAULT_BRAND = {
   primary_color: "#324642",
   secondary_color: "#6A9387",
   font_family: "Helvetica Neue, Arial, sans-serif",
+  header_html: "",
+  footer_html: "",
 } as const;
 
 // Top-level alias keys (so templates can write {{logo_url}} instead of {{brand.logo_url}})
@@ -239,6 +244,13 @@ const DATE_KEYS = new Set([
 ]);
 
 function getValue(ctx: TemplateContext, path: string): string {
+  // Checkbox helpers: {{check.<key>}} returns ☑ or ☐ depending on overrides.checks
+  if (path.startsWith("check.")) {
+    const key = path.slice("check.".length);
+    const map = (ctx as TemplateContext & { checks?: Record<string, boolean> }).checks ?? {};
+    return map[key] ? "☑" : "☐";
+  }
+
   // Brand alias resolution: {{logo_url}} → ctx.brand.logo_url (with default fallback)
   if (BRAND_ALIASES[path]) {
     const key = BRAND_ALIASES[path];
@@ -292,8 +304,9 @@ export function findMissingVariables(template: string, ctx: TemplateContext): st
   });
   const missing: string[] = [];
   for (const path of used) {
-    // Brand aliases are always resolvable (fallbacks exist) → skip
+    // Brand aliases & checkbox helpers are always resolvable → skip
     if (BRAND_ALIASES[path]) continue;
+    if (path.startsWith("check.")) continue;
     if (!getValue(ctx, path)) missing.push(path);
   }
   return missing;
@@ -303,15 +316,40 @@ export function wrapHtmlDocument(
   title: string,
   bodyHtml: string,
   brand?: TemplateContext["brand"] | null,
+  options?: { customCss?: string | null },
 ): string {
   const b = { ...DEFAULT_BRAND, ...(brand ?? {}) };
   const primary = b.primary_color || DEFAULT_BRAND.primary_color;
   const secondary = b.secondary_color || DEFAULT_BRAND.secondary_color;
   const font = b.font_family || DEFAULT_BRAND.font_family;
   const companyName = escapeAttr(b.company_name || "");
-  const logoBlock = b.logo_url
-    ? `<img src="${escapeAttr(b.logo_url)}" alt="${companyName}" style="height:50px;width:auto;display:block;" />`
-    : `<div style="font-weight:700;font-size:18px;color:var(--brand-primary);">${companyName}</div>`;
+  const customCss = (options?.customCss ?? "").toString();
+
+  const headerHtml = b.header_html
+    ? b.header_html
+    : `<div class="doc-header">
+         <div class="doc-header__brand">
+           ${
+             b.logo_url
+               ? `<img src="${escapeAttr(b.logo_url)}" alt="${companyName}" class="doc-logo" />`
+               : `<div class="doc-wordmark">${companyName}</div>`
+           }
+         </div>
+         <div class="doc-header__meta">
+           <div class="doc-header__company">${companyName}</div>
+           ${b.company_address ? `<div>${escapeAttr(b.company_address)}</div>` : ""}
+           ${b.company_email ? `<div>${escapeAttr(b.company_email)}</div>` : ""}
+           ${b.company_website ? `<div>${escapeAttr(b.company_website)}</div>` : ""}
+         </div>
+       </div>`;
+
+  const footerHtml = b.footer_html
+    ? b.footer_html
+    : `<div class="doc-footer">
+         <span>${companyName}</span>
+         ${b.company_website ? `<span> · ${escapeAttr(b.company_website)}</span>` : ""}
+         ${b.company_email ? `<span> · ${escapeAttr(b.company_email)}</span>` : ""}
+       </div>`;
 
   return `<!doctype html>
 <html lang="de">
@@ -319,43 +357,212 @@ export function wrapHtmlDocument(
 <meta charset="utf-8" />
 <title>${title.replace(/</g, "&lt;")}</title>
 <style>
-  @page { size: A4; margin: 24mm; }
-  :root { --brand-primary: ${primary}; --brand-secondary: ${secondary}; }
-  body { font-family: ${font}; color: #111; line-height: 1.55; max-width: 780px; margin: 32px auto; padding: 0 24px; background: #fff; }
-  .brand-header { display:flex; align-items:center; justify-content:space-between; padding-bottom:16px; border-bottom:2px solid var(--brand-primary); margin-bottom:24px; }
-  .brand-header .meta { text-align:right; font-size:12px; color:#555; line-height:1.4; }
-  h1 { font-size: 22px; margin: 0 0 8px; color: var(--brand-primary); }
-  h2 { font-size: 16px; margin: 24px 0 8px; color: var(--brand-primary); border-left: 4px solid var(--brand-secondary); padding-left: 8px; }
-  h3 { font-size: 14px; margin: 16px 0 6px; color: var(--brand-primary); }
-  p { margin: 8px 0; }
-  strong { color: var(--brand-primary); }
-  hr { border: 0; border-top: 1px solid var(--brand-secondary); opacity: 0.3; margin: 24px 0; }
-  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--brand-secondary); font-size: 14px; }
-  th { color: var(--brand-primary); }
-  .box { border-left: 4px solid var(--brand-secondary); padding: 8px 12px; margin: 12px 0; background: rgba(0,0,0,0.02); }
-  .muted { color: #666; font-size: 12px; }
-  .signature { margin-top: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-  .signature div { border-top: 1px solid var(--brand-primary); padding-top: 6px; font-size: 12px; }
-  .brand-footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--brand-secondary); font-size: 10px; color:#666; text-align:center; }
-  @media print {
-    body { margin: 0; padding: 0; max-width: none; }
+  @page {
+    size: A4;
+    margin: 22mm 18mm 22mm 18mm;
   }
+  :root {
+    --brand-primary: ${primary};
+    --brand-secondary: ${secondary};
+    --brand-soft: color-mix(in oklab, ${primary} 6%, white);
+    --text: #1a1a1a;
+    --text-muted: #5b6770;
+    --border: #d9dee2;
+    --rule: ${secondary};
+  }
+  * { box-sizing: border-box; }
+  html, body { background: #fff; }
+  body {
+    font-family: ${font};
+    color: var(--text);
+    line-height: 1.55;
+    font-size: 11pt;
+    margin: 0 auto;
+    padding: 0;
+    max-width: 800px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .doc-shell { padding: 0 4mm; }
+
+  /* Header */
+  .doc-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+    border-bottom: 2px solid var(--brand-primary);
+  }
+  .doc-logo { height: 48px; width: auto; display: block; }
+  .doc-wordmark {
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 0.04em;
+    color: var(--brand-primary);
+    text-transform: uppercase;
+  }
+  .doc-header__meta {
+    text-align: right;
+    font-size: 10pt;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+  .doc-header__company { color: var(--brand-primary); font-weight: 600; }
+
+  /* Title block */
+  .doc-title { margin: 0 0 6px; }
+  h1 {
+    font-size: 22pt;
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: var(--brand-primary);
+    letter-spacing: -0.01em;
+  }
+  h2 {
+    font-size: 12pt;
+    font-weight: 700;
+    margin: 22px 0 10px;
+    color: var(--brand-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--brand-secondary);
+  }
+  h3 {
+    font-size: 11pt;
+    font-weight: 600;
+    margin: 14px 0 6px;
+    color: var(--brand-primary);
+  }
+  p { margin: 6px 0; }
+  strong { color: var(--brand-primary); font-weight: 600; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 18px 0; }
+
+  /* Tables — structured data */
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 10.5pt; }
+  th, td { text-align: left; padding: 7px 9px; vertical-align: top; }
+  table.data th {
+    width: 38%;
+    color: var(--text-muted);
+    font-weight: 500;
+    background: var(--brand-soft);
+    border-bottom: 1px solid var(--border);
+  }
+  table.data td {
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  /* Two-column grid */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 8px 0 14px;
+  }
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    background: #fff;
+    page-break-inside: avoid;
+  }
+  .panel h3 {
+    margin-top: 0;
+    font-size: 10pt;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--brand-primary);
+  }
+  .panel .label { font-size: 9pt; color: var(--text-muted); display: block; margin-top: 6px; }
+  .panel .value { font-size: 11pt; color: var(--text); }
+
+  /* Numbered sections */
+  .section { page-break-inside: avoid; margin-top: 16px; }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12pt;
+    font-weight: 700;
+    color: var(--brand-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 22px 0 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--brand-secondary);
+  }
+  .section-title .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    border-radius: 4px;
+    background: var(--brand-primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 10pt;
+  }
+
+  /* Checkboxes */
+  .checks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 18px; margin: 6px 0; }
+  .check { font-size: 10.5pt; line-height: 1.6; }
+  .check .box-icon { font-size: 12pt; margin-right: 6px; color: var(--brand-primary); }
+
+  .box {
+    border-left: 4px solid var(--brand-secondary);
+    padding: 10px 14px;
+    margin: 12px 0;
+    background: var(--brand-soft);
+    border-radius: 0 4px 4px 0;
+    page-break-inside: avoid;
+  }
+
+  .muted { color: var(--text-muted); font-size: 10pt; }
+
+  /* Signatures */
+  .signature {
+    margin-top: 36px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    page-break-inside: avoid;
+  }
+  .signature .sig-line {
+    border-top: 1px solid var(--text);
+    padding-top: 6px;
+    font-size: 10pt;
+    color: var(--text-muted);
+  }
+  .signature .sig-name { color: var(--text); font-weight: 600; }
+
+  /* Footer */
+  .doc-footer {
+    margin-top: 32px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 8.5pt;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  /* Pagination */
+  .page-break { page-break-after: always; break-after: page; }
+  h1, h2, h3 { page-break-after: avoid; break-after: avoid; }
+  table, .panel, .section, .signature, .box { page-break-inside: avoid; break-inside: avoid; }
+
+  ${customCss || ""}
 </style>
 </head>
 <body>
-<div class="brand-header" style="display:flex; justify-content:space-between; align-items:center;">
-  <div>${logoBlock}</div>
-  <div class="meta" style="text-align:right; font-size:12px;">
-    ${companyName}<br/>
-    ${escapeAttr(b.company_address || "")}<br/>
-    ${escapeAttr(b.company_email || "")}<br/>
-    ${escapeAttr(b.company_website || "")}
-  </div>
-</div>
+<div class="doc-shell">
+${headerHtml}
 ${bodyHtml}
-<div class="brand-footer" style="margin-top:40px; font-size:10px; color:#666;">
-  ${companyName} | ${escapeAttr(b.company_website || "")}
+${footerHtml}
 </div>
 </body>
 </html>`;
@@ -370,58 +577,164 @@ function escapeAttr(s: string): string {
 }
 
 
-export const DEFAULT_MANDATE_TEMPLATE = `<h1>Maklervertrag (Verkaufsmandat)</h1>
-<p class="muted">Datum: {{today}} – Ort: {{company.default_place}}</p>
+/* ---------- Helpers used inside templates ---------- */
+// Templates are pure HTML strings (no JS). Checkbox states are rendered via
+// {{var}} substitution: if the variable resolves to a truthy value it shows ☑,
+// otherwise ☐. We expose helper variables for the property type checkboxes via
+// the wizard's `overrides.checks` payload (see MandateWizard).
 
-<h2>Auftraggeber</h2>
-<p>{{client.full_name}}<br/>{{client.address}}<br/>{{client.postal_code}} {{client.city}}<br/>E-Mail: {{client.email}} – Telefon: {{client.phone}}</p>
+const MANDATE_INTRO = `
+<h1 class="doc-title">Maklermandat</h1>
+<p class="muted">Verkaufsvermittlungsauftrag · {{mandate.type}}</p>
+<p class="muted">Ausgestellt am {{today}} in {{company.default_place}}</p>
+`;
 
-<h2>Auftragnehmer</h2>
-<p>{{company.legal_name}}<br/>{{company.address}}<br/>{{company.postal_code}} {{company.city}}<br/>UID: {{company.uid_number}}</p>
+const MANDATE_PARTIES_GRID = `
+<div class="grid-2">
+  <div class="panel">
+    <h3>Auftraggeber</h3>
+    <span class="label">Name</span>
+    <div class="value"><strong>{{client.full_name}}</strong></div>
+    <span class="label">Adresse</span>
+    <div class="value">{{client.address}}<br/>{{client.postal_code}} {{client.city}}</div>
+    <span class="label">Kontakt</span>
+    <div class="value">{{client.email}} · {{client.phone}}</div>
+  </div>
+  <div class="panel">
+    <h3>Auftragnehmer</h3>
+    <span class="label">Firma</span>
+    <div class="value"><strong>{{company.legal_name}}</strong></div>
+    <span class="label">Adresse</span>
+    <div class="value">{{company.address}}<br/>{{company.postal_code}} {{company.city}}</div>
+    <span class="label">Kontakt</span>
+    <div class="value">{{company.email}} · {{company.phone}}</div>
+    <span class="label">UID</span>
+    <div class="value">{{company.uid_number}}</div>
+  </div>
+</div>
+`;
 
-<h2>Objekt</h2>
-<p><strong>{{property.title}}</strong><br/>{{property.address}}, {{property.postal_code}} {{property.city}}</p>
-<p>Verkaufspreis: <strong>{{property.price}}</strong> – Wohnfläche: {{property.living_area}} m² – Zimmer: {{property.rooms}}</p>
+const MANDATE_OBJECT_GRID = `
+<div class="grid-2">
+  <div class="panel">
+    <h3>Vermittlungsobjekt</h3>
+    <span class="label">Bezeichnung</span>
+    <div class="value"><strong>{{property.title}}</strong></div>
+    <span class="label">Adresse</span>
+    <div class="value">{{property.address}}<br/>{{property.postal_code}} {{property.city}}</div>
+    <span class="label">Verkaufspreis</span>
+    <div class="value"><strong>{{property.price}}</strong></div>
+  </div>
+  <div class="panel">
+    <h3>Eckdaten</h3>
+    <span class="label">Wohnfläche</span>
+    <div class="value">{{property.living_area}} m²</div>
+    <span class="label">Zimmer</span>
+    <div class="value">{{property.rooms}}</div>
+    <span class="label">Grundstück</span>
+    <div class="value">{{property.plot_area}} m²</div>
+    <span class="label">Baujahr</span>
+    <div class="value">{{property.year_built}}</div>
+  </div>
+</div>
 
-<h2>Provision</h2>
-<p>Modell: {{mandate.commission_model}}<br/>Provision: <strong>{{mandate.commission_value}}</strong></p>
+<h3>Objektart</h3>
+<div class="checks">
+  <div class="check"><span class="box-icon">{{check.house}}</span> Einfamilienhaus</div>
+  <div class="check"><span class="box-icon">{{check.apartment}}</span> Eigentumswohnung</div>
+  <div class="check"><span class="box-icon">{{check.multifamily}}</span> Mehrfamilienhaus</div>
+  <div class="check"><span class="box-icon">{{check.commercial}}</span> Gewerbeobjekt</div>
+  <div class="check"><span class="box-icon">{{check.land}}</span> Grundstück / Bauland</div>
+  <div class="check"><span class="box-icon">{{check.other}}</span> Sonstiges</div>
+</div>
+`;
 
-<h2>Laufzeit</h2>
-<p>Gültig von {{mandate.valid_from}} bis {{mandate.valid_until}}.</p>
-
-<hr/>
-<p>Mit der Unterzeichnung erteilt der Auftraggeber dem Auftragnehmer den Auftrag, das oben genannte Objekt zu vermarkten.</p>
-
+const MANDATE_SIGNATURES = `
 <div class="signature">
-  <div>{{client.full_name}} – Auftraggeber</div>
-  <div>{{company.default_signatory_name}} – {{company.default_signatory_role}}, {{company.name}}</div>
-</div>`;
+  <div class="sig-line">
+    <div class="sig-name">{{client.full_name}}</div>
+    Auftraggeber · {{company.default_place}}, den {{today}}
+  </div>
+  <div class="sig-line">
+    <div class="sig-name">{{company.default_signatory_name}}</div>
+    {{company.default_signatory_role}} · {{company.name}}
+  </div>
+</div>
+`;
 
-export const DEFAULT_MANDATE_PARTIAL_TEMPLATE = `<h1>Teilexklusiver Maklerauftrag</h1>
-<p class="muted">Datum: {{today}} – Ort: {{company.default_place}}</p>
+export const DEFAULT_MANDATE_TEMPLATE = `${MANDATE_INTRO}
+${MANDATE_PARTIES_GRID}
 
-<h2>Auftraggeber</h2>
-<p>{{client.full_name}}<br/>{{client.address}}<br/>{{client.postal_code}} {{client.city}}</p>
+<div class="section-title"><span class="num">1</span> Vertragsgegenstand</div>
+<p>Der Auftraggeber beauftragt den Auftragnehmer mit der <strong>exklusiven</strong> Vermittlung des nachstehend bezeichneten Objekts. Während der Laufzeit dieses Mandats ist der Auftraggeber nicht berechtigt, weitere Makler oder Vermittler mit der Vermarktung des Objekts zu beauftragen.</p>
+${MANDATE_OBJECT_GRID}
 
-<h2>Auftragnehmer</h2>
-<p>{{company.legal_name}}<br/>{{company.address}}<br/>{{company.postal_code}} {{company.city}}</p>
+<div class="section-title"><span class="num">2</span> Provision</div>
+<table class="data">
+  <tr><th>Provisionsmodell</th><td>{{mandate.commission_model}}</td></tr>
+  <tr><th>Provisionssatz / Pauschale</th><td><strong>{{mandate.commission_value}}</strong></td></tr>
+  <tr><th>Berechnungsbasis</th><td>Notariell beurkundeter Kaufpreis (zzgl. ges. MwSt.)</td></tr>
+  <tr><th>Fälligkeit</th><td>Mit Abschluss des Kaufvertrages, spätestens bei Eigentumsübertragung</td></tr>
+</table>
 
-<h2>Objekt</h2>
-<p><strong>{{property.title}}</strong><br/>{{property.address}}, {{property.postal_code}} {{property.city}}<br/>Verkaufspreis: <strong>{{property.price}}</strong></p>
+<div class="section-title"><span class="num">3</span> Laufzeit & Verlängerung</div>
+<p>Dieses Mandat tritt am <strong>{{mandate.valid_from}}</strong> in Kraft und endet am <strong>{{mandate.valid_until}}</strong>. Wird das Mandat nicht spätestens 30 Tage vor Ablauf schriftlich gekündigt, verlängert es sich stillschweigend um jeweils drei Monate.</p>
 
-<h2>Provision</h2>
-<p>Modell: {{mandate.commission_model}} – Wert: <strong>{{mandate.commission_value}}</strong></p>
+<div class="section-title"><span class="num">4</span> Pflichten des Auftragnehmers</div>
+<p>Der Auftragnehmer verpflichtet sich, das Objekt fachgerecht und mit der Sorgfalt eines ordentlichen Maklers zu vermarkten. Dies umfasst insbesondere:</p>
+<ul>
+  <li>Erstellung eines professionellen Exposés inkl. hochwertiger Fotos</li>
+  <li>Listing auf relevanten Plattformen (ImmoScout24, Homegate, Newhome u. a.)</li>
+  <li>Qualifizierung von Interessenten und Bonitätsprüfung</li>
+  <li>Organisation und Durchführung der Besichtigungen</li>
+  <li>Verhandlungsführung und Begleitung bis zur Beurkundung</li>
+</ul>
 
-<h2>Besonderheit</h2>
-<p>Diese Vereinbarung ist <strong>teilexklusiv</strong>. Der Auftraggeber behält das Recht, einen eigenen Käufer ohne Provisionsanspruch des Maklers zu vermitteln.</p>
+<div class="section-title"><span class="num">5</span> Pflichten des Auftraggebers</div>
+<p>Der Auftraggeber stellt dem Auftragnehmer alle für die Vermittlung erforderlichen Unterlagen vollständig und wahrheitsgemäss zur Verfügung. Er verpflichtet sich, alle Anfragen, die ihn direkt erreichen, unverzüglich an den Auftragnehmer weiterzuleiten.</p>
 
-<h2>Laufzeit</h2>
-<p>Gültig von {{mandate.valid_from}} bis {{mandate.valid_until}}.</p>
+<div class="section-title"><span class="num">6</span> Datenschutz & Vertraulichkeit</div>
+<p>Beide Parteien verpflichten sich zur vertraulichen Behandlung aller im Rahmen dieses Mandats ausgetauschten Informationen. Personenbezogene Daten werden ausschliesslich zum Zweck der Vertragserfüllung gemäss DSGVO und revDSG verarbeitet.</p>
 
-<div class="signature">
-  <div>{{client.full_name}}</div>
-  <div>{{company.default_signatory_name}} – {{company.name}}</div>
-</div>`;
+<div class="section-title"><span class="num">7</span> Schlussbestimmungen</div>
+<p>Änderungen und Ergänzungen dieses Vertrages bedürfen der Schriftform. Sollten einzelne Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt. Gerichtsstand ist {{company.default_place}}, anwendbar ist Schweizer Recht.</p>
+
+${MANDATE_SIGNATURES}
+`;
+
+export const DEFAULT_MANDATE_PARTIAL_TEMPLATE = `${MANDATE_INTRO}
+${MANDATE_PARTIES_GRID}
+
+<div class="section-title"><span class="num">1</span> Vertragsgegenstand</div>
+<p>Der Auftraggeber beauftragt den Auftragnehmer mit der <strong>teilexklusiven</strong> Vermittlung des unten bezeichneten Objekts. Der Auftraggeber behält das Recht, einen eigenen Käufer zu vermitteln, ohne dass ein Provisionsanspruch des Auftragnehmers entsteht. Die Beauftragung weiterer Makler ist ausgeschlossen.</p>
+${MANDATE_OBJECT_GRID}
+
+<div class="section-title"><span class="num">2</span> Provision</div>
+<table class="data">
+  <tr><th>Provisionsmodell</th><td>{{mandate.commission_model}}</td></tr>
+  <tr><th>Provisionssatz / Pauschale</th><td><strong>{{mandate.commission_value}}</strong></td></tr>
+  <tr><th>Berechnungsbasis</th><td>Notariell beurkundeter Kaufpreis (zzgl. ges. MwSt.)</td></tr>
+  <tr><th>Fälligkeit</th><td>Mit Abschluss des Kaufvertrages</td></tr>
+</table>
+<div class="box"><strong>Eigenvermittlung:</strong> Findet der Auftraggeber selbst einen Käufer, ist keine Provision geschuldet. Der Auftraggeber informiert den Auftragnehmer hierüber unverzüglich.</div>
+
+<div class="section-title"><span class="num">3</span> Laufzeit & Verlängerung</div>
+<p>Dieses Mandat ist gültig vom <strong>{{mandate.valid_from}}</strong> bis zum <strong>{{mandate.valid_until}}</strong>. Eine stillschweigende Verlängerung erfolgt nicht.</p>
+
+<div class="section-title"><span class="num">4</span> Pflichten des Auftragnehmers</div>
+<p>Professionelle Vermarktung gemäss Standard des Maklers, inklusive Exposé, Online-Listings, Interessentenqualifizierung, Besichtigungen und Verhandlungsbegleitung.</p>
+
+<div class="section-title"><span class="num">5</span> Pflichten des Auftraggebers</div>
+<p>Bereitstellung aller relevanten Objektunterlagen sowie unverzügliche Weiterleitung sämtlicher direkt eingehender Anfragen, sofern diese nicht aus eigener Vermittlung stammen.</p>
+
+<div class="section-title"><span class="num">6</span> Datenschutz & Vertraulichkeit</div>
+<p>Beide Parteien behandeln alle ausgetauschten Informationen vertraulich. Datenverarbeitung erfolgt gemäss DSGVO und revDSG.</p>
+
+<div class="section-title"><span class="num">7</span> Schlussbestimmungen</div>
+<p>Änderungen bedürfen der Schriftform. Gerichtsstand: {{company.default_place}}. Es gilt Schweizer Recht.</p>
+
+${MANDATE_SIGNATURES}
+`;
 
 export const DEFAULT_RESERVATION_TEMPLATE = `<h1>Reservationsvereinbarung</h1>
 <p class="muted">Datum: {{today}} – Ort: {{company.default_place}}</p>
