@@ -80,19 +80,14 @@ export function DocumentWizard({
     queryKey: ["templates-by-kind", dbType],
     enabled: open,
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("document_templates")
         .select("*")
         .eq("type", dbType as any)
         .eq("is_active", true)
+        .order("is_default", { ascending: false })
         .order("name");
 
-      const nameHint = TEMPLATE_NAME_HINTS[kind];
-      if (nameHint) {
-        query = query.ilike("name", `%${nameHint}%`);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return data ?? [];
     },
