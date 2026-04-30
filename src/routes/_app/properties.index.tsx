@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -114,6 +114,17 @@ function PropertiesPage() {
     if (fAssigned !== "all" && p.assigned_to !== fAssigned) return false;
     return true;
   });
+
+  // Pagination
+  const [pageSize, setPageSize] = useState<number>(20);
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [search, fStatus, fType, fListing, fCity, fAssigned, archivedFilter, pageSize, view]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = useMemo(
+    () => filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filtered, currentPage, pageSize],
+  );
 
   const toggleOne = (id: string) => setSelected((prev) => {
     const next = new Set(prev);
@@ -314,7 +325,7 @@ function PropertiesPage() {
         />
       ) : view === "grid" ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((p: any) => {
+          {paginated.map((p: any) => {
             const isSel = selected.has(p.id);
             return (
               <div key={p.id} className={`group relative overflow-hidden rounded-2xl border bg-card shadow-soft transition hover:shadow-glow ${isSel ? "ring-2 ring-primary" : ""}`}>
@@ -372,7 +383,7 @@ function PropertiesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((p: any) => {
+              {paginated.map((p: any) => {
                 const emp = p.assigned_to ? (employeeMap.get(p.assigned_to) as any) : null;
                 const isArchived = p.status === "archived";
                 return (
@@ -428,6 +439,29 @@ function PropertiesPage() {
               })}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {filtered.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span>
+              Zeige {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)} von {filtered.length}
+            </span>
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+              <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="20">20 / Seite</SelectItem>
+                <SelectItem value="50">50 / Seite</SelectItem>
+                <SelectItem value="100">100 / Seite</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Zurück</Button>
+            <span>Seite {currentPage} / {totalPages}</span>
+            <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Weiter</Button>
+          </div>
         </div>
       )}
 

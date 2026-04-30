@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ function ClientsPage() {
   const [assignedFilter, setAssignedFilter] = useState<string>(ALL);
   const [financingFilter, setFinancingFilter] = useState<string>(ALL);
   const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
-  const [view, setView] = useState<ViewMode>("grid");
+  const [view, setView] = useState<ViewMode>("list");
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -88,6 +88,17 @@ function ClientsPage() {
     }
     return true;
   }), [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, search]);
+
+  // Pagination
+  const [pageSize, setPageSize] = useState<number>(20);
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [search, typeFilter, assignedFilter, financingFilter, archivedFilter, pageSize, view]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = useMemo(
+    () => filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filtered, currentPage, pageSize],
+  );
 
   const toggleOne = (id: string) => setSelected((prev) => {
     const next = new Set(prev);
@@ -278,7 +289,7 @@ function ClientsPage() {
         <EmptyState title="Keine Kunden" description="Lege deinen ersten Kunden an oder ändere die Filter." />
       ) : view === "grid" ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((c: any) => {
+          {paginated.map((c: any) => {
             const isSel = selected.has(c.id);
             return (
               <Card key={c.id} className={`transition hover:shadow-glow ${isSel ? "ring-2 ring-primary" : ""}`}>
@@ -343,7 +354,7 @@ function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((c: any) => {
+              {paginated.map((c: any) => {
                 const emp = c.assigned_to ? (employeeMap.get(c.assigned_to) as any) : null;
                 return (
                   <TableRow key={c.id} data-state={selected.has(c.id) ? "selected" : undefined}>
@@ -403,6 +414,29 @@ function ClientsPage() {
               })}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {filtered.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span>
+              Zeige {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)} von {filtered.length}
+            </span>
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+              <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="20">20 / Seite</SelectItem>
+                <SelectItem value="50">50 / Seite</SelectItem>
+                <SelectItem value="100">100 / Seite</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Zurück</Button>
+            <span>Seite {currentPage} / {totalPages}</span>
+            <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Weiter</Button>
+          </div>
         </div>
       )}
 
