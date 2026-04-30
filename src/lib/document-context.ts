@@ -50,8 +50,8 @@ export async function resolveDocumentContext(input: ResolveInput): Promise<Templ
         .eq("id", uid)
         .maybeSingle();
       (ctx as any).agent = {
-        full_name: prof?.full_name ?? userData.user.email ?? "",
-        email: prof?.email ?? userData.user.email ?? "",
+        full_name: prof?.full_name ?? userData?.user?.email ?? "",
+        email: prof?.email ?? userData?.user?.email ?? "",
         phone: prof?.phone ?? "",
       };
     }
