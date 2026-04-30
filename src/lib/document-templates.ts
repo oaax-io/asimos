@@ -1016,10 +1016,21 @@ function wrapAsimoSkin(args: {
   .a-two-cols > div > .a-objekt:first-child { margin-top: 0; }
   .a-clear { clear: both; }
 
-  .a-signatures { margin-top: 16px; break-inside: avoid; }
-  .a-sig { margin-top: 18px; }
-  .a-sig .line { border-bottom: 1px solid #111; height: 22px; }
-  .a-sig .label { font-size: 8.5pt; color: var(--asimo-muted); margin-top: 3px; }
+  .a-signatures {
+    margin-top: 28px;
+    padding-top: 14px;
+    border-top: 1px solid var(--asimo-rule);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 22px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-before: avoid;
+    page-break-before: avoid;
+  }
+  .a-sig { margin-top: 22px; break-inside: avoid; }
+  .a-sig .line { border-bottom: 1px solid #111; height: 26px; }
+  .a-sig .label { font-size: 8.5pt; color: var(--asimo-muted); margin-top: 4px; }
 
   .a-footer { position: fixed; bottom: 6mm; left: 14mm; right: 14mm; display: flex; justify-content: space-between; align-items: center; font-size: 8pt; color: var(--asimo-muted); border-top: 1px solid var(--asimo-rule); padding-top: 6px; }
   .a-foot-left { display: flex; align-items: center; gap: 8px; }
