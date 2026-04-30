@@ -4,10 +4,15 @@ import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, MapPin, Bed, Maximize, Search } from "lucide-react";
+import { Plus, MapPin, Bed, Maximize, Search, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { formatCurrency, formatArea, propertyTypeLabels, propertyStatusLabels, listingTypeLabels } from "@/lib/format";
@@ -19,6 +24,8 @@ export const Route = createFileRoute("/_app/properties/")({ component: Propertie
 const PROP_TYPES = ["apartment","house","commercial","land","parking","mixed_use","other"] as const;
 const STATUSES = ["draft","preparation","active","available","reserved","sold","rented","archived"] as const;
 
+type ViewMode = "grid" | "list";
+
 function PropertiesPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -29,6 +36,10 @@ function PropertiesPage() {
   const [fListing, setFListing] = useState<string>("all");
   const [fCity, setFCity] = useState<string>("all");
   const [fAssigned, setFAssigned] = useState<string>("all");
+  const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
+  const [view, setView] = useState<ViewMode>("grid");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["properties"],
@@ -48,6 +59,7 @@ function PropertiesPage() {
     },
   });
 
+  const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
   const cities = useMemo(() => Array.from(new Set(properties.map(p => p.city).filter(Boolean))) as string[], [properties]);
 
   const create = useMutation({
@@ -92,6 +104,8 @@ function PropertiesPage() {
   });
 
   const filtered = properties.filter(p => {
+    if (archivedFilter === "active" && p.status === "archived") return false;
+    if (archivedFilter === "archived" && p.status !== "archived") return false;
     if (search && !(`${p.title} ${p.city ?? ""} ${p.address ?? ""}`.toLowerCase().includes(search.toLowerCase()))) return false;
     if (fStatus !== "all" && p.status !== fStatus) return false;
     if (fType !== "all" && p.property_type !== fType) return false;
@@ -101,13 +115,90 @@ function PropertiesPage() {
     return true;
   });
 
+  const toggleOne = (id: string) => setSelected((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const allFilteredSelected = filtered.length > 0 && filtered.every((p: any) => selected.has(p.id));
+  const toggleAll = () => setSelected((prev) => {
+    if (allFilteredSelected) {
+      const next = new Set(prev);
+      filtered.forEach((p: any) => next.delete(p.id));
+      return next;
+    }
+    const next = new Set(prev);
+    filtered.forEach((p: any) => next.add(p.id));
+    return next;
+  });
+  const clearSelection = () => setSelected(new Set());
+
+  const assign = useMutation({
+    mutationFn: async (assignedTo: string | null) => {
+      const ids = Array.from(selected);
+      if (!ids.length) return;
+      const { error } = await supabase.from("properties").update({ assigned_to: assignedTo }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Zuweisung aktualisiert");
+      qc.invalidateQueries({ queryKey: ["properties"] });
+      clearSelection();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const archive = useMutation({
+    mutationFn: async (toArchived: boolean) => {
+      const ids = Array.from(selected);
+      if (!ids.length) return;
+      const { error } = await supabase
+        .from("properties")
+        .update({ status: toArchived ? "archived" : "draft" })
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_, toArchived) => {
+      toast.success(toArchived ? "Immobilien archiviert" : "Immobilien wiederhergestellt");
+      qc.invalidateQueries({ queryKey: ["properties"] });
+      clearSelection();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: async () => {
+      const ids = Array.from(selected);
+      if (!ids.length) return;
+      const { error } = await supabase.from("properties").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Immobilien gelöscht");
+      qc.invalidateQueries({ queryKey: ["properties"] });
+      clearSelection();
+      setConfirmDelete(false);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const selectionCount = selected.size;
+
   return (
     <>
       <PageHeader
         title="Immobilien"
         description="Dein Immobilienportfolio im Überblick"
         action={
-          <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button>
+          <div className="flex items-center gap-2">
+            <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>
+              <TabsList>
+                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />Kacheln</TabsTrigger>
+                <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button>
+          </div>
         }
       />
 
@@ -118,7 +209,7 @@ function PropertiesPage() {
         submitting={create.isPending}
       />
 
-      <div className="mb-4 grid gap-3 md:grid-cols-2 lg:grid-cols-6">
+      <div className="mb-4 grid gap-3 md:grid-cols-2 lg:grid-cols-7">
         <div className="relative lg:col-span-2">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder="Suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -159,7 +250,55 @@ function PropertiesPage() {
             {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={archivedFilter} onValueChange={(v) => setArchivedFilter(v as typeof archivedFilter)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Aktiv</SelectItem>
+            <SelectItem value="archived">Archiviert</SelectItem>
+            <SelectItem value="all">Alle</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
+
+      {selectionCount > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-accent/40 p-3">
+          <span className="text-sm font-medium">{selectionCount} ausgewählt</span>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline"><UserCog className="mr-1 h-4 w-4" />Zuweisen</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
+                <DropdownMenuLabel>Mitarbeitende</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => assign.mutate(null)}>
+                  <X className="mr-2 h-4 w-4" />Zuweisung entfernen
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {employees.map((e: any) => (
+                  <DropdownMenuItem key={e.id} onClick={() => assign.mutate(e.id)}>
+                    {e.full_name ?? e.email}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {archivedFilter === "archived" ? (
+              <Button size="sm" variant="outline" onClick={() => archive.mutate(false)}>
+                <ArchiveRestore className="mr-1 h-4 w-4" />Wiederherstellen
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => archive.mutate(true)}>
+                <Archive className="mr-1 h-4 w-4" />Archivieren
+              </Button>
+            )}
+            <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(true)}>
+              <Trash2 className="mr-1 h-4 w-4" />Löschen
+            </Button>
+            <Button size="sm" variant="ghost" onClick={clearSelection}>
+              <X className="mr-1 h-4 w-4" />Auswahl aufheben
+            </Button>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="text-sm text-muted-foreground">Lädt…</div>
@@ -173,41 +312,141 @@ function PropertiesPage() {
             <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button>
           ) : undefined}
         />
-      ) : (
+      ) : view === "grid" ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((p) => (
-            <Link key={p.id} to="/properties/$id" params={{ id: p.id }} className="group overflow-hidden rounded-2xl border bg-card shadow-soft transition hover:shadow-glow">
-              <div className="aspect-[4/3] overflow-hidden bg-muted">
-                {p.images?.[0] ? (
-                  <img src={p.images[0]} alt={p.title} className="h-full w-full object-cover transition group-hover:scale-105" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">Kein Bild</div>
-                )}
-              </div>
-              <div className="p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <Badge variant="secondary" className="text-xs">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
-                  <span className="text-xs text-muted-foreground">{listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}</span>
+          {filtered.map((p: any) => {
+            const isSel = selected.has(p.id);
+            return (
+              <div key={p.id} className={`group relative overflow-hidden rounded-2xl border bg-card shadow-soft transition hover:shadow-glow ${isSel ? "ring-2 ring-primary" : ""}`}>
+                <div className="absolute left-3 top-3 z-10 rounded-md bg-background/90 p-1 backdrop-blur">
+                  <Checkbox checked={isSel} onCheckedChange={() => toggleOne(p.id)} aria-label="Auswählen" />
                 </div>
-                <h3 className="mt-2 line-clamp-1 font-semibold">{p.title}</h3>
-                <p className="mt-1 line-clamp-1 flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3" />{[p.address, p.city].filter(Boolean).join(", ") || "—"}
-                </p>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="font-display text-lg font-bold">
-                    {formatCurrency(p.listing_type === "rent" ? (p.rent ? Number(p.rent) : null) : (p.price ? Number(p.price) : null))}
-                    {p.listing_type === "rent" && p.rent ? <span className="text-xs font-normal text-muted-foreground"> /Mt.</span> : null}
-                  </span>
-                  <div className="flex gap-3 text-xs text-muted-foreground">
-                    {p.rooms && <span className="flex items-center gap-1"><Bed className="h-3 w-3" />{p.rooms}</span>}
-                    {(p.living_area || p.area) && <span className="flex items-center gap-1"><Maximize className="h-3 w-3" />{formatArea(Number(p.living_area || p.area))}</span>}
+                <Link to="/properties/$id" params={{ id: p.id }} className="block">
+                  <div className="aspect-[4/3] overflow-hidden bg-muted">
+                    {p.images?.[0] ? (
+                      <img src={p.images[0]} alt={p.title} className="h-full w-full object-cover transition group-hover:scale-105" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">Kein Bild</div>
+                    )}
                   </div>
-                </div>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge variant="secondary" className="text-xs">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
+                      <span className="text-xs text-muted-foreground">{listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}</span>
+                    </div>
+                    <h3 className="mt-2 line-clamp-1 font-semibold">{p.title}</h3>
+                    <p className="mt-1 line-clamp-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3" />{[p.address, p.city].filter(Boolean).join(", ") || "—"}
+                    </p>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="font-display text-lg font-bold">
+                        {formatCurrency(p.listing_type === "rent" ? (p.rent ? Number(p.rent) : null) : (p.price ? Number(p.price) : null))}
+                        {p.listing_type === "rent" && p.rent ? <span className="text-xs font-normal text-muted-foreground"> /Mt.</span> : null}
+                      </span>
+                      <div className="flex gap-3 text-xs text-muted-foreground">
+                        {p.rooms && <span className="flex items-center gap-1"><Bed className="h-3 w-3" />{p.rooms}</span>}
+                        {(p.living_area || p.area) && <span className="flex items-center gap-1"><Maximize className="h-3 w-3" />{formatArea(Number(p.living_area || p.area))}</span>}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
               </div>
-            </Link>
-          ))}
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-xl border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAll} aria-label="Alle auswählen" />
+                </TableHead>
+                <TableHead>Titel</TableHead>
+                <TableHead>Typ</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Ort</TableHead>
+                <TableHead className="text-right">Preis</TableHead>
+                <TableHead>Zuständig</TableHead>
+                <TableHead className="w-10"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((p: any) => {
+                const emp = p.assigned_to ? (employeeMap.get(p.assigned_to) as any) : null;
+                const isArchived = p.status === "archived";
+                return (
+                  <TableRow key={p.id} data-state={selected.has(p.id) ? "selected" : undefined}>
+                    <TableCell>
+                      <Checkbox checked={selected.has(p.id)} onCheckedChange={() => toggleOne(p.id)} aria-label="Auswählen" />
+                    </TableCell>
+                    <TableCell>
+                      <Link to="/properties/$id" params={{ id: p.id }} className="font-medium hover:text-primary">
+                        {p.title}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-sm">{propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels]}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="text-xs">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{[p.address, p.city].filter(Boolean).join(", ") || "—"}</TableCell>
+                    <TableCell className="text-right text-sm">
+                      {formatCurrency(p.listing_type === "rent" ? (p.rent ? Number(p.rent) : null) : (p.price ? Number(p.price) : null))}
+                      {p.listing_type === "rent" && p.rent ? <span className="text-xs text-muted-foreground"> /Mt.</span> : null}
+                    </TableCell>
+                    <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link to="/properties/$id" params={{ id: p.id }}>Öffnen</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {isArchived ? (
+                            <DropdownMenuItem onClick={() => { setSelected(new Set([p.id])); archive.mutate(false); }}>
+                              <ArchiveRestore className="mr-2 h-4 w-4" />Wiederherstellen
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onClick={() => { setSelected(new Set([p.id])); archive.mutate(true); }}>
+                              <Archive className="mr-2 h-4 w-4" />Archivieren
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => { setSelected(new Set([p.id])); setConfirmDelete(true); }}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />Löschen
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
       )}
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Immobilien löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectionCount} Objekt{selectionCount === 1 ? "" : "e"} werden unwiderruflich gelöscht. Verknüpfte Daten können verloren gehen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => remove.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
