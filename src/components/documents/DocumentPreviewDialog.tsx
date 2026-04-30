@@ -70,11 +70,22 @@ export function DocumentPreviewDialog({
         propertyId: propertyId ?? undefined,
         overrides: extraContext,
       });
-      // Try the intended active template first (important when multiple active mandate templates exist)
-      const nameHint = TEMPLATE_NAME_HINTS[kind!];
+      // 1) is_default flag wins
       let tpl: { content: string | null } | null = null;
+      {
+        const { data } = await supabase
+          .from("document_templates")
+          .select("content")
+          .eq("type", kind! as any)
+          .eq("is_active", true)
+          .eq("is_default", true)
+          .maybeSingle();
+        tpl = data;
+      }
 
-      if (nameHint) {
+      // 2) Fall back to legacy name hint
+      const nameHint = TEMPLATE_NAME_HINTS[kind!];
+      if (!tpl && nameHint) {
         const { data } = await supabase
           .from("document_templates")
           .select("content")
@@ -87,6 +98,7 @@ export function DocumentPreviewDialog({
         tpl = data;
       }
 
+      // 3) Any active template
       if (!tpl) {
         const { data } = await supabase
           .from("document_templates")
@@ -98,6 +110,7 @@ export function DocumentPreviewDialog({
           .maybeSingle();
         tpl = data;
       }
+
 
       const content = (tpl?.content && tpl.content.trim()) ? tpl.content : defaultTemplateForType(kind!);
       return wrapHtmlDocument(KIND_LABELS[kind!], renderTemplate(content, ctx), ctx.brand);
