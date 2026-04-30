@@ -309,12 +309,30 @@ const DATE_KEYS = new Set([
   "today",
 ]);
 
+function splitName(full: string): { first: string; last: string } {
+  const t = (full ?? "").trim().replace(/\s+/g, " ");
+  if (!t) return { first: "", last: "" };
+  const parts = t.split(" ");
+  if (parts.length === 1) return { first: parts[0], last: "" };
+  return { first: parts[0], last: parts.slice(1).join(" ") };
+}
+
 function getValue(ctx: TemplateContext, path: string): string {
   // Checkbox helpers
   if (path.startsWith("check.")) {
     const key = path.slice("check.".length);
     const map = (ctx as TemplateContext & { checks?: Record<string, boolean> }).checks ?? {};
     return map[key] ? "☑" : "☐";
+  }
+
+  // Derived name parts (split full_name into Vorname / Name)
+  if (path === "client.first_name" || path === "client.last_name" || path === "client_first_name" || path === "client_last_name") {
+    const { first, last } = splitName(ctx.client?.full_name ?? "");
+    return path.endsWith("first_name") ? first : last;
+  }
+  if (path === "partner.first_name" || path === "partner.last_name") {
+    const { first, last } = splitName((ctx as any).partner?.full_name ?? "");
+    return path.endsWith("first_name") ? first : last;
   }
 
   // Flat alias → resolve through the nested path
