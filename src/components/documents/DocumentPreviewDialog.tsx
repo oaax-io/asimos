@@ -76,7 +76,7 @@ export function DocumentPreviewDialog({
         .limit(1)
         .maybeSingle();
       const content = tpl?.content ?? defaultTemplateForType(kind!);
-      return wrapHtmlDocument(KIND_LABELS[kind!], renderTemplate(content, ctx));
+      return wrapHtmlDocument(KIND_LABELS[kind!], renderTemplate(content, ctx), ctx.brand);
     },
   });
 

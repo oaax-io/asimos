@@ -159,7 +159,7 @@ export function DocumentWizard({
 
   const previewHtml = useMemo(() => {
     if (!finalContext) return "";
-    return wrapHtmlDocument(KIND_LABELS[kind], renderTemplate(templateContent, finalContext));
+    return wrapHtmlDocument(KIND_LABELS[kind], renderTemplate(templateContent, finalContext), finalContext.brand);
   }, [finalContext, templateContent, kind]);
 
   const save = useMutation({

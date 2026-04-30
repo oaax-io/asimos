@@ -99,9 +99,44 @@ export type TemplateContext = {
     bic?: string | null;
     purpose?: string | null;
   } | null;
+  brand?: {
+    company_name?: string | null;
+    company_address?: string | null;
+    company_email?: string | null;
+    company_website?: string | null;
+    logo_url?: string | null;
+    primary_color?: string | null;
+    secondary_color?: string | null;
+    font_family?: string | null;
+  } | null;
   today?: string;
   place?: string;
 };
+
+// Default brand fallback (ASIMO)
+export const DEFAULT_BRAND = {
+  company_name: "ASIMO",
+  company_address: "",
+  company_email: "",
+  company_website: "",
+  logo_url: "",
+  primary_color: "#324642",
+  secondary_color: "#6A9387",
+  font_family: "Helvetica Neue, Arial, sans-serif",
+} as const;
+
+// Top-level alias keys (so templates can write {{logo_url}} instead of {{brand.logo_url}})
+const BRAND_ALIASES: Record<string, keyof NonNullable<TemplateContext["brand"]>> = {
+  company_name: "company_name",
+  company_address: "company_address",
+  company_email: "company_email",
+  company_website: "company_website",
+  logo_url: "logo_url",
+  primary_color: "primary_color",
+  secondary_color: "secondary_color",
+  font_family: "font_family",
+};
+
 
 export const AVAILABLE_VARIABLES = [
   // Client
@@ -204,6 +239,13 @@ const DATE_KEYS = new Set([
 ]);
 
 function getValue(ctx: TemplateContext, path: string): string {
+  // Brand alias resolution: {{logo_url}} → ctx.brand.logo_url (with default fallback)
+  if (BRAND_ALIASES[path]) {
+    const key = BRAND_ALIASES[path];
+    const v = ctx.brand?.[key] ?? DEFAULT_BRAND[key];
+    return v ? String(v) : "";
+  }
+
   const parts = path.split(".");
   let cur: unknown = ctx;
   for (const p of parts) {
@@ -250,12 +292,27 @@ export function findMissingVariables(template: string, ctx: TemplateContext): st
   });
   const missing: string[] = [];
   for (const path of used) {
+    // Brand aliases are always resolvable (fallbacks exist) → skip
+    if (BRAND_ALIASES[path]) continue;
     if (!getValue(ctx, path)) missing.push(path);
   }
   return missing;
 }
 
-export function wrapHtmlDocument(title: string, bodyHtml: string): string {
+export function wrapHtmlDocument(
+  title: string,
+  bodyHtml: string,
+  brand?: TemplateContext["brand"] | null,
+): string {
+  const b = { ...DEFAULT_BRAND, ...(brand ?? {}) };
+  const primary = b.primary_color || DEFAULT_BRAND.primary_color;
+  const secondary = b.secondary_color || DEFAULT_BRAND.secondary_color;
+  const font = b.font_family || DEFAULT_BRAND.font_family;
+  const logoBlock = b.logo_url
+    ? `<img src="${escapeAttr(b.logo_url)}" alt="${escapeAttr(b.company_name || "")}" style="height:56px;width:auto;display:block;" />`
+    : `<div style="font-weight:700;font-size:18px;color:${primary};">${escapeAttr(b.company_name || "")}</div>`;
+  const footerBlock = `${escapeAttr(b.company_name || "")}${b.company_address ? " · " + escapeAttr(b.company_address) : ""}${b.company_email ? " · " + escapeAttr(b.company_email) : ""}${b.company_website ? " · " + escapeAttr(b.company_website) : ""}`;
+
   return `<!doctype html>
 <html lang="de">
 <head>
@@ -263,26 +320,49 @@ export function wrapHtmlDocument(title: string, bodyHtml: string): string {
 <title>${title.replace(/</g, "&lt;")}</title>
 <style>
   @page { size: A4; margin: 24mm; }
-  body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111; line-height: 1.55; max-width: 780px; margin: 32px auto; padding: 0 24px; background: #fff; }
-  h1 { font-size: 22px; margin: 0 0 8px; }
-  h2 { font-size: 16px; margin: 24px 0 8px; }
+  :root { --brand-primary: ${primary}; --brand-secondary: ${secondary}; }
+  body { font-family: ${font}; color: #111; line-height: 1.55; max-width: 780px; margin: 32px auto; padding: 0 24px; background: #fff; }
+  .brand-header { display:flex; align-items:center; justify-content:space-between; padding-bottom:16px; border-bottom:2px solid ${primary}; margin-bottom:24px; }
+  .brand-header .meta { text-align:right; font-size:11px; color:#555; line-height:1.4; }
+  h1 { font-size: 22px; margin: 0 0 8px; color: ${primary}; }
+  h2 { font-size: 16px; margin: 24px 0 8px; color: ${primary}; border-left: 3px solid ${secondary}; padding-left: 8px; }
   p { margin: 8px 0; }
-  hr { border: 0; border-top: 1px solid #e5e5e5; margin: 24px 0; }
+  strong { color: ${primary}; }
+  hr { border: 0; border-top: 1px solid ${secondary}33; margin: 24px 0; }
   table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 14px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid ${secondary}33; font-size: 14px; }
+  th { color: ${primary}; }
   .muted { color: #666; font-size: 12px; }
   .signature { margin-top: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-  .signature div { border-top: 1px solid #333; padding-top: 6px; font-size: 12px; }
+  .signature div { border-top: 1px solid ${primary}; padding-top: 6px; font-size: 12px; }
+  .brand-footer { margin-top: 48px; padding-top: 12px; border-top: 1px solid ${secondary}66; color:#666; font-size: 11px; text-align:center; }
   @media print {
     body { margin: 0; padding: 0; max-width: none; }
   }
 </style>
 </head>
 <body>
+<div class="brand-header">
+  <div>${logoBlock}</div>
+  <div class="meta">
+    ${escapeAttr(b.company_address || "")}<br/>
+    ${escapeAttr(b.company_email || "")} ${b.company_website ? "· " + escapeAttr(b.company_website) : ""}
+  </div>
+</div>
 ${bodyHtml}
+<div class="brand-footer">${footerBlock}</div>
 </body>
 </html>`;
 }
+
+function escapeAttr(s: string): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 
 export const DEFAULT_MANDATE_TEMPLATE = `<h1>Maklervertrag (Verkaufsmandat)</h1>
 <p class="muted">Datum: {{today}} – Ort: {{company.default_place}}</p>

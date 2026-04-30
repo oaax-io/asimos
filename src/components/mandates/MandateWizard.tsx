@@ -158,6 +158,7 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
     return wrapHtmlDocument(
       mandateType === "exclusive" ? "Maklermandat (exklusiv)" : "Maklermandat (teilexklusiv)",
       renderTemplate(tpl, ctx),
+      ctx.brand,
     );
   }, [ctx, docKind, mandateType]);
 
