@@ -107,6 +107,7 @@ export function DocumentPreviewDialog({
                 html={html}
                 title={title}
                 documentId={generatedDocumentId ?? null}
+                documentType={kind ?? null}
                 onPrintFallback={printIt}
                 variant="default"
               />
