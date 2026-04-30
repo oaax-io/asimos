@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Database } from "@/integrations/supabase/types";
 
 /**
  * Server-side PDF generation via self-hosted Puppeteer microservice.
@@ -25,6 +26,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const PDF_TIMEOUT_MS = 30_000;
 const BUCKET = "documents";
 const PDF_PROVIDER = "railway-puppeteer";
+type StoredDocumentInsert = Database["public"]["Tables"]["documents"]["Insert"];
 
 export const renderDocumentPdf = createServerFn({ method: "POST" })
   .inputValidator((input: { html: string; title?: string; documentId?: string | null }) => {
@@ -142,6 +144,16 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
 
     // 4) Update generated_documents row when known
     if (data.documentId) {
+      const { data: generatedDoc, error: generatedDocErr } = await supabaseAdmin
+        .from("generated_documents")
+        .select("id, related_type, related_id, title, document_type, created_by")
+        .eq("id", data.documentId)
+        .maybeSingle();
+
+      if (generatedDocErr) {
+        console.warn(`[pdf] generated_documents lookup failed id=${data.documentId} err=${generatedDocErr.message}`);
+      }
+
       const { error: updErr } = await supabaseAdmin
         .from("generated_documents")
         .update({
@@ -154,6 +166,43 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
         .eq("id", data.documentId);
       if (updErr) {
         console.warn(`[pdf] generated_documents update failed id=${data.documentId} err=${updErr.message}`);
+      }
+
+      if (generatedDoc?.related_type && generatedDoc.related_id) {
+        const documentsPayload: StoredDocumentInsert = {
+          file_name: filename,
+          file_url: storagePath,
+          document_type: mapGeneratedDocumentTypeToStoredType(generatedDoc.document_type),
+          related_type: generatedDoc.related_type,
+          related_id: generatedDoc.related_id,
+          uploaded_by: generatedDoc.created_by ?? null,
+          size_bytes: pdfBytes.byteLength,
+          mime_type: "application/pdf",
+          notes: `Automatisch generiertes PDF${generatedDoc.title ? `: ${generatedDoc.title}` : ""}`,
+        };
+
+        const { data: existingDocument, error: existingDocumentErr } = await supabaseAdmin
+          .from("documents")
+          .select("id")
+          .eq("file_url", storagePath)
+          .maybeSingle();
+
+        if (existingDocumentErr) {
+          console.warn(`[pdf] documents lookup failed path=${storagePath} err=${existingDocumentErr.message}`);
+        } else if (existingDocument?.id) {
+          const { error: docUpdateErr } = await supabaseAdmin
+            .from("documents")
+            .update(documentsPayload)
+            .eq("id", existingDocument.id);
+          if (docUpdateErr) {
+            console.warn(`[pdf] documents update failed id=${existingDocument.id} err=${docUpdateErr.message}`);
+          }
+        } else {
+          const { error: docInsertErr } = await supabaseAdmin.from("documents").insert(documentsPayload);
+          if (docInsertErr) {
+            console.warn(`[pdf] documents insert failed path=${storagePath} err=${docInsertErr.message}`);
+          }
+        }
       }
     }
 
@@ -201,6 +250,18 @@ function slugify(s: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
+}
+
+function mapGeneratedDocumentTypeToStoredType(
+  documentType: string | null | undefined,
+): StoredDocumentInsert["document_type"] {
+  if (documentType === "reservation") return "reservation";
+  if (documentType === "reservation_receipt") return "reservation_receipt";
+  if (documentType === "mandate") return "mandate";
+  if (documentType === "mandate_partial") return "mandate_partial";
+  if (documentType === "nda") return "nda";
+  if (documentType === "expose") return "contract";
+  return "contract";
 }
 
 async function safeText(res: Response): Promise<string> {
