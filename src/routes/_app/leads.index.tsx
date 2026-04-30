@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -114,6 +114,17 @@ function LeadsPage() {
       return true;
     });
   }, [leads, statusFilter, sourceFilter, assignedFilter, search]);
+
+  // Pagination (Liste)
+  const PAGE_SIZE = 20;
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [search, statusFilter, sourceFilter, assignedFilter]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage],
+  );
 
   // Banner nur bei "echten" Fehlern – Backend-Unavailable wird automatisch retryed.
   const queryError = leadsQuery.error;
@@ -448,7 +459,7 @@ function LeadsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((l) => {
+                {paginated.map((l) => {
                   const isSel = selected.has(l.id);
                   return (
                     <TableRow key={l.id} className={cn("group", isSel && "bg-primary/5")}>
@@ -501,6 +512,22 @@ function LeadsPage() {
               </TableBody>
             </Table>
           </div>
+          {filtered.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+              <span>
+                Zeige {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} von {filtered.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
+                  Zurück
+                </Button>
+                <span>Seite {currentPage} / {totalPages}</span>
+                <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>
+                  Weiter
+                </Button>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="kanban">
