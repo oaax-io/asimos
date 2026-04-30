@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Search, Eye, Send, Printer } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { SendDocumentDialog } from "@/components/documents/SendDocumentDialog";
+import { GeneratePdfButton } from "@/components/documents/GeneratePdfButton";
 
 const TYPE_LABELS: Record<string, string> = {
   reservation: "Reservation",
@@ -231,7 +232,14 @@ export function GeneratedDocumentsTable({
                         <Button variant="ghost" size="icon" title="Vorschau" onClick={() => setPreviewDoc(r)}>
                           <Eye className="size-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" title="Drucken / PDF" onClick={() => printDoc(r)}>
+                        <GeneratePdfButton
+                          html={r.html_content}
+                          title={r.title ?? undefined}
+                          documentId={r.id}
+                          onPrintFallback={() => printDoc(r)}
+                          variant="ghost"
+                        />
+                        <Button variant="ghost" size="icon" title="Drucken" onClick={() => printDoc(r)}>
                           <Printer className="size-4" />
                         </Button>
                         <Button variant="ghost" size="icon" title="Senden" onClick={() => setSendDoc(r)}>
