@@ -619,7 +619,19 @@ function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] 
             <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Quelle</Label><Input value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} /></div>
+            <div>
+              <Label>Quelle</Label>
+              <Select value={form.source || UNASSIGNED} onValueChange={(v) => setForm({ ...form, source: v === UNASSIGNED ? "" : v })}>
+                <SelectTrigger><SelectValue placeholder="Quelle wählen" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={UNASSIGNED}>Keine Angabe</SelectItem>
+                  {LEAD_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {form.source && !LEAD_SOURCES.includes(form.source as typeof LEAD_SOURCES[number]) && (
+                    <SelectItem value={form.source}>{form.source}</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as LeadStatus })}>
