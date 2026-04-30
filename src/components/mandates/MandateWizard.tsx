@@ -70,6 +70,7 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
   const [commissionValue, setCommissionValue] = useState<string>("3");
   const [validFrom, setValidFrom] = useState<string>("");
   const [validUntil, setValidUntil] = useState<string>("");
+  const [createdDocumentId, setCreatedDocumentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -81,6 +82,7 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
       setCommissionValue("3");
       setValidFrom("");
       setValidUntil("");
+      setCreatedDocumentId(null);
     }
   }, [open]);
 
