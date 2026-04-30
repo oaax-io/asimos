@@ -218,34 +218,59 @@ export function DocumentTemplatesManager() {
         />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {templates.map((t) => (
-            <div key={t.id} className="rounded-xl border bg-card p-4 shadow-soft">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <FileCode2 className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-medium">{t.name}</h3>
+          {templates.map((t) => {
+            const isSystem = (t as { is_system?: boolean }).is_system === true;
+            const isDefault = (t as { is_default?: boolean }).is_default === true;
+            return (
+              <div key={t.id} className={`rounded-xl border bg-card p-4 shadow-soft ${isDefault ? "ring-1 ring-primary" : ""}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <FileCode2 className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="font-medium">{t.name}</h3>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1">
+                    {isDefault && (
+                      <Badge className="gap-1"><Star className="h-3 w-3" />Standard</Badge>
+                    )}
+                    {isSystem && (
+                      <Badge variant="outline" className="gap-1"><Lock className="h-3 w-3" />System</Badge>
+                    )}
+                    <Badge variant={t.is_active ? "default" : "secondary"}>{t.is_active ? "Aktiv" : "Inaktiv"}</Badge>
+                  </div>
                 </div>
-                <Badge variant={t.is_active ? "default" : "secondary"}>{t.is_active ? "Aktiv" : "Inaktiv"}</Badge>
+                <p className="mt-1 text-xs text-muted-foreground">{TYPE_LABELS[t.type] ?? t.type}</p>
+                <div className="mt-3 line-clamp-3 text-xs text-muted-foreground">
+                  {t.content.replace(/<[^>]+>/g, " ").slice(0, 200)}…
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => startEdit(t)}>
+                    {isSystem ? "Ansehen" : "Bearbeiten"}
+                  </Button>
+                  {!isDefault && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDefault.mutate(t.id)}
+                      disabled={setDefault.isPending}
+                    >
+                      <Star className="mr-1 h-4 w-4" />
+                      Als Standard
+                    </Button>
+                  )}
+                  {!isSystem && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => remove.mutate(t.id)}
+                      className="ml-auto text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">{TYPE_LABELS[t.type] ?? t.type}</p>
-              <div className="mt-3 line-clamp-3 text-xs text-muted-foreground">
-                {t.content.replace(/<[^>]+>/g, " ").slice(0, 200)}…
-              </div>
-              <div className="mt-3 flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => startEdit(t)}>
-                  Bearbeiten
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => remove.mutate(t.id)}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
