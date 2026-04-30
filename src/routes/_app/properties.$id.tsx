@@ -61,8 +61,8 @@ function PropertyDetail() {
   });
 
   const update = useMutation({
-    mutationFn: async (values: Partial<PropertyFormValues>) => {
-      const { error } = await supabase.from("properties").update(values as any).eq("id", id);
+    mutationFn: async (payload: WizardSubmit) => {
+      const { error } = await supabase.from("properties").update(payload.property as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
