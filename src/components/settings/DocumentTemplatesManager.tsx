@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, FileCode2, Trash2, Eye } from "lucide-react";
+import { Plus, FileCode2, Trash2, Eye, Sparkles, Code2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import {
   AVAILABLE_VARIABLES,
   defaultTemplateForType,
@@ -280,16 +282,40 @@ export function DocumentTemplatesManager() {
                 </div>
               </div>
               <div>
-                <Label>HTML-Inhalt</Label>
-                <Textarea
-                  rows={18}
-                  value={form.content}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
-                  className="font-mono text-xs"
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Verwende <code>{"{{client_name}}"}</code> oder <code>{"{{client.full_name}}"}</code>, um Variablen einzufügen.
-                </p>
+                <Label className="mb-1.5 block">Inhalt</Label>
+                <Tabs defaultValue="visual">
+                  <TabsList>
+                    <TabsTrigger value="visual">
+                      <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                      Visuell
+                    </TabsTrigger>
+                    <TabsTrigger value="html">
+                      <Code2 className="mr-1.5 h-3.5 w-3.5" />
+                      HTML
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="visual" className="mt-2">
+                    <RichTextEditor
+                      value={form.content}
+                      onChange={(html) => setForm((prev) => ({ ...prev, content: html }))}
+                      variables={AVAILABLE_VARIABLES.map((v) => ({ key: v.key, label: v.label.replace(/^★\s*/, "") }))}
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Wähle rechts eine Variable, um sie als Chip einzufügen. Beim Generieren wird sie durch echte Daten ersetzt.
+                    </p>
+                  </TabsContent>
+                  <TabsContent value="html" className="mt-2">
+                    <Textarea
+                      rows={18}
+                      value={form.content}
+                      onChange={(e) => setForm({ ...form, content: e.target.value })}
+                      className="font-mono text-xs"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Für Power-User: HTML direkt bearbeiten. Variablen als <code>{"{{client_name}}"}</code> schreiben.
+                    </p>
+                  </TabsContent>
+                </Tabs>
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
