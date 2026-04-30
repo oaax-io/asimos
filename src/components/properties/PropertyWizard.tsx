@@ -18,6 +18,7 @@ import { propertyStatusLabels } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { convertUnsupportedImages } from "@/lib/image-convert";
 
 /* -------------------- Typen -------------------- */
 
@@ -820,8 +821,9 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
     if (files.length === 0) return;
     setUploading(true);
     try {
+      const processed = await convertUnsupportedImages(files);
       const uploaded: WizardMedia[] = [];
-      for (const file of files) {
+      for (const file of processed) {
         const ext = file.name.split(".").pop() ?? "bin";
         const path = `_wizard/${crypto.randomUUID()}.${ext}`;
         const { error } = await supabase.storage.from("media").upload(path, file, {
@@ -927,7 +929,7 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
             ref={fileRef}
             type="file"
             multiple
-            accept="image/*,video/*,.pdf"
+            accept="image/*,video/*,.pdf,.tif,.tiff,.heic,.heif"
             className="hidden"
             onChange={(e) => { void handleFiles(Array.from(e.target.files ?? [])); if (fileRef.current) fileRef.current.value = ""; }}
           />
