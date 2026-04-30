@@ -1021,6 +1021,7 @@ function wrapAsimoSkin(args: {
     padding-top: 14px;
     border-top: 1px solid var(--asimo-rule);
     width: calc(50% - 11px);
+    margin-left: auto;
     display: block;
     break-inside: avoid;
     page-break-inside: avoid;
