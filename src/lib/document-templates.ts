@@ -936,26 +936,32 @@ function wrapAsimoSkin(args: {
 <style>
   @page {
     size: A4;
-    margin: 16mm 14mm 22mm 14mm;
+    margin: 16mm 14mm 20mm 14mm;
     @bottom-left {
-      content: "${companyName.replace(/"/g, '\\"')} — ${title.replace(/"/g, '\\"').replace(/</g, "&lt;")}";
+      content: "${companyName.replace(/"/g, '\\"')}";
       font-family: ${font};
       font-size: 8pt;
       color: #6b7280;
-      padding-top: 4mm;
-      border-top: 1px solid #d6d6d6;
-      width: 100%;
-      vertical-align: top;
+      letter-spacing: 0.02em;
+      vertical-align: bottom;
+      padding-bottom: 6mm;
+    }
+    @bottom-center {
+      content: "${title.replace(/"/g, '\\"').replace(/</g, "&lt;")}";
+      font-family: ${font};
+      font-size: 8pt;
+      color: #9ca3af;
+      vertical-align: bottom;
+      padding-bottom: 6mm;
     }
     @bottom-right {
-      content: "Seite " counter(page) " von " counter(pages);
+      content: "Seite " counter(page) " / " counter(pages);
       font-family: ${font};
       font-size: 8pt;
-      color: #6b7280;
-      padding-top: 4mm;
-      border-top: 1px solid #d6d6d6;
-      vertical-align: top;
+      color: ${accent};
       font-weight: 600;
+      vertical-align: bottom;
+      padding-bottom: 6mm;
     }
   }
   :root {
@@ -1010,10 +1016,21 @@ function wrapAsimoSkin(args: {
   .a-two-cols > div > .a-objekt:first-child { margin-top: 0; }
   .a-clear { clear: both; }
 
-  .a-signatures { margin-top: 16px; break-inside: avoid; }
-  .a-sig { margin-top: 18px; }
-  .a-sig .line { border-bottom: 1px solid #111; height: 22px; }
-  .a-sig .label { font-size: 8.5pt; color: var(--asimo-muted); margin-top: 3px; }
+  .a-signatures {
+    margin-top: 28px;
+    padding-top: 14px;
+    border-top: 1px solid var(--asimo-rule);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 22px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-before: avoid;
+    page-break-before: avoid;
+  }
+  .a-sig { margin-top: 22px; break-inside: avoid; }
+  .a-sig .line { border-bottom: 1px solid #111; height: 26px; }
+  .a-sig .label { font-size: 8.5pt; color: var(--asimo-muted); margin-top: 4px; }
 
   .a-footer { position: fixed; bottom: 6mm; left: 14mm; right: 14mm; display: flex; justify-content: space-between; align-items: center; font-size: 8pt; color: var(--asimo-muted); border-top: 1px solid var(--asimo-rule); padding-top: 6px; }
   .a-foot-left { display: flex; align-items: center; gap: 8px; }
