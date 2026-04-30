@@ -1064,6 +1064,7 @@ function wrapAsimoSkin(args: {
 
   .a-section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 7px; }
   .a-section h4 { font-size: 9.5pt; font-weight: 700; color: var(--asimo-accent); margin: 6px 0 3px; }
+  .a-section h4.sub { font-size: 9pt; color: #333; margin-top: 4px; }
   .a-section p { margin: 0 0 4px; text-align: justify; hyphens: auto; -webkit-hyphens: auto; font-size: 8.25pt; line-height: 1.38; }
   .commission-row { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-top: 5px; font-size: 8.25pt; align-items: center; }
   .commission-grid { display: grid; grid-template-columns: repeat(2, max-content); gap: 4px 18px; margin-top: 6px; font-size: 8.25pt; }
@@ -1216,7 +1217,7 @@ export const DEFAULT_MANDATE_ASIMO_EXCLUSIVE = `<!--skin:asimo-->
     </div>
 
     <div class="a-section" style="{{mandate.show_term}}">
-      <h4>Vertragslaufzeit</h4>
+      <h4 class="sub">6.1 Vertragslaufzeit</h4>
       <p>Dieses Mandat ist gültig vom <strong>{{mandate.valid_from}}</strong> bis zum <strong>{{mandate.valid_until}}</strong>.</p>
     </div>
 
