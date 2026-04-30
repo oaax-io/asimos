@@ -263,6 +263,10 @@ function LeadsPage() {
               <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
               <TabsTrigger value="kanban"><LayoutGrid className="mr-1 h-4 w-4" />Kanban</TabsTrigger>
             </TabsList>
+          <Button variant="outline" onClick={() => setImportSourceOpen(true)}>
+            <Upload className="mr-1 h-4 w-4" />
+            Importieren
+          </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Neuer Lead</Button></DialogTrigger>
             <DialogContent>
