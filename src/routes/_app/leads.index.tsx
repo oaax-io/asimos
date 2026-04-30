@@ -30,6 +30,7 @@ type Profile = { id: string; full_name: string | null; email: string | null };
 
 const ALL = "__all__";
 const UNASSIGNED = "__unassigned__";
+const LEAD_SOURCES = ["Eigenlead", "Website", "Empfehlung", "Tiktok", "Instagram", "Facebook"] as const;
 
 function LeadsPage() {
   const qc = useQueryClient();
@@ -118,6 +119,8 @@ function LeadsPage() {
   const create = useMutation({
     mutationFn: async () => {
       if (!form.full_name.trim()) throw new Error("Name ist erforderlich");
+      if (!form.email.trim()) throw new Error("E-Mail ist erforderlich");
+      if (!form.phone.trim()) throw new Error("Telefon ist erforderlich");
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
@@ -261,12 +264,21 @@ function LeadsPage() {
             <DialogContent>
               <DialogHeader><DialogTitle>Neuer Lead</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                <div><Label>Name</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
+                <div><Label>Name *</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-                  <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+                  <div><Label>E-Mail *</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+                  <div><Label>Telefon *</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
                 </div>
-                <div><Label>Quelle</Label><Input placeholder="Website, Empfehlung…" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} /></div>
+                <div>
+                  <Label>Quelle</Label>
+                  <Select value={form.source || UNASSIGNED} onValueChange={(v) => setForm({ ...form, source: v === UNASSIGNED ? "" : v })}>
+                    <SelectTrigger><SelectValue placeholder="Quelle wählen" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={UNASSIGNED}>Keine Angabe</SelectItem>
+                      {LEAD_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div>
                   <Label>Zugewiesen an</Label>
                   <Select value={form.assigned_to || UNASSIGNED} onValueChange={(v) => setForm({ ...form, assigned_to: v === UNASSIGNED ? "" : v })}>
@@ -281,7 +293,7 @@ function LeadsPage() {
               </div>
               <DialogFooter className="gap-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
-                <Button onClick={() => create.mutate()} disabled={!form.full_name || create.isPending}>
+                <Button onClick={() => create.mutate()} disabled={!form.full_name.trim() || !form.email.trim() || !form.phone.trim() || create.isPending}>
                   {create.isPending ? "Speichern…" : "Speichern"}
                 </Button>
               </DialogFooter>
@@ -607,7 +619,19 @@ function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] 
             <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Quelle</Label><Input value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} /></div>
+            <div>
+              <Label>Quelle</Label>
+              <Select value={form.source || UNASSIGNED} onValueChange={(v) => setForm({ ...form, source: v === UNASSIGNED ? "" : v })}>
+                <SelectTrigger><SelectValue placeholder="Quelle wählen" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={UNASSIGNED}>Keine Angabe</SelectItem>
+                  {LEAD_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {form.source && !LEAD_SOURCES.includes(form.source as typeof LEAD_SOURCES[number]) && (
+                    <SelectItem value={form.source}>{form.source}</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as LeadStatus })}>
