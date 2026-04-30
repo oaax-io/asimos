@@ -125,6 +125,8 @@ export const DEFAULT_BRAND = {
   primary_color: "#324642",
   secondary_color: "#6A9387",
   font_family: "Helvetica Neue, Arial, sans-serif",
+  header_html: "",
+  footer_html: "",
 } as const;
 
 // Top-level alias keys (so templates can write {{logo_url}} instead of {{brand.logo_url}})
