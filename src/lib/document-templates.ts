@@ -303,8 +303,9 @@ export function findMissingVariables(template: string, ctx: TemplateContext): st
   });
   const missing: string[] = [];
   for (const path of used) {
-    // Brand aliases are always resolvable (fallbacks exist) → skip
+    // Brand aliases & checkbox helpers are always resolvable → skip
     if (BRAND_ALIASES[path]) continue;
+    if (path.startsWith("check.")) continue;
     if (!getValue(ctx, path)) missing.push(path);
   }
   return missing;
