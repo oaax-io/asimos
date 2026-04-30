@@ -1036,7 +1036,10 @@ function wrapAsimoSkin(args: {
   .a-section h4 { font-size: 9.5pt; font-weight: 700; color: var(--asimo-accent); margin: 6px 0 3px; }
   .a-section p { margin: 0 0 4px; text-align: justify; hyphens: auto; -webkit-hyphens: auto; font-size: 8.25pt; line-height: 1.38; }
   .commission-row { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-top: 5px; font-size: 8.25pt; align-items: center; }
-  .commission-row .pauschal-val { border-bottom: 1px solid #111; padding: 0 8px; min-width: 70px; display: inline-block; font-weight: 600; }
+  .commission-grid { display: grid; grid-template-columns: repeat(2, max-content); gap: 4px 18px; margin-top: 6px; font-size: 8.25pt; }
+  .commission-pauschal { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 8.25pt; }
+  .c-opt { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .pauschal-val { border-bottom: 1px solid #111; padding: 0 8px; min-width: 90px; display: inline-block; font-weight: 600; }
   .a-two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
   .a-two-cols > div > .a-section:first-child,
   .a-two-cols > div > .a-objekt:first-child { margin-top: 0; }
@@ -1148,12 +1151,14 @@ export const DEFAULT_MANDATE_ASIMO_EXCLUSIVE = `<!--skin:asimo-->
     <div class="a-section">
       <h4>2. Provision</h4>
       <p>Der Verkäufer verpflichtet sich, dem Immobilienmakler eine Provision (wie unten angekreuzt in Prozent oder Pauschal) des Verkaufspreises zu zahlen, die bei erfolgreichem Abschluss des Kaufvertrages fällig wird. Die Provision ist zur Zahlung fällig, sobald der notarielle Kaufvertrag zwischen Käufer und Verkäufer beurkundet worden ist. Der Auftraggeber hat das Recht, die Immobilie selbst zu verkaufen, ohne dass dabei eine Provision geschuldet wird, sofern die Auftragnehmerin mit einer möglichen Kundschaft noch keine Reservation abgeschlossen ist.</p>
-      <div class="commission-row">
-        <span><span class="bx"></span>2.5%</span>
-        <span><span class="bx"></span>3%</span>
-        <span><span class="bx"></span>4%</span>
-        <span><span class="bx"></span>5%</span>
-        <span><span class="bx on">✕</span>Pauschalbetrag:</span>
+      <div class="commission-grid">
+        <span class="c-opt"><span class="bx"></span>2.5%</span>
+        <span class="c-opt"><span class="bx"></span>3%</span>
+        <span class="c-opt"><span class="bx"></span>4%</span>
+        <span class="c-opt"><span class="bx"></span>5%</span>
+      </div>
+      <div class="commission-pauschal">
+        <span class="c-opt"><span class="bx on">✕</span>Pauschalbetrag:</span>
         <span class="pauschal-val">CHF {{commission_value}}</span>
       </div>
     </div>
