@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, FileCode2, Trash2, Eye, Sparkles, Code2, Star, Lock } from "lucide-react";
+import { Plus, FileCode2, Trash2, Eye, Sparkles, Code2, Star, Lock, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -135,6 +135,38 @@ export function DocumentTemplatesManager() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const duplicate = useMutation({
+    mutationFn: async (t: { name: string; type: string; content: string; is_active: boolean }) => {
+      const { data, error } = await supabase
+        .from("document_templates")
+        .insert({
+          name: `${t.name} (Kopie)`,
+          type: t.type as "other",
+          content: t.content,
+          is_active: t.is_active,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success("Vorlage kopiert");
+      qc.invalidateQueries({ queryKey: ["all-document-templates"] });
+      if (data) {
+        setForm({
+          id: data.id,
+          name: data.name,
+          type: data.type,
+          content: data.content,
+          is_active: data.is_active,
+        });
+        setOpen(true);
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const startNew = () => {
     setForm(EMPTY);
     setOpen(true);
@@ -142,6 +174,34 @@ export function DocumentTemplatesManager() {
   const startEdit = (t: { id: string; name: string; type: string; content: string; is_active: boolean }) => {
     setForm({ id: t.id, name: t.name, type: t.type, content: t.content, is_active: t.is_active });
     setOpen(true);
+  };
+
+  const previewTemplate = (t: { name: string; content: string }) => {
+    const sampleCtx = {
+      client: {
+        full_name: "Anna Müller",
+        address: "Bahnhofstrasse 12",
+        postal_code: "8001",
+        city: "Zürich",
+        email: "anna@example.ch",
+        phone: "+41 79 123 45 67",
+      },
+      property: {
+        title: "Loft mit Seesicht",
+        address: "Seestrasse 88",
+        postal_code: "8800",
+        city: "Thalwil",
+        price: 1850000,
+        rent: null,
+        rooms: 4.5,
+        living_area: 142,
+      },
+      mandate: { commission_model: "Prozent", commission_value: 3, valid_from: "2026-05-01", valid_until: "2026-11-01" },
+      reservation: { reservation_fee: 25000, valid_until: "2026-06-15" },
+      company: { name: "ASIMOS Immobilien AG" },
+    };
+    setPreviewHtml(wrapHtmlDocument(t.name || "Vorschau", renderTemplate(t.content, sampleCtx)));
+    setPreviewOpen(true);
   };
 
   const handleTypeChange = (v: string) => {
@@ -217,61 +277,104 @@ export function DocumentTemplatesManager() {
           }
         />
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {templates.map((t) => {
-            const isSystem = (t as { is_system?: boolean }).is_system === true;
-            const isDefault = (t as { is_default?: boolean }).is_default === true;
-            return (
-              <div key={t.id} className={`rounded-xl border bg-card p-4 shadow-soft ${isDefault ? "ring-1 ring-primary" : ""}`}>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <FileCode2 className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="font-medium">{t.name}</h3>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1">
-                    {isDefault && (
-                      <Badge className="gap-1"><Star className="h-3 w-3" />Standard</Badge>
-                    )}
-                    {isSystem && (
-                      <Badge variant="outline" className="gap-1"><Lock className="h-3 w-3" />System</Badge>
-                    )}
-                    <Badge variant={t.is_active ? "default" : "secondary"}>{t.is_active ? "Aktiv" : "Inaktiv"}</Badge>
-                  </div>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">{TYPE_LABELS[t.type] ?? t.type}</p>
-                <div className="mt-3 line-clamp-3 text-xs text-muted-foreground">
-                  {t.content.replace(/<[^>]+>/g, " ").slice(0, 200)}…
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => startEdit(t)}>
-                    {isSystem ? "Ansehen" : "Bearbeiten"}
-                  </Button>
-                  {!isDefault && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setDefault.mutate(t.id)}
+        <>
+          {/* Standard-Vorlage pro Dokumenttyp */}
+          <div className="rounded-xl border bg-muted/20 p-4">
+            <h3 className="text-sm font-semibold">Standardvorlagen</h3>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Wähle pro Dokumenttyp die Vorlage, die beim Generieren standardmäßig vorausgewählt wird.
+            </p>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {Object.entries(TYPE_LABELS).map(([typeKey, typeLabel]) => {
+                const ofType = templates.filter((x) => x.type === typeKey && x.is_active);
+                if (ofType.length === 0) return null;
+                const current = ofType.find((x) => (x as { is_default?: boolean }).is_default)?.id ?? "";
+                return (
+                  <div key={typeKey} className="space-y-1">
+                    <Label className="text-xs">{typeLabel}</Label>
+                    <Select
+                      value={current}
+                      onValueChange={(id) => setDefault.mutate(id)}
                       disabled={setDefault.isPending}
                     >
-                      <Star className="mr-1 h-4 w-4" />
-                      Als Standard
+                      <SelectTrigger>
+                        <SelectValue placeholder="– keine –" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ofType.map((x) => (
+                          <SelectItem key={x.id} value={x.id}>
+                            {x.name}
+                            {(x as { is_system?: boolean }).is_system ? " (System)" : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {templates.map((t) => {
+              const isSystem = (t as { is_system?: boolean }).is_system === true;
+              const isDefault = (t as { is_default?: boolean }).is_default === true;
+              return (
+                <div key={t.id} className={`rounded-xl border bg-card p-4 shadow-soft ${isDefault ? "ring-1 ring-primary" : ""}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <FileCode2 className="h-4 w-4 text-muted-foreground" />
+                      <h3 className="font-medium">{t.name}</h3>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1">
+                      {isDefault && (
+                        <Badge className="gap-1"><Star className="h-3 w-3" />Standard</Badge>
+                      )}
+                      {isSystem && (
+                        <Badge variant="outline" className="gap-1"><Lock className="h-3 w-3" />System</Badge>
+                      )}
+                      <Badge variant={t.is_active ? "default" : "secondary"}>{t.is_active ? "Aktiv" : "Inaktiv"}</Badge>
+                    </div>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{TYPE_LABELS[t.type] ?? t.type}</p>
+                  <div className="mt-3 line-clamp-3 text-xs text-muted-foreground">
+                    {t.content.replace(/<[^>]+>/g, " ").slice(0, 200)}…
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={() => previewTemplate(t)}>
+                      <Eye className="mr-1 h-4 w-4" />
+                      Ansehen
                     </Button>
-                  )}
-                  {!isSystem && (
+                    {!isSystem && (
+                      <Button size="sm" variant="outline" onClick={() => startEdit(t)}>
+                        Bearbeiten
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => remove.mutate(t.id)}
-                      className="ml-auto text-destructive hover:text-destructive"
+                      onClick={() => duplicate.mutate(t)}
+                      disabled={duplicate.isPending}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Copy className="mr-1 h-4 w-4" />
+                      Kopieren
                     </Button>
-                  )}
+                    {!isSystem && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => remove.mutate(t.id)}
+                        className="ml-auto text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
