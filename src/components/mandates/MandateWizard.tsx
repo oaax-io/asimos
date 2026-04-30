@@ -467,6 +467,9 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
                   html={previewHtml}
                   title={mandateType === "exclusive" ? "Maklermandat (exklusiv)" : "Maklermandat (teilexklusiv)"}
                   documentId={createdDocumentId}
+                  documentType={mandateType === "exclusive" ? "mandate" : "mandate_partial"}
+                  clientName={selectedClient?.full_name ?? null}
+                  propertyTitle={selectedProperty?.title ?? null}
                   variant="outline"
                   size="sm"
                   disabled={!createdDocumentId}
@@ -533,6 +536,9 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
                   html={previewHtml}
                   title={mandateType === "exclusive" ? "Maklermandat (exklusiv)" : "Maklermandat (teilexklusiv)"}
                   documentId={createdDocumentId}
+                  documentType={mandateType === "exclusive" ? "mandate" : "mandate_partial"}
+                  clientName={selectedClient?.full_name ?? null}
+                  propertyTitle={selectedProperty?.title ?? null}
                   variant="outline"
                   disabled={!createdDocumentId}
                 />
