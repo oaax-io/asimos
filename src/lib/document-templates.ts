@@ -976,51 +976,51 @@ function wrapAsimoSkin(args: {
   body {
     font-family: ${font};
     color: var(--asimo-text);
-    line-height: 1.45;
-    font-size: 9.5pt;
+    line-height: 1.35;
+    font-size: 8.75pt;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .a-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
-  .a-title { font-size: 22pt; font-weight: 800; color: #111; letter-spacing: -0.01em; margin: 0; line-height: 1.1; }
+  .a-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .a-title { font-size: 19pt; font-weight: 800; color: #111; letter-spacing: -0.01em; margin: 0; line-height: 1.1; }
   .a-title .sub { font-weight: 400; color: #111; }
-  .a-logo { height: 38px; width: auto; display: block; }
+  .a-logo { height: 32px; width: auto; display: block; }
   .a-parties {
-    display: grid; grid-template-columns: 200px 1fr; gap: 16px; margin-bottom: 16px;
-    border-left: 3px solid var(--asimo-accent); padding-left: 14px;
+    display: grid; grid-template-columns: 180px 1fr; gap: 14px; margin-bottom: 12px;
+    border-left: 3px solid var(--asimo-accent); padding-left: 12px;
   }
-  .a-zwischen { font-weight: 700; color: #111; font-size: 10pt; margin-bottom: 6px; }
-  .a-party-l { font-size: 9pt; line-height: 1.4; color: #111; }
-  .a-parties-r-label { font-size: 10pt; margin-bottom: 6px; color: #111; }
+  .a-zwischen { font-weight: 700; color: #111; font-size: 9.5pt; margin-bottom: 4px; }
+  .a-party-l { font-size: 8.5pt; line-height: 1.35; color: #111; }
+  .a-parties-r-label { font-size: 9.5pt; margin-bottom: 4px; color: #111; }
   .a-formgrid { display: grid; grid-template-columns: 90px 1fr 90px 1fr; column-gap: 10px; row-gap: 0; }
-  .a-formgrid .lbl { font-size: 8.5pt; color: #111; font-weight: 600; padding: 6px 0 4px; border-bottom: 1px solid var(--asimo-rule); }
-  .a-formgrid .val { font-size: 9.5pt; color: #111; padding: 6px 0 4px; border-bottom: 1px solid var(--asimo-rule); min-height: 18px; }
+  .a-formgrid .lbl { font-size: 8pt; color: #111; font-weight: 600; padding: 4px 0 3px; border-bottom: 1px solid var(--asimo-rule); }
+  .a-formgrid .val { font-size: 8.75pt; color: #111; padding: 4px 0 3px; border-bottom: 1px solid var(--asimo-rule); min-height: 16px; }
 
-  .a-objekt { border: 1px dashed var(--asimo-accent); border-radius: 8px; padding: 12px 14px; margin: 0 0 14px; page-break-inside: avoid; }
-  .a-objekt h3 { font-size: 13pt; font-weight: 800; color: #111; margin: 0 0 10px; }
-  .a-objekt .a-formgrid { grid-template-columns: 110px 1fr; }
+  .a-objekt { border: 1px dashed var(--asimo-accent); border-radius: 8px; padding: 10px 12px; margin: 0 0 10px; page-break-inside: avoid; }
+  .a-objekt h3 { font-size: 11.5pt; font-weight: 800; color: #111; margin: 0 0 8px; }
+  .a-objekt .a-formgrid { grid-template-columns: 100px 1fr; }
   .a-objekt .lbl.highlight { background: var(--asimo-accent-soft); padding-left: 6px; border-bottom-color: var(--asimo-accent); }
 
-  .a-checks-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 12px; font-size: 9pt; color: #111; margin-bottom: 10px; }
+  .a-checks-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px 10px; font-size: 8.25pt; color: #111; margin-bottom: 8px; }
   .a-check { white-space: nowrap; }
-  .bx { display: inline-block; width: 10px; height: 10px; border: 1px solid #111; margin-right: 5px; vertical-align: middle; line-height: 10px; text-align: center; font-size: 8pt; }
+  .bx { display: inline-block; width: 9px; height: 9px; border: 1px solid #111; margin-right: 4px; vertical-align: middle; line-height: 9px; text-align: center; font-size: 7pt; }
   .bx.on { background: #111; color: #fff; }
 
-  .a-section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 10px; }
-  .a-section h4 { font-size: 10.5pt; font-weight: 700; color: var(--asimo-accent); margin: 8px 0 4px; }
-  .a-section p { margin: 0 0 5px; text-align: justify; hyphens: auto; -webkit-hyphens: auto; font-size: 9pt; line-height: 1.45; }
-  .commission-row { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 6px; font-size: 9pt; align-items: center; }
-  .commission-row .pauschal-val { border-bottom: 1px solid #111; padding: 0 8px; min-width: 80px; display: inline-block; font-weight: 600; }
-  .a-two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .a-section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 7px; }
+  .a-section h4 { font-size: 9.5pt; font-weight: 700; color: var(--asimo-accent); margin: 6px 0 3px; }
+  .a-section p { margin: 0 0 4px; text-align: justify; hyphens: auto; -webkit-hyphens: auto; font-size: 8.25pt; line-height: 1.38; }
+  .commission-row { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-top: 5px; font-size: 8.25pt; align-items: center; }
+  .commission-row .pauschal-val { border-bottom: 1px solid #111; padding: 0 8px; min-width: 70px; display: inline-block; font-weight: 600; }
+  .a-two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
   .a-two-cols > div > .a-section:first-child,
   .a-two-cols > div > .a-objekt:first-child { margin-top: 0; }
   .a-clear { clear: both; }
 
   .a-signatures {
-    margin-top: 24px;
-    padding-top: 14px;
+    margin-top: 14px;
+    padding-top: 10px;
     border-top: 1px solid var(--asimo-rule);
-    width: calc(50% - 11px);
+    width: calc(50% - 9px);
     margin-left: auto;
     display: block;
     break-inside: avoid;
@@ -1028,9 +1028,9 @@ function wrapAsimoSkin(args: {
     break-before: avoid;
     page-break-before: avoid;
   }
-  .a-sig { margin-top: 22px; break-inside: avoid; }
-  .a-sig .line { border-bottom: 1px solid #111; height: 26px; }
-  .a-sig .label { font-size: 8.5pt; color: var(--asimo-muted); margin-top: 4px; }
+  .a-sig { margin-top: 14px; break-inside: avoid; }
+  .a-sig .line { border-bottom: 1px solid #111; height: 18px; }
+  .a-sig .label { font-size: 7.75pt; color: var(--asimo-muted); margin-top: 3px; }
 
   .a-footer { position: fixed; bottom: 6mm; left: 14mm; right: 14mm; display: flex; justify-content: space-between; align-items: center; font-size: 8pt; color: var(--asimo-muted); border-top: 1px solid var(--asimo-rule); padding-top: 6px; }
   .a-foot-left { display: flex; align-items: center; gap: 8px; }
