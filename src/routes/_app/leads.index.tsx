@@ -574,6 +574,22 @@ function LeadsPage() {
         {queryErrorMessage}
       </div>
     ) : null}
+
+    <LeadImportSourceDialog
+      open={importSourceOpen}
+      onOpenChange={setImportSourceOpen}
+      onPick={(variant) => {
+        setImportSourceOpen(false);
+        setImportWizardVariant(variant);
+      }}
+    />
+    {importWizardVariant && (
+      <LeadImportWizard
+        open={true}
+        onOpenChange={(v) => { if (!v) setImportWizardVariant(null); }}
+        variant={importWizardVariant}
+      />
+    )}
     </div>
   );
 }
