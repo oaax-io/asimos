@@ -297,6 +297,18 @@ function hydrateFromProperty(p: any): WizardData {
   const str = (v: any) => (v === null || v === undefined ? "" : String(v));
   const isUnit = !!p.is_unit;
   const isMfh = p.property_type === "mixed_use" || p.building_type === "multi_family";
+  const fallbackMedia: WizardMedia[] = Array.isArray(p.images)
+    ? p.images
+        .filter(Boolean)
+        .map((fileUrl: string, index: number) => ({
+          file_url: fileUrl,
+          file_name: fileUrl.split("/").pop() ?? null,
+          file_type: /\.(jpe?g|png|webp|gif|avif|jfif|bmp)$/i.test(fileUrl) ? "image" : null,
+          title: null,
+          is_cover: index === 0,
+          source: "upload" as const,
+        }))
+    : [];
   return {
     ...empty,
     property_type: p.property_type ?? "house",
@@ -343,7 +355,7 @@ function hydrateFromProperty(p: any): WizardData {
     image_url: Array.isArray(p.images) ? (p.images[0] ?? "") : "",
     description: p.description ?? "",
     internal_notes: p.internal_notes ?? "",
-    media: [],
+    media: fallbackMedia,
     units: [],
   };
 }
@@ -405,6 +417,41 @@ export function PropertyWizard({
     },
     enabled: open && d.structure === "unit_in_building",
   });
+
+  const existingMedia = useQuery({
+    queryKey: ["wizard_existing_media", initial?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("property_media")
+        .select("id, file_url, file_name, file_type, title, is_cover, sort_order")
+        .eq("property_id", initial.id)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []).map((item) => ({
+        file_url: item.file_url,
+        file_name: item.file_name,
+        file_type: item.file_type,
+        title: item.title,
+        is_cover: !!item.is_cover,
+        source: "upload" as const,
+        library_media_id: item.id,
+      }));
+    },
+    enabled: open && mode === "edit" && !!initial?.id,
+  });
+
+  useEffect(() => {
+    if (!open || mode !== "edit") return;
+    if (!existingMedia.data || existingMedia.data.length === 0) return;
+
+    setD((prev) => ({
+      ...prev,
+      media: prev.media.length === existingMedia.data.length && prev.media.every((item, index) => item.file_url === existingMedia.data?.[index]?.file_url)
+        ? prev.media
+        : ensureCover(existingMedia.data),
+    }));
+  }, [existingMedia.data, mode, open]);
 
   const canProceed = (() => {
     if (step === 2) return !!d.title;
