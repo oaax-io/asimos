@@ -43,6 +43,7 @@ export function GenerateDocumentDialog({
         .select("*")
         .eq("type", documentType)
         .eq("is_active", true)
+        .order("is_default", { ascending: false })
         .order("name");
       if (error) throw error;
       return data ?? [];
