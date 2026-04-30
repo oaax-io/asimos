@@ -347,6 +347,14 @@ function getValue(ctx: TemplateContext, path: string): string {
     return v ? String(v) : "";
   }
 
+  // Fallbacks: if legal_name is empty fall back to company.name (and brand company_name)
+  if (path === "company.legal_name") {
+    const v = resolveNested(ctx, "company.legal_name")
+      || resolveNested(ctx, "company.name")
+      || (ctx.brand?.company_name ?? "");
+    return v ? String(v) : "";
+  }
+
   return resolveNested(ctx, path);
 }
 
