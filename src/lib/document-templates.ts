@@ -1243,3 +1243,378 @@ export const DEFAULT_MANDATE_ASIMO_EXCLUSIVE = `<!--skin:asimo-->
   </div>
 </div>
 `;
+
+/* ============================================================
+ * ASIMO – Maklermandat (Einfach / Nicht-exklusiv)
+ * ============================================================ */
+export const DEFAULT_MANDATE_ASIMO_PARTIAL = `<!--skin:asimo-->
+<div class="a-header">
+  <h1 class="a-title">Maklermandat <span class="sub">/ Einfach</span></h1>
+  <img src="{{logo_url}}" alt="{{company_name}}" class="a-logo" />
+</div>
+
+<div class="a-parties">
+  <div>
+    <div class="a-zwischen">zwischen</div>
+    <div class="a-party-l">
+      <strong>{{company.legal_name}}</strong><br/>
+      {{company.address}}<br/>
+      {{company.postal_code}} {{company.city}}<br/>
+      vertreten durch: {{agent.full_name}}<br/>
+      <span style="color:#6b7280;">(nachfolgend „Auftragnehmer")</span>
+    </div>
+  </div>
+  <div>
+    <div class="a-parties-r-label">und (nachfolgend: <strong>Auftraggeber</strong>)</div>
+    <div class="a-formgrid">
+      <div class="lbl">Vorname</div><div class="val">{{client.first_name}}</div>
+      <div class="lbl">Name</div><div class="val">{{client.last_name}}</div>
+      <div class="lbl">Strasse + Nr.</div><div class="val">{{client.address}}</div>
+      <div class="lbl">Ort/PLZ</div><div class="val">{{client.postal_code}} {{client.city}}</div>
+      <div class="lbl">Telefon</div><div class="val">{{client.phone}}</div>
+      <div class="lbl">E-Mail</div><div class="val">{{client.email}}</div>
+    </div>
+  </div>
+</div>
+
+<div class="a-two-cols">
+  <div>
+    <div class="a-objekt">
+      <h3>Objekt</h3>
+      <div class="a-formgrid">
+        <div class="lbl">Strasse + Nr.</div><div class="val">{{property.address}}</div>
+        <div class="lbl">Ort/PLZ</div><div class="val">{{property.postal_code}} {{property.city}}</div>
+        <div class="lbl highlight">Verkaufspreis</div><div class="val"><strong>{{property.price}}</strong></div>
+      </div>
+    </div>
+
+    <div class="a-section">
+      <h4>1. Mandatumfang</h4>
+      <p>Der Auftraggeber beauftragt den Auftragnehmer mit der nicht-exklusiven Vermittlung des oben genannten Objekts. Der Auftraggeber bleibt berechtigt, das Objekt selbst oder durch weitere Makler zu vermarkten.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>2. Provision</h4>
+      <p>Bei erfolgreichem Abschluss eines Kaufvertrages mit einem vom Auftragnehmer nachgewiesenen oder vermittelten Käufer ist folgende Provision geschuldet, fällig mit notarieller Beurkundung des Kaufvertrages.</p>
+      <div class="commission-pauschal" style="{{commission.show_percent}}">
+        <span class="c-opt"><span class="bx on">✕</span>Provision in Prozent vom Verkaufspreis:</span>
+        <span class="pauschal-val"><strong>{{commission_value}}%</strong></span>
+      </div>
+      <div class="commission-pauschal" style="{{commission.show_flat}}">
+        <span class="c-opt"><span class="bx on">✕</span>Pauschalbetrag:</span>
+        <span class="pauschal-val"><strong>{{commission_value}}</strong></span>
+      </div>
+    </div>
+
+    <div class="a-section">
+      <h4>3. Provisionsschutz</h4>
+      <p>Kommt es nach Auflösen des Vertrags innerhalb von zwei Jahren zu einem Geschäftsabschluss mit einem Interessenten, der auf die Kontakte und Bemühungen des Auftragnehmers zurückzuführen ist, ist die volle Provision geschuldet.</p>
+    </div>
+  </div>
+
+  <div>
+    <div class="a-section">
+      <h4>4. Mitwirkungspflicht</h4>
+      <p>Der Auftraggeber stellt dem Auftragnehmer alle für die Vermarktung erforderlichen Unterlagen und Informationen unverzüglich zur Verfügung und informiert über parallele Verkaufsbemühungen oder erhaltene Angebote.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>5. Dauer des Mandats</h4>
+      <p>Dieses Mandat tritt mit Unterzeichnung in Kraft und kann von beiden Parteien jederzeit schriftlich beendet werden. Bereits entstandene Provisionsansprüche bleiben unberührt.</p>
+    </div>
+
+    <div class="a-section" style="{{mandate.show_term}}">
+      <h4 class="sub">5.1 Vertragslaufzeit</h4>
+      <p>Dieses Mandat ist gültig vom <strong>{{mandate.valid_from}}</strong> bis zum <strong>{{mandate.valid_until}}</strong>.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>6. Schlussbestimmungen</h4>
+      <p>Änderungen und Ergänzungen dieses Mandats bedürfen der Schriftform. Sollte eine Bestimmung dieses Mandats unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.</p>
+    </div>
+  </div>
+</div>
+
+<div class="a-clear"></div>
+
+<div class="a-signatures">
+  <div class="a-sig"><div class="line"></div><div class="label">Ort und Datum</div></div>
+  <div class="a-sig"><div class="line"></div><div class="label">Unterschrift Auftraggeber</div></div>
+  <div class="a-sig"><div class="line"></div><div class="label">Unterschrift {{company.name}}</div></div>
+</div>
+`;
+
+/* ============================================================
+ * ASIMO – Reservationsvereinbarung
+ * ============================================================ */
+export const DEFAULT_RESERVATION_ASIMO = `<!--skin:asimo-->
+<div class="a-header">
+  <h1 class="a-title">Reservationsvereinbarung</h1>
+  <img src="{{logo_url}}" alt="{{company_name}}" class="a-logo" />
+</div>
+
+<div class="a-parties">
+  <div>
+    <div class="a-zwischen">zwischen</div>
+    <div class="a-party-l">
+      <strong>{{company.legal_name}}</strong><br/>
+      {{company.address}}<br/>
+      {{company.postal_code}} {{company.city}}<br/>
+      vertreten durch: {{agent.full_name}}<br/>
+      <span style="color:#6b7280;">(nachfolgend „Vermittler")</span>
+    </div>
+  </div>
+  <div>
+    <div class="a-parties-r-label">und (nachfolgend: <strong>Reservant</strong>)</div>
+    <div class="a-formgrid">
+      <div class="lbl">Vorname</div><div class="val">{{client.first_name}}</div>
+      <div class="lbl">Name</div><div class="val">{{client.last_name}}</div>
+      <div class="lbl">Strasse + Nr.</div><div class="val">{{client.address}}</div>
+      <div class="lbl">Ort/PLZ</div><div class="val">{{client.postal_code}} {{client.city}}</div>
+      <div class="lbl">Telefon</div><div class="val">{{client.phone}}</div>
+      <div class="lbl">E-Mail</div><div class="val">{{client.email}}</div>
+    </div>
+  </div>
+</div>
+
+<div class="a-two-cols">
+  <div>
+    <div class="a-objekt">
+      <h3>Reserviertes Objekt</h3>
+      <div class="a-formgrid">
+        <div class="lbl">Bezeichnung</div><div class="val">{{property.title}}</div>
+        <div class="lbl">Strasse + Nr.</div><div class="val">{{property.address}}</div>
+        <div class="lbl">Ort/PLZ</div><div class="val">{{property.postal_code}} {{property.city}}</div>
+        <div class="lbl highlight">Kaufpreis</div><div class="val"><strong>{{property.price}}</strong></div>
+      </div>
+    </div>
+
+    <div class="a-section">
+      <h4>1. Gegenstand der Reservation</h4>
+      <p>Der Vermittler bestätigt dem Reservanten die exklusive Reservation des oben bezeichneten Objekts. Während der Reservationsdauer wird das Objekt keinem Dritten angeboten oder verkauft.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>2. Reservationsgebühr</h4>
+      <div class="commission-pauschal">
+        <span class="c-opt"><span class="bx on">✕</span>Reservationsgebühr:</span>
+        <span class="pauschal-val"><strong>{{reservation.reservation_fee}}</strong></span>
+      </div>
+      <p>Die Reservationsgebühr ist innert {{reservation.payment_deadline}} auf das vom Vermittler bezeichnete Konto zu überweisen. Bei Abschluss des Kaufvertrages wird die Gebühr vollumfänglich an den Kaufpreis angerechnet.</p>
+    </div>
+  </div>
+
+  <div>
+    <div class="a-section">
+      <h4>3. Reservationsdauer</h4>
+      <p>Diese Reservation gilt bis zum <strong>{{reservation.valid_until}}</strong>. Kommt innerhalb dieser Frist kein Kaufvertrag zustande, erlischt die Reservation automatisch.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>4. Rücktritt</h4>
+      <p>Tritt der Reservant ohne triftigen Grund vom Kaufvorhaben zurück, verfällt die Reservationsgebühr als Aufwandsentschädigung zugunsten des Vermittlers. Tritt der Verkäufer zurück, wird die Gebühr vollumfänglich zurückerstattet.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>5. Form und Schlussbestimmungen</h4>
+      <p>Diese Reservationsvereinbarung begründet keinen Anspruch auf Abschluss eines Kaufvertrages. Der Kaufvertrag bedarf der öffentlichen Beurkundung. Änderungen dieser Vereinbarung bedürfen der Schriftform.</p>
+    </div>
+  </div>
+</div>
+
+<div class="a-clear"></div>
+
+<div class="a-signatures">
+  <div class="a-sig"><div class="line"></div><div class="label">Ort und Datum</div></div>
+  <div class="a-sig"><div class="line"></div><div class="label">Unterschrift Reservant</div></div>
+  <div class="a-sig"><div class="line"></div><div class="label">Unterschrift {{company.name}}</div></div>
+</div>
+`;
+
+/* ============================================================
+ * ASIMO – Quittung Reservationsgebühr
+ * ============================================================ */
+export const DEFAULT_RESERVATION_RECEIPT_ASIMO = `<!--skin:asimo-->
+<div class="a-header">
+  <h1 class="a-title">Quittung <span class="sub">/ Reservationsgebühr</span></h1>
+  <img src="{{logo_url}}" alt="{{company_name}}" class="a-logo" />
+</div>
+
+<div class="a-parties">
+  <div>
+    <div class="a-zwischen">Empfänger</div>
+    <div class="a-party-l">
+      <strong>{{company.legal_name}}</strong><br/>
+      {{company.address}}<br/>
+      {{company.postal_code}} {{company.city}}<br/>
+      vertreten durch: {{agent.full_name}}
+    </div>
+  </div>
+  <div>
+    <div class="a-parties-r-label">Einzahler</div>
+    <div class="a-formgrid">
+      <div class="lbl">Name</div><div class="val">{{client.full_name}}</div>
+      <div class="lbl">Adresse</div><div class="val">{{client.address}}, {{client.postal_code}} {{client.city}}</div>
+      <div class="lbl">E-Mail</div><div class="val">{{client.email}}</div>
+    </div>
+  </div>
+</div>
+
+<div class="a-objekt">
+  <h3>Bestätigte Zahlung</h3>
+  <div class="a-formgrid">
+    <div class="lbl">Verwendungszweck</div><div class="val">Reservation – {{property.title}}</div>
+    <div class="lbl">Objekt</div><div class="val">{{property.address}}, {{property.postal_code}} {{property.city}}</div>
+    <div class="lbl">Reservation gültig bis</div><div class="val">{{reservation.valid_until}}</div>
+    <div class="lbl highlight">Erhaltener Betrag</div><div class="val"><strong>{{reservation.reservation_fee}}</strong></div>
+  </div>
+</div>
+
+<div class="a-section">
+  <h4>Bestätigung</h4>
+  <p>Hiermit bestätigt {{company.legal_name}} den Erhalt der oben aufgeführten Reservationsgebühr für das genannte Objekt. Die Zahlung wird bei Abschluss des Kaufvertrages vollumfänglich an den Kaufpreis angerechnet.</p>
+</div>
+
+<div class="a-clear"></div>
+
+<div class="a-signatures">
+  <div class="a-sig"><div class="line"></div><div class="label">Ort und Datum</div></div>
+  <div class="a-sig"><div class="line"></div><div class="label">Unterschrift {{company.name}}</div></div>
+</div>
+`;
+
+/* ============================================================
+ * ASIMO – Vertraulichkeitsvereinbarung (NDA)
+ * ============================================================ */
+export const DEFAULT_NDA_ASIMO = `<!--skin:asimo-->
+<div class="a-header">
+  <h1 class="a-title">Vertraulichkeitsvereinbarung <span class="sub">/ NDA</span></h1>
+  <img src="{{logo_url}}" alt="{{company_name}}" class="a-logo" />
+</div>
+
+<div class="a-parties">
+  <div>
+    <div class="a-zwischen">zwischen</div>
+    <div class="a-party-l">
+      <strong>{{company.legal_name}}</strong><br/>
+      {{company.address}}<br/>
+      {{company.postal_code}} {{company.city}}<br/>
+      vertreten durch: {{agent.full_name}}<br/>
+      <span style="color:#6b7280;">(nachfolgend „Offenlegende Partei")</span>
+    </div>
+  </div>
+  <div>
+    <div class="a-parties-r-label">und (nachfolgend: <strong>Empfangende Partei</strong>)</div>
+    <div class="a-formgrid">
+      <div class="lbl">Vorname</div><div class="val">{{client.first_name}}</div>
+      <div class="lbl">Name</div><div class="val">{{client.last_name}}</div>
+      <div class="lbl">Strasse + Nr.</div><div class="val">{{client.address}}</div>
+      <div class="lbl">Ort/PLZ</div><div class="val">{{client.postal_code}} {{client.city}}</div>
+      <div class="lbl">E-Mail</div><div class="val">{{client.email}}</div>
+    </div>
+  </div>
+</div>
+
+<div class="a-two-cols">
+  <div>
+    <div class="a-section">
+      <h4>1. Zweck</h4>
+      <p>Die Parteien beabsichtigen, im Zusammenhang mit dem Objekt <strong>{{property.title}}</strong>, {{property.address}}, {{property.postal_code}} {{property.city}}, vertrauliche Informationen auszutauschen. Diese Vereinbarung regelt den Schutz dieser Informationen.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>2. Vertrauliche Informationen</h4>
+      <p>Als vertraulich gelten alle mündlich oder schriftlich übermittelten Daten, Unterlagen, Pläne, Kalkulationen, Eigentums- und Mieterverhältnisse, Finanzkennzahlen sowie sämtliche objektbezogenen Informationen.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>3. Geheimhaltungspflicht</h4>
+      <p>Die Empfangende Partei verpflichtet sich, die vertraulichen Informationen ausschliesslich für den unter Ziff. 1 genannten Zweck zu verwenden, sie streng vertraulich zu behandeln und nicht an Dritte weiterzugeben.</p>
+    </div>
+  </div>
+
+  <div>
+    <div class="a-section">
+      <h4>4. Ausnahmen</h4>
+      <p>Die Geheimhaltungspflicht gilt nicht für Informationen, die nachweislich öffentlich bekannt sind, der Empfangenden Partei bereits bekannt waren oder aufgrund gesetzlicher Vorschriften offengelegt werden müssen.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>5. Laufzeit</h4>
+      <p>Diese Vereinbarung gilt vom <strong>{{nda.valid_from}}</strong> bis zum <strong>{{nda.valid_until}}</strong>. Die Geheimhaltungspflicht besteht über das Ende der Vereinbarung hinaus für weitere drei Jahre fort.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>6. Konventionalstrafe</h4>
+      <p>Bei jeder schuldhaften Verletzung der Geheimhaltungspflicht ist eine Konventionalstrafe in Höhe von CHF 10'000 geschuldet. Die Geltendmachung weitergehenden Schadens bleibt vorbehalten.</p>
+    </div>
+
+    <div class="a-section">
+      <h4>7. Schlussbestimmungen</h4>
+      <p>Es gilt schweizerisches Recht. Gerichtsstand ist der Sitz der Offenlegenden Partei. Änderungen dieser Vereinbarung bedürfen der Schriftform.</p>
+    </div>
+  </div>
+</div>
+
+<div class="a-clear"></div>
+
+<div class="a-signatures">
+  <div class="a-sig"><div class="line"></div><div class="label">Ort und Datum</div></div>
+  <div class="a-sig"><div class="line"></div><div class="label">Unterschrift Empfangende Partei</div></div>
+  <div class="a-sig"><div class="line"></div><div class="label">Unterschrift {{company.name}}</div></div>
+</div>
+`;
+
+/* ============================================================
+ * ASIMO Template Registry – used by the seeder + settings UI
+ * ============================================================ */
+export const ASIMO_TEMPLATES: Array<{
+  key: string;
+  name: string;
+  type: string;
+  category: string;
+  description: string;
+  content: string;
+}> = [
+  {
+    key: "asimo_mandate_exclusive",
+    name: "ASIMO – Maklermandat (Exklusiv)",
+    type: "mandate",
+    category: "mandate",
+    description: "ASIMO-Standardvorlage für exklusive Verkaufsmandate.",
+    content: DEFAULT_MANDATE_ASIMO_EXCLUSIVE,
+  },
+  {
+    key: "asimo_mandate_partial",
+    name: "ASIMO – Maklermandat (Einfach)",
+    type: "mandate_partial",
+    category: "mandate",
+    description: "ASIMO-Standardvorlage für nicht-exklusive Vermittlungsmandate.",
+    content: DEFAULT_MANDATE_ASIMO_PARTIAL,
+  },
+  {
+    key: "asimo_reservation",
+    name: "ASIMO – Reservationsvereinbarung",
+    type: "reservation",
+    category: "reservation",
+    description: "ASIMO-Standardvorlage für Objektreservationen.",
+    content: DEFAULT_RESERVATION_ASIMO,
+  },
+  {
+    key: "asimo_reservation_receipt",
+    name: "ASIMO – Quittung Reservationsgebühr",
+    type: "reservation_receipt",
+    category: "reservation",
+    description: "ASIMO-Quittung für eingegangene Reservationsgebühren.",
+    content: DEFAULT_RESERVATION_RECEIPT_ASIMO,
+  },
+  {
+    key: "asimo_nda",
+    name: "ASIMO – Vertraulichkeitsvereinbarung (NDA)",
+    type: "nda",
+    category: "nda",
+    description: "ASIMO-Standardvorlage für Vertraulichkeitsvereinbarungen.",
+    content: DEFAULT_NDA_ASIMO,
+  },
+];
+

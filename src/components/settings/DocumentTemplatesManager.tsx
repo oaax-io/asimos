@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, FileCode2, Trash2, Eye, Sparkles, Code2 } from "lucide-react";
+import { Plus, FileCode2, Trash2, Eye, Sparkles, Code2, Star, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +20,7 @@ import {
   renderTemplate,
   wrapHtmlDocument,
 } from "@/lib/document-templates";
+import { seedAsimoTemplates, setDefaultTemplate } from "@/server/templates.functions";
 
 const TYPE_LABELS: Record<string, string> = {
   mandate: "Mandat (exklusiv)",
@@ -54,45 +55,38 @@ export function DocumentTemplatesManager() {
   const [previewHtml, setPreviewHtml] = useState("");
   const [form, setForm] = useState<FormState>(EMPTY);
 
+  // One-shot ASIMO seeder: ensures all ASIMO system templates exist & are up-to-date.
+  useEffect(() => {
+    seedAsimoTemplates()
+      .then(() => qc.invalidateQueries({ queryKey: ["all-document-templates"] }))
+      .catch((err) => console.error("ASIMO seed failed", err));
+  }, [qc]);
+
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["all-document-templates"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("document_templates")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("type")
+        .order("is_default", { ascending: false })
+        .order("name");
       if (error) throw error;
-      const rows = data ?? [];
-
-      const seedTypes: { type: string; name: string }[] = [
-        { type: "mandate", name: "Maklermandat (Exklusiv) – Standard" },
-        { type: "mandate_partial", name: "Maklermandat (Teilexklusiv) – Standard" },
-        { type: "reservation", name: "Reservationsvereinbarung – Standard" },
-        { type: "nda", name: "NDA / Vertraulichkeit – Standard" },
-      ];
-      const missing = seedTypes.filter(
-        (s) => !rows.some((r) => r.type === s.type && (r as { is_system?: boolean }).is_system),
-      );
-      if (missing.length > 0) {
-        const inserts = missing
-          .map((s) => ({
-            name: s.name,
-            type: s.type as "other",
-            content: defaultTemplateForType(s.type),
-            is_active: true,
-            is_system: true,
-          }))
-          .filter((r) => r.content);
-        if (inserts.length > 0) {
-          const { data: inserted } = await supabase
-            .from("document_templates")
-            .insert(inserts)
-            .select("*");
-          if (inserted) return [...inserted, ...rows];
-        }
-      }
-      return rows;
+      return data ?? [];
     },
+  });
+
+  const setDefault = useMutation({
+    mutationFn: async (templateId: string) => {
+      await setDefaultTemplate({ data: { templateId } });
+    },
+    onSuccess: () => {
+      toast.success("Standardvorlage aktualisiert");
+      qc.invalidateQueries({ queryKey: ["all-document-templates"] });
+      qc.invalidateQueries({ queryKey: ["templates-by-kind"] });
+      qc.invalidateQueries({ queryKey: ["document-templates"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const save = useMutation({
@@ -224,34 +218,59 @@ export function DocumentTemplatesManager() {
         />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {templates.map((t) => (
-            <div key={t.id} className="rounded-xl border bg-card p-4 shadow-soft">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <FileCode2 className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-medium">{t.name}</h3>
+          {templates.map((t) => {
+            const isSystem = (t as { is_system?: boolean }).is_system === true;
+            const isDefault = (t as { is_default?: boolean }).is_default === true;
+            return (
+              <div key={t.id} className={`rounded-xl border bg-card p-4 shadow-soft ${isDefault ? "ring-1 ring-primary" : ""}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <FileCode2 className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="font-medium">{t.name}</h3>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1">
+                    {isDefault && (
+                      <Badge className="gap-1"><Star className="h-3 w-3" />Standard</Badge>
+                    )}
+                    {isSystem && (
+                      <Badge variant="outline" className="gap-1"><Lock className="h-3 w-3" />System</Badge>
+                    )}
+                    <Badge variant={t.is_active ? "default" : "secondary"}>{t.is_active ? "Aktiv" : "Inaktiv"}</Badge>
+                  </div>
                 </div>
-                <Badge variant={t.is_active ? "default" : "secondary"}>{t.is_active ? "Aktiv" : "Inaktiv"}</Badge>
+                <p className="mt-1 text-xs text-muted-foreground">{TYPE_LABELS[t.type] ?? t.type}</p>
+                <div className="mt-3 line-clamp-3 text-xs text-muted-foreground">
+                  {t.content.replace(/<[^>]+>/g, " ").slice(0, 200)}…
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={() => startEdit(t)}>
+                    {isSystem ? "Ansehen" : "Bearbeiten"}
+                  </Button>
+                  {!isDefault && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setDefault.mutate(t.id)}
+                      disabled={setDefault.isPending}
+                    >
+                      <Star className="mr-1 h-4 w-4" />
+                      Als Standard
+                    </Button>
+                  )}
+                  {!isSystem && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => remove.mutate(t.id)}
+                      className="ml-auto text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">{TYPE_LABELS[t.type] ?? t.type}</p>
-              <div className="mt-3 line-clamp-3 text-xs text-muted-foreground">
-                {t.content.replace(/<[^>]+>/g, " ").slice(0, 200)}…
-              </div>
-              <div className="mt-3 flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => startEdit(t)}>
-                  Bearbeiten
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => remove.mutate(t.id)}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
