@@ -479,7 +479,7 @@ export function PropertyWizard({
             </Button>
           ) : (
             <Button onClick={finish} disabled={!canProceed || submitting}>
-              <Check className="mr-1 h-4 w-4" /> Immobilie speichern
+              <Check className="mr-1 h-4 w-4" /> {mode === "edit" ? "Änderungen speichern" : "Immobilie speichern"}
             </Button>
           )}
         </div>
