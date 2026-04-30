@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { FileDown, Loader2, Printer } from "lucide-react";
 import { toast } from "sonner";
-import { renderDocumentPdf } from "@/server/documents.functions";
+import { getDocumentPdfUrl, renderDocumentPdf } from "@/server/documents.functions";
 
 type Props = {
   html: string | null | undefined;
@@ -30,6 +30,18 @@ export function GeneratePdfButton({
   const [loading, setLoading] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const renderPdf = useServerFn(renderDocumentPdf);
+  const getPdfUrl = useServerFn(getDocumentPdfUrl);
+
+  const openPdf = (url: string) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    link.download = `${(title ?? "Dokument").trim() || "Dokument"}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
 
   const triggerPrint = () => {
     if (onPrintFallback) return onPrintFallback();
@@ -49,12 +61,21 @@ export function GeneratePdfButton({
     }
     setLoading(true);
     try {
+      if (documentId) {
+        const existing = await getPdfUrl({ data: { documentId } });
+        if (existing.ok && existing.fileUrl) {
+          setFileUrl(existing.fileUrl);
+          openPdf(existing.fileUrl);
+          toast.success("PDF geöffnet");
+          return;
+        }
+      }
+
       const res = await renderPdf({ data: { html, title, documentId: documentId ?? null } });
       if (res.ok && res.fileUrl) {
         setFileUrl(res.fileUrl);
         toast.success("PDF wurde erstellt");
-        // Open immediately in a new tab
-        window.open(res.fileUrl, "_blank");
+        openPdf(res.fileUrl);
       } else {
         toast.message("Server-PDF nicht verfügbar – Druck-Fallback wird geöffnet", {
           description: "message" in res ? res.message : undefined,
@@ -71,10 +92,8 @@ export function GeneratePdfButton({
 
   if (fileUrl) {
     return (
-      <Button asChild variant={variant} size={size}>
-        <a href={fileUrl} target="_blank" rel="noreferrer">
-          <FileDown className="mr-2 size-4" /> PDF herunterladen
-        </a>
+      <Button variant={variant} size={size} onClick={() => openPdf(fileUrl)}>
+        <FileDown className="mr-2 size-4" /> PDF herunterladen
       </Button>
     );
   }
