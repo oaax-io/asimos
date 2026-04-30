@@ -307,15 +307,40 @@ export function wrapHtmlDocument(
   title: string,
   bodyHtml: string,
   brand?: TemplateContext["brand"] | null,
+  options?: { customCss?: string | null },
 ): string {
   const b = { ...DEFAULT_BRAND, ...(brand ?? {}) };
   const primary = b.primary_color || DEFAULT_BRAND.primary_color;
   const secondary = b.secondary_color || DEFAULT_BRAND.secondary_color;
   const font = b.font_family || DEFAULT_BRAND.font_family;
   const companyName = escapeAttr(b.company_name || "");
-  const logoBlock = b.logo_url
-    ? `<img src="${escapeAttr(b.logo_url)}" alt="${companyName}" style="height:50px;width:auto;display:block;" />`
-    : `<div style="font-weight:700;font-size:18px;color:var(--brand-primary);">${companyName}</div>`;
+  const customCss = (options?.customCss ?? "").toString();
+
+  const headerHtml = b.header_html
+    ? b.header_html
+    : `<div class="doc-header">
+         <div class="doc-header__brand">
+           ${
+             b.logo_url
+               ? `<img src="${escapeAttr(b.logo_url)}" alt="${companyName}" class="doc-logo" />`
+               : `<div class="doc-wordmark">${companyName}</div>`
+           }
+         </div>
+         <div class="doc-header__meta">
+           <div class="doc-header__company">${companyName}</div>
+           ${b.company_address ? `<div>${escapeAttr(b.company_address)}</div>` : ""}
+           ${b.company_email ? `<div>${escapeAttr(b.company_email)}</div>` : ""}
+           ${b.company_website ? `<div>${escapeAttr(b.company_website)}</div>` : ""}
+         </div>
+       </div>`;
+
+  const footerHtml = b.footer_html
+    ? b.footer_html
+    : `<div class="doc-footer">
+         <span>${companyName}</span>
+         ${b.company_website ? `<span> · ${escapeAttr(b.company_website)}</span>` : ""}
+         ${b.company_email ? `<span> · ${escapeAttr(b.company_email)}</span>` : ""}
+       </div>`;
 
   return `<!doctype html>
 <html lang="de">
@@ -323,43 +348,212 @@ export function wrapHtmlDocument(
 <meta charset="utf-8" />
 <title>${title.replace(/</g, "&lt;")}</title>
 <style>
-  @page { size: A4; margin: 24mm; }
-  :root { --brand-primary: ${primary}; --brand-secondary: ${secondary}; }
-  body { font-family: ${font}; color: #111; line-height: 1.55; max-width: 780px; margin: 32px auto; padding: 0 24px; background: #fff; }
-  .brand-header { display:flex; align-items:center; justify-content:space-between; padding-bottom:16px; border-bottom:2px solid var(--brand-primary); margin-bottom:24px; }
-  .brand-header .meta { text-align:right; font-size:12px; color:#555; line-height:1.4; }
-  h1 { font-size: 22px; margin: 0 0 8px; color: var(--brand-primary); }
-  h2 { font-size: 16px; margin: 24px 0 8px; color: var(--brand-primary); border-left: 4px solid var(--brand-secondary); padding-left: 8px; }
-  h3 { font-size: 14px; margin: 16px 0 6px; color: var(--brand-primary); }
-  p { margin: 8px 0; }
-  strong { color: var(--brand-primary); }
-  hr { border: 0; border-top: 1px solid var(--brand-secondary); opacity: 0.3; margin: 24px 0; }
-  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--brand-secondary); font-size: 14px; }
-  th { color: var(--brand-primary); }
-  .box { border-left: 4px solid var(--brand-secondary); padding: 8px 12px; margin: 12px 0; background: rgba(0,0,0,0.02); }
-  .muted { color: #666; font-size: 12px; }
-  .signature { margin-top: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
-  .signature div { border-top: 1px solid var(--brand-primary); padding-top: 6px; font-size: 12px; }
-  .brand-footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--brand-secondary); font-size: 10px; color:#666; text-align:center; }
-  @media print {
-    body { margin: 0; padding: 0; max-width: none; }
+  @page {
+    size: A4;
+    margin: 22mm 18mm 22mm 18mm;
   }
+  :root {
+    --brand-primary: ${primary};
+    --brand-secondary: ${secondary};
+    --brand-soft: color-mix(in oklab, ${primary} 6%, white);
+    --text: #1a1a1a;
+    --text-muted: #5b6770;
+    --border: #d9dee2;
+    --rule: ${secondary};
+  }
+  * { box-sizing: border-box; }
+  html, body { background: #fff; }
+  body {
+    font-family: ${font};
+    color: var(--text);
+    line-height: 1.55;
+    font-size: 11pt;
+    margin: 0 auto;
+    padding: 0;
+    max-width: 800px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .doc-shell { padding: 0 4mm; }
+
+  /* Header */
+  .doc-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+    border-bottom: 2px solid var(--brand-primary);
+  }
+  .doc-logo { height: 48px; width: auto; display: block; }
+  .doc-wordmark {
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 0.04em;
+    color: var(--brand-primary);
+    text-transform: uppercase;
+  }
+  .doc-header__meta {
+    text-align: right;
+    font-size: 10pt;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+  .doc-header__company { color: var(--brand-primary); font-weight: 600; }
+
+  /* Title block */
+  .doc-title { margin: 0 0 6px; }
+  h1 {
+    font-size: 22pt;
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: var(--brand-primary);
+    letter-spacing: -0.01em;
+  }
+  h2 {
+    font-size: 12pt;
+    font-weight: 700;
+    margin: 22px 0 10px;
+    color: var(--brand-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--brand-secondary);
+  }
+  h3 {
+    font-size: 11pt;
+    font-weight: 600;
+    margin: 14px 0 6px;
+    color: var(--brand-primary);
+  }
+  p { margin: 6px 0; }
+  strong { color: var(--brand-primary); font-weight: 600; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 18px 0; }
+
+  /* Tables — structured data */
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 10.5pt; }
+  th, td { text-align: left; padding: 7px 9px; vertical-align: top; }
+  table.data th {
+    width: 38%;
+    color: var(--text-muted);
+    font-weight: 500;
+    background: var(--brand-soft);
+    border-bottom: 1px solid var(--border);
+  }
+  table.data td {
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  /* Two-column grid */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 8px 0 14px;
+  }
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    background: #fff;
+    page-break-inside: avoid;
+  }
+  .panel h3 {
+    margin-top: 0;
+    font-size: 10pt;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--brand-primary);
+  }
+  .panel .label { font-size: 9pt; color: var(--text-muted); display: block; margin-top: 6px; }
+  .panel .value { font-size: 11pt; color: var(--text); }
+
+  /* Numbered sections */
+  .section { page-break-inside: avoid; margin-top: 16px; }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12pt;
+    font-weight: 700;
+    color: var(--brand-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 22px 0 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--brand-secondary);
+  }
+  .section-title .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 6px;
+    border-radius: 4px;
+    background: var(--brand-primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 10pt;
+  }
+
+  /* Checkboxes */
+  .checks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 18px; margin: 6px 0; }
+  .check { font-size: 10.5pt; line-height: 1.6; }
+  .check .box-icon { font-size: 12pt; margin-right: 6px; color: var(--brand-primary); }
+
+  .box {
+    border-left: 4px solid var(--brand-secondary);
+    padding: 10px 14px;
+    margin: 12px 0;
+    background: var(--brand-soft);
+    border-radius: 0 4px 4px 0;
+    page-break-inside: avoid;
+  }
+
+  .muted { color: var(--text-muted); font-size: 10pt; }
+
+  /* Signatures */
+  .signature {
+    margin-top: 36px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    page-break-inside: avoid;
+  }
+  .signature .sig-line {
+    border-top: 1px solid var(--text);
+    padding-top: 6px;
+    font-size: 10pt;
+    color: var(--text-muted);
+  }
+  .signature .sig-name { color: var(--text); font-weight: 600; }
+
+  /* Footer */
+  .doc-footer {
+    margin-top: 32px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 8.5pt;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  /* Pagination */
+  .page-break { page-break-after: always; break-after: page; }
+  h1, h2, h3 { page-break-after: avoid; break-after: avoid; }
+  table, .panel, .section, .signature, .box { page-break-inside: avoid; break-inside: avoid; }
+
+  ${customCss || ""}
 </style>
 </head>
 <body>
-<div class="brand-header" style="display:flex; justify-content:space-between; align-items:center;">
-  <div>${logoBlock}</div>
-  <div class="meta" style="text-align:right; font-size:12px;">
-    ${companyName}<br/>
-    ${escapeAttr(b.company_address || "")}<br/>
-    ${escapeAttr(b.company_email || "")}<br/>
-    ${escapeAttr(b.company_website || "")}
-  </div>
-</div>
+<div class="doc-shell">
+${headerHtml}
 ${bodyHtml}
-<div class="brand-footer" style="margin-top:40px; font-size:10px; color:#666;">
-  ${companyName} | ${escapeAttr(b.company_website || "")}
+${footerHtml}
 </div>
 </body>
 </html>`;
