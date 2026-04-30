@@ -1029,7 +1029,21 @@ function wrapAsimoSkin(args: {
     page-break-before: avoid;
   }
   .a-sig { margin-top: 14px; break-inside: avoid; }
-  .a-sig .line { border-bottom: 1px solid #111; height: 18px; }
+  .a-sig .line {
+    border-bottom: 1px dashed #c4c4c4;
+    height: 18px;
+    position: relative;
+  }
+  .a-sig .line::before {
+    content: "›";
+    position: absolute;
+    left: 0;
+    bottom: -3px;
+    font-size: 11pt;
+    color: var(--asimo-accent);
+    line-height: 1;
+    opacity: 0.6;
+  }
   .a-sig .label { font-size: 7.75pt; color: var(--asimo-muted); margin-top: 3px; }
 
   .a-footer { position: fixed; bottom: 6mm; left: 14mm; right: 14mm; display: flex; justify-content: space-between; align-items: center; font-size: 8pt; color: var(--asimo-muted); border-top: 1px solid var(--asimo-rule); padding-top: 6px; }
