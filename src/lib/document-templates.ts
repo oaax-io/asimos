@@ -336,6 +336,13 @@ function getValue(ctx: TemplateContext, path: string): string {
     return isFlat ? "" : "display:none";
   }
 
+  // {{mandate.show_term}} → "" if either valid_from or valid_until is set, else "display:none"
+  if (path === "mandate.show_term") {
+    const m = (ctx as any).mandate ?? {};
+    const has = (m.valid_from && String(m.valid_from).trim()) || (m.valid_until && String(m.valid_until).trim());
+    return has ? "" : "display:none";
+  }
+
   // Mark the selected percent option, e.g. {{commission.mark_3}} renders ✕ when 3% is selected
   if (path.startsWith("commission.mark_")) {
     const target = path.slice("commission.mark_".length).replace(/_/g, ".");
@@ -1206,6 +1213,11 @@ export const DEFAULT_MANDATE_ASIMO_EXCLUSIVE = `<!--skin:asimo-->
     <div class="a-section">
       <h4>6. Dauer des Mandats</h4>
       <p>Dieses Mandat tritt mit Unterzeichnung in Kraft und ist unbefristet. Es kann von beiden Parteien mit einer Kündigungsfrist von drei Monaten zum Monatsende gekündigt werden. Es entstehen für den Auftraggeber während der Vertragslaufzeit keine Gebühren.</p>
+    </div>
+
+    <div class="a-section" style="{{mandate.show_term}}">
+      <h4>Vertragslaufzeit</h4>
+      <p>Dieses Mandat ist gültig vom <strong>{{mandate.valid_from}}</strong> bis zum <strong>{{mandate.valid_until}}</strong>.</p>
     </div>
 
     <div class="a-section">
