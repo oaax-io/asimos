@@ -1437,61 +1437,121 @@ export type Database = {
       }
       leads: {
         Row: {
+          address: string | null
           agency_id: string | null
           assigned_to: string | null
           budget_max: number | null
           budget_min: number | null
+          city: string | null
+          company_name: string | null
+          contact_first_name: string | null
+          contact_last_name: string | null
           converted_client_id: string | null
+          country: string | null
           created_at: string
           email: string | null
+          entity_type: string
           full_name: string
           id: string
+          import_batch_id: string | null
+          import_source: string | null
           interest_type: string | null
+          internal_notes: string | null
+          language: string | null
+          mobile: string | null
           notes: string | null
+          old_crm_created_at: string | null
+          old_crm_id: string | null
+          old_crm_updated_at: string | null
           owner_id: string | null
           phone: string | null
+          phone_direct: string | null
+          postal_code: string | null
           preferred_location: string | null
+          secondary_email: string | null
           source: string | null
           status: Database["public"]["Enums"]["lead_status"]
+          tags: string[]
           updated_at: string
+          website: string | null
         }
         Insert: {
+          address?: string | null
           agency_id?: string | null
           assigned_to?: string | null
           budget_max?: number | null
           budget_min?: number | null
+          city?: string | null
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
           converted_client_id?: string | null
+          country?: string | null
           created_at?: string
           email?: string | null
+          entity_type?: string
           full_name: string
           id?: string
+          import_batch_id?: string | null
+          import_source?: string | null
           interest_type?: string | null
+          internal_notes?: string | null
+          language?: string | null
+          mobile?: string | null
           notes?: string | null
+          old_crm_created_at?: string | null
+          old_crm_id?: string | null
+          old_crm_updated_at?: string | null
           owner_id?: string | null
           phone?: string | null
+          phone_direct?: string | null
+          postal_code?: string | null
           preferred_location?: string | null
+          secondary_email?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          tags?: string[]
           updated_at?: string
+          website?: string | null
         }
         Update: {
+          address?: string | null
           agency_id?: string | null
           assigned_to?: string | null
           budget_max?: number | null
           budget_min?: number | null
+          city?: string | null
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
           converted_client_id?: string | null
+          country?: string | null
           created_at?: string
           email?: string | null
+          entity_type?: string
           full_name?: string
           id?: string
+          import_batch_id?: string | null
+          import_source?: string | null
           interest_type?: string | null
+          internal_notes?: string | null
+          language?: string | null
+          mobile?: string | null
           notes?: string | null
+          old_crm_created_at?: string | null
+          old_crm_id?: string | null
+          old_crm_updated_at?: string | null
           owner_id?: string | null
           phone?: string | null
+          phone_direct?: string | null
+          postal_code?: string | null
           preferred_location?: string | null
+          secondary_email?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          tags?: string[]
           updated_at?: string
+          website?: string | null
         }
         Relationships: [
           {
