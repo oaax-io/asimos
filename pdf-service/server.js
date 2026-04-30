@@ -74,7 +74,10 @@ async function renderPdf(req, res) {
       } catch {}
     }
   }
-});
+}
+
+app.post("/", renderPdf);
+app.post("/render-pdf", renderPdf);
 
 const server = app.listen(PORT, () => {
   console.log(`PDF service listening on :${PORT}`);
