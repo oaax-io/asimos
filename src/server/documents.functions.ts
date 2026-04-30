@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
+import { buildDocumentFileName } from "@/lib/document-filename";
 
 /**
  * Server-side PDF generation via self-hosted Puppeteer microservice.
@@ -29,19 +30,37 @@ const PDF_PROVIDER = "railway-puppeteer";
 type StoredDocumentInsert = Database["public"]["Tables"]["documents"]["Insert"];
 
 export const renderDocumentPdf = createServerFn({ method: "POST" })
-  .inputValidator((input: { html: string; title?: string; documentId?: string | null }) => {
-    if (!input || typeof input.html !== "string" || input.html.length === 0) {
-      throw new Error("html is required");
-    }
-    if (input.html.length > 5_000_000) {
-      throw new Error("html too large");
-    }
-    return {
-      html: input.html,
-      title: typeof input.title === "string" ? input.title.slice(0, 200) : "Dokument",
-      documentId: input.documentId ?? null,
-    };
-  })
+  .inputValidator(
+    (input: {
+      html: string;
+      title?: string;
+      documentId?: string | null;
+      fileName?: string | null;
+      documentType?: string | null;
+      clientName?: string | null;
+      propertyTitle?: string | null;
+      companyName?: string | null;
+    }) => {
+      if (!input || typeof input.html !== "string" || input.html.length === 0) {
+        throw new Error("html is required");
+      }
+      if (input.html.length > 5_000_000) {
+        throw new Error("html too large");
+      }
+      const trim = (v: unknown, n: number): string | null =>
+        typeof v === "string" && v.trim() ? v.trim().slice(0, n) : null;
+      return {
+        html: input.html,
+        title: typeof input.title === "string" ? input.title.slice(0, 200) : "Dokument",
+        documentId: input.documentId ?? null,
+        fileName: trim(input.fileName, 200),
+        documentType: trim(input.documentType, 50),
+        clientName: trim(input.clientName, 120),
+        propertyTitle: trim(input.propertyTitle, 200),
+        companyName: trim(input.companyName, 120),
+      };
+    },
+  )
   .handler(async ({ data }) => {
     const serviceUrl = process.env.PDF_SERVICE_URL;
     const serviceToken = process.env.PDF_SERVICE_TOKEN;
@@ -60,8 +79,17 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
     }
 
     const id = data.documentId ?? crypto.randomUUID();
-    const filename = `${slugify(data.title) || "dokument"}-${id.slice(0, 8)}.pdf`;
-    const storagePath = `generated/${id}.pdf`;
+    const filename =
+      data.fileName ??
+      buildDocumentFileName({
+        company: data.companyName,
+        documentType: data.documentType,
+        documentLabel: !data.documentType ? data.title : null,
+        clientName: data.clientName,
+        propertyTitle: data.propertyTitle,
+        documentId: id,
+      });
+    const storagePath = `generated/${filename}`;
 
     // 1) Render via microservice (10s timeout)
     let pdfBytes: ArrayBuffer;
