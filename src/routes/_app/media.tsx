@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
+import { convertUnsupportedImages } from "@/lib/image-convert";
 
 export const Route = createFileRoute("/_app/media")({ component: MediaPage });
 
@@ -89,10 +90,11 @@ function MediaPage() {
       if (!form.property_id) throw new Error("Bitte Immobilie wählen");
       if (files.length === 0) throw new Error("Bitte mindestens eine Datei auswählen");
       setUploading(true);
+      const processed = await convertUnsupportedImages(files);
       const maxSort = Math.max(0, ...media.filter((m) => m.property_id === form.property_id).map((m) => m.sort_order));
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      for (let i = 0; i < processed.length; i++) {
+        const file = processed[i];
         const ext = file.name.split(".").pop() ?? "bin";
         const path = `${form.property_id}/${crypto.randomUUID()}.${ext}`;
         const { error: upErr } = await supabase.storage.from("media").upload(path, file, {
@@ -223,7 +225,7 @@ function MediaPage() {
                   <Input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*,video/*,.pdf"
+                    accept="image/*,video/*,.pdf,.tif,.tiff,.heic,.heif"
                     multiple
                     onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
                   />
