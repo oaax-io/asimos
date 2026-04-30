@@ -243,6 +243,13 @@ const DATE_KEYS = new Set([
 ]);
 
 function getValue(ctx: TemplateContext, path: string): string {
+  // Checkbox helpers: {{check.<key>}} returns ☑ or ☐ depending on overrides.checks
+  if (path.startsWith("check.")) {
+    const key = path.slice("check.".length);
+    const map = (ctx as TemplateContext & { checks?: Record<string, boolean> }).checks ?? {};
+    return map[key] ? "☑" : "☐";
+  }
+
   // Brand alias resolution: {{logo_url}} → ctx.brand.logo_url (with default fallback)
   if (BRAND_ALIASES[path]) {
     const key = BRAND_ALIASES[path];
