@@ -32,6 +32,15 @@ import {
   Code as CodeIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, Braces } from "lucide-react";
 
 // ----- Variable chip node -----
 // Renders {{key}} as a styled, atomic, non-editable chip in the editor.
@@ -98,7 +107,7 @@ function preprocessHtml(html: string, labelLookup: (key: string) => string | und
   });
 }
 
-type Variable = { key: string; label: string };
+type Variable = { key: string; label: string; group?: string };
 
 interface RichTextEditorProps {
   value: string;
@@ -150,7 +159,7 @@ export function RichTextEditor({ value, onChange, variables, className }: RichTe
 
   return (
     <div className={cn("space-y-2", className)}>
-      <Toolbar editor={editor} />
+      <Toolbar editor={editor} variables={variables} />
       <EditorContent editor={editor} />
     </div>
   );
@@ -184,7 +193,13 @@ function ToolBtn({
   );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function Toolbar({ editor, variables }: { editor: Editor; variables: Variable[] }) {
+  const grouped = variables.reduce<Record<string, Variable[]>>((acc, v) => {
+    const g = v.group ?? "Allgemein";
+    (acc[g] ??= []).push(v);
+    return acc;
+  }, {});
+  const groupOrder = Object.keys(grouped);
   return (
     <div className="flex flex-wrap items-center gap-1 rounded-md border bg-muted/30 p-1">
       <ToolBtn title="Fett" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
@@ -265,6 +280,36 @@ function Toolbar({ editor }: { editor: Editor }) {
       <ToolBtn title="Wiederherstellen" disabled={!editor.can().redo()} onClick={() => editor.chain().focus().redo().run()}>
         <Redo2 className="h-4 w-4" />
       </ToolBtn>
+      <div className="mx-1 h-6 w-px bg-border" />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button type="button" size="sm" variant="outline" className="h-8 gap-1" title="Variable einfügen">
+            <Braces className="h-4 w-4" />
+            Variable
+            <ChevronDown className="h-3 w-3 opacity-60" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="max-h-[400px] w-64 overflow-y-auto">
+          {groupOrder.map((group, idx) => (
+            <div key={group}>
+              {idx > 0 && <DropdownMenuSeparator />}
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {group}
+              </DropdownMenuLabel>
+              {grouped[group].map((v) => (
+                <DropdownMenuItem
+                  key={v.key}
+                  onSelect={() => insertVariableIntoEditor(editor, v.key, v.label.replace(/^★\s*/, ""))}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <span className="truncate">{v.label}</span>
+                  <code className="ml-2 text-[10px] text-muted-foreground">{`{{${v.key}}}`}</code>
+                </DropdownMenuItem>
+              ))}
+            </div>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
