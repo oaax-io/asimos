@@ -89,6 +89,17 @@ function ClientsPage() {
     return true;
   }), [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, search]);
 
+  // Pagination
+  const [pageSize, setPageSize] = useState<number>(20);
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [search, typeFilter, assignedFilter, financingFilter, archivedFilter, pageSize, view]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = useMemo(
+    () => filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filtered, currentPage, pageSize],
+  );
+
   const toggleOne = (id: string) => setSelected((prev) => {
     const next = new Set(prev);
     if (next.has(id)) next.delete(id); else next.add(id);
