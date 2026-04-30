@@ -23,6 +23,12 @@ export const Route = createFileRoute("/_app/properties/$id")({ component: Proper
 
 const STATUSES = ["draft","preparation","active","available","reserved","sold","rented","archived"] as const;
 
+function getMediaPublicUrl(path?: string | null) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+}
+
 function PropertyDetail() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
@@ -64,6 +70,23 @@ function PropertyDetail() {
     mutationFn: async (payload: WizardSubmit) => {
       const { error } = await supabase.from("properties").update(payload.property as any).eq("id", id);
       if (error) throw error;
+
+      const { error: deleteMediaError } = await supabase.from("property_media").delete().eq("property_id", id);
+      if (deleteMediaError) throw deleteMediaError;
+
+      if (payload.media.length > 0) {
+        const mediaRows = payload.media.map((m, index) => ({
+          property_id: id,
+          file_url: m.file_url,
+          file_name: m.file_name,
+          file_type: m.file_type,
+          title: m.title,
+          is_cover: m.is_cover,
+          sort_order: index + 1,
+        }));
+        const { error: mediaError } = await supabase.from("property_media").insert(mediaRows as any);
+        if (mediaError) throw mediaError;
+      }
     },
     onSuccess: () => {
       toast.success("Gespeichert");
@@ -126,7 +149,7 @@ function PropertyDetail() {
       <div className="mb-6 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 aspect-[16/10] overflow-hidden rounded-2xl border bg-muted">
           {p.images?.[0] ? (
-            <img src={p.images[0]} alt={p.title} className="h-full w-full object-cover" />
+            <img src={getMediaPublicUrl(p.images[0])} alt={p.title} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">Kein Bild</div>
           )}
@@ -179,7 +202,7 @@ function PropertyDetail() {
         <TabsContent value="overview"><OverviewTab p={p} /></TabsContent>
         <TabsContent value="owner"><OwnerTab p={p} /></TabsContent>
         <TabsContent value="facts"><FactsTab p={p} /></TabsContent>
-        <TabsContent value="media"><MediaTab propertyId={id} cover={p.images?.[0]} /></TabsContent>
+        <TabsContent value="media"><MediaTab propertyId={id} cover={getMediaPublicUrl(p.images?.[0])} /></TabsContent>
         <TabsContent value="documents"><DocumentsTab propertyId={id} /></TabsContent>
         <TabsContent value="checklists"><ChecklistsTab propertyId={id} /></TabsContent>
         <TabsContent value="tasks"><TasksTab propertyId={id} /></TabsContent>
