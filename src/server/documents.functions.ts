@@ -165,7 +165,7 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
       fileUrl: signed.signedUrl,
       path: storagePath,
       title: data.title,
-      provider: "puppeteer" as const,
+      provider: PDF_PROVIDER,
       durationMs: ms,
     };
   });
