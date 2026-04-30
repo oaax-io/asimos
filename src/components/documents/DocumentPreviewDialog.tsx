@@ -110,10 +110,8 @@ export function DocumentPreviewDialog({
                 title={title}
                 documentId={generatedDocumentId ?? null}
                 onPrintFallback={printIt}
+                variant="default"
               />
-              <Button variant="ghost" size="sm" onClick={printIt} disabled={!html}>
-                <Printer className="mr-2 size-4" /> Drucken
-              </Button>
             </div>
           </div>
         </DialogHeader>
