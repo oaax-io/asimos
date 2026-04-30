@@ -1,7 +1,17 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
-import { FileDown, Loader2, Printer } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getDocumentPdfUrl, renderDocumentPdf } from "@/server/documents.functions";
 
@@ -29,6 +39,7 @@ export function GeneratePdfButton({
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [fallbackReason, setFallbackReason] = useState<string | null>(null);
   const renderPdf = useServerFn(renderDocumentPdf);
   const getPdfUrl = useServerFn(getDocumentPdfUrl);
 
@@ -54,6 +65,14 @@ export function GeneratePdfButton({
     setTimeout(() => w.print(), 300);
   };
 
+  const requestPrintFallback = (message?: string) => {
+    const reason = message?.trim() || "Der PDF-Service hat keine Datei zurückgegeben.";
+    toast.error("PDF konnte nicht generiert werden. Browser-Druck als Fallback verwenden?", {
+      description: reason,
+    });
+    setFallbackReason(reason);
+  };
+
   const handle = async () => {
     if (!html) {
       toast.error("Kein Inhalt zum Generieren");
@@ -77,14 +96,10 @@ export function GeneratePdfButton({
         toast.success("PDF wurde erstellt");
         openPdf(res.fileUrl);
       } else {
-        toast.message("Server-PDF nicht verfügbar – Druck-Fallback wird geöffnet", {
-          description: "message" in res ? res.message : undefined,
-        });
-        triggerPrint();
+        requestPrintFallback("message" in res ? res.message : undefined);
       }
     } catch (err) {
-      toast.error("PDF-Erzeugung fehlgeschlagen", { description: (err as Error).message });
-      triggerPrint();
+      requestPrintFallback((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -99,9 +114,33 @@ export function GeneratePdfButton({
   }
 
   return (
-    <Button variant={variant} size={size} onClick={handle} disabled={loading || !html}>
-      {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Printer className="mr-2 size-4" />}
-      {loading ? "Wird erstellt…" : "PDF generieren"}
-    </Button>
+    <>
+      <Button variant={variant} size={size} onClick={handle} disabled={loading || !html}>
+        {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <FileDown className="mr-2 size-4" />}
+        {loading ? "Wird erstellt…" : "PDF generieren"}
+      </Button>
+
+      <AlertDialog open={!!fallbackReason} onOpenChange={(open) => !open && setFallbackReason(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Browser-Druck als Fallback verwenden?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {fallbackReason ?? "PDF konnte nicht generiert werden."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setFallbackReason(null);
+                triggerPrint();
+              }}
+            >
+              Browser-Druck öffnen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

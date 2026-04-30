@@ -3,12 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { GeneratePdfButton } from "@/components/documents/GeneratePdfButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Check, ChevronLeft, ChevronRight, Eye, FileText, Printer, Send } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Eye, FileText, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import {
@@ -347,11 +348,12 @@ export function DocumentWizard({
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Eye className="size-4" /> Vorschau
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={printPreview}>
-                    <Printer className="mr-2 size-4" /> Drucken / PDF
-                  </Button>
-                </div>
+                <GeneratePdfButton
+                  html={previewHtml}
+                  title={KIND_LABELS[kind]}
+                  onPrintFallback={printPreview}
+                  variant="outline"
+                />
               </div>
               <iframe
                 title="Vorschau"
