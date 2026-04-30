@@ -22,8 +22,9 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
  * back to the existing window.print() flow.
  */
 
-const PDF_TIMEOUT_MS = 10_000;
-const BUCKET = "generated-documents";
+const PDF_TIMEOUT_MS = 30_000;
+const BUCKET = "documents";
+const PDF_PROVIDER = "railway-puppeteer";
 
 export const renderDocumentPdf = createServerFn({ method: "POST" })
   .inputValidator((input: { html: string; title?: string; documentId?: string | null }) => {
@@ -65,14 +66,16 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), PDF_TIMEOUT_MS);
     try {
-      const res = await fetch(serviceUrl, {
+      const endpoint = serviceUrl.replace(/\/+$/, "") + "/render-pdf";
+      const res = await fetch(endpoint, {
         method: "POST",
         signal: controller.signal,
         headers: {
           "Content-Type": "application/json",
+          "x-pdf-token": serviceToken,
           "x-api-key": serviceToken,
         },
-        body: JSON.stringify({ html: data.html, filename }),
+        body: JSON.stringify({ html: data.html, title: data.title, filename }),
       });
       if (!res.ok) {
         const text = await safeText(res);
@@ -145,7 +148,7 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
           file_url: storagePath,
           pdf_url: storagePath,
           pdf_generated_at: new Date().toISOString(),
-          pdf_provider: "puppeteer",
+          pdf_provider: PDF_PROVIDER,
           status: "ready",
         })
         .eq("id", data.documentId);
@@ -162,7 +165,7 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
       fileUrl: signed.signedUrl,
       path: storagePath,
       title: data.title,
-      provider: "puppeteer" as const,
+      provider: PDF_PROVIDER,
       durationMs: ms,
     };
   });
