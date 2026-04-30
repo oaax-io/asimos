@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDate, formatCurrency } from "@/lib/format";
 import { DocumentWizard } from "@/components/documents/DocumentWizard";
+import { DocumentPreviewDialog } from "@/components/documents/DocumentPreviewDialog";
 
 export const Route = createFileRoute("/_app/reservations")({ component: ReservationsPage });
 
@@ -66,7 +67,7 @@ function ReservationsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [genFor, setGenFor] = useState<ReservationRow | null>(null);
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewFor, setPreviewFor] = useState<ReservationRow | null>(null);
   const [form, setForm] = useState({
     client_id: "",
     property_id: "",
@@ -132,14 +133,6 @@ function ReservationsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["reservations"] }),
   });
 
-  const showGenerated = async (docId: string) => {
-    const { data } = await supabase
-      .from("generated_documents")
-      .select("html_content")
-      .eq("id", docId)
-      .maybeSingle();
-    setPreviewHtml(data?.html_content ?? "<p>Kein Inhalt</p>");
-  };
 
 
 
@@ -300,14 +293,10 @@ function ReservationsPage() {
                     {r.valid_until ? formatDate(r.valid_until) : "—"}
                   </TableCell>
                   <TableCell>
-                    {r.generated_document_id ? (
-                      <Button variant="ghost" size="sm" onClick={() => showGenerated(r.generated_document_id!)}>
-                        <Eye className="mr-1 h-3.5 w-3.5" />
-                        Ansehen
-                      </Button>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
+                    <Button variant="ghost" size="sm" onClick={() => setPreviewFor(r)}>
+                      <Eye className="mr-1 h-3.5 w-3.5" />
+                      {r.generated_document_id ? "Ansehen" : "Vorschau"}
+                    </Button>
                   </TableCell>
                   <TableCell>
                     <Select value={r.status} onValueChange={(v) => updateStatus.mutate({ id: r.id, status: v })}>
@@ -354,14 +343,22 @@ function ReservationsPage() {
         />
       )}
 
-      <Dialog open={!!previewHtml} onOpenChange={(o) => !o && setPreviewHtml(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Generiertes Dokument</DialogTitle>
-          </DialogHeader>
-          <iframe title="Dokument" srcDoc={previewHtml ?? ""} className="h-[70vh] w-full rounded-md border bg-white" />
-        </DialogContent>
-      </Dialog>
+      {previewFor && (
+        <DocumentPreviewDialog
+          open={!!previewFor}
+          onOpenChange={(o) => !o && setPreviewFor(null)}
+          generatedDocumentId={previewFor.generated_document_id}
+          kind="reservation"
+          clientId={previewFor.client_id}
+          propertyId={previewFor.property_id}
+          extraContext={{
+            reservation: {
+              reservation_fee: previewFor.reservation_fee,
+              valid_until: previewFor.valid_until,
+            },
+          }}
+        />
+      )}
     </>
   );
 }
