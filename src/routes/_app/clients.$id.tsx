@@ -36,7 +36,7 @@ import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuick
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetail });
 
-const TYPES = ["buyer", "seller", "tenant", "landlord"] as const;
+const TYPES = ["buyer", "seller", "owner", "tenant", "landlord"] as const;
 const PROP_TYPES = ["apartment", "house", "commercial", "land", "other"] as const;
 
 function ClientDetail() {
