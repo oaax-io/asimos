@@ -387,11 +387,20 @@ export function findMissingVariables(template: string, ctx: TemplateContext): st
   return missing;
 }
 
+/**
+ * Detect a skin marker in template body. Templates can opt into an alternate
+ * visual skin by including `<!--skin:asimo-->` at the top.
+ */
+export function pickSkin(bodyHtml: string): "default" | "asimo" {
+  if (/<!--\s*skin:asimo\s*-->/i.test(bodyHtml)) return "asimo";
+  return "default";
+}
+
 export function wrapHtmlDocument(
   title: string,
   bodyHtml: string,
   brand?: TemplateContext["brand"] | null,
-  options?: { customCss?: string | null },
+  options?: { customCss?: string | null; skin?: "default" | "asimo" | "auto" },
 ): string {
   const b = { ...DEFAULT_BRAND, ...(brand ?? {}) };
   const primary = b.primary_color || DEFAULT_BRAND.primary_color;
@@ -399,6 +408,12 @@ export function wrapHtmlDocument(
   const font = b.font_family || DEFAULT_BRAND.font_family;
   const companyName = escapeAttr(b.company_name || "");
   const customCss = (options?.customCss ?? "").toString();
+  const skinOpt = options?.skin ?? "auto";
+  const skin = skinOpt === "auto" ? pickSkin(bodyHtml) : skinOpt;
+
+  if (skin === "asimo") {
+    return wrapAsimoSkin({ title, bodyHtml, brand: b, font, customCss });
+  }
 
   const headerHtml = b.header_html
     ? b.header_html
