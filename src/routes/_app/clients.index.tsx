@@ -23,7 +23,7 @@ import { ClientWizard } from "@/components/clients/ClientWizard";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
-const TYPES = ["buyer","seller","tenant","landlord","investor","other"] as const;
+const TYPES = ["buyer","seller","owner","tenant","landlord","investor","other"] as const;
 const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
 const FINANCING_OPTIONS = ["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"];
 const ALL = "__all__";
