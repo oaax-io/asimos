@@ -325,6 +325,29 @@ function getValue(ctx: TemplateContext, path: string): string {
     return map[key] ? "☑" : "☐";
   }
 
+  // Commission model display helpers (used to show/hide blocks in templates)
+  // {{commission.show_percent}} → "" if percent selected, otherwise "display:none"
+  // {{commission.show_flat}}    → "" if flat (Pauschal) selected, otherwise "display:none"
+  if (path === "commission.show_percent" || path === "commission.show_flat") {
+    const model = String((ctx as any).mandate?.commission_model ?? "").toLowerCase();
+    const isFlat = /pauschal|flat|fixed|chf/.test(model);
+    const isPercent = /prozent|percent|%/.test(model) || (!isFlat && model !== "");
+    if (path === "commission.show_percent") return isPercent ? "" : "display:none";
+    return isFlat ? "" : "display:none";
+  }
+
+  // Mark the selected percent option, e.g. {{commission.mark_3}} renders ✕ when 3% is selected
+  if (path.startsWith("commission.mark_")) {
+    const target = path.slice("commission.mark_".length).replace(/_/g, ".");
+    const targetNum = parseFloat(target);
+    const model = String((ctx as any).mandate?.commission_model ?? "").toLowerCase();
+    const isPercent = /prozent|percent|%/.test(model);
+    if (!isPercent) return "";
+    const raw = String((ctx as any).mandate?.commission_value ?? "");
+    const valNum = parseFloat(raw.replace(",", "."));
+    return Number.isFinite(valNum) && Number.isFinite(targetNum) && Math.abs(valNum - targetNum) < 0.001 ? "✕" : "";
+  }
+
   // Derived name parts (split full_name into Vorname / Name)
   if (path === "client.first_name" || path === "client.last_name" || path === "client_first_name" || path === "client_last_name") {
     const { first, last } = splitName(ctx.client?.full_name ?? "");
@@ -1151,15 +1174,15 @@ export const DEFAULT_MANDATE_ASIMO_EXCLUSIVE = `<!--skin:asimo-->
     <div class="a-section">
       <h4>2. Provision</h4>
       <p>Der Verkäufer verpflichtet sich, dem Immobilienmakler eine Provision (wie unten angekreuzt in Prozent oder Pauschal) des Verkaufspreises zu zahlen, die bei erfolgreichem Abschluss des Kaufvertrages fällig wird. Die Provision ist zur Zahlung fällig, sobald der notarielle Kaufvertrag zwischen Käufer und Verkäufer beurkundet worden ist. Der Auftraggeber hat das Recht, die Immobilie selbst zu verkaufen, ohne dass dabei eine Provision geschuldet wird, sofern die Auftragnehmerin mit einer möglichen Kundschaft noch keine Reservation abgeschlossen ist.</p>
-      <div class="commission-grid">
-        <span class="c-opt"><span class="bx"></span>2.5%</span>
-        <span class="c-opt"><span class="bx"></span>3%</span>
-        <span class="c-opt"><span class="bx"></span>4%</span>
-        <span class="c-opt"><span class="bx"></span>5%</span>
+      <div class="commission-grid" style="{{commission.show_percent}}">
+        <span class="c-opt"><span class="bx">{{commission.mark_2_5}}</span>2.5%</span>
+        <span class="c-opt"><span class="bx">{{commission.mark_3}}</span>3%</span>
+        <span class="c-opt"><span class="bx">{{commission.mark_4}}</span>4%</span>
+        <span class="c-opt"><span class="bx">{{commission.mark_5}}</span>5%</span>
       </div>
-      <div class="commission-pauschal">
+      <div class="commission-pauschal" style="{{commission.show_flat}}">
         <span class="c-opt"><span class="bx on">✕</span>Pauschalbetrag:</span>
-        <span class="pauschal-val">CHF {{commission_value}}</span>
+        <span class="pauschal-val">{{commission_value}}</span>
       </div>
     </div>
 
