@@ -1091,23 +1091,23 @@ export const DEFAULT_MANDATE_ASIMO_EXCLUSIVE = `<!--skin:asimo-->
   <div>
     <div class="a-zwischen">zwischen</div>
     <div class="a-party-l">
-      {{company.legal_name}}<br/>
+      <strong>{{company.legal_name}}</strong><br/>
       {{company.address}}<br/>
       {{company.postal_code}} {{company.city}}<br/>
+      vertreten durch: {{company.default_signatory_name}}<br/>
+      {{company.email}} · {{company.phone}}<br/>
       <span style="color:#6b7280;">(nachfolgend „Auftragnehmer")</span>
     </div>
   </div>
   <div>
     <div class="a-parties-r-label">und (nachfolgend: <strong>Auftraggeber</strong>)</div>
     <div class="a-formgrid">
-      <div class="lbl">Firma</div><div class="val">{{client.full_name}}</div>
-      <div class="lbl">Ort/PLZ</div><div class="val">{{client.postal_code}} {{client.city}}</div>
-      <div class="lbl">Vorname</div><div class="val"></div>
-      <div class="lbl">Telefon</div><div class="val">{{client.phone}}</div>
-      <div class="lbl">Name</div><div class="val"></div>
-      <div class="lbl">E-Mail</div><div class="val">{{client.email}}</div>
+      <div class="lbl">Vorname</div><div class="val">{{client.first_name}}</div>
+      <div class="lbl">Name</div><div class="val">{{client.last_name}}</div>
       <div class="lbl">Strasse + Nr.</div><div class="val">{{client.address}}</div>
-      <div class="lbl">UID</div><div class="val">--</div>
+      <div class="lbl">Ort/PLZ</div><div class="val">{{client.postal_code}} {{client.city}}</div>
+      <div class="lbl">Telefon</div><div class="val">{{client.phone}}</div>
+      <div class="lbl">E-Mail</div><div class="val">{{client.email}}</div>
     </div>
   </div>
 </div>
