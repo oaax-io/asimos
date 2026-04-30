@@ -117,8 +117,17 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
 
   const docKind = mandateType === "exclusive" ? "mandate" : "mandate_partial";
 
-  const extraContext: Partial<TemplateContext> = useMemo(
-    () => ({
+  const extraContext: Partial<TemplateContext> = useMemo(() => {
+    const ptype = selectedProperty?.property_type ?? "";
+    const checks: Record<string, boolean> = {
+      house: ptype === "house",
+      apartment: ptype === "apartment",
+      multifamily: ptype === "multifamily" || ptype === "multi_family",
+      commercial: ptype === "commercial" || ptype === "office" || ptype === "retail",
+      land: ptype === "land" || ptype === "plot",
+      other: !["house", "apartment", "multifamily", "multi_family", "commercial", "office", "retail", "land", "plot"].includes(ptype),
+    };
+    return {
       mandate: {
         commission_model: commissionType === "percent" ? "Prozent" : "Pauschal",
         commission_value: commissionValue
@@ -130,9 +139,9 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
         valid_until: validUntil || null,
         type: mandateType === "exclusive" ? "Exklusiv" : "Teilexklusiv",
       },
-    }),
-    [commissionType, commissionValue, validFrom, validUntil, mandateType],
-  );
+      checks,
+    };
+  }, [commissionType, commissionValue, validFrom, validUntil, mandateType, selectedProperty?.property_type]);
 
   const { data: ctx } = useQuery({
     queryKey: [
