@@ -99,7 +99,7 @@ export function DocumentPreviewDialog({
         tpl = data;
       }
 
-      const content = tpl?.content ?? defaultTemplateForType(kind!);
+      const content = (tpl?.content && tpl.content.trim()) ? tpl.content : defaultTemplateForType(kind!);
       return wrapHtmlDocument(KIND_LABELS[kind!], renderTemplate(content, ctx), ctx.brand);
     },
   });
