@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/EmptyState";
-import { PropertyFormDialog, type PropertyFormValues } from "@/components/properties/PropertyFormDialog";
+import { PropertyWizard, type WizardSubmit } from "@/components/properties/PropertyWizard";
 import { formatCurrency, formatArea, formatDate, formatDateTime, propertyTypeLabels, propertyStatusLabels, listingTypeLabels } from "@/lib/format";
 import { toast } from "sonner";
 import { MatchPanel } from "@/components/matching/MatchPanel";
