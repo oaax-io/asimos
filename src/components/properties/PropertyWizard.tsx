@@ -179,6 +179,12 @@ export type WizardSubmit = {
   media: WizardMedia[];
 };
 
+function ensureWizardCover(list: WizardMedia[]): WizardMedia[] {
+  if (list.length === 0) return list;
+  if (list.some((m) => m.is_cover)) return list;
+  return list.map((m, i) => ({ ...m, is_cover: i === 0 }));
+}
+
 function buildFeatures(d: WizardData): string[] {
   const f: string[] = [];
   if (d.has_balcony) f.push("Balkon");
@@ -449,7 +455,7 @@ export function PropertyWizard({
       ...prev,
       media: prev.media.length === existingMedia.data.length && prev.media.every((item, index) => item.file_url === existingMedia.data?.[index]?.file_url)
         ? prev.media
-        : ensureCover(existingMedia.data),
+        : ensureWizardCover(existingMedia.data),
     }));
   }, [existingMedia.data, mode, open]);
 
