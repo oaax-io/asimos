@@ -336,6 +336,13 @@ function getValue(ctx: TemplateContext, path: string): string {
     return isFlat ? "" : "display:none";
   }
 
+  // {{mandate.show_term}} → "" if either valid_from or valid_until is set, else "display:none"
+  if (path === "mandate.show_term") {
+    const m = (ctx as any).mandate ?? {};
+    const has = (m.valid_from && String(m.valid_from).trim()) || (m.valid_until && String(m.valid_until).trim());
+    return has ? "" : "display:none";
+  }
+
   // Mark the selected percent option, e.g. {{commission.mark_3}} renders ✕ when 3% is selected
   if (path.startsWith("commission.mark_")) {
     const target = path.slice("commission.mark_".length).replace(/_/g, ".");
