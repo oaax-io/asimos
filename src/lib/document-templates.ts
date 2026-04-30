@@ -568,58 +568,164 @@ function escapeAttr(s: string): string {
 }
 
 
-export const DEFAULT_MANDATE_TEMPLATE = `<h1>Maklervertrag (Verkaufsmandat)</h1>
-<p class="muted">Datum: {{today}} – Ort: {{company.default_place}}</p>
+/* ---------- Helpers used inside templates ---------- */
+// Templates are pure HTML strings (no JS). Checkbox states are rendered via
+// {{var}} substitution: if the variable resolves to a truthy value it shows ☑,
+// otherwise ☐. We expose helper variables for the property type checkboxes via
+// the wizard's `overrides.checks` payload (see MandateWizard).
 
-<h2>Auftraggeber</h2>
-<p>{{client.full_name}}<br/>{{client.address}}<br/>{{client.postal_code}} {{client.city}}<br/>E-Mail: {{client.email}} – Telefon: {{client.phone}}</p>
+const MANDATE_INTRO = `
+<h1 class="doc-title">Maklermandat</h1>
+<p class="muted">Verkaufsvermittlungsauftrag · {{mandate.type}}</p>
+<p class="muted">Ausgestellt am {{today}} in {{company.default_place}}</p>
+`;
 
-<h2>Auftragnehmer</h2>
-<p>{{company.legal_name}}<br/>{{company.address}}<br/>{{company.postal_code}} {{company.city}}<br/>UID: {{company.uid_number}}</p>
+const MANDATE_PARTIES_GRID = `
+<div class="grid-2">
+  <div class="panel">
+    <h3>Auftraggeber</h3>
+    <span class="label">Name</span>
+    <div class="value"><strong>{{client.full_name}}</strong></div>
+    <span class="label">Adresse</span>
+    <div class="value">{{client.address}}<br/>{{client.postal_code}} {{client.city}}</div>
+    <span class="label">Kontakt</span>
+    <div class="value">{{client.email}} · {{client.phone}}</div>
+  </div>
+  <div class="panel">
+    <h3>Auftragnehmer</h3>
+    <span class="label">Firma</span>
+    <div class="value"><strong>{{company.legal_name}}</strong></div>
+    <span class="label">Adresse</span>
+    <div class="value">{{company.address}}<br/>{{company.postal_code}} {{company.city}}</div>
+    <span class="label">Kontakt</span>
+    <div class="value">{{company.email}} · {{company.phone}}</div>
+    <span class="label">UID</span>
+    <div class="value">{{company.uid_number}}</div>
+  </div>
+</div>
+`;
 
-<h2>Objekt</h2>
-<p><strong>{{property.title}}</strong><br/>{{property.address}}, {{property.postal_code}} {{property.city}}</p>
-<p>Verkaufspreis: <strong>{{property.price}}</strong> – Wohnfläche: {{property.living_area}} m² – Zimmer: {{property.rooms}}</p>
+const MANDATE_OBJECT_GRID = `
+<div class="grid-2">
+  <div class="panel">
+    <h3>Vermittlungsobjekt</h3>
+    <span class="label">Bezeichnung</span>
+    <div class="value"><strong>{{property.title}}</strong></div>
+    <span class="label">Adresse</span>
+    <div class="value">{{property.address}}<br/>{{property.postal_code}} {{property.city}}</div>
+    <span class="label">Verkaufspreis</span>
+    <div class="value"><strong>{{property.price}}</strong></div>
+  </div>
+  <div class="panel">
+    <h3>Eckdaten</h3>
+    <span class="label">Wohnfläche</span>
+    <div class="value">{{property.living_area}} m²</div>
+    <span class="label">Zimmer</span>
+    <div class="value">{{property.rooms}}</div>
+    <span class="label">Grundstück</span>
+    <div class="value">{{property.plot_area}} m²</div>
+    <span class="label">Baujahr</span>
+    <div class="value">{{property.year_built}}</div>
+  </div>
+</div>
 
-<h2>Provision</h2>
-<p>Modell: {{mandate.commission_model}}<br/>Provision: <strong>{{mandate.commission_value}}</strong></p>
+<h3>Objektart</h3>
+<div class="checks">
+  <div class="check"><span class="box-icon">{{check.house}}</span> Einfamilienhaus</div>
+  <div class="check"><span class="box-icon">{{check.apartment}}</span> Eigentumswohnung</div>
+  <div class="check"><span class="box-icon">{{check.multifamily}}</span> Mehrfamilienhaus</div>
+  <div class="check"><span class="box-icon">{{check.commercial}}</span> Gewerbeobjekt</div>
+  <div class="check"><span class="box-icon">{{check.land}}</span> Grundstück / Bauland</div>
+  <div class="check"><span class="box-icon">{{check.other}}</span> Sonstiges</div>
+</div>
+`;
 
-<h2>Laufzeit</h2>
-<p>Gültig von {{mandate.valid_from}} bis {{mandate.valid_until}}.</p>
-
-<hr/>
-<p>Mit der Unterzeichnung erteilt der Auftraggeber dem Auftragnehmer den Auftrag, das oben genannte Objekt zu vermarkten.</p>
-
+const MANDATE_SIGNATURES = `
 <div class="signature">
-  <div>{{client.full_name}} – Auftraggeber</div>
-  <div>{{company.default_signatory_name}} – {{company.default_signatory_role}}, {{company.name}}</div>
-</div>`;
+  <div class="sig-line">
+    <div class="sig-name">{{client.full_name}}</div>
+    Auftraggeber · {{company.default_place}}, den {{today}}
+  </div>
+  <div class="sig-line">
+    <div class="sig-name">{{company.default_signatory_name}}</div>
+    {{company.default_signatory_role}} · {{company.name}}
+  </div>
+</div>
+`;
 
-export const DEFAULT_MANDATE_PARTIAL_TEMPLATE = `<h1>Teilexklusiver Maklerauftrag</h1>
-<p class="muted">Datum: {{today}} – Ort: {{company.default_place}}</p>
+export const DEFAULT_MANDATE_TEMPLATE = `${MANDATE_INTRO}
+${MANDATE_PARTIES_GRID}
 
-<h2>Auftraggeber</h2>
-<p>{{client.full_name}}<br/>{{client.address}}<br/>{{client.postal_code}} {{client.city}}</p>
+<div class="section-title"><span class="num">1</span> Vertragsgegenstand</div>
+<p>Der Auftraggeber beauftragt den Auftragnehmer mit der <strong>exklusiven</strong> Vermittlung des nachstehend bezeichneten Objekts. Während der Laufzeit dieses Mandats ist der Auftraggeber nicht berechtigt, weitere Makler oder Vermittler mit der Vermarktung des Objekts zu beauftragen.</p>
+${MANDATE_OBJECT_GRID}
 
-<h2>Auftragnehmer</h2>
-<p>{{company.legal_name}}<br/>{{company.address}}<br/>{{company.postal_code}} {{company.city}}</p>
+<div class="section-title"><span class="num">2</span> Provision</div>
+<table class="data">
+  <tr><th>Provisionsmodell</th><td>{{mandate.commission_model}}</td></tr>
+  <tr><th>Provisionssatz / Pauschale</th><td><strong>{{mandate.commission_value}}</strong></td></tr>
+  <tr><th>Berechnungsbasis</th><td>Notariell beurkundeter Kaufpreis (zzgl. ges. MwSt.)</td></tr>
+  <tr><th>Fälligkeit</th><td>Mit Abschluss des Kaufvertrages, spätestens bei Eigentumsübertragung</td></tr>
+</table>
 
-<h2>Objekt</h2>
-<p><strong>{{property.title}}</strong><br/>{{property.address}}, {{property.postal_code}} {{property.city}}<br/>Verkaufspreis: <strong>{{property.price}}</strong></p>
+<div class="section-title"><span class="num">3</span> Laufzeit & Verlängerung</div>
+<p>Dieses Mandat tritt am <strong>{{mandate.valid_from}}</strong> in Kraft und endet am <strong>{{mandate.valid_until}}</strong>. Wird das Mandat nicht spätestens 30 Tage vor Ablauf schriftlich gekündigt, verlängert es sich stillschweigend um jeweils drei Monate.</p>
 
-<h2>Provision</h2>
-<p>Modell: {{mandate.commission_model}} – Wert: <strong>{{mandate.commission_value}}</strong></p>
+<div class="section-title"><span class="num">4</span> Pflichten des Auftragnehmers</div>
+<p>Der Auftragnehmer verpflichtet sich, das Objekt fachgerecht und mit der Sorgfalt eines ordentlichen Maklers zu vermarkten. Dies umfasst insbesondere:</p>
+<ul>
+  <li>Erstellung eines professionellen Exposés inkl. hochwertiger Fotos</li>
+  <li>Listing auf relevanten Plattformen (ImmoScout24, Homegate, Newhome u. a.)</li>
+  <li>Qualifizierung von Interessenten und Bonitätsprüfung</li>
+  <li>Organisation und Durchführung der Besichtigungen</li>
+  <li>Verhandlungsführung und Begleitung bis zur Beurkundung</li>
+</ul>
 
-<h2>Besonderheit</h2>
-<p>Diese Vereinbarung ist <strong>teilexklusiv</strong>. Der Auftraggeber behält das Recht, einen eigenen Käufer ohne Provisionsanspruch des Maklers zu vermitteln.</p>
+<div class="section-title"><span class="num">5</span> Pflichten des Auftraggebers</div>
+<p>Der Auftraggeber stellt dem Auftragnehmer alle für die Vermittlung erforderlichen Unterlagen vollständig und wahrheitsgemäss zur Verfügung. Er verpflichtet sich, alle Anfragen, die ihn direkt erreichen, unverzüglich an den Auftragnehmer weiterzuleiten.</p>
 
-<h2>Laufzeit</h2>
-<p>Gültig von {{mandate.valid_from}} bis {{mandate.valid_until}}.</p>
+<div class="section-title"><span class="num">6</span> Datenschutz & Vertraulichkeit</div>
+<p>Beide Parteien verpflichten sich zur vertraulichen Behandlung aller im Rahmen dieses Mandats ausgetauschten Informationen. Personenbezogene Daten werden ausschliesslich zum Zweck der Vertragserfüllung gemäss DSGVO und revDSG verarbeitet.</p>
 
-<div class="signature">
-  <div>{{client.full_name}}</div>
-  <div>{{company.default_signatory_name}} – {{company.name}}</div>
-</div>`;
+<div class="section-title"><span class="num">7</span> Schlussbestimmungen</div>
+<p>Änderungen und Ergänzungen dieses Vertrages bedürfen der Schriftform. Sollten einzelne Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt. Gerichtsstand ist {{company.default_place}}, anwendbar ist Schweizer Recht.</p>
+
+${MANDATE_SIGNATURES}
+`;
+
+export const DEFAULT_MANDATE_PARTIAL_TEMPLATE = `${MANDATE_INTRO}
+${MANDATE_PARTIES_GRID}
+
+<div class="section-title"><span class="num">1</span> Vertragsgegenstand</div>
+<p>Der Auftraggeber beauftragt den Auftragnehmer mit der <strong>teilexklusiven</strong> Vermittlung des unten bezeichneten Objekts. Der Auftraggeber behält das Recht, einen eigenen Käufer zu vermitteln, ohne dass ein Provisionsanspruch des Auftragnehmers entsteht. Die Beauftragung weiterer Makler ist ausgeschlossen.</p>
+${MANDATE_OBJECT_GRID}
+
+<div class="section-title"><span class="num">2</span> Provision</div>
+<table class="data">
+  <tr><th>Provisionsmodell</th><td>{{mandate.commission_model}}</td></tr>
+  <tr><th>Provisionssatz / Pauschale</th><td><strong>{{mandate.commission_value}}</strong></td></tr>
+  <tr><th>Berechnungsbasis</th><td>Notariell beurkundeter Kaufpreis (zzgl. ges. MwSt.)</td></tr>
+  <tr><th>Fälligkeit</th><td>Mit Abschluss des Kaufvertrages</td></tr>
+</table>
+<div class="box"><strong>Eigenvermittlung:</strong> Findet der Auftraggeber selbst einen Käufer, ist keine Provision geschuldet. Der Auftraggeber informiert den Auftragnehmer hierüber unverzüglich.</div>
+
+<div class="section-title"><span class="num">3</span> Laufzeit & Verlängerung</div>
+<p>Dieses Mandat ist gültig vom <strong>{{mandate.valid_from}}</strong> bis zum <strong>{{mandate.valid_until}}</strong>. Eine stillschweigende Verlängerung erfolgt nicht.</p>
+
+<div class="section-title"><span class="num">4</span> Pflichten des Auftragnehmers</div>
+<p>Professionelle Vermarktung gemäss Standard des Maklers, inklusive Exposé, Online-Listings, Interessentenqualifizierung, Besichtigungen und Verhandlungsbegleitung.</p>
+
+<div class="section-title"><span class="num">5</span> Pflichten des Auftraggebers</div>
+<p>Bereitstellung aller relevanten Objektunterlagen sowie unverzügliche Weiterleitung sämtlicher direkt eingehender Anfragen, sofern diese nicht aus eigener Vermittlung stammen.</p>
+
+<div class="section-title"><span class="num">6</span> Datenschutz & Vertraulichkeit</div>
+<p>Beide Parteien behandeln alle ausgetauschten Informationen vertraulich. Datenverarbeitung erfolgt gemäss DSGVO und revDSG.</p>
+
+<div class="section-title"><span class="num">7</span> Schlussbestimmungen</div>
+<p>Änderungen bedürfen der Schriftform. Gerichtsstand: {{company.default_place}}. Es gilt Schweizer Recht.</p>
+
+${MANDATE_SIGNATURES}
+`;
 
 export const DEFAULT_RESERVATION_TEMPLATE = `<h1>Reservationsvereinbarung</h1>
 <p class="muted">Datum: {{today}} – Ort: {{company.default_place}}</p>
