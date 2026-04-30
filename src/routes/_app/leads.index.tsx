@@ -119,6 +119,8 @@ function LeadsPage() {
   const create = useMutation({
     mutationFn: async () => {
       if (!form.full_name.trim()) throw new Error("Name ist erforderlich");
+      if (!form.email.trim()) throw new Error("E-Mail ist erforderlich");
+      if (!form.phone.trim()) throw new Error("Telefon ist erforderlich");
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
       if (!accessToken) throw new Error("Nicht angemeldet");
