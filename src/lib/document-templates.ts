@@ -1148,12 +1148,14 @@ export const DEFAULT_MANDATE_ASIMO_EXCLUSIVE = `<!--skin:asimo-->
     <div class="a-section">
       <h4>2. Provision</h4>
       <p>Der Verkäufer verpflichtet sich, dem Immobilienmakler eine Provision (wie unten angekreuzt in Prozent oder Pauschal) des Verkaufspreises zu zahlen, die bei erfolgreichem Abschluss des Kaufvertrages fällig wird. Die Provision ist zur Zahlung fällig, sobald der notarielle Kaufvertrag zwischen Käufer und Verkäufer beurkundet worden ist. Der Auftraggeber hat das Recht, die Immobilie selbst zu verkaufen, ohne dass dabei eine Provision geschuldet wird, sofern die Auftragnehmerin mit einer möglichen Kundschaft noch keine Reservation abgeschlossen ist.</p>
-      <div class="commission-row">
-        <span><span class="bx"></span>2.5%</span>
-        <span><span class="bx"></span>3%</span>
-        <span><span class="bx"></span>4%</span>
-        <span><span class="bx"></span>5%</span>
-        <span><span class="bx on">✕</span>Pauschalbetrag:</span>
+      <div class="commission-grid">
+        <span class="c-opt"><span class="bx"></span>2.5%</span>
+        <span class="c-opt"><span class="bx"></span>3%</span>
+        <span class="c-opt"><span class="bx"></span>4%</span>
+        <span class="c-opt"><span class="bx"></span>5%</span>
+      </div>
+      <div class="commission-pauschal">
+        <span class="c-opt"><span class="bx on">✕</span>Pauschalbetrag:</span>
         <span class="pauschal-val">CHF {{commission_value}}</span>
       </div>
     </div>
