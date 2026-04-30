@@ -39,6 +39,26 @@ export async function resolveDocumentContext(input: ResolveInput): Promise<Templ
     };
   }
 
+  // Current user (the broker generating the document) → ctx.agent
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData?.user?.id;
+    if (uid) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("full_name, email, phone")
+        .eq("id", uid)
+        .maybeSingle();
+      (ctx as any).agent = {
+        full_name: prof?.full_name ?? userData.user.email ?? "",
+        email: prof?.email ?? userData.user.email ?? "",
+        phone: prof?.phone ?? "",
+      };
+    }
+  } catch {
+    // ignore — agent is optional
+  }
+
   // Company (singleton)
   const { data: company } = await supabase.from("company").select("*").maybeSingle();
   if (company) {
