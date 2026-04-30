@@ -1456,6 +1456,7 @@ export type Database = {
           created_at: string
           generated_document_id: string | null
           id: string
+          mandate_type: string
           notes: string | null
           property_id: string | null
           status: Database["public"]["Enums"]["mandate_status"]
@@ -1471,6 +1472,7 @@ export type Database = {
           created_at?: string
           generated_document_id?: string | null
           id?: string
+          mandate_type?: string
           notes?: string | null
           property_id?: string | null
           status?: Database["public"]["Enums"]["mandate_status"]
@@ -1486,6 +1488,7 @@ export type Database = {
           created_at?: string
           generated_document_id?: string | null
           id?: string
+          mandate_type?: string
           notes?: string | null
           property_id?: string | null
           status?: Database["public"]["Enums"]["mandate_status"]
