@@ -182,7 +182,7 @@ function ClientDetail() {
           <Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
         </Button>
         <div className="flex gap-2">
-          <EditClientDialog client={client} onSaved={() => qc.invalidateQueries({ queryKey: ["client", id] })} />
+          <ClientEditDialog client={client} onSaved={() => qc.invalidateQueries({ queryKey: ["client", id] })} />
           <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
             <Trash2 className="h-4 w-4" />
           </Button>
