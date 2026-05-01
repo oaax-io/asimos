@@ -16,7 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { formatCurrency, formatArea, propertyTypeLabels, propertyStatusLabels, listingTypeLabels, getPropertyStatusBadgeClass } from "@/lib/format";
+import { formatCurrency, formatArea, propertyTypeLabels, propertyStatusLabels, listingTypeLabels, getPropertyStatusBadgeClass, getPropertyStatusDotClass } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 import { PropertyWizard, type WizardSubmit } from "@/components/properties/PropertyWizard";
 
@@ -303,7 +303,14 @@ function PropertiesPage() {
                 <SelectTrigger className="h-9 w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Alle Status</SelectItem>
-                  {STATUSES.map(s => <SelectItem key={s} value={s}>{propertyStatusLabels[s]}</SelectItem>)}
+                  {STATUSES.map(s => (
+                    <SelectItem key={s} value={s}>
+                      <span className="flex items-center gap-2">
+                        <span className={`inline-block h-2.5 w-2.5 rounded-full ${getPropertyStatusDotClass(s)}`} />
+                        {propertyStatusLabels[s]}
+                      </span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Select value={fListing} onValueChange={setFListing}>
