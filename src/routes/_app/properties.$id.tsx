@@ -270,6 +270,9 @@ function PropertyDetail() {
           <Button variant="outline" asChild>
             <Link to="/properties/$id/expose" params={{ id }}><FileText className="mr-1 h-4 w-4" />Exposé</Link>
           </Button>
+          <Button variant="outline" onClick={() => setFinancingOpen(true)}>
+            <Banknote className="mr-1 h-4 w-4" />Finanzierung starten
+          </Button>
           <Button variant="outline" onClick={() => setEditOpen(true)}><Pencil className="mr-1 h-4 w-4" />Bearbeiten</Button>
           <Select value={p.status} onValueChange={(v) => updateStatus.mutate(v)}>
             <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
@@ -295,6 +298,14 @@ function PropertyDetail() {
         initial={p}
         onSubmit={(payload) => update.mutate(payload)}
         submitting={update.isPending}
+      />
+
+      <FinancingQuickCheckWizard
+        open={financingOpen}
+        onOpenChange={setFinancingOpen}
+        defaultPropertyId={id}
+        defaultClientId={currentOwners[0]?.client_id}
+        onCreated={(dossierId) => navigate({ to: "/financing/$id", params: { id: dossierId } })}
       />
 
       {/* Parent / Unit context banner */}
