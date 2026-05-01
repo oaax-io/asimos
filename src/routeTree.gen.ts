@@ -33,6 +33,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppClientsRouteImport } from './routes/_app/clients'
 import { Route as AppChecklistsRouteImport } from './routes/_app/checklists'
 import { Route as AppAppointmentsRouteImport } from './routes/_app/appointments'
+import { Route as AppAnalyticsRouteImport } from './routes/_app/analytics'
 import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties.index'
 import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads.index'
 import { Route as AppFinancingIndexRouteImport } from './routes/_app/financing.index'
@@ -162,6 +163,11 @@ const AppAppointmentsRoute = AppAppointmentsRouteImport.update({
   path: '/appointments',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPropertiesIndexRoute = AppPropertiesIndexRouteImport.update({
   id: '/properties/',
   path: '/properties/',
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/oaax': typeof OaaxRoute
   '/set-password': typeof SetPasswordRoute
+  '/analytics': typeof AppAnalyticsRoute
   '/appointments': typeof AppAppointmentsRoute
   '/checklists': typeof AppChecklistsRoute
   '/clients': typeof AppClientsRouteWithChildren
@@ -247,6 +254,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/oaax': typeof OaaxRoute
   '/set-password': typeof SetPasswordRoute
+  '/analytics': typeof AppAnalyticsRoute
   '/appointments': typeof AppAppointmentsRoute
   '/checklists': typeof AppChecklistsRoute
   '/dashboard': typeof AppDashboardRoute
@@ -281,6 +289,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/oaax': typeof OaaxRoute
   '/set-password': typeof SetPasswordRoute
+  '/_app/analytics': typeof AppAnalyticsRoute
   '/_app/appointments': typeof AppAppointmentsRoute
   '/_app/checklists': typeof AppChecklistsRoute
   '/_app/clients': typeof AppClientsRouteWithChildren
@@ -317,6 +326,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/oaax'
     | '/set-password'
+    | '/analytics'
     | '/appointments'
     | '/checklists'
     | '/clients'
@@ -351,6 +361,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/oaax'
     | '/set-password'
+    | '/analytics'
     | '/appointments'
     | '/checklists'
     | '/dashboard'
@@ -384,6 +395,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/oaax'
     | '/set-password'
+    | '/_app/analytics'
     | '/_app/appointments'
     | '/_app/checklists'
     | '/_app/clients'
@@ -594,6 +606,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppointmentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/analytics': {
+      id: '/_app/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AppAnalyticsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/properties/': {
       id: '/_app/properties/'
       path: '/properties'
@@ -701,6 +720,7 @@ const AppPropertiesIdRouteWithChildren = AppPropertiesIdRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppAnalyticsRoute: typeof AppAnalyticsRoute
   AppAppointmentsRoute: typeof AppAppointmentsRoute
   AppChecklistsRoute: typeof AppChecklistsRoute
   AppClientsRoute: typeof AppClientsRouteWithChildren
@@ -725,6 +745,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAnalyticsRoute: AppAnalyticsRoute,
   AppAppointmentsRoute: AppAppointmentsRoute,
   AppChecklistsRoute: AppChecklistsRoute,
   AppClientsRoute: AppClientsRouteWithChildren,

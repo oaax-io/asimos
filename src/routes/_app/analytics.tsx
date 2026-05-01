@@ -309,7 +309,6 @@ function AnalyticsPage() {
       <PageHeader
         title="Analytics"
         description="Unternehmens- und Portfolioübersicht auf einen Blick."
-        icon={BarChart3}
       />
 
       {/* Filter */}
