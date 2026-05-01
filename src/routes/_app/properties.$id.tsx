@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User } from "lucide-react";
+import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -64,6 +64,29 @@ function PropertyDetail() {
         hasNda: (n.data?.length ?? 0) > 0,
       };
     },
+  });
+
+  const { data: units = [] } = useQuery({
+    queryKey: ["property_units", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("properties")
+        .select("id,title,unit_number,unit_type,unit_floor,unit_status,rooms,living_area,price,rent,listing_type,status,property_type")
+        .eq("parent_property_id", id)
+        .order("unit_number", { ascending: true });
+      return data ?? [];
+    },
+    enabled: !!id && !!p && !p.is_unit,
+  });
+
+  const { data: parent } = useQuery({
+    queryKey: ["property_parent", p?.parent_property_id],
+    queryFn: async () => {
+      if (!p?.parent_property_id) return null;
+      const { data } = await supabase.from("properties").select("id,title,address,city").eq("id", p.parent_property_id).single();
+      return data;
+    },
+    enabled: !!p?.is_unit && !!p?.parent_property_id,
   });
 
   const update = useMutation({
@@ -145,7 +168,34 @@ function PropertyDetail() {
         submitting={update.isPending}
       />
 
-      {/* Hero */}
+      {/* Parent / Unit context banner */}
+      {p.is_unit && parent && (
+        <Card className="mb-4 border-primary/30 bg-primary/5">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div className="flex items-center gap-2 text-sm">
+              <Layers3 className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">Einheit in</span>
+              <span className="font-medium">{parent.title}</span>
+              {parent.address && <span className="text-muted-foreground">· {[parent.address, parent.city].filter(Boolean).join(", ")}</span>}
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/properties/$id" params={{ id: parent.id }}>
+                <ExternalLink className="mr-1 h-4 w-4" />Liegenschaft öffnen
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      {!p.is_unit && units.length > 0 && (
+        <Card className="mb-4 border-primary/20 bg-muted/30">
+          <CardContent className="flex flex-wrap items-center gap-2 p-4 text-sm">
+            <Building2 className="h-4 w-4 text-primary" />
+            <span className="font-medium">{units.length} Einheit{units.length === 1 ? "" : "en"}</span>
+            <span className="text-muted-foreground">in dieser Liegenschaft</span>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="mb-6 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 aspect-[16/10] overflow-hidden rounded-2xl border bg-muted">
           {p.images?.[0] ? (
@@ -196,6 +246,7 @@ function PropertyDetail() {
           <TabsTrigger value="mandate">Mandat</TabsTrigger>
           <TabsTrigger value="reservation">Reservation</TabsTrigger>
           <TabsTrigger value="expose">Exposé</TabsTrigger>
+          {!p.is_unit && <TabsTrigger value="units">Einheiten{units.length ? ` (${units.length})` : ""}</TabsTrigger>}
           <TabsTrigger value="matching">Matching</TabsTrigger>
         </TabsList>
 
@@ -210,6 +261,7 @@ function PropertyDetail() {
         <TabsContent value="mandate"><MandateTab propertyId={id} /></TabsContent>
         <TabsContent value="reservation"><ReservationTab propertyId={id} /></TabsContent>
         <TabsContent value="expose"><ExposeTab propertyId={id} /></TabsContent>
+        {!p.is_unit && <TabsContent value="units"><UnitsTab parentId={id} units={units} /></TabsContent>}
         <TabsContent value="matching" className="mt-4"><MatchPanel direction="property-to-client" property={p} /></TabsContent>
       </Tabs>
     </div>
@@ -824,3 +876,68 @@ function ExposeTab({ propertyId }: { propertyId: string }) {
     </div>
   );
 }
+
+function UnitsTab({ parentId, units }: { parentId: string; units: any[] }) {
+  if (!units.length) {
+    return (
+      <EmptyState
+        title="Noch keine Einheiten erfasst"
+        description="Lege einzelne Wohnungen oder Einheiten an, die zu dieser Liegenschaft gehören."
+        action={
+          <Button asChild>
+            <Link to="/properties" search={{ newUnitParent: parentId } as any}>
+              <Plus className="mr-1 h-4 w-4" />Einheit hinzufügen
+            </Link>
+          </Button>
+        }
+      />
+    );
+  }
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+              <tr>
+                <th className="px-4 py-2 text-left">Nr.</th>
+                <th className="px-4 py-2 text-left">Bezeichnung</th>
+                <th className="px-4 py-2 text-left">Typ</th>
+                <th className="px-4 py-2 text-left">Etage</th>
+                <th className="px-4 py-2 text-right">Zimmer</th>
+                <th className="px-4 py-2 text-right">Fläche</th>
+                <th className="px-4 py-2 text-right">Preis / Miete</th>
+                <th className="px-4 py-2 text-left">Status</th>
+                <th className="px-4 py-2"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {units.map((u) => (
+                <tr key={u.id} className="hover:bg-muted/30">
+                  <td className="px-4 py-2 font-medium">{u.unit_number || "—"}</td>
+                  <td className="px-4 py-2">{u.title}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{u.unit_type || propertyTypeLabels[u.property_type as keyof typeof propertyTypeLabels] || "—"}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{u.unit_floor || "—"}</td>
+                  <td className="px-4 py-2 text-right">{u.rooms ?? "—"}</td>
+                  <td className="px-4 py-2 text-right">{formatArea(u.living_area ? Number(u.living_area) : null)}</td>
+                  <td className="px-4 py-2 text-right">
+                    {u.listing_type === "rent"
+                      ? (u.rent ? formatCurrency(Number(u.rent)) : "—")
+                      : (u.price ? formatCurrency(Number(u.price)) : "—")}
+                  </td>
+                  <td className="px-4 py-2"><Badge variant="secondary">{propertyStatusLabels[u.status as keyof typeof propertyStatusLabels]}</Badge></td>
+                  <td className="px-4 py-2 text-right">
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to="/properties/$id" params={{ id: u.id }}>Öffnen<ExternalLink className="ml-1 h-3 w-3" /></Link>
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
