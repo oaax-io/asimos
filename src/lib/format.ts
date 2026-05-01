@@ -70,7 +70,7 @@ export const apptTypeLabels = {
 
 export function formatCurrency(n: number | null | undefined) {
   if (n == null) return "—";
-  return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat("de-CH", { style: "currency", currency: "CHF", maximumFractionDigits: 0 }).format(n);
 }
 
 export function formatArea(n: number | null | undefined) {

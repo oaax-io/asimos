@@ -712,8 +712,8 @@ function EditClientDialog({ client, onSaved }: { client: any; onSaved: () => voi
                 </Select>
               </div>
               <div><Label>Städte (Komma-getrennt)</Label><Input value={form.preferred_cities} onChange={(e) => setForm({ ...form, preferred_cities: e.target.value })} /></div>
-              <div><Label>Budget min (€)</Label><Input type="number" value={form.budget_min} onChange={(e) => setForm({ ...form, budget_min: e.target.value })} /></div>
-              <div><Label>Budget max (€)</Label><Input type="number" value={form.budget_max} onChange={(e) => setForm({ ...form, budget_max: e.target.value })} /></div>
+              <div><Label>Budget min (CHF)</Label><Input type="number" value={form.budget_min} onChange={(e) => setForm({ ...form, budget_min: e.target.value })} /></div>
+              <div><Label>Budget max (CHF)</Label><Input type="number" value={form.budget_max} onChange={(e) => setForm({ ...form, budget_max: e.target.value })} /></div>
               <div><Label>Zimmer min</Label><Input type="number" value={form.rooms_min} onChange={(e) => setForm({ ...form, rooms_min: e.target.value })} /></div>
               <div><Label>Fläche min (m²)</Label><Input type="number" value={form.area_min} onChange={(e) => setForm({ ...form, area_min: e.target.value })} /></div>
             </div>
