@@ -194,6 +194,8 @@ function PropertyDetail() {
       toast.success("Gespeichert");
       qc.invalidateQueries({ queryKey: ["property", id] });
       qc.invalidateQueries({ queryKey: ["properties"] });
+      qc.invalidateQueries({ queryKey: ["property_current_owners", id] });
+      qc.invalidateQueries({ queryKey: ["property_ownerships", id] });
       setEditOpen(false);
     },
     onError: (e: any) => toast.error(e.message),
