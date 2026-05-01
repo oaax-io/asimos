@@ -151,7 +151,14 @@ function PropertyDetail() {
           <Button variant="outline" onClick={() => setEditOpen(true)}><Pencil className="mr-1 h-4 w-4" />Bearbeiten</Button>
           <Select value={p.status} onValueChange={(v) => updateStatus.mutate(v)}>
             <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{propertyStatusLabels[s]}</SelectItem>)}</SelectContent>
+            <SelectContent>{STATUSES.map(s => (
+              <SelectItem key={s} value={s}>
+                <span className="flex items-center gap-2">
+                  <span className={`inline-block h-2.5 w-2.5 rounded-full ${getPropertyStatusDotClass(s)}`} />
+                  {propertyStatusLabels[s]}
+                </span>
+              </SelectItem>
+            ))}</SelectContent>
           </Select>
           <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
             <Trash2 className="h-4 w-4" />
