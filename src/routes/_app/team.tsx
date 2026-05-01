@@ -90,20 +90,11 @@ function TeamPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const updateRole = useMutation({
-    mutationFn: async ({ id, role }: { id: string; role: (typeof ROLES)[number] }) => {
-      const { error } = await supabase.from("profiles").update({ role }).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Rolle aktualisiert");
-      qc.invalidateQueries({ queryKey: ["team"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const [editing, setEditing] = useState<any | null>(null);
 
   const initials = (name?: string | null, email?: string | null) =>
     (name || email || "?").split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
+
 
   return (
     <>
