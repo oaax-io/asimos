@@ -571,11 +571,11 @@ function PropertiesPage() {
         </div>
       )}
 
-      {filtered.length > 0 && (
+      {displayed.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <span>
-              Zeige {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)} von {filtered.length}
+              Zeige {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, displayed.length)} von {displayed.length}
             </span>
             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
               <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
