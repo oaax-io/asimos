@@ -1332,6 +1332,31 @@ function UnitsTab({ parentId, units }: { parentId: string; units: any[] }) {
   );
 }
 
+const FIELD_LABELS: Record<string, string> = {
+  title: "Titel", property_type: "Objekttyp", listing_type: "Vermarktungsart",
+  status: "Status", marketing_type: "Marketing-Typ", building_type: "Gebäudetyp",
+  is_unit: "Ist Einheit", parent_property_id: "Übergeordnetes Objekt",
+  owner_client_id: "Eigentümer", seller_client_id: "Verkäufer", assigned_to: "Zuständig",
+  address: "Adresse", postal_code: "PLZ", city: "Ort", country: "Land",
+  floor: "Etage", living_area: "Wohnfläche", area: "Fläche", usable_area: "Nutzfläche",
+  plot_area: "Grundstück", rooms: "Zimmer", bathrooms: "Bäder",
+  total_floors: "Etagen gesamt", year_built: "Baujahr", renovated_at: "Renoviert",
+  price: "Kaufpreis", rent: "Miete", reservation_amount_default: "Reservation",
+  internal_minimum_price: "Mindestpreis (intern)", heating_type: "Heizung",
+  energy_source: "Energiequelle", energy_class: "Energieklasse",
+  description: "Beschreibung", internal_notes: "Interne Notizen",
+  features: "Ausstattung", images: "Bilder",
+};
+
+function fmtVal(v: any): string {
+  if (v == null || v === "") return "—";
+  if (typeof v === "boolean") return v ? "Ja" : "Nein";
+  if (Array.isArray(v)) return v.length ? `${v.length} Einträge` : "—";
+  if (typeof v === "object") return "geändert";
+  const s = String(v);
+  return s.length > 60 ? s.slice(0, 57) + "…" : s;
+}
+
 function ActivityTab({ activities, employees }: { activities: any[]; employees: any[] }) {
   if (!activities.length) {
     return (
@@ -1345,22 +1370,61 @@ function ActivityTab({ activities, employees }: { activities: any[]; employees: 
   return (
     <Card>
       <CardContent className="p-6">
-        <ol className="relative space-y-4 border-l pl-6">
-          {activities.map((a) => (
-            <li key={a.id} className="relative">
-              <span className="absolute -left-[31px] mt-1.5 inline-block h-3 w-3 rounded-full border-2 border-background bg-primary" />
-              <p className="text-sm font-medium">{a.action}</p>
-              <p className="text-xs text-muted-foreground">
-                {formatDateTime(a.created_at)}
-                {a.actor_id && empMap.get(a.actor_id) ? ` · ${empMap.get(a.actor_id)}` : ""}
-              </p>
-              {a.metadata && Object.keys(a.metadata).length > 0 && (
-                <pre className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
-                  {JSON.stringify(a.metadata, null, 2)}
-                </pre>
-              )}
-            </li>
-          ))}
+        <ol className="relative space-y-5 border-l border-border pl-6">
+          {activities.map((a) => {
+            const meta = a.metadata ?? {};
+            const changes: Record<string, { from: any; to: any }> = meta.changes ?? {};
+            const changeKeys = Object.keys(changes);
+            const ownerChanged = !!meta.owner_changed;
+            const actor = a.actor_id ? empMap.get(a.actor_id) : null;
+            return (
+              <li key={a.id} className="relative">
+                <span className="absolute -left-[31px] mt-1.5 inline-block h-3 w-3 rounded-full border-2 border-background bg-primary" />
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-semibold">{a.action}</p>
+                  {changeKeys.length > 0 && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {changeKeys.length} Änderung{changeKeys.length === 1 ? "" : "en"}
+                    </Badge>
+                  )}
+                  {ownerChanged && <Badge variant="outline" className="text-[10px]">Eigentümerwechsel</Badge>}
+                </div>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {formatDateTime(a.created_at)}
+                  {actor ? ` · ${actor}` : ""}
+                </p>
+
+                {changeKeys.length > 0 && (
+                  <div className="mt-2 overflow-hidden rounded-md border bg-muted/20">
+                    <table className="w-full text-[12px]">
+                      <tbody>
+                        {changeKeys.map((k) => (
+                          <tr key={k} className="border-b last:border-b-0">
+                            <td className="px-3 py-1.5 font-medium text-muted-foreground w-1/3">
+                              {FIELD_LABELS[k] ?? k}
+                            </td>
+                            <td className="px-3 py-1.5">
+                              <span className="text-muted-foreground line-through">{fmtVal(changes[k]?.from)}</span>
+                              <span className="mx-2 text-muted-foreground">→</span>
+                              <span className="font-medium">{fmtVal(changes[k]?.to)}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {meta.from && meta.to && !changeKeys.length && (
+                  <p className="mt-1 text-xs">
+                    <span className="text-muted-foreground line-through">{String(meta.from)}</span>
+                    <span className="mx-2">→</span>
+                    <span className="font-medium">{String(meta.to)}</span>
+                  </p>
+                )}
+              </li>
+            );
+          })}
         </ol>
       </CardContent>
     </Card>
