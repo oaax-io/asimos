@@ -436,23 +436,7 @@ function PropertyDetail() {
           )}
           <TabsTrigger value="activity">Aktivitäten</TabsTrigger>
         </TabsList>
-        </div>
-      </div>
 
-      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="details">Details & Medien</TabsTrigger>
-          <TabsTrigger value="owner">Eigentümer</TabsTrigger>
-          <TabsTrigger value="marketing">Vermarktung</TabsTrigger>
-          <TabsTrigger value="organisation">Organisation</TabsTrigger>
-          <TabsTrigger value="documents">Dokumente</TabsTrigger>
-          {!p.is_unit && (
-            <TabsTrigger value="units">
-              Einheiten{units.length ? ` (${units.length})` : ""}
-            </TabsTrigger>
-          )}
-        </TabsList>
 
         <div className="min-w-0">
           <TabsContent value="overview" className="mt-0"><OverviewTab p={p} /></TabsContent>
