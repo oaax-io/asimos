@@ -2190,6 +2190,36 @@ export type Database = {
           },
         ]
       }
+      property_market_analyses: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          model: string | null
+          property_id: string
+          raw_markdown: string | null
+          sections: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          model?: string | null
+          property_id: string
+          raw_markdown?: string | null
+          sections?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          model?: string | null
+          property_id?: string
+          raw_markdown?: string | null
+          sections?: Json
+        }
+        Relationships: []
+      }
       property_media: {
         Row: {
           created_at: string
