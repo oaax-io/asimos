@@ -473,7 +473,7 @@ function LeadsPage() {
                         <div className="flex items-center justify-end gap-1">
                           <EditLeadButton lead={l} employees={employees} />
                           {l.status !== "converted" && (
-                            <Button size="sm" variant="outline" className="h-8" onClick={() => convert.mutate(l)}>
+                            <Button size="sm" variant="outline" className="h-8" onClick={() => setConvertLead(l)}>
                               <ArrowRight className="mr-1 h-3 w-3" />Zu Kunde
                             </Button>
                           )}
