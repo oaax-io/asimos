@@ -337,7 +337,96 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-5">
-            {step === 2 && (
+            {step === 0 && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-base font-semibold">Was möchtest du erfassen?</p>
+                  <p className="text-sm text-muted-foreground">Wähle die Art des Kunden.</p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {([
+                    { v: "person",  title: "Privatperson",     desc: "Eine natürliche Person", Icon: UserCircle },
+                    { v: "company", title: "Unternehmen / Firma", desc: "Eine juristische Person", Icon: Building2 },
+                  ] as const).map(({ v, title, desc, Icon }) => {
+                    const active = form.entity_type === v;
+                    return (
+                      <button
+                        type="button"
+                        key={v}
+                        onClick={() => set("entity_type", v)}
+                        className={`group flex items-start gap-3 rounded-xl border p-4 text-left transition hover:border-primary/60 hover:bg-accent/40 ${
+                          active ? "border-primary bg-primary/5 ring-2 ring-primary/30" : ""
+                        }`}
+                      >
+                        <span className={`flex h-10 w-10 items-center justify-center rounded-lg border ${active ? "border-primary bg-primary text-primary-foreground" : "bg-muted"}`}>
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="flex-1">
+                          <span className="block font-semibold">{title}</span>
+                          <span className="block text-sm text-muted-foreground">{desc}</span>
+                        </span>
+                        {active && <Check className="h-5 w-5 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {step === 1 && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-base font-semibold">Welche Rolle hat dieser Kunde?</p>
+                  <p className="text-sm text-muted-foreground">Bestimmt die Beziehung im System.</p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {ROLE_OPTIONS.map(({ value, label, description, icon: Icon }) => {
+                    const active = form.role_choice === value;
+                    return (
+                      <button
+                        type="button"
+                        key={value}
+                        onClick={() => set("role_choice", value)}
+                        className={`flex items-start gap-3 rounded-xl border p-4 text-left transition hover:border-primary/60 hover:bg-accent/40 ${
+                          active ? "border-primary bg-primary/5 ring-2 ring-primary/30" : ""
+                        }`}
+                      >
+                        <span className={`flex h-10 w-10 items-center justify-center rounded-lg border ${active ? "border-primary bg-primary text-primary-foreground" : "bg-muted"}`}>
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="flex-1">
+                          <span className="block font-semibold">{label}</span>
+                          <span className="block text-sm text-muted-foreground">{description}</span>
+                        </span>
+                        {active && <Check className="h-5 w-5 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {step === 2 && form.entity_type === "company" && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <Label>Firmenname *</Label>
+                    <Input value={form.company_name} onChange={(e) => set("company_name", e.target.value)} placeholder="Muster AG" />
+                  </div>
+                  <div>
+                    <Label>Kontaktperson – Vorname</Label>
+                    <Input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Kontaktperson – Nachname</Label>
+                    <Input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">Die Kontaktperson ist optional und kann später ergänzt werden.</p>
+              </div>
+            )}
+
+
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <div>
