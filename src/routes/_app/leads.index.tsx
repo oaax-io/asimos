@@ -180,28 +180,9 @@ function LeadsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["leads"] }),
   });
 
-  const convert = useMutation({
-    mutationFn: async (lead: Lead) => {
-      const { data: created, error } = await supabase.from("clients").insert({
-        owner_id: user!.id,
-        assigned_to: lead.assigned_to,
-        full_name: lead.full_name,
-        email: lead.email,
-        phone: lead.phone,
-        notes: lead.notes,
-        client_type: "buyer",
-      }).select("id").single();
-      if (error) throw error;
-      await supabase.from("leads").update({ status: "converted", converted_client_id: created.id }).eq("id", lead.id);
-      return created;
-    },
-    onSuccess: () => {
-      toast.success("Zu Kunde konvertiert");
-      qc.invalidateQueries({ queryKey: ["leads"] });
-      qc.invalidateQueries({ queryKey: ["clients"] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
+  const navigate = useNavigate();
+  const [convertLead, setConvertLead] = useState<Lead | null>(null);
+
 
   // ----- Bulk-Aktionen -----
   const bulkAssign = useMutation({
