@@ -925,7 +925,7 @@ function UnitsTab({ parentId, units }: { parentId: string; units: any[] }) {
                       ? (u.rent ? formatCurrency(Number(u.rent)) : "—")
                       : (u.price ? formatCurrency(Number(u.price)) : "—")}
                   </td>
-                  <td className="px-4 py-2"><Badge variant="secondary">{propertyStatusLabels[u.status as keyof typeof propertyStatusLabels]}</Badge></td>
+                  <td className="px-4 py-2"><Badge variant="outline" className={getPropertyStatusBadgeClass(u.status)}>{propertyStatusLabels[u.status as keyof typeof propertyStatusLabels]}</Badge></td>
                   <td className="px-4 py-2 text-right">
                     <Button variant="ghost" size="sm" asChild>
                       <Link to="/properties/$id" params={{ id: u.id }}>Öffnen<ExternalLink className="ml-1 h-3 w-3" /></Link>
