@@ -35,6 +35,7 @@ function PropertyDetail() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
+  const [tab, setTab] = useState("overview");
 
   const { data: p, isLoading } = useQuery({
     queryKey: ["property", id],
