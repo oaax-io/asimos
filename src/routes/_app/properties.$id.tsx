@@ -246,6 +246,7 @@ function PropertyDetail() {
           <TabsTrigger value="mandate">Mandat</TabsTrigger>
           <TabsTrigger value="reservation">Reservation</TabsTrigger>
           <TabsTrigger value="expose">Exposé</TabsTrigger>
+          {!p.is_unit && <TabsTrigger value="units">Einheiten{units.length ? ` (${units.length})` : ""}</TabsTrigger>}
           <TabsTrigger value="matching">Matching</TabsTrigger>
         </TabsList>
 
