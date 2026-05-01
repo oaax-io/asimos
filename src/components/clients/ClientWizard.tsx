@@ -337,7 +337,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-5">
-            {step === 0 && (
+            {step === 2 && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <div>
@@ -384,7 +384,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               </div>
             )}
 
-            {step === 1 && (
+            {step === 3 && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div>
@@ -425,7 +425,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               </div>
             )}
 
-            {step === 2 && (
+            {step === 4 && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div>
@@ -473,7 +473,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               </div>
             )}
 
-            {step === 3 && (
+            {step === 5 && (
               <div className="space-y-4">
                 <div className="rounded-xl border bg-muted/30 p-4">
                   <p className="mb-3 text-sm font-semibold">Monatliche Ausgaben (CHF)</p>
@@ -510,7 +510,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               </div>
             )}
 
-            {step === 4 && (
+            {step === 6 && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div>
@@ -599,7 +599,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               </div>
             )}
 
-            {step === 5 && (
+            {step === 7 && (
               <div className="space-y-4">
                 <div className="rounded-xl border p-4">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Person</p>
