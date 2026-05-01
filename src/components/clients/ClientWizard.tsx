@@ -258,6 +258,17 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       });
       if (roleErr) console.warn("Rolle konnte nicht gespeichert werden:", roleErr);
 
+      // 1c) Verknüpfung zu bestehender Kontaktperson (nur Firma)
+      if (form.entity_type === "company" && form.contact_mode === "existing" && form.linked_contact_client_id) {
+        const { error: relErr } = await supabase.from("client_relationships").insert({
+          client_id: client.id,
+          related_client_id: form.linked_contact_client_id,
+          relationship_type: "other" as any,
+          notes: "Kontaktperson",
+        });
+        if (relErr) console.warn("Kontaktperson konnte nicht verknüpft werden:", relErr);
+      }
+
       // 2) Insert self-disclosure (non-blocking — log but don't fail)
       const disclosurePayload: any = {
         client_id: client.id,
