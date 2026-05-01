@@ -876,3 +876,68 @@ function ExposeTab({ propertyId }: { propertyId: string }) {
     </div>
   );
 }
+
+function UnitsTab({ parentId, units }: { parentId: string; units: any[] }) {
+  if (!units.length) {
+    return (
+      <EmptyState
+        title="Noch keine Einheiten erfasst"
+        description="Lege einzelne Wohnungen oder Einheiten an, die zu dieser Liegenschaft gehören."
+        action={
+          <Button asChild>
+            <Link to="/properties" search={{ newUnitParent: parentId } as any}>
+              <Plus className="mr-1 h-4 w-4" />Einheit hinzufügen
+            </Link>
+          </Button>
+        }
+      />
+    );
+  }
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+              <tr>
+                <th className="px-4 py-2 text-left">Nr.</th>
+                <th className="px-4 py-2 text-left">Bezeichnung</th>
+                <th className="px-4 py-2 text-left">Typ</th>
+                <th className="px-4 py-2 text-left">Etage</th>
+                <th className="px-4 py-2 text-right">Zimmer</th>
+                <th className="px-4 py-2 text-right">Fläche</th>
+                <th className="px-4 py-2 text-right">Preis / Miete</th>
+                <th className="px-4 py-2 text-left">Status</th>
+                <th className="px-4 py-2"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {units.map((u) => (
+                <tr key={u.id} className="hover:bg-muted/30">
+                  <td className="px-4 py-2 font-medium">{u.unit_number || "—"}</td>
+                  <td className="px-4 py-2">{u.title}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{u.unit_type || propertyTypeLabels[u.property_type as keyof typeof propertyTypeLabels] || "—"}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{u.unit_floor || "—"}</td>
+                  <td className="px-4 py-2 text-right">{u.rooms ?? "—"}</td>
+                  <td className="px-4 py-2 text-right">{formatArea(u.living_area ? Number(u.living_area) : null)}</td>
+                  <td className="px-4 py-2 text-right">
+                    {u.listing_type === "rent"
+                      ? (u.rent ? formatCurrency(Number(u.rent)) : "—")
+                      : (u.price ? formatCurrency(Number(u.price)) : "—")}
+                  </td>
+                  <td className="px-4 py-2"><Badge variant="secondary">{propertyStatusLabels[u.status as keyof typeof propertyStatusLabels]}</Badge></td>
+                  <td className="px-4 py-2 text-right">
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to="/properties/$id" params={{ id: u.id }}>Öffnen<ExternalLink className="ml-1 h-3 w-3" /></Link>
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
