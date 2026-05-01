@@ -233,10 +233,22 @@ function PropertyDetail() {
         const { error: mediaError } = await supabase.from("property_media").insert(mediaRows as any);
         if (mediaError) throw mediaError;
       }
+
+      await supabase.from("activity_logs").insert({
+        actor_id: user?.id ?? null,
+        action: "Immobilie bearbeitet",
+        related_type: "property",
+        related_id: id,
+        metadata: {
+          fields: Object.keys(payload.property ?? {}),
+          owner_changed: !!(newOwnerId && newOwnerId !== prevOwnerId),
+        },
+      });
     },
     onSuccess: () => {
       toast.success("Gespeichert");
       qc.invalidateQueries({ queryKey: ["property", id] });
+      qc.invalidateQueries({ queryKey: ["property_activities", id] });
       qc.invalidateQueries({ queryKey: ["properties"] });
       qc.invalidateQueries({ queryKey: ["property_current_owners", id] });
       qc.invalidateQueries({ queryKey: ["property_ownerships", id] });
