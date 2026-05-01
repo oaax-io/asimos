@@ -426,7 +426,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               </div>
             )}
 
-
+            {step === 2 && form.entity_type === "person" && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <div>
