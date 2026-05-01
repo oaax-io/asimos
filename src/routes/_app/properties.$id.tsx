@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity } from "lucide-react";
+import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity, TrendingUp, Sparkles, RefreshCw } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -434,6 +435,7 @@ function PropertyDetail() {
               Einheiten{units.length ? ` (${units.length})` : ""}
             </TabsTrigger>
           )}
+          <TabsTrigger value="market"><TrendingUp className="mr-1 h-3.5 w-3.5" />Marktanalyse</TabsTrigger>
           <TabsTrigger value="activity">Aktivitäten</TabsTrigger>
         </TabsList>
 
@@ -498,6 +500,9 @@ function PropertyDetail() {
 
           <TabsContent value="documents" className="mt-0"><DocumentsTab propertyId={id} /></TabsContent>
           {!p.is_unit && <TabsContent value="units" className="mt-0"><UnitsTab parentId={id} units={units} /></TabsContent>}
+          <TabsContent value="market" className="mt-0">
+            <MarketAnalysisTab property={p} />
+          </TabsContent>
           <TabsContent value="activity" className="mt-0">
             <ActivityTab activities={activities} employees={employees} />
           </TabsContent>
