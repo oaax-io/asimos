@@ -256,6 +256,24 @@ function PropertyDetail() {
             <p className="flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4" />Zuständig</p>
             <p className="mt-1 font-medium">{assignedEmp ? (assignedEmp as any).full_name || (assignedEmp as any).email : "Niemand zugewiesen"}</p>
           </CardContent></Card>
+          <button
+            type="button"
+            onClick={() => setTab("owner")}
+            className="block w-full text-left"
+          >
+            <Card className="transition hover:border-primary/50 hover:bg-primary/5">
+              <CardContent className="p-4 text-sm">
+                <p className="flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4" />Eigentümer</p>
+                {currentOwners.length === 0 ? (
+                  <p className="mt-1 italic text-muted-foreground">Noch kein Eigentümer hinterlegt</p>
+                ) : currentOwners.length === 1 ? (
+                  <p className="mt-1 font-medium">{currentOwners[0].client?.full_name ?? "—"}</p>
+                ) : (
+                  <p className="mt-1 font-medium">Mehrere Eigentümer ({currentOwners.length})</p>
+                )}
+              </CardContent>
+            </Card>
+          </button>
         </div>
       </div>
 
