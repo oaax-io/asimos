@@ -156,13 +156,14 @@ function PropertiesPage() {
     return next;
   });
 
+  const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [search, fStatus, fType, fListing, fCity, fAssigned, archivedFilter, pageSize, view]);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  useEffect(() => { setPage(1); }, [search, fStatus, fType, fListing, fCity, fAssigned, archivedFilter, fStructure, groupUnits, pageSize, view]);
+  const totalPages = Math.max(1, Math.ceil(displayed.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const paginated = useMemo(
-    () => filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
-    [filtered, currentPage, pageSize],
+    () => displayed.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [displayed, currentPage, pageSize],
   );
 
   const toggleOne = (id: string) => setSelected((prev) => {
