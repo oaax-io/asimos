@@ -949,20 +949,3 @@ function UnitsTab({ parentId, units }: { parentId: string; units: any[] }) {
     </Card>
   );
 }
-
-  const { data: currentOwners = [] } = useQuery({
-    queryKey: ["property_current_owners", id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("property_ownerships")
-        .select("client_id, ownership_type, client:clients!property_ownerships_client_id_fkey(id, full_name)")
-        .eq("property_id", id)
-        .is("end_date", null);
-      return (data ?? []) as unknown as Array<{
-        client_id: string;
-        ownership_type: string;
-        client: { id: string; full_name: string } | null;
-      }>;
-    },
-    enabled: !!id,
-  });
