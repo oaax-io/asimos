@@ -440,7 +440,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
 
       // Rollenabhängige Folgeaktion
       if (role === "buyer" || role === "tenant" || role === "investor") {
-        navigate({ to: "/matching" }).catch(() => {});
+        navigate({ to: "/matching", search: {} } as any).catch(() => {});
       } else if ((role === "seller_owner" || role === "landlord") && propertyId) {
         navigate({ to: "/properties/$id", params: { id: propertyId } }).catch(() => {});
       } else if (role === "financing_applicant") {
