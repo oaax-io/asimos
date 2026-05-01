@@ -22,6 +22,7 @@ import { MatchPanel } from "@/components/matching/MatchPanel";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { PropertyOwnersTab } from "@/components/properties/PropertyOwnersTab";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
@@ -37,6 +38,7 @@ function PropertyDetail() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [financingOpen, setFinancingOpen] = useState(false);
   const [tab, setTab] = useState("overview");
@@ -231,10 +233,22 @@ function PropertyDetail() {
         const { error: mediaError } = await supabase.from("property_media").insert(mediaRows as any);
         if (mediaError) throw mediaError;
       }
+
+      await supabase.from("activity_logs").insert({
+        actor_id: user?.id ?? null,
+        action: "Immobilie bearbeitet",
+        related_type: "property",
+        related_id: id,
+        metadata: {
+          fields: Object.keys(payload.property ?? {}),
+          owner_changed: !!(newOwnerId && newOwnerId !== prevOwnerId),
+        },
+      });
     },
     onSuccess: () => {
       toast.success("Gespeichert");
       qc.invalidateQueries({ queryKey: ["property", id] });
+      qc.invalidateQueries({ queryKey: ["property_activities", id] });
       qc.invalidateQueries({ queryKey: ["properties"] });
       qc.invalidateQueries({ queryKey: ["property_current_owners", id] });
       qc.invalidateQueries({ queryKey: ["property_ownerships", id] });
@@ -245,10 +259,22 @@ function PropertyDetail() {
 
   const updateStatus = useMutation({
     mutationFn: async (status: string) => {
+      const prevStatus = p?.status;
       const { error } = await supabase.from("properties").update({ status: status as any }).eq("id", id);
       if (error) throw error;
+      await supabase.from("activity_logs").insert({
+        actor_id: user?.id ?? null,
+        action: `Status geändert: ${prevStatus ?? "—"} → ${status}`,
+        related_type: "property",
+        related_id: id,
+        metadata: { from: prevStatus, to: status },
+      });
     },
-    onSuccess: () => { toast.success("Status aktualisiert"); qc.invalidateQueries({ queryKey: ["property", id] }); },
+    onSuccess: () => {
+      toast.success("Status aktualisiert");
+      qc.invalidateQueries({ queryKey: ["property", id] });
+      qc.invalidateQueries({ queryKey: ["property_activities", id] });
+    },
   });
 
   const del = useMutation({
