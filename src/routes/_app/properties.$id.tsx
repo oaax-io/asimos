@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/EmptyState";
 import { PropertyWizard, type WizardSubmit } from "@/components/properties/PropertyWizard";
-import { formatCurrency, formatArea, formatDate, formatDateTime, propertyTypeLabels, propertyStatusLabels, listingTypeLabels } from "@/lib/format";
+import { formatCurrency, formatArea, formatDate, formatDateTime, propertyTypeLabels, propertyStatusLabels, listingTypeLabels, getPropertyStatusBadgeClass } from "@/lib/format";
 import { toast } from "sonner";
 import { MatchPanel } from "@/components/matching/MatchPanel";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
@@ -206,7 +206,7 @@ function PropertyDetail() {
         </div>
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            <Badge>{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
+            <Badge variant="outline" className={getPropertyStatusBadgeClass(p.status)}>{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
             <Badge variant="secondary">{propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels]}</Badge>
             <Badge variant="outline">{listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}</Badge>
             {p.status === "reserved" && <Badge className="bg-amber-500 hover:bg-amber-500">Aktive Reservation</Badge>}
@@ -925,7 +925,7 @@ function UnitsTab({ parentId, units }: { parentId: string; units: any[] }) {
                       ? (u.rent ? formatCurrency(Number(u.rent)) : "—")
                       : (u.price ? formatCurrency(Number(u.price)) : "—")}
                   </td>
-                  <td className="px-4 py-2"><Badge variant="secondary">{propertyStatusLabels[u.status as keyof typeof propertyStatusLabels]}</Badge></td>
+                  <td className="px-4 py-2"><Badge variant="outline" className={getPropertyStatusBadgeClass(u.status)}>{propertyStatusLabels[u.status as keyof typeof propertyStatusLabels]}</Badge></td>
                   <td className="px-4 py-2 text-right">
                     <Button variant="ghost" size="sm" asChild>
                       <Link to="/properties/$id" params={{ id: u.id }}>Öffnen<ExternalLink className="ml-1 h-3 w-3" /></Link>

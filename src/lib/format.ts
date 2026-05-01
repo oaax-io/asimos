@@ -61,6 +61,24 @@ export const propertyStatusLabels = {
   archived: "Archiviert",
 } as const;
 
+// Tailwind classes for property status badges. Uses static class strings so
+// Tailwind's JIT picks them up. Designed to read well in both light & dark mode.
+export const propertyStatusBadgeClass: Record<string, string> = {
+  draft: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/60 dark:text-slate-200 dark:border-slate-700",
+  preparation: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/40 dark:text-orange-200 dark:border-orange-800",
+  active: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-200 dark:border-green-800",
+  available: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-200 dark:border-emerald-800",
+  reserved: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-800",
+  sold: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/40 dark:text-blue-200 dark:border-blue-800",
+  rented: "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-200 dark:border-indigo-800",
+  archived: "bg-zinc-200 text-zinc-700 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700",
+};
+
+export function getPropertyStatusBadgeClass(status: string | null | undefined) {
+  if (!status) return propertyStatusBadgeClass.draft;
+  return propertyStatusBadgeClass[status] ?? propertyStatusBadgeClass.draft;
+}
+
 export const apptTypeLabels = {
   viewing: "Besichtigung",
   meeting: "Meeting",

@@ -16,7 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { formatCurrency, formatArea, propertyTypeLabels, propertyStatusLabels, listingTypeLabels } from "@/lib/format";
+import { formatCurrency, formatArea, propertyTypeLabels, propertyStatusLabels, listingTypeLabels, getPropertyStatusBadgeClass } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 import { PropertyWizard, type WizardSubmit } from "@/components/properties/PropertyWizard";
 
@@ -486,7 +486,7 @@ function PropertiesPage() {
                   </div>
                   <div className="p-4">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge variant="secondary" className="text-xs">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
+                      <Badge variant="outline" className={`text-xs ${getPropertyStatusBadgeClass(p.status)}`}>{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
                       {childUnits.length > 0 && (
                         <Badge className="bg-primary/10 text-primary hover:bg-primary/15 text-xs">
                           <Building2 className="mr-1 h-3 w-3" />Liegenschaft · {childUnits.length} Einheit{childUnits.length === 1 ? "" : "en"}
@@ -593,7 +593,7 @@ function PropertiesPage() {
                       </TableCell>
                       <TableCell className="text-sm">{propertyTypeLabels[row.property_type as keyof typeof propertyTypeLabels]}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="text-xs">{propertyStatusLabels[row.status as keyof typeof propertyStatusLabels]}</Badge>
+                        <Badge variant="outline" className={`text-xs ${getPropertyStatusBadgeClass(row.status)}`}>{propertyStatusLabels[row.status as keyof typeof propertyStatusLabels]}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{[row.address, row.city].filter(Boolean).join(", ") || "—"}</TableCell>
                       <TableCell className="text-right text-sm">
