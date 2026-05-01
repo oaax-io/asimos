@@ -486,7 +486,7 @@ function PropertiesPage() {
                   </div>
                   <div className="p-4">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge variant="secondary" className="text-xs">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
+                      <Badge variant="outline" className={`text-xs ${getPropertyStatusBadgeClass(p.status)}`}>{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
                       {childUnits.length > 0 && (
                         <Badge className="bg-primary/10 text-primary hover:bg-primary/15 text-xs">
                           <Building2 className="mr-1 h-3 w-3" />Liegenschaft · {childUnits.length} Einheit{childUnits.length === 1 ? "" : "en"}
