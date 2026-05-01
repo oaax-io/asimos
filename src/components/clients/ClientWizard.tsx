@@ -136,7 +136,7 @@ const UNASSIGNED = "__unassigned__";
 const NO_FIN = "__none__";
 
 const empty: FormState = {
-  entity_type: "person", role_choice: "", company_name: "",
+  entity_type: "person", role_choice: "", company_name: "", contact_mode: "manual", linked_contact_client_id: "",
   salutation: "", first_name: "", last_name: "", birth_name: "", birth_date: "",
   nationality: "", marital_status: "",
   email: "", phone: "", mobile: "", street: "", street_number: "",
