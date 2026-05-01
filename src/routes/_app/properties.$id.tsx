@@ -7,6 +7,7 @@ import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -339,64 +340,82 @@ function PropertyDetail() {
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-        <TabsList className="flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="details">Details & Medien</TabsTrigger>
-          <TabsTrigger value="owner">Eigentümer</TabsTrigger>
-          <TabsTrigger value="marketing">Vermarktung</TabsTrigger>
-          <TabsTrigger value="organisation">Organisation</TabsTrigger>
-          <TabsTrigger value="documents">Dokumente</TabsTrigger>
-          {!p.is_unit && <TabsTrigger value="units">Einheiten{units.length ? ` (${units.length})` : ""}</TabsTrigger>}
+      <Tabs value={tab} onValueChange={setTab} className="flex flex-col gap-4 lg:flex-row-reverse">
+        <TabsList className="flex h-auto w-full flex-row flex-wrap justify-start gap-1 lg:w-56 lg:flex-col lg:items-stretch lg:justify-start lg:bg-transparent lg:p-0">
+          <TabsTrigger value="overview" className="lg:justify-start">Übersicht</TabsTrigger>
+          <TabsTrigger value="details" className="lg:justify-start">Details & Medien</TabsTrigger>
+          <TabsTrigger value="owner" className="lg:justify-start">Eigentümer</TabsTrigger>
+          <TabsTrigger value="marketing" className="lg:justify-start">Vermarktung</TabsTrigger>
+          <TabsTrigger value="organisation" className="lg:justify-start">Organisation</TabsTrigger>
+          <TabsTrigger value="documents" className="lg:justify-start">Dokumente</TabsTrigger>
+          {!p.is_unit && (
+            <TabsTrigger value="units" className="lg:justify-start">
+              Einheiten{units.length ? ` (${units.length})` : ""}
+            </TabsTrigger>
+          )}
         </TabsList>
 
-        <TabsContent value="overview"><OverviewTab p={p} /></TabsContent>
+        <div className="min-w-0 flex-1">
+          <TabsContent value="overview" className="mt-0"><OverviewTab p={p} /></TabsContent>
 
-        <TabsContent value="details">
-          <Tabs defaultValue="facts" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="facts">Eckdaten</TabsTrigger>
-              <TabsTrigger value="media">Medien</TabsTrigger>
-            </TabsList>
-            <TabsContent value="facts"><FactsTab p={p} /></TabsContent>
-            <TabsContent value="media"><MediaTab propertyId={id} cover={getMediaPublicUrl(p.images?.[0])} /></TabsContent>
-          </Tabs>
-        </TabsContent>
+          <TabsContent value="details" className="mt-0">
+            <Accordion type="multiple" defaultValue={["facts"]} className="space-y-2">
+              <AccordionItem value="facts" className="rounded-xl border px-4">
+                <AccordionTrigger className="font-display text-base">Eckdaten</AccordionTrigger>
+                <AccordionContent><FactsTab p={p} /></AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="media" className="rounded-xl border px-4">
+                <AccordionTrigger className="font-display text-base">Medien</AccordionTrigger>
+                <AccordionContent><MediaTab propertyId={id} cover={getMediaPublicUrl(p.images?.[0])} /></AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </TabsContent>
 
-        <TabsContent value="owner">
-          <PropertyOwnersTab propertyId={id} legacyOwnerClientId={p.owner_client_id ?? p.seller_client_id} />
-        </TabsContent>
+          <TabsContent value="owner" className="mt-0">
+            <PropertyOwnersTab propertyId={id} legacyOwnerClientId={p.owner_client_id ?? p.seller_client_id} />
+          </TabsContent>
 
-        <TabsContent value="marketing">
-          <Tabs defaultValue="mandate" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="mandate">Mandat</TabsTrigger>
-              <TabsTrigger value="expose">Exposé</TabsTrigger>
-              <TabsTrigger value="reservation">Reservation</TabsTrigger>
-              <TabsTrigger value="matching">Matching</TabsTrigger>
-            </TabsList>
-            <TabsContent value="mandate"><MandateTab propertyId={id} /></TabsContent>
-            <TabsContent value="expose"><ExposeTab propertyId={id} /></TabsContent>
-            <TabsContent value="reservation"><ReservationTab propertyId={id} /></TabsContent>
-            <TabsContent value="matching" className="mt-4"><MatchPanel direction="property-to-client" property={p} /></TabsContent>
-          </Tabs>
-        </TabsContent>
+          <TabsContent value="marketing" className="mt-0">
+            <Accordion type="multiple" defaultValue={["mandate"]} className="space-y-2">
+              <AccordionItem value="mandate" className="rounded-xl border px-4">
+                <AccordionTrigger className="font-display text-base">Mandat</AccordionTrigger>
+                <AccordionContent><MandateTab propertyId={id} /></AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="expose" className="rounded-xl border px-4">
+                <AccordionTrigger className="font-display text-base">Exposé</AccordionTrigger>
+                <AccordionContent><ExposeTab propertyId={id} /></AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="reservation" className="rounded-xl border px-4">
+                <AccordionTrigger className="font-display text-base">Reservation</AccordionTrigger>
+                <AccordionContent><ReservationTab propertyId={id} /></AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="matching" className="rounded-xl border px-4">
+                <AccordionTrigger className="font-display text-base">Matching</AccordionTrigger>
+                <AccordionContent><MatchPanel direction="property-to-client" property={p} /></AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </TabsContent>
 
-        <TabsContent value="organisation">
-          <Tabs defaultValue="tasks" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="tasks">Aufgaben</TabsTrigger>
-              <TabsTrigger value="appointments">Termine</TabsTrigger>
-              <TabsTrigger value="checklists">Checklisten</TabsTrigger>
-            </TabsList>
-            <TabsContent value="tasks"><TasksTab propertyId={id} /></TabsContent>
-            <TabsContent value="appointments"><AppointmentsTab propertyId={id} /></TabsContent>
-            <TabsContent value="checklists"><ChecklistsTab propertyId={id} /></TabsContent>
-          </Tabs>
-        </TabsContent>
+          <TabsContent value="organisation" className="mt-0">
+            <Accordion type="multiple" defaultValue={["tasks"]} className="space-y-2">
+              <AccordionItem value="tasks" className="rounded-xl border px-4">
+                <AccordionTrigger className="font-display text-base">Aufgaben</AccordionTrigger>
+                <AccordionContent><TasksTab propertyId={id} /></AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="appointments" className="rounded-xl border px-4">
+                <AccordionTrigger className="font-display text-base">Termine</AccordionTrigger>
+                <AccordionContent><AppointmentsTab propertyId={id} /></AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="checklists" className="rounded-xl border px-4">
+                <AccordionTrigger className="font-display text-base">Checklisten</AccordionTrigger>
+                <AccordionContent><ChecklistsTab propertyId={id} /></AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </TabsContent>
 
-        <TabsContent value="documents"><DocumentsTab propertyId={id} /></TabsContent>
-        {!p.is_unit && <TabsContent value="units"><UnitsTab parentId={id} units={units} /></TabsContent>}
+          <TabsContent value="documents" className="mt-0"><DocumentsTab propertyId={id} /></TabsContent>
+          {!p.is_unit && <TabsContent value="units" className="mt-0"><UnitsTab parentId={id} units={units} /></TabsContent>}
+        </div>
       </Tabs>
     </div>
   );
