@@ -571,7 +571,7 @@ function LeadsPage() {
                               compact
                             />
                             {l.status !== "converted" && (
-                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => convert.mutate(l)} title="Zu Kunde konvertieren">
+                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setConvertLead(l)} title="Zu Kunde konvertieren">
                                 <ArrowRight className="h-3 w-3" />
                               </Button>
                             )}
