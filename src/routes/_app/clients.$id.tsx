@@ -29,6 +29,7 @@ import { MatchPanel } from "@/components/matching/MatchPanel";
 import { ClientSelfDisclosureTab } from "@/components/clients/ClientSelfDisclosureTab";
 import { ClientRelationshipsTab } from "@/components/clients/ClientRelationshipsTab";
 import { ClientProfileSummary } from "@/components/clients/ClientProfileSummary";
+import { ClientEditDialog } from "@/components/clients/ClientEditDialog";
 import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
 import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkCard";
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
@@ -37,8 +38,6 @@ import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuick
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetail });
 
-const TYPES = ["buyer", "seller", "owner", "tenant", "landlord"] as const;
-const PROP_TYPES = ["apartment", "house", "commercial", "land", "other"] as const;
 
 function ClientDetail() {
   const { id } = Route.useParams();
@@ -182,7 +181,7 @@ function ClientDetail() {
           <Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
         </Button>
         <div className="flex gap-2">
-          <EditClientDialog client={client} onSaved={() => qc.invalidateQueries({ queryKey: ["client", id] })} />
+          <ClientEditDialog client={client} onSaved={() => qc.invalidateQueries({ queryKey: ["client", id] })} />
           <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -624,128 +623,7 @@ function NewAppointmentButton({
   );
 }
 
-function EditClientDialog({ client, onSaved }: { client: any; onSaved: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    full_name: client.full_name ?? "",
-    email: client.email ?? "",
-    phone: client.phone ?? "",
-    client_type: client.client_type as typeof TYPES[number],
-    notes: client.notes ?? "",
-    budget_min: client.budget_min?.toString() ?? "",
-    budget_max: client.budget_max?.toString() ?? "",
-    rooms_min: client.rooms_min?.toString() ?? "",
-    area_min: client.area_min?.toString() ?? "",
-    preferred_cities: client.preferred_cities?.join(", ") ?? "",
-    preferred_types: (client.preferred_types ?? []) as string[],
-    preferred_listing: (client.preferred_listing ?? "sale") as "sale" | "rent",
-  });
-
-  useEffect(() => {
-    if (open) {
-      setForm({
-        full_name: client.full_name ?? "",
-        email: client.email ?? "",
-        phone: client.phone ?? "",
-        client_type: client.client_type,
-        notes: client.notes ?? "",
-        budget_min: client.budget_min?.toString() ?? "",
-        budget_max: client.budget_max?.toString() ?? "",
-        rooms_min: client.rooms_min?.toString() ?? "",
-        area_min: client.area_min?.toString() ?? "",
-        preferred_cities: client.preferred_cities?.join(", ") ?? "",
-        preferred_types: client.preferred_types ?? [],
-        preferred_listing: client.preferred_listing ?? "sale",
-      });
-    }
-  }, [open, client]);
-
-  const save = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("clients").update({
-        full_name: form.full_name,
-        email: form.email || null,
-        phone: form.phone || null,
-        client_type: form.client_type,
-        notes: form.notes || null,
-        budget_min: form.budget_min ? Number(form.budget_min) : null,
-        budget_max: form.budget_max ? Number(form.budget_max) : null,
-        rooms_min: form.rooms_min ? Number(form.rooms_min) : null,
-        area_min: form.area_min ? Number(form.area_min) : null,
-        preferred_cities: form.preferred_cities ? form.preferred_cities.split(",").map((s: string) => s.trim()).filter(Boolean) : null,
-        preferred_types: form.preferred_types.length ? (form.preferred_types as Array<"apartment" | "house" | "commercial" | "land" | "other">) : null,
-        preferred_listing: form.preferred_listing,
-      }).eq("id", client.id);
-      if (error) throw error;
-    },
-    onSuccess: () => { toast.success("Gespeichert"); setOpen(false); onSaved(); },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        <Pencil className="mr-1.5 h-4 w-4" />Bearbeiten
-      </Button>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-        <DialogHeader><DialogTitle>Kunde bearbeiten</DialogTitle></DialogHeader>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Name</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
-            <div>
-              <Label>Typ</Label>
-              <Select value={form.client_type} onValueChange={(v: any) => setForm({ ...form, client_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{TYPES.map(t => <SelectItem key={t} value={t}>{clientTypeLabels[t]}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-          </div>
-
-          <div className="rounded-xl border bg-muted/30 p-4">
-            <p className="mb-3 text-sm font-semibold">Suchprofil</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Vermarktung</Label>
-                <Select value={form.preferred_listing} onValueChange={(v: any) => setForm({ ...form, preferred_listing: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="sale">Kauf</SelectItem><SelectItem value="rent">Miete</SelectItem></SelectContent>
-                </Select>
-              </div>
-              <div><Label>Städte (Komma-getrennt)</Label><Input value={form.preferred_cities} onChange={(e) => setForm({ ...form, preferred_cities: e.target.value })} /></div>
-              <div><Label>Budget min (CHF)</Label><Input type="number" value={form.budget_min} onChange={(e) => setForm({ ...form, budget_min: e.target.value })} /></div>
-              <div><Label>Budget max (CHF)</Label><Input type="number" value={form.budget_max} onChange={(e) => setForm({ ...form, budget_max: e.target.value })} /></div>
-              <div><Label>Zimmer min</Label><Input type="number" value={form.rooms_min} onChange={(e) => setForm({ ...form, rooms_min: e.target.value })} /></div>
-              <div><Label>Fläche min (m²)</Label><Input type="number" value={form.area_min} onChange={(e) => setForm({ ...form, area_min: e.target.value })} /></div>
-            </div>
-            <div className="mt-3">
-              <Label>Bevorzugte Objekttypen</Label>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {PROP_TYPES.map(t => {
-                  const sel = form.preferred_types.includes(t);
-                  return (
-                    <button type="button" key={t} onClick={() => setForm({
-                      ...form,
-                      preferred_types: sel ? form.preferred_types.filter((x: string) => x !== t) : [...form.preferred_types, t],
-                    })} className={`rounded-full border px-3 py-1 text-xs transition ${sel ? "border-primary bg-primary text-primary-foreground" : "bg-background"}`}>
-                      {propertyTypeLabels[t]}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <div><Label>Notizen</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-        </div>
-        <DialogFooter>
-          <Button onClick={() => save.mutate()} disabled={!form.full_name || save.isPending}>Speichern</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
+// EditClientDialog wurde durch ClientEditDialog (Stammdaten-only) ersetzt.
 
 function FinancingTab({
   clientId, dossiers, onChange,
