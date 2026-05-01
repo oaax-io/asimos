@@ -51,6 +51,7 @@ function PropertiesPage() {
   const [view, setView] = useState<ViewMode>("list");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["properties"],
