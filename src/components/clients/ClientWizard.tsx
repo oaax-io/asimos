@@ -232,6 +232,15 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
         .from("clients").insert(clientPayload).select("id").single();
       if (clientErr) throw clientErr;
 
+      // 1b) Insert client role
+      const { error: roleErr } = await supabase.from("client_roles").insert({
+        client_id: client.id,
+        role_type: ROLE_TO_DB_ROLE[form.role_choice as RoleChoice] as any,
+        status: "active",
+        start_date: new Date().toISOString().slice(0, 10),
+      });
+      if (roleErr) console.warn("Rolle konnte nicht gespeichert werden:", roleErr);
+
       // 2) Insert self-disclosure (non-blocking — log but don't fail)
       const disclosurePayload: any = {
         client_id: client.id,
