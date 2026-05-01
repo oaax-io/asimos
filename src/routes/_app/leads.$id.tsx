@@ -100,59 +100,7 @@ function LeadDetail() {
     },
   });
 
-  const convert = useMutation({
-    mutationFn: async () => {
-      const lead = leadQuery.data!;
-      // Map Lead-Interesse → client_type (Käufer ist Default)
-      const interestToType: Record<string, "buyer" | "seller" | "tenant" | "landlord"> = {
-        kauf: "buyer", buy: "buyer", kaufen: "buyer",
-        miete: "tenant", mieten: "tenant", rent: "tenant",
-        verkauf: "seller", verkaufen: "seller", sell: "seller",
-        vermietung: "landlord", vermieten: "landlord",
-      };
-      const interestKey = (lead.interest_type ?? "").toLowerCase().trim();
-      const clientType = interestToType[interestKey] ?? "buyer";
-
-      // Notizen mit Quelle anreichern
-      const noteParts: string[] = [];
-      if (lead.notes) noteParts.push(lead.notes);
-      if (lead.source) noteParts.push(`Quelle: ${lead.source}`);
-      const mergedNotes = noteParts.join("\n\n") || null;
-
-      const payload: Record<string, unknown> = {
-        owner_id: user!.id,
-        assigned_to: lead.assigned_to,
-        full_name: lead.full_name,
-        email: lead.email,
-        phone: lead.phone,
-        notes: mergedNotes,
-        client_type: clientType,
-        budget_min: lead.budget_min ?? null,
-        budget_max: lead.budget_max ?? null,
-        preferred_cities: lead.preferred_location
-          ? [lead.preferred_location]
-          : null,
-      };
-
-      const { data: created, error } = await supabase
-        .from("clients")
-        .insert(payload as never)
-        .select("id")
-        .single();
-      if (error) throw error;
-      await supabase.from("leads").update({ status: "converted", converted_client_id: created.id }).eq("id", id);
-      await supabase.from("activity_logs").insert({
-        actor_id: user?.id ?? null, action: "Zu Kunde konvertiert",
-        related_type: "lead", related_id: id, metadata: { client_id: created.id },
-      });
-      return created;
-    },
-    onSuccess: (created) => {
-      toast.success("Zu Kunde konvertiert");
-      navigate({ to: "/clients/$id", params: { id: created.id } });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
+  const [convertOpen, setConvertOpen] = useState(false);
 
   const del = useMutation({
     mutationFn: async () => {
