@@ -259,10 +259,22 @@ function PropertyDetail() {
 
   const updateStatus = useMutation({
     mutationFn: async (status: string) => {
+      const prevStatus = p?.status;
       const { error } = await supabase.from("properties").update({ status: status as any }).eq("id", id);
       if (error) throw error;
+      await supabase.from("activity_logs").insert({
+        actor_id: user?.id ?? null,
+        action: `Status geändert: ${prevStatus ?? "—"} → ${status}`,
+        related_type: "property",
+        related_id: id,
+        metadata: { from: prevStatus, to: status },
+      });
     },
-    onSuccess: () => { toast.success("Status aktualisiert"); qc.invalidateQueries({ queryKey: ["property", id] }); },
+    onSuccess: () => {
+      toast.success("Status aktualisiert");
+      qc.invalidateQueries({ queryKey: ["property", id] });
+      qc.invalidateQueries({ queryKey: ["property_activities", id] });
+    },
   });
 
   const del = useMutation({
