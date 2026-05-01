@@ -1412,8 +1412,8 @@ function MarketAnalysisTab({ property }: { property: any }) {
               <CardContent className="space-y-3 p-5">
                 <h3 className="flex items-center gap-2 font-display text-base"><Banknote className="h-4 w-4 text-primary" />Kaufpreis</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <Stat label="Preis pro m²" value={fmtRange(sections.purchase_price.price_per_sqm_min, sections.purchase_price.price_per_sqm_max, ` ${sections.purchase_price.currency}/m²`)} />
-                  <Stat label="Verkehrswert" value={fmtRange(sections.purchase_price.estimated_value_min, sections.purchase_price.estimated_value_max, "", sections.purchase_price.currency)} />
+                  <MarketStat label="Preis pro m²" value={fmtRange(sections.purchase_price.price_per_sqm_min, sections.purchase_price.price_per_sqm_max, ` ${sections.purchase_price.currency}/m²`)} />
+                  <MarketStat label="Verkehrswert" value={fmtRange(sections.purchase_price.estimated_value_min, sections.purchase_price.estimated_value_max, "", sections.purchase_price.currency)} />
                 </div>
                 <div className={`text-sm font-medium ${comparisonMap[sections.purchase_price.comparison]?.cls ?? ""}`}>
                   {comparisonMap[sections.purchase_price.comparison]?.label}
@@ -1428,10 +1428,10 @@ function MarketAnalysisTab({ property }: { property: any }) {
               <CardContent className="space-y-3 p-5">
                 <h3 className="flex items-center gap-2 font-display text-base"><Building2 className="h-4 w-4 text-primary" />Vermietungspotenzial</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <Stat label="Miete pro m²" value={fmtRange(sections.rental.rent_per_sqm_min, sections.rental.rent_per_sqm_max, " /m²")} />
-                  <Stat label="Monatsmiete" value={fmtRange(sections.rental.monthly_rent_min, sections.rental.monthly_rent_max)} />
+                  <MarketStat label="Miete pro m²" value={fmtRange(sections.rental.rent_per_sqm_min, sections.rental.rent_per_sqm_max, " /m²")} />
+                  <MarketStat label="Monatsmiete" value={fmtRange(sections.rental.monthly_rent_min, sections.rental.monthly_rent_max)} />
                   {(sections.rental.gross_yield_min != null || sections.rental.gross_yield_max != null) && (
-                    <Stat label="Bruttorendite" value={fmtRange(sections.rental.gross_yield_min, sections.rental.gross_yield_max, " %")} className="col-span-2" />
+                    <MarketStat label="Bruttorendite" value={fmtRange(sections.rental.gross_yield_min, sections.rental.gross_yield_max, " %")} className="col-span-2" />
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">{sections.rental.comment}</p>
@@ -1480,7 +1480,7 @@ function MarketAnalysisTab({ property }: { property: any }) {
   );
 }
 
-function Stat({ label, value, className = "" }: { label: string; value: string; className?: string }) {
+function MarketStat({ label, value, className = "" }: { label: string; value: string; className?: string }) {
   return (
     <div className={`rounded-lg border bg-muted/30 p-3 ${className}`}>
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
