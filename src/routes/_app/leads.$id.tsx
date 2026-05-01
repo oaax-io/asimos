@@ -18,6 +18,7 @@ import {
 import { leadStatusLabels, leadStatuses, type LeadStatus, formatDate, formatDateTime, apptTypeLabels } from "@/lib/format";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { ConvertLeadDialog } from "@/components/leads/ConvertLeadDialog";
 
 export const Route = createFileRoute("/_app/leads/$id")({ component: LeadDetail });
 
