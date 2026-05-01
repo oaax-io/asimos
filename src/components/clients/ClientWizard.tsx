@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Check, Loader2, User, Mail, Briefcase, Wallet, Target, ClipboardCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Loader2, User, Mail, Briefcase, Wallet, Target, ClipboardCheck, Building2, UserCircle, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { clientTypeLabels, propertyTypeLabels } from "@/lib/format";
 import {
@@ -30,7 +30,9 @@ interface Props {
 }
 
 const STEPS = [
-  { key: "person",   label: "Persönliches", icon: User },
+  { key: "entity",   label: "Art",          icon: UserCircle },
+  { key: "role",     label: "Rolle",        icon: Tag },
+  { key: "person",   label: "Stammdaten",   icon: User },
   { key: "contact",  label: "Kontakt",      icon: Mail },
   { key: "job",      label: "Beruf & Einkommen", icon: Briefcase },
   { key: "expense",  label: "Ausgaben",     icon: Wallet },
@@ -38,7 +40,41 @@ const STEPS = [
   { key: "review",   label: "Übersicht",    icon: ClipboardCheck },
 ] as const;
 
+type EntityType = "person" | "company";
+type RoleChoice = "buyer" | "seller_owner" | "tenant" | "landlord" | "financing_applicant" | "general_contact";
+
+const ROLE_OPTIONS: { value: RoleChoice; label: string; description: string; icon: typeof Tag }[] = [
+  { value: "buyer",               label: "Käufer",                 description: "Sucht eine Immobilie zum Kauf", icon: Target },
+  { value: "seller_owner",        label: "Verkäufer / Eigentümer", description: "Bietet eine Immobilie an oder besitzt eine", icon: Building2 },
+  { value: "tenant",              label: "Mieter",                 description: "Sucht eine Mietwohnung", icon: User },
+  { value: "landlord",            label: "Vermieter",              description: "Vermietet eine Immobilie", icon: Building2 },
+  { value: "financing_applicant", label: "Finanzierungskunde",     description: "Benötigt Finanzierungsberatung", icon: Wallet },
+  { value: "general_contact",     label: "Allgemeiner Kontakt",    description: "Sonstiger Kontakt ohne klare Rolle", icon: Mail },
+];
+
+const ROLE_TO_CLIENT_TYPE: Record<RoleChoice, typeof TYPES[number]> = {
+  buyer: "buyer",
+  seller_owner: "seller",
+  tenant: "tenant",
+  landlord: "landlord",
+  financing_applicant: "other",
+  general_contact: "other",
+};
+
+const ROLE_TO_DB_ROLE: Record<RoleChoice, string> = {
+  buyer: "buyer",
+  seller_owner: "seller",
+  tenant: "tenant",
+  landlord: "landlord",
+  financing_applicant: "financing_applicant",
+  general_contact: "general_contact",
+};
+
 type FormState = {
+  // Entität & Rolle
+  entity_type: EntityType;
+  role_choice: RoleChoice | "";
+  company_name: string;
   // Stamm
   salutation: string;
   first_name: string;
@@ -98,6 +134,7 @@ const UNASSIGNED = "__unassigned__";
 const NO_FIN = "__none__";
 
 const empty: FormState = {
+  entity_type: "person", role_choice: "", company_name: "",
   salutation: "", first_name: "", last_name: "", birth_name: "", birth_date: "",
   nationality: "", marital_status: "",
   email: "", phone: "", mobile: "", street: "", street_number: "",
@@ -146,23 +183,33 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
     return calculateBenchmark(finance);
   }, [form]);
 
-  const fullName = `${form.first_name} ${form.last_name}`.trim();
-  const canSave = fullName.length > 0;
+  const personName = `${form.first_name} ${form.last_name}`.trim();
+  const fullName = form.entity_type === "company"
+    ? form.company_name.trim()
+    : personName;
+  const canSave = fullName.length > 0 && !!form.role_choice;
 
   const reset = () => { setForm(empty); setStep(0); };
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!canSave) throw new Error("Vor- und Nachname sind erforderlich");
+      if (!form.role_choice) throw new Error("Bitte Rolle wählen");
+      if (!fullName) throw new Error(form.entity_type === "company" ? "Firmenname ist erforderlich" : "Vor- und Nachname sind erforderlich");
       const { data: userData } = await supabase.auth.getUser();
       const owner_id = userData.user?.id ?? null;
+
+      const mappedClientType = ROLE_TO_CLIENT_TYPE[form.role_choice as RoleChoice];
 
       // 1) Insert client
       const clientPayload: any = {
         full_name: fullName,
+        entity_type: form.entity_type,
+        company_name: form.entity_type === "company" ? (form.company_name || null) : null,
+        contact_first_name: form.entity_type === "company" ? (form.first_name || null) : null,
+        contact_last_name: form.entity_type === "company" ? (form.last_name || null) : null,
         email: form.email || null,
         phone: form.phone || form.mobile || null,
-        client_type: form.client_type,
+        client_type: mappedClientType,
         notes: form.notes || null,
         owner_id,
         assigned_to: form.assigned_to || null,
@@ -184,6 +231,15 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       const { data: client, error: clientErr } = await supabase
         .from("clients").insert(clientPayload).select("id").single();
       if (clientErr) throw clientErr;
+
+      // 1b) Insert client role
+      const { error: roleErr } = await supabase.from("client_roles").insert({
+        client_id: client.id,
+        role_type: ROLE_TO_DB_ROLE[form.role_choice as RoleChoice] as any,
+        status: "active",
+        start_date: new Date().toISOString().slice(0, 10),
+      });
+      if (roleErr) console.warn("Rolle konnte nicht gespeichert werden:", roleErr);
 
       // 2) Insert self-disclosure (non-blocking — log but don't fail)
       const disclosurePayload: any = {
@@ -283,6 +339,95 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
           <div className="flex-1 overflow-y-auto px-6 py-5">
             {step === 0 && (
               <div className="space-y-4">
+                <div>
+                  <p className="text-base font-semibold">Was möchtest du erfassen?</p>
+                  <p className="text-sm text-muted-foreground">Wähle die Art des Kunden.</p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {([
+                    { v: "person",  title: "Privatperson",     desc: "Eine natürliche Person", Icon: UserCircle },
+                    { v: "company", title: "Unternehmen / Firma", desc: "Eine juristische Person", Icon: Building2 },
+                  ] as const).map(({ v, title, desc, Icon }) => {
+                    const active = form.entity_type === v;
+                    return (
+                      <button
+                        type="button"
+                        key={v}
+                        onClick={() => set("entity_type", v)}
+                        className={`group flex items-start gap-3 rounded-xl border p-4 text-left transition hover:border-primary/60 hover:bg-accent/40 ${
+                          active ? "border-primary bg-primary/5 ring-2 ring-primary/30" : ""
+                        }`}
+                      >
+                        <span className={`flex h-10 w-10 items-center justify-center rounded-lg border ${active ? "border-primary bg-primary text-primary-foreground" : "bg-muted"}`}>
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="flex-1">
+                          <span className="block font-semibold">{title}</span>
+                          <span className="block text-sm text-muted-foreground">{desc}</span>
+                        </span>
+                        {active && <Check className="h-5 w-5 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {step === 1 && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-base font-semibold">Welche Rolle hat dieser Kunde?</p>
+                  <p className="text-sm text-muted-foreground">Bestimmt die Beziehung im System.</p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {ROLE_OPTIONS.map(({ value, label, description, icon: Icon }) => {
+                    const active = form.role_choice === value;
+                    return (
+                      <button
+                        type="button"
+                        key={value}
+                        onClick={() => set("role_choice", value)}
+                        className={`flex items-start gap-3 rounded-xl border p-4 text-left transition hover:border-primary/60 hover:bg-accent/40 ${
+                          active ? "border-primary bg-primary/5 ring-2 ring-primary/30" : ""
+                        }`}
+                      >
+                        <span className={`flex h-10 w-10 items-center justify-center rounded-lg border ${active ? "border-primary bg-primary text-primary-foreground" : "bg-muted"}`}>
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="flex-1">
+                          <span className="block font-semibold">{label}</span>
+                          <span className="block text-sm text-muted-foreground">{description}</span>
+                        </span>
+                        {active && <Check className="h-5 w-5 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {step === 2 && form.entity_type === "company" && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <Label>Firmenname *</Label>
+                    <Input value={form.company_name} onChange={(e) => set("company_name", e.target.value)} placeholder="Muster AG" />
+                  </div>
+                  <div>
+                    <Label>Kontaktperson – Vorname</Label>
+                    <Input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Kontaktperson – Nachname</Label>
+                    <Input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">Die Kontaktperson ist optional und kann später ergänzt werden.</p>
+              </div>
+            )}
+
+            {step === 2 && form.entity_type === "person" && (
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <div>
                     <Label>Anrede</Label>
@@ -328,7 +473,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               </div>
             )}
 
-            {step === 1 && (
+            {step === 3 && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div>
@@ -369,7 +514,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               </div>
             )}
 
-            {step === 2 && (
+            {step === 4 && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div>
@@ -417,7 +562,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               </div>
             )}
 
-            {step === 3 && (
+            {step === 5 && (
               <div className="space-y-4">
                 <div className="rounded-xl border bg-muted/30 p-4">
                   <p className="mb-3 text-sm font-semibold">Monatliche Ausgaben (CHF)</p>
@@ -454,7 +599,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               </div>
             )}
 
-            {step === 4 && (
+            {step === 6 && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div>
@@ -543,12 +688,24 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               </div>
             )}
 
-            {step === 5 && (
+            {step === 7 && (
               <div className="space-y-4">
                 <div className="rounded-xl border p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Person</p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                    {form.entity_type === "company" ? "Unternehmen" : "Person"}
+                  </p>
                   <p className="text-base font-semibold">{fullName || "—"}</p>
-                  <p className="text-sm text-muted-foreground">
+                  {form.entity_type === "company" && personName && (
+                    <p className="text-sm text-muted-foreground">Kontakt: {personName}</p>
+                  )}
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {form.role_choice && (
+                      <Badge variant="secondary">
+                        {ROLE_OPTIONS.find((r) => r.value === form.role_choice)?.label}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
                     {[form.email, form.phone || form.mobile].filter(Boolean).join(" · ") || "Keine Kontaktdaten"}
                   </p>
                   <p className="text-sm text-muted-foreground">
@@ -586,7 +743,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
 
                 {!canSave && (
                   <p className="text-sm text-destructive">
-                    Bitte mindestens Vor- und Nachname erfassen (Schritt 1).
+                    Bitte Rolle wählen und {form.entity_type === "company" ? "Firmenname" : "Vor- und Nachname"} erfassen.
                   </p>
                 )}
               </div>
@@ -607,7 +764,13 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                 Abbrechen
               </Button>
               {!isLast ? (
-                <Button onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}>
+                <Button
+                  onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+                  disabled={
+                    (step === 1 && !form.role_choice) ||
+                    (step === 2 && form.entity_type === "company" && !form.company_name.trim())
+                  }
+                >
                   Weiter <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               ) : (

@@ -711,9 +711,13 @@ export type Database = {
           budget_min: number | null
           city: string | null
           client_type: Database["public"]["Enums"]["client_type"]
+          company_name: string | null
+          contact_first_name: string | null
+          contact_last_name: string | null
           country: string | null
           created_at: string
           email: string | null
+          entity_type: string
           equity: number | null
           financing_status: string | null
           full_name: string
@@ -744,9 +748,13 @@ export type Database = {
           budget_min?: number | null
           city?: string | null
           client_type?: Database["public"]["Enums"]["client_type"]
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
           country?: string | null
           created_at?: string
           email?: string | null
+          entity_type?: string
           equity?: number | null
           financing_status?: string | null
           full_name: string
@@ -779,9 +787,13 @@ export type Database = {
           budget_min?: number | null
           city?: string | null
           client_type?: Database["public"]["Enums"]["client_type"]
+          company_name?: string | null
+          contact_first_name?: string | null
+          contact_last_name?: string | null
           country?: string | null
           created_at?: string
           email?: string | null
+          entity_type?: string
           equity?: number | null
           financing_status?: string | null
           full_name?: string
