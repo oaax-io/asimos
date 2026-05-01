@@ -778,8 +778,13 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                     {form.entity_type === "company" ? "Unternehmen" : "Person"}
                   </p>
                   <p className="text-base font-semibold">{fullName || "—"}</p>
-                  {form.entity_type === "company" && personName && (
+                  {form.entity_type === "company" && form.contact_mode === "manual" && personName && (
                     <p className="text-sm text-muted-foreground">Kontakt: {personName}</p>
+                  )}
+                  {form.entity_type === "company" && form.contact_mode === "existing" && form.linked_contact_client_id && (
+                    <p className="text-sm text-muted-foreground">
+                      Kontakt: {personClients.find((c: any) => c.id === form.linked_contact_client_id)?.full_name ?? "—"} (verknüpft)
+                    </p>
                   )}
                   <div className="mt-1 flex flex-wrap gap-2">
                     {form.role_choice && (
