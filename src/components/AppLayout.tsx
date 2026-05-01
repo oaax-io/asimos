@@ -34,6 +34,7 @@ const NAV_GROUPS = [
       { to: "/financing", label: "Finanzierungen", icon: Banknote },
       { to: "/appointments", label: "Termine", icon: Calendar },
       { to: "/tasks", label: "Aufgaben", icon: CheckSquare },
+      { to: "/analytics", label: "Analytics", icon: BarChart3 },
     ],
   },
   {
