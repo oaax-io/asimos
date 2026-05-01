@@ -35,6 +35,7 @@ function PropertyDetail() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
+  const [tab, setTab] = useState("overview");
 
   const { data: p, isLoading } = useQuery({
     queryKey: ["property", id],
@@ -88,6 +89,23 @@ function PropertyDetail() {
       return data;
     },
     enabled: !!p?.is_unit && !!p?.parent_property_id,
+  });
+
+  const { data: currentOwners = [] } = useQuery({
+    queryKey: ["property_current_owners", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("property_ownerships")
+        .select("client_id, ownership_type, client:clients!property_ownerships_client_id_fkey(id, full_name)")
+        .eq("property_id", id)
+        .is("end_date", null);
+      return (data ?? []) as unknown as Array<{
+        client_id: string;
+        ownership_type: string;
+        client: { id: string; full_name: string } | null;
+      }>;
+    },
+    enabled: !!id,
   });
 
   const update = useMutation({
@@ -238,10 +256,28 @@ function PropertyDetail() {
             <p className="flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4" />Zuständig</p>
             <p className="mt-1 font-medium">{assignedEmp ? (assignedEmp as any).full_name || (assignedEmp as any).email : "Niemand zugewiesen"}</p>
           </CardContent></Card>
+          <button
+            type="button"
+            onClick={() => setTab("owner")}
+            className="block w-full text-left"
+          >
+            <Card className="transition hover:border-primary/50 hover:bg-primary/5">
+              <CardContent className="p-4 text-sm">
+                <p className="flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4" />Eigentümer</p>
+                {currentOwners.length === 0 ? (
+                  <p className="mt-1 italic text-muted-foreground">Noch kein Eigentümer hinterlegt</p>
+                ) : currentOwners.length === 1 ? (
+                  <p className="mt-1 font-medium">{currentOwners[0].client?.full_name ?? "—"}</p>
+                ) : (
+                  <p className="mt-1 font-medium">Mehrere Eigentümer ({currentOwners.length})</p>
+                )}
+              </CardContent>
+            </Card>
+          </button>
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList className="flex flex-wrap h-auto gap-1">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="owner">Eigentümer</TabsTrigger>
@@ -948,4 +984,3 @@ function UnitsTab({ parentId, units }: { parentId: string; units: any[] }) {
     </Card>
   );
 }
-
