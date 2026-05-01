@@ -498,6 +498,9 @@ function PropertyDetail() {
 
           <TabsContent value="documents" className="mt-0"><DocumentsTab propertyId={id} /></TabsContent>
           {!p.is_unit && <TabsContent value="units" className="mt-0"><UnitsTab parentId={id} units={units} /></TabsContent>}
+          <TabsContent value="activity" className="mt-0">
+            <ActivityTab activities={activities} employees={employees} />
+          </TabsContent>
         </div>
       </Tabs>
     </div>
