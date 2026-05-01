@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Check, Loader2, User, Mail, Briefcase, Wallet, Target, ClipboardCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Loader2, User, Mail, Briefcase, Wallet, Target, ClipboardCheck, Building2, UserCircle, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { clientTypeLabels, propertyTypeLabels } from "@/lib/format";
 import {
