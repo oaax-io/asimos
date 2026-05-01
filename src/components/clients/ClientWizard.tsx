@@ -30,13 +30,45 @@ interface Props {
 }
 
 const STEPS = [
-  { key: "person",   label: "Persönliches", icon: User },
+  { key: "entity",   label: "Art",          icon: UserCircle },
+  { key: "role",     label: "Rolle",        icon: Tag },
+  { key: "person",   label: "Stammdaten",   icon: User },
   { key: "contact",  label: "Kontakt",      icon: Mail },
   { key: "job",      label: "Beruf & Einkommen", icon: Briefcase },
   { key: "expense",  label: "Ausgaben",     icon: Wallet },
   { key: "search",   label: "Suchprofil",   icon: Target },
   { key: "review",   label: "Übersicht",    icon: ClipboardCheck },
 ] as const;
+
+type EntityType = "person" | "company";
+type RoleChoice = "buyer" | "seller_owner" | "tenant" | "landlord" | "financing_applicant" | "general_contact";
+
+const ROLE_OPTIONS: { value: RoleChoice; label: string; description: string; icon: typeof Tag }[] = [
+  { value: "buyer",               label: "Käufer",                 description: "Sucht eine Immobilie zum Kauf", icon: Target },
+  { value: "seller_owner",        label: "Verkäufer / Eigentümer", description: "Bietet eine Immobilie an oder besitzt eine", icon: Building2 },
+  { value: "tenant",              label: "Mieter",                 description: "Sucht eine Mietwohnung", icon: User },
+  { value: "landlord",            label: "Vermieter",              description: "Vermietet eine Immobilie", icon: Building2 },
+  { value: "financing_applicant", label: "Finanzierungskunde",     description: "Benötigt Finanzierungsberatung", icon: Wallet },
+  { value: "general_contact",     label: "Allgemeiner Kontakt",    description: "Sonstiger Kontakt ohne klare Rolle", icon: Mail },
+];
+
+const ROLE_TO_CLIENT_TYPE: Record<RoleChoice, typeof TYPES[number]> = {
+  buyer: "buyer",
+  seller_owner: "seller",
+  tenant: "tenant",
+  landlord: "landlord",
+  financing_applicant: "other",
+  general_contact: "other",
+};
+
+const ROLE_TO_DB_ROLE: Record<RoleChoice, string> = {
+  buyer: "buyer",
+  seller_owner: "seller",
+  tenant: "tenant",
+  landlord: "landlord",
+  financing_applicant: "financing_applicant",
+  general_contact: "general_contact",
+};
 
 type FormState = {
   // Stamm
