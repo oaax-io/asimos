@@ -183,8 +183,11 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
     return calculateBenchmark(finance);
   }, [form]);
 
-  const fullName = `${form.first_name} ${form.last_name}`.trim();
-  const canSave = fullName.length > 0;
+  const personName = `${form.first_name} ${form.last_name}`.trim();
+  const fullName = form.entity_type === "company"
+    ? form.company_name.trim()
+    : personName;
+  const canSave = fullName.length > 0 && !!form.role_choice;
 
   const reset = () => { setForm(empty); setStep(0); };
 
