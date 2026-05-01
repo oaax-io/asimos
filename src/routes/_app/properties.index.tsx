@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, MapPin, Bed, Maximize, Search, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Upload, Building2, Layers3, ChevronRight, ChevronDown } from "lucide-react";
+import { Plus, MapPin, Bed, Maximize, Search, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Upload, Building2, Layers3, ChevronRight, ChevronDown, SlidersHorizontal, RotateCcw } from "lucide-react";
 import { PropertyImportDialog } from "@/components/properties/PropertyImportDialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -51,6 +51,7 @@ function PropertiesPage() {
   const [view, setView] = useState<ViewMode>("list");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["properties"],
@@ -267,78 +268,150 @@ function PropertiesPage() {
         onImported={() => qc.invalidateQueries({ queryKey: ["properties"] })}
       />
 
-      <div className="mb-4 grid gap-3 md:grid-cols-2 lg:grid-cols-7">
-        <div className="relative lg:col-span-2">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
-        </div>
-        <Select value={fStatus} onValueChange={setFStatus}>
-          <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Status</SelectItem>
-            {STATUSES.map(s => <SelectItem key={s} value={s}>{propertyStatusLabels[s]}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={fType} onValueChange={setFType}>
-          <SelectTrigger><SelectValue placeholder="Typ" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Typen</SelectItem>
-            {PROP_TYPES.map(t => <SelectItem key={t} value={t}>{propertyTypeLabels[t]}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={fListing} onValueChange={setFListing}>
-          <SelectTrigger><SelectValue placeholder="Vermarktung" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Kauf & Miete</SelectItem>
-            <SelectItem value="sale">Kauf</SelectItem>
-            <SelectItem value="rent">Miete</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={fCity} onValueChange={setFCity}>
-          <SelectTrigger><SelectValue placeholder="Stadt" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Städte</SelectItem>
-            {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={fAssigned} onValueChange={setFAssigned}>
-          <SelectTrigger><SelectValue placeholder="Zuständig" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Mitarbeiter</SelectItem>
-            {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={archivedFilter} onValueChange={(v) => setArchivedFilter(v as typeof archivedFilter)}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Aktiv</SelectItem>
-            <SelectItem value="archived">Archiviert</SelectItem>
-            <SelectItem value="all">Alle</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {(() => {
+        const activeChips: Array<{ key: string; label: string; clear: () => void }> = [];
+        if (fStatus !== "all") activeChips.push({ key: "status", label: `Status: ${propertyStatusLabels[fStatus as keyof typeof propertyStatusLabels]}`, clear: () => setFStatus("all") });
+        if (fListing !== "all") activeChips.push({ key: "listing", label: `Vermarktung: ${fListing === "sale" ? "Kauf" : "Miete"}`, clear: () => setFListing("all") });
+        if (fType !== "all") activeChips.push({ key: "type", label: `Typ: ${propertyTypeLabels[fType as keyof typeof propertyTypeLabels]}`, clear: () => setFType("all") });
+        if (fCity !== "all") activeChips.push({ key: "city", label: `Stadt: ${fCity}`, clear: () => setFCity("all") });
+        if (fAssigned !== "all") {
+          const emp = employees.find((e: any) => e.id === fAssigned) as any;
+          activeChips.push({ key: "assigned", label: `Zuständig: ${emp?.full_name || emp?.email || "—"}`, clear: () => setFAssigned("all") });
+        }
+        if (fStructure !== "all") {
+          const labels: Record<string, string> = { buildings: "Liegenschaften", units: "Einheiten", standalone: "Einzelobjekte" };
+          activeChips.push({ key: "structure", label: `Struktur: ${labels[fStructure]}`, clear: () => setFStructure("all") });
+        }
+        if (archivedFilter !== "active") {
+          activeChips.push({ key: "arch", label: archivedFilter === "archived" ? "Nur archivierte" : "Aktiv & archivierte", clear: () => setArchivedFilter("active") });
+        }
+        const resetAll = () => {
+          setSearch(""); setFStatus("all"); setFType("all"); setFListing("all");
+          setFCity("all"); setFAssigned("all"); setFStructure("all"); setArchivedFilter("active");
+        };
+        const hasActive = activeChips.length > 0 || search.length > 0;
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Select value={fStructure} onValueChange={(v) => setFStructure(v as typeof fStructure)}>
-          <SelectTrigger className="h-9 w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Objekte</SelectItem>
-            <SelectItem value="buildings">Nur Liegenschaften (mit Einheiten)</SelectItem>
-            <SelectItem value="units">Nur Einheiten</SelectItem>
-            <SelectItem value="standalone">Nur Einzelobjekte</SelectItem>
-          </SelectContent>
-        </Select>
-        {view === "list" && fStructure !== "units" && (
-          <Button
-            size="sm"
-            variant={groupUnits ? "default" : "outline"}
-            onClick={() => setGroupUnits(g => !g)}
-          >
-            <Layers3 className="mr-1 h-4 w-4" />
-            {groupUnits ? "Gruppiert nach Liegenschaft" : "Flache Liste"}
-          </Button>
-        )}
-      </div>
+        return (
+          <div className="mb-4 space-y-2">
+            {/* Quick filter row */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[220px] flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input className="pl-9" placeholder="Suchen nach Titel, Adresse, Ort…" value={search} onChange={(e) => setSearch(e.target.value)} />
+              </div>
+              <Select value={fStatus} onValueChange={setFStatus}>
+                <SelectTrigger className="h-9 w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Status</SelectItem>
+                  {STATUSES.map(s => <SelectItem key={s} value={s}>{propertyStatusLabels[s]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={fListing} onValueChange={setFListing}>
+                <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder="Vermarktung" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Kauf & Miete</SelectItem>
+                  <SelectItem value="sale">Kauf</SelectItem>
+                  <SelectItem value="rent">Miete</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={archivedFilter} onValueChange={(v) => setArchivedFilter(v as typeof archivedFilter)}>
+                <SelectTrigger className="h-9 w-[130px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Aktiv</SelectItem>
+                  <SelectItem value="archived">Archiviert</SelectItem>
+                  <SelectItem value="all">Alle</SelectItem>
+                </SelectContent>
+              </Select>
+              {view === "list" && fStructure !== "units" && (
+                <Button
+                  size="sm"
+                  variant={groupUnits ? "default" : "outline"}
+                  onClick={() => setGroupUnits(g => !g)}
+                  title={groupUnits ? "Gruppiert nach Liegenschaft" : "Flache Liste"}
+                >
+                  <Layers3 className="mr-1 h-4 w-4" />
+                  {groupUnits ? "Gruppiert" : "Flach"}
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant={moreOpen ? "default" : "outline"}
+                onClick={() => setMoreOpen(o => !o)}
+              >
+                <SlidersHorizontal className="mr-1 h-4 w-4" />
+                Mehr Filter
+                {activeChips.filter(c => ["type","city","assigned","structure"].includes(c.key)).length > 0 && (
+                  <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">
+                    {activeChips.filter(c => ["type","city","assigned","structure"].includes(c.key)).length}
+                  </Badge>
+                )}
+              </Button>
+              {hasActive && (
+                <Button size="sm" variant="ghost" onClick={resetAll}>
+                  <RotateCcw className="mr-1 h-4 w-4" />Zurücksetzen
+                </Button>
+              )}
+            </div>
+
+            {/* Expandable advanced filters */}
+            {moreOpen && (
+              <div className="grid gap-2 rounded-xl border bg-muted/20 p-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Select value={fType} onValueChange={setFType}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Typ" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle Typen</SelectItem>
+                    {PROP_TYPES.map(t => <SelectItem key={t} value={t}>{propertyTypeLabels[t]}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={fStructure} onValueChange={(v) => setFStructure(v as typeof fStructure)}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle Strukturen</SelectItem>
+                    <SelectItem value="buildings">Nur Liegenschaften</SelectItem>
+                    <SelectItem value="units">Nur Einheiten</SelectItem>
+                    <SelectItem value="standalone">Nur Einzelobjekte</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={fAssigned} onValueChange={setFAssigned}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Zuständig" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle Mitarbeiter</SelectItem>
+                    {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {cities.length > 1 && (
+                  <Select value={fCity} onValueChange={setFCity}>
+                    <SelectTrigger className="h-9"><SelectValue placeholder="Stadt" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alle Städte</SelectItem>
+                      {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
+
+            {/* Active chips */}
+            {activeChips.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {activeChips.map(chip => (
+                  <Badge key={chip.key} variant="secondary" className="gap-1 pr-1">
+                    {chip.label}
+                    <button
+                      type="button"
+                      onClick={chip.clear}
+                      className="rounded-sm p-0.5 hover:bg-background/60"
+                      aria-label={`${chip.label} entfernen`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {selectionCount > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-accent/40 p-3">
