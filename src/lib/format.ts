@@ -79,6 +79,23 @@ export function getPropertyStatusBadgeClass(status: string | null | undefined) {
   return propertyStatusBadgeClass[status] ?? propertyStatusBadgeClass.draft;
 }
 
+// Solid dot color per status (for legends / select items).
+export const propertyStatusDotClass: Record<string, string> = {
+  draft: "bg-slate-400",
+  preparation: "bg-orange-500",
+  active: "bg-green-500",
+  available: "bg-emerald-500",
+  reserved: "bg-amber-500",
+  sold: "bg-blue-500",
+  rented: "bg-indigo-500",
+  archived: "bg-zinc-500",
+};
+
+export function getPropertyStatusDotClass(status: string | null | undefined) {
+  if (!status) return propertyStatusDotClass.draft;
+  return propertyStatusDotClass[status] ?? propertyStatusDotClass.draft;
+}
+
 export const apptTypeLabels = {
   viewing: "Besichtigung",
   meeting: "Meeting",
