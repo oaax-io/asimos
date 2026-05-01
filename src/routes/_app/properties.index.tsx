@@ -593,7 +593,7 @@ function PropertiesPage() {
                       </TableCell>
                       <TableCell className="text-sm">{propertyTypeLabels[row.property_type as keyof typeof propertyTypeLabels]}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="text-xs">{propertyStatusLabels[row.status as keyof typeof propertyStatusLabels]}</Badge>
+                        <Badge variant="outline" className={`text-xs ${getPropertyStatusBadgeClass(row.status)}`}>{propertyStatusLabels[row.status as keyof typeof propertyStatusLabels]}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{[row.address, row.city].filter(Boolean).join(", ") || "—"}</TableCell>
                       <TableCell className="text-right text-sm">
