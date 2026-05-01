@@ -193,16 +193,23 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!canSave) throw new Error("Vor- und Nachname sind erforderlich");
+      if (!form.role_choice) throw new Error("Bitte Rolle wählen");
+      if (!fullName) throw new Error(form.entity_type === "company" ? "Firmenname ist erforderlich" : "Vor- und Nachname sind erforderlich");
       const { data: userData } = await supabase.auth.getUser();
       const owner_id = userData.user?.id ?? null;
+
+      const mappedClientType = ROLE_TO_CLIENT_TYPE[form.role_choice as RoleChoice];
 
       // 1) Insert client
       const clientPayload: any = {
         full_name: fullName,
+        entity_type: form.entity_type,
+        company_name: form.entity_type === "company" ? (form.company_name || null) : null,
+        contact_first_name: form.entity_type === "company" ? (form.first_name || null) : null,
+        contact_last_name: form.entity_type === "company" ? (form.last_name || null) : null,
         email: form.email || null,
         phone: form.phone || form.mobile || null,
-        client_type: form.client_type,
+        client_type: mappedClientType,
         notes: form.notes || null,
         owner_id,
         assigned_to: form.assigned_to || null,
