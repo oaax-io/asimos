@@ -443,6 +443,56 @@ export type Database = {
           },
         ]
       }
+      client_roles: {
+        Row: {
+          client_id: string
+          created_at: string
+          end_date: string | null
+          id: string
+          notes: string | null
+          related_id: string | null
+          related_type: string | null
+          role_type: Database["public"]["Enums"]["client_role_type"]
+          start_date: string | null
+          status: Database["public"]["Enums"]["client_role_status"]
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          role_type: Database["public"]["Enums"]["client_role_type"]
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["client_role_status"]
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          role_type?: Database["public"]["Enums"]["client_role_type"]
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["client_role_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_roles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_self_disclosures: {
         Row: {
           additional_income: number | null
@@ -2109,6 +2159,75 @@ export type Database = {
           },
         ]
       }
+      property_ownerships: {
+        Row: {
+          acquisition_price: number | null
+          acquisition_type: string | null
+          client_id: string
+          created_at: string
+          end_date: string | null
+          id: string
+          is_primary_contact: boolean
+          land_register_entry: string | null
+          notes: string | null
+          ownership_type: Database["public"]["Enums"]["ownership_type"]
+          property_id: string
+          sale_price: number | null
+          share_percent: number | null
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          acquisition_price?: number | null
+          acquisition_type?: string | null
+          client_id: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_primary_contact?: boolean
+          land_register_entry?: string | null
+          notes?: string | null
+          ownership_type?: Database["public"]["Enums"]["ownership_type"]
+          property_id: string
+          sale_price?: number | null
+          share_percent?: number | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acquisition_price?: number | null
+          acquisition_type?: string | null
+          client_id?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_primary_contact?: boolean
+          land_register_entry?: string | null
+          notes?: string | null
+          ownership_type?: Database["public"]["Enums"]["ownership_type"]
+          property_id?: string
+          sale_price?: number | null
+          share_percent?: number | null
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_ownerships_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_ownerships_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reservations: {
         Row: {
           client_id: string | null
@@ -2348,6 +2467,19 @@ export type Database = {
         | "co_applicant"
         | "co_investor"
         | "other"
+      client_role_status: "active" | "inactive" | "completed" | "cancelled"
+      client_role_type:
+        | "buyer"
+        | "seller"
+        | "owner"
+        | "former_owner"
+        | "tenant"
+        | "landlord"
+        | "financing_applicant"
+        | "co_applicant"
+        | "investor"
+        | "contact_person"
+        | "general_contact"
       client_type:
         | "buyer"
         | "seller"
@@ -2428,6 +2560,7 @@ export type Database = {
         | "rejected"
         | "converted"
         | "shortlisted"
+      ownership_type: "owner" | "co_owner" | "former_owner"
       property_status:
         | "draft"
         | "available"
@@ -2598,6 +2731,20 @@ export const Constants = {
         "co_investor",
         "other",
       ],
+      client_role_status: ["active", "inactive", "completed", "cancelled"],
+      client_role_type: [
+        "buyer",
+        "seller",
+        "owner",
+        "former_owner",
+        "tenant",
+        "landlord",
+        "financing_applicant",
+        "co_applicant",
+        "investor",
+        "contact_person",
+        "general_contact",
+      ],
       client_type: [
         "buyer",
         "seller",
@@ -2688,6 +2835,7 @@ export const Constants = {
         "converted",
         "shortlisted",
       ],
+      ownership_type: ["owner", "co_owner", "former_owner"],
       property_status: [
         "draft",
         "available",

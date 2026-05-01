@@ -24,6 +24,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
 import { addLead, getLeads } from "@/server/crm.functions";
+import { ConvertLeadDialog } from "@/components/leads/ConvertLeadDialog";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_app/leads/")({ component: LeadsPage });
 
@@ -178,28 +180,9 @@ function LeadsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["leads"] }),
   });
 
-  const convert = useMutation({
-    mutationFn: async (lead: Lead) => {
-      const { data: created, error } = await supabase.from("clients").insert({
-        owner_id: user!.id,
-        assigned_to: lead.assigned_to,
-        full_name: lead.full_name,
-        email: lead.email,
-        phone: lead.phone,
-        notes: lead.notes,
-        client_type: "buyer",
-      }).select("id").single();
-      if (error) throw error;
-      await supabase.from("leads").update({ status: "converted", converted_client_id: created.id }).eq("id", lead.id);
-      return created;
-    },
-    onSuccess: () => {
-      toast.success("Zu Kunde konvertiert");
-      qc.invalidateQueries({ queryKey: ["leads"] });
-      qc.invalidateQueries({ queryKey: ["clients"] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
+  const navigate = useNavigate();
+  const [convertLead, setConvertLead] = useState<Lead | null>(null);
+
 
   // ----- Bulk-Aktionen -----
   const bulkAssign = useMutation({
@@ -490,7 +473,7 @@ function LeadsPage() {
                         <div className="flex items-center justify-end gap-1">
                           <EditLeadButton lead={l} employees={employees} />
                           {l.status !== "converted" && (
-                            <Button size="sm" variant="outline" className="h-8" onClick={() => convert.mutate(l)}>
+                            <Button size="sm" variant="outline" className="h-8" onClick={() => setConvertLead(l)}>
                               <ArrowRight className="mr-1 h-3 w-3" />Zu Kunde
                             </Button>
                           )}
@@ -588,7 +571,7 @@ function LeadsPage() {
                               compact
                             />
                             {l.status !== "converted" && (
-                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => convert.mutate(l)} title="Zu Kunde konvertieren">
+                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setConvertLead(l)} title="Zu Kunde konvertieren">
                                 <ArrowRight className="h-3 w-3" />
                               </Button>
                             )}
@@ -625,6 +608,19 @@ function LeadsPage() {
         open={true}
         onOpenChange={(v) => { if (!v) setImportWizardVariant(null); }}
         variant={importWizardVariant}
+      />
+    )}
+    {convertLead && (
+      <ConvertLeadDialog
+        lead={convertLead}
+        open={!!convertLead}
+        onOpenChange={(v) => { if (!v) setConvertLead(null); }}
+        onConverted={(clientId) => {
+          setConvertLead(null);
+          qc.invalidateQueries({ queryKey: ["leads"] });
+          qc.invalidateQueries({ queryKey: ["clients"] });
+          navigate({ to: "/clients/$id", params: { id: clientId } });
+        }}
       />
     )}
     </div>
