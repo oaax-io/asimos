@@ -94,7 +94,7 @@ export function ClientEditDialog({ client, onSaved, trigger }: Props) {
         }
       }
 
-      const payload: Record<string, unknown> = {
+      const payload = {
         entity_type: form.entity_type,
         full_name: fullName,
         company_name: form.entity_type === "company" ? form.company_name.trim() || null : null,
