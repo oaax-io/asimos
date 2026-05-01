@@ -342,33 +342,61 @@ function PropertyDetail() {
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList className="flex flex-wrap h-auto gap-1">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
+          <TabsTrigger value="details">Details & Medien</TabsTrigger>
           <TabsTrigger value="owner">Eigentümer</TabsTrigger>
-          <TabsTrigger value="facts">Eckdaten</TabsTrigger>
-          <TabsTrigger value="media">Medien</TabsTrigger>
+          <TabsTrigger value="marketing">Vermarktung</TabsTrigger>
+          <TabsTrigger value="organisation">Organisation</TabsTrigger>
           <TabsTrigger value="documents">Dokumente</TabsTrigger>
-          <TabsTrigger value="checklists">Checklisten</TabsTrigger>
-          <TabsTrigger value="tasks">Aufgaben</TabsTrigger>
-          <TabsTrigger value="appointments">Termine</TabsTrigger>
-          <TabsTrigger value="mandate">Mandat</TabsTrigger>
-          <TabsTrigger value="reservation">Reservation</TabsTrigger>
-          <TabsTrigger value="expose">Exposé</TabsTrigger>
           {!p.is_unit && <TabsTrigger value="units">Einheiten{units.length ? ` (${units.length})` : ""}</TabsTrigger>}
-          <TabsTrigger value="matching">Matching</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview"><OverviewTab p={p} /></TabsContent>
-        <TabsContent value="owner"><PropertyOwnersTab propertyId={id} legacyOwnerClientId={p.owner_client_id ?? p.seller_client_id} /></TabsContent>
-        <TabsContent value="facts"><FactsTab p={p} /></TabsContent>
-        <TabsContent value="media"><MediaTab propertyId={id} cover={getMediaPublicUrl(p.images?.[0])} /></TabsContent>
+
+        <TabsContent value="details">
+          <Tabs defaultValue="facts" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="facts">Eckdaten</TabsTrigger>
+              <TabsTrigger value="media">Medien</TabsTrigger>
+            </TabsList>
+            <TabsContent value="facts"><FactsTab p={p} /></TabsContent>
+            <TabsContent value="media"><MediaTab propertyId={id} cover={getMediaPublicUrl(p.images?.[0])} /></TabsContent>
+          </Tabs>
+        </TabsContent>
+
+        <TabsContent value="owner">
+          <PropertyOwnersTab propertyId={id} legacyOwnerClientId={p.owner_client_id ?? p.seller_client_id} />
+        </TabsContent>
+
+        <TabsContent value="marketing">
+          <Tabs defaultValue="mandate" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="mandate">Mandat</TabsTrigger>
+              <TabsTrigger value="expose">Exposé</TabsTrigger>
+              <TabsTrigger value="reservation">Reservation</TabsTrigger>
+              <TabsTrigger value="matching">Matching</TabsTrigger>
+            </TabsList>
+            <TabsContent value="mandate"><MandateTab propertyId={id} /></TabsContent>
+            <TabsContent value="expose"><ExposeTab propertyId={id} /></TabsContent>
+            <TabsContent value="reservation"><ReservationTab propertyId={id} /></TabsContent>
+            <TabsContent value="matching" className="mt-4"><MatchPanel direction="property-to-client" property={p} /></TabsContent>
+          </Tabs>
+        </TabsContent>
+
+        <TabsContent value="organisation">
+          <Tabs defaultValue="tasks" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="tasks">Aufgaben</TabsTrigger>
+              <TabsTrigger value="appointments">Termine</TabsTrigger>
+              <TabsTrigger value="checklists">Checklisten</TabsTrigger>
+            </TabsList>
+            <TabsContent value="tasks"><TasksTab propertyId={id} /></TabsContent>
+            <TabsContent value="appointments"><AppointmentsTab propertyId={id} /></TabsContent>
+            <TabsContent value="checklists"><ChecklistsTab propertyId={id} /></TabsContent>
+          </Tabs>
+        </TabsContent>
+
         <TabsContent value="documents"><DocumentsTab propertyId={id} /></TabsContent>
-        <TabsContent value="checklists"><ChecklistsTab propertyId={id} /></TabsContent>
-        <TabsContent value="tasks"><TasksTab propertyId={id} /></TabsContent>
-        <TabsContent value="appointments"><AppointmentsTab propertyId={id} /></TabsContent>
-        <TabsContent value="mandate"><MandateTab propertyId={id} /></TabsContent>
-        <TabsContent value="reservation"><ReservationTab propertyId={id} /></TabsContent>
-        <TabsContent value="expose"><ExposeTab propertyId={id} /></TabsContent>
         {!p.is_unit && <TabsContent value="units"><UnitsTab parentId={id} units={units} /></TabsContent>}
-        <TabsContent value="matching" className="mt-4"><MatchPanel direction="property-to-client" property={p} /></TabsContent>
       </Tabs>
     </div>
   );
