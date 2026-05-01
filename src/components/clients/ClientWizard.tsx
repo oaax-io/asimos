@@ -430,16 +430,71 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                     <Label>Firmenname *</Label>
                     <Input value={form.company_name} onChange={(e) => set("company_name", e.target.value)} placeholder="Muster AG" />
                   </div>
-                  <div>
-                    <Label>Kontaktperson – Vorname</Label>
-                    <Input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Kontaktperson – Nachname</Label>
-                    <Input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} />
-                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">Die Kontaktperson ist optional und kann später ergänzt werden.</p>
+
+                <div className="rounded-xl border bg-muted/20 p-4 space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold">Kontaktperson</p>
+                    <p className="text-xs text-muted-foreground">Optional – manuell erfassen oder bestehenden Kunden verknüpfen.</p>
+                  </div>
+
+                  <div className="inline-flex rounded-lg border bg-background p-1">
+                    <button
+                      type="button"
+                      onClick={() => { set("contact_mode", "manual"); set("linked_contact_client_id", ""); }}
+                      className={`px-3 py-1.5 text-sm rounded-md transition ${form.contact_mode === "manual" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+                    >
+                      Neu erfassen
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { set("contact_mode", "existing"); set("first_name", ""); set("last_name", ""); }}
+                      className={`px-3 py-1.5 text-sm rounded-md transition ${form.contact_mode === "existing" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+                    >
+                      Bestehenden Kunden wählen
+                    </button>
+                  </div>
+
+                  {form.contact_mode === "manual" ? (
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <div>
+                        <Label>Vorname</Label>
+                        <Input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} />
+                      </div>
+                      <div>
+                        <Label>Nachname</Label>
+                        <Input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <Label>Kunde wählen</Label>
+                      <Select
+                        value={form.linked_contact_client_id || ""}
+                        onValueChange={(v) => set("linked_contact_client_id", v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={personClientsQuery.isLoading ? "Lade Kunden…" : "Bestehenden Kunden auswählen"} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                          {personClients.length === 0 && !personClientsQuery.isLoading && (
+                            <div className="px-2 py-3 text-sm text-muted-foreground">Keine Privatpersonen gefunden.</div>
+                          )}
+                          {personClients.map((c: any) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.full_name}{c.email ? ` · ${c.email}` : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {form.linked_contact_client_id && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Diese Person wird als Kontakt mit der Firma verknüpft.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
