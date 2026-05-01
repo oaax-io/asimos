@@ -38,6 +38,7 @@ function PropertyDetail() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [financingOpen, setFinancingOpen] = useState(false);
   const [tab, setTab] = useState("overview");
