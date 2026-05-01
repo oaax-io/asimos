@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, MapPin, Bed, Maximize, Search, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Upload } from "lucide-react";
+import { Plus, MapPin, Bed, Maximize, Search, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Upload, Building2, Layers3, ChevronRight, ChevronDown } from "lucide-react";
 import { PropertyImportDialog } from "@/components/properties/PropertyImportDialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,6 +45,9 @@ function PropertiesPage() {
   const [fCity, setFCity] = useState<string>("all");
   const [fAssigned, setFAssigned] = useState<string>("all");
   const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
+  const [fStructure, setFStructure] = useState<"all" | "buildings" | "units" | "standalone">("all");
+  const [groupUnits, setGroupUnits] = useState<boolean>(true);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [view, setView] = useState<ViewMode>("list");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -120,18 +123,47 @@ function PropertiesPage() {
     if (fListing !== "all" && p.listing_type !== fListing) return false;
     if (fCity !== "all" && p.city !== fCity) return false;
     if (fAssigned !== "all" && p.assigned_to !== fAssigned) return false;
+    if (fStructure === "units" && !p.is_unit) return false;
+    if (fStructure === "standalone" && (p.is_unit || (properties as any[]).some(x => x.parent_property_id === p.id))) return false;
+    if (fStructure === "buildings" && !(properties as any[]).some(x => x.parent_property_id === p.id)) return false;
     return true;
   });
 
-  // Pagination
+  // Units-by-parent map for badges + grouping
+  const unitsByParent = useMemo(() => {
+    const m = new Map<string, any[]>();
+    for (const p of properties as any[]) {
+      if (p.parent_property_id) {
+        const arr = m.get(p.parent_property_id) ?? [];
+        arr.push(p);
+        m.set(p.parent_property_id, arr);
+      }
+    }
+    return m;
+  }, [properties]);
+  const propertyById = useMemo(() => new Map((properties as any[]).map(p => [p.id, p])), [properties]);
+
+  // Build display rows: when grouping, hide units whose parent is also visible (they show inside parent)
+  const displayed = useMemo(() => {
+    if (!groupUnits || fStructure === "units") return filtered;
+    const visibleIds = new Set(filtered.map(p => p.id));
+    return filtered.filter(p => !(p.is_unit && p.parent_property_id && visibleIds.has(p.parent_property_id)));
+  }, [filtered, groupUnits, fStructure]);
+
+  const toggleExpanded = (id: string) => setExpanded(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+
   const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [search, fStatus, fType, fListing, fCity, fAssigned, archivedFilter, pageSize, view]);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  useEffect(() => { setPage(1); }, [search, fStatus, fType, fListing, fCity, fAssigned, archivedFilter, fStructure, groupUnits, pageSize, view]);
+  const totalPages = Math.max(1, Math.ceil(displayed.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const paginated = useMemo(
-    () => filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
-    [filtered, currentPage, pageSize],
+    () => displayed.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [displayed, currentPage, pageSize],
   );
 
   const toggleOne = (id: string) => setSelected((prev) => {
@@ -286,6 +318,28 @@ function PropertiesPage() {
         </Select>
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Select value={fStructure} onValueChange={(v) => setFStructure(v as typeof fStructure)}>
+          <SelectTrigger className="h-9 w-56"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Objekte</SelectItem>
+            <SelectItem value="buildings">Nur Liegenschaften (mit Einheiten)</SelectItem>
+            <SelectItem value="units">Nur Einheiten</SelectItem>
+            <SelectItem value="standalone">Nur Einzelobjekte</SelectItem>
+          </SelectContent>
+        </Select>
+        {view === "list" && fStructure !== "units" && (
+          <Button
+            size="sm"
+            variant={groupUnits ? "default" : "outline"}
+            onClick={() => setGroupUnits(g => !g)}
+          >
+            <Layers3 className="mr-1 h-4 w-4" />
+            {groupUnits ? "Gruppiert nach Liegenschaft" : "Flache Liste"}
+          </Button>
+        )}
+      </div>
+
       {selectionCount > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-accent/40 p-3">
           <span className="text-sm font-medium">{selectionCount} ausgewählt</span>
@@ -328,7 +382,7 @@ function PropertiesPage() {
 
       {isLoading ? (
         <div className="text-sm text-muted-foreground">Lädt…</div>
-      ) : filtered.length === 0 ? (
+      ) : displayed.length === 0 ? (
         <EmptyState
           title={properties.length === 0 ? "Noch keine Immobilien" : "Keine Treffer"}
           description={properties.length === 0
@@ -342,6 +396,8 @@ function PropertiesPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paginated.map((p: any) => {
             const isSel = selected.has(p.id);
+            const childUnits = unitsByParent.get(p.id) ?? [];
+            const parentProp = p.parent_property_id ? propertyById.get(p.parent_property_id) : null;
             return (
               <div key={p.id} className={`group relative overflow-hidden rounded-2xl border bg-card shadow-soft transition hover:shadow-glow ${isSel ? "ring-2 ring-primary" : ""}`}>
                 <div className="absolute left-3 top-3 z-10 rounded-md bg-background/90 p-1 backdrop-blur">
@@ -356,11 +412,24 @@ function PropertiesPage() {
                     )}
                   </div>
                   <div className="p-4">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant="secondary" className="text-xs">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
-                      <span className="text-xs text-muted-foreground">{listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}</span>
+                      {childUnits.length > 0 && (
+                        <Badge className="bg-primary/10 text-primary hover:bg-primary/15 text-xs">
+                          <Building2 className="mr-1 h-3 w-3" />Liegenschaft · {childUnits.length} Einheit{childUnits.length === 1 ? "" : "en"}
+                        </Badge>
+                      )}
+                      {p.is_unit && (
+                        <Badge variant="outline" className="text-xs">
+                          <Layers3 className="mr-1 h-3 w-3" />Einheit{p.unit_number ? ` ${p.unit_number}` : ""}
+                        </Badge>
+                      )}
+                      <span className="ml-auto text-xs text-muted-foreground">{listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}</span>
                     </div>
                     <h3 className="mt-2 line-clamp-1 font-semibold">{p.title}</h3>
+                    {parentProp && (
+                      <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">↳ in {parentProp.title}</p>
+                    )}
                     <p className="mt-1 line-clamp-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPin className="h-3 w-3" />{[p.address, p.city].filter(Boolean).join(", ") || "—"}
                     </p>
@@ -398,70 +467,115 @@ function PropertiesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginated.map((p: any) => {
-                const emp = p.assigned_to ? (employeeMap.get(p.assigned_to) as any) : null;
-                const isArchived = p.status === "archived";
-                return (
-                  <TableRow key={p.id} data-state={selected.has(p.id) ? "selected" : undefined}>
-                    <TableCell>
-                      <Checkbox checked={selected.has(p.id)} onCheckedChange={() => toggleOne(p.id)} aria-label="Auswählen" />
-                    </TableCell>
-                    <TableCell>
-                      <Link to="/properties/$id" params={{ id: p.id }} className="font-medium hover:text-primary">
-                        {p.title}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-sm">{propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels]}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="text-xs">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{[p.address, p.city].filter(Boolean).join(", ") || "—"}</TableCell>
-                    <TableCell className="text-right text-sm">
-                      {formatCurrency(p.listing_type === "rent" ? (p.rent ? Number(p.rent) : null) : (p.price ? Number(p.price) : null))}
-                      {p.listing_type === "rent" && p.rent ? <span className="text-xs text-muted-foreground"> /Mt.</span> : null}
-                    </TableCell>
-                    <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link to="/properties/$id" params={{ id: p.id }}>Öffnen</Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {isArchived ? (
-                            <DropdownMenuItem onClick={() => { setSelected(new Set([p.id])); archive.mutate(false); }}>
-                              <ArchiveRestore className="mr-2 h-4 w-4" />Wiederherstellen
+              {paginated.flatMap((p: any) => {
+                const renderRow = (row: any, opts: { indent?: boolean } = {}) => {
+                  const emp = row.assigned_to ? (employeeMap.get(row.assigned_to) as any) : null;
+                  const isArchived = row.status === "archived";
+                  const childUnits = unitsByParent.get(row.id) ?? [];
+                  const isParent = !opts.indent && childUnits.length > 0;
+                  const showExpander = isParent && groupUnits && fStructure !== "units";
+                  const isExpanded = expanded.has(row.id);
+                  const parentProp = row.parent_property_id ? propertyById.get(row.parent_property_id) : null;
+                  return (
+                    <TableRow key={row.id} data-state={selected.has(row.id) ? "selected" : undefined} className={opts.indent ? "bg-muted/20" : undefined}>
+                      <TableCell>
+                        <Checkbox checked={selected.has(row.id)} onCheckedChange={() => toggleOne(row.id)} aria-label="Auswählen" />
+                      </TableCell>
+                      <TableCell>
+                        <div className={`flex items-center gap-2 ${opts.indent ? "pl-6" : ""}`}>
+                          {showExpander ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 -ml-1"
+                              onClick={(e) => { e.preventDefault(); toggleExpanded(row.id); }}
+                              aria-label={isExpanded ? "Einklappen" : "Aufklappen"}
+                            >
+                              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            </Button>
+                          ) : opts.indent ? (
+                            <span className="text-muted-foreground">↳</span>
+                          ) : null}
+                          <div className="min-w-0">
+                            <Link to="/properties/$id" params={{ id: row.id }} className="font-medium hover:text-primary">
+                              {row.title}
+                            </Link>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                              {isParent && (
+                                <Badge className="bg-primary/10 text-primary hover:bg-primary/15 text-[10px] px-1.5 py-0">
+                                  <Building2 className="mr-1 h-3 w-3" />Liegenschaft · {childUnits.length}
+                                </Badge>
+                              )}
+                              {row.is_unit && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  <Layers3 className="mr-1 h-3 w-3" />Einheit{row.unit_number ? ` ${row.unit_number}` : ""}
+                                </Badge>
+                              )}
+                              {row.is_unit && parentProp && !opts.indent && (
+                                <span className="text-[11px] text-muted-foreground">in {parentProp.title}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">{propertyTypeLabels[row.property_type as keyof typeof propertyTypeLabels]}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">{propertyStatusLabels[row.status as keyof typeof propertyStatusLabels]}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{[row.address, row.city].filter(Boolean).join(", ") || "—"}</TableCell>
+                      <TableCell className="text-right text-sm">
+                        {formatCurrency(row.listing_type === "rent" ? (row.rent ? Number(row.rent) : null) : (row.price ? Number(row.price) : null))}
+                        {row.listing_type === "rent" && row.rent ? <span className="text-xs text-muted-foreground"> /Mt.</span> : null}
+                      </TableCell>
+                      <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link to="/properties/$id" params={{ id: row.id }}>Öffnen</Link>
                             </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem onClick={() => { setSelected(new Set([p.id])); archive.mutate(true); }}>
-                              <Archive className="mr-2 h-4 w-4" />Archivieren
+                            <DropdownMenuSeparator />
+                            {isArchived ? (
+                              <DropdownMenuItem onClick={() => { setSelected(new Set([row.id])); archive.mutate(false); }}>
+                                <ArchiveRestore className="mr-2 h-4 w-4" />Wiederherstellen
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => { setSelected(new Set([row.id])); archive.mutate(true); }}>
+                                <Archive className="mr-2 h-4 w-4" />Archivieren
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => { setSelected(new Set([row.id])); setConfirmDelete(true); }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />Löschen
                             </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => { setSelected(new Set([p.id])); setConfirmDelete(true); }}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />Löschen
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                };
+                const rows = [renderRow(p)];
+                const childUnits = unitsByParent.get(p.id) ?? [];
+                if (groupUnits && fStructure !== "units" && childUnits.length > 0 && expanded.has(p.id)) {
+                  for (const u of childUnits) rows.push(renderRow(u, { indent: true }));
+                }
+                return rows;
               })}
             </TableBody>
           </Table>
         </div>
       )}
 
-      {filtered.length > 0 && (
+      {displayed.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <span>
-              Zeige {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)} von {filtered.length}
+              Zeige {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, displayed.length)} von {displayed.length}
             </span>
             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
               <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
