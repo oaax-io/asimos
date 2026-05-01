@@ -743,7 +743,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
 
                 {!canSave && (
                   <p className="text-sm text-destructive">
-                    Bitte mindestens Vor- und Nachname erfassen (Schritt 1).
+                    Bitte Rolle wählen und {form.entity_type === "company" ? "Firmenname" : "Vor- und Nachname"} erfassen.
                   </p>
                 )}
               </div>
