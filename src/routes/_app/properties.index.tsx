@@ -123,11 +123,39 @@ function PropertiesPage() {
     if (fListing !== "all" && p.listing_type !== fListing) return false;
     if (fCity !== "all" && p.city !== fCity) return false;
     if (fAssigned !== "all" && p.assigned_to !== fAssigned) return false;
+    if (fStructure === "units" && !p.is_unit) return false;
+    if (fStructure === "standalone" && (p.is_unit || (properties as any[]).some(x => x.parent_property_id === p.id))) return false;
+    if (fStructure === "buildings" && !(properties as any[]).some(x => x.parent_property_id === p.id)) return false;
     return true;
   });
 
-  // Pagination
-  const [pageSize, setPageSize] = useState<number>(20);
+  // Units-by-parent map for badges + grouping
+  const unitsByParent = useMemo(() => {
+    const m = new Map<string, any[]>();
+    for (const p of properties as any[]) {
+      if (p.parent_property_id) {
+        const arr = m.get(p.parent_property_id) ?? [];
+        arr.push(p);
+        m.set(p.parent_property_id, arr);
+      }
+    }
+    return m;
+  }, [properties]);
+  const propertyById = useMemo(() => new Map((properties as any[]).map(p => [p.id, p])), [properties]);
+
+  // Build display rows: when grouping, hide units whose parent is also visible (they show inside parent)
+  const displayed = useMemo(() => {
+    if (!groupUnits || fStructure === "units") return filtered;
+    const visibleIds = new Set(filtered.map(p => p.id));
+    return filtered.filter(p => !(p.is_unit && p.parent_property_id && visibleIds.has(p.parent_property_id)));
+  }, [filtered, groupUnits, fStructure]);
+
+  const toggleExpanded = (id: string) => setExpanded(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+
   const [page, setPage] = useState(1);
   useEffect(() => { setPage(1); }, [search, fStatus, fType, fListing, fCity, fAssigned, archivedFilter, pageSize, view]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
