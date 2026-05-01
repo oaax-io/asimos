@@ -1184,7 +1184,6 @@ function ActivityTab({ activities, employees }: { activities: any[]; employees: 
   if (!activities.length) {
     return (
       <EmptyState
-        icon={Activity}
         title="Noch keine Aktivitäten"
         description="Hier erscheinen alle Bearbeitungen, Statusänderungen und Ereignisse zu dieser Immobilie."
       />
