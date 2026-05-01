@@ -318,6 +318,28 @@ function PropertiesPage() {
         </Select>
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Select value={fStructure} onValueChange={(v) => setFStructure(v as typeof fStructure)}>
+          <SelectTrigger className="h-9 w-56"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Objekte</SelectItem>
+            <SelectItem value="buildings">Nur Liegenschaften (mit Einheiten)</SelectItem>
+            <SelectItem value="units">Nur Einheiten</SelectItem>
+            <SelectItem value="standalone">Nur Einzelobjekte</SelectItem>
+          </SelectContent>
+        </Select>
+        {view === "list" && fStructure !== "units" && (
+          <Button
+            size="sm"
+            variant={groupUnits ? "default" : "outline"}
+            onClick={() => setGroupUnits(g => !g)}
+          >
+            <Layers3 className="mr-1 h-4 w-4" />
+            {groupUnits ? "Gruppiert nach Liegenschaft" : "Flache Liste"}
+          </Button>
+        )}
+      </div>
+
       {selectionCount > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-accent/40 p-3">
           <span className="text-sm font-medium">{selectionCount} ausgewählt</span>
