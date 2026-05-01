@@ -610,6 +610,19 @@ function LeadsPage() {
         variant={importWizardVariant}
       />
     )}
+    {convertLead && (
+      <ConvertLeadDialog
+        lead={convertLead}
+        open={!!convertLead}
+        onOpenChange={(v) => { if (!v) setConvertLead(null); }}
+        onConverted={(clientId) => {
+          setConvertLead(null);
+          qc.invalidateQueries({ queryKey: ["leads"] });
+          qc.invalidateQueries({ queryKey: ["clients"] });
+          navigate({ to: "/clients/$id", params: { id: clientId } });
+        }}
+      />
+    )}
     </div>
   );
 }
