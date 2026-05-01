@@ -111,6 +111,44 @@ function PropertyDetail() {
     enabled: !!id,
   });
 
+  const { data: counts } = useQuery({
+    queryKey: ["property_counts", id],
+    queryFn: async () => {
+      const head = { count: "exact" as const, head: true };
+      const [m, d, t, a, md, r, mt] = await Promise.all([
+        supabase.from("matches").select("id", head).eq("property_id", id),
+        supabase.from("documents").select("id", head).eq("related_type", "property").eq("related_id", id),
+        supabase.from("checklist_items").select("id, checklist:checklists!inner(related_type,related_id)", head).eq("checklist.related_type", "property").eq("checklist.related_id", id),
+        supabase.from("appointments").select("id", head).eq("property_id", id),
+        supabase.from("mandates").select("id", head).eq("property_id", id),
+        supabase.from("nda_agreements").select("id", head).eq("property_id", id),
+        supabase.from("mandates").select("id", head).eq("property_id", id),
+      ]);
+      return {
+        matches: m.count ?? 0,
+        documents: d.count ?? 0,
+        appointments: a.count ?? 0,
+        mandates: md.count ?? 0,
+      };
+    },
+    enabled: !!id,
+  });
+
+  const { data: activities = [] } = useQuery({
+    queryKey: ["property_activities", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("activity_logs")
+        .select("id, action, created_at, actor_id, metadata")
+        .eq("related_type", "property")
+        .eq("related_id", id)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      return data ?? [];
+    },
+    enabled: !!id,
+  });
+
   const update = useMutation({
     mutationFn: async (payload: WizardSubmit) => {
       const newOwnerId =
