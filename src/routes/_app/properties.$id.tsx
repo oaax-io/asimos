@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3 } from "lucide-react";
+import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { MatchPanel } from "@/components/matching/MatchPanel";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { PropertyOwnersTab } from "@/components/properties/PropertyOwnersTab";
+import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
@@ -36,6 +37,7 @@ function PropertyDetail() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
+  const [financingOpen, setFinancingOpen] = useState(false);
   const [tab, setTab] = useState("overview");
 
   const { data: p, isLoading } = useQuery({
@@ -105,6 +107,44 @@ function PropertyDetail() {
         ownership_type: string;
         client: { id: string; full_name: string } | null;
       }>;
+    },
+    enabled: !!id,
+  });
+
+  const { data: counts } = useQuery({
+    queryKey: ["property_counts", id],
+    queryFn: async () => {
+      const head = { count: "exact" as const, head: true };
+      const [m, d, t, a, md, r, mt] = await Promise.all([
+        supabase.from("matches").select("id", head).eq("property_id", id),
+        supabase.from("documents").select("id", head).eq("related_type", "property").eq("related_id", id),
+        supabase.from("checklist_items").select("id, checklist:checklists!inner(related_type,related_id)", head).eq("checklist.related_type", "property").eq("checklist.related_id", id),
+        supabase.from("appointments").select("id", head).eq("property_id", id),
+        supabase.from("mandates").select("id", head).eq("property_id", id),
+        supabase.from("nda_agreements").select("id", head).eq("property_id", id),
+        supabase.from("mandates").select("id", head).eq("property_id", id),
+      ]);
+      return {
+        matches: m.count ?? 0,
+        documents: d.count ?? 0,
+        appointments: a.count ?? 0,
+        mandates: md.count ?? 0,
+      };
+    },
+    enabled: !!id,
+  });
+
+  const { data: activities = [] } = useQuery({
+    queryKey: ["property_activities", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("activity_logs")
+        .select("id, action, created_at, actor_id, metadata")
+        .eq("related_type", "property")
+        .eq("related_id", id)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      return data ?? [];
     },
     enabled: !!id,
   });
@@ -230,6 +270,9 @@ function PropertyDetail() {
           <Button variant="outline" asChild>
             <Link to="/properties/$id/expose" params={{ id }}><FileText className="mr-1 h-4 w-4" />Exposé</Link>
           </Button>
+          <Button variant="outline" onClick={() => setFinancingOpen(true)}>
+            <Banknote className="mr-1 h-4 w-4" />Finanzierung starten
+          </Button>
           <Button variant="outline" onClick={() => setEditOpen(true)}><Pencil className="mr-1 h-4 w-4" />Bearbeiten</Button>
           <Select value={p.status} onValueChange={(v) => updateStatus.mutate(v)}>
             <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
@@ -255,6 +298,14 @@ function PropertyDetail() {
         initial={p}
         onSubmit={(payload) => update.mutate(payload)}
         submitting={update.isPending}
+      />
+
+      <FinancingQuickCheckWizard
+        open={financingOpen}
+        onOpenChange={setFinancingOpen}
+        defaultPropertyId={id}
+        defaultClientId={currentOwners[0]?.client_id}
+        onCreated={(dossierId) => navigate({ to: "/financing/$id", params: { id: dossierId } })}
       />
 
       {/* Parent / Unit context banner */}
@@ -337,6 +388,32 @@ function PropertyDetail() {
               </CardContent>
             </Card>
           </button>
+          <div className="grid grid-cols-3 gap-2">
+            <button type="button" onClick={() => setTab("marketing")} className="text-left">
+              <Card className="transition hover:border-primary/50 hover:bg-primary/5">
+                <CardContent className="p-3">
+                  <p className="text-[11px] uppercase text-muted-foreground">Matches</p>
+                  <p className="font-display text-xl font-bold">{counts?.matches ?? 0}</p>
+                </CardContent>
+              </Card>
+            </button>
+            <button type="button" onClick={() => setTab("organisation")} className="text-left">
+              <Card className="transition hover:border-primary/50 hover:bg-primary/5">
+                <CardContent className="p-3">
+                  <p className="text-[11px] uppercase text-muted-foreground">Termine</p>
+                  <p className="font-display text-xl font-bold">{counts?.appointments ?? 0}</p>
+                </CardContent>
+              </Card>
+            </button>
+            <button type="button" onClick={() => setTab("documents")} className="text-left">
+              <Card className="transition hover:border-primary/50 hover:bg-primary/5">
+                <CardContent className="p-3">
+                  <p className="text-[11px] uppercase text-muted-foreground">Dokumente</p>
+                  <p className="font-display text-xl font-bold">{counts?.documents ?? 0}</p>
+                </CardContent>
+              </Card>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -345,15 +422,21 @@ function PropertyDetail() {
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="details">Details & Medien</TabsTrigger>
           <TabsTrigger value="owner">Eigentümer</TabsTrigger>
-          <TabsTrigger value="marketing">Vermarktung</TabsTrigger>
+          <TabsTrigger value="marketing">
+            Vermarktung{counts?.matches ? ` (${counts.matches})` : ""}
+          </TabsTrigger>
           <TabsTrigger value="organisation">Organisation</TabsTrigger>
-          <TabsTrigger value="documents">Dokumente</TabsTrigger>
+          <TabsTrigger value="documents">
+            Dokumente{counts?.documents ? ` (${counts.documents})` : ""}
+          </TabsTrigger>
           {!p.is_unit && (
             <TabsTrigger value="units">
               Einheiten{units.length ? ` (${units.length})` : ""}
             </TabsTrigger>
           )}
+          <TabsTrigger value="activity">Aktivitäten</TabsTrigger>
         </TabsList>
+
 
         <div className="min-w-0">
           <TabsContent value="overview" className="mt-0"><OverviewTab p={p} /></TabsContent>
@@ -415,6 +498,9 @@ function PropertyDetail() {
 
           <TabsContent value="documents" className="mt-0"><DocumentsTab propertyId={id} /></TabsContent>
           {!p.is_unit && <TabsContent value="units" className="mt-0"><UnitsTab parentId={id} units={units} /></TabsContent>}
+          <TabsContent value="activity" className="mt-0">
+            <ActivityTab activities={activities} employees={employees} />
+          </TabsContent>
         </div>
       </Tabs>
     </div>
@@ -1089,6 +1175,42 @@ function UnitsTab({ parentId, units }: { parentId: string; units: any[] }) {
             </tbody>
           </table>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ActivityTab({ activities, employees }: { activities: any[]; employees: any[] }) {
+  if (!activities.length) {
+    return (
+      <EmptyState
+        icon={Activity}
+        title="Noch keine Aktivitäten"
+        description="Hier erscheinen alle Bearbeitungen, Statusänderungen und Ereignisse zu dieser Immobilie."
+      />
+    );
+  }
+  const empMap = new Map(employees.map((e: any) => [e.id, e.full_name || e.email]));
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <ol className="relative space-y-4 border-l pl-6">
+          {activities.map((a) => (
+            <li key={a.id} className="relative">
+              <span className="absolute -left-[31px] mt-1.5 inline-block h-3 w-3 rounded-full border-2 border-background bg-primary" />
+              <p className="text-sm font-medium">{a.action}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatDateTime(a.created_at)}
+                {a.actor_id && empMap.get(a.actor_id) ? ` · ${empMap.get(a.actor_id)}` : ""}
+              </p>
+              {a.metadata && Object.keys(a.metadata).length > 0 && (
+                <pre className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
+                  {JSON.stringify(a.metadata, null, 2)}
+                </pre>
+              )}
+            </li>
+          ))}
+        </ol>
       </CardContent>
     </Card>
   );
