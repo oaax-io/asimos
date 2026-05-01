@@ -163,6 +163,21 @@ function PropertyDetail() {
         null;
       const prevOwnerId = p?.owner_client_id ?? p?.seller_client_id ?? null;
 
+      // Diff berechnen: nur Felder die sich tatsächlich geändert haben
+      const next = (payload.property ?? {}) as Record<string, any>;
+      const prev = (p ?? {}) as Record<string, any>;
+      const changes: Record<string, { from: any; to: any }> = {};
+      const norm = (v: any) => {
+        if (v === undefined) return null;
+        if (Array.isArray(v)) return JSON.stringify(v);
+        return v;
+      };
+      for (const k of Object.keys(next)) {
+        if (norm(next[k]) !== norm(prev[k])) {
+          changes[k] = { from: prev[k] ?? null, to: next[k] ?? null };
+        }
+      }
+
       const { error } = await supabase.from("properties").update(payload.property as any).eq("id", id);
       if (error) throw error;
 
@@ -237,16 +252,17 @@ function PropertyDetail() {
         if (mediaError) throw mediaError;
       }
 
-      await supabase.from("activity_logs").insert({
-        actor_id: user?.id ?? null,
-        action: "Immobilie bearbeitet",
-        related_type: "property",
-        related_id: id,
-        metadata: {
-          fields: Object.keys(payload.property ?? {}),
-          owner_changed: !!(newOwnerId && newOwnerId !== prevOwnerId),
-        },
-      });
+      const ownerChanged = !!(newOwnerId && newOwnerId !== prevOwnerId);
+      // Nur loggen wenn es etwas zu loggen gibt
+      if (Object.keys(changes).length > 0 || ownerChanged) {
+        await supabase.from("activity_logs").insert({
+          actor_id: user?.id ?? null,
+          action: "Immobilie bearbeitet",
+          related_type: "property",
+          related_id: id,
+          metadata: { changes, owner_changed: ownerChanged },
+        });
+      }
     },
     onSuccess: () => {
       toast.success("Gespeichert");
@@ -259,8 +275,6 @@ function PropertyDetail() {
     },
     onError: (e: any) => toast.error(e.message),
   });
-
-  const updateStatus = useMutation({
     mutationFn: async (status: string) => {
       const prevStatus = p?.status;
       const { error } = await supabase.from("properties").update({ status: status as any }).eq("id", id);
