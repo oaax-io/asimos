@@ -75,6 +75,8 @@ type FormState = {
   entity_type: EntityType;
   role_choice: RoleChoice | "";
   company_name: string;
+  contact_mode: "manual" | "existing";
+  linked_contact_client_id: string;
   // Stamm
   salutation: string;
   first_name: string;
