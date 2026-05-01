@@ -744,11 +744,30 @@ function MediaTab({ propertyId, cover }: { propertyId: string; cover?: string | 
   );
 }
 
+const PROPERTY_DOC_TYPES: { value: string; label: string }[] = [
+  { value: "property_document", label: "Allgemeines Objektdokument" },
+  { value: "contract", label: "Vertrag (Kauf-/Mietvertrag)" },
+  { value: "mandate", label: "Maklermandat" },
+  { value: "reservation", label: "Reservationsvereinbarung" },
+  { value: "reservation_receipt", label: "Reservationsquittung" },
+  { value: "nda", label: "Geheimhaltungsvereinbarung (NDA)" },
+  { value: "financing", label: "Finanzierungsunterlagen" },
+  { value: "media", label: "Bilder / Medien" },
+  { value: "other", label: "Sonstiges" },
+];
+
 function DocumentsTab({ propertyId }: { propertyId: string }) {
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
+  const [docType, setDocType] = useState<string>("property_document");
+  const [notes, setNotes] = useState("");
+
+  const resetForm = () => {
+    setFile(null); setName(""); setDocType("property_document"); setNotes("");
+  };
 
   const { data: docs = [] } = useQuery({
     queryKey: ["docs", "property", propertyId],
@@ -760,43 +779,126 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
 
   const add = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("documents").insert({ related_type: "property", related_id: propertyId, file_name: name, file_url: url });
+      if (!file) throw new Error("Bitte Datei auswählen");
+      const ext = file.name.split(".").pop() ?? "bin";
+      const path = `property/${propertyId}/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("documents").upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
+      if (upErr) throw upErr;
+      const { error } = await supabase.from("documents").insert({
+        related_type: "property",
+        related_id: propertyId,
+        file_name: name.trim() || file.name,
+        file_url: path,
+        document_type: docType as any,
+        mime_type: file.type || null,
+        size_bytes: file.size,
+        uploaded_by: user?.id ?? null,
+        notes: notes.trim() || null,
+      });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Dokument verknüpft"); setName(""); setUrl(""); setOpen(false); qc.invalidateQueries({ queryKey: ["docs", "property", propertyId] }); },
+    onSuccess: () => {
+      toast.success("Dokument hochgeladen");
+      resetForm();
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["docs", "property", propertyId] });
+      qc.invalidateQueries({ queryKey: ["property_counts", propertyId] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const openDoc = async (path: string) => {
+    if (path.startsWith("http")) { window.open(path, "_blank"); return; }
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 300);
+    if (error || !data?.signedUrl) { toast.error(error?.message ?? "Konnte Datei nicht öffnen"); return; }
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const removeDoc = useMutation({
+    mutationFn: async (d: any) => {
+      if (d.file_url && !d.file_url.startsWith("http")) {
+        await supabase.storage.from("documents").remove([d.file_url]);
+      }
+      const { error } = await supabase.from("documents").delete().eq("id", d.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Dokument gelöscht");
+      qc.invalidateQueries({ queryKey: ["docs", "property", propertyId] });
+      qc.invalidateQueries({ queryKey: ["property_counts", propertyId] });
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Dokument hinzufügen</Button>
+        <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Dokument hochladen</Button>
       </div>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Dokument verknüpfen</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Dokument hochladen</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-            <div><Label>URL</Label><Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" /></div>
+            <div>
+              <Label>Datei</Label>
+              <Input type="file" onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                setFile(f);
+                if (f && !name) setName(f.name.replace(/\.[^.]+$/, ""));
+              }} />
+            </div>
+            <div>
+              <Label>Dokumenttyp</Label>
+              <Select value={docType} onValueChange={setDocType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PROPERTY_DOC_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Bezeichnung</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="z.B. Kaufvertrag Entwurf" /></div>
+            <div><Label>Notizen (optional)</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} /></div>
           </div>
-          <DialogFooter><Button onClick={() => add.mutate()} disabled={!url || !name || add.isPending}>Speichern</Button></DialogFooter>
+          <DialogFooter>
+            <Button onClick={() => add.mutate()} disabled={!file || add.isPending}>
+              {add.isPending ? "Lädt hoch…" : "Hochladen"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {docs.length === 0 ? (
-        <EmptyState title="Keine Dokumente" description="Verknüpfe Verträge, Pläne oder Energieausweise." />
+        <EmptyState title="Keine Dokumente" description="Lade Verträge, Pläne oder Energieausweise hoch." />
       ) : (
         <Card><CardContent className="p-0">
           <ul className="divide-y">
-            {docs.map((d: any) => (
-              <li key={d.id} className="flex items-center justify-between gap-3 px-6 py-3">
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{d.file_name}</p>
-                  <p className="text-xs text-muted-foreground">{formatDateTime(d.created_at)}</p>
-                </div>
-                <Button variant="outline" size="sm" asChild><a href={d.file_url} target="_blank" rel="noreferrer"><ExternalLink className="mr-1 h-3 w-3" />Öffnen</a></Button>
-              </li>
-            ))}
+            {docs.map((d: any) => {
+              const typeLabel = PROPERTY_DOC_TYPES.find((t) => t.value === d.document_type)?.label ?? d.document_type;
+              return (
+                <li key={d.id} className="flex items-center justify-between gap-3 px-6 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{d.file_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      <Badge variant="outline" className="mr-2 text-[10px]">{typeLabel}</Badge>
+                      {formatDateTime(d.created_at)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <Button variant="outline" size="sm" onClick={() => openDoc(d.file_url)}>
+                      <ExternalLink className="mr-1 h-3 w-3" />Öffnen
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => removeDoc.mutate(d)} disabled={removeDoc.isPending}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </CardContent></Card>
       )}
