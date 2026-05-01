@@ -764,7 +764,13 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                 Abbrechen
               </Button>
               {!isLast ? (
-                <Button onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}>
+                <Button
+                  onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+                  disabled={
+                    (step === 1 && !form.role_choice) ||
+                    (step === 2 && form.entity_type === "company" && !form.company_name.trim())
+                  }
+                >
                   Weiter <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               ) : (
