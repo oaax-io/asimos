@@ -259,7 +259,7 @@ function PropertyDetail() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList className="flex flex-wrap h-auto gap-1">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="owner">Eigentümer</TabsTrigger>
