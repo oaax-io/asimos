@@ -71,6 +71,10 @@ const ROLE_TO_DB_ROLE: Record<RoleChoice, string> = {
 };
 
 type FormState = {
+  // Entität & Rolle
+  entity_type: EntityType;
+  role_choice: RoleChoice | "";
+  company_name: string;
   // Stamm
   salutation: string;
   first_name: string;
@@ -130,6 +134,7 @@ const UNASSIGNED = "__unassigned__";
 const NO_FIN = "__none__";
 
 const empty: FormState = {
+  entity_type: "person", role_choice: "", company_name: "",
   salutation: "", first_name: "", last_name: "", birth_name: "", birth_date: "",
   nationality: "", marital_status: "",
   email: "", phone: "", mobile: "", street: "", street_number: "",
