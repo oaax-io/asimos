@@ -340,22 +340,22 @@ function PropertyDetail() {
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab} className="flex flex-col gap-4 lg:flex-row-reverse">
-        <TabsList className="flex h-auto w-full flex-row flex-wrap justify-start gap-1 lg:w-56 lg:flex-col lg:items-stretch lg:justify-start lg:bg-transparent lg:p-0">
-          <TabsTrigger value="overview" className="lg:justify-start">Übersicht</TabsTrigger>
-          <TabsTrigger value="details" className="lg:justify-start">Details & Medien</TabsTrigger>
-          <TabsTrigger value="owner" className="lg:justify-start">Eigentümer</TabsTrigger>
-          <TabsTrigger value="marketing" className="lg:justify-start">Vermarktung</TabsTrigger>
-          <TabsTrigger value="organisation" className="lg:justify-start">Organisation</TabsTrigger>
-          <TabsTrigger value="documents" className="lg:justify-start">Dokumente</TabsTrigger>
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
+        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
+          <TabsTrigger value="overview">Übersicht</TabsTrigger>
+          <TabsTrigger value="details">Details & Medien</TabsTrigger>
+          <TabsTrigger value="owner">Eigentümer</TabsTrigger>
+          <TabsTrigger value="marketing">Vermarktung</TabsTrigger>
+          <TabsTrigger value="organisation">Organisation</TabsTrigger>
+          <TabsTrigger value="documents">Dokumente</TabsTrigger>
           {!p.is_unit && (
-            <TabsTrigger value="units" className="lg:justify-start">
+            <TabsTrigger value="units">
               Einheiten{units.length ? ` (${units.length})` : ""}
             </TabsTrigger>
           )}
         </TabsList>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0">
           <TabsContent value="overview" className="mt-0"><OverviewTab p={p} /></TabsContent>
 
           <TabsContent value="details" className="mt-0">
