@@ -18,6 +18,7 @@ import { formatCurrency, formatArea, formatDate, formatDateTime, propertyTypeLab
 import { toast } from "sonner";
 import { MatchPanel } from "@/components/matching/MatchPanel";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
+import { PropertyOwnersTab } from "@/components/properties/PropertyOwnersTab";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
@@ -258,7 +259,7 @@ function PropertyDetail() {
         </TabsList>
 
         <TabsContent value="overview"><OverviewTab p={p} /></TabsContent>
-        <TabsContent value="owner"><OwnerTab p={p} /></TabsContent>
+        <TabsContent value="owner"><PropertyOwnersTab propertyId={id} legacyOwnerClientId={p.owner_client_id ?? p.seller_client_id} /></TabsContent>
         <TabsContent value="facts"><FactsTab p={p} /></TabsContent>
         <TabsContent value="media"><MediaTab propertyId={id} cover={getMediaPublicUrl(p.images?.[0])} /></TabsContent>
         <TabsContent value="documents"><DocumentsTab propertyId={id} /></TabsContent>

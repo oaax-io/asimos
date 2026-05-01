@@ -2174,6 +2174,7 @@ export type Database = {
           property_id: string
           sale_price: number | null
           share_percent: number | null
+          source: string
           start_date: string | null
           updated_at: string
         }
@@ -2191,6 +2192,7 @@ export type Database = {
           property_id: string
           sale_price?: number | null
           share_percent?: number | null
+          source?: string
           start_date?: string | null
           updated_at?: string
         }
@@ -2208,6 +2210,7 @@ export type Database = {
           property_id?: string
           sale_price?: number | null
           share_percent?: number | null
+          source?: string
           start_date?: string | null
           updated_at?: string
         }
