@@ -467,59 +467,104 @@ function PropertiesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginated.map((p: any) => {
-                const emp = p.assigned_to ? (employeeMap.get(p.assigned_to) as any) : null;
-                const isArchived = p.status === "archived";
-                return (
-                  <TableRow key={p.id} data-state={selected.has(p.id) ? "selected" : undefined}>
-                    <TableCell>
-                      <Checkbox checked={selected.has(p.id)} onCheckedChange={() => toggleOne(p.id)} aria-label="Auswählen" />
-                    </TableCell>
-                    <TableCell>
-                      <Link to="/properties/$id" params={{ id: p.id }} className="font-medium hover:text-primary">
-                        {p.title}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-sm">{propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels]}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="text-xs">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{[p.address, p.city].filter(Boolean).join(", ") || "—"}</TableCell>
-                    <TableCell className="text-right text-sm">
-                      {formatCurrency(p.listing_type === "rent" ? (p.rent ? Number(p.rent) : null) : (p.price ? Number(p.price) : null))}
-                      {p.listing_type === "rent" && p.rent ? <span className="text-xs text-muted-foreground"> /Mt.</span> : null}
-                    </TableCell>
-                    <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link to="/properties/$id" params={{ id: p.id }}>Öffnen</Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {isArchived ? (
-                            <DropdownMenuItem onClick={() => { setSelected(new Set([p.id])); archive.mutate(false); }}>
-                              <ArchiveRestore className="mr-2 h-4 w-4" />Wiederherstellen
+              {paginated.flatMap((p: any) => {
+                const renderRow = (row: any, opts: { indent?: boolean } = {}) => {
+                  const emp = row.assigned_to ? (employeeMap.get(row.assigned_to) as any) : null;
+                  const isArchived = row.status === "archived";
+                  const childUnits = unitsByParent.get(row.id) ?? [];
+                  const isParent = !opts.indent && childUnits.length > 0;
+                  const showExpander = isParent && groupUnits && fStructure !== "units";
+                  const isExpanded = expanded.has(row.id);
+                  const parentProp = row.parent_property_id ? propertyById.get(row.parent_property_id) : null;
+                  return (
+                    <TableRow key={row.id} data-state={selected.has(row.id) ? "selected" : undefined} className={opts.indent ? "bg-muted/20" : undefined}>
+                      <TableCell>
+                        <Checkbox checked={selected.has(row.id)} onCheckedChange={() => toggleOne(row.id)} aria-label="Auswählen" />
+                      </TableCell>
+                      <TableCell>
+                        <div className={`flex items-center gap-2 ${opts.indent ? "pl-6" : ""}`}>
+                          {showExpander ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 -ml-1"
+                              onClick={(e) => { e.preventDefault(); toggleExpanded(row.id); }}
+                              aria-label={isExpanded ? "Einklappen" : "Aufklappen"}
+                            >
+                              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            </Button>
+                          ) : opts.indent ? (
+                            <span className="text-muted-foreground">↳</span>
+                          ) : null}
+                          <div className="min-w-0">
+                            <Link to="/properties/$id" params={{ id: row.id }} className="font-medium hover:text-primary">
+                              {row.title}
+                            </Link>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                              {isParent && (
+                                <Badge className="bg-primary/10 text-primary hover:bg-primary/15 text-[10px] px-1.5 py-0">
+                                  <Building2 className="mr-1 h-3 w-3" />Liegenschaft · {childUnits.length}
+                                </Badge>
+                              )}
+                              {row.is_unit && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                  <Layers3 className="mr-1 h-3 w-3" />Einheit{row.unit_number ? ` ${row.unit_number}` : ""}
+                                </Badge>
+                              )}
+                              {row.is_unit && parentProp && !opts.indent && (
+                                <span className="text-[11px] text-muted-foreground">in {parentProp.title}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">{propertyTypeLabels[row.property_type as keyof typeof propertyTypeLabels]}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-xs">{propertyStatusLabels[row.status as keyof typeof propertyStatusLabels]}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{[row.address, row.city].filter(Boolean).join(", ") || "—"}</TableCell>
+                      <TableCell className="text-right text-sm">
+                        {formatCurrency(row.listing_type === "rent" ? (row.rent ? Number(row.rent) : null) : (row.price ? Number(row.price) : null))}
+                        {row.listing_type === "rent" && row.rent ? <span className="text-xs text-muted-foreground"> /Mt.</span> : null}
+                      </TableCell>
+                      <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link to="/properties/$id" params={{ id: row.id }}>Öffnen</Link>
                             </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem onClick={() => { setSelected(new Set([p.id])); archive.mutate(true); }}>
-                              <Archive className="mr-2 h-4 w-4" />Archivieren
+                            <DropdownMenuSeparator />
+                            {isArchived ? (
+                              <DropdownMenuItem onClick={() => { setSelected(new Set([row.id])); archive.mutate(false); }}>
+                                <ArchiveRestore className="mr-2 h-4 w-4" />Wiederherstellen
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => { setSelected(new Set([row.id])); archive.mutate(true); }}>
+                                <Archive className="mr-2 h-4 w-4" />Archivieren
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => { setSelected(new Set([row.id])); setConfirmDelete(true); }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />Löschen
                             </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => { setSelected(new Set([p.id])); setConfirmDelete(true); }}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />Löschen
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                };
+                const rows = [renderRow(p)];
+                const childUnits = unitsByParent.get(p.id) ?? [];
+                if (groupUnits && fStructure !== "units" && childUnits.length > 0 && expanded.has(p.id)) {
+                  for (const u of childUnits) rows.push(renderRow(u, { indent: true }));
+                }
+                return rows;
               })}
             </TableBody>
           </Table>
