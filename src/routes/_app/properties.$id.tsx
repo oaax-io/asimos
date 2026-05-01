@@ -66,6 +66,29 @@ function PropertyDetail() {
     },
   });
 
+  const { data: units = [] } = useQuery({
+    queryKey: ["property_units", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("properties")
+        .select("id,title,unit_number,unit_type,unit_floor,unit_status,rooms,living_area,price,rent,listing_type,status,property_type")
+        .eq("parent_property_id", id)
+        .order("unit_number", { ascending: true });
+      return data ?? [];
+    },
+    enabled: !!id && !!p && !p.is_unit,
+  });
+
+  const { data: parent } = useQuery({
+    queryKey: ["property_parent", p?.parent_property_id],
+    queryFn: async () => {
+      if (!p?.parent_property_id) return null;
+      const { data } = await supabase.from("properties").select("id,title,address,city").eq("id", p.parent_property_id).single();
+      return data;
+    },
+    enabled: !!p?.is_unit && !!p?.parent_property_id,
+  });
+
   const update = useMutation({
     mutationFn: async (payload: WizardSubmit) => {
       const { error } = await supabase.from("properties").update(payload.property as any).eq("id", id);
