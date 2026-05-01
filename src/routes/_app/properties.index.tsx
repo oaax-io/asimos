@@ -83,14 +83,52 @@ function PropertiesPage() {
         .select("id")
         .single();
       if (error) throw error;
+
+      const ownerClientId = (payload.property as { owner_client_id?: string | null }).owner_client_id ?? null;
+      if (ownerClientId && created?.id) {
+        await supabase.from("property_ownerships").insert({
+          property_id: created.id,
+          client_id: ownerClientId,
+          ownership_type: "owner",
+          start_date: new Date().toISOString().slice(0, 10),
+          source: "manual",
+          is_primary_contact: true,
+        });
+        await supabase.from("client_roles").insert({
+          client_id: ownerClientId,
+          role_type: "owner",
+          related_type: "property",
+          related_id: created.id,
+          status: "active",
+          start_date: new Date().toISOString().slice(0, 10),
+        });
+      }
+
       if (payload.units.length > 0 && created?.id) {
         const unitsPayload = payload.units.map((u) => ({
           ...u,
           owner_id: user!.id,
           parent_property_id: created.id,
         }));
-        const { error: uErr } = await supabase.from("properties").insert(unitsPayload as any);
+        const { data: createdUnits, error: uErr } = await supabase
+          .from("properties")
+          .insert(unitsPayload as any)
+          .select("id, owner_client_id");
         if (uErr) throw uErr;
+        const today = new Date().toISOString().slice(0, 10);
+        const unitOwnerships = (createdUnits ?? [])
+          .filter((u: any) => u.owner_client_id)
+          .map((u: any) => ({
+            property_id: u.id,
+            client_id: u.owner_client_id,
+            ownership_type: "owner" as const,
+            start_date: today,
+            source: "manual",
+            is_primary_contact: true,
+          }));
+        if (unitOwnerships.length > 0) {
+          await supabase.from("property_ownerships").insert(unitOwnerships);
+        }
       }
       if (payload.media.length > 0 && created?.id) {
         const mediaRows = payload.media.map((m, i) => ({
