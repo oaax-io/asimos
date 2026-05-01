@@ -691,9 +691,21 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             {step === 7 && (
               <div className="space-y-4">
                 <div className="rounded-xl border p-4">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Person</p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                    {form.entity_type === "company" ? "Unternehmen" : "Person"}
+                  </p>
                   <p className="text-base font-semibold">{fullName || "—"}</p>
-                  <p className="text-sm text-muted-foreground">
+                  {form.entity_type === "company" && personName && (
+                    <p className="text-sm text-muted-foreground">Kontakt: {personName}</p>
+                  )}
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {form.role_choice && (
+                      <Badge variant="secondary">
+                        {ROLE_OPTIONS.find((r) => r.value === form.role_choice)?.label}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
                     {[form.email, form.phone || form.mobile].filter(Boolean).join(" · ") || "Keine Kontaktdaten"}
                   </p>
                   <p className="text-sm text-muted-foreground">
