@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { MatchPanel } from "@/components/matching/MatchPanel";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { PropertyOwnersTab } from "@/components/properties/PropertyOwnersTab";
+import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
