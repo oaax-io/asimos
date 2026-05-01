@@ -388,6 +388,54 @@ function PropertyDetail() {
               </CardContent>
             </Card>
           </button>
+          <div className="grid grid-cols-3 gap-2">
+            <button type="button" onClick={() => setTab("marketing")} className="text-left">
+              <Card className="transition hover:border-primary/50 hover:bg-primary/5">
+                <CardContent className="p-3">
+                  <p className="text-[11px] uppercase text-muted-foreground">Matches</p>
+                  <p className="font-display text-xl font-bold">{counts?.matches ?? 0}</p>
+                </CardContent>
+              </Card>
+            </button>
+            <button type="button" onClick={() => setTab("organisation")} className="text-left">
+              <Card className="transition hover:border-primary/50 hover:bg-primary/5">
+                <CardContent className="p-3">
+                  <p className="text-[11px] uppercase text-muted-foreground">Termine</p>
+                  <p className="font-display text-xl font-bold">{counts?.appointments ?? 0}</p>
+                </CardContent>
+              </Card>
+            </button>
+            <button type="button" onClick={() => setTab("documents")} className="text-left">
+              <Card className="transition hover:border-primary/50 hover:bg-primary/5">
+                <CardContent className="p-3">
+                  <p className="text-[11px] uppercase text-muted-foreground">Dokumente</p>
+                  <p className="font-display text-xl font-bold">{counts?.documents ?? 0}</p>
+                </CardContent>
+              </Card>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
+        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
+          <TabsTrigger value="overview">Übersicht</TabsTrigger>
+          <TabsTrigger value="details">Details & Medien</TabsTrigger>
+          <TabsTrigger value="owner">Eigentümer</TabsTrigger>
+          <TabsTrigger value="marketing">
+            Vermarktung{counts?.matches ? ` (${counts.matches})` : ""}
+          </TabsTrigger>
+          <TabsTrigger value="organisation">Organisation</TabsTrigger>
+          <TabsTrigger value="documents">
+            Dokumente{counts?.documents ? ` (${counts.documents})` : ""}
+          </TabsTrigger>
+          {!p.is_unit && (
+            <TabsTrigger value="units">
+              Einheiten{units.length ? ` (${units.length})` : ""}
+            </TabsTrigger>
+          )}
+          <TabsTrigger value="activity">Aktivitäten</TabsTrigger>
+        </TabsList>
         </div>
       </div>
 
