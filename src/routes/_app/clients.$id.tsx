@@ -294,6 +294,7 @@ function ClientDetail() {
         {/* 1. Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
           <BenchmarkOrPlaceholder benchmark={benchmark} />
+          <ClientProfileSummary clientId={id} entityType={client.entity_type} />
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardContent className="p-6">
