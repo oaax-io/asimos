@@ -1219,3 +1219,73 @@ function ActivityTab({ activities, employees }: { activities: any[]; employees: 
     </Card>
   );
 }
+
+function MarketAnalysisTab({ property }: { property: any }) {
+  const [analysis, setAnalysis] = useState<string>("");
+  const [generatedAt, setGeneratedAt] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+
+  const runAnalysis = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("property-market-analysis", {
+        body: { property },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setAnalysis((data as any).analysis);
+      setGeneratedAt((data as any).generated_at);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Marktanalyse fehlgeschlagen");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="space-y-4 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="flex items-center gap-2 font-display text-lg">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              KI-Marktanalyse
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Kaufpreis, Mietpotenzial und Lage-Einschätzung anhand der Objektdaten.
+              {generatedAt && ` · Erstellt ${formatDateTime(generatedAt)}`}
+            </p>
+          </div>
+          <Button onClick={runAnalysis} disabled={loading} className="gap-2">
+            {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {analysis ? "Neu generieren" : "Analyse starten"}
+          </Button>
+        </div>
+
+        {!analysis && !loading && (
+          <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+            Klicke auf <strong>Analyse starten</strong>, um eine KI-gestützte Marktbeobachtung
+            für diese Immobilie zu erstellen. Je vollständiger die Objektdaten, desto präziser die Einschätzung.
+          </div>
+        )}
+
+        {loading && (
+          <div className="rounded-xl border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
+            <RefreshCw className="mx-auto mb-2 h-5 w-5 animate-spin" />
+            KI analysiert Markt, Lage und Preise…
+          </div>
+        )}
+
+        {analysis && (
+          <div className="prose prose-sm max-w-none rounded-xl border bg-muted/20 p-6 dark:prose-invert prose-headings:font-display prose-headings:mt-4 prose-headings:mb-2 prose-h2:text-base prose-p:my-2 prose-ul:my-2">
+            <ReactMarkdown>{analysis}</ReactMarkdown>
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground">
+          ⚠️ Hinweis: KI-generierte Einschätzung ohne Gewähr. Ersetzt keine professionelle Verkehrswertermittlung.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
