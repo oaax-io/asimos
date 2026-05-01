@@ -4,7 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Mail, Phone, Shield } from "lucide-react";
+import { Plus, Mail, Phone, Shield, KeyRound, Pencil, Copy, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,9 +17,11 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/team")({ component: TeamPage });
 
-const ROLES = ["owner", "agent", "assistant"] as const;
+const ROLES = ["owner", "admin", "manager", "agent", "assistant"] as const;
 const ROLE_LABELS: Record<(typeof ROLES)[number], string> = {
   owner: "Inhaber",
+  admin: "Administrator",
+  manager: "Manager",
   agent: "Makler",
   assistant: "Assistenz",
 };
