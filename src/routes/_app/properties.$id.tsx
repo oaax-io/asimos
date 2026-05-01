@@ -1179,3 +1179,39 @@ function UnitsTab({ parentId, units }: { parentId: string; units: any[] }) {
     </Card>
   );
 }
+
+function ActivityTab({ activities, employees }: { activities: any[]; employees: any[] }) {
+  if (!activities.length) {
+    return (
+      <EmptyState
+        icon={Activity}
+        title="Noch keine Aktivitäten"
+        description="Hier erscheinen alle Bearbeitungen, Statusänderungen und Ereignisse zu dieser Immobilie."
+      />
+    );
+  }
+  const empMap = new Map(employees.map((e: any) => [e.id, e.full_name || e.email]));
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <ol className="relative space-y-4 border-l pl-6">
+          {activities.map((a) => (
+            <li key={a.id} className="relative">
+              <span className="absolute -left-[31px] mt-1.5 inline-block h-3 w-3 rounded-full border-2 border-background bg-primary" />
+              <p className="text-sm font-medium">{a.action}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatDateTime(a.created_at)}
+                {a.actor_id && empMap.get(a.actor_id) ? ` · ${empMap.get(a.actor_id)}` : ""}
+              </p>
+              {a.metadata && Object.keys(a.metadata).length > 0 && (
+                <pre className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-2 text-[11px] text-muted-foreground">
+                  {JSON.stringify(a.metadata, null, 2)}
+                </pre>
+              )}
+            </li>
+          ))}
+        </ol>
+      </CardContent>
+    </Card>
+  );
+}
