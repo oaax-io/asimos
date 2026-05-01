@@ -493,6 +493,72 @@ export type Database = {
           },
         ]
       }
+      client_search_profiles: {
+        Row: {
+          area_max: number | null
+          area_min: number | null
+          budget_max: number | null
+          budget_min: number | null
+          client_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          listing_type: Database["public"]["Enums"]["listing_type"] | null
+          notes: string | null
+          preferred_cities: string[] | null
+          preferred_property_types:
+            | Database["public"]["Enums"]["property_type"][]
+            | null
+          role_type: Database["public"]["Enums"]["client_role_type"]
+          rooms_min: number | null
+          updated_at: string
+          usage_types: string[] | null
+          yield_target: number | null
+        }
+        Insert: {
+          area_max?: number | null
+          area_min?: number | null
+          budget_max?: number | null
+          budget_min?: number | null
+          client_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          listing_type?: Database["public"]["Enums"]["listing_type"] | null
+          notes?: string | null
+          preferred_cities?: string[] | null
+          preferred_property_types?:
+            | Database["public"]["Enums"]["property_type"][]
+            | null
+          role_type?: Database["public"]["Enums"]["client_role_type"]
+          rooms_min?: number | null
+          updated_at?: string
+          usage_types?: string[] | null
+          yield_target?: number | null
+        }
+        Update: {
+          area_max?: number | null
+          area_min?: number | null
+          budget_max?: number | null
+          budget_min?: number | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          listing_type?: Database["public"]["Enums"]["listing_type"] | null
+          notes?: string | null
+          preferred_cities?: string[] | null
+          preferred_property_types?:
+            | Database["public"]["Enums"]["property_type"][]
+            | null
+          role_type?: Database["public"]["Enums"]["client_role_type"]
+          rooms_min?: number | null
+          updated_at?: string
+          usage_types?: string[] | null
+          yield_target?: number | null
+        }
+        Relationships: []
+      }
       client_self_disclosures: {
         Row: {
           additional_income: number | null
