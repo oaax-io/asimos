@@ -168,7 +168,34 @@ function PropertyDetail() {
         submitting={update.isPending}
       />
 
-      {/* Hero */}
+      {/* Parent / Unit context banner */}
+      {p.is_unit && parent && (
+        <Card className="mb-4 border-primary/30 bg-primary/5">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div className="flex items-center gap-2 text-sm">
+              <Layers3 className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">Einheit in</span>
+              <span className="font-medium">{parent.title}</span>
+              {parent.address && <span className="text-muted-foreground">· {[parent.address, parent.city].filter(Boolean).join(", ")}</span>}
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/properties/$id" params={{ id: parent.id }}>
+                <ExternalLink className="mr-1 h-4 w-4" />Liegenschaft öffnen
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      {!p.is_unit && units.length > 0 && (
+        <Card className="mb-4 border-primary/20 bg-muted/30">
+          <CardContent className="flex flex-wrap items-center gap-2 p-4 text-sm">
+            <Building2 className="h-4 w-4 text-primary" />
+            <span className="font-medium">{units.length} Einheit{units.length === 1 ? "" : "en"}</span>
+            <span className="text-muted-foreground">in dieser Liegenschaft</span>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="mb-6 grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 aspect-[16/10] overflow-hidden rounded-2xl border bg-muted">
           {p.images?.[0] ? (
