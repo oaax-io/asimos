@@ -1220,10 +1220,54 @@ function ActivityTab({ activities, employees }: { activities: any[]; employees: 
   );
 }
 
+function fmtRange(min: number | null | undefined, max: number | null | undefined, suffix = "", currency = "") {
+  const f = (n: number) => currency ? formatCurrency(n) : n.toLocaleString("de-CH", { maximumFractionDigits: 0 });
+  if (min == null && max == null) return "—";
+  if (min == null) return `bis ${f(max!)}${suffix}`;
+  if (max == null) return `ab ${f(min)}${suffix}`;
+  if (min === max) return `${f(min)}${suffix}`;
+  return `${f(min)} – ${f(max)}${suffix}`;
+}
+
+const verdictMap: Record<string, { label: string; cls: string }> = {
+  strong_buy: { label: "Starker Kauf", cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30" },
+  buy: { label: "Kaufempfehlung", cls: "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30" },
+  hold: { label: "Halten / Beobachten", cls: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" },
+  caution: { label: "Vorsicht", cls: "bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/30" },
+  avoid: { label: "Eher vermeiden", cls: "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30" },
+};
+const trendMap: Record<string, { label: string; cls: string; arrow: string }> = {
+  rising: { label: "Steigend", cls: "text-emerald-600", arrow: "↗" },
+  stable: { label: "Stabil", cls: "text-blue-600", arrow: "→" },
+  declining: { label: "Rückläufig", cls: "text-red-600", arrow: "↘" },
+  mixed: { label: "Gemischt", cls: "text-amber-600", arrow: "↔" },
+};
+const comparisonMap: Record<string, { label: string; cls: string }> = {
+  below_market: { label: "Unter Marktwert", cls: "text-emerald-600" },
+  at_market: { label: "Marktgerecht", cls: "text-blue-600" },
+  above_market: { label: "Über Marktwert", cls: "text-red-600" },
+  unknown: { label: "Nicht eindeutig", cls: "text-muted-foreground" },
+};
+
 function MarketAnalysisTab({ property }: { property: any }) {
-  const [analysis, setAnalysis] = useState<string>("");
-  const [generatedAt, setGeneratedAt] = useState<string>("");
+  const qc = useQueryClient();
   const [loading, setLoading] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const { data: history = [] } = useQuery({
+    queryKey: ["market_analyses", property.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("property_market_analyses")
+        .select("id, created_at, sections, model, created_by")
+        .eq("property_id", property.id)
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const current = history.find((h: any) => h.id === selectedId) ?? history[0];
+  const sections: any = current?.sections;
 
   const runAnalysis = async () => {
     setLoading(true);
@@ -1233,8 +1277,9 @@ function MarketAnalysisTab({ property }: { property: any }) {
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      setAnalysis((data as any).analysis);
-      setGeneratedAt((data as any).generated_at);
+      await qc.invalidateQueries({ queryKey: ["market_analyses", property.id] });
+      setSelectedId((data as any).id ?? null);
+      toast.success("Marktanalyse erstellt");
     } catch (e: any) {
       toast.error(e?.message ?? "Marktanalyse fehlgeschlagen");
     } finally {
@@ -1242,50 +1287,204 @@ function MarketAnalysisTab({ property }: { property: any }) {
     }
   };
 
+  const deleteAnalysis = async (id: string) => {
+    if (!confirm("Diese Analyse wirklich löschen?")) return;
+    const { error } = await supabase.from("property_market_analyses").delete().eq("id", id);
+    if (error) return toast.error("Löschen fehlgeschlagen");
+    if (selectedId === id) setSelectedId(null);
+    qc.invalidateQueries({ queryKey: ["market_analyses", property.id] });
+    toast.success("Analyse gelöscht");
+  };
+
   return (
-    <Card>
-      <CardContent className="space-y-4 p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="flex flex-wrap items-start justify-between gap-3 p-5">
           <div>
             <h2 className="flex items-center gap-2 font-display text-lg">
               <TrendingUp className="h-5 w-5 text-primary" />
               KI-Marktanalyse
             </h2>
             <p className="text-sm text-muted-foreground">
-              Kaufpreis, Mietpotenzial und Lage-Einschätzung anhand der Objektdaten.
-              {generatedAt && ` · Erstellt ${formatDateTime(generatedAt)}`}
+              Kaufpreis, Mietpotenzial & Lageeinschätzung – alle Versionen werden gespeichert.
             </p>
           </div>
           <Button onClick={runAnalysis} disabled={loading} className="gap-2">
             {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {analysis ? "Neu generieren" : "Analyse starten"}
+            {history.length ? "Neue Analyse" : "Analyse starten"}
           </Button>
+        </CardContent>
+      </Card>
+
+      {history.length > 0 && (
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Historie</span>
+              {history.map((h: any) => {
+                const isActive = (current?.id === h.id);
+                return (
+                  <button
+                    key={h.id}
+                    onClick={() => setSelectedId(h.id)}
+                    className={`group flex items-center gap-2 rounded-full border px-3 py-1 text-xs transition ${isActive ? "border-primary bg-primary/10 text-primary" : "hover:bg-muted"}`}
+                  >
+                    <Calendar className="h-3 w-3" />
+                    {formatDateTime(h.created_at)}
+                    <Trash2
+                      className="h-3 w-3 opacity-0 hover:text-destructive group-hover:opacity-60"
+                      onClick={(e) => { e.stopPropagation(); deleteAnalysis(h.id); }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!sections && !loading && (
+        <Card><CardContent className="p-10 text-center">
+          <Sparkles className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
+            Klicke auf <strong>Analyse starten</strong>, um eine KI-gestützte Marktbeobachtung zu erstellen.
+          </p>
+        </CardContent></Card>
+      )}
+      {loading && !sections && (
+        <Card><CardContent className="p-10 text-center text-sm text-muted-foreground">
+          <RefreshCw className="mx-auto mb-2 h-5 w-5 animate-spin" />
+          KI analysiert Markt, Lage und Preise…
+        </CardContent></Card>
+      )}
+
+      {sections && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {sections.recommendation && (
+            <Card className={`md:col-span-2 border-2 ${verdictMap[sections.recommendation.verdict]?.cls ?? ""}`}>
+              <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full bg-background/60 p-2"><CheckCircle2 className="h-5 w-5" /></div>
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide opacity-70">Empfehlung</p>
+                    <p className="font-display text-lg">{verdictMap[sections.recommendation.verdict]?.label ?? sections.recommendation.verdict}</p>
+                  </div>
+                </div>
+                <p className="max-w-xl text-sm">{sections.recommendation.summary}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {sections.location && (
+            <Card>
+              <CardContent className="space-y-3 p-5">
+                <div className="flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 font-display text-base"><MapPin className="h-4 w-4 text-primary" />Lageanalyse</h3>
+                  <Badge variant="secondary">{sections.location.score}/10</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">{sections.location.summary}</p>
+                {sections.location.highlights?.length > 0 && (
+                  <ul className="space-y-1 text-sm">
+                    {sections.location.highlights.map((h: string, i: number) => (
+                      <li key={i} className="flex gap-2"><CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" /><span>{h}</span></li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {sections.trend && (
+            <Card>
+              <CardContent className="space-y-3 p-5">
+                <h3 className="flex items-center gap-2 font-display text-base"><TrendingUp className="h-4 w-4 text-primary" />Markttrend</h3>
+                <div className={`flex items-baseline gap-2 ${trendMap[sections.trend.direction]?.cls ?? ""}`}>
+                  <span className="text-3xl">{trendMap[sections.trend.direction]?.arrow}</span>
+                  <span className="font-display text-lg">{trendMap[sections.trend.direction]?.label ?? sections.trend.direction}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{sections.trend.outlook}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {sections.purchase_price && (
+            <Card>
+              <CardContent className="space-y-3 p-5">
+                <h3 className="flex items-center gap-2 font-display text-base"><Banknote className="h-4 w-4 text-primary" />Kaufpreis</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <Stat label="Preis pro m²" value={fmtRange(sections.purchase_price.price_per_sqm_min, sections.purchase_price.price_per_sqm_max, ` ${sections.purchase_price.currency}/m²`)} />
+                  <Stat label="Verkehrswert" value={fmtRange(sections.purchase_price.estimated_value_min, sections.purchase_price.estimated_value_max, "", sections.purchase_price.currency)} />
+                </div>
+                <div className={`text-sm font-medium ${comparisonMap[sections.purchase_price.comparison]?.cls ?? ""}`}>
+                  {comparisonMap[sections.purchase_price.comparison]?.label}
+                </div>
+                <p className="text-xs text-muted-foreground">{sections.purchase_price.comment}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {sections.rental && (
+            <Card>
+              <CardContent className="space-y-3 p-5">
+                <h3 className="flex items-center gap-2 font-display text-base"><Building2 className="h-4 w-4 text-primary" />Vermietungspotenzial</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <Stat label="Miete pro m²" value={fmtRange(sections.rental.rent_per_sqm_min, sections.rental.rent_per_sqm_max, " /m²")} />
+                  <Stat label="Monatsmiete" value={fmtRange(sections.rental.monthly_rent_min, sections.rental.monthly_rent_max)} />
+                  {(sections.rental.gross_yield_min != null || sections.rental.gross_yield_max != null) && (
+                    <Stat label="Bruttorendite" value={fmtRange(sections.rental.gross_yield_min, sections.rental.gross_yield_max, " %")} className="col-span-2" />
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">{sections.rental.comment}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {sections.opportunities?.length > 0 && (
+            <Card className="border-emerald-500/30">
+              <CardContent className="space-y-2 p-5">
+                <h3 className="flex items-center gap-2 font-display text-base text-emerald-700 dark:text-emerald-400">
+                  <CheckCircle2 className="h-4 w-4" />Chancen
+                </h3>
+                <ul className="space-y-1.5 text-sm">
+                  {sections.opportunities.map((o: string, i: number) => (
+                    <li key={i} className="flex gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" /><span>{o}</span></li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {sections.risks?.length > 0 && (
+            <Card className="border-red-500/30">
+              <CardContent className="space-y-2 p-5">
+                <h3 className="flex items-center gap-2 font-display text-base text-red-700 dark:text-red-400">
+                  <Activity className="h-4 w-4" />Risiken
+                </h3>
+                <ul className="space-y-1.5 text-sm">
+                  {sections.risks.map((r: string, i: number) => (
+                    <li key={i} className="flex gap-2"><span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" /><span>{r}</span></li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="md:col-span-2 px-1 text-xs text-muted-foreground">
+            ⚠️ KI-generierte Einschätzung – ersetzt keine professionelle Verkehrswertermittlung.
+            {current?.created_at && ` · Erstellt ${formatDateTime(current.created_at)}`}
+            {current?.model && ` · ${current.model}`}
+          </div>
         </div>
+      )}
+    </div>
+  );
+}
 
-        {!analysis && !loading && (
-          <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-            Klicke auf <strong>Analyse starten</strong>, um eine KI-gestützte Marktbeobachtung
-            für diese Immobilie zu erstellen. Je vollständiger die Objektdaten, desto präziser die Einschätzung.
-          </div>
-        )}
-
-        {loading && (
-          <div className="rounded-xl border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
-            <RefreshCw className="mx-auto mb-2 h-5 w-5 animate-spin" />
-            KI analysiert Markt, Lage und Preise…
-          </div>
-        )}
-
-        {analysis && (
-          <div className="prose prose-sm max-w-none rounded-xl border bg-muted/20 p-6 dark:prose-invert prose-headings:font-display prose-headings:mt-4 prose-headings:mb-2 prose-h2:text-base prose-p:my-2 prose-ul:my-2">
-            <ReactMarkdown>{analysis}</ReactMarkdown>
-          </div>
-        )}
-
-        <p className="text-xs text-muted-foreground">
-          ⚠️ Hinweis: KI-generierte Einschätzung ohne Gewähr. Ersetzt keine professionelle Verkehrswertermittlung.
-        </p>
-      </CardContent>
-    </Card>
+function Stat({ label, value, className = "" }: { label: string; value: string; className?: string }) {
+  return (
+    <div className={`rounded-lg border bg-muted/30 p-3 ${className}`}>
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-1 font-display text-base">{value}</p>
+    </div>
   );
 }
