@@ -19,6 +19,7 @@ import { PropertyWizard, type WizardSubmit } from "@/components/properties/Prope
 import { formatCurrency, formatArea, formatDate, formatDateTime, propertyTypeLabels, propertyStatusLabels, listingTypeLabels, getPropertyStatusBadgeClass, getPropertyStatusDotClass } from "@/lib/format";
 import { toast } from "sonner";
 import { MatchPanel } from "@/components/matching/MatchPanel";
+import { matchPropertyToClients } from "@/lib/matching";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { PropertyOwnersTab } from "@/components/properties/PropertyOwnersTab";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
@@ -115,26 +116,28 @@ function PropertyDetail() {
   });
 
   const { data: counts } = useQuery({
-    queryKey: ["property_counts", id],
+    queryKey: ["property_counts", id, p?.updated_at],
     queryFn: async () => {
       const head = { count: "exact" as const, head: true };
-      const [m, d, t, a, md, r, mt] = await Promise.all([
-        supabase.from("matches").select("id", head).eq("property_id", id),
+      const [storedMatches, allClients, d, a, md] = await Promise.all([
+        supabase.from("matches").select("property_id, client_id").eq("property_id", id),
+        supabase.from("clients").select("*"),
         supabase.from("documents").select("id", head).eq("related_type", "property").eq("related_id", id),
-        supabase.from("checklist_items").select("id, checklist:checklists!inner(related_type,related_id)", head).eq("checklist.related_type", "property").eq("checklist.related_id", id),
         supabase.from("appointments").select("id", head).eq("property_id", id),
         supabase.from("mandates").select("id", head).eq("property_id", id),
-        supabase.from("nda_agreements").select("id", head).eq("property_id", id),
-        supabase.from("mandates").select("id", head).eq("property_id", id),
       ]);
+      // Live-Matches berechnen (entspricht MatchPanel: score >= 40)
+      const computed = p ? matchPropertyToClients(p as any, (allClients.data ?? []) as any[], 40) : [];
+      const ids = new Set<string>(computed.map((c) => c.client.id));
+      (storedMatches.data ?? []).forEach((m: any) => ids.add(m.client_id));
       return {
-        matches: m.count ?? 0,
+        matches: ids.size,
         documents: d.count ?? 0,
         appointments: a.count ?? 0,
         mandates: md.count ?? 0,
       };
     },
-    enabled: !!id,
+    enabled: !!id && !!p,
   });
 
   const { data: activities = [] } = useQuery({
