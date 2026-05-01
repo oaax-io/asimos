@@ -28,6 +28,7 @@ import { useAuth } from "@/lib/auth";
 import { MatchPanel } from "@/components/matching/MatchPanel";
 import { ClientSelfDisclosureTab } from "@/components/clients/ClientSelfDisclosureTab";
 import { ClientRelationshipsTab } from "@/components/clients/ClientRelationshipsTab";
+import { ClientProfileSummary } from "@/components/clients/ClientProfileSummary";
 import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
 import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkCard";
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
@@ -293,6 +294,7 @@ function ClientDetail() {
         {/* 1. Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
           <BenchmarkOrPlaceholder benchmark={benchmark} />
+          <ClientProfileSummary clientId={id} entityType={client.entity_type} />
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardContent className="p-6">
