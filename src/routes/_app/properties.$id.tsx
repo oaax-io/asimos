@@ -110,8 +110,68 @@ function PropertyDetail() {
 
   const update = useMutation({
     mutationFn: async (payload: WizardSubmit) => {
+      const newOwnerId =
+        (payload.property as any)?.owner_client_id ??
+        (payload.property as any)?.seller_client_id ??
+        null;
+      const prevOwnerId = p?.owner_client_id ?? p?.seller_client_id ?? null;
+
       const { error } = await supabase.from("properties").update(payload.property as any).eq("id", id);
       if (error) throw error;
+
+      // Eigentümer-Historie synchron halten
+      if (newOwnerId && newOwnerId !== prevOwnerId) {
+        const today = new Date().toISOString().slice(0, 10);
+        // Alte aktive Eigentümer schließen
+        await supabase
+          .from("property_ownerships")
+          .update({ end_date: today, ownership_type: "former_owner" })
+          .eq("property_id", id)
+          .is("end_date", null);
+        await supabase
+          .from("client_roles")
+          .update({ status: "completed", end_date: today, role_type: "former_owner" })
+          .eq("related_type", "property")
+          .eq("related_id", id)
+          .eq("role_type", "owner")
+          .eq("status", "active");
+        // Neuen Eigentümer setzen
+        await supabase.from("property_ownerships").insert({
+          property_id: id,
+          client_id: newOwnerId,
+          ownership_type: "owner",
+          start_date: today,
+          source: "manual",
+          is_primary_contact: true,
+        });
+        await supabase.from("client_roles").insert({
+          client_id: newOwnerId,
+          role_type: "owner",
+          related_type: "property",
+          related_id: id,
+          status: "active",
+          start_date: today,
+        });
+      } else if (newOwnerId && prevOwnerId && newOwnerId === prevOwnerId) {
+        // Sicherstellen, dass mindestens ein aktiver Eintrag existiert
+        const { data: existing } = await supabase
+          .from("property_ownerships")
+          .select("id")
+          .eq("property_id", id)
+          .is("end_date", null)
+          .limit(1);
+        if (!existing || existing.length === 0) {
+          const today = new Date().toISOString().slice(0, 10);
+          await supabase.from("property_ownerships").insert({
+            property_id: id,
+            client_id: newOwnerId,
+            ownership_type: "owner",
+            start_date: today,
+            source: "manual",
+            is_primary_contact: true,
+          });
+        }
+      }
 
       const { error: deleteMediaError } = await supabase.from("property_media").delete().eq("property_id", id);
       if (deleteMediaError) throw deleteMediaError;
@@ -134,6 +194,8 @@ function PropertyDetail() {
       toast.success("Gespeichert");
       qc.invalidateQueries({ queryKey: ["property", id] });
       qc.invalidateQueries({ queryKey: ["properties"] });
+      qc.invalidateQueries({ queryKey: ["property_current_owners", id] });
+      qc.invalidateQueries({ queryKey: ["property_ownerships", id] });
       setEditOpen(false);
     },
     onError: (e: any) => toast.error(e.message),
