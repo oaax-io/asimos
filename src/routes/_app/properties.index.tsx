@@ -396,6 +396,8 @@ function PropertiesPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paginated.map((p: any) => {
             const isSel = selected.has(p.id);
+            const childUnits = unitsByParent.get(p.id) ?? [];
+            const parentProp = p.parent_property_id ? propertyById.get(p.parent_property_id) : null;
             return (
               <div key={p.id} className={`group relative overflow-hidden rounded-2xl border bg-card shadow-soft transition hover:shadow-glow ${isSel ? "ring-2 ring-primary" : ""}`}>
                 <div className="absolute left-3 top-3 z-10 rounded-md bg-background/90 p-1 backdrop-blur">
@@ -410,11 +412,24 @@ function PropertiesPage() {
                     )}
                   </div>
                   <div className="p-4">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant="secondary" className="text-xs">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
-                      <span className="text-xs text-muted-foreground">{listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}</span>
+                      {childUnits.length > 0 && (
+                        <Badge className="bg-primary/10 text-primary hover:bg-primary/15 text-xs">
+                          <Building2 className="mr-1 h-3 w-3" />Liegenschaft · {childUnits.length} Einheit{childUnits.length === 1 ? "" : "en"}
+                        </Badge>
+                      )}
+                      {p.is_unit && (
+                        <Badge variant="outline" className="text-xs">
+                          <Layers3 className="mr-1 h-3 w-3" />Einheit{p.unit_number ? ` ${p.unit_number}` : ""}
+                        </Badge>
+                      )}
+                      <span className="ml-auto text-xs text-muted-foreground">{listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}</span>
                     </div>
                     <h3 className="mt-2 line-clamp-1 font-semibold">{p.title}</h3>
+                    {parentProp && (
+                      <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">↳ in {parentProp.title}</p>
+                    )}
                     <p className="mt-1 line-clamp-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPin className="h-3 w-3" />{[p.address, p.city].filter(Boolean).join(", ") || "—"}
                     </p>
