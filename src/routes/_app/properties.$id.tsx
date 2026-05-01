@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity } from "lucide-react";
+import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity, TrendingUp, Sparkles, RefreshCw } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -434,6 +435,7 @@ function PropertyDetail() {
               Einheiten{units.length ? ` (${units.length})` : ""}
             </TabsTrigger>
           )}
+          <TabsTrigger value="market"><TrendingUp className="mr-1 h-3.5 w-3.5" />Marktanalyse</TabsTrigger>
           <TabsTrigger value="activity">Aktivitäten</TabsTrigger>
         </TabsList>
 
@@ -498,6 +500,9 @@ function PropertyDetail() {
 
           <TabsContent value="documents" className="mt-0"><DocumentsTab propertyId={id} /></TabsContent>
           {!p.is_unit && <TabsContent value="units" className="mt-0"><UnitsTab parentId={id} units={units} /></TabsContent>}
+          <TabsContent value="market" className="mt-0">
+            <MarketAnalysisTab property={p} />
+          </TabsContent>
           <TabsContent value="activity" className="mt-0">
             <ActivityTab activities={activities} employees={employees} />
           </TabsContent>
@@ -1210,6 +1215,76 @@ function ActivityTab({ activities, employees }: { activities: any[]; employees: 
             </li>
           ))}
         </ol>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MarketAnalysisTab({ property }: { property: any }) {
+  const [analysis, setAnalysis] = useState<string>("");
+  const [generatedAt, setGeneratedAt] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+
+  const runAnalysis = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("property-market-analysis", {
+        body: { property },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setAnalysis((data as any).analysis);
+      setGeneratedAt((data as any).generated_at);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Marktanalyse fehlgeschlagen");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="space-y-4 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="flex items-center gap-2 font-display text-lg">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              KI-Marktanalyse
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Kaufpreis, Mietpotenzial und Lage-Einschätzung anhand der Objektdaten.
+              {generatedAt && ` · Erstellt ${formatDateTime(generatedAt)}`}
+            </p>
+          </div>
+          <Button onClick={runAnalysis} disabled={loading} className="gap-2">
+            {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {analysis ? "Neu generieren" : "Analyse starten"}
+          </Button>
+        </div>
+
+        {!analysis && !loading && (
+          <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+            Klicke auf <strong>Analyse starten</strong>, um eine KI-gestützte Marktbeobachtung
+            für diese Immobilie zu erstellen. Je vollständiger die Objektdaten, desto präziser die Einschätzung.
+          </div>
+        )}
+
+        {loading && (
+          <div className="rounded-xl border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
+            <RefreshCw className="mx-auto mb-2 h-5 w-5 animate-spin" />
+            KI analysiert Markt, Lage und Preise…
+          </div>
+        )}
+
+        {analysis && (
+          <div className="prose prose-sm max-w-none rounded-xl border bg-muted/20 p-6 dark:prose-invert prose-headings:font-display prose-headings:mt-4 prose-headings:mb-2 prose-h2:text-base prose-p:my-2 prose-ul:my-2">
+            <ReactMarkdown>{analysis}</ReactMarkdown>
+          </div>
+        )}
+
+        <p className="text-xs text-muted-foreground">
+          ⚠️ Hinweis: KI-generierte Einschätzung ohne Gewähr. Ersetzt keine professionelle Verkehrswertermittlung.
+        </p>
       </CardContent>
     </Card>
   );

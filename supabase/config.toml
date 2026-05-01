@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.team-create-member]
 verify_jwt = true
+
+[functions.property-market-analysis]
+verify_jwt = false
