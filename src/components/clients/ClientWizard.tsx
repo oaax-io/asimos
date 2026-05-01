@@ -75,6 +75,8 @@ type FormState = {
   entity_type: EntityType;
   role_choice: RoleChoice | "";
   company_name: string;
+  contact_mode: "manual" | "existing";
+  linked_contact_client_id: string;
   // Stamm
   salutation: string;
   first_name: string;
@@ -134,7 +136,7 @@ const UNASSIGNED = "__unassigned__";
 const NO_FIN = "__none__";
 
 const empty: FormState = {
-  entity_type: "person", role_choice: "", company_name: "",
+  entity_type: "person", role_choice: "", company_name: "", contact_mode: "manual", linked_contact_client_id: "",
   salutation: "", first_name: "", last_name: "", birth_name: "", birth_date: "",
   nationality: "", marital_status: "",
   email: "", phone: "", mobile: "", street: "", street_number: "",
@@ -171,6 +173,21 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
     },
   });
   const employees = employeesQuery.data ?? [];
+
+  const personClientsQuery = useQuery({
+    queryKey: ["clients-persons-for-link"],
+    enabled: open && form.entity_type === "company",
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("id, full_name, email")
+        .eq("entity_type", "person")
+        .eq("is_archived", false)
+        .order("full_name");
+      return data ?? [];
+    },
+  });
+  const personClients = personClientsQuery.data ?? [];
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -240,6 +257,17 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
         start_date: new Date().toISOString().slice(0, 10),
       });
       if (roleErr) console.warn("Rolle konnte nicht gespeichert werden:", roleErr);
+
+      // 1c) Verknüpfung zu bestehender Kontaktperson (nur Firma)
+      if (form.entity_type === "company" && form.contact_mode === "existing" && form.linked_contact_client_id) {
+        const { error: relErr } = await supabase.from("client_relationships").insert({
+          client_id: client.id,
+          related_client_id: form.linked_contact_client_id,
+          relationship_type: "other" as any,
+          notes: "Kontaktperson",
+        });
+        if (relErr) console.warn("Kontaktperson konnte nicht verknüpft werden:", relErr);
+      }
 
       // 2) Insert self-disclosure (non-blocking — log but don't fail)
       const disclosurePayload: any = {
@@ -413,16 +441,71 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                     <Label>Firmenname *</Label>
                     <Input value={form.company_name} onChange={(e) => set("company_name", e.target.value)} placeholder="Muster AG" />
                   </div>
-                  <div>
-                    <Label>Kontaktperson – Vorname</Label>
-                    <Input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Kontaktperson – Nachname</Label>
-                    <Input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} />
-                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">Die Kontaktperson ist optional und kann später ergänzt werden.</p>
+
+                <div className="rounded-xl border bg-muted/20 p-4 space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold">Kontaktperson</p>
+                    <p className="text-xs text-muted-foreground">Optional – manuell erfassen oder bestehenden Kunden verknüpfen.</p>
+                  </div>
+
+                  <div className="inline-flex rounded-lg border bg-background p-1">
+                    <button
+                      type="button"
+                      onClick={() => { set("contact_mode", "manual"); set("linked_contact_client_id", ""); }}
+                      className={`px-3 py-1.5 text-sm rounded-md transition ${form.contact_mode === "manual" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+                    >
+                      Neu erfassen
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { set("contact_mode", "existing"); set("first_name", ""); set("last_name", ""); }}
+                      className={`px-3 py-1.5 text-sm rounded-md transition ${form.contact_mode === "existing" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+                    >
+                      Bestehenden Kunden wählen
+                    </button>
+                  </div>
+
+                  {form.contact_mode === "manual" ? (
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <div>
+                        <Label>Vorname</Label>
+                        <Input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} />
+                      </div>
+                      <div>
+                        <Label>Nachname</Label>
+                        <Input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <Label>Kunde wählen</Label>
+                      <Select
+                        value={form.linked_contact_client_id || ""}
+                        onValueChange={(v) => set("linked_contact_client_id", v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={personClientsQuery.isLoading ? "Lade Kunden…" : "Bestehenden Kunden auswählen"} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                          {personClients.length === 0 && !personClientsQuery.isLoading && (
+                            <div className="px-2 py-3 text-sm text-muted-foreground">Keine Privatpersonen gefunden.</div>
+                          )}
+                          {personClients.map((c: any) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.full_name}{c.email ? ` · ${c.email}` : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {form.linked_contact_client_id && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Diese Person wird als Kontakt mit der Firma verknüpft.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -695,8 +778,13 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                     {form.entity_type === "company" ? "Unternehmen" : "Person"}
                   </p>
                   <p className="text-base font-semibold">{fullName || "—"}</p>
-                  {form.entity_type === "company" && personName && (
+                  {form.entity_type === "company" && form.contact_mode === "manual" && personName && (
                     <p className="text-sm text-muted-foreground">Kontakt: {personName}</p>
+                  )}
+                  {form.entity_type === "company" && form.contact_mode === "existing" && form.linked_contact_client_id && (
+                    <p className="text-sm text-muted-foreground">
+                      Kontakt: {personClients.find((c: any) => c.id === form.linked_contact_client_id)?.full_name ?? "—"} (verknüpft)
+                    </p>
                   )}
                   <div className="mt-1 flex flex-wrap gap-2">
                     {form.role_choice && (
