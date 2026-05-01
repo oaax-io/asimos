@@ -261,6 +261,7 @@ function PropertyDetail() {
         <TabsContent value="mandate"><MandateTab propertyId={id} /></TabsContent>
         <TabsContent value="reservation"><ReservationTab propertyId={id} /></TabsContent>
         <TabsContent value="expose"><ExposeTab propertyId={id} /></TabsContent>
+        {!p.is_unit && <TabsContent value="units"><UnitsTab parentId={id} units={units} /></TabsContent>}
         <TabsContent value="matching" className="mt-4"><MatchPanel direction="property-to-client" property={p} /></TabsContent>
       </Tabs>
     </div>
