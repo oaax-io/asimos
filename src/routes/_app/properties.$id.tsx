@@ -206,7 +206,7 @@ function PropertyDetail() {
         </div>
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            <Badge>{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
+            <Badge variant="outline" className={getPropertyStatusBadgeClass(p.status)}>{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
             <Badge variant="secondary">{propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels]}</Badge>
             <Badge variant="outline">{listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}</Badge>
             {p.status === "reserved" && <Badge className="bg-amber-500 hover:bg-amber-500">Aktive Reservation</Badge>}
