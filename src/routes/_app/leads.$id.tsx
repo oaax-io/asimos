@@ -143,10 +143,17 @@ function LeadDetail() {
             qc.invalidateQueries({ queryKey: ["lead_activity", id] });
           }} />
           {lead.status !== "converted" && (
-            <Button onClick={() => convert.mutate()} disabled={convert.isPending}>
+            <Button onClick={() => setConvertOpen(true)}>
               <ArrowRight className="mr-1.5 h-4 w-4" />Zu Kunde konvertieren
             </Button>
           )}
+          <ConvertLeadDialog
+            lead={lead}
+            open={convertOpen}
+            onOpenChange={setConvertOpen}
+            onConverted={(clientId) => navigate({ to: "/clients/$id", params: { id: clientId } })}
+          />
+
           <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
             <Trash2 className="h-4 w-4" />
           </Button>
