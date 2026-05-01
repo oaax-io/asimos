@@ -303,7 +303,14 @@ function PropertiesPage() {
                 <SelectTrigger className="h-9 w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Alle Status</SelectItem>
-                  {STATUSES.map(s => <SelectItem key={s} value={s}>{propertyStatusLabels[s]}</SelectItem>)}
+                  {STATUSES.map(s => (
+                    <SelectItem key={s} value={s}>
+                      <span className="flex items-center gap-2">
+                        <span className={`inline-block h-2.5 w-2.5 rounded-full ${getPropertyStatusDotClass(s)}`} />
+                        {propertyStatusLabels[s]}
+                      </span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Select value={fListing} onValueChange={setFListing}>
