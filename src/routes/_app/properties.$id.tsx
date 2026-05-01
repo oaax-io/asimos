@@ -275,6 +275,8 @@ function PropertyDetail() {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const updateStatus = useMutation({
     mutationFn: async (status: string) => {
       const prevStatus = p?.status;
       const { error } = await supabase.from("properties").update({ status: status as any }).eq("id", id);
