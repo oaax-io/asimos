@@ -382,7 +382,7 @@ function PropertiesPage() {
 
       {isLoading ? (
         <div className="text-sm text-muted-foreground">Lädt…</div>
-      ) : filtered.length === 0 ? (
+      ) : displayed.length === 0 ? (
         <EmptyState
           title={properties.length === 0 ? "Noch keine Immobilien" : "Keine Treffer"}
           description={properties.length === 0
