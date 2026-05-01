@@ -174,6 +174,21 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
   });
   const employees = employeesQuery.data ?? [];
 
+  const personClientsQuery = useQuery({
+    queryKey: ["clients-persons-for-link"],
+    enabled: open && form.entity_type === "company",
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("clients")
+        .select("id, full_name, email")
+        .eq("entity_type", "person")
+        .eq("is_archived", false)
+        .order("full_name");
+      return data ?? [];
+    },
+  });
+  const personClients = personClientsQuery.data ?? [];
+
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
