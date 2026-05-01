@@ -22,6 +22,7 @@ import { MatchPanel } from "@/components/matching/MatchPanel";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { PropertyOwnersTab } from "@/components/properties/PropertyOwnersTab";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
