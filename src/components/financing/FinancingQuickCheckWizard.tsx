@@ -234,21 +234,74 @@ export function FinancingQuickCheckWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.client_id, form.client_source, clientsQuery.data]);
 
+  // ---- Auto-Fill: Mitantragsteller (aus clients + Selbstauskunft) ----
+  useEffect(() => {
+    if (!form.co_applicant_enabled || !form.co_applicant_client_id) return;
+    const c = clientsQuery.data?.find((x: { id: string }) => x.id === form.co_applicant_client_id) as
+      | { id: string; full_name: string; email: string | null; equity: number | null }
+      | undefined;
+    if (c?.equity != null) {
+      setForm((f) => ({
+        ...f,
+        co_applicant_eigenkapital: f.co_applicant_eigenkapital || String(c.equity),
+      }));
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("client_self_disclosures")
+        .select("annual_net_salary, salary_net_monthly")
+        .eq("client_id", form.co_applicant_client_id)
+        .maybeSingle();
+      if (!data) return;
+      const yearly = data.annual_net_salary
+        ?? (data.salary_net_monthly ? Number(data.salary_net_monthly) * 12 : null);
+      if (yearly) {
+        setForm((f) => ({
+          ...f,
+          co_applicant_einkommen: f.co_applicant_einkommen || String(yearly),
+        }));
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.co_applicant_client_id, form.co_applicant_enabled, clientsQuery.data]);
+
+  // ---- Kombinierte Werte (Haupt + Mitantragsteller) ----
+  const combined = useMemo(() => {
+    const mainIncome = num(form.gross_income_yearly);
+    const mainEquity = num(form.own_funds_total);
+    const mainPk = num(form.own_funds_pension_fund);
+    const coActive = form.co_applicant_enabled && !!form.co_applicant_client_id;
+    const coIncome = coActive ? num(form.co_applicant_einkommen) : 0;
+    const coEquity = coActive ? num(form.co_applicant_eigenkapital) : 0;
+    const coPk = coActive ? num(form.co_applicant_pk_anteil) : 0;
+    // Einkommen nur kombinieren, wenn Co-Einkommen > 0
+    const incomeCombined = coIncome > 0 ? mainIncome + coIncome : mainIncome;
+    const equityCombined = mainEquity + coEquity;
+    const pkCombined = mainPk + coPk;
+    return {
+      coActive,
+      coIncomeMissing: coActive && coIncome <= 0,
+      mainIncome, mainEquity, mainPk,
+      coIncome, coEquity, coPk,
+      incomeCombined, equityCombined, pkCombined,
+    };
+  }, [form]);
+
   // ---- Live-KPIs (Schritt 4 + 5 + 6) ----
   const liveResult = useMemo(() => {
     return calcQuickCheck({
       purchase_price: numOrNull(form.property_purchase_price) ?? 0,
       renovation_costs: numOrNull(form.renovation_costs) ?? 0,
       requested_mortgage: numOrNull(form.requested_mortgage) ?? 0,
-      own_funds_total: numOrNull(form.own_funds_total) ?? 0,
-      own_funds_pension_fund: numOrNull(form.own_funds_pension_fund),
+      own_funds_total: combined.equityCombined,
+      own_funds_pension_fund: combined.pkCombined || null,
       own_funds_vested_benefits: null,
-      gross_income_yearly: numOrNull(form.gross_income_yearly) ?? 0,
+      gross_income_yearly: combined.incomeCombined,
       calculated_interest_rate: numOrNull(form.calc_rate) ?? 5,
-      ancillary_costs_yearly: null, // berechnet aus % unten
+      ancillary_costs_yearly: null,
       amortisation_yearly: null,
     });
-  }, [form]);
+  }, [form, combined]);
 
   // Tatsächliche Live-Kennzahlen mit Nebenkosten-% und Amortisation aus Schritt 5
   const liveKpis = useMemo(() => {
@@ -256,8 +309,8 @@ export function FinancingQuickCheckWizard({
     const reno = num(form.renovation_costs);
     const total = purchase + reno;
     const mortgage = num(form.requested_mortgage);
-    const equity = num(form.own_funds_total);
-    const income = num(form.gross_income_yearly);
+    const equity = combined.equityCombined;
+    const income = combined.incomeCombined;
     const rate = num(form.calc_rate) || 5;
     const ancPct = num(form.ancillary_pct) || 1;
     const years = num(form.amortisation_years) || 15;
@@ -265,14 +318,13 @@ export function FinancingQuickCheckWizard({
     const ltv = total > 0 ? (mortgage / total) * 100 : 0;
     const equityRatio = total > 0 ? (equity / total) * 100 : 0;
     const ancillary = total * (ancPct / 100);
-    // Amortisation: nur 2. Hypothek (über 66.67% LTV) auf "years" Jahre
     const firstMortgageMax = total * 0.6667;
     const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
     const amort = years > 0 ? secondMortgage / years : 0;
     const yearly = mortgage * (rate / 100) + ancillary + amort;
     const affordability = income > 0 ? (yearly / income) * 100 : 0;
     return { ltv, equityRatio, affordability, total, ancillary, amort, yearly };
-  }, [form]);
+  }, [form, combined]);
 
   // ---- Validierung ----
   const canNext = useMemo(() => {
