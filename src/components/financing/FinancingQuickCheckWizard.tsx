@@ -1,39 +1,90 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import {
-  Home, Hammer, ArrowUpCircle, Repeat2, Building, TrendingUp,
-  CheckCircle2, AlertTriangle, XCircle, Info, ArrowLeft, ArrowRight,
-  Database, PencilLine,
+  Home, Hammer, ArrowUpCircle, Repeat2, TrendingUp,
+  CheckCircle2, ArrowLeft, ArrowRight, ChevronsUpDown, Check,
 } from "lucide-react";
 import {
-  FINANCING_TYPE_LABELS, FINANCING_TYPE_DESCRIPTIONS,
-  calcQuickCheck, type FinancingType, type QuickCheckStatus,
+  FINANCING_TYPE_LABELS, type FinancingType,
 } from "@/lib/financing";
-import {
-  fieldsForModules, computeFinancingMulti, toNumOrNull,
-  type DynamicForm, type FieldKey,
-} from "@/lib/financing-fields";
 import { formatCurrency } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
-const TYPE_ICONS: Record<FinancingType, any> = {
-  purchase: Home,
-  renovation: Hammer,
-  increase: ArrowUpCircle,
-  refinance: Repeat2,
-  new_build: Building,
-  mortgage_increase: TrendingUp,
+// Nur die fünf neuen, gewünschten Module (kein new_build)
+type WizardModule = "purchase" | "renovation" | "increase" | "refinance" | "mortgage_increase";
+
+const MODULE_OPTIONS: { key: WizardModule; label: string; description: string; icon: any }[] = [
+  { key: "purchase", label: "Kauf", description: "Finanzierung für den Kauf einer Immobilie.", icon: Home },
+  { key: "renovation", label: "Renovation", description: "Finanzierung von Umbau- oder Renovationsarbeiten.", icon: Hammer },
+  { key: "increase", label: "Erhöhung bestehende Hypothek", description: "Aufstockung einer bestehenden Hypothek (z. B. für Investitionen).", icon: ArrowUpCircle },
+  { key: "refinance", label: "Refinanzierung", description: "Wechsel der Bank oder Ablösung der bestehenden Hypothek.", icon: Repeat2 },
+  { key: "mortgage_increase", label: "Hypothekaraufstockung", description: "Erhöhung der Hypothek bei der bestehenden Bank.", icon: TrendingUp },
+];
+
+type PropertySource = "crm" | "manual" | "later";
+type ClientSource = "crm" | "manual";
+
+export type WizardForm = {
+  modules: WizardModule[];
+
+  // Property
+  property_source: PropertySource;
+  property_id: string;
+  property_title: string;
+  property_address: string;
+  property_purchase_price: string;
+
+  // Client
+  client_source: ClientSource;
+  client_id: string;
+  gross_income_yearly: string;
+  own_funds_total: string;
+  own_funds_pension_fund: string;
+
+  // Reserved für spätere Schritte (4–6)
+  renovation_costs: string;
+  existing_mortgage: string;
+  requested_mortgage: string;
+  calc_rate: string;
+  ancillary_pct: string;
+  amortisation_years: string;
 };
 
-type DataSource = "existing_property" | "quick_entry";
+const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
+  modules: [],
+  property_source: "crm",
+  property_id: "",
+  property_title: "",
+  property_address: "",
+  property_purchase_price: "",
+  client_source: "crm",
+  client_id: "",
+  gross_income_yearly: "",
+  own_funds_total: "",
+  own_funds_pension_fund: "",
+  renovation_costs: "",
+  existing_mortgage: "",
+  requested_mortgage: "",
+  calc_rate: "5",
+  ancillary_pct: "1",
+  amortisation_years: "15",
+  ...defaults,
+});
 
 type Props = {
   open: boolean;
@@ -43,238 +94,144 @@ type Props = {
   defaultPropertyId?: string;
 };
 
+const TOTAL_STEPS = 6;
+
 export function FinancingQuickCheckWizard({
   open, onOpenChange, onCreated, defaultClientId, defaultPropertyId,
 }: Props) {
   const qc = useQueryClient();
   const [step, setStep] = useState(1);
-  const [modules, setModules] = useState<FinancingType[]>(["purchase"]);
-  const [dataSource, setDataSource] = useState<DataSource>(
-    defaultPropertyId ? "existing_property" : "existing_property"
-  );
-  const [clientId, setClientId] = useState<string>(defaultClientId ?? "");
-  const [propertyId, setPropertyId] = useState<string>(defaultPropertyId ?? "");
-  const [snapshot, setSnapshot] = useState({ title: "", address: "", city: "", postal_code: "" });
-  const [form, setForm] = useState<DynamicForm>({});
-  const [calcRate, setCalcRate] = useState("5");
-  const [ancillary, setAncillary] = useState("");
-  const [amortisation, setAmortisation] = useState("");
+  const [form, setForm] = useState<WizardForm>(() => emptyForm({
+    client_id: defaultClientId ?? "",
+    property_id: defaultPropertyId ?? "",
+    client_source: defaultClientId ? "crm" : "crm",
+    property_source: defaultPropertyId ? "crm" : "crm",
+  }));
 
-  const TOTAL_STEPS = 7;
-  const fields = useMemo(() => fieldsForModules(modules), [modules]);
-  const primaryType: FinancingType = modules[0] ?? "purchase";
-
-  const toggleModule = (m: FinancingType) => {
-    setModules((prev) => {
-      if (prev.includes(m)) {
-        const next = prev.filter((x) => x !== m);
-        return next.length ? next : prev; // mind. 1 erforderlich
-      }
-      return [...prev, m];
-    });
-  };
+  const update = <K extends keyof WizardForm>(k: K, v: WizardForm[K]) =>
+    setForm((f) => ({ ...f, [k]: v }));
 
   useEffect(() => {
     if (!open) {
       setStep(1);
-      setModules(["purchase"]);
-      setDataSource(defaultPropertyId ? "existing_property" : "existing_property");
-      setClientId(defaultClientId ?? "");
-      setPropertyId(defaultPropertyId ?? "");
-      setSnapshot({ title: "", address: "", city: "", postal_code: "" });
-      setForm({});
-      setCalcRate("5");
-      setAncillary("");
-      setAmortisation("");
+      setForm(emptyForm({
+        client_id: defaultClientId ?? "",
+        property_id: defaultPropertyId ?? "",
+      }));
     }
   }, [open, defaultClientId, defaultPropertyId]);
 
-  // Felder zurücksetzen bei Modulwechsel (nicht relevante leeren)
-  useEffect(() => {
-    setForm((prev) => {
-      const allowed = new Set<FieldKey>(fields.map((f) => f.key));
-      const next: DynamicForm = {};
-      allowed.forEach((k) => { next[k] = prev[k] ?? ""; });
-      return next;
+  const toggleModule = (m: WizardModule) => {
+    setForm((f) => {
+      const has = f.modules.includes(m);
+      return { ...f, modules: has ? f.modules.filter((x) => x !== m) : [...f.modules, m] };
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modules.join("|")]);
+  };
 
-  const clientsQuery = useQuery({
-    queryKey: ["financing_wizard_clients"],
+  // ---- Daten: Properties & Clients ----
+  const propertiesQuery = useQuery({
+    queryKey: ["wizard_properties"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("id, full_name, email").order("full_name");
+      const { data, error } = await supabase
+        .from("properties")
+        .select("id, title, address, city, postal_code, price")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
     enabled: open,
   });
 
-  const propertiesQuery = useQuery({
-    queryKey: ["financing_wizard_properties"],
+  const clientsQuery = useQuery({
+    queryKey: ["wizard_clients"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("properties")
-        .select("id, title, address, city, postal_code, price, status")
-        .order("created_at", { ascending: false });
+        .from("clients")
+        .select("id, full_name, email, equity")
+        .order("full_name");
       if (error) throw error;
       return data ?? [];
     },
-    enabled: open && dataSource === "existing_property",
+    enabled: open,
   });
 
-  const selectedClient = clientsQuery.data?.find((c: any) => c.id === clientId);
-  const selectedProperty = propertiesQuery.data?.find((p: any) => p.id === propertyId);
-
-  // Auto-Übernahme aus Immobilie
+  // ---- Auto-Fill: Property ----
   useEffect(() => {
-    if (!selectedProperty) return;
-    setForm((f) => {
-      const next = { ...f };
-      const set = new Set(modules);
-      if (selectedProperty.price) {
-        if (set.has("purchase") && !next.purchase_price) {
-          next.purchase_price = String(selectedProperty.price);
-        }
-        if (!set.has("purchase") && !set.has("new_build") && !next.property_value) {
-          next.property_value = String(selectedProperty.price);
-        }
-      }
-      return next;
-    });
+    if (form.property_source !== "crm" || !form.property_id) return;
+    const p: any = propertiesQuery.data?.find((x: any) => x.id === form.property_id);
+    if (!p) return;
+    setForm((f) => ({
+      ...f,
+      property_title: f.property_title || p.title || "",
+      property_address: f.property_address || [p.address, p.postal_code, p.city].filter(Boolean).join(", "),
+      property_purchase_price: f.property_purchase_price || (p.price != null ? String(p.price) : ""),
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [propertyId, modules.join("|")]);
+  }, [form.property_id, form.property_source, propertiesQuery.data]);
 
-  // Auto-Übernahme aus Selbstauskunft
+  // ---- Auto-Fill: Client (aus clients + Selbstauskunft) ----
   useEffect(() => {
-    if (!clientId) return;
+    if (form.client_source !== "crm" || !form.client_id) return;
+    const c: any = clientsQuery.data?.find((x: any) => x.id === form.client_id);
+    if (c?.equity != null) {
+      setForm((f) => ({
+        ...f,
+        own_funds_total: f.own_funds_total || String(c.equity),
+      }));
+    }
     (async () => {
       const { data } = await supabase
         .from("client_self_disclosures")
         .select("annual_net_salary, salary_net_monthly")
-        .eq("client_id", clientId)
+        .eq("client_id", form.client_id)
         .maybeSingle();
-      if (data && !form.gross_income_yearly) {
-        const yearly = data.annual_net_salary
-          ?? (data.salary_net_monthly ? Number(data.salary_net_monthly) * 12 : null);
-        if (yearly) setForm((f) => ({ ...f, gross_income_yearly: String(yearly) }));
+      if (!data) return;
+      const yearly = data.annual_net_salary
+        ?? (data.salary_net_monthly ? Number(data.salary_net_monthly) * 12 : null);
+      if (yearly) {
+        setForm((f) => ({
+          ...f,
+          gross_income_yearly: f.gross_income_yearly || String(yearly),
+        }));
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId]);
+  }, [form.client_id, form.client_source, clientsQuery.data]);
 
-  const computed = useMemo(() => computeFinancingMulti(modules, form), [modules, form]);
-
-  const result = useMemo(() => calcQuickCheck({
-    purchase_price: computed.reference_value,
-    renovation_costs: 0,
-    requested_mortgage: computed.effective_mortgage,
-    own_funds_total: toNumOrNull(form.own_funds_total) ?? Math.max(0, computed.reference_value - computed.effective_mortgage),
-    own_funds_pension_fund: toNumOrNull(form.own_funds_pension_fund),
-    own_funds_vested_benefits: toNumOrNull(form.own_funds_vested_benefits),
-    gross_income_yearly: toNumOrNull(form.gross_income_yearly),
-    calculated_interest_rate: parseFloat(calcRate) || 5,
-    ancillary_costs_yearly: toNumOrNull(ancillary),
-    amortisation_yearly: toNumOrNull(amortisation),
-  }), [computed, form, calcRate, ancillary, amortisation]);
-
-  const moduleLabel = (m: FinancingType) => FINANCING_TYPE_LABELS[m];
-  const modulesLabel = modules.map(moduleLabel).join(" + ");
-
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      if (!clientId) throw new Error("Bitte Kunden auswählen");
-
-      // Nur Felder befüllen, die zur Modul-Kombination gehören
-      const allowed = new Set<FieldKey>(fields.map((f) => f.key));
-      const fieldVal = (k: FieldKey) => (allowed.has(k) ? toNumOrNull(form[k]) : null);
-      const txtVal = (k: FieldKey) => (allowed.has(k) ? (form[k] || null) : null);
-
-      const payload: any = {
-        client_id: clientId,
-        property_id: dataSource === "existing_property" ? (propertyId || null) : null,
-        financing_type: primaryType,
-        financing_modules: modules,
-        data_source: dataSource,
-        property_snapshot: dataSource === "quick_entry" ? snapshot : {},
-        title: `${modulesLabel}${selectedClient ? " – " + selectedClient.full_name : ""}`,
-
-        // Modul-spezifische Felder
-        purchase_price: fieldVal("purchase_price"),
-        purchase_additional_costs: fieldVal("purchase_additional_costs"),
-        renovation_costs: fieldVal("renovation_costs"),
-        renovation_description: txtVal("renovation_description"),
-        renovation_value_increase: fieldVal("renovation_value_increase"),
-        property_value: fieldVal("property_value"),
-        existing_mortgage: fieldVal("existing_mortgage"),
-        requested_mortgage: fieldVal("requested_mortgage"),
-        requested_increase: fieldVal("requested_increase"),
-        new_total_mortgage: computed.new_total_mortgage || null,
-        land_price: fieldVal("land_price"),
-        construction_costs: fieldVal("construction_costs"),
-        construction_additional_costs: fieldVal("construction_additional_costs"),
-        current_bank: txtVal("current_bank"),
-        interest_rate_expiry: allowed.has("interest_rate_expiry") ? (form.interest_rate_expiry || null) : null,
-
-        // Eigenmittel & Einkommen
-        own_funds_total: fieldVal("own_funds_total"),
-        own_funds_pension_fund: fieldVal("own_funds_pension_fund"),
-        own_funds_vested_benefits: fieldVal("own_funds_vested_benefits"),
-        gross_income_yearly: fieldVal("gross_income_yearly"),
-
-        // Berechnete Werte
-        total_investment: computed.total_investment || null,
-        loan_to_value_ratio: result.loan_to_value_ratio || null,
-        affordability_ratio: result.affordability_ratio || null,
-        calculated_interest_rate: parseFloat(calcRate) || 5,
-        ancillary_costs_yearly: toNumOrNull(ancillary),
-        amortisation_yearly: toNumOrNull(amortisation),
-        quick_check_status: result.status,
-        quick_check_reasons: result.reasons,
-        dossier_status: "quick_check" as const,
-      };
-
-
-      const { data, error } = await supabase
-        .from("financing_dossiers")
-        .insert(payload)
-        .select("id")
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ["financing_dossiers"] });
-      toast.success("Dossier erstellt");
-      onCreated?.(data.id);
-    },
-    onError: (e: any) => toast.error(e.message ?? "Fehler"),
-  });
-
-  const requiredFilled = useMemo(() => {
-    return fields.filter((f) => f.required).every((f) => (form[f.key] ?? "").toString().trim() !== "");
-  }, [fields, form]);
-
-  const canNext = () => {
-    if (step === 1) return modules.length > 0;
-    if (step === 2) return !!dataSource;
-    if (step === 3) return !!clientId;
-    if (step === 4) {
-      if (dataSource === "quick_entry") return !!snapshot.title;
+  // ---- Validierung ----
+  const canNext = useMemo(() => {
+    if (step === 1) return form.modules.length > 0;
+    if (step === 2) {
+      if (form.property_source === "crm") return !!form.property_id;
+      if (form.property_source === "manual") return !!form.property_title.trim();
+      return true; // later
+    }
+    if (step === 3) {
+      if (form.client_source === "crm") return !!form.client_id;
       return true;
     }
-    if (step === 5) return requiredFilled;
-    if (step === 6) return (toNumOrNull(form.gross_income_yearly) ?? 0) > 0;
     return true;
-  };
+  }, [step, form]);
 
-  const updateField = (k: FieldKey, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  // Platzhalter-Mutation (volle Speicherung folgt mit Schritt 6)
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      toast.info("Speichern wird mit Schritt 6 implementiert.");
+      return null;
+    },
+    onSuccess: (id: any) => {
+      qc.invalidateQueries({ queryKey: ["financing_dossiers"] });
+      if (id) onCreated?.(id);
+    },
+  });
+
+  const headerTitle = `Quick Check Finanzierung – Schritt ${step} / ${TOTAL_STEPS}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Quick Check Finanzierung – Schritt {step} / {TOTAL_STEPS}</DialogTitle>
+          <DialogTitle>{headerTitle}</DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-1 my-2">
@@ -283,224 +240,26 @@ export function FinancingQuickCheckWizard({
           ))}
         </div>
 
-        {/* 1. Finanzierungsart (Multi-Select) */}
-        {step === 1 && (
-          <div className="space-y-3">
-            <p className="text-xs text-muted-foreground">
-              Mehrere Bausteine kombinierbar (z. B. Kauf + Renovation, Aufstockung + Renovation).
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {(Object.keys(FINANCING_TYPE_LABELS) as FinancingType[]).map((t) => {
-                const Icon = TYPE_ICONS[t];
-                const active = modules.includes(t);
-                return (
-                  <Card
-                    key={t}
-                    onClick={() => toggleModule(t)}
-                    className={`cursor-pointer p-4 transition ${active ? "border-primary ring-2 ring-primary/30" : "hover:border-primary/40"}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`rounded-lg p-2 ${active ? "bg-primary/15" : "bg-muted"}`}>
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{FINANCING_TYPE_LABELS[t]}</p>
-                        <p className="text-xs text-muted-foreground">{FINANCING_TYPE_DESCRIPTIONS[t]}</p>
-                      </div>
-                      {active && <CheckCircle2 className="h-4 w-4 text-primary mt-1" />}
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-            {modules.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {modules.map((m) => (
-                  <Badge key={m} variant="secondary">{FINANCING_TYPE_LABELS[m]}</Badge>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* 2. Datenbasis */}
+        {step === 1 && <Step1Modules form={form} toggleModule={toggleModule} />}
         {step === 2 && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Card
-              onClick={() => setDataSource("existing_property")}
-              className={`cursor-pointer p-4 transition ${dataSource === "existing_property" ? "border-primary ring-2 ring-primary/30" : "hover:border-primary/40"}`}
-            >
-              <div className="flex items-start gap-3">
-                <div className={`rounded-lg p-2 ${dataSource === "existing_property" ? "bg-primary/15" : "bg-muted"}`}>
-                  <Database className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-medium">Bestehende Immobilie verwenden</p>
-                  <p className="text-xs text-muted-foreground">Immobilie aus dem System auswählen, Daten werden übernommen.</p>
-                </div>
-              </div>
-            </Card>
-            <Card
-              onClick={() => setDataSource("quick_entry")}
-              className={`cursor-pointer p-4 transition ${dataSource === "quick_entry" ? "border-primary ring-2 ring-primary/30" : "hover:border-primary/40"}`}
-            >
-              <div className="flex items-start gap-3">
-                <div className={`rounded-lg p-2 ${dataSource === "quick_entry" ? "bg-primary/15" : "bg-muted"}`}>
-                  <PencilLine className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-medium">Schnellprüfung</p>
-                  <p className="text-xs text-muted-foreground">Werte manuell erfassen, ohne Immobilie im System.</p>
-                </div>
-              </div>
-            </Card>
-          </div>
+          <Step2Property
+            form={form}
+            update={update}
+            properties={propertiesQuery.data ?? []}
+            loading={propertiesQuery.isLoading}
+          />
         )}
-
-        {/* 3. Kunde */}
         {step === 3 && (
-          <div className="space-y-3">
-            <Label>Kunde wählen</Label>
-            <Select value={clientId} onValueChange={setClientId}>
-              <SelectTrigger><SelectValue placeholder="Kunde auswählen" /></SelectTrigger>
-              <SelectContent>
-                {(clientsQuery.data ?? []).map((c: any) => (
-                  <SelectItem key={c.id} value={c.id}>{c.full_name}{c.email ? ` (${c.email})` : ""}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">Daten aus Selbstauskunft werden automatisch vorausgefüllt.</p>
-          </div>
+          <Step3Client
+            form={form}
+            update={update}
+            clients={clientsQuery.data ?? []}
+            loading={clientsQuery.isLoading}
+          />
         )}
-
-        {/* 4. Immobilie / Snapshot */}
-        {step === 4 && dataSource === "existing_property" && (
-          <div className="space-y-3">
-            <Label>Immobilie wählen (optional)</Label>
-            <Select value={propertyId || "__none__"} onValueChange={(v) => setPropertyId(v === "__none__" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="Keine Immobilie" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">— Keine Immobilie —</SelectItem>
-                {(propertiesQuery.data ?? []).map((p: any) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.title}{p.city ? ` · ${p.city}` : ""}{p.price ? ` · ${formatCurrency(Number(p.price))}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedProperty && (
-              <p className="text-xs text-muted-foreground">Objektwert und Adresse werden im nächsten Schritt übernommen.</p>
-            )}
-          </div>
-        )}
-
-        {step === 4 && dataSource === "quick_entry" && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="sm:col-span-2 space-y-1">
-              <Label className="text-xs">Bezeichnung der Immobilie</Label>
-              <Input value={snapshot.title} onChange={(e) => setSnapshot({ ...snapshot, title: e.target.value })} placeholder="z. B. Wohnung Bahnhofstrasse 12" />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Adresse</Label>
-              <Input value={snapshot.address} onChange={(e) => setSnapshot({ ...snapshot, address: e.target.value })} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">PLZ</Label>
-              <Input value={snapshot.postal_code} onChange={(e) => setSnapshot({ ...snapshot, postal_code: e.target.value })} />
-            </div>
-            <div className="space-y-1 sm:col-span-2">
-              <Label className="text-xs">Ort</Label>
-              <Input value={snapshot.city} onChange={(e) => setSnapshot({ ...snapshot, city: e.target.value })} />
-            </div>
-          </div>
-        )}
-
-        {/* 5. Dynamische Felder */}
-        {step === 5 && (
-          <div className="space-y-3">
-            <div className="text-sm text-muted-foreground">
-              Felder für: <span className="font-medium text-foreground">{modulesLabel}</span>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {fields
-                .filter((f) => f.key !== "gross_income_yearly")
-                .map((f) => (
-                  <DynField
-                    key={f.key}
-                    field={f}
-                    value={form[f.key] ?? ""}
-                    onChange={(v) => updateField(f.key, v)}
-                  />
-                ))}
-            </div>
-            <div className="rounded-lg bg-muted/50 p-3 text-sm space-y-1">
-              <div className="flex justify-between"><span className="text-muted-foreground">Gesamtinvestition / Objektwert:</span><span className="font-semibold">{formatCurrency(computed.total_investment)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Massgebliche Hypothek:</span><span className="font-semibold">{formatCurrency(computed.effective_mortgage)}</span></div>
-            </div>
-          </div>
-        )}
-
-        {/* 6. Einkommen / Tragbarkeit */}
-        {step === 6 && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <DynField
-              field={{ key: "gross_income_yearly", label: "Bruttoeinkommen jährlich (CHF)", type: "number", required: true }}
-              value={form.gross_income_yearly ?? ""}
-              onChange={(v) => updateField("gross_income_yearly", v)}
-            />
-            <div className="space-y-1">
-              <Label className="text-xs">Kalkulatorischer Zinssatz (%)</Label>
-              <Input type="number" inputMode="decimal" value={calcRate} onChange={(e) => setCalcRate(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Nebenkosten jährlich (Vorschlag: {formatCurrency(computed.reference_value * 0.01)})</Label>
-              <Input type="number" inputMode="decimal" value={ancillary} onChange={(e) => setAncillary(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Amortisation jährlich (CHF)</Label>
-              <Input type="number" inputMode="decimal" value={amortisation} onChange={(e) => setAmortisation(e.target.value)} />
-            </div>
-          </div>
-        )}
-
-        {/* 7. Zusammenfassung */}
-        {step === 7 && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <SumRow label="Module" value={modulesLabel} />
-              <SumRow label="Datenbasis" value={dataSource === "existing_property" ? "Bestehende Immobilie" : "Schnellprüfung"} />
-              <SumRow label="Kunde" value={selectedClient?.full_name ?? "—"} />
-              <SumRow label="Immobilie" value={dataSource === "existing_property" ? (selectedProperty?.title ?? "Keine") : (snapshot.title || "—")} />
-            </div>
-
-            <div className="rounded-xl border p-4">
-              <div className="flex items-center gap-3">
-                <StatusBadge status={result.status} />
-                <p className="font-semibold">Ergebnis Quick Check</p>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-sm">
-                <Stat label="Gesamtinvestition" value={formatCurrency(computed.total_investment)} />
-                <Stat label="Hypothek" value={formatCurrency(computed.effective_mortgage)} />
-                <Stat label="Belehnung" value={`${result.loan_to_value_ratio.toFixed(1)}%`} />
-                <Stat label="Tragbarkeit" value={`${result.affordability_ratio.toFixed(1)}%`} />
-              </div>
-              <ul className="mt-4 space-y-1.5">
-                {result.reasons.map((r) => (
-                  <li key={r.key} className="flex items-center gap-2 text-sm">
-                    {r.tone === "ok" && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
-                    {r.tone === "warn" && <AlertTriangle className="h-4 w-4 text-amber-600" />}
-                    {r.tone === "bad" && <XCircle className="h-4 w-4 text-red-600" />}
-                    <span>{r.label}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex items-start gap-2 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-              <Info className="h-4 w-4 mt-0.5" />
-              <p>Mit "Dossier weiterbearbeiten" wird das Dossier gespeichert und geöffnet.</p>
-            </div>
-          </div>
-        )}
+        {step === 4 && <PlaceholderStep label="Schritt 4 — Kennzahlen (folgt)" />}
+        {step === 5 && <PlaceholderStep label="Schritt 5 — Erweiterte Parameter (folgt)" />}
+        {step === 6 && <PlaceholderStep label="Schritt 6 — Zusammenfassung & Bestätigung (folgt)" />}
 
         <DialogFooter className="mt-4 flex-row justify-between sm:justify-between">
           <div>
@@ -512,17 +271,14 @@ export function FinancingQuickCheckWizard({
           </div>
           <div className="flex gap-2">
             {step < TOTAL_STEPS && (
-              <Button onClick={() => setStep(step + 1)} disabled={!canNext()}>
+              <Button onClick={() => setStep(step + 1)} disabled={!canNext}>
                 Weiter <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             )}
             {step === TOTAL_STEPS && (
-              <>
-                <Button variant="outline" onClick={() => onOpenChange(false)}>Nicht weiterverfolgen</Button>
-                <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Speichern…" : "Dossier weiterbearbeiten"}
-                </Button>
-              </>
+              <Button onClick={() => createMutation.mutate()} disabled>
+                Quick Check starten
+              </Button>
             )}
           </div>
         </DialogFooter>
@@ -531,17 +287,218 @@ export function FinancingQuickCheckWizard({
   );
 }
 
-function DynField({
-  field, value, onChange,
-}: { field: { key: FieldKey; label: string; type?: string; required?: boolean }; value: string; onChange: (v: string) => void }) {
+/* ==================== Schritt 1 ==================== */
+function Step1Modules({
+  form, toggleModule,
+}: { form: WizardForm; toggleModule: (m: WizardModule) => void }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Mehrere Bausteine kombinierbar. Mindestens eine Auswahl ist erforderlich.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {MODULE_OPTIONS.map((opt) => {
+          const Icon = opt.icon;
+          const active = form.modules.includes(opt.key);
+          return (
+            <Card
+              key={opt.key}
+              onClick={() => toggleModule(opt.key)}
+              className={cn(
+                "cursor-pointer p-4 transition",
+                active ? "border-primary ring-2 ring-primary/30" : "hover:border-primary/40",
+              )}
+            >
+              <div className="flex items-start gap-3">
+                <div className={cn("rounded-lg p-2", active ? "bg-primary/15" : "bg-muted")}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium">{opt.label}</p>
+                  <p className="text-xs text-muted-foreground">{opt.description}</p>
+                </div>
+                {active && <CheckCircle2 className="h-4 w-4 text-primary mt-1" />}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+      {form.modules.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {form.modules.map((m) => {
+            const opt = MODULE_OPTIONS.find((o) => o.key === m);
+            return <Badge key={m} variant="secondary">{opt?.label ?? FINANCING_TYPE_LABELS[m as FinancingType]}</Badge>;
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ==================== Schritt 2 ==================== */
+function Step2Property({
+  form, update, properties, loading,
+}: {
+  form: WizardForm;
+  update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
+  properties: any[];
+  loading: boolean;
+}) {
+  return (
+    <div className="space-y-4">
+      <RadioGroup
+        value={form.property_source}
+        onValueChange={(v) => update("property_source", v as PropertySource)}
+        className="grid gap-2"
+      >
+        <SourceRow value="crm" label="Immobilie aus CRM wählen" description="Bestehendes Objekt auswählen, Daten werden übernommen." />
+        <SourceRow value="manual" label="Manuell erfassen" description="Adresse, Bezeichnung und Kaufpreis selbst eingeben." />
+        <SourceRow value="later" label="Später erfassen" description="Schritt überspringen — Felder bleiben leer." />
+      </RadioGroup>
+
+      {form.property_source === "crm" && (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Immobilie</Label>
+            <SearchableSelect
+              placeholder={loading ? "Lade…" : "Immobilie suchen…"}
+              emptyText="Keine Immobilie gefunden."
+              value={form.property_id}
+              onChange={(v) => update("property_id", v)}
+              items={properties.map((p) => ({
+                value: p.id,
+                label: p.title || "(ohne Titel)",
+                hint: [p.city, p.price ? formatCurrency(Number(p.price)) : null].filter(Boolean).join(" · "),
+              }))}
+            />
+          </div>
+          {form.property_id && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Objektbezeichnung" value={form.property_title} onChange={(v) => update("property_title", v)} />
+              <Field label="Kaufpreis (CHF)" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
+              <div className="sm:col-span-2">
+                <Field label="Adresse" value={form.property_address} onChange={(v) => update("property_address", v)} />
+              </div>
+              <p className="sm:col-span-2 text-xs text-muted-foreground">
+                Werte aus CRM vorausgefüllt. Anpassungen gelten nur für diesen Quick Check.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {form.property_source === "manual" && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Field label="Objektbezeichnung *" value={form.property_title} onChange={(v) => update("property_title", v)} />
+          </div>
+          <div className="sm:col-span-2">
+            <Field label="Adresse" value={form.property_address} onChange={(v) => update("property_address", v)} />
+          </div>
+          <Field label="Kaufpreis (CHF)" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
+        </div>
+      )}
+
+      {form.property_source === "later" && (
+        <p className="text-xs text-muted-foreground">
+          Sie können die Immobiliendaten später im Dossier ergänzen.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ==================== Schritt 3 ==================== */
+function Step3Client({
+  form, update, clients, loading,
+}: {
+  form: WizardForm;
+  update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
+  clients: any[];
+  loading: boolean;
+}) {
+  return (
+    <div className="space-y-4">
+      <RadioGroup
+        value={form.client_source}
+        onValueChange={(v) => update("client_source", v as ClientSource)}
+        className="grid gap-2"
+      >
+        <SourceRow value="crm" label="Kunde aus CRM wählen" description="Selbstauskunft & Eigenkapital werden vorausgefüllt." />
+        <SourceRow value="manual" label="Ohne Kunde / manuell" description="Quick Check ohne Verknüpfung zu einem Kunden." />
+      </RadioGroup>
+
+      {form.client_source === "crm" && (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Kunde</Label>
+            <SearchableSelect
+              placeholder={loading ? "Lade…" : "Kunde suchen…"}
+              emptyText="Keinen Kunden gefunden."
+              value={form.client_id}
+              onChange={(v) => update("client_id", v)}
+              items={clients.map((c) => ({
+                value: c.id,
+                label: c.full_name,
+                hint: c.email ?? undefined,
+              }))}
+            />
+          </div>
+          {form.client_id && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Brutto-Jahreseinkommen (CHF)" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
+              <Field label="Eigenmittel total (CHF)" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
+              <Field label="davon Pensionskasse (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+              <p className="sm:col-span-2 text-xs text-muted-foreground">
+                Werte aus Kundenprofil und Selbstauskunft vorausgefüllt — editierbar.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {form.client_source === "manual" && (
+        <p className="text-xs text-muted-foreground">
+          Quick Check wird ohne Kundenverknüpfung erstellt. Die Finanzdaten erfassen Sie in Schritt 4.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ==================== Helpers ==================== */
+function PlaceholderStep({ label }: { label: string }) {
+  return (
+    <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+      {label}
+    </div>
+  );
+}
+
+function SourceRow({ value, label, description }: { value: string; label: string; description: string }) {
+  return (
+    <Label
+      htmlFor={`src-${value}`}
+      className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 hover:border-primary/40 [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:ring-2 [&:has([data-state=checked])]:ring-primary/20"
+    >
+      <RadioGroupItem id={`src-${value}`} value={value} className="mt-1" />
+      <div className="flex-1">
+        <p className="font-medium text-sm">{label}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+    </Label>
+  );
+}
+
+function Field({
+  label, value, onChange, type = "text",
+}: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
   return (
     <div className="space-y-1">
-      <Label className="text-xs">
-        {field.label}{field.required && <span className="text-destructive"> *</span>}
-      </Label>
+      <Label className="text-xs">{label}</Label>
       <Input
-        type={field.type === "date" ? "date" : field.type === "text" ? "text" : "number"}
-        inputMode={field.type === "number" ? "decimal" : undefined}
+        type={type}
+        inputMode={type === "number" ? "decimal" : undefined}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
@@ -549,27 +506,57 @@ function DynField({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function SearchableSelect({
+  value, onChange, items, placeholder, emptyText,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  items: { value: string; label: string; hint?: string }[];
+  placeholder: string;
+  emptyText: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = items.find((i) => i.value === value);
   return (
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-semibold">{value}</p>
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          className="w-full justify-between font-normal"
+        >
+          <span className="truncate">
+            {selected
+              ? `${selected.label}${selected.hint ? ` · ${selected.hint}` : ""}`
+              : placeholder}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Suchen…" />
+          <CommandList>
+            <CommandEmpty>{emptyText}</CommandEmpty>
+            <CommandGroup>
+              {items.map((i) => (
+                <CommandItem
+                  key={i.value}
+                  value={`${i.label} ${i.hint ?? ""}`}
+                  onSelect={() => { onChange(i.value); setOpen(false); }}
+                >
+                  <Check className={cn("mr-2 h-4 w-4", value === i.value ? "opacity-100" : "opacity-0")} />
+                  <div className="flex-1">
+                    <div className="text-sm">{i.label}</div>
+                    {i.hint && <div className="text-xs text-muted-foreground">{i.hint}</div>}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
-}
-
-function SumRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border p-2">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-medium">{value}</p>
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: QuickCheckStatus }) {
-  if (status === "realistic") return <Badge className="bg-emerald-600 hover:bg-emerald-600">Realistisch</Badge>;
-  if (status === "critical") return <Badge className="bg-amber-500 hover:bg-amber-500">Kritisch</Badge>;
-  if (status === "not_financeable") return <Badge className="bg-red-600 hover:bg-red-600">Nicht finanzierbar</Badge>;
-  return <Badge variant="secondary">Unvollständig</Badge>;
 }
