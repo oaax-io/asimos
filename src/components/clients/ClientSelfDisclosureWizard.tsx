@@ -262,13 +262,12 @@ export function ClientSelfDisclosureWizard({
       }
 
       setForm(nextForm);
-      const baseBenchmark = calculateBenchmark(
-        baseForm as Record<string, number | string | null>,
+      const nextBenchmark = calculateBenchmark(
+        nextForm as Record<string, number | string | null>,
       );
       lastSyncedSnapshotRef.current = JSON.stringify(
-        buildPersistPayload(baseForm, clientId, baseBenchmark, employees),
+        buildPersistPayload(nextForm, clientId, nextBenchmark, employees),
       );
-      setStep(1);
       setLastSavedAt(null);
     }
     wasOpenRef.current = open;
