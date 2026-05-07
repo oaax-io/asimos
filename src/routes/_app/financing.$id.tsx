@@ -11,8 +11,10 @@ import { ArrowLeft, User, Building2, Banknote, RotateCcw } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import {
   FINANCING_TYPE_LABELS, DOSSIER_STATUS_LABELS, QUICK_CHECK_LABELS,
+  calcQuickCheck,
   type FinancingType, type DossierStatus, type QuickCheckStatus,
 } from "@/lib/financing";
+import { cn } from "@/lib/utils";
 import { FinancingSelfDisclosureTab } from "@/components/financing/FinancingSelfDisclosureTab";
 import { UbsChecklistTab } from "@/components/financing/UbsChecklistTab";
 import { FinancingDocumentsTab } from "@/components/financing/FinancingDocumentsTab";
