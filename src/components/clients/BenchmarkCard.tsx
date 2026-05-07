@@ -124,12 +124,18 @@ function BenchStat({
   highlight?: string;
 }) {
   return (
-    <div className="rounded-lg border bg-card/60 p-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+    <div className="rounded-lg border bg-card/60 p-2.5 min-w-0">
+      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         {icon}
-        {label}
+        <span className="truncate">{label}</span>
       </div>
-      <div className={cn("mt-1 font-display text-base font-semibold", highlight)}>
+      <div
+        className={cn(
+          "mt-1 font-display text-sm font-semibold tabular-nums truncate",
+          highlight,
+        )}
+        title={value}
+      >
         {value}
       </div>
     </div>
