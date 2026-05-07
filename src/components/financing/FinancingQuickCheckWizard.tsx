@@ -390,14 +390,22 @@ export function FinancingQuickCheckWizard({
             loading={clientsQuery.isLoading}
           />
         )}
-        {step === 4 && <PlaceholderStep label="Schritt 4 — Kennzahlen (folgt)" />}
-        {step === 5 && <PlaceholderStep label="Schritt 5 — Erweiterte Parameter (folgt)" />}
-        {step === 6 && <PlaceholderStep label="Schritt 6 — Zusammenfassung & Bestätigung (folgt)" />}
+        {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} />}
+        {step === 5 && <Step5Advanced form={form} update={update} kpis={liveKpis} />}
+        {step === 6 && (
+          <Step6Summary
+            form={form}
+            kpis={liveKpis}
+            status={liveResult.status}
+            clients={clientsQuery.data ?? []}
+            properties={propertiesQuery.data ?? []}
+          />
+        )}
 
         <DialogFooter className="mt-4 flex-row justify-between sm:justify-between">
           <div>
             {step > 1 && (
-              <Button variant="outline" onClick={() => setStep(step - 1)}>
+              <Button variant="outline" onClick={() => setStep(step - 1)} disabled={createMutation.isPending}>
                 <ArrowLeft className="mr-1 h-4 w-4" />Zurück
               </Button>
             )}
@@ -409,8 +417,8 @@ export function FinancingQuickCheckWizard({
               </Button>
             )}
             {step === TOTAL_STEPS && (
-              <Button onClick={() => createMutation.mutate()} disabled>
-                Quick Check starten
+              <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+                {createMutation.isPending ? "Speichern…" : "Quick Check starten"}
               </Button>
             )}
           </div>
