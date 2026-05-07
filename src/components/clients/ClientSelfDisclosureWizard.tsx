@@ -405,7 +405,7 @@ export function ClientSelfDisclosureWizard({
         connectionToastStateRef.current = "online";
       }
       if (pendingSync || persistSnapshot !== lastSyncedSnapshotRef.current) {
-        void persistDisclosure();
+        void persistDisclosure().catch(() => undefined);
       }
     };
 
