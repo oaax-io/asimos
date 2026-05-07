@@ -65,6 +65,26 @@ export function ClientSelfDisclosureTab({ clientId }: Props) {
     },
   });
 
+  const { data: advisors = [] } = useQuery({
+    queryKey: ["self_disclosure_advisors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .eq("is_active", true);
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const advisorLabel = useMemo(() => {
+    const advisorId = data?.advisor_id as string | undefined;
+    if (!advisorId) return undefined;
+    const advisor = advisors.find((entry) => entry.id === advisorId);
+    return advisor?.full_name || advisor?.email || advisorId;
+  }, [advisors, data?.advisor_id]);
+
   const benchmark = useMemo(
     () => calculateBenchmark((data ?? {}) as Record<string, number | string | null>),
     [data],
@@ -209,7 +229,7 @@ export function ClientSelfDisclosureTab({ clientId }: Props) {
         {Boolean(data?.internal_notes || data?.advisor_id || data?.disclosure_date) && (
           <SummaryCard title="Abschluss">
             <SummaryGrid>
-              <SummaryItem label="Berater" value={data?.advisor_id as string} />
+              <SummaryItem label="Berater" value={advisorLabel} />
               <SummaryItem label="Datum" value={data?.disclosure_date as string} />
               <SummaryItem label="Ort" value={data?.disclosure_place as string} />
             </SummaryGrid>
