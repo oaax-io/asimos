@@ -89,14 +89,14 @@ export function ClientSelfDisclosureTab({ clientId }: Props) {
                 Noch keine Selbstauskunft
               </h3>
               <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                Erfasse die Selbstauskunft im Wizard – oder lade ein bestehendes
-                ASIMO-PDF hoch und lass die Felder automatisch erkennen.
+                Erfasse die Selbstauskunft Schritt für Schritt – oder lade ein
+                bestehendes ASIMO-PDF hoch und lass die Felder automatisch erkennen.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button onClick={() => setWizardOpen(true)}>
                 <FilePlus className="mr-2 h-4 w-4" />
-                Wizard starten
+                Erfassung starten
               </Button>
               <Button variant="outline" onClick={() => setWizardOpen(true)}>
                 <Upload className="mr-2 h-4 w-4" />
