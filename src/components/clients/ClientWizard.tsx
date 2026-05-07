@@ -507,6 +507,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
         if (dossierErr) console.warn("Finanzierungsdossier:", dossierErr);
       }
 
+      return {
         clientId,
         role,
         propertyId: createdPropertyId
