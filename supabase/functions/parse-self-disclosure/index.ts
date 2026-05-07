@@ -1,5 +1,15 @@
-// Parses an uploaded ASIMO Selbstauskunft PDF using Lovable AI Gateway (Gemini)
-// and returns structured field values matching the client_self_disclosures schema.
+// Parses an uploaded ASIMO Selbstauskunft PDF and returns structured field values
+// matching the client_self_disclosures schema.
+//
+// Strategy:
+//   1) Extract AcroForm field values directly from the PDF (deterministic, exact).
+//      ASIMO PDFs are interactive forms — Vision-only OCR misses these because
+//      the values are stored in form objects, not rendered as glyphs.
+//   2) Send the raw form-field map + extracted text to Gemini with the target
+//      schema, so the LLM does the mapping (label codes -> our DB columns).
+//   3) Fallback to pure vision if the PDF has no AcroForm.
+
+import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,21 +21,21 @@ const corsHeaders = {
 const FIELD_SCHEMA = {
   type: "object",
   properties: {
-    salutation: { type: "string", description: "Anrede: Herr, Frau, Divers" },
+    salutation: { type: "string" },
     title: { type: "string" },
     first_name: { type: "string" },
     last_name: { type: "string" },
-    birth_name: { type: "string", description: "Ledigname" },
+    birth_name: { type: "string" },
     street: { type: "string" },
     street_number: { type: "string" },
     postal_code: { type: "string" },
     city: { type: "string" },
-    country: { type: "string", description: "Ländercode, z.B. CH" },
-    resident_since: { type: "string", description: "ISO date YYYY-MM-DD oder YYYY" },
+    country: { type: "string" },
+    resident_since: { type: "string", description: "ISO YYYY-MM-DD oder YYYY" },
     phone: { type: "string" },
     mobile: { type: "string" },
     email: { type: "string" },
-    birth_date: { type: "string", description: "ISO date YYYY-MM-DD" },
+    birth_date: { type: "string", description: "ISO YYYY-MM-DD (von DD.MM.YYYY konvertieren)" },
     nationality: { type: "string" },
     birth_place: { type: "string" },
     birth_country: { type: "string" },
@@ -36,8 +46,8 @@ const FIELD_SCHEMA = {
     employer_address: { type: "string" },
     employer_phone: { type: "string" },
     employed_as: { type: "string" },
-    employed_since: { type: "string", description: "ISO date oder Jahr" },
-    salary_type: { type: "string", description: "Fixum / Provision / Fixum + Provision" },
+    employed_since: { type: "string" },
+    salary_type: { type: "string" },
     annual_net_salary: { type: "number" },
     salary_net_monthly: { type: "number" },
     additional_income: { type: "number" },
@@ -58,10 +68,44 @@ const FIELD_SCHEMA = {
     miscellaneous_expense: { type: "number" },
     disclosure_date: { type: "string", description: "ISO date" },
     disclosure_place: { type: "string" },
-    advisor_id: { type: "string", description: "Beratername wie im Dokument" },
+    advisor_id: { type: "string" },
   },
   additionalProperties: false,
 };
+
+async function extractFormFields(
+  pdfBytes: Uint8Array,
+): Promise<Record<string, string>> {
+  try {
+    const pdf = await PDFDocument.load(pdfBytes, {
+      ignoreEncryption: true,
+      updateMetadata: false,
+    });
+    const form = pdf.getForm();
+    const fields = form.getFields();
+    const out: Record<string, string> = {};
+    for (const f of fields) {
+      const name = f.getName();
+      // pdf-lib: only TextField and Dropdown have getText/getSelected
+      // deno-lint-ignore no-explicit-any
+      const anyF = f as any;
+      let val: string | undefined;
+      if (typeof anyF.getText === "function") {
+        val = anyF.getText();
+      } else if (typeof anyF.getSelected === "function") {
+        const sel = anyF.getSelected();
+        if (Array.isArray(sel) && sel.length) val = sel.join(", ");
+      } else if (typeof anyF.isChecked === "function") {
+        val = anyF.isChecked() ? "true" : "";
+      }
+      if (val && val.trim() !== "") out[name] = val.trim();
+    }
+    return out;
+  } catch (e) {
+    console.warn("extractFormFields failed", e);
+    return {};
+  }
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -80,12 +124,70 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Decode base64 -> bytes
+    const binary = atob(pdf_base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+    // 1) Extract AcroForm fields deterministically.
+    const formFields = await extractFormFields(bytes);
+    const formFieldsCount = Object.keys(formFields).length;
+    console.log("form fields extracted:", formFieldsCount);
+
     const systemPrompt = `Du bist ein präziser Datenextraktor für die ASIMO-Selbstauskunft (Schweiz).
-Extrahiere ausschliesslich Felder aus der "Selbstauskunft"-Seite (NICHT aus der Investment-Checkliste).
-Mitantragsteller ignorieren – nur Antragsteller (linke Spalte).
-CHF-Beträge als reine Zahlen ohne Tausender-Trennzeichen, ohne Währung.
-Datumsangaben als ISO YYYY-MM-DD wenn möglich, sonst Jahr als YYYY.
-Lasse Felder weg, die im Dokument nicht stehen. Keine Halluzinationen.`;
+Du erhältst (a) die rohen AcroForm-Feldwerte des PDFs als JSON und (b) zusätzlich die PDF-Datei.
+
+WICHTIG – Feld-Kodierung der ASIMO-Selbstauskunft:
+- Felder mit Präfix "AN" gehören zum ANTRAGSTELLER → diese extrahieren.
+- Felder mit Präfix "MI" gehören zum MITANTRAGSTELLER → IGNORIEREN.
+- Investment-Checkliste (Seite 1) ignorieren – nur Selbstauskunft (Seite 2).
+
+Mapping-Hinweise (typische ASIMO-Codes, nutze die Werte falls vorhanden):
+- AN02 → first_name | AN03 → last_name (kann auch Ledigname enthalten)
+- AN04 → street | AN04x → street_number
+- AN05plz → postal_code | AN05ort → city
+- AN06 → resident_since (Jahr) | Land falls separat, sonst "CH"
+- AN07 → phone | AN07x → mobile
+- AN08 → email
+- AN09 → birth_date (DD.MM.YYYY → YYYY-MM-DD) | AN09x → nationality
+- AN10 → birth_place | AN10x → birth_country
+- AN11 → marital_status | AN12 → tax_id_ch
+- AN13 → employment_status | AN14 → employer_name
+- AN15plz/AN15ort → employer_address (Ort) | AN16/AN16x → employer street+nr
+  Kombiniere AN16 + " " + AN16x + ", " + AN15plz + " " + AN15ort zu employer_address.
+- AN17 → employer_phone | AN18 → employed_as | AN18x → employed_since
+- AN19 → salary_net_monthly | AN20 → additional_income
+- AN21 → annual_net_salary | AN22 → total_income_monthly (NICHT setzen, wird berechnet)
+- Ausgaben AN23–AN30 (in PDF-Reihenfolge): typischerweise
+  AN23=mortgage_expense, AN24=rent_expense, AN25=leasing_expense,
+  AN26=credit_expense, AN27=life_insurance_expense, AN28=alimony_expense,
+  AN29=health_insurance_expense, AN30=property_insurance_expense.
+  Wenn Reihenfolge im Originaldokument abweicht, korrigiere anhand der visuellen Labels.
+- "Datum" → disclosure_date (DD.MM.YYYY → YYYY-MM-DD) | "Ort1" → disclosure_place
+- "Berater" → advisor_id (Name als String)
+
+CHF-Beträge: nur Zahlen, ohne Tausender, ohne Währung.
+Lasse Felder weg, die leer/nicht vorhanden sind. Keine Halluzinationen.`;
+
+    const userParts: Array<Record<string, unknown>> = [
+      {
+        type: "text",
+        text:
+          formFieldsCount > 0
+            ? `AcroForm-Feldwerte aus dem PDF (autoritativ):\n\`\`\`json\n${JSON.stringify(
+                formFields,
+                null,
+                2,
+              )}\n\`\`\`\n\nMappe diese Werte gemäss Schema und Hinweisen. Nutze die PDF-Vorlage zur visuellen Kontrolle der Label-Reihenfolge.`
+            : "Keine AcroForm-Felder gefunden. Extrahiere alle Felder visuell aus der PDF.",
+      },
+      {
+        type: "image_url",
+        image_url: {
+          url: `data:${mime_type ?? "application/pdf"};base64,${pdf_base64}`,
+        },
+      },
+    ];
 
     const aiResp = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -99,21 +201,7 @@ Lasse Felder weg, die im Dokument nicht stehen. Keine Halluzinationen.`;
           model: "google/gemini-2.5-flash",
           messages: [
             { role: "system", content: systemPrompt },
-            {
-              role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: "Extrahiere die Selbstauskunfts-Felder aus diesem PDF.",
-                },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: `data:${mime_type ?? "application/pdf"};base64,${pdf_base64}`,
-                  },
-                },
-              ],
-            },
+            { role: "user", content: userParts },
           ],
           tools: [
             {
@@ -160,9 +248,10 @@ Lasse Felder weg, die im Dokument nicht stehen. Keine Halluzinationen.`;
       ? JSON.parse(toolCall.function.arguments)
       : {};
 
-    return new Response(JSON.stringify({ fields: args }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ fields: args, form_fields_count: formFieldsCount }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (e) {
     console.error("parse-self-disclosure error", e);
     return new Response(
