@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,7 @@ import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
 import { cn } from "@/lib/utils";
 
 type DisclosureRow = Record<string, unknown> & { id?: string };
+type EmployeeOption = { id: string; full_name: string | null; email: string | null };
 
 interface Props {
   clientId: string;
@@ -94,6 +95,87 @@ const NUMERIC_FIELDS = new Set([
   "reserve_ratio",
 ]);
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuid(value: unknown): boolean {
+  return typeof value === "string" && UUID_RE.test(value.trim());
+}
+
+function isLikelyNetworkError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return (
+    !navigator.onLine ||
+    /failed to fetch|networkerror|network request failed|load failed|fetch/i.test(message)
+  );
+}
+
+function normalizeAdvisorId(value: unknown, employees: EmployeeOption[]): string | null {
+  if (!value || typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (isUuid(trimmed)) return trimmed;
+  const normalizedInput = trimmed.toLowerCase();
+
+  const match = employees.find((employee) => {
+    const fullName = typeof employee.full_name === "string"
+      ? employee.full_name.trim().toLowerCase()
+      : null;
+    const email = typeof employee.email === "string"
+      ? employee.email.trim().toLowerCase()
+      : null;
+    return fullName === normalizedInput || email === normalizedInput;
+  });
+
+  return match?.id ?? null;
+}
+
+function getDraftStorageKey(clientId: string) {
+  return `client-self-disclosure-draft:${clientId}`;
+}
+
+function buildPersistPayload(
+  form: DisclosureRow,
+  clientId: string,
+  benchmark: ReturnType<typeof calculateBenchmark>,
+  employees: EmployeeOption[],
+) {
+  const cleaned = sanitize(form);
+  const {
+    id: _id,
+    created_at: _createdAt,
+    updated_at: _updatedAt,
+    reviewed_at: _reviewedAt,
+    reviewed_by: _reviewedBy,
+    sent_at: _sentAt,
+    submitted_at: _submittedAt,
+    client_id: _clientId,
+    total_income_monthly: _totalIncome,
+    total_expenses_monthly: _totalExpenses,
+    reserve_total: _reserveTotal,
+    reserve_ratio: _reserveRatio,
+    benchmark_status: _benchmarkStatus,
+    ...rest
+  } = cleaned;
+
+  const normalizedAdvisorId = normalizeAdvisorId(cleaned.advisor_id, employees);
+  const advisorPatch = normalizedAdvisorId !== null || cleaned.advisor_id == null
+    ? { advisor_id: normalizedAdvisorId }
+    : {};
+
+  return {
+    ...rest,
+    client_id: clientId,
+    ...advisorPatch,
+    status: typeof cleaned.status === "string" ? cleaned.status : "draft",
+    total_income_monthly: benchmark.totalIncome,
+    total_expenses_monthly: benchmark.totalExpenses,
+    reserve_total: benchmark.reserveTotal,
+    reserve_ratio: Number(benchmark.reserveRatio.toFixed(2)),
+    benchmark_status: benchmark.status,
+  };
+}
+
 function sanitize(src: DisclosureRow): DisclosureRow {
   const out: DisclosureRow = {};
   for (const [k, v] of Object.entries(src)) {
@@ -130,19 +212,71 @@ export function ClientSelfDisclosureWizard({
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<DisclosureRow>(initial ?? {});
   const [parsing, setParsing] = useState(false);
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator === "undefined" ? true : navigator.onLine,
+  );
+  const [autosaveState, setAutosaveState] = useState<
+    "idle" | "saving" | "saved" | "offline" | "error"
+  >("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [pendingSync, setPendingSync] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastSyncedSnapshotRef = useRef("{}");
+  const savingRef = useRef(false);
+  const queuedSaveRef = useRef(false);
+  const connectionToastStateRef = useRef<"online" | "offline" | null>(null);
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ["self_disclosure_advisors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .eq("is_active", true)
+        .order("full_name");
+      if (error) throw error;
+      return (data ?? []) as EmployeeOption[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const wasOpenRef = useRef(false);
   useEffect(() => {
     if (open && !wasOpenRef.current) {
-      // Nur beim Übergang geschlossen -> offen zurücksetzen,
-      // damit per PDF erkannte Felder nicht durch React-Query-Refetches
-      // überschrieben werden.
-      setForm(initial ?? {});
-      setStep(1);
+      const baseForm = initial ?? {};
+      let nextForm = baseForm;
+
+      try {
+        const rawDraft = localStorage.getItem(getDraftStorageKey(clientId));
+        if (rawDraft) {
+          const parsed = JSON.parse(rawDraft) as { form?: DisclosureRow; step?: number };
+          if (parsed.form && typeof parsed.form === "object") {
+            nextForm = { ...baseForm, ...parsed.form };
+            setPendingSync(true);
+            setAutosaveState(navigator.onLine ? "idle" : "offline");
+          }
+          if (typeof parsed.step === "number") setStep(parsed.step);
+          else setStep(1);
+        } else {
+          setStep(1);
+          setPendingSync(false);
+          setAutosaveState("idle");
+        }
+      } catch {
+        setStep(1);
+      }
+
+      setForm(nextForm);
+      const nextBenchmark = calculateBenchmark(
+        nextForm as Record<string, number | string | null>,
+      );
+      lastSyncedSnapshotRef.current = JSON.stringify(
+        buildPersistPayload(nextForm, clientId, nextBenchmark, employees),
+      );
+      setLastSavedAt(null);
     }
     wasOpenRef.current = open;
-  }, [open, initial]);
+  }, [open, initial, clientId, employees]);
 
   const set = (k: string, v: unknown) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -150,6 +284,153 @@ export function ClientSelfDisclosureWizard({
     () => calculateBenchmark(form as Record<string, number | string | null>),
     [form],
   );
+
+  const persistPayload = useMemo(
+    () => buildPersistPayload(form, clientId, benchmark, employees),
+    [form, clientId, benchmark, employees],
+  );
+  const persistSnapshot = useMemo(
+    () => JSON.stringify(persistPayload),
+    [persistPayload],
+  );
+
+  useEffect(() => {
+    if (!employees.length) return;
+    const current = form.advisor_id;
+    if (isUuid(current) || typeof current !== "string" || !current.trim()) return;
+    const normalized = normalizeAdvisorId(current, employees);
+    if (!normalized) return;
+    setForm((prev) =>
+      prev.advisor_id === current ? { ...prev, advisor_id: normalized } : prev,
+    );
+  }, [employees, form.advisor_id]);
+
+  useEffect(() => {
+    if (!open) return;
+    try {
+      localStorage.setItem(
+        getDraftStorageKey(clientId),
+        JSON.stringify({ form, step, updated_at: new Date().toISOString() }),
+      );
+    } catch {
+      // ignore local draft storage issues
+    }
+  }, [open, clientId, form, step]);
+
+  async function persistDisclosure({
+    manual = false,
+    closeOnSuccess = false,
+  }: {
+    manual?: boolean;
+    closeOnSuccess?: boolean;
+  } = {}) {
+    if (!open) return { ok: false };
+    if (savingRef.current) {
+      queuedSaveRef.current = true;
+      return { ok: false };
+    }
+    if (!isOnline) {
+      setPendingSync(true);
+      setAutosaveState("offline");
+      if (manual) {
+        throw new Error(
+          "Keine Verbindung – Ihre Eingaben bleiben lokal gespeichert und werden nach Wiederverbindung synchronisiert.",
+        );
+      }
+      return { ok: false };
+    }
+
+    savingRef.current = true;
+    setAutosaveState("saving");
+    try {
+      const { error } = await supabase
+        .from("client_self_disclosures")
+        .upsert(persistPayload, { onConflict: "client_id" });
+      if (error) throw error;
+
+      lastSyncedSnapshotRef.current = persistSnapshot;
+      setPendingSync(false);
+      setAutosaveState("saved");
+      setLastSavedAt(Date.now());
+      try {
+        localStorage.removeItem(getDraftStorageKey(clientId));
+      } catch {
+        // ignore
+      }
+      qc.invalidateQueries({ queryKey: ["client_self_disclosure", clientId] });
+      qc.invalidateQueries({ queryKey: ["client_benchmark", clientId] });
+
+      if (manual) toast.success("Selbstauskunft gespeichert");
+      if (closeOnSuccess) onOpenChange(false);
+      return { ok: true };
+    } catch (error) {
+      if (isLikelyNetworkError(error)) {
+        setPendingSync(true);
+        setAutosaveState("offline");
+        throw new Error(
+          "Keine Verbindung – Ihre Eingaben bleiben lokal gespeichert und werden nach Wiederverbindung synchronisiert.",
+        );
+      }
+
+      setAutosaveState("error");
+      throw error;
+    } finally {
+      savingRef.current = false;
+      if (queuedSaveRef.current && isOnline) {
+        queuedSaveRef.current = false;
+        queueMicrotask(() => {
+          void persistDisclosure();
+        });
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    if (persistSnapshot === lastSyncedSnapshotRef.current) return;
+
+    setPendingSync(true);
+    if (!isOnline) {
+      setAutosaveState("offline");
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      void persistDisclosure();
+    }, 1200);
+
+    return () => window.clearTimeout(timeout);
+  }, [open, isOnline, persistSnapshot]);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      if (connectionToastStateRef.current !== "online") {
+        toast.success("Verbindung wiederhergestellt – Änderungen werden weiter synchronisiert.");
+        connectionToastStateRef.current = "online";
+      }
+      if (pendingSync || persistSnapshot !== lastSyncedSnapshotRef.current) {
+        void persistDisclosure().catch(() => undefined);
+      }
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      setPendingSync(true);
+      setAutosaveState("offline");
+      if (connectionToastStateRef.current !== "offline") {
+        toast.error("Keine Verbindung – Änderungen werden lokal weiter gespeichert.");
+        connectionToastStateRef.current = "offline";
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [pendingSync, persistSnapshot]);
 
   const handlePdfUpload = async (file: File) => {
     if (!file) return;
@@ -205,26 +486,10 @@ export function ClientSelfDisclosureWizard({
 
   const save = useMutation({
     mutationFn: async () => {
-      const cleaned = sanitize(form);
-      const payload = {
-        ...cleaned,
-        client_id: clientId,
-        total_income_monthly: benchmark.totalIncome,
-        total_expenses_monthly: benchmark.totalExpenses,
-        reserve_total: benchmark.reserveTotal,
-        reserve_ratio: Number(benchmark.reserveRatio.toFixed(2)),
-        benchmark_status: benchmark.status,
-      };
-      const { error } = await supabase
-        .from("client_self_disclosures")
-        .upsert(payload, { onConflict: "client_id" });
-      if (error) throw error;
+      await persistDisclosure({ manual: true, closeOnSuccess: true });
     },
     onSuccess: () => {
-      toast.success("Selbstauskunft gespeichert");
-      qc.invalidateQueries({ queryKey: ["client_self_disclosure", clientId] });
-      qc.invalidateQueries({ queryKey: ["client_benchmark", clientId] });
-      onOpenChange(false);
+      // handled in persistDisclosure
     },
     onError: (e: unknown) =>
       toast.error(e instanceof Error ? e.message : "Speichern fehlgeschlagen"),
@@ -299,10 +564,17 @@ export function ClientSelfDisclosureWizard({
               {step === 2 && <JobStep form={form} set={set} />}
               {step === 3 && <IncomeStep form={form} set={set} />}
               {step === 4 && <ExpenseStep form={form} set={set} />}
-              {step === 5 && <ClosingStep form={form} set={set} />}
+              {step === 5 && <ClosingStep form={form} set={set} employees={employees} />}
             </div>
 
             <div className="flex items-center justify-between border-t p-4 bg-muted/30">
+              <div className="text-xs text-muted-foreground">
+                {autosaveState === "saving" && "Speichert automatisch…"}
+                {autosaveState === "saved" && lastSavedAt && `Automatisch gespeichert · ${new Date(lastSavedAt).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}`}
+                {autosaveState === "offline" && "Offline – Änderungen werden lokal gesichert und später synchronisiert."}
+                {autosaveState === "error" && "Automatisches Speichern pausiert – bitte manuell speichern."}
+                {autosaveState === "idle" && pendingSync && "Änderungen stehen zur Synchronisierung bereit."}
+              </div>
               <Button
                 variant="ghost"
                 onClick={() => setStep((s) => Math.max(1, s - 1))}
@@ -317,7 +589,7 @@ export function ClientSelfDisclosureWizard({
                   <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
               ) : (
-                <Button onClick={() => save.mutate()} disabled={save.isPending}>
+                <Button onClick={() => save.mutate()} disabled={save.isPending || parsing}>
                   {save.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
@@ -586,18 +858,32 @@ function ExpenseStep({
 function ClosingStep({
   form,
   set,
+  employees,
 }: {
   form: DisclosureRow;
   set: (k: string, v: unknown) => void;
+  employees: EmployeeOption[];
 }) {
   return (
     <div className="space-y-4">
       <Grid>
         <FieldBox label="Berater">
-          <Input
-            value={(form.advisor_id as string) ?? ""}
-            onChange={(e) => set("advisor_id", e.target.value)}
-          />
+          <Select
+            value={((form.advisor_id as string) ?? "") || "unassigned"}
+            onValueChange={(value) => set("advisor_id", value === "unassigned" ? null : value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Berater auswählen" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unassigned">Kein Berater</SelectItem>
+              {employees.map((employee) => (
+                <SelectItem key={employee.id} value={employee.id}>
+                  {employee.full_name || employee.email || "Ohne Name"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </FieldBox>
         <FieldBox label="Datum">
           <Input
