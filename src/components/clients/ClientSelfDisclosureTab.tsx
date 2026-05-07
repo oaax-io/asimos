@@ -206,7 +206,7 @@ export function ClientSelfDisclosureTab({ clientId }: Props) {
           </SummaryGrid>
         </SummaryCard>
 
-        {(data?.internal_notes || data?.advisor_id || data?.disclosure_date) && (
+        {Boolean(data?.internal_notes || data?.advisor_id || data?.disclosure_date) && (
           <SummaryCard title="Abschluss">
             <SummaryGrid>
               <SummaryItem label="Berater" value={data?.advisor_id as string} />
