@@ -31,6 +31,9 @@ export const Route = createFileRoute("/_app/financing/$id")({ component: Financi
 function FinancingDetailPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [resetOpen, setResetOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const { data: dossier, isLoading } = useQuery({
     queryKey: ["financing_dossier", id],
@@ -54,10 +57,30 @@ function FinancingDetailPage() {
     },
   });
 
+  const resetMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("financing_dossiers")
+        .update({ quick_check_status: "incomplete" })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Quick Check zurückgesetzt");
+      setResetOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["financing_dossier", id] });
+      queryClient.invalidateQueries({ queryKey: ["financing_dossiers"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Zurücksetzen fehlgeschlagen"),
+  });
+
   if (isLoading) return <p className="text-sm text-muted-foreground">Laden…</p>;
   if (!dossier) return <p className="text-sm text-muted-foreground">Dossier nicht gefunden.</p>;
 
   const reasons = (dossier.quick_check_reasons as any[]) ?? [];
+  const qcStatus = (dossier.quick_check_status ?? "incomplete") as QuickCheckStatus;
+  const isIncomplete = qcStatus === "incomplete";
+  const lastCheckAt = dossier.updated_at ? formatDateTime(dossier.updated_at) : null;
 
   return (
     <div className="space-y-6">
