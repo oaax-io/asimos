@@ -575,51 +575,184 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
   );
 }
 
+type ScenarioRow = {
+  id: string;
+  created_at: string;
+  dossier_id: string;
+  bezeichnung: string;
+  kaufpreis: number | null;
+  eigenmittel: number | null;
+  bruttoeinkommen: number | null;
+  hypothek: number | null;
+  kalk_zinssatz: number | null;
+  tragbarkeit: number | null;
+  belehnung: number | null;
+  eigenmittelquote: number | null;
+  harte_eigenmittel: number | null;
+  status: string | null;
+};
+
 function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
-  const i = deriveInputs(dossier);
+  const original = useMemo(() => deriveInputs(dossier), [dossier]);
+  const dossierId = String((dossier as { id?: string }).id ?? "");
+  const queryClient = useQueryClient();
+
+  const [purchase, setPurchase] = useState<number>(Math.round(original.purchase));
+  const [equity, setEquity] = useState<number>(Math.round(original.equity));
+  const [income, setIncome] = useState<number>(Math.round(original.income));
+  const [mortgage, setMortgage] = useState<number>(Math.round(original.mortgage));
+  const [rate, setRate] = useState<number>(Math.round(original.rate * 10) / 10);
+
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [scenarioName, setScenarioName] = useState("");
+
+  const purchaseMin = Math.round(original.purchase * 0.5);
+  const purchaseMax = Math.round(original.purchase * 1.5) || 100000;
+  const equityMax = Math.round(original.equity * 2.0) || 200000;
+  const incomeMin = Math.round(original.income * 0.5);
+  const incomeMax = Math.round(original.income * 2.0) || 200000;
+  const mortgageMin = Math.round(original.mortgage * 0.5);
+  const mortgageMax = Math.round(original.mortgage * 1.3) || 100000;
+
+  // Live calculation based on slider values
+  const live = useMemo(() => {
+    const p = Math.round(purchase);
+    const eq = Math.round(equity);
+    const inc = Math.round(income);
+    const mort = Math.round(mortgage);
+    const r = Math.round(rate * 10) / 10;
+    const total = p + original.reno;
+    const ancillary = total * (original.ancillaryPct / 100);
+    const firstMortgageMax = total * 0.6667;
+    const second = Math.max(0, mort - firstMortgageMax);
+    const amort = second / original.amortYears;
+    const result = calcQuickCheck({
+      purchase_price: p,
+      renovation_costs: original.reno,
+      requested_mortgage: mort,
+      own_funds_total: eq,
+      own_funds_pension_fund: original.pension,
+      own_funds_vested_benefits: original.vested,
+      gross_income_yearly: inc,
+      calculated_interest_rate: r,
+      ancillary_costs_yearly: ancillary,
+      amortisation_yearly: amort,
+    });
+    return { p, eq, inc, mort, r, total, result };
+  }, [purchase, equity, income, mortgage, rate, original]);
+
+  const reset = () => {
+    setPurchase(Math.round(original.purchase));
+    setEquity(Math.round(original.equity));
+    setIncome(Math.round(original.income));
+    setMortgage(Math.round(original.mortgage));
+    setRate(Math.round(original.rate * 10) / 10);
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async (label: string) => {
+      const r = live.result;
+      const { error } = await supabase.from("financing_dossiers_scenarios" as never).insert({
+        dossier_id: dossierId,
+        bezeichnung: label,
+        kaufpreis: live.p,
+        eigenmittel: live.eq,
+        bruttoeinkommen: live.inc,
+        hypothek: live.mort,
+        kalk_zinssatz: live.r,
+        tragbarkeit: r.affordability_ratio,
+        belehnung: r.loan_to_value_ratio,
+        eigenmittelquote: live.total > 0 ? (live.eq / live.total) * 100 : 0,
+        harte_eigenmittel: r.hard_equity,
+        status: r.status,
+      } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Szenario gespeichert");
+      setSaveOpen(false);
+      setScenarioName("");
+      queryClient.invalidateQueries({ queryKey: ["financing_scenarios", dossierId] });
+    },
+    onError: (e: Error) => toast.error(e.message ?? "Speichern fehlgeschlagen"),
+  });
+
+  const { data: scenarios } = useQuery({
+    queryKey: ["financing_scenarios", dossierId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financing_dossiers_scenarios" as never)
+        .select("*")
+        .eq("dossier_id", dossierId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as ScenarioRow[];
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (sid: string) => {
+      const { error } = await supabase
+        .from("financing_dossiers_scenarios" as never)
+        .delete()
+        .eq("id", sid);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Szenario gelöscht");
+      queryClient.invalidateQueries({ queryKey: ["financing_scenarios", dossierId] });
+    },
+    onError: (e: Error) => toast.error(e.message ?? "Löschen fehlgeschlagen"),
+  });
+
+  const loadScenario = (s: ScenarioRow) => {
+    if (s.kaufpreis != null) setPurchase(Math.round(Number(s.kaufpreis)));
+    if (s.eigenmittel != null) setEquity(Math.round(Number(s.eigenmittel)));
+    if (s.bruttoeinkommen != null) setIncome(Math.round(Number(s.bruttoeinkommen)));
+    if (s.hypothek != null) setMortgage(Math.round(Number(s.hypothek)));
+    if (s.kalk_zinssatz != null) setRate(Math.round(Number(s.kalk_zinssatz) * 10) / 10);
+    toast.success(`Szenario "${s.bezeichnung}" geladen`);
+  };
+
+  const liveLtv = live.result.loan_to_value_ratio;
+  const liveAff = live.result.affordability_ratio;
+  const liveEqRatio = live.total > 0 ? (live.eq / live.total) * 100 : 0;
+  const liveStatus = live.result.status as QuickCheckStatus;
+
+  // Matrix uses slider values for equity, mortgage, rate
   const priceSteps = [-200000, -100000, 0, 100000, 200000];
   const incomeSteps = [-40000, -20000, 0, 20000, 40000];
 
-  type Cell = { affordability: number; tone: "ok" | "warn" | "bad" | "gray"; label: string; isCurrent: boolean };
+  type Cell = { tone: "ok" | "warn" | "bad" | "gray"; label: string; isCurrent: boolean };
   const matrix: Cell[][] = incomeSteps.map((dInc) =>
     priceSteps.map((dPrice) => {
-      const purchase = Math.max(0, i.purchase + dPrice);
-      const total = purchase + i.reno;
-      const newReno = i.reno;
-      const newAncillary = total * (i.ancillaryPct / 100);
+      const p = Math.max(0, live.p + dPrice);
+      const total = p + original.reno;
+      const ancillary = total * (original.ancillaryPct / 100);
       const firstMortgageMax = total * 0.6667;
-      const newSecond = Math.max(0, i.mortgage - firstMortgageMax);
-      const newAmort = newSecond / i.amortYears;
+      const second = Math.max(0, live.mort - firstMortgageMax);
+      const amort = second / original.amortYears;
       const result = calcQuickCheck({
-        purchase_price: purchase,
-        renovation_costs: newReno,
-        requested_mortgage: i.mortgage,
-        own_funds_total: i.equity,
-        own_funds_pension_fund: i.pension,
-        own_funds_vested_benefits: i.vested,
-        gross_income_yearly: Math.max(0, i.income + dInc),
-        calculated_interest_rate: i.rate,
-        ancillary_costs_yearly: newAncillary,
-        amortisation_yearly: newAmort,
+        purchase_price: p,
+        renovation_costs: original.reno,
+        requested_mortgage: live.mort,
+        own_funds_total: live.eq,
+        own_funds_pension_fund: original.pension,
+        own_funds_vested_benefits: original.vested,
+        gross_income_yearly: Math.max(0, live.inc + dInc),
+        calculated_interest_rate: live.r,
+        ancillary_costs_yearly: ancillary,
+        amortisation_yearly: amort,
       });
-      const eqRatio = total > 0 ? (i.equity / total) * 100 : 0;
+      const eqRatio = total > 0 ? (live.eq / total) * 100 : 0;
       const aff = result.affordability_ratio;
       let tone: Cell["tone"];
       let label: string;
-      if (eqRatio < 10) {
-        tone = "gray";
-        label = "EK!";
-      } else if (aff > 38 || eqRatio < 15) {
-        tone = "bad";
-        label = pct(aff);
-      } else if (aff > 33 || eqRatio < 20) {
-        tone = "warn";
-        label = pct(aff);
-      } else {
-        tone = "ok";
-        label = pct(aff);
-      }
-      return { affordability: aff, tone, label, isCurrent: dPrice === 0 && dInc === 0 };
+      if (eqRatio < 10) { tone = "gray"; label = "EK!"; }
+      else if (aff > 38 || eqRatio < 15) { tone = "bad"; label = pct(aff); }
+      else if (aff > 33 || eqRatio < 20) { tone = "warn"; label = pct(aff); }
+      else { tone = "ok"; label = pct(aff); }
+      return { tone, label, isCurrent: dPrice === 0 && dInc === 0 };
     })
   );
 
@@ -634,64 +767,288 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     : t === "bad" ? "border-red-600"
     : "border-muted-foreground";
 
+  const equityPctNow = live.total > 0 ? (live.eq / live.total) * 100 : 0;
+  const ltvNow = live.total > 0 ? (live.mort / live.total) * 100 : 0;
+
   return (
-    <Card>
-      <CardContent className="p-4 space-y-3">
-        <h3 className="font-semibold">Sensitivitätsanalyse — Einkommen vs. Kaufpreis</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[520px] border-separate border-spacing-1 text-sm">
-            <thead>
-              <tr>
-                <th className="p-2 text-left text-xs text-muted-foreground">Einkommen \ Kaufpreis</th>
-                {priceSteps.map((dp) => {
-                  const v = Math.max(0, i.purchase + dp);
+    <>
+      {/* BEREICH A — Slider */}
+      <Card>
+        <CardContent className="p-4 space-y-4">
+          <div>
+            <h3 className="font-semibold">Interaktive Szenario-Regler</h3>
+            <p className="text-sm text-muted-foreground">
+              Passe die Werte an um verschiedene Szenarien zu prüfen. Die Matrix aktualisiert sich live.
+              Du kannst ein Szenario als neue Berechnung im Dossier speichern.
+            </p>
+          </div>
+
+          <SliderRow
+            label="Kaufpreis"
+            display={chf(purchase)}
+            value={purchase}
+            min={purchaseMin}
+            max={purchaseMax}
+            step={10000}
+            onChange={setPurchase}
+          />
+          <SliderRow
+            label="Eigenmittel"
+            display={`${chf(equity)} (${pct(equityPctNow)})`}
+            value={equity}
+            min={0}
+            max={equityMax}
+            step={5000}
+            onChange={setEquity}
+          />
+          <SliderRow
+            label="Bruttoeinkommen"
+            display={`${chf(income)} / Jahr`}
+            value={income}
+            min={incomeMin}
+            max={incomeMax}
+            step={5000}
+            onChange={setIncome}
+          />
+          <SliderRow
+            label="Gewünschte Hypothek"
+            display={`${chf(mortgage)} (${pct(ltvNow)} Belehnung)`}
+            value={mortgage}
+            min={mortgageMin}
+            max={mortgageMax}
+            step={10000}
+            onChange={setMortgage}
+          />
+          <SliderRow
+            label="Kalk. Zinssatz"
+            display={`${rate.toFixed(1)}%`}
+            value={rate}
+            min={1.0}
+            max={8.0}
+            step={0.1}
+            onChange={(v) => setRate(Math.round(v * 10) / 10)}
+            isPercent
+          />
+
+          {/* Live result */}
+          <div className="grid gap-2 sm:grid-cols-4 pt-2 border-t">
+            <LiveMetric label="Belehnung" value={pct(liveLtv)} delta={liveLtv - original.ltv} betterWhenLower />
+            <LiveMetric label="Tragbarkeit" value={pct(liveAff)} delta={liveAff - original.affordability} betterWhenLower />
+            <LiveMetric label="Eigenmittelquote" value={pct(liveEqRatio)} delta={liveEqRatio - original.equityRatio} betterWhenLower={false} />
+            <div className="rounded-lg border p-3 flex flex-col justify-center">
+              <p className="text-xs text-muted-foreground">Status</p>
+              <Badge className={cn("mt-1 w-fit", qcBadgeTone(liveStatus))}>{QUICK_CHECK_LABELS[liveStatus]}</Badge>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => setSaveOpen(true)}>Als Szenario speichern</Button>
+            <Button variant="outline" onClick={reset}>Zurücksetzen</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* BEREICH B — Matrix */}
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <h3 className="font-semibold">Sensitivitätsanalyse — Einkommen vs. Kaufpreis</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] border-separate border-spacing-1 text-sm">
+              <thead>
+                <tr>
+                  <th className="p-2 text-left text-xs text-muted-foreground">Einkommen \ Kaufpreis</th>
+                  {priceSteps.map((dp) => {
+                    const v = Math.max(0, live.p + dp);
+                    return (
+                      <th key={dp} className="p-2 text-center text-xs text-muted-foreground tabular-nums">
+                        {chfCompact(v)}
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {incomeSteps.map((di, rowIdx) => {
+                  const incomeV = Math.max(0, live.inc + di);
                   return (
-                    <th key={dp} className="p-2 text-center text-xs text-muted-foreground tabular-nums">
-                      {chfCompact(v)}
-                    </th>
+                    <tr key={di}>
+                      <th className="p-2 text-left text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                        {chfCompact(incomeV)}/J
+                      </th>
+                      {matrix[rowIdx].map((cell, colIdx) => (
+                        <td key={colIdx} className="p-0">
+                          <div
+                            className={cn(
+                              "rounded px-2 py-3 text-center text-xs font-medium tabular-nums border-2",
+                              cellTone(cell.tone),
+                              cell.isCurrent ? borderTone(cell.tone) : "border-transparent",
+                            )}
+                          >
+                            {cell.label}
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
                   );
                 })}
-              </tr>
-            </thead>
-            <tbody>
-              {incomeSteps.map((di, rowIdx) => {
-                const incomeV = Math.max(0, i.income + di);
+              </tbody>
+            </table>
+          </div>
+          <div className="flex flex-wrap gap-3 text-xs">
+            <LegendDot tone="ok" label="Realistisch" />
+            <LegendDot tone="warn" label="Kritisch" />
+            <LegendDot tone="bad" label="Nicht finanzierbar" />
+            <LegendDot tone="gray" label="EK ungenügend" />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Eigenmittel {chf(live.eq)} · Zinssatz {live.r.toFixed(1)}% · Nebenkosten {original.ancillaryPct.toFixed(1)}% · Hypothek {chf(live.mort)}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Saved scenarios */}
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <h3 className="font-semibold">Gespeicherte Szenarien</h3>
+          {!scenarios || scenarios.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Noch keine Szenarien gespeichert.</p>
+          ) : (
+            <div className="grid gap-2 md:grid-cols-2">
+              {scenarios.map((s) => {
+                const st = (s.status as QuickCheckStatus) ?? "incomplete";
                 return (
-                  <tr key={di}>
-                    <th className="p-2 text-left text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-                      {chfCompact(incomeV)}/J
-                    </th>
-                    {matrix[rowIdx].map((cell, colIdx) => (
-                      <td key={colIdx} className="p-0">
-                        <div
-                          className={cn(
-                            "rounded px-2 py-3 text-center text-xs font-medium tabular-nums border-2",
-                            cellTone(cell.tone),
-                            cell.isCurrent ? borderTone(cell.tone) : "border-transparent",
-                          )}
-                        >
-                          {cell.label}
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
+                  <div key={s.id} className="rounded-lg border p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold">{s.bezeichnung}</p>
+                        <p className="text-xs text-muted-foreground">{formatDateOnly(s.created_at)}</p>
+                      </div>
+                      <Badge className={qcBadgeTone(st)}>{QUICK_CHECK_LABELS[st]}</Badge>
+                    </div>
+                    <div className="flex gap-3 text-xs text-muted-foreground tabular-nums">
+                      <span>Tragbarkeit: <span className="font-medium text-foreground">{s.tragbarkeit != null ? pct(Number(s.tragbarkeit)) : "—"}</span></span>
+                      <span>Belehnung: <span className="font-medium text-foreground">{s.belehnung != null ? pct(Number(s.belehnung)) : "—"}</span></span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => loadScenario(s)}>Laden</Button>
+                      <DeleteScenarioButton onConfirm={() => deleteMutation.mutate(s.id)} pending={deleteMutation.isPending} />
+                    </div>
+                  </div>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex flex-wrap gap-3 text-xs">
-          <LegendDot tone="ok" label="Realistisch" />
-          <LegendDot tone="warn" label="Kritisch" />
-          <LegendDot tone="bad" label="Nicht finanzierbar" />
-          <LegendDot tone="gray" label="EK ungenügend" />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Eigenmittel {chf(i.equity)} · Zinssatz {i.rate.toFixed(1)}% · Nebenkosten {i.ancillaryPct.toFixed(1)}% · Alle anderen Werte konstant
-        </p>
-      </CardContent>
-    </Card>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Save dialog */}
+      <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Szenario speichern</DialogTitle>
+            <DialogDescription>Vergib eine Bezeichnung für dieses Szenario.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="scenario-name">Bezeichnung</Label>
+            <Input
+              id="scenario-name"
+              value={scenarioName}
+              onChange={(e) => setScenarioName(e.target.value)}
+              placeholder="z.B. Mehr Eigenkapital"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveOpen(false)}>Abbrechen</Button>
+            <Button
+              onClick={() => saveMutation.mutate(scenarioName.trim())}
+              disabled={!scenarioName.trim() || saveMutation.isPending}
+            >
+              {saveMutation.isPending ? "Speichern…" : "Speichern"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
+}
+
+function SliderRow({
+  label, display, value, min, max, step, onChange, isPercent,
+}: {
+  label: string; display: string; value: number;
+  min: number; max: number; step: number;
+  onChange: (v: number) => void; isPercent?: boolean;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between gap-2">
+        <Label className="text-sm">{label}</Label>
+        <span className="text-sm font-medium tabular-nums">{display}</span>
+      </div>
+      <Slider
+        value={[value]}
+        min={min}
+        max={max}
+        step={step}
+        onValueChange={(v) => onChange(isPercent ? v[0] : Math.round(v[0]))}
+      />
+    </div>
+  );
+}
+
+function LiveMetric({
+  label, value, delta, betterWhenLower,
+}: { label: string; value: string; delta: number; betterWhenLower: boolean }) {
+  const abs = Math.abs(delta);
+  const showDelta = abs >= 0.05;
+  const isBetter = betterWhenLower ? delta < 0 : delta > 0;
+  const colorCls = !showDelta ? "text-muted-foreground" : isBetter ? "text-emerald-600" : "text-muted-foreground";
+  const Icon = delta > 0 ? ArrowUp : ArrowDown;
+  return (
+    <div className="rounded-lg border p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-lg font-semibold tabular-nums">{value}</p>
+      {showDelta && (
+        <p className={cn("text-xs flex items-center gap-1 tabular-nums", colorCls)}>
+          <Icon className="h-3 w-3" />
+          {abs.toFixed(1)}% vs. Original
+        </p>
+      )}
+    </div>
+  );
+}
+
+function DeleteScenarioButton({ onConfirm, pending }: { onConfirm: () => void; pending: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+        <Trash2 className="h-4 w-4" />
+      </Button>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Szenario löschen?</AlertDialogTitle>
+            <AlertDialogDescription>Diese Aktion kann nicht rückgängig gemacht werden.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { onConfirm(); setOpen(false); }} disabled={pending}>
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+function formatDateOnly(v: string): string {
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 
 function LegendDot({ tone, label }: { tone: "ok" | "warn" | "bad" | "gray"; label: string }) {
