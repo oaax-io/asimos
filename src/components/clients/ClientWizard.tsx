@@ -775,11 +775,28 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             )}
 
             {/* FINANCING */}
-            {currentStep === "financing" && (
-              <div className="space-y-4">
+            {currentStep === "financing" && (() => {
+              const goal = form.role_choice === "financing_applicant" ? form.financing_goal : "purchase";
+              const ownFundsSplit =
+                num(form.own_funds_cash) ?? 0;
+              const splitSum =
+                (num(form.own_funds_cash) ?? 0) +
+                (num(form.own_funds_pillar_3a) ?? 0) +
+                (num(form.own_funds_pension_fund) ?? 0) +
+                (num(form.own_funds_vested_benefits) ?? 0) +
+                (num(form.own_funds_securities) ?? 0) +
+                (num(form.own_funds_gift) ?? 0) +
+                (num(form.own_funds_private_loan) ?? 0) +
+                (num(form.own_funds_inheritance) ?? 0) +
+                (num(form.own_funds_other) ?? 0);
+              void ownFundsSplit;
+              const total = num(form.own_funds_total);
+              const mismatch = total != null && Math.abs(total - splitSum) > 1;
+              return (
+              <div className="space-y-5">
                 {form.role_choice === "financing_applicant" && (
                   <div>
-                    <Label>Finanzierungsziel</Label>
+                    <Label>Finanzierungsziel *</Label>
                     <Select value={form.financing_goal} onValueChange={(v) => set("financing_goal", v)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -788,24 +805,88 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                     </Select>
                   </div>
                 )}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div><Label>Eigenmittel (CHF)</Label><Input type="number" value={form.equity} onChange={(e) => set("equity", e.target.value)} /></div>
-                  <div>
-                    <Label>Finanzierungsstatus</Label>
-                    <Select value={form.financing_status} onValueChange={(v) => set("financing_status", v)}>
-                      <SelectTrigger><SelectValue placeholder="Wählen..." /></SelectTrigger>
-                      <SelectContent>
-                        {["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"].map((f) =>
-                          <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+
+                {/* Objekt-/Finanzierungswerte je nach Ziel */}
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold">Objekt- & Finanzierungswerte</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {(goal === "purchase") && (<>
+                      <div><Label>Kaufpreis (CHF)</Label><Input type="number" value={form.fin_purchase_price} onChange={(e) => set("fin_purchase_price", e.target.value)} /></div>
+                      <div><Label>Gewünschte Hypothek (CHF)</Label><Input type="number" value={form.fin_requested_mortgage} onChange={(e) => set("fin_requested_mortgage", e.target.value)} /></div>
+                    </>)}
+                    {(goal === "renovation") && (<>
+                      <div><Label>Renovationskosten (CHF)</Label><Input type="number" value={form.fin_renovation_costs} onChange={(e) => set("fin_renovation_costs", e.target.value)} /></div>
+                      <div><Label>Gewünschter Finanzierungsbetrag (CHF)</Label><Input type="number" value={form.fin_target_financing_amount} onChange={(e) => set("fin_target_financing_amount", e.target.value)} /></div>
+                    </>)}
+                    {(goal === "increase") && (<>
+                      <div><Label>Zusatzbedarf (CHF)</Label><Input type="number" value={form.fin_requested_increase} onChange={(e) => set("fin_requested_increase", e.target.value)} /></div>
+                      <div><Label>Bestehende Hypothek (CHF, optional)</Label><Input type="number" value={form.fin_existing_mortgage} onChange={(e) => set("fin_existing_mortgage", e.target.value)} /></div>
+                    </>)}
+                    {(goal === "refinance") && (<>
+                      <div><Label>Bestehende Hypothek (CHF)</Label><Input type="number" value={form.fin_existing_mortgage} onChange={(e) => set("fin_existing_mortgage", e.target.value)} /></div>
+                      <div><Label>Gewünschte neue Hypothek (CHF)</Label><Input type="number" value={form.fin_requested_mortgage} onChange={(e) => set("fin_requested_mortgage", e.target.value)} /></div>
+                    </>)}
+                    {(goal === "new_build") && (<>
+                      <div><Label>Projektkosten (CHF)</Label><Input type="number" value={form.fin_project_costs} onChange={(e) => set("fin_project_costs", e.target.value)} /></div>
+                      <div><Label>Gewünschte Hypothek (CHF)</Label><Input type="number" value={form.fin_requested_mortgage} onChange={(e) => set("fin_requested_mortgage", e.target.value)} /></div>
+                    </>)}
+                    {(goal === "mortgage_increase") && (<>
+                      <div><Label>Bestehende Hypothek (CHF)</Label><Input type="number" value={form.fin_existing_mortgage} onChange={(e) => set("fin_existing_mortgage", e.target.value)} /></div>
+                      <div><Label>Erhöhungsbetrag (CHF)</Label><Input type="number" value={form.fin_requested_increase} onChange={(e) => set("fin_requested_increase", e.target.value)} /></div>
+                    </>)}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Quick Check kann später aus der Finanzierungsansicht gestartet werden.
-                </p>
+
+                {/* Eigenmittel */}
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold">Eigenmittel</p>
+                  <div><Label>Eigenmittel total (CHF)</Label><Input type="number" value={form.own_funds_total} onChange={(e) => set("own_funds_total", e.target.value)} /></div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div><Label>davon Bar / Konto</Label><Input type="number" value={form.own_funds_cash} onChange={(e) => set("own_funds_cash", e.target.value)} /></div>
+                    <div><Label>Säule 3a</Label><Input type="number" value={form.own_funds_pillar_3a} onChange={(e) => set("own_funds_pillar_3a", e.target.value)} /></div>
+                    <div><Label>Pensionskasse</Label><Input type="number" value={form.own_funds_pension_fund} onChange={(e) => set("own_funds_pension_fund", e.target.value)} /></div>
+                    <div><Label>Freizügigkeit</Label><Input type="number" value={form.own_funds_vested_benefits} onChange={(e) => set("own_funds_vested_benefits", e.target.value)} /></div>
+                    <div><Label>Wertschriften</Label><Input type="number" value={form.own_funds_securities} onChange={(e) => set("own_funds_securities", e.target.value)} /></div>
+                    <div><Label>Schenkung</Label><Input type="number" value={form.own_funds_gift} onChange={(e) => set("own_funds_gift", e.target.value)} /></div>
+                    <div><Label>Privatdarlehen</Label><Input type="number" value={form.own_funds_private_loan} onChange={(e) => set("own_funds_private_loan", e.target.value)} /></div>
+                    <div><Label>Erbvorbezug</Label><Input type="number" value={form.own_funds_inheritance} onChange={(e) => set("own_funds_inheritance", e.target.value)} /></div>
+                    <div><Label>Sonstige</Label><Input type="number" value={form.own_funds_other} onChange={(e) => set("own_funds_other", e.target.value)} /></div>
+                  </div>
+                  <div className="rounded-md bg-muted/50 px-3 py-2 text-xs">
+                    Aufgeteilte Eigenmittel: <strong>CHF {splitSum.toLocaleString("de-CH")}</strong>
+                    {mismatch && (
+                      <span className="ml-2 text-amber-600">
+                        Hinweis: Aufteilung weicht vom Total ab.
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Einkommen */}
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold">Einkommen (grob)</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div><Label>Bruttoeinkommen jährlich (CHF)</Label><Input type="number" value={form.gross_income_yearly} onChange={(e) => set("gross_income_yearly", e.target.value)} /></div>
+                    <div><Label>Einkommen Partner jährlich (CHF, optional)</Label><Input type="number" value={form.partner_income_yearly} onChange={(e) => set("partner_income_yearly", e.target.value)} /></div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Detailangaben werden später in der Selbstauskunft ergänzt.
+                  </p>
+                </div>
+
+                <div>
+                  <Label>Finanzierungsstatus</Label>
+                  <Select value={form.financing_status} onValueChange={(v) => set("financing_status", v)}>
+                    <SelectTrigger><SelectValue placeholder="Wählen..." /></SelectTrigger>
+                    <SelectContent>
+                      {["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"].map((f) =>
+                        <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            )}
+              );
+            })()}
 
             {/* PROPERTY (Verkäufer/Vermieter/Finanzierung) */}
             {currentStep === "property" && (
