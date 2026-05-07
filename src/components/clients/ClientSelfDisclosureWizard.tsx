@@ -158,10 +158,15 @@ function buildPersistPayload(
     ...rest
   } = cleaned;
 
+  const normalizedAdvisorId = normalizeAdvisorId(cleaned.advisor_id, employees);
+  const advisorPatch = normalizedAdvisorId !== null || cleaned.advisor_id == null
+    ? { advisor_id: normalizedAdvisorId }
+    : {};
+
   return {
     ...rest,
     client_id: clientId,
-    advisor_id: normalizeAdvisorId(cleaned.advisor_id, employees),
+    ...advisorPatch,
     status: typeof cleaned.status === "string" ? cleaned.status : "draft",
     total_income_monthly: benchmark.totalIncome,
     total_expenses_monthly: benchmark.totalExpenses,
