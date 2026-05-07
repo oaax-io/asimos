@@ -127,6 +127,28 @@ type FormState = {
   equity: string;
   financing_status: string;
   financing_goal: string;
+  // Objekt-/Finanzierungswerte
+  fin_purchase_price: string;
+  fin_renovation_costs: string;
+  fin_existing_mortgage: string;
+  fin_requested_mortgage: string;
+  fin_requested_increase: string;
+  fin_target_financing_amount: string;
+  fin_project_costs: string;
+  // Eigenmittel-Aufteilung
+  own_funds_total: string;
+  own_funds_cash: string;
+  own_funds_pillar_3a: string;
+  own_funds_pension_fund: string;
+  own_funds_vested_benefits: string;
+  own_funds_securities: string;
+  own_funds_gift: string;
+  own_funds_private_loan: string;
+  own_funds_inheritance: string;
+  own_funds_other: string;
+  // Einkommen grob
+  gross_income_yearly: string;
+  partner_income_yearly: string;
 
   // Eigentum (Verkäufer/Vermieter/Eigentümer)
   property_mode: "existing" | "new" | "none";
@@ -156,6 +178,14 @@ const empty: FormState = {
   budget_min: "", budget_max: "", rooms_min: "", area_min: "",
   yield_target: "", usage_types: [],
   equity: "", financing_status: "", financing_goal: "purchase",
+  fin_purchase_price: "", fin_renovation_costs: "", fin_existing_mortgage: "",
+  fin_requested_mortgage: "", fin_requested_increase: "",
+  fin_target_financing_amount: "", fin_project_costs: "",
+  own_funds_total: "", own_funds_cash: "", own_funds_pillar_3a: "",
+  own_funds_pension_fund: "", own_funds_vested_benefits: "",
+  own_funds_securities: "", own_funds_gift: "", own_funds_private_loan: "",
+  own_funds_inheritance: "", own_funds_other: "",
+  gross_income_yearly: "", partner_income_yearly: "",
   property_mode: "none", selected_property_id: "",
   new_property_title: "", new_property_address: "", new_property_postal_code: "",
   new_property_city: "", new_property_type: "apartment", new_property_price: "",
@@ -291,7 +321,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
         postal_code: form.postal_code || null,
         city: form.city || null,
         country: form.country || null,
-        equity: num(form.equity),
+        equity: num(form.own_funds_total) ?? num(form.equity),
         financing_status: form.financing_status || null,
       };
       const { data: client, error: clientErr } = await supabase
@@ -423,6 +453,58 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
           related_id: form.selected_property_id,
           related_type: "property",
         });
+      }
+
+      // 7) Finanzierungs-Draft anlegen (nur wenn financing-Step ausgefüllt wurde)
+      const hasFinancingStep = role === "financing_applicant" || role === "buyer";
+      const anyFinValue =
+        form.fin_purchase_price || form.fin_renovation_costs ||
+        form.fin_existing_mortgage || form.fin_requested_mortgage ||
+        form.fin_requested_increase || form.fin_target_financing_amount ||
+        form.fin_project_costs || form.own_funds_total ||
+        form.gross_income_yearly;
+      if (hasFinancingStep && anyFinValue) {
+        const goal = role === "financing_applicant" ? form.financing_goal : "purchase";
+        const linkedPropertyId = createdPropertyId
+          ?? (form.property_mode === "existing" ? form.selected_property_id || null : null);
+        const requestedMortgage =
+          num(form.fin_requested_mortgage) ?? num(form.fin_target_financing_amount);
+        const dossierPayload: any = {
+          client_id: clientId,
+          property_id: linkedPropertyId,
+          financing_type: goal,
+          financing_modules: goal ? [goal] : [],
+          status: "draft",
+          dossier_status: "draft",
+          quick_check_status: "incomplete",
+          data_source: linkedPropertyId ? "existing_property" : "manual",
+          title: `Finanzierung – ${fullName}`,
+          purchase_price: num(form.fin_purchase_price),
+          renovation_costs: num(form.fin_renovation_costs),
+          existing_mortgage: num(form.fin_existing_mortgage),
+          requested_mortgage: requestedMortgage,
+          requested_increase: num(form.fin_requested_increase),
+          construction_costs: num(form.fin_project_costs),
+          own_funds_total: num(form.own_funds_total),
+          own_funds_liquid: num(form.own_funds_cash),
+          own_funds_pillar_3a: num(form.own_funds_pillar_3a),
+          own_funds_pension_fund: num(form.own_funds_pension_fund),
+          own_funds_vested_benefits: num(form.own_funds_vested_benefits),
+          own_funds_gift: num(form.own_funds_gift),
+          own_funds_private_loan: num(form.own_funds_private_loan),
+          own_funds_inheritance: num(form.own_funds_inheritance),
+          gross_income_yearly: num(form.gross_income_yearly),
+          section_additional: {
+            wizard_source: true,
+            own_funds_securities: num(form.own_funds_securities),
+            own_funds_other: num(form.own_funds_other),
+            partner_income_yearly: num(form.partner_income_yearly),
+            target_financing_amount: num(form.fin_target_financing_amount),
+          },
+        };
+        const { error: dossierErr } = await supabase
+          .from("financing_dossiers").insert(dossierPayload);
+        if (dossierErr) console.warn("Finanzierungsdossier:", dossierErr);
       }
 
       return {
@@ -745,11 +827,28 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             )}
 
             {/* FINANCING */}
-            {currentStep === "financing" && (
-              <div className="space-y-4">
+            {currentStep === "financing" && (() => {
+              const goal = form.role_choice === "financing_applicant" ? form.financing_goal : "purchase";
+              const ownFundsSplit =
+                num(form.own_funds_cash) ?? 0;
+              const splitSum =
+                (num(form.own_funds_cash) ?? 0) +
+                (num(form.own_funds_pillar_3a) ?? 0) +
+                (num(form.own_funds_pension_fund) ?? 0) +
+                (num(form.own_funds_vested_benefits) ?? 0) +
+                (num(form.own_funds_securities) ?? 0) +
+                (num(form.own_funds_gift) ?? 0) +
+                (num(form.own_funds_private_loan) ?? 0) +
+                (num(form.own_funds_inheritance) ?? 0) +
+                (num(form.own_funds_other) ?? 0);
+              void ownFundsSplit;
+              const total = num(form.own_funds_total);
+              const mismatch = total != null && Math.abs(total - splitSum) > 1;
+              return (
+              <div className="space-y-5">
                 {form.role_choice === "financing_applicant" && (
                   <div>
-                    <Label>Finanzierungsziel</Label>
+                    <Label>Finanzierungsziel *</Label>
                     <Select value={form.financing_goal} onValueChange={(v) => set("financing_goal", v)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -758,24 +857,88 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                     </Select>
                   </div>
                 )}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div><Label>Eigenmittel (CHF)</Label><Input type="number" value={form.equity} onChange={(e) => set("equity", e.target.value)} /></div>
-                  <div>
-                    <Label>Finanzierungsstatus</Label>
-                    <Select value={form.financing_status} onValueChange={(v) => set("financing_status", v)}>
-                      <SelectTrigger><SelectValue placeholder="Wählen..." /></SelectTrigger>
-                      <SelectContent>
-                        {["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"].map((f) =>
-                          <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+
+                {/* Objekt-/Finanzierungswerte je nach Ziel */}
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold">Objekt- & Finanzierungswerte</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {(goal === "purchase") && (<>
+                      <div><Label>Kaufpreis (CHF)</Label><Input type="number" value={form.fin_purchase_price} onChange={(e) => set("fin_purchase_price", e.target.value)} /></div>
+                      <div><Label>Gewünschte Hypothek (CHF)</Label><Input type="number" value={form.fin_requested_mortgage} onChange={(e) => set("fin_requested_mortgage", e.target.value)} /></div>
+                    </>)}
+                    {(goal === "renovation") && (<>
+                      <div><Label>Renovationskosten (CHF)</Label><Input type="number" value={form.fin_renovation_costs} onChange={(e) => set("fin_renovation_costs", e.target.value)} /></div>
+                      <div><Label>Gewünschter Finanzierungsbetrag (CHF)</Label><Input type="number" value={form.fin_target_financing_amount} onChange={(e) => set("fin_target_financing_amount", e.target.value)} /></div>
+                    </>)}
+                    {(goal === "increase") && (<>
+                      <div><Label>Zusatzbedarf (CHF)</Label><Input type="number" value={form.fin_requested_increase} onChange={(e) => set("fin_requested_increase", e.target.value)} /></div>
+                      <div><Label>Bestehende Hypothek (CHF, optional)</Label><Input type="number" value={form.fin_existing_mortgage} onChange={(e) => set("fin_existing_mortgage", e.target.value)} /></div>
+                    </>)}
+                    {(goal === "refinance") && (<>
+                      <div><Label>Bestehende Hypothek (CHF)</Label><Input type="number" value={form.fin_existing_mortgage} onChange={(e) => set("fin_existing_mortgage", e.target.value)} /></div>
+                      <div><Label>Gewünschte neue Hypothek (CHF)</Label><Input type="number" value={form.fin_requested_mortgage} onChange={(e) => set("fin_requested_mortgage", e.target.value)} /></div>
+                    </>)}
+                    {(goal === "new_build") && (<>
+                      <div><Label>Projektkosten (CHF)</Label><Input type="number" value={form.fin_project_costs} onChange={(e) => set("fin_project_costs", e.target.value)} /></div>
+                      <div><Label>Gewünschte Hypothek (CHF)</Label><Input type="number" value={form.fin_requested_mortgage} onChange={(e) => set("fin_requested_mortgage", e.target.value)} /></div>
+                    </>)}
+                    {(goal === "mortgage_increase") && (<>
+                      <div><Label>Bestehende Hypothek (CHF)</Label><Input type="number" value={form.fin_existing_mortgage} onChange={(e) => set("fin_existing_mortgage", e.target.value)} /></div>
+                      <div><Label>Erhöhungsbetrag (CHF)</Label><Input type="number" value={form.fin_requested_increase} onChange={(e) => set("fin_requested_increase", e.target.value)} /></div>
+                    </>)}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Quick Check kann später aus der Finanzierungsansicht gestartet werden.
-                </p>
+
+                {/* Eigenmittel */}
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold">Eigenmittel</p>
+                  <div><Label>Eigenmittel total (CHF)</Label><Input type="number" value={form.own_funds_total} onChange={(e) => set("own_funds_total", e.target.value)} /></div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div><Label>davon Bar / Konto</Label><Input type="number" value={form.own_funds_cash} onChange={(e) => set("own_funds_cash", e.target.value)} /></div>
+                    <div><Label>Säule 3a</Label><Input type="number" value={form.own_funds_pillar_3a} onChange={(e) => set("own_funds_pillar_3a", e.target.value)} /></div>
+                    <div><Label>Pensionskasse</Label><Input type="number" value={form.own_funds_pension_fund} onChange={(e) => set("own_funds_pension_fund", e.target.value)} /></div>
+                    <div><Label>Freizügigkeit</Label><Input type="number" value={form.own_funds_vested_benefits} onChange={(e) => set("own_funds_vested_benefits", e.target.value)} /></div>
+                    <div><Label>Wertschriften</Label><Input type="number" value={form.own_funds_securities} onChange={(e) => set("own_funds_securities", e.target.value)} /></div>
+                    <div><Label>Schenkung</Label><Input type="number" value={form.own_funds_gift} onChange={(e) => set("own_funds_gift", e.target.value)} /></div>
+                    <div><Label>Privatdarlehen</Label><Input type="number" value={form.own_funds_private_loan} onChange={(e) => set("own_funds_private_loan", e.target.value)} /></div>
+                    <div><Label>Erbvorbezug</Label><Input type="number" value={form.own_funds_inheritance} onChange={(e) => set("own_funds_inheritance", e.target.value)} /></div>
+                    <div><Label>Sonstige</Label><Input type="number" value={form.own_funds_other} onChange={(e) => set("own_funds_other", e.target.value)} /></div>
+                  </div>
+                  <div className="rounded-md bg-muted/50 px-3 py-2 text-xs">
+                    Aufgeteilte Eigenmittel: <strong>CHF {splitSum.toLocaleString("de-CH")}</strong>
+                    {mismatch && (
+                      <span className="ml-2 text-amber-600">
+                        Hinweis: Aufteilung weicht vom Total ab.
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Einkommen */}
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold">Einkommen (grob)</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div><Label>Bruttoeinkommen jährlich (CHF)</Label><Input type="number" value={form.gross_income_yearly} onChange={(e) => set("gross_income_yearly", e.target.value)} /></div>
+                    <div><Label>Einkommen Partner jährlich (CHF, optional)</Label><Input type="number" value={form.partner_income_yearly} onChange={(e) => set("partner_income_yearly", e.target.value)} /></div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Detailangaben werden später in der Selbstauskunft ergänzt.
+                  </p>
+                </div>
+
+                <div>
+                  <Label>Finanzierungsstatus</Label>
+                  <Select value={form.financing_status} onValueChange={(v) => set("financing_status", v)}>
+                    <SelectTrigger><SelectValue placeholder="Wählen..." /></SelectTrigger>
+                    <SelectContent>
+                      {["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"].map((f) =>
+                        <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            )}
+              );
+            })()}
 
             {/* PROPERTY (Verkäufer/Vermieter/Finanzierung) */}
             {currentStep === "property" && (
