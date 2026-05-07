@@ -219,7 +219,7 @@ export function ClientSelfDisclosureTab({ clientId }: Props) {
                   Interne Notizen
                 </div>
                 <p className="mt-1 whitespace-pre-wrap text-sm">
-                  {data.internal_notes as string}
+                  {String(data.internal_notes)}
                 </p>
               </div>
             ) : null}
