@@ -89,7 +89,7 @@ export function BenchmarkCard({ benchmark, variant = "full", className }: Props)
           <Progress value={ratio} className="h-2" />
         </div>
 
-        <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 text-sm">
           <BenchStat
             icon={<TrendingUp className="h-4 w-4 text-emerald-500" />}
             label="Einnahmen"
