@@ -176,6 +176,10 @@ export function ClientSelfDisclosureWizard({
         { body: { pdf_base64: base64, mime_type: file.type } },
       );
       if (error) throw error;
+      if (data?.error) {
+        toast.error(String(data.error));
+        return;
+      }
       const fields = (data?.fields ?? {}) as Record<string, unknown>;
       const cleaned: DisclosureRow = {};
       for (const [k, v] of Object.entries(fields)) {
@@ -184,7 +188,11 @@ export function ClientSelfDisclosureWizard({
       }
       setForm((prev) => ({ ...prev, ...cleaned }));
       const count = Object.keys(cleaned).length;
-      toast.success(`${count} Felder erkannt – bitte prüfen.`);
+      toast.success(
+        count > 0
+          ? `${count} Felder erkannt – bitte prüfen.`
+          : `Keine zuordenbaren Felder erkannt (${data?.form_fields_count ?? 0} Formularfelder gelesen).`,
+      );
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : "PDF konnte nicht gelesen werden",
