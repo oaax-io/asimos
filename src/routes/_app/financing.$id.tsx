@@ -579,7 +579,22 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
           <DetailRow label={`Nebenkosten (${i.ancillaryPct.toFixed(1)}%)`} value={chf(i.ancillary)} />
           <DetailRow label="Amortisation" value={chf(i.amort)} />
           <DetailRow label="Total Wohnkosten p.a." value={chf(i.yearly)} bold divider />
-          <DetailRow label="Bruttoeinkommen p.a." value={chf(i.income)} />
+          {(() => {
+            const coIncome = n(dossier.co_applicant_einkommen);
+            const mainIncome = n(dossier.gross_income_yearly);
+            const coName = dossier.co_applicant?.full_name;
+            const role = dossier.co_applicant_role === "ehepartner" ? "Ehepartner/in" : "Mitantragsteller/in";
+            if (coIncome > 0 && coName) {
+              return (
+                <>
+                  <DetailRow label="Einkommen Hauptantragsteller" value={chf(mainIncome)} />
+                  <DetailRow label={`Einkommen ${role} ${coName}`} value={chf(coIncome)} />
+                  <DetailRow label="Kombiniertes Einkommen p.a." value={chf(i.income)} bold />
+                </>
+              );
+            }
+            return <DetailRow label="Bruttoeinkommen p.a." value={chf(i.income)} />;
+          })()}
           <div className="my-2 border-t" />
           <div className="flex justify-between gap-4 text-sm">
             <span>Tragbarkeitsquote</span>
