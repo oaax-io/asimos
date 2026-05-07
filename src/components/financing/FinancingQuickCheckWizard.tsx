@@ -822,17 +822,42 @@ function SourceRow({ value, label, description }: { value: string; label: string
 function Field({
   label, value, onChange, type = "text",
 }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  const isNumber = type === "number";
+  const display = isNumber ? formatChNumber(value) : value;
   return (
     <div className="space-y-1">
       <Label className="text-xs">{label}</Label>
       <Input
-        type={type}
-        inputMode={type === "number" ? "decimal" : undefined}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        type={isNumber ? "text" : type}
+        inputMode={isNumber ? "decimal" : undefined}
+        value={display}
+        onChange={(e) => {
+          if (isNumber) {
+            const raw = e.target.value.replace(/[^\d.,-]/g, "").replace(/,/g, ".");
+            onChange(raw);
+          } else {
+            onChange(e.target.value);
+          }
+        }}
       />
     </div>
   );
+}
+
+function formatChNumber(v: string): string {
+  if (!v) return "";
+  // Keep trailing decimal separator while typing
+  const trailingDot = /[.,]$/.test(v);
+  const parts = v.split(/[.,]/);
+  const intPart = parts[0].replace(/[^\d-]/g, "");
+  const decPart = parts[1]?.replace(/\D/g, "");
+  if (intPart === "" && !decPart) return v;
+  const n = Number(intPart);
+  if (!Number.isFinite(n)) return v;
+  const intFmt = n.toLocaleString("de-CH").replace(/\u202f|\u00a0/g, "'");
+  if (decPart !== undefined) return `${intFmt}.${decPart}`;
+  if (trailingDot) return `${intFmt}.`;
+  return intFmt;
 }
 
 function SearchableSelect({
