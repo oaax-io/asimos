@@ -635,14 +635,30 @@ function Step2Property({
 }
 
 /* ==================== Schritt 3 ==================== */
+type ClientLite = { id: string; full_name: string; email: string | null; equity: number | null };
+
 function Step3Client({
   form, update, clients, loading,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
-  clients: any[];
+  clients: ClientLite[];
   loading: boolean;
 }) {
+  const toggleCoApplicant = (enabled: boolean) => {
+    if (enabled) {
+      update("co_applicant_enabled", true);
+    } else {
+      // Alle Co-Applicant-Felder leeren
+      update("co_applicant_enabled", false);
+      update("co_applicant_role", "");
+      update("co_applicant_client_id", "");
+      update("co_applicant_einkommen", "");
+      update("co_applicant_eigenkapital", "");
+      update("co_applicant_pk_anteil", "");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <RadioGroup
@@ -688,7 +704,191 @@ function Step3Client({
           Quick Check wird ohne Kundenverknüpfung erstellt. Die Finanzdaten erfassen Sie in Schritt 4.
         </p>
       )}
+
+      {/* === Mitantragsteller (optional) === */}
+      {form.client_source === "crm" && (
+        <CoApplicantSection
+          form={form}
+          update={update}
+          clients={clients}
+          loading={loading}
+          toggle={toggleCoApplicant}
+        />
+      )}
     </div>
+  );
+}
+
+function CoApplicantSection({
+  form, update, clients, loading, toggle,
+}: {
+  form: WizardForm;
+  update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
+  clients: ClientLite[];
+  loading: boolean;
+  toggle: (enabled: boolean) => void;
+}) {
+  const selected = clients.find((c) => c.id === form.co_applicant_client_id);
+  const items = clients
+    .filter((c) => c.id !== form.client_id)
+    .map((c) => ({ value: c.id, label: c.full_name, hint: c.email ?? undefined }));
+
+  const incomeNum = num(form.co_applicant_einkommen);
+  const equityNum = num(form.co_applicant_eigenkapital);
+  const pkNum = num(form.co_applicant_pk_anteil);
+
+  const hasIncome = incomeNum > 0;
+  const hasEquity = equityNum > 0;
+  const hasPk = pkNum > 0;
+  const anyMissing = selected && (!hasIncome || !hasEquity || !hasPk);
+
+  // Kombinierte Anzeige
+  const mainIncome = num(form.gross_income_yearly);
+  const mainEquity = num(form.own_funds_total);
+  const mainPk = num(form.own_funds_pension_fund);
+  const incomeCombined = hasIncome ? mainIncome + incomeNum : mainIncome;
+  const equityCombined = mainEquity + equityNum;
+  const pkCombined = mainPk + pkNum;
+
+  return (
+    <div className="rounded-lg border bg-muted/20 p-4 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <Label htmlFor="co-applicant-toggle" className="text-sm font-medium cursor-pointer">
+              Mitantragsteller / Ehepartner hinzufügen
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Optional — kombiniert Einkommen und Eigenmittel für die Berechnung.
+            </p>
+          </div>
+        </div>
+        <Switch
+          id="co-applicant-toggle"
+          checked={form.co_applicant_enabled}
+          onCheckedChange={toggle}
+        />
+      </div>
+
+      {form.co_applicant_enabled && (
+        <div className="space-y-4 border-t pt-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Rolle *</Label>
+              <Select
+                value={form.co_applicant_role || ""}
+                onValueChange={(v) => update("co_applicant_role", v as CoApplicantRole)}
+              >
+                <SelectTrigger><SelectValue placeholder="Rolle wählen…" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ehepartner">Ehepartner/in</SelectItem>
+                  <SelectItem value="mitantragsteller">Mitantragsteller/in</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Kunde aus CRM</Label>
+              <SearchableSelect
+                placeholder={loading ? "Lade…" : "Kunde suchen…"}
+                emptyText="Keinen Kunden gefunden."
+                value={form.co_applicant_client_id}
+                onChange={(v) => update("co_applicant_client_id", v)}
+                items={items}
+              />
+            </div>
+          </div>
+
+          {selected && (
+            <>
+              <DataQualityChecklist
+                hasIncome={hasIncome}
+                hasEquity={hasEquity}
+                hasPk={hasPk}
+                income={incomeNum}
+                equity={equityNum}
+                pk={pkNum}
+              />
+
+              {anyMissing && (
+                <div className="rounded-md border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs space-y-2">
+                  <p className="text-amber-800 dark:text-amber-200">
+                    Einige Daten von <span className="font-medium">{selected.full_name}</span> sind
+                    noch nicht erfasst. Ergänze die fehlenden Angaben im Kundenprofil für eine
+                    vollständige Berechnung.
+                  </p>
+                  <a
+                    href={`/clients/${selected.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 font-medium text-amber-900 dark:text-amber-100 hover:underline"
+                  >
+                    Zum Kundenprofil <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              )}
+
+              {!hasIncome && (
+                <div className="rounded-md border border-red-300/60 bg-red-50 dark:bg-red-950/30 p-3 text-xs flex gap-2 items-start">
+                  <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                  <p className="text-red-800 dark:text-red-200">
+                    Das Einkommen ist für die Tragbarkeitsberechnung zwingend erforderlich.
+                    Ohne diesen Wert wird der Mitantragsteller in der Berechnung nicht berücksichtigt.
+                  </p>
+                </div>
+              )}
+
+              {/* Manuelle Korrektur der übernommenen Werte */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Field label="Einkommen (CHF/J)" type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
+                <Field label="Eigenkapital (CHF)" type="number" value={form.co_applicant_eigenkapital} onChange={(v) => update("co_applicant_eigenkapital", v)} />
+                <Field label="PK-Anteil (CHF)" type="number" value={form.co_applicant_pk_anteil} onChange={(v) => update("co_applicant_pk_anteil", v)} />
+              </div>
+
+              <div className="rounded-md bg-background border p-3 space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                  <Users className="h-3 w-3" /> Kombinierte Werte
+                </p>
+                <div className="text-xs text-muted-foreground space-y-0.5">
+                  <div className="flex justify-between"><span>Kombiniertes Einkommen:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(incomeCombined)} / Jahr</span></div>
+                  <div className="flex justify-between"><span>Kombinierte Eigenmittel:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(equityCombined)}</span></div>
+                  <div className="flex justify-between"><span>Kombinierter PK-Anteil:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(pkCombined)}</span></div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DataQualityChecklist({
+  hasIncome, hasEquity, hasPk, income, equity, pk,
+}: {
+  hasIncome: boolean; hasEquity: boolean; hasPk: boolean;
+  income: number; equity: number; pk: number;
+}) {
+  const Row = ({ ok, label, value }: { ok: boolean; label: string; value: number }) => (
+    <li className={cn(
+      "flex items-center justify-between gap-3 text-xs py-1",
+      ok ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300",
+    )}>
+      <span className="flex items-center gap-2">
+        {ok ? <Check className="h-3.5 w-3.5" /> : <span className="text-base leading-none">✗</span>}
+        {label}
+      </span>
+      <span className="tabular-nums">
+        {ok ? formatCurrency(value) : "nicht erfasst"}
+      </span>
+    </li>
+  );
+  return (
+    <ul className="rounded-md border bg-background p-3 divide-y divide-border/50">
+      <Row ok={hasIncome} label="Brutto-Jahreseinkommen" value={income} />
+      <Row ok={hasEquity} label="Eigenkapital" value={equity} />
+      <Row ok={hasPk} label="PK / Freizügigkeit" value={pk} />
+    </ul>
   );
 }
 
