@@ -336,7 +336,7 @@ export function FinancingQuickCheckWizard({
         affordability_ratio: result.affordability_ratio || null,
         quick_check_status: result.status,
         quick_check_reasons: result.reasons,
-        status: "quick_check" as const,
+        status: "draft" as const,
         dossier_status: "quick_check" as const,
       };
 
