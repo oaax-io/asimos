@@ -392,7 +392,7 @@ function deriveInputs(d: Dossier): Inputs {
   const reno = n(d.renovation_costs);
   const total = purchase + reno;
   const mortgage = n(d.requested_mortgage);
-  const equity = n(d.own_funds_total);
+  
   const equity = d.eigenkapital_kombiniert != null && d.eigenkapital_kombiniert !== ""
     ? n(d.eigenkapital_kombiniert) : n(d.own_funds_total);
   const pension = d.pk_anteil_kombiniert != null && d.pk_anteil_kombiniert !== ""
