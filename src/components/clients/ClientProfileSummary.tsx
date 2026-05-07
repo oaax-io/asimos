@@ -11,7 +11,7 @@ import {
   Users,
   ExternalLink,
   MapPin,
-  Euro,
+  Banknote,
   BedDouble,
   Ruler,
   TrendingUp,
