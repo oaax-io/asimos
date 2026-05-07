@@ -118,7 +118,9 @@ function normalizeAdvisorId(value: unknown, employees: EmployeeOption[]): string
 
   const match = employees.find((employee) =>
     [employee.full_name, employee.email].some(
-      (candidate) => candidate?.trim().toLowerCase() === trimmed.toLowerCase(),
+      (candidate) =>
+        typeof candidate === "string" &&
+        candidate.trim().toLowerCase() === trimmed.toLowerCase(),
     ),
   );
 
