@@ -82,6 +82,195 @@ const FIELD_SCHEMA = {
   additionalProperties: false,
 };
 
+const ALLOWED_KEYS = new Set(Object.keys(FIELD_SCHEMA.properties));
+const NUMERIC_KEYS = new Set([
+  "annual_net_salary",
+  "salary_net_monthly",
+  "additional_income",
+  "income_job_two",
+  "income_rental",
+  "mortgage_expense",
+  "rent_expense",
+  "leasing_expense",
+  "credit_expense",
+  "life_insurance_expense",
+  "alimony_expense",
+  "health_insurance_expense",
+  "property_insurance_expense",
+  "utilities_expense",
+  "telecom_expense",
+  "living_costs_expense",
+  "taxes_expense",
+  "miscellaneous_expense",
+]);
+const DATE_KEYS = new Set([
+  "resident_since",
+  "birth_date",
+  "employed_since",
+  "disclosure_date",
+]);
+
+function pickValue(
+  fields: Record<string, string>,
+  ...keys: string[]
+): string | undefined {
+  for (const key of keys) {
+    const value = fields[key]?.trim();
+    if (value) return value;
+  }
+  return undefined;
+}
+
+function normalizeDate(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  if (/^\d{4}$/.test(trimmed)) return `${trimmed}-01-01`;
+
+  const match = trimmed.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (!match) return undefined;
+
+  const [, day, month, year] = match;
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+
+function normalizeNumber(value: string | number | undefined): number | undefined {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  if (!value) return undefined;
+
+  const cleaned = value
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/CHF/gi, "")
+    .replace(/[’']/g, "")
+    .replace(/\.(?=\d{3}(\D|$))/g, "")
+    .replace(",", ".")
+    .replace(/[^\d.-]/g, "");
+
+  if (!cleaned) return undefined;
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function parseJsonObject(raw: string): unknown {
+  const cleaned = raw
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/, "")
+    .trim();
+  return JSON.parse(cleaned);
+}
+
+function sanitizeFields(input: unknown): Record<string, string | number> {
+  if (!input || typeof input !== "object") return {};
+
+  const source = input as Record<string, unknown>;
+  const out: Record<string, string | number> = {};
+
+  for (const key of ALLOWED_KEYS) {
+    const value = source[key];
+    if (value === undefined || value === null || value === "") continue;
+
+    if (NUMERIC_KEYS.has(key)) {
+      const parsed = normalizeNumber(
+        typeof value === "string" || typeof value === "number"
+          ? value
+          : undefined,
+      );
+      if (parsed !== undefined) out[key] = parsed;
+      continue;
+    }
+
+    if (DATE_KEYS.has(key)) {
+      const parsed = normalizeDate(typeof value === "string" ? value : undefined);
+      if (parsed) out[key] = parsed;
+      continue;
+    }
+
+    if (typeof value === "string" && value.trim()) {
+      out[key] = value.trim();
+    }
+  }
+
+  return out;
+}
+
+function mapAsimoFormFields(
+  fields: Record<string, string>,
+): Record<string, string | number> {
+  const mapped: Record<string, string | number> = {};
+
+  const setString = (key: string, ...sourceKeys: string[]) => {
+    const value = pickValue(fields, ...sourceKeys);
+    if (value) mapped[key] = value;
+  };
+
+  const setNumber = (key: string, ...sourceKeys: string[]) => {
+    const value = pickValue(fields, ...sourceKeys);
+    const parsed = normalizeNumber(value);
+    if (parsed !== undefined) mapped[key] = parsed;
+  };
+
+  const setDate = (key: string, ...sourceKeys: string[]) => {
+    const value = pickValue(fields, ...sourceKeys);
+    const parsed = normalizeDate(value);
+    if (parsed) mapped[key] = parsed;
+  };
+
+  setString("first_name", "AN02");
+  setString("last_name", "AN03");
+  setString("street", "AN16", "AN04");
+  setString("street_number", "AN16x", "AN04x");
+  setString("postal_code", "AN05plz");
+  setString("city", "AN05ort");
+  setString("resident_since", "AN06");
+  setString("phone", "AN07");
+  setString("mobile", "AN07x");
+  setString("email", "AN08");
+  setDate("birth_date", "AN09");
+  setString("nationality", "AN09x");
+  setString("birth_place", "AN10");
+  setString("birth_country", "AN10x");
+  setString("marital_status", "AN11");
+  setString("tax_id_ch", "AN12");
+  setString("employment_status", "AN13");
+  setString("employer_name", "AN14");
+  setString("employer_phone", "AN17");
+  setString("employed_as", "AN18");
+  setDate("employed_since", "AN18x");
+  setNumber("salary_net_monthly", "AN19");
+  setNumber("additional_income", "AN20");
+  setNumber("annual_net_salary", "AN21");
+  setNumber("mortgage_expense", "AN23");
+  setNumber("rent_expense", "AN24");
+  setNumber("leasing_expense", "AN25");
+  setNumber("credit_expense", "AN26");
+  setNumber("life_insurance_expense", "AN27");
+  setNumber("alimony_expense", "AN28");
+  setNumber("health_insurance_expense", "AN29");
+  setNumber("property_insurance_expense", "AN30");
+  setDate("disclosure_date", "Datum", "Datum1", "Date");
+  setString("disclosure_place", "Ort1", "Ort", "Place");
+  setString("advisor_id", "Berater", "Advisor");
+
+  const employerStreet = [pickValue(fields, "AN16"), pickValue(fields, "AN16x")]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const employerCity = [pickValue(fields, "AN15plz"), pickValue(fields, "AN15ort")]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const employerAddress = [employerStreet, employerCity].filter(Boolean).join(", ");
+  if (employerAddress) mapped.employer_address = employerAddress;
+
+  return mapped;
+}
+
 async function extractFormFields(
   pdfBytes: Uint8Array,
 ): Promise<Record<string, string>> {
