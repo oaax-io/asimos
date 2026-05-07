@@ -275,8 +275,54 @@ function FinancingDetailPage() {
           <p className="text-sm text-muted-foreground">Aktivitätenverlauf folgt in einer späteren Phase.</p>
         </TabsContent>
       </Tabs>
+
+      <FinancingQuickCheckWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        defaultClientId={dossier.client_id ?? undefined}
+        defaultPropertyId={dossier.property_id ?? undefined}
+        onCreated={(newId) => {
+          setWizardOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["financing_dossier", id] });
+          if (newId !== id) navigate({ to: "/financing/$id", params: { id: newId } });
+        }}
+      />
+
+      <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quick Check zurücksetzen und neu starten?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die gespeicherten Werte bleiben erhalten.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => resetMutation.mutate()}
+              disabled={resetMutation.isPending}
+            >
+              Zurücksetzen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
+}
+
+function formatDateTime(v: string): string {
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function qcBadgeTone(s: QuickCheckStatus): string {
+  if (s === "realistic") return "bg-emerald-600 hover:bg-emerald-600 text-white";
+  if (s === "critical") return "bg-amber-500 hover:bg-amber-500 text-white";
+  if (s === "not_financeable") return "bg-red-600 hover:bg-red-600 text-white";
+  return "bg-secondary text-secondary-foreground hover:bg-secondary";
 }
 
 function fmt(v: any) {
