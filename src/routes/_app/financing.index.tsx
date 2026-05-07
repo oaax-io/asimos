@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/EmptyState";
-import { Plus, Search, Building2, User, Database, PencilLine, Trash2 } from "lucide-react";
+import { Plus, Search, Building2, User, Database, PencilLine, Trash2, UserPlus, FileText, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
@@ -22,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/financing/")({ component: FinancingPage });
 
@@ -37,15 +39,19 @@ function FinancingPage() {
   const [bankFilter, setBankFilter] = useState<string>(ALL);
   const [sourceFilter, setSourceFilter] = useState<string>(ALL);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const canDelete = useIsOwnerOrAdmin();
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("financing_dossiers").delete().eq("id", id);
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("financing_dossiers").delete().in("id", ids);
       if (error) throw error;
     },
-    onSuccess: () => {
-      toast.success("Finanzierung gelöscht");
+    onSuccess: (_data, ids) => {
+      toast.success(ids.length === 1 ? "Finanzierung gelöscht" : `${ids.length} Finanzierungen gelöscht`);
+      setSelected(new Set());
+      setConfirmDeleteOpen(false);
       qc.invalidateQueries({ queryKey: ["financing_dossiers"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Löschen fehlgeschlagen"),
@@ -92,6 +98,24 @@ function FinancingPage() {
       return hay.includes(s);
     });
   }, [dossiers, search, statusFilter, typeFilter, qcFilter, bankFilter, sourceFilter]);
+
+  const toggleOne = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+
+  const allVisibleSelected = filtered.length > 0 && filtered.every((d: any) => selected.has(d.id));
+  const toggleAllVisible = () =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) filtered.forEach((d: any) => next.delete(d.id));
+      else filtered.forEach((d: any) => next.add(d.id));
+      return next;
+    });
+
+  const selectionCount = selected.size;
 
   return (
     <div className="space-y-6">
@@ -156,6 +180,57 @@ function FinancingPage() {
         </Select>
       </div>
 
+      {filtered.length > 0 && (
+        <div className="flex items-center justify-between rounded-md border bg-card px-3 py-2 text-sm">
+          <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+            <Checkbox
+              checked={allVisibleSelected}
+              onCheckedChange={toggleAllVisible}
+              aria-label="Alle auswählen"
+            />
+            <span className="text-muted-foreground">
+              {selectionCount > 0 ? `${selectionCount} ausgewählt` : "Alle auswählen"}
+            </span>
+          </label>
+          {selectionCount > 0 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toast.info("Zuweisen kommt bald")}
+              >
+                <UserPlus className="mr-2 h-4 w-4" />Zuweisen
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toast.info("Dokumentgenerierung kommt bald")}
+              >
+                <FileText className="mr-2 h-4 w-4" />Dokument generieren
+              </Button>
+              {canDelete && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setConfirmDeleteOpen(true)}
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />Löschen
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelected(new Set())}
+                aria-label="Auswahl aufheben"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Laden…</p>
       ) : filtered.length === 0 ? (
@@ -170,9 +245,8 @@ function FinancingPage() {
             <DossierCard
               key={d.id}
               d={d}
-              canDelete={canDelete}
-              onDelete={() => deleteMutation.mutate(d.id)}
-              isDeleting={deleteMutation.isPending}
+              selected={selected.has(d.id)}
+              onToggle={() => toggleOne(d.id)}
             />
           ))}
         </div>
@@ -183,17 +257,39 @@ function FinancingPage() {
         onOpenChange={setWizardOpen}
         onCreated={(id) => { setWizardOpen(false); navigate({ to: "/financing/$id", params: { id } }); }}
       />
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {selectionCount === 1 ? "Finanzierung löschen?" : `${selectionCount} Finanzierungen löschen?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMutation.mutate(Array.from(selected))}
+              disabled={deleteMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
 function DossierCard({
-  d, canDelete, onDelete, isDeleting,
+  d, selected, onToggle,
 }: {
   d: any;
-  canDelete: boolean;
-  onDelete: () => void;
-  isDeleting: boolean;
+  selected: boolean;
+  onToggle: () => void;
 }) {
   const ds = (d.data_source ?? "existing_property") as "existing_property" | "quick_entry";
   const snap = (d.property_snapshot as any) ?? {};
@@ -203,83 +299,58 @@ function DossierCard({
     ?? null;
 
   return (
-    <div className="relative">
-      <Link to="/financing/$id" params={{ id: d.id }}>
-        <Card className="transition hover:shadow-md">
-          <CardContent className="flex flex-wrap items-start gap-4 p-4">
-            <div className="flex-1 min-w-0 space-y-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-medium truncate">
-                  {d.title || FINANCING_TYPE_LABELS[d.financing_type as FinancingType] || "Finanzierung"}
-                </p>
-                <Badge variant="secondary">{FINANCING_TYPE_LABELS[d.financing_type as FinancingType] ?? "—"}</Badge>
-                <Badge className={dossierTone(d.dossier_status)}>
-                  {DOSSIER_STATUS_LABELS[d.dossier_status as DossierStatus] ?? "Entwurf"}
-                </Badge>
-                <Badge variant="outline" className={qcTone(d.quick_check_status ?? "incomplete")}>
-                  {QUICK_CHECK_LABELS[(d.quick_check_status ?? "incomplete") as QuickCheckStatus]}
-                </Badge>
-                <Badge variant="outline" className="gap-1">
-                  {ds === "existing_property"
-                    ? <><Database className="h-3 w-3" />Bestehende Immobilie</>
-                    : <><PencilLine className="h-3 w-3" />Quick-Erfassung</>}
-                </Badge>
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                {d.clients?.full_name && (
-                  <span className="inline-flex items-center gap-1"><User className="h-3.5 w-3.5" />{d.clients.full_name}</span>
-                )}
-                {propertyLabel && (
-                  <span className="inline-flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{propertyLabel}</span>
-                )}
-                {d.bank_name && <span>Bank: {d.bank_name}{d.bank_type ? ` (${d.bank_type === "ubs" ? "UBS" : "andere"})` : ""}</span>}
-                {!d.bank_name && d.bank_type && <span>Banktyp: {d.bank_type === "ubs" ? "UBS" : "andere"}</span>}
-                <span>Aktualisiert {formatDate(d.updated_at)}</span>
-              </div>
+    <Card className={cn("transition hover:shadow-md", selected && "ring-2 ring-primary")}>
+      <CardContent className="flex flex-wrap items-start gap-4 p-4">
+        <div
+          className="flex items-center pt-1"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Checkbox
+            checked={selected}
+            onCheckedChange={onToggle}
+            aria-label="Auswählen"
+          />
+        </div>
+        <Link to="/financing/$id" params={{ id: d.id }} className="flex-1 min-w-0 flex flex-wrap items-start gap-4">
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-medium truncate">
+                {d.title || FINANCING_TYPE_LABELS[d.financing_type as FinancingType] || "Finanzierung"}
+              </p>
+              <Badge variant="secondary">{FINANCING_TYPE_LABELS[d.financing_type as FinancingType] ?? "—"}</Badge>
+              <Badge className={dossierTone(d.dossier_status)}>
+                {DOSSIER_STATUS_LABELS[d.dossier_status as DossierStatus] ?? "Entwurf"}
+              </Badge>
+              <Badge variant="outline" className={qcTone(d.quick_check_status ?? "incomplete")}>
+                {QUICK_CHECK_LABELS[(d.quick_check_status ?? "incomplete") as QuickCheckStatus]}
+              </Badge>
+              <Badge variant="outline" className="gap-1">
+                {ds === "existing_property"
+                  ? <><Database className="h-3 w-3" />Bestehende Immobilie</>
+                  : <><PencilLine className="h-3 w-3" />Quick-Erfassung</>}
+              </Badge>
             </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-right text-xs">
-              <KV label="Hypothek" value={d.requested_mortgage ? formatCurrency(Number(d.requested_mortgage)) : "—"} />
-              <KV label="Investition" value={d.total_investment ? formatCurrency(Number(d.total_investment)) : "—"} />
-              <KV label="Belehnung" value={d.loan_to_value_ratio != null ? `${Number(d.loan_to_value_ratio).toFixed(1)}%` : "—"} />
-              <KV label="Tragbarkeit" value={d.affordability_ratio != null ? `${Number(d.affordability_ratio).toFixed(1)}%` : "—"} />
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+              {d.clients?.full_name && (
+                <span className="inline-flex items-center gap-1"><User className="h-3.5 w-3.5" />{d.clients.full_name}</span>
+              )}
+              {propertyLabel && (
+                <span className="inline-flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{propertyLabel}</span>
+              )}
+              {d.bank_name && <span>Bank: {d.bank_name}{d.bank_type ? ` (${d.bank_type === "ubs" ? "UBS" : "andere"})` : ""}</span>}
+              {!d.bank_name && d.bank_type && <span>Banktyp: {d.bank_type === "ubs" ? "UBS" : "andere"}</span>}
+              <span>Aktualisiert {formatDate(d.updated_at)}</span>
             </div>
-          </CardContent>
-        </Card>
-      </Link>
-      {canDelete && (
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-2 top-2 h-8 w-8 text-muted-foreground hover:text-destructive"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              aria-label="Finanzierung löschen"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Finanzierung löschen?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Dieses Dossier wird unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={onDelete}
-                disabled={isDeleting}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Löschen
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-    </div>
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-right text-xs">
+            <KV label="Hypothek" value={d.requested_mortgage ? formatCurrency(Number(d.requested_mortgage)) : "—"} />
+            <KV label="Investition" value={d.total_investment ? formatCurrency(Number(d.total_investment)) : "—"} />
+            <KV label="Belehnung" value={d.loan_to_value_ratio != null ? `${Number(d.loan_to_value_ratio).toFixed(1)}%` : "—"} />
+            <KV label="Tragbarkeit" value={d.affordability_ratio != null ? `${Number(d.affordability_ratio).toFixed(1)}%` : "—"} />
+          </div>
+        </Link>
+      </CardContent>
+    </Card>
   );
 }
 
