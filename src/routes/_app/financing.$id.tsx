@@ -335,6 +335,14 @@ type Dossier = Record<string, unknown> & {
   calculated_interest_rate?: number | string | null;
   ancillary_costs_yearly?: number | string | null;
   amortisation_yearly?: number | string | null;
+  co_applicant_client_id?: string | null;
+  co_applicant_role?: string | null;
+  co_applicant_einkommen?: number | string | null;
+  co_applicant_eigenkapital?: number | string | null;
+  co_applicant_pk_anteil?: number | string | null;
+  einkommen_kombiniert?: number | string | null;
+  eigenkapital_kombiniert?: number | string | null;
+  pk_anteil_kombiniert?: number | string | null;
 };
 
 function n(v: unknown, fallback = 0): number {
