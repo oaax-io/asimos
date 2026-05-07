@@ -1071,6 +1071,89 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          assigned_to: string | null
+          attachments: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          page_url: string | null
+          priority: Database["public"]["Enums"]["feedback_priority"]
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["feedback_status"]
+          title: string
+          type: Database["public"]["Enums"]["feedback_type"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          attachments?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          page_url?: string | null
+          priority?: Database["public"]["Enums"]["feedback_priority"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["feedback_status"]
+          title: string
+          type?: Database["public"]["Enums"]["feedback_type"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          attachments?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          page_url?: string | null
+          priority?: Database["public"]["Enums"]["feedback_priority"]
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["feedback_status"]
+          title?: string
+          type?: Database["public"]["Enums"]["feedback_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      feedback_comments: {
+        Row: {
+          attachments: Json
+          author_id: string | null
+          body: string
+          created_at: string
+          feedback_id: string
+          id: string
+        }
+        Insert: {
+          attachments?: Json
+          author_id?: string | null
+          body: string
+          created_at?: string
+          feedback_id: string
+          id?: string
+        }
+        Update: {
+          attachments?: Json
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          feedback_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_comments_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "feedback"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financing_checklist_items: {
         Row: {
           created_at: string
@@ -2611,6 +2694,9 @@ export type Database = {
         | "nda"
         | "reservation_receipt"
         | "mandate_partial"
+      feedback_priority: "low" | "medium" | "high" | "critical"
+      feedback_status: "new" | "planned" | "in_progress" | "done" | "rejected"
+      feedback_type: "idea" | "bug" | "question" | "other"
       financing_checklist_section:
         | "customer"
         | "financing_structure"
@@ -2878,6 +2964,9 @@ export const Constants = {
         "reservation_receipt",
         "mandate_partial",
       ],
+      feedback_priority: ["low", "medium", "high", "critical"],
+      feedback_status: ["new", "planned", "in_progress", "done", "rejected"],
+      feedback_type: ["idea", "bug", "question", "other"],
       financing_checklist_section: [
         "customer",
         "financing_structure",
