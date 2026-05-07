@@ -357,21 +357,23 @@ export function FinancingQuickCheckWizard({
       const purchase = numOrNull(form.property_purchase_price);
       const reno = numOrNull(form.renovation_costs);
       const mortgage = numOrNull(form.requested_mortgage);
-      const equity = numOrNull(form.own_funds_total);
-      const pension = numOrNull(form.own_funds_pension_fund);
-      const income = numOrNull(form.gross_income_yearly);
       const rate = numOrNull(form.calc_rate) ?? 5;
       const ancillary = liveKpis.ancillary || null;
       const amort = liveKpis.amort || null;
+
+      // Kombinierte Werte für die Berechnung verwenden
+      const equityCombined = combined.equityCombined;
+      const pkCombined = combined.pkCombined;
+      const incomeCombined = combined.incomeCombined;
 
       const result = calcQuickCheck({
         purchase_price: purchase,
         renovation_costs: reno,
         requested_mortgage: mortgage,
-        own_funds_total: equity,
-        own_funds_pension_fund: pension,
+        own_funds_total: equityCombined,
+        own_funds_pension_fund: pkCombined,
         own_funds_vested_benefits: null,
-        gross_income_yearly: income,
+        gross_income_yearly: incomeCombined,
         calculated_interest_rate: rate,
         ancillary_costs_yearly: ancillary,
         amortisation_yearly: amort,
@@ -379,7 +381,9 @@ export function FinancingQuickCheckWizard({
 
       const primaryType: FinancingType = (form.modules[0] as FinancingType) ?? "purchase";
 
-      const payload: any = {
+      const coActive = form.co_applicant_enabled && !!form.co_applicant_client_id;
+
+      const payload: Record<string, unknown> = {
         client_id: form.client_source === "crm" && form.client_id ? form.client_id : null,
         property_id: form.property_source === "crm" && form.property_id ? form.property_id : null,
         property_snapshot: form.property_source !== "crm" ? {
@@ -395,9 +399,20 @@ export function FinancingQuickCheckWizard({
         renovation_costs: reno,
         existing_mortgage: numOrNull(form.existing_mortgage),
         requested_mortgage: mortgage,
-        own_funds_total: equity,
-        own_funds_pension_fund: pension,
-        gross_income_yearly: income,
+        // Hauptantragsteller-Einzelwerte (unverändert)
+        own_funds_total: combined.mainEquity || null,
+        own_funds_pension_fund: combined.mainPk || null,
+        gross_income_yearly: combined.mainIncome || null,
+        // Mitantragsteller
+        co_applicant_client_id: coActive ? form.co_applicant_client_id : null,
+        co_applicant_role: coActive ? form.co_applicant_role || null : null,
+        co_applicant_einkommen: coActive ? combined.coIncome : null,
+        co_applicant_eigenkapital: coActive ? combined.coEquity : null,
+        co_applicant_pk_anteil: coActive ? combined.coPk : null,
+        // Kombiniert
+        einkommen_kombiniert: incomeCombined || null,
+        eigenkapital_kombiniert: equityCombined || null,
+        pk_anteil_kombiniert: pkCombined || null,
         calculated_interest_rate: rate,
         ancillary_costs_yearly: ancillary,
         amortisation_yearly: amort,
