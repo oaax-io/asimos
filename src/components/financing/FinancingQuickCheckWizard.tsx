@@ -899,12 +899,12 @@ function DataQualityChecklist({
         value={formatCurrency(equity)}
         fallback="nicht erfasst"
       />
-      {/* PK ist nie aus dem CRM verfügbar — immer als fehlend markieren */}
+      {/* PK nicht aus dem CRM — optional, aber grün sobald manuell erfasst */}
       <Row
-        ok={false}
+        ok={pk > 0}
         label="PK / Freizügigkeit"
-        value={formatCurrency(pk)}
-        fallback={pk > 0 ? `${formatCurrency(pk)} (manuell)` : "nicht im CRM — Standard: CHF 0"}
+        value={`${formatCurrency(pk)} (manuell)`}
+        fallback="optional — nicht im CRM (Standard: CHF 0)"
       />
     </ul>
   );
