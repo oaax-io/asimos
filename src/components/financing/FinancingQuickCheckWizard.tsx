@@ -864,30 +864,48 @@ function CoApplicantSection({
 }
 
 function DataQualityChecklist({
-  hasIncome, hasEquity, hasPk, income, equity, pk,
+  hasIncome, hasEquity, income, equity, pk,
 }: {
   hasIncome: boolean; hasEquity: boolean; hasPk: boolean;
   income: number; equity: number; pk: number;
 }) {
-  const Row = ({ ok, label, value }: { ok: boolean; label: string; value: number }) => (
+  const Row = ({ ok, label, value, fallback }: {
+    ok: boolean; label: string; value: string; fallback: string;
+  }) => (
     <li className={cn(
-      "flex items-center justify-between gap-3 text-xs py-1",
+      "flex items-start justify-between gap-3 text-xs py-1.5",
       ok ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300",
     )}>
-      <span className="flex items-center gap-2">
-        {ok ? <Check className="h-3.5 w-3.5" /> : <span className="text-base leading-none">✗</span>}
+      <span className="flex items-center gap-2 shrink-0">
+        {ok
+          ? <Check className="h-3.5 w-3.5" />
+          : <span className="text-base leading-none">✗</span>}
         {label}
       </span>
-      <span className="tabular-nums">
-        {ok ? formatCurrency(value) : "nicht erfasst"}
-      </span>
+      <span className="text-right tabular-nums">{ok ? value : fallback}</span>
     </li>
   );
   return (
     <ul className="rounded-md border bg-background p-3 divide-y divide-border/50">
-      <Row ok={hasIncome} label="Brutto-Jahreseinkommen" value={income} />
-      <Row ok={hasEquity} label="Eigenkapital" value={equity} />
-      <Row ok={hasPk} label="PK / Freizügigkeit" value={pk} />
+      <Row
+        ok={hasIncome}
+        label="Brutto-Jahreseinkommen"
+        value={`${formatCurrency(income)} / Jahr (aus Selbstauskunft)`}
+        fallback="nicht erfasst"
+      />
+      <Row
+        ok={hasEquity}
+        label="Eigenkapital"
+        value={formatCurrency(equity)}
+        fallback="nicht erfasst"
+      />
+      {/* PK ist nie aus dem CRM verfügbar — immer als fehlend markieren */}
+      <Row
+        ok={false}
+        label="PK / Freizügigkeit"
+        value={formatCurrency(pk)}
+        fallback={pk > 0 ? `${formatCurrency(pk)} (manuell)` : "nicht im CRM — Standard: CHF 0"}
+      />
     </ul>
   );
 }
