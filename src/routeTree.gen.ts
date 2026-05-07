@@ -27,6 +27,7 @@ import { Route as AppMatchingRouteImport } from './routes/_app/matching'
 import { Route as AppMandatesRouteImport } from './routes/_app/mandates'
 import { Route as AppLeadsRouteImport } from './routes/_app/leads'
 import { Route as AppGeneratedDocumentsRouteImport } from './routes/_app/generated-documents'
+import { Route as AppFeedbackRouteImport } from './routes/_app/feedback'
 import { Route as AppExposesRouteImport } from './routes/_app/exposes'
 import { Route as AppDocumentsRouteImport } from './routes/_app/documents'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
@@ -133,6 +134,11 @@ const AppGeneratedDocumentsRoute = AppGeneratedDocumentsRouteImport.update({
   path: '/generated-documents',
   getParentRoute: () => AppRoute,
 } as any)
+const AppFeedbackRoute = AppFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppExposesRoute = AppExposesRouteImport.update({
   id: '/exposes',
   path: '/exposes',
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/documents': typeof AppDocumentsRoute
   '/exposes': typeof AppExposesRoute
+  '/feedback': typeof AppFeedbackRoute
   '/generated-documents': typeof AppGeneratedDocumentsRoute
   '/leads': typeof AppLeadsRouteWithChildren
   '/mandates': typeof AppMandatesRoute
@@ -260,6 +267,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/documents': typeof AppDocumentsRoute
   '/exposes': typeof AppExposesRoute
+  '/feedback': typeof AppFeedbackRoute
   '/generated-documents': typeof AppGeneratedDocumentsRoute
   '/mandates': typeof AppMandatesRoute
   '/matching': typeof AppMatchingRoute
@@ -296,6 +304,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/documents': typeof AppDocumentsRoute
   '/_app/exposes': typeof AppExposesRoute
+  '/_app/feedback': typeof AppFeedbackRoute
   '/_app/generated-documents': typeof AppGeneratedDocumentsRoute
   '/_app/leads': typeof AppLeadsRouteWithChildren
   '/_app/mandates': typeof AppMandatesRoute
@@ -333,6 +342,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/documents'
     | '/exposes'
+    | '/feedback'
     | '/generated-documents'
     | '/leads'
     | '/mandates'
@@ -367,6 +377,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/documents'
     | '/exposes'
+    | '/feedback'
     | '/generated-documents'
     | '/mandates'
     | '/matching'
@@ -402,6 +413,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/documents'
     | '/_app/exposes'
+    | '/_app/feedback'
     | '/_app/generated-documents'
     | '/_app/leads'
     | '/_app/mandates'
@@ -562,6 +574,13 @@ declare module '@tanstack/react-router' {
       path: '/generated-documents'
       fullPath: '/generated-documents'
       preLoaderRoute: typeof AppGeneratedDocumentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/feedback': {
+      id: '/_app/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof AppFeedbackRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/exposes': {
@@ -727,6 +746,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppDocumentsRoute: typeof AppDocumentsRoute
   AppExposesRoute: typeof AppExposesRoute
+  AppFeedbackRoute: typeof AppFeedbackRoute
   AppGeneratedDocumentsRoute: typeof AppGeneratedDocumentsRoute
   AppLeadsRoute: typeof AppLeadsRouteWithChildren
   AppMandatesRoute: typeof AppMandatesRoute
@@ -752,6 +772,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppDocumentsRoute: AppDocumentsRoute,
   AppExposesRoute: AppExposesRoute,
+  AppFeedbackRoute: AppFeedbackRoute,
   AppGeneratedDocumentsRoute: AppGeneratedDocumentsRoute,
   AppLeadsRoute: AppLeadsRouteWithChildren,
   AppMandatesRoute: AppMandatesRoute,

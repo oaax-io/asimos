@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, UserPlus, Building2, Calendar, Target,
   Settings, LogOut, Search, Shield, Users2, CheckSquare, FileText,
   Image as ImageIcon, ListChecks, FileSignature, FileCheck2, FileBadge, FileLock2,
-  Banknote, BarChart3,
+  Banknote, BarChart3, MessageSquarePlus,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,7 @@ const NAV_GROUPS = [
     label: "Administration",
     items: [
       { to: "/team", label: "Mitarbeiter", icon: Users2 },
+      { to: "/feedback", label: "Feedback", icon: MessageSquarePlus },
       { to: "/settings", label: "Einstellungen", icon: Settings },
     ],
   },
@@ -157,6 +158,10 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
             </div>
 
             <div className="ml-auto flex items-center gap-2">
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate({ to: "/feedback" })}>
+                <MessageSquarePlus className="h-4 w-4" />
+                <span className="hidden sm:inline">Feedback</span>
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 px-2">
