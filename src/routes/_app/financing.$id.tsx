@@ -53,15 +53,18 @@ function FinancingDetailPage() {
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      const [clientRes, propRes] = await Promise.all([
+      const [clientRes, propRes, coRes] = await Promise.all([
         data.client_id
           ? supabase.from("clients").select("id, full_name, email, phone").eq("id", data.client_id).maybeSingle()
           : Promise.resolve({ data: null }),
         data.property_id
           ? supabase.from("properties").select("id, title, city, price").eq("id", data.property_id).maybeSingle()
           : Promise.resolve({ data: null }),
+        (data as { co_applicant_client_id?: string | null }).co_applicant_client_id
+          ? supabase.from("clients").select("id, full_name").eq("id", (data as { co_applicant_client_id: string }).co_applicant_client_id).maybeSingle()
+          : Promise.resolve({ data: null }),
       ]);
-      return { ...data, clients: clientRes.data, properties: propRes.data } as any;
+      return { ...data, clients: clientRes.data, properties: propRes.data, co_applicant: coRes.data } as any;
     },
   });
 
@@ -335,6 +338,16 @@ type Dossier = Record<string, unknown> & {
   calculated_interest_rate?: number | string | null;
   ancillary_costs_yearly?: number | string | null;
   amortisation_yearly?: number | string | null;
+  co_applicant_client_id?: string | null;
+  co_applicant_role?: string | null;
+  co_applicant_einkommen?: number | string | null;
+  co_applicant_eigenkapital?: number | string | null;
+  co_applicant_pk_anteil?: number | string | null;
+  einkommen_kombiniert?: number | string | null;
+  eigenkapital_kombiniert?: number | string | null;
+  pk_anteil_kombiniert?: number | string | null;
+  co_applicant?: { id: string; full_name: string } | null;
+  clients?: { id: string; full_name: string; email?: string | null; phone?: string | null } | null;
 };
 
 function n(v: unknown, fallback = 0): number {
@@ -384,12 +397,16 @@ function deriveInputs(d: Dossier): Inputs {
   const reno = n(d.renovation_costs);
   const total = purchase + reno;
   const mortgage = n(d.requested_mortgage);
-  const equity = n(d.own_funds_total);
-  const pension = n(d.own_funds_pension_fund);
+  
+  const equity = d.eigenkapital_kombiniert != null && d.eigenkapital_kombiniert !== ""
+    ? n(d.eigenkapital_kombiniert) : n(d.own_funds_total);
+  const pension = d.pk_anteil_kombiniert != null && d.pk_anteil_kombiniert !== ""
+    ? n(d.pk_anteil_kombiniert) : n(d.own_funds_pension_fund);
   const vested = n(d.own_funds_vested_benefits);
   const pensionRelated = pension + vested;
   const hardEquity = Math.max(0, equity - pensionRelated);
-  const income = n(d.gross_income_yearly);
+  const income = d.einkommen_kombiniert != null && d.einkommen_kombiniert !== ""
+    ? n(d.einkommen_kombiniert) : n(d.gross_income_yearly);
   const rate = n(d.calculated_interest_rate, 5);
   const ancillary = d.ancillary_costs_yearly != null && d.ancillary_costs_yearly !== ""
     ? n(d.ancillary_costs_yearly)
@@ -514,6 +531,33 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
               <li key={idx} className={toneText(t.tone)}>• {t.text}</li>
             ))}
           </ul>
+          {(() => {
+            const coIncome = n(dossier.co_applicant_einkommen);
+            const coName = dossier.co_applicant?.full_name;
+            const coId = dossier.co_applicant_client_id;
+            const mainIncome = n(dossier.gross_income_yearly);
+            const mainName = dossier.clients?.full_name ?? "Hauptantragsteller";
+            if (coId && coName && coIncome > 0) {
+              return (
+                <div className="mt-3 rounded-md border border-blue-300/60 bg-blue-50 dark:bg-blue-950/30 p-3 text-xs text-blue-900 dark:text-blue-100">
+                  Berechnung mit kombiniertem Einkommen:{" "}
+                  <span className="font-medium">{mainName}</span> {chf(mainIncome)} +{" "}
+                  <span className="font-medium">{coName}</span> {chf(coIncome)} ={" "}
+                  <span className="font-semibold">{chf(i.income)}</span> / Jahr
+                </div>
+              );
+            }
+            if (coId && coName && coIncome <= 0) {
+              return (
+                <div className="mt-3 rounded-md border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs text-amber-900 dark:text-amber-100">
+                  Einkommen von <span className="font-medium">{coName}</span> nicht erfasst —
+                  Berechnung basiert nur auf Einkommen des Hauptantragstellers.{" "}
+                  <a href={`/clients/${coId}`} className="underline font-medium">→ Zum Kundenprofil</a>
+                </div>
+              );
+            }
+            return null;
+          })()}
         </CardContent>
       </Card>
     </>
@@ -562,7 +606,22 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
           <DetailRow label={`Nebenkosten (${i.ancillaryPct.toFixed(1)}%)`} value={chf(i.ancillary)} />
           <DetailRow label="Amortisation" value={chf(i.amort)} />
           <DetailRow label="Total Wohnkosten p.a." value={chf(i.yearly)} bold divider />
-          <DetailRow label="Bruttoeinkommen p.a." value={chf(i.income)} />
+          {(() => {
+            const coIncome = n(dossier.co_applicant_einkommen);
+            const mainIncome = n(dossier.gross_income_yearly);
+            const coName = dossier.co_applicant?.full_name;
+            const role = dossier.co_applicant_role === "ehepartner" ? "Ehepartner/in" : "Mitantragsteller/in";
+            if (coIncome > 0 && coName) {
+              return (
+                <>
+                  <DetailRow label="Einkommen Hauptantragsteller" value={chf(mainIncome)} />
+                  <DetailRow label={`Einkommen ${role} ${coName}`} value={chf(coIncome)} />
+                  <DetailRow label="Kombiniertes Einkommen p.a." value={chf(i.income)} bold />
+                </>
+              );
+            }
+            return <DetailRow label="Bruttoeinkommen p.a." value={chf(i.income)} />;
+          })()}
           <div className="my-2 border-t" />
           <div className="flex justify-between gap-4 text-sm">
             <span>Tragbarkeitsquote</span>

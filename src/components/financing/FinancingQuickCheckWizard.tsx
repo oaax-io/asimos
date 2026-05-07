@@ -26,7 +26,9 @@ import { toast } from "sonner";
 import {
   Home, Hammer, ArrowUpCircle, Repeat2, TrendingUp,
   CheckCircle2, ArrowLeft, ArrowRight, ChevronsUpDown, Check, ChevronDown, Settings2,
+  UserPlus, AlertTriangle, ExternalLink, Users,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   FINANCING_TYPE_LABELS, calcQuickCheck, type FinancingType,
 } from "@/lib/financing";
@@ -57,6 +59,8 @@ const MODULE_OPTIONS: { key: WizardModule; label: string; description: string; i
 type PropertySource = "crm" | "manual" | "later";
 type ClientSource = "crm" | "manual";
 
+type CoApplicantRole = "ehepartner" | "mitantragsteller";
+
 export type WizardForm = {
   modules: WizardModule[];
 
@@ -73,6 +77,14 @@ export type WizardForm = {
   gross_income_yearly: string;
   own_funds_total: string;
   own_funds_pension_fund: string;
+
+  // Mitantragsteller (optional)
+  co_applicant_enabled: boolean;
+  co_applicant_role: CoApplicantRole | "";
+  co_applicant_client_id: string;
+  co_applicant_einkommen: string;
+  co_applicant_eigenkapital: string;
+  co_applicant_pk_anteil: string;
 
   // Reserved für spätere Schritte (4–6)
   renovation_costs: string;
@@ -95,6 +107,12 @@ const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
   gross_income_yearly: "",
   own_funds_total: "",
   own_funds_pension_fund: "",
+  co_applicant_enabled: false,
+  co_applicant_role: "",
+  co_applicant_client_id: "",
+  co_applicant_einkommen: "",
+  co_applicant_eigenkapital: "",
+  co_applicant_pk_anteil: "",
   renovation_costs: "",
   existing_mortgage: "",
   requested_mortgage: "",
@@ -216,21 +234,74 @@ export function FinancingQuickCheckWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.client_id, form.client_source, clientsQuery.data]);
 
+  // ---- Auto-Fill: Mitantragsteller (aus clients + Selbstauskunft) ----
+  useEffect(() => {
+    if (!form.co_applicant_enabled || !form.co_applicant_client_id) return;
+    const c = clientsQuery.data?.find((x: { id: string }) => x.id === form.co_applicant_client_id) as
+      | { id: string; full_name: string; email: string | null; equity: number | null }
+      | undefined;
+    if (c?.equity != null) {
+      setForm((f) => ({
+        ...f,
+        co_applicant_eigenkapital: f.co_applicant_eigenkapital || String(c.equity),
+      }));
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("client_self_disclosures")
+        .select("annual_net_salary, salary_net_monthly")
+        .eq("client_id", form.co_applicant_client_id)
+        .maybeSingle();
+      if (!data) return;
+      const yearly = data.annual_net_salary
+        ?? (data.salary_net_monthly ? Number(data.salary_net_monthly) * 12 : null);
+      if (yearly) {
+        setForm((f) => ({
+          ...f,
+          co_applicant_einkommen: f.co_applicant_einkommen || String(yearly),
+        }));
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.co_applicant_client_id, form.co_applicant_enabled, clientsQuery.data]);
+
+  // ---- Kombinierte Werte (Haupt + Mitantragsteller) ----
+  const combined = useMemo(() => {
+    const mainIncome = num(form.gross_income_yearly);
+    const mainEquity = num(form.own_funds_total);
+    const mainPk = num(form.own_funds_pension_fund);
+    const coActive = form.co_applicant_enabled && !!form.co_applicant_client_id;
+    const coIncome = coActive ? num(form.co_applicant_einkommen) : 0;
+    const coEquity = coActive ? num(form.co_applicant_eigenkapital) : 0;
+    const coPk = coActive ? num(form.co_applicant_pk_anteil) : 0;
+    // Einkommen nur kombinieren, wenn Co-Einkommen > 0
+    const incomeCombined = coIncome > 0 ? mainIncome + coIncome : mainIncome;
+    const equityCombined = mainEquity + coEquity;
+    const pkCombined = mainPk + coPk;
+    return {
+      coActive,
+      coIncomeMissing: coActive && coIncome <= 0,
+      mainIncome, mainEquity, mainPk,
+      coIncome, coEquity, coPk,
+      incomeCombined, equityCombined, pkCombined,
+    };
+  }, [form]);
+
   // ---- Live-KPIs (Schritt 4 + 5 + 6) ----
   const liveResult = useMemo(() => {
     return calcQuickCheck({
       purchase_price: numOrNull(form.property_purchase_price) ?? 0,
       renovation_costs: numOrNull(form.renovation_costs) ?? 0,
       requested_mortgage: numOrNull(form.requested_mortgage) ?? 0,
-      own_funds_total: numOrNull(form.own_funds_total) ?? 0,
-      own_funds_pension_fund: numOrNull(form.own_funds_pension_fund),
+      own_funds_total: combined.equityCombined,
+      own_funds_pension_fund: combined.pkCombined || null,
       own_funds_vested_benefits: null,
-      gross_income_yearly: numOrNull(form.gross_income_yearly) ?? 0,
+      gross_income_yearly: combined.incomeCombined,
       calculated_interest_rate: numOrNull(form.calc_rate) ?? 5,
-      ancillary_costs_yearly: null, // berechnet aus % unten
+      ancillary_costs_yearly: null,
       amortisation_yearly: null,
     });
-  }, [form]);
+  }, [form, combined]);
 
   // Tatsächliche Live-Kennzahlen mit Nebenkosten-% und Amortisation aus Schritt 5
   const liveKpis = useMemo(() => {
@@ -238,8 +309,8 @@ export function FinancingQuickCheckWizard({
     const reno = num(form.renovation_costs);
     const total = purchase + reno;
     const mortgage = num(form.requested_mortgage);
-    const equity = num(form.own_funds_total);
-    const income = num(form.gross_income_yearly);
+    const equity = combined.equityCombined;
+    const income = combined.incomeCombined;
     const rate = num(form.calc_rate) || 5;
     const ancPct = num(form.ancillary_pct) || 1;
     const years = num(form.amortisation_years) || 15;
@@ -247,14 +318,13 @@ export function FinancingQuickCheckWizard({
     const ltv = total > 0 ? (mortgage / total) * 100 : 0;
     const equityRatio = total > 0 ? (equity / total) * 100 : 0;
     const ancillary = total * (ancPct / 100);
-    // Amortisation: nur 2. Hypothek (über 66.67% LTV) auf "years" Jahre
     const firstMortgageMax = total * 0.6667;
     const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
     const amort = years > 0 ? secondMortgage / years : 0;
     const yearly = mortgage * (rate / 100) + ancillary + amort;
     const affordability = income > 0 ? (yearly / income) * 100 : 0;
     return { ltv, equityRatio, affordability, total, ancillary, amort, yearly };
-  }, [form]);
+  }, [form, combined]);
 
   // ---- Validierung ----
   const canNext = useMemo(() => {
@@ -287,21 +357,23 @@ export function FinancingQuickCheckWizard({
       const purchase = numOrNull(form.property_purchase_price);
       const reno = numOrNull(form.renovation_costs);
       const mortgage = numOrNull(form.requested_mortgage);
-      const equity = numOrNull(form.own_funds_total);
-      const pension = numOrNull(form.own_funds_pension_fund);
-      const income = numOrNull(form.gross_income_yearly);
       const rate = numOrNull(form.calc_rate) ?? 5;
       const ancillary = liveKpis.ancillary || null;
       const amort = liveKpis.amort || null;
+
+      // Kombinierte Werte für die Berechnung verwenden
+      const equityCombined = combined.equityCombined;
+      const pkCombined = combined.pkCombined;
+      const incomeCombined = combined.incomeCombined;
 
       const result = calcQuickCheck({
         purchase_price: purchase,
         renovation_costs: reno,
         requested_mortgage: mortgage,
-        own_funds_total: equity,
-        own_funds_pension_fund: pension,
+        own_funds_total: equityCombined,
+        own_funds_pension_fund: pkCombined,
         own_funds_vested_benefits: null,
-        gross_income_yearly: income,
+        gross_income_yearly: incomeCombined,
         calculated_interest_rate: rate,
         ancillary_costs_yearly: ancillary,
         amortisation_yearly: amort,
@@ -309,7 +381,9 @@ export function FinancingQuickCheckWizard({
 
       const primaryType: FinancingType = (form.modules[0] as FinancingType) ?? "purchase";
 
-      const payload: any = {
+      const coActive = form.co_applicant_enabled && !!form.co_applicant_client_id;
+
+      const payload: Record<string, unknown> = {
         client_id: form.client_source === "crm" && form.client_id ? form.client_id : null,
         property_id: form.property_source === "crm" && form.property_id ? form.property_id : null,
         property_snapshot: form.property_source !== "crm" ? {
@@ -325,9 +399,20 @@ export function FinancingQuickCheckWizard({
         renovation_costs: reno,
         existing_mortgage: numOrNull(form.existing_mortgage),
         requested_mortgage: mortgage,
-        own_funds_total: equity,
-        own_funds_pension_fund: pension,
-        gross_income_yearly: income,
+        // Hauptantragsteller-Einzelwerte (unverändert)
+        own_funds_total: combined.mainEquity || null,
+        own_funds_pension_fund: combined.mainPk || null,
+        gross_income_yearly: combined.mainIncome || null,
+        // Mitantragsteller
+        co_applicant_client_id: coActive ? form.co_applicant_client_id : null,
+        co_applicant_role: coActive ? form.co_applicant_role || null : null,
+        co_applicant_einkommen: coActive ? combined.coIncome : null,
+        co_applicant_eigenkapital: coActive ? combined.coEquity : null,
+        co_applicant_pk_anteil: coActive ? combined.coPk : null,
+        // Kombiniert
+        einkommen_kombiniert: incomeCombined || null,
+        eigenkapital_kombiniert: equityCombined || null,
+        pk_anteil_kombiniert: pkCombined || null,
         calculated_interest_rate: rate,
         ancillary_costs_yearly: ancillary,
         amortisation_yearly: amort,
@@ -342,7 +427,7 @@ export function FinancingQuickCheckWizard({
 
       const { data, error } = await supabase
         .from("financing_dossiers")
-        .insert(payload)
+        .insert(payload as never)
         .select("id")
         .single();
       if (error) throw error;
@@ -550,14 +635,30 @@ function Step2Property({
 }
 
 /* ==================== Schritt 3 ==================== */
+type ClientLite = { id: string; full_name: string; email: string | null; equity: number | null };
+
 function Step3Client({
   form, update, clients, loading,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
-  clients: any[];
+  clients: ClientLite[];
   loading: boolean;
 }) {
+  const toggleCoApplicant = (enabled: boolean) => {
+    if (enabled) {
+      update("co_applicant_enabled", true);
+    } else {
+      // Alle Co-Applicant-Felder leeren
+      update("co_applicant_enabled", false);
+      update("co_applicant_role", "");
+      update("co_applicant_client_id", "");
+      update("co_applicant_einkommen", "");
+      update("co_applicant_eigenkapital", "");
+      update("co_applicant_pk_anteil", "");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <RadioGroup
@@ -603,7 +704,191 @@ function Step3Client({
           Quick Check wird ohne Kundenverknüpfung erstellt. Die Finanzdaten erfassen Sie in Schritt 4.
         </p>
       )}
+
+      {/* === Mitantragsteller (optional) === */}
+      {form.client_source === "crm" && (
+        <CoApplicantSection
+          form={form}
+          update={update}
+          clients={clients}
+          loading={loading}
+          toggle={toggleCoApplicant}
+        />
+      )}
     </div>
+  );
+}
+
+function CoApplicantSection({
+  form, update, clients, loading, toggle,
+}: {
+  form: WizardForm;
+  update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
+  clients: ClientLite[];
+  loading: boolean;
+  toggle: (enabled: boolean) => void;
+}) {
+  const selected = clients.find((c) => c.id === form.co_applicant_client_id);
+  const items = clients
+    .filter((c) => c.id !== form.client_id)
+    .map((c) => ({ value: c.id, label: c.full_name, hint: c.email ?? undefined }));
+
+  const incomeNum = num(form.co_applicant_einkommen);
+  const equityNum = num(form.co_applicant_eigenkapital);
+  const pkNum = num(form.co_applicant_pk_anteil);
+
+  const hasIncome = incomeNum > 0;
+  const hasEquity = equityNum > 0;
+  const hasPk = pkNum > 0;
+  const anyMissing = selected && (!hasIncome || !hasEquity || !hasPk);
+
+  // Kombinierte Anzeige
+  const mainIncome = num(form.gross_income_yearly);
+  const mainEquity = num(form.own_funds_total);
+  const mainPk = num(form.own_funds_pension_fund);
+  const incomeCombined = hasIncome ? mainIncome + incomeNum : mainIncome;
+  const equityCombined = mainEquity + equityNum;
+  const pkCombined = mainPk + pkNum;
+
+  return (
+    <div className="rounded-lg border bg-muted/20 p-4 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <Label htmlFor="co-applicant-toggle" className="text-sm font-medium cursor-pointer">
+              Mitantragsteller / Ehepartner hinzufügen
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Optional — kombiniert Einkommen und Eigenmittel für die Berechnung.
+            </p>
+          </div>
+        </div>
+        <Switch
+          id="co-applicant-toggle"
+          checked={form.co_applicant_enabled}
+          onCheckedChange={toggle}
+        />
+      </div>
+
+      {form.co_applicant_enabled && (
+        <div className="space-y-4 border-t pt-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Rolle *</Label>
+              <Select
+                value={form.co_applicant_role || ""}
+                onValueChange={(v) => update("co_applicant_role", v as CoApplicantRole)}
+              >
+                <SelectTrigger><SelectValue placeholder="Rolle wählen…" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ehepartner">Ehepartner/in</SelectItem>
+                  <SelectItem value="mitantragsteller">Mitantragsteller/in</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Kunde aus CRM</Label>
+              <SearchableSelect
+                placeholder={loading ? "Lade…" : "Kunde suchen…"}
+                emptyText="Keinen Kunden gefunden."
+                value={form.co_applicant_client_id}
+                onChange={(v) => update("co_applicant_client_id", v)}
+                items={items}
+              />
+            </div>
+          </div>
+
+          {selected && (
+            <>
+              <DataQualityChecklist
+                hasIncome={hasIncome}
+                hasEquity={hasEquity}
+                hasPk={hasPk}
+                income={incomeNum}
+                equity={equityNum}
+                pk={pkNum}
+              />
+
+              {anyMissing && (
+                <div className="rounded-md border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs space-y-2">
+                  <p className="text-amber-800 dark:text-amber-200">
+                    Einige Daten von <span className="font-medium">{selected.full_name}</span> sind
+                    noch nicht erfasst. Ergänze die fehlenden Angaben im Kundenprofil für eine
+                    vollständige Berechnung.
+                  </p>
+                  <a
+                    href={`/clients/${selected.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 font-medium text-amber-900 dark:text-amber-100 hover:underline"
+                  >
+                    Zum Kundenprofil <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              )}
+
+              {!hasIncome && (
+                <div className="rounded-md border border-red-300/60 bg-red-50 dark:bg-red-950/30 p-3 text-xs flex gap-2 items-start">
+                  <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                  <p className="text-red-800 dark:text-red-200">
+                    Das Einkommen ist für die Tragbarkeitsberechnung zwingend erforderlich.
+                    Ohne diesen Wert wird der Mitantragsteller in der Berechnung nicht berücksichtigt.
+                  </p>
+                </div>
+              )}
+
+              {/* Manuelle Korrektur der übernommenen Werte */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Field label="Einkommen (CHF/J)" type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
+                <Field label="Eigenkapital (CHF)" type="number" value={form.co_applicant_eigenkapital} onChange={(v) => update("co_applicant_eigenkapital", v)} />
+                <Field label="PK-Anteil (CHF)" type="number" value={form.co_applicant_pk_anteil} onChange={(v) => update("co_applicant_pk_anteil", v)} />
+              </div>
+
+              <div className="rounded-md bg-background border p-3 space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                  <Users className="h-3 w-3" /> Kombinierte Werte
+                </p>
+                <div className="text-xs text-muted-foreground space-y-0.5">
+                  <div className="flex justify-between"><span>Kombiniertes Einkommen:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(incomeCombined)} / Jahr</span></div>
+                  <div className="flex justify-between"><span>Kombinierte Eigenmittel:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(equityCombined)}</span></div>
+                  <div className="flex justify-between"><span>Kombinierter PK-Anteil:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(pkCombined)}</span></div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DataQualityChecklist({
+  hasIncome, hasEquity, hasPk, income, equity, pk,
+}: {
+  hasIncome: boolean; hasEquity: boolean; hasPk: boolean;
+  income: number; equity: number; pk: number;
+}) {
+  const Row = ({ ok, label, value }: { ok: boolean; label: string; value: number }) => (
+    <li className={cn(
+      "flex items-center justify-between gap-3 text-xs py-1",
+      ok ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300",
+    )}>
+      <span className="flex items-center gap-2">
+        {ok ? <Check className="h-3.5 w-3.5" /> : <span className="text-base leading-none">✗</span>}
+        {label}
+      </span>
+      <span className="tabular-nums">
+        {ok ? formatCurrency(value) : "nicht erfasst"}
+      </span>
+    </li>
+  );
+  return (
+    <ul className="rounded-md border bg-background p-3 divide-y divide-border/50">
+      <Row ok={hasIncome} label="Brutto-Jahreseinkommen" value={income} />
+      <Row ok={hasEquity} label="Eigenkapital" value={equity} />
+      <Row ok={hasPk} label="PK / Freizügigkeit" value={pk} />
+    </ul>
   );
 }
 
