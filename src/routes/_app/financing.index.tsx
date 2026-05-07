@@ -187,7 +187,14 @@ function FinancingPage() {
   );
 }
 
-function DossierCard({ d }: { d: any }) {
+function DossierCard({
+  d, canDelete, onDelete, isDeleting,
+}: {
+  d: any;
+  canDelete: boolean;
+  onDelete: () => void;
+  isDeleting: boolean;
+}) {
   const ds = (d.data_source ?? "existing_property") as "existing_property" | "quick_entry";
   const snap = (d.property_snapshot as any) ?? {};
   const propertyLabel = d.properties?.title
@@ -196,48 +203,83 @@ function DossierCard({ d }: { d: any }) {
     ?? null;
 
   return (
-    <Link to="/financing/$id" params={{ id: d.id }}>
-      <Card className="transition hover:shadow-md">
-        <CardContent className="flex flex-wrap items-start gap-4 p-4">
-          <div className="flex-1 min-w-0 space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="font-medium truncate">
-                {d.title || FINANCING_TYPE_LABELS[d.financing_type as FinancingType] || "Finanzierung"}
-              </p>
-              <Badge variant="secondary">{FINANCING_TYPE_LABELS[d.financing_type as FinancingType] ?? "—"}</Badge>
-              <Badge className={dossierTone(d.dossier_status)}>
-                {DOSSIER_STATUS_LABELS[d.dossier_status as DossierStatus] ?? "Entwurf"}
-              </Badge>
-              <Badge variant="outline" className={qcTone(d.quick_check_status ?? "incomplete")}>
-                {QUICK_CHECK_LABELS[(d.quick_check_status ?? "incomplete") as QuickCheckStatus]}
-              </Badge>
-              <Badge variant="outline" className="gap-1">
-                {ds === "existing_property"
-                  ? <><Database className="h-3 w-3" />Bestehende Immobilie</>
-                  : <><PencilLine className="h-3 w-3" />Quick-Erfassung</>}
-              </Badge>
+    <div className="relative">
+      <Link to="/financing/$id" params={{ id: d.id }}>
+        <Card className="transition hover:shadow-md">
+          <CardContent className="flex flex-wrap items-start gap-4 p-4">
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-medium truncate">
+                  {d.title || FINANCING_TYPE_LABELS[d.financing_type as FinancingType] || "Finanzierung"}
+                </p>
+                <Badge variant="secondary">{FINANCING_TYPE_LABELS[d.financing_type as FinancingType] ?? "—"}</Badge>
+                <Badge className={dossierTone(d.dossier_status)}>
+                  {DOSSIER_STATUS_LABELS[d.dossier_status as DossierStatus] ?? "Entwurf"}
+                </Badge>
+                <Badge variant="outline" className={qcTone(d.quick_check_status ?? "incomplete")}>
+                  {QUICK_CHECK_LABELS[(d.quick_check_status ?? "incomplete") as QuickCheckStatus]}
+                </Badge>
+                <Badge variant="outline" className="gap-1">
+                  {ds === "existing_property"
+                    ? <><Database className="h-3 w-3" />Bestehende Immobilie</>
+                    : <><PencilLine className="h-3 w-3" />Quick-Erfassung</>}
+                </Badge>
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                {d.clients?.full_name && (
+                  <span className="inline-flex items-center gap-1"><User className="h-3.5 w-3.5" />{d.clients.full_name}</span>
+                )}
+                {propertyLabel && (
+                  <span className="inline-flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{propertyLabel}</span>
+                )}
+                {d.bank_name && <span>Bank: {d.bank_name}{d.bank_type ? ` (${d.bank_type === "ubs" ? "UBS" : "andere"})` : ""}</span>}
+                {!d.bank_name && d.bank_type && <span>Banktyp: {d.bank_type === "ubs" ? "UBS" : "andere"}</span>}
+                <span>Aktualisiert {formatDate(d.updated_at)}</span>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              {d.clients?.full_name && (
-                <span className="inline-flex items-center gap-1"><User className="h-3.5 w-3.5" />{d.clients.full_name}</span>
-              )}
-              {propertyLabel && (
-                <span className="inline-flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{propertyLabel}</span>
-              )}
-              {d.bank_name && <span>Bank: {d.bank_name}{d.bank_type ? ` (${d.bank_type === "ubs" ? "UBS" : "andere"})` : ""}</span>}
-              {!d.bank_name && d.bank_type && <span>Banktyp: {d.bank_type === "ubs" ? "UBS" : "andere"}</span>}
-              <span>Aktualisiert {formatDate(d.updated_at)}</span>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-right text-xs">
+              <KV label="Hypothek" value={d.requested_mortgage ? formatCurrency(Number(d.requested_mortgage)) : "—"} />
+              <KV label="Investition" value={d.total_investment ? formatCurrency(Number(d.total_investment)) : "—"} />
+              <KV label="Belehnung" value={d.loan_to_value_ratio != null ? `${Number(d.loan_to_value_ratio).toFixed(1)}%` : "—"} />
+              <KV label="Tragbarkeit" value={d.affordability_ratio != null ? `${Number(d.affordability_ratio).toFixed(1)}%` : "—"} />
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-right text-xs">
-            <KV label="Hypothek" value={d.requested_mortgage ? formatCurrency(Number(d.requested_mortgage)) : "—"} />
-            <KV label="Investition" value={d.total_investment ? formatCurrency(Number(d.total_investment)) : "—"} />
-            <KV label="Belehnung" value={d.loan_to_value_ratio != null ? `${Number(d.loan_to_value_ratio).toFixed(1)}%` : "—"} />
-            <KV label="Tragbarkeit" value={d.affordability_ratio != null ? `${Number(d.affordability_ratio).toFixed(1)}%` : "—"} />
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
+          </CardContent>
+        </Card>
+      </Link>
+      {canDelete && (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2 h-8 w-8 text-muted-foreground hover:text-destructive"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              aria-label="Finanzierung löschen"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Finanzierung löschen?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Dieses Dossier wird unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onDelete}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Löschen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </div>
   );
 }
 
