@@ -1,12 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, User, Building2, Banknote } from "lucide-react";
+import { ArrowLeft, User, Building2, Banknote, RotateCcw } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import {
   FINANCING_TYPE_LABELS, DOSSIER_STATUS_LABELS, QUICK_CHECK_LABELS,
@@ -18,6 +19,12 @@ import { FinancingDocumentsTab } from "@/components/financing/FinancingDocuments
 import { BankSubmissionTab } from "@/components/financing/BankSubmissionTab";
 import { DossierQualityCard } from "@/components/financing/DossierQualityCard";
 import { FinancingQuickCheckActions } from "@/components/financing/FinancingQuickCheckActions";
+import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/financing/$id")({ component: FinancingDetailPage });
 
