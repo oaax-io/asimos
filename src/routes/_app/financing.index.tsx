@@ -311,3 +311,15 @@ function dossierTone(s: string | null | undefined): string {
     default: return "bg-secondary text-secondary-foreground hover:bg-secondary";
   }
 }
+
+function useIsOwnerOrAdmin(): boolean {
+  const [allowed, setAllowed] = useState(false);
+  useEffect(() => {
+    let active = true;
+    supabase.rpc("is_owner_or_admin").then(({ data }) => {
+      if (active) setAllowed(!!data);
+    });
+    return () => { active = false; };
+  }, []);
+  return allowed;
+}
