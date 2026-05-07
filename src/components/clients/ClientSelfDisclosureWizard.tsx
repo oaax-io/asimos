@@ -132,11 +132,16 @@ export function ClientSelfDisclosureWizard({
   const [parsing, setParsing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const wasOpenRef = useRef(false);
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpenRef.current) {
+      // Nur beim Übergang geschlossen -> offen zurücksetzen,
+      // damit per PDF erkannte Felder nicht durch React-Query-Refetches
+      // überschrieben werden.
       setForm(initial ?? {});
       setStep(1);
     }
+    wasOpenRef.current = open;
   }, [open, initial]);
 
   const set = (k: string, v: unknown) => setForm((p) => ({ ...p, [k]: v }));
