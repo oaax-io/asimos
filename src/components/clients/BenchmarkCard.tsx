@@ -89,7 +89,7 @@ export function BenchmarkCard({ benchmark, variant = "full", className }: Props)
           <Progress value={ratio} className="h-2" />
         </div>
 
-        <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 text-sm">
           <BenchStat
             icon={<TrendingUp className="h-4 w-4 text-emerald-500" />}
             label="Einnahmen"
@@ -124,17 +124,16 @@ function BenchStat({
   highlight?: string;
 }) {
   return (
-    <div className="rounded-lg border bg-card/60 p-2.5 min-w-0">
-      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+    <div className="flex items-center justify-between gap-3 rounded-lg border bg-card/60 px-3 py-2 min-w-0">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
         {icon}
         <span className="truncate">{label}</span>
       </div>
       <div
         className={cn(
-          "mt-1 font-display text-sm font-semibold tabular-nums truncate",
+          "font-display text-sm font-semibold tabular-nums whitespace-nowrap",
           highlight,
         )}
-        title={value}
       >
         {value}
       </div>
