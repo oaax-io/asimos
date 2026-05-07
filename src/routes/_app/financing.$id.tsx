@@ -393,11 +393,15 @@ function deriveInputs(d: Dossier): Inputs {
   const total = purchase + reno;
   const mortgage = n(d.requested_mortgage);
   const equity = n(d.own_funds_total);
-  const pension = n(d.own_funds_pension_fund);
+  const equity = d.eigenkapital_kombiniert != null && d.eigenkapital_kombiniert !== ""
+    ? n(d.eigenkapital_kombiniert) : n(d.own_funds_total);
+  const pension = d.pk_anteil_kombiniert != null && d.pk_anteil_kombiniert !== ""
+    ? n(d.pk_anteil_kombiniert) : n(d.own_funds_pension_fund);
   const vested = n(d.own_funds_vested_benefits);
   const pensionRelated = pension + vested;
   const hardEquity = Math.max(0, equity - pensionRelated);
-  const income = n(d.gross_income_yearly);
+  const income = d.einkommen_kombiniert != null && d.einkommen_kombiniert !== ""
+    ? n(d.einkommen_kombiniert) : n(d.gross_income_yearly);
   const rate = n(d.calculated_interest_rate, 5);
   const ancillary = d.ancillary_costs_yearly != null && d.ancillary_costs_yearly !== ""
     ? n(d.ancillary_costs_yearly)
