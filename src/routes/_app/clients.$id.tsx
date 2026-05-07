@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   ArrowLeft, Mail, Phone, Trash2, RefreshCw, Pencil, FileSignature,
-  Calendar, Target, Home, MapPin, Euro, Ruler, BedDouble, Building2, MessageSquare,
+  Calendar, Target, Home, MapPin, Banknote, Ruler, BedDouble, Building2, MessageSquare,
   CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
   ClipboardList, Heart,
 } from "lucide-react";
