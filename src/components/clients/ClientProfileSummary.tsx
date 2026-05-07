@@ -11,7 +11,7 @@ import {
   Users,
   ExternalLink,
   MapPin,
-  Euro,
+  Banknote,
   BedDouble,
   Ruler,
   TrendingUp,
@@ -244,7 +244,7 @@ export function ClientProfileSummary({ clientId, entityType }: Props) {
                     {!sp.is_active && <Badge variant="secondary">Inaktiv</Badge>}
                   </div>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    <Field icon={<Euro className="h-3.5 w-3.5" />} label="Budget" value={
+                    <Field icon={<Banknote className="h-3.5 w-3.5" />} label="Budget" value={
                       sp.budget_min || sp.budget_max
                         ? `${sp.budget_min ? formatCurrency(Number(sp.budget_min)) : "—"} – ${sp.budget_max ? formatCurrency(Number(sp.budget_max)) : "—"}`
                         : "—"

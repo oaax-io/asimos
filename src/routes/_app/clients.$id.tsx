@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   ArrowLeft, Mail, Phone, Trash2, RefreshCw, Pencil, FileSignature,
-  Calendar, Target, Home, MapPin, Euro, Ruler, BedDouble, Building2, MessageSquare,
+  Calendar, Target, Home, MapPin, Banknote, Ruler, BedDouble, Building2, MessageSquare,
   CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
   ClipboardList, Heart,
 } from "lucide-react";
@@ -299,7 +299,7 @@ function ClientDetail() {
               <CardContent className="p-6">
                 <h3 className="mb-4 font-display text-lg font-semibold">Suchprofil</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <Field icon={<Euro className="h-4 w-4" />} label="Budget" value={
+                  <Field icon={<Banknote className="h-4 w-4" />} label="Budget" value={
                     client.budget_min || client.budget_max
                       ? `${client.budget_min ? formatCurrency(Number(client.budget_min)) : "—"} – ${client.budget_max ? formatCurrency(Number(client.budget_max)) : "—"}`
                       : "—"
