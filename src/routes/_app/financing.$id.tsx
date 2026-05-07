@@ -199,54 +199,16 @@ function FinancingDetailPage() {
                   <TabsTrigger value="szenarien">Szenarien</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="vorpruefung" className="space-y-3">
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <KV label="Kaufpreis" value={fmt(dossier.purchase_price)} />
-                    <KV label="Renovationskosten" value={fmt(dossier.renovation_costs)} />
-                    <KV label="Gesamtinvestition" value={fmt(dossier.total_investment)} />
-                    <KV label="Hypothek" value={fmt(dossier.requested_mortgage)} />
-                    <KV label="Belehnung" value={dossier.loan_to_value_ratio != null ? `${Number(dossier.loan_to_value_ratio).toFixed(1)}%` : "—"} />
-                    <KV label="Eigenmittel total" value={fmt(dossier.own_funds_total)} />
-                    <KV label="Pensionskasse" value={fmt(dossier.own_funds_pension_fund)} />
-                    <KV label="Freizügigkeit" value={fmt(dossier.own_funds_vested_benefits)} />
-                    <KV label="Bruttoeinkommen jährlich" value={fmt(dossier.gross_income_yearly)} />
-                    <KV label="Kalkulatorischer Zinssatz" value={`${Number(dossier.calculated_interest_rate ?? 5).toFixed(2)}%`} />
-                    <KV label="Nebenkosten jährlich" value={fmt(dossier.ancillary_costs_yearly)} />
-                    <KV label="Amortisation jährlich" value={fmt(dossier.amortisation_yearly)} />
-                    <KV label="Tragbarkeit" value={dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"} />
-                  </div>
-                  {reasons.length > 0 && (
-                    <Card>
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold mb-2">Bewertung</h3>
-                        <ul className="space-y-1 text-sm">
-                          {reasons.map((r, i) => (
-                            <li key={i} className={
-                              r.tone === "ok" ? "text-emerald-600" :
-                              r.tone === "warn" ? "text-amber-600" :
-                              r.tone === "bad" ? "text-red-600" : ""
-                            }>• {r.label}</li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  )}
+                <TabsContent value="vorpruefung" className="space-y-4">
+                  <QuickCheckVorpruefung dossier={dossier} />
                 </TabsContent>
 
-                <TabsContent value="detail">
-                  <Card>
-                    <CardContent className="p-6 text-sm text-muted-foreground">
-                      Detailrechnung folgt.
-                    </CardContent>
-                  </Card>
+                <TabsContent value="detail" className="space-y-4">
+                  <QuickCheckDetail dossier={dossier} />
                 </TabsContent>
 
-                <TabsContent value="szenarien">
-                  <Card>
-                    <CardContent className="p-6 text-sm text-muted-foreground">
-                      Szenarien folgen.
-                    </CardContent>
-                  </Card>
+                <TabsContent value="szenarien" className="space-y-4">
+                  <QuickCheckScenarios dossier={dossier} />
                 </TabsContent>
               </Tabs>
             </>
