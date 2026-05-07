@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -10,6 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
@@ -17,13 +25,23 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "sonner";
 import {
   Home, Hammer, ArrowUpCircle, Repeat2, TrendingUp,
-  CheckCircle2, ArrowLeft, ArrowRight, ChevronsUpDown, Check,
+  CheckCircle2, ArrowLeft, ArrowRight, ChevronsUpDown, Check, ChevronDown, Settings2,
 } from "lucide-react";
 import {
-  FINANCING_TYPE_LABELS, type FinancingType,
+  FINANCING_TYPE_LABELS, calcQuickCheck, type FinancingType,
 } from "@/lib/financing";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
+const num = (v: string) => {
+  const n = parseFloat(String(v ?? "").replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+};
+const numOrNull = (v: string) => {
+  if (v == null || v === "") return null;
+  const n = parseFloat(String(v).replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+};
 
 // Nur die fünf neuen, gewünschten Module (kein new_build)
 type WizardModule = "purchase" | "renovation" | "increase" | "refinance" | "mortgage_increase";
@@ -198,6 +216,46 @@ export function FinancingQuickCheckWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.client_id, form.client_source, clientsQuery.data]);
 
+  // ---- Live-KPIs (Schritt 4 + 5 + 6) ----
+  const liveResult = useMemo(() => {
+    return calcQuickCheck({
+      purchase_price: numOrNull(form.property_purchase_price) ?? 0,
+      renovation_costs: numOrNull(form.renovation_costs) ?? 0,
+      requested_mortgage: numOrNull(form.requested_mortgage) ?? 0,
+      own_funds_total: numOrNull(form.own_funds_total) ?? 0,
+      own_funds_pension_fund: numOrNull(form.own_funds_pension_fund),
+      own_funds_vested_benefits: null,
+      gross_income_yearly: numOrNull(form.gross_income_yearly) ?? 0,
+      calculated_interest_rate: numOrNull(form.calc_rate) ?? 5,
+      ancillary_costs_yearly: null, // berechnet aus % unten
+      amortisation_yearly: null,
+    });
+  }, [form]);
+
+  // Tatsächliche Live-Kennzahlen mit Nebenkosten-% und Amortisation aus Schritt 5
+  const liveKpis = useMemo(() => {
+    const purchase = num(form.property_purchase_price);
+    const reno = num(form.renovation_costs);
+    const total = purchase + reno;
+    const mortgage = num(form.requested_mortgage);
+    const equity = num(form.own_funds_total);
+    const income = num(form.gross_income_yearly);
+    const rate = num(form.calc_rate) || 5;
+    const ancPct = num(form.ancillary_pct) || 1;
+    const years = num(form.amortisation_years) || 15;
+
+    const ltv = total > 0 ? (mortgage / total) * 100 : 0;
+    const equityRatio = total > 0 ? (equity / total) * 100 : 0;
+    const ancillary = total * (ancPct / 100);
+    // Amortisation: nur 2. Hypothek (über 66.67% LTV) auf "years" Jahre
+    const firstMortgageMax = total * 0.6667;
+    const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
+    const amort = years > 0 ? secondMortgage / years : 0;
+    const yearly = mortgage * (rate / 100) + ancillary + amort;
+    const affordability = income > 0 ? (yearly / income) * 100 : 0;
+    return { ltv, equityRatio, affordability, total, ancillary, amort, yearly };
+  }, [form]);
+
   // ---- Validierung ----
   const canNext = useMemo(() => {
     if (step === 1) return form.modules.length > 0;
@@ -210,19 +268,94 @@ export function FinancingQuickCheckWizard({
       if (form.client_source === "crm") return !!form.client_id;
       return true;
     }
+    if (step === 4) {
+      // Genau die vier Pflichtfelder — keine weiteren Checks
+      const purchase = num(form.property_purchase_price);
+      const equity = num(form.own_funds_total);
+      const income = num(form.gross_income_yearly);
+      const mortgage = num(form.requested_mortgage);
+      return purchase > 0 && equity >= 0 && income > 0 && mortgage > 0;
+    }
+    if (step === 5) return true;
     return true;
   }, [step, form]);
 
-  // Platzhalter-Mutation (volle Speicherung folgt mit Schritt 6)
+  const navigate = useNavigate();
+
   const createMutation = useMutation({
     mutationFn: async () => {
-      toast.info("Speichern wird mit Schritt 6 implementiert.");
-      return null;
+      const purchase = numOrNull(form.property_purchase_price);
+      const reno = numOrNull(form.renovation_costs);
+      const mortgage = numOrNull(form.requested_mortgage);
+      const equity = numOrNull(form.own_funds_total);
+      const pension = numOrNull(form.own_funds_pension_fund);
+      const income = numOrNull(form.gross_income_yearly);
+      const rate = numOrNull(form.calc_rate) ?? 5;
+      const ancillary = liveKpis.ancillary || null;
+      const amort = liveKpis.amort || null;
+
+      const result = calcQuickCheck({
+        purchase_price: purchase,
+        renovation_costs: reno,
+        requested_mortgage: mortgage,
+        own_funds_total: equity,
+        own_funds_pension_fund: pension,
+        own_funds_vested_benefits: null,
+        gross_income_yearly: income,
+        calculated_interest_rate: rate,
+        ancillary_costs_yearly: ancillary,
+        amortisation_yearly: amort,
+      });
+
+      const primaryType: FinancingType = (form.modules[0] as FinancingType) ?? "purchase";
+
+      const payload: any = {
+        client_id: form.client_source === "crm" && form.client_id ? form.client_id : null,
+        property_id: form.property_source === "crm" && form.property_id ? form.property_id : null,
+        property_snapshot: form.property_source !== "crm" ? {
+          title: form.property_title || null,
+          address: form.property_address || null,
+          price: purchase,
+        } : {},
+        data_source: form.property_source === "crm" ? "existing_property" : "quick_entry",
+        financing_type: primaryType,
+        financing_modules: form.modules,
+        title: form.property_title || form.modules.map((m) => MODULE_OPTIONS.find((o) => o.key === m)?.label).filter(Boolean).join(" + "),
+        purchase_price: purchase,
+        renovation_costs: reno,
+        existing_mortgage: numOrNull(form.existing_mortgage),
+        requested_mortgage: mortgage,
+        own_funds_total: equity,
+        own_funds_pension_fund: pension,
+        gross_income_yearly: income,
+        calculated_interest_rate: rate,
+        ancillary_costs_yearly: ancillary,
+        amortisation_yearly: amort,
+        total_investment: result.total_investment || null,
+        loan_to_value_ratio: result.loan_to_value_ratio || null,
+        affordability_ratio: result.affordability_ratio || null,
+        quick_check_status: result.status,
+        quick_check_reasons: result.reasons,
+        status: "quick_check" as const,
+        dossier_status: "quick_check" as const,
+      };
+
+      const { data, error } = await supabase
+        .from("financing_dossiers")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id as string;
     },
-    onSuccess: (id: any) => {
+    onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["financing_dossiers"] });
-      if (id) onCreated?.(id);
+      toast.success("Quick Check erstellt");
+      onOpenChange(false);
+      onCreated?.(id);
+      navigate({ to: "/financing/$id", params: { id } });
     },
+    onError: (e: any) => toast.error(e.message ?? "Fehler beim Speichern"),
   });
 
   const headerTitle = `Quick Check Finanzierung – Schritt ${step} / ${TOTAL_STEPS}`;
@@ -257,14 +390,22 @@ export function FinancingQuickCheckWizard({
             loading={clientsQuery.isLoading}
           />
         )}
-        {step === 4 && <PlaceholderStep label="Schritt 4 — Kennzahlen (folgt)" />}
-        {step === 5 && <PlaceholderStep label="Schritt 5 — Erweiterte Parameter (folgt)" />}
-        {step === 6 && <PlaceholderStep label="Schritt 6 — Zusammenfassung & Bestätigung (folgt)" />}
+        {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} />}
+        {step === 5 && <Step5Advanced form={form} update={update} kpis={liveKpis} />}
+        {step === 6 && (
+          <Step6Summary
+            form={form}
+            kpis={liveKpis}
+            status={liveResult.status}
+            clients={clientsQuery.data ?? []}
+            properties={propertiesQuery.data ?? []}
+          />
+        )}
 
         <DialogFooter className="mt-4 flex-row justify-between sm:justify-between">
           <div>
             {step > 1 && (
-              <Button variant="outline" onClick={() => setStep(step - 1)}>
+              <Button variant="outline" onClick={() => setStep(step - 1)} disabled={createMutation.isPending}>
                 <ArrowLeft className="mr-1 h-4 w-4" />Zurück
               </Button>
             )}
@@ -276,8 +417,8 @@ export function FinancingQuickCheckWizard({
               </Button>
             )}
             {step === TOTAL_STEPS && (
-              <Button onClick={() => createMutation.mutate()} disabled>
-                Quick Check starten
+              <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+                {createMutation.isPending ? "Speichern…" : "Quick Check starten"}
               </Button>
             )}
           </div>
@@ -466,14 +607,202 @@ function Step3Client({
   );
 }
 
-/* ==================== Helpers ==================== */
-function PlaceholderStep({ label }: { label: string }) {
+/* ==================== Schritt 4 ==================== */
+type Kpis = { ltv: number; equityRatio: number; affordability: number; total: number; ancillary: number; amort: number; yearly: number };
+
+function KpiPreview({ kpis }: { kpis: Kpis }) {
   return (
-    <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-      {label}
+    <p className="text-xs text-muted-foreground">
+      Belehnung: <span className="font-medium text-foreground">{kpis.ltv.toFixed(1)}%</span>
+      {" · "}Tragbarkeit: <span className="font-medium text-foreground">{kpis.affordability.toFixed(1)}%</span>
+      {" · "}Eigenmittelquote: <span className="font-medium text-foreground">{kpis.equityRatio.toFixed(1)}%</span>
+    </p>
+  );
+}
+
+function Step4Metrics({
+  form, update, kpis,
+}: {
+  form: WizardForm;
+  update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
+  kpis: Kpis;
+}) {
+  const showRenovation = form.modules.includes("renovation");
+  const showExisting = form.modules.includes("increase") || form.modules.includes("refinance") || form.modules.includes("mortgage_increase");
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Kaufpreis (CHF) *" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
+        <Field label="Gewünschte Hypothek (CHF) *" type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
+        <Field label="Eigenmittel total (CHF) *" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
+        <Field label="davon PK / Freizügigkeit (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+        <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
+        {showRenovation && (
+          <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+        )}
+        {showExisting && (
+          <Field label="Bestehende Hypothek (CHF)" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
+        )}
+      </div>
+      <div className="rounded-lg bg-muted/50 p-3">
+        <KpiPreview kpis={kpis} />
+      </div>
     </div>
   );
 }
+
+/* ==================== Schritt 5 ==================== */
+function Step5Advanced({
+  form, update, kpis,
+}: {
+  form: WizardForm;
+  update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
+  kpis: Kpis;
+}) {
+  const [open, setOpen] = useState(false);
+  const rate = num(form.calc_rate) || 5;
+  const anc = num(form.ancillary_pct) || 1;
+  return (
+    <div className="space-y-4">
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between">
+            <span className="flex items-center gap-2"><Settings2 className="h-4 w-4" />Erweiterte Einstellungen anpassen</span>
+            <ChevronDown className={cn("h-4 w-4 transition", open && "rotate-180")} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-5 pt-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <Label>Kalkulatorischer Zinssatz</Label>
+              <span className="font-medium">{rate.toFixed(1)} %</span>
+            </div>
+            <Slider
+              value={[rate]} min={1} max={8} step={0.1}
+              onValueChange={(v) => update("calc_rate", String(v[0]))}
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <Label>Nebenkosten (% der Gesamtinvestition)</Label>
+              <span className="font-medium">{anc.toFixed(1)} %</span>
+            </div>
+            <Slider
+              value={[anc]} min={0.5} max={3} step={0.1}
+              onValueChange={(v) => update("ancillary_pct", String(v[0]))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Amortisationsdauer</Label>
+            <Select value={form.amortisation_years} onValueChange={(v) => update("amortisation_years", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 Jahre</SelectItem>
+                <SelectItem value="12">12 Jahre</SelectItem>
+                <SelectItem value="15">15 Jahre</SelectItem>
+                <SelectItem value="20">20 Jahre</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+      <div className="rounded-lg bg-muted/50 p-3 space-y-1">
+        <KpiPreview kpis={kpis} />
+        <p className="text-xs text-muted-foreground">
+          Jährliche Belastung: {formatCurrency(kpis.yearly)} (Zins + Nebenkosten + Amortisation)
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ==================== Schritt 6 ==================== */
+function Step6Summary({
+  form, kpis, status, clients, properties,
+}: {
+  form: WizardForm;
+  kpis: Kpis;
+  status: string;
+  clients: any[];
+  properties: any[];
+}) {
+  const client = clients.find((c) => c.id === form.client_id);
+  const property = properties.find((p) => p.id === form.property_id);
+  const moduleLabels = form.modules.map((m) => MODULE_OPTIONS.find((o) => o.key === m)?.label).filter(Boolean).join(" + ");
+  const propertyLabel = form.property_source === "crm"
+    ? (property?.title ?? "—")
+    : form.property_source === "manual"
+      ? (form.property_title || "—")
+      : "Später erfassen";
+  const clientLabel = form.client_source === "crm"
+    ? (client?.full_name ?? "—")
+    : "Ohne Kunde";
+
+  return (
+    <div className="space-y-4">
+      <SummaryGroup title="Finanzierungsart">
+        <SumRow label="Module" value={moduleLabels || "—"} />
+      </SummaryGroup>
+
+      <SummaryGroup title="Immobilie">
+        <SumRow label="Bezeichnung" value={propertyLabel} />
+        {form.property_address && <SumRow label="Adresse" value={form.property_address} />}
+        {form.property_purchase_price && <SumRow label="Kaufpreis" value={formatCurrency(num(form.property_purchase_price))} />}
+      </SummaryGroup>
+
+      <SummaryGroup title="Kunde">
+        <SumRow label="Kunde" value={clientLabel} />
+        {form.gross_income_yearly && <SumRow label="Brutto-Jahreseinkommen" value={formatCurrency(num(form.gross_income_yearly))} />}
+        {form.own_funds_total && <SumRow label="Eigenmittel total" value={formatCurrency(num(form.own_funds_total))} />}
+        {form.own_funds_pension_fund && <SumRow label="davon PK / Freizügigkeit" value={formatCurrency(num(form.own_funds_pension_fund))} />}
+      </SummaryGroup>
+
+      <SummaryGroup title="Kennzahlen">
+        <SumRow label="Gewünschte Hypothek" value={formatCurrency(num(form.requested_mortgage))} />
+        {form.renovation_costs && <SumRow label="Renovationskosten" value={formatCurrency(num(form.renovation_costs))} />}
+        {form.existing_mortgage && <SumRow label="Bestehende Hypothek" value={formatCurrency(num(form.existing_mortgage))} />}
+        <SumRow label="Kalk. Zinssatz" value={`${num(form.calc_rate).toFixed(1)} %`} />
+        <SumRow label="Nebenkosten" value={`${num(form.ancillary_pct).toFixed(1)} %`} />
+        <SumRow label="Amortisationsdauer" value={`${form.amortisation_years} Jahre`} />
+      </SummaryGroup>
+
+      <div className="rounded-lg border p-4 bg-muted/30">
+        <div className="flex items-center justify-between mb-2">
+          <p className="font-semibold">Live-Vorschau</p>
+          <StatusBadge status={status} />
+        </div>
+        <KpiPreview kpis={kpis} />
+      </div>
+    </div>
+  );
+}
+
+function SummaryGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border p-3 space-y-1">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+      <div className="grid gap-1 sm:grid-cols-2">{children}</div>
+    </div>
+  );
+}
+
+function SumRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between text-sm py-0.5">
+      <span className="text-muted-foreground">{label}:</span>
+      <span className="font-medium text-right">{value}</span>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  if (status === "realistic") return <Badge className="bg-emerald-600 hover:bg-emerald-600">Realistisch</Badge>;
+  if (status === "critical") return <Badge className="bg-amber-500 hover:bg-amber-500">Kritisch</Badge>;
+  if (status === "not_financeable") return <Badge className="bg-red-600 hover:bg-red-600">Nicht finanzierbar</Badge>;
+  return <Badge variant="secondary">Unvollständig</Badge>;
+}
+
+/* ==================== Helpers ==================== */
 
 function SourceRow({ value, label, description }: { value: string; label: string; description: string }) {
   return (
