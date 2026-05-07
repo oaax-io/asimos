@@ -455,7 +455,58 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
         });
       }
 
-      return {
+      // 7) Finanzierungs-Draft anlegen (nur wenn financing-Step ausgefüllt wurde)
+      const hasFinancingStep = role === "financing_applicant" || role === "buyer";
+      const anyFinValue =
+        form.fin_purchase_price || form.fin_renovation_costs ||
+        form.fin_existing_mortgage || form.fin_requested_mortgage ||
+        form.fin_requested_increase || form.fin_target_financing_amount ||
+        form.fin_project_costs || form.own_funds_total ||
+        form.gross_income_yearly;
+      if (hasFinancingStep && anyFinValue) {
+        const goal = role === "financing_applicant" ? form.financing_goal : "purchase";
+        const linkedPropertyId = createdPropertyId
+          ?? (form.property_mode === "existing" ? form.selected_property_id || null : null);
+        const requestedMortgage =
+          num(form.fin_requested_mortgage) ?? num(form.fin_target_financing_amount);
+        const dossierPayload: any = {
+          client_id: clientId,
+          property_id: linkedPropertyId,
+          financing_type: goal,
+          financing_modules: goal ? [goal] : [],
+          status: "draft",
+          dossier_status: "draft",
+          quick_check_status: "incomplete",
+          data_source: linkedPropertyId ? "existing_property" : "manual",
+          title: `Finanzierung – ${fullName}`,
+          purchase_price: num(form.fin_purchase_price),
+          renovation_costs: num(form.fin_renovation_costs),
+          existing_mortgage: num(form.fin_existing_mortgage),
+          requested_mortgage: requestedMortgage,
+          requested_increase: num(form.fin_requested_increase),
+          construction_costs: num(form.fin_project_costs),
+          own_funds_total: num(form.own_funds_total),
+          own_funds_liquid: num(form.own_funds_cash),
+          own_funds_pillar_3a: num(form.own_funds_pillar_3a),
+          own_funds_pension_fund: num(form.own_funds_pension_fund),
+          own_funds_vested_benefits: num(form.own_funds_vested_benefits),
+          own_funds_gift: num(form.own_funds_gift),
+          own_funds_private_loan: num(form.own_funds_private_loan),
+          own_funds_inheritance: num(form.own_funds_inheritance),
+          gross_income_yearly: num(form.gross_income_yearly),
+          section_additional: {
+            wizard_source: true,
+            own_funds_securities: num(form.own_funds_securities),
+            own_funds_other: num(form.own_funds_other),
+            partner_income_yearly: num(form.partner_income_yearly),
+            target_financing_amount: num(form.fin_target_financing_amount),
+          },
+        };
+        const { error: dossierErr } = await supabase
+          .from("financing_dossiers").insert(dossierPayload);
+        if (dossierErr) console.warn("Finanzierungsdossier:", dossierErr);
+      }
+
         clientId,
         role,
         propertyId: createdPropertyId
