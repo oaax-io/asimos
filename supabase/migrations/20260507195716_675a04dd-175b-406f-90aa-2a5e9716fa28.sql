@@ -1,0 +1,1 @@
+ALTER TABLE public.financing_dossiers DROP CONSTRAINT IF EXISTS financing_dossiers_client_id_key;
