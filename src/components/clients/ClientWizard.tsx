@@ -127,6 +127,28 @@ type FormState = {
   equity: string;
   financing_status: string;
   financing_goal: string;
+  // Objekt-/Finanzierungswerte
+  fin_purchase_price: string;
+  fin_renovation_costs: string;
+  fin_existing_mortgage: string;
+  fin_requested_mortgage: string;
+  fin_requested_increase: string;
+  fin_target_financing_amount: string;
+  fin_project_costs: string;
+  // Eigenmittel-Aufteilung
+  own_funds_total: string;
+  own_funds_cash: string;
+  own_funds_pillar_3a: string;
+  own_funds_pension_fund: string;
+  own_funds_vested_benefits: string;
+  own_funds_securities: string;
+  own_funds_gift: string;
+  own_funds_private_loan: string;
+  own_funds_inheritance: string;
+  own_funds_other: string;
+  // Einkommen grob
+  gross_income_yearly: string;
+  partner_income_yearly: string;
 
   // Eigentum (Verkäufer/Vermieter/Eigentümer)
   property_mode: "existing" | "new" | "none";
