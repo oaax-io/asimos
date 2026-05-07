@@ -216,6 +216,46 @@ export function FinancingQuickCheckWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.client_id, form.client_source, clientsQuery.data]);
 
+  // ---- Live-KPIs (Schritt 4 + 5 + 6) ----
+  const liveResult = useMemo(() => {
+    return calcQuickCheck({
+      purchase_price: numOrNull(form.property_purchase_price) ?? 0,
+      renovation_costs: numOrNull(form.renovation_costs) ?? 0,
+      requested_mortgage: numOrNull(form.requested_mortgage) ?? 0,
+      own_funds_total: numOrNull(form.own_funds_total) ?? 0,
+      own_funds_pension_fund: numOrNull(form.own_funds_pension_fund),
+      own_funds_vested_benefits: null,
+      gross_income_yearly: numOrNull(form.gross_income_yearly) ?? 0,
+      calculated_interest_rate: numOrNull(form.calc_rate) ?? 5,
+      ancillary_costs_yearly: null, // berechnet aus % unten
+      amortisation_yearly: null,
+    });
+  }, [form]);
+
+  // Tatsächliche Live-Kennzahlen mit Nebenkosten-% und Amortisation aus Schritt 5
+  const liveKpis = useMemo(() => {
+    const purchase = num(form.property_purchase_price);
+    const reno = num(form.renovation_costs);
+    const total = purchase + reno;
+    const mortgage = num(form.requested_mortgage);
+    const equity = num(form.own_funds_total);
+    const income = num(form.gross_income_yearly);
+    const rate = num(form.calc_rate) || 5;
+    const ancPct = num(form.ancillary_pct) || 1;
+    const years = num(form.amortisation_years) || 15;
+
+    const ltv = total > 0 ? (mortgage / total) * 100 : 0;
+    const equityRatio = total > 0 ? (equity / total) * 100 : 0;
+    const ancillary = total * (ancPct / 100);
+    // Amortisation: nur 2. Hypothek (über 66.67% LTV) auf "years" Jahre
+    const firstMortgageMax = total * 0.6667;
+    const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
+    const amort = years > 0 ? secondMortgage / years : 0;
+    const yearly = mortgage * (rate / 100) + ancillary + amort;
+    const affordability = income > 0 ? (yearly / income) * 100 : 0;
+    return { ltv, equityRatio, affordability, total, ancillary, amort, yearly };
+  }, [form]);
+
   // ---- Validierung ----
   const canNext = useMemo(() => {
     if (step === 1) return form.modules.length > 0;
@@ -228,19 +268,94 @@ export function FinancingQuickCheckWizard({
       if (form.client_source === "crm") return !!form.client_id;
       return true;
     }
+    if (step === 4) {
+      // Genau die vier Pflichtfelder — keine weiteren Checks
+      const purchase = num(form.property_purchase_price);
+      const equity = num(form.own_funds_total);
+      const income = num(form.gross_income_yearly);
+      const mortgage = num(form.requested_mortgage);
+      return purchase > 0 && equity >= 0 && income > 0 && mortgage > 0;
+    }
+    if (step === 5) return true;
     return true;
   }, [step, form]);
 
-  // Platzhalter-Mutation (volle Speicherung folgt mit Schritt 6)
+  const navigate = useNavigate();
+
   const createMutation = useMutation({
     mutationFn: async () => {
-      toast.info("Speichern wird mit Schritt 6 implementiert.");
-      return null;
+      const purchase = numOrNull(form.property_purchase_price);
+      const reno = numOrNull(form.renovation_costs);
+      const mortgage = numOrNull(form.requested_mortgage);
+      const equity = numOrNull(form.own_funds_total);
+      const pension = numOrNull(form.own_funds_pension_fund);
+      const income = numOrNull(form.gross_income_yearly);
+      const rate = numOrNull(form.calc_rate) ?? 5;
+      const ancillary = liveKpis.ancillary || null;
+      const amort = liveKpis.amort || null;
+
+      const result = calcQuickCheck({
+        purchase_price: purchase,
+        renovation_costs: reno,
+        requested_mortgage: mortgage,
+        own_funds_total: equity,
+        own_funds_pension_fund: pension,
+        own_funds_vested_benefits: null,
+        gross_income_yearly: income,
+        calculated_interest_rate: rate,
+        ancillary_costs_yearly: ancillary,
+        amortisation_yearly: amort,
+      });
+
+      const primaryType: FinancingType = (form.modules[0] as FinancingType) ?? "purchase";
+
+      const payload: any = {
+        client_id: form.client_source === "crm" && form.client_id ? form.client_id : null,
+        property_id: form.property_source === "crm" && form.property_id ? form.property_id : null,
+        property_snapshot: form.property_source !== "crm" ? {
+          title: form.property_title || null,
+          address: form.property_address || null,
+          price: purchase,
+        } : {},
+        data_source: form.property_source === "crm" ? "existing_property" : "quick_entry",
+        financing_type: primaryType,
+        financing_modules: form.modules,
+        title: form.property_title || form.modules.map((m) => MODULE_OPTIONS.find((o) => o.key === m)?.label).filter(Boolean).join(" + "),
+        purchase_price: purchase,
+        renovation_costs: reno,
+        existing_mortgage: numOrNull(form.existing_mortgage),
+        requested_mortgage: mortgage,
+        own_funds_total: equity,
+        own_funds_pension_fund: pension,
+        gross_income_yearly: income,
+        calculated_interest_rate: rate,
+        ancillary_costs_yearly: ancillary,
+        amortisation_yearly: amort,
+        total_investment: result.total_investment || null,
+        loan_to_value_ratio: result.loan_to_value_ratio || null,
+        affordability_ratio: result.affordability_ratio || null,
+        quick_check_status: result.status,
+        quick_check_reasons: result.reasons,
+        status: "quick_check" as const,
+        dossier_status: "quick_check" as const,
+      };
+
+      const { data, error } = await supabase
+        .from("financing_dossiers")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (error) throw error;
+      return data.id as string;
     },
-    onSuccess: (id: any) => {
+    onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["financing_dossiers"] });
-      if (id) onCreated?.(id);
+      toast.success("Quick Check erstellt");
+      onOpenChange(false);
+      onCreated?.(id);
+      navigate({ to: "/financing/$id", params: { id } });
     },
+    onError: (e: any) => toast.error(e.message ?? "Fehler beim Speichern"),
   });
 
   const headerTitle = `Quick Check Finanzierung – Schritt ${step} / ${TOTAL_STEPS}`;
