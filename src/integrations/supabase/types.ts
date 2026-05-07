@@ -1222,6 +1222,11 @@ export type Database = {
           bank_type: string | null
           calculated_interest_rate: number | null
           client_id: string
+          co_applicant_client_id: string | null
+          co_applicant_eigenkapital: number | null
+          co_applicant_einkommen: number | null
+          co_applicant_pk_anteil: number | null
+          co_applicant_role: string | null
           completion_percent: number
           construction_additional_costs: number | null
           construction_costs: number | null
@@ -1231,6 +1236,8 @@ export type Database = {
           dossier_status:
             | Database["public"]["Enums"]["financing_dossier_status"]
             | null
+          eigenkapital_kombiniert: number | null
+          einkommen_kombiniert: number | null
           existing_mortgage: number | null
           financing_modules: string[]
           financing_type: Database["public"]["Enums"]["financing_type"] | null
@@ -1249,6 +1256,7 @@ export type Database = {
           own_funds_private_loan: number | null
           own_funds_total: number | null
           own_funds_vested_benefits: number | null
+          pk_anteil_kombiniert: number | null
           property_id: string | null
           property_snapshot: Json | null
           property_value: number | null
@@ -1299,6 +1307,11 @@ export type Database = {
           bank_type?: string | null
           calculated_interest_rate?: number | null
           client_id: string
+          co_applicant_client_id?: string | null
+          co_applicant_eigenkapital?: number | null
+          co_applicant_einkommen?: number | null
+          co_applicant_pk_anteil?: number | null
+          co_applicant_role?: string | null
           completion_percent?: number
           construction_additional_costs?: number | null
           construction_costs?: number | null
@@ -1308,6 +1321,8 @@ export type Database = {
           dossier_status?:
             | Database["public"]["Enums"]["financing_dossier_status"]
             | null
+          eigenkapital_kombiniert?: number | null
+          einkommen_kombiniert?: number | null
           existing_mortgage?: number | null
           financing_modules?: string[]
           financing_type?: Database["public"]["Enums"]["financing_type"] | null
@@ -1326,6 +1341,7 @@ export type Database = {
           own_funds_private_loan?: number | null
           own_funds_total?: number | null
           own_funds_vested_benefits?: number | null
+          pk_anteil_kombiniert?: number | null
           property_id?: string | null
           property_snapshot?: Json | null
           property_value?: number | null
@@ -1376,6 +1392,11 @@ export type Database = {
           bank_type?: string | null
           calculated_interest_rate?: number | null
           client_id?: string
+          co_applicant_client_id?: string | null
+          co_applicant_eigenkapital?: number | null
+          co_applicant_einkommen?: number | null
+          co_applicant_pk_anteil?: number | null
+          co_applicant_role?: string | null
           completion_percent?: number
           construction_additional_costs?: number | null
           construction_costs?: number | null
@@ -1385,6 +1406,8 @@ export type Database = {
           dossier_status?:
             | Database["public"]["Enums"]["financing_dossier_status"]
             | null
+          eigenkapital_kombiniert?: number | null
+          einkommen_kombiniert?: number | null
           existing_mortgage?: number | null
           financing_modules?: string[]
           financing_type?: Database["public"]["Enums"]["financing_type"] | null
@@ -1403,6 +1426,7 @@ export type Database = {
           own_funds_private_loan?: number | null
           own_funds_total?: number | null
           own_funds_vested_benefits?: number | null
+          pk_anteil_kombiniert?: number | null
           property_id?: string | null
           property_snapshot?: Json | null
           property_value?: number | null
@@ -1439,7 +1463,15 @@ export type Database = {
           valuation_result?: Json | null
           valuation_status?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "financing_dossiers_co_applicant_client_id_fkey"
+            columns: ["co_applicant_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       financing_dossiers_scenarios: {
         Row: {
