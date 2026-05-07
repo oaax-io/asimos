@@ -53,15 +53,18 @@ function FinancingDetailPage() {
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      const [clientRes, propRes] = await Promise.all([
+      const [clientRes, propRes, coRes] = await Promise.all([
         data.client_id
           ? supabase.from("clients").select("id, full_name, email, phone").eq("id", data.client_id).maybeSingle()
           : Promise.resolve({ data: null }),
         data.property_id
           ? supabase.from("properties").select("id, title, city, price").eq("id", data.property_id).maybeSingle()
           : Promise.resolve({ data: null }),
+        (data as { co_applicant_client_id?: string | null }).co_applicant_client_id
+          ? supabase.from("clients").select("id, full_name").eq("id", (data as { co_applicant_client_id: string }).co_applicant_client_id).maybeSingle()
+          : Promise.resolve({ data: null }),
       ]);
-      return { ...data, clients: clientRes.data, properties: propRes.data } as any;
+      return { ...data, clients: clientRes.data, properties: propRes.data, co_applicant: coRes.data } as any;
     },
   });
 
