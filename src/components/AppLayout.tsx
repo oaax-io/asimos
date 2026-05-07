@@ -53,6 +53,7 @@ const NAV_GROUPS = [
     label: "Administration",
     items: [
       { to: "/team", label: "Mitarbeiter", icon: Users2 },
+      { to: "/feedback", label: "Feedback", icon: MessageSquarePlus },
       { to: "/settings", label: "Einstellungen", icon: Settings },
     ],
   },
