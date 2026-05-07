@@ -115,14 +115,17 @@ function normalizeAdvisorId(value: unknown, employees: EmployeeOption[]): string
   const trimmed = value.trim();
   if (!trimmed) return null;
   if (isUuid(trimmed)) return trimmed;
+  const normalizedInput = trimmed.toLowerCase();
 
-  const match = employees.find((employee) =>
-    [employee.full_name, employee.email].some(
-      (candidate) =>
-        typeof candidate === "string" &&
-        candidate.trim().toLowerCase() === trimmed.toLowerCase(),
-    ),
-  );
+  const match = employees.find((employee) => {
+    const fullName = typeof employee.full_name === "string"
+      ? employee.full_name.trim().toLowerCase()
+      : null;
+    const email = typeof employee.email === "string"
+      ? employee.email.trim().toLowerCase()
+      : null;
+    return fullName === normalizedInput || email === normalizedInput;
+  });
 
   return match?.id ?? null;
 }
