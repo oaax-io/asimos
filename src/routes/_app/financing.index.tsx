@@ -29,6 +29,7 @@ const ALL = "__all__";
 
 function FinancingPage() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(ALL);
   const [typeFilter, setTypeFilter] = useState<string>(ALL);
@@ -36,6 +37,19 @@ function FinancingPage() {
   const [bankFilter, setBankFilter] = useState<string>(ALL);
   const [sourceFilter, setSourceFilter] = useState<string>(ALL);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const canDelete = useIsOwnerOrAdmin();
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("financing_dossiers").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Finanzierung gelöscht");
+      qc.invalidateQueries({ queryKey: ["financing_dossiers"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Löschen fehlgeschlagen"),
+  });
 
   const { data: dossiers = [], isLoading } = useQuery({
     queryKey: ["financing_dossiers"],
