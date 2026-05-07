@@ -57,28 +57,29 @@ export function BenchmarkCard({ benchmark, variant = "full", className }: Props)
         className,
       )}
     >
-      <CardContent className="space-y-5 p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+      <CardContent className="space-y-5 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
               Finanz-Benchmark
             </p>
-            <h3 className="mt-1 font-display text-xl font-semibold">
+            <h3 className="mt-1 font-display text-lg font-semibold leading-tight">
               {benchmarkLabels[benchmark.status]}
             </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {benchmarkDescriptions[benchmark.status]}
-            </p>
           </div>
           <span
             className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium",
+              "shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap",
               c.badge,
             )}
           >
-            {ratio}% Reservequote
+            {ratio}%
           </span>
         </div>
+
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          {benchmarkDescriptions[benchmark.status]}
+        </p>
 
         <div>
           <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
@@ -88,7 +89,7 @@ export function BenchmarkCard({ benchmark, variant = "full", className }: Props)
           <Progress value={ratio} className="h-2" />
         </div>
 
-        <div className="grid grid-cols-3 gap-3 text-sm">
+        <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
           <BenchStat
             icon={<TrendingUp className="h-4 w-4 text-emerald-500" />}
             label="Einnahmen"
@@ -123,12 +124,18 @@ function BenchStat({
   highlight?: string;
 }) {
   return (
-    <div className="rounded-lg border bg-card/60 p-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+    <div className="rounded-lg border bg-card/60 p-2.5 min-w-0">
+      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         {icon}
-        {label}
+        <span className="truncate">{label}</span>
       </div>
-      <div className={cn("mt-1 font-display text-base font-semibold", highlight)}>
+      <div
+        className={cn(
+          "mt-1 font-display text-sm font-semibold tabular-nums truncate",
+          highlight,
+        )}
+        title={value}
+      >
         {value}
       </div>
     </div>
