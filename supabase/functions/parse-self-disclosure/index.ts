@@ -332,6 +332,18 @@ Deno.serve(async (req: Request) => {
     const formFieldsCount = Object.keys(formFields).length;
     console.log("form fields extracted:", formFieldsCount);
 
+    const directFields = mapAsimoFormFields(formFields);
+    if (Object.keys(directFields).length > 0) {
+      return new Response(
+        JSON.stringify({
+          fields: directFields,
+          form_fields_count: formFieldsCount,
+          source: "acroform",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const systemPrompt = `Du bist ein präziser Datenextraktor für die ASIMO-Selbstauskunft (Schweiz).
 Du erhältst (a) die rohen AcroForm-Feldwerte des PDFs als JSON und (b) zusätzlich die PDF-Datei.
 
@@ -434,27 +446,61 @@ Lasse Felder weg, die leer/nicht vorhanden sind. Keine Halluzinationen.`;
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      return new Response(JSON.stringify({ error: "AI Gateway Fehler" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: "Automatische Erkennung war für dieses PDF nicht möglich.",
+          fallback: true,
+          fields: {},
+          form_fields_count: formFieldsCount,
+          source: "fallback",
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const json = await aiResp.json();
     const toolCall = json.choices?.[0]?.message?.tool_calls?.[0];
-    const args = toolCall?.function?.arguments
-      ? JSON.parse(toolCall.function.arguments)
-      : {};
+    const content = json.choices?.[0]?.message?.content;
+
+    let args: Record<string, string | number> = {};
+    try {
+      if (toolCall?.function?.arguments) {
+        args = sanitizeFields(parseJsonObject(toolCall.function.arguments));
+      } else if (typeof content === "string" && content.trim()) {
+        args = sanitizeFields(parseJsonObject(content));
+      } else if (Array.isArray(content)) {
+        const textPart = content.find(
+          (part: Record<string, unknown>) =>
+            part?.type === "text" && typeof part?.text === "string" && part.text.trim(),
+        );
+        if (textPart?.text && typeof textPart.text === "string") {
+          args = sanitizeFields(parseJsonObject(textPart.text));
+        }
+      }
+    } catch (parseError) {
+      console.warn("could not parse AI result", parseError);
+    }
 
     return new Response(
-      JSON.stringify({ fields: args, form_fields_count: formFieldsCount }),
+      JSON.stringify({
+        fields: args,
+        form_fields_count: formFieldsCount,
+        source: "ai",
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
     console.error("parse-self-disclosure error", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "unknown" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({
+        error: e instanceof Error ? e.message : "unknown",
+        fallback: true,
+        fields: {},
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
