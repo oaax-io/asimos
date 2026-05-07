@@ -299,7 +299,7 @@ function ClientDetail() {
               <CardContent className="p-6">
                 <h3 className="mb-4 font-display text-lg font-semibold">Suchprofil</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <Field icon={<Euro className="h-4 w-4" />} label="Budget" value={
+                  <Field icon={<Banknote className="h-4 w-4" />} label="Budget" value={
                     client.budget_min || client.budget_max
                       ? `${client.budget_min ? formatCurrency(Number(client.budget_min)) : "—"} – ${client.budget_max ? formatCurrency(Number(client.budget_max)) : "—"}`
                       : "—"
