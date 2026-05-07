@@ -321,7 +321,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
         postal_code: form.postal_code || null,
         city: form.city || null,
         country: form.country || null,
-        equity: num(form.equity),
+        equity: num(form.own_funds_total) ?? num(form.equity),
         financing_status: form.financing_status || null,
       };
       const { data: client, error: clientErr } = await supabase
