@@ -26,7 +26,9 @@ import { toast } from "sonner";
 import {
   Home, Hammer, ArrowUpCircle, Repeat2, TrendingUp,
   CheckCircle2, ArrowLeft, ArrowRight, ChevronsUpDown, Check, ChevronDown, Settings2,
+  UserPlus, AlertTriangle, ExternalLink, Users,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   FINANCING_TYPE_LABELS, calcQuickCheck, type FinancingType,
 } from "@/lib/financing";
