@@ -315,3 +315,389 @@ function KV({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+// ───────── Quick Check Sub-Tabs ─────────
+
+type Dossier = Record<string, unknown> & {
+  purchase_price?: number | string | null;
+  renovation_costs?: number | string | null;
+  requested_mortgage?: number | string | null;
+  own_funds_total?: number | string | null;
+  own_funds_pension_fund?: number | string | null;
+  own_funds_vested_benefits?: number | string | null;
+  gross_income_yearly?: number | string | null;
+  calculated_interest_rate?: number | string | null;
+  ancillary_costs_yearly?: number | string | null;
+  amortisation_yearly?: number | string | null;
+};
+
+function n(v: unknown, fallback = 0): number {
+  const x = typeof v === "string" ? parseFloat(v) : (v as number);
+  return Number.isFinite(x) ? x : fallback;
+}
+function chf(v: number): string {
+  return formatCurrency(Math.round(v));
+}
+function chfCompact(v: number): string {
+  const k = v / 1000;
+  if (Math.abs(k) >= 1000) return `${(k / 1000).toFixed(1)}M`;
+  return `${Math.round(k)}k`;
+}
+function pct(v: number): string {
+  return `${v.toFixed(1)}%`;
+}
+
+type Inputs = {
+  total: number;
+  purchase: number;
+  reno: number;
+  mortgage: number;
+  equity: number;
+  pension: number;
+  vested: number;
+  hardEquity: number;
+  income: number;
+  rate: number;
+  ancillaryPct: number;
+  ancillary: number;
+  firstMortgage: number;
+  secondMortgage: number;
+  amortYears: number;
+  amort: number;
+  yearly: number;
+  interest: number;
+  ltv: number;
+  affordability: number;
+  equityRatio: number;
+  hardRatio: number;
+  minIncome: number;
+};
+
+function deriveInputs(d: Dossier): Inputs {
+  const purchase = n(d.purchase_price);
+  const reno = n(d.renovation_costs);
+  const total = purchase + reno;
+  const mortgage = n(d.requested_mortgage);
+  const equity = n(d.own_funds_total);
+  const pension = n(d.own_funds_pension_fund);
+  const vested = n(d.own_funds_vested_benefits);
+  const pensionRelated = pension + vested;
+  const hardEquity = Math.max(0, equity - pensionRelated);
+  const income = n(d.gross_income_yearly);
+  const rate = n(d.calculated_interest_rate, 5);
+  const ancillary = d.ancillary_costs_yearly != null && d.ancillary_costs_yearly !== ""
+    ? n(d.ancillary_costs_yearly)
+    : total * 0.01;
+  const ancillaryPct = total > 0 ? (ancillary / total) * 100 : 1;
+  const firstMortgageMax = total * 0.6667;
+  const firstMortgage = Math.min(mortgage, firstMortgageMax);
+  const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
+  const amortYears = 15;
+  const amort = d.amortisation_yearly != null && d.amortisation_yearly !== ""
+    ? n(d.amortisation_yearly)
+    : secondMortgage / amortYears;
+  const interest = mortgage * (rate / 100);
+  const yearly = interest + ancillary + amort;
+  const ltv = total > 0 ? (mortgage / total) * 100 : 0;
+  const affordability = income > 0 ? (yearly / income) * 100 : 0;
+  const equityRatio = total > 0 ? (equity / total) * 100 : 0;
+  const hardRatio = total > 0 ? (hardEquity / total) * 100 : 0;
+  const minIncome = yearly > 0 ? yearly / 0.33 : 0;
+  return {
+    total, purchase, reno, mortgage, equity, pension, vested, hardEquity,
+    income, rate, ancillary, ancillaryPct, firstMortgage, secondMortgage,
+    amortYears, amort, yearly, interest, ltv, affordability, equityRatio,
+    hardRatio, minIncome,
+  };
+}
+
+function toneFor(value: number, limit: number, warn: number, mode: "max" | "min"): "ok" | "warn" | "bad" {
+  if (mode === "max") {
+    if (value <= limit) return "ok";
+    if (value <= warn) return "warn";
+    return "bad";
+  }
+  if (value >= limit) return "ok";
+  if (value >= warn) return "warn";
+  return "bad";
+}
+function toneText(t: "ok" | "warn" | "bad"): string {
+  return t === "ok" ? "text-emerald-600" : t === "warn" ? "text-amber-600" : "text-red-600";
+}
+function toneBar(t: "ok" | "warn" | "bad"): string {
+  return t === "ok" ? "bg-emerald-500" : t === "warn" ? "bg-amber-500" : "bg-red-500";
+}
+
+function MetricCard({
+  label, value, limitLabel, tone, fillPct, limitPct,
+}: {
+  label: string; value: string; limitLabel: string;
+  tone: "ok" | "warn" | "bad"; fillPct: number; limitPct: number;
+}) {
+  const fill = Math.max(0, Math.min(100, fillPct));
+  const limit = Math.max(0, Math.min(100, limitPct));
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-baseline justify-between">
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-xs text-muted-foreground">{limitLabel}</p>
+        </div>
+        <p className={cn("text-2xl font-semibold", toneText(tone))}>{value}</p>
+        <div className="relative h-2 w-full rounded bg-muted">
+          <div className={cn("h-2 rounded transition-all", toneBar(tone))} style={{ width: `${fill}%` }} />
+          <div
+            className="absolute top-[-2px] h-3 w-px bg-foreground/70"
+            style={{ left: `${limit}%` }}
+            aria-hidden
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
+  const i = deriveInputs(dossier);
+  const ltvTone = toneFor(i.ltv, 80, 90, "max");
+  const affTone = toneFor(i.affordability, 33, 38, "max");
+  const eqTone = toneFor(i.equityRatio, 20, 15, "min");
+  const hardTone = toneFor(i.hardRatio, 10, 7, "min");
+
+  const tips: { tone: "ok" | "warn" | "bad"; text: string }[] = [];
+  if (i.affordability > 33 && i.income > 0) {
+    const incomeNeeded = i.minIncome;
+    const delta = Math.max(0, incomeNeeded - i.income);
+    tips.push({
+      tone: "warn",
+      text: `Einkommen müsste um ${chf(delta)} erhöht werden um Tragbarkeit auf 33% zu bringen (benötigt: ${chf(incomeNeeded)})`,
+    });
+  }
+  if (i.equityRatio < 20 && i.total > 0) {
+    const needed = i.total * 0.20;
+    const missing = Math.max(0, needed - i.equity);
+    tips.push({
+      tone: "warn",
+      text: `Fehlende Eigenmittel: ${chf(missing)} (mindestens ${chf(needed)} des Kaufpreises erforderlich)`,
+    });
+  }
+  if (i.hardRatio < 10 && i.total > 0) {
+    const neededHard = i.total * 0.10;
+    tips.push({
+      tone: "warn",
+      text: `PK-Anteil zu hoch — mindestens ${chf(neededHard)} aus Barvermögen erforderlich (aktuell ${chf(i.hardEquity)} harte Eigenmittel)`,
+    });
+  }
+  if (tips.length === 0) {
+    tips.push({ tone: "ok", text: "Alle Kennzahlen erfüllt — Finanzierung grundsätzlich bankfähig." });
+  }
+
+  return (
+    <>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <MetricCard label="Belehnung (LTV)" value={pct(i.ltv)} limitLabel="Limit: 80%" tone={ltvTone} fillPct={i.ltv} limitPct={80} />
+        <MetricCard label="Tragbarkeit" value={pct(i.affordability)} limitLabel="Limit: 33%" tone={affTone} fillPct={i.affordability * (100 / 50)} limitPct={33 * (100 / 50)} />
+        <MetricCard label="Eigenmittelquote" value={pct(i.equityRatio)} limitLabel="Limit: 20%" tone={eqTone} fillPct={i.equityRatio * (100 / 50)} limitPct={20 * (100 / 50)} />
+        <MetricCard label="Harte Eigenmittel" value={pct(i.hardRatio)} limitLabel="Limit: 10%" tone={hardTone} fillPct={i.hardRatio * (100 / 30)} limitPct={10 * (100 / 30)} />
+      </div>
+      <Card>
+        <CardContent className="p-4 space-y-2">
+          <h3 className="font-semibold">Optimierungsvorschläge</h3>
+          <ul className="space-y-1 text-sm">
+            {tips.map((t, idx) => (
+              <li key={idx} className={toneText(t.tone)}>• {t.text}</li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+function DetailRow({ label, value, bold, indent, divider }: {
+  label: string; value: string; bold?: boolean; indent?: boolean; divider?: boolean;
+}) {
+  return (
+    <>
+      {divider && <div className="my-2 border-t" />}
+      <div className={cn("flex justify-between gap-4 text-sm", indent && "pl-4 text-muted-foreground")}>
+        <span>{label}</span>
+        <span className={cn("tabular-nums", bold && "font-semibold")}>{value}</span>
+      </div>
+    </>
+  );
+}
+
+function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
+  const i = deriveInputs(dossier);
+  const affTone = toneFor(i.affordability, 33, 38, "max");
+
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      <Card>
+        <CardContent className="p-4 space-y-1">
+          <h3 className="font-semibold mb-2">Finanzierungsstruktur</h3>
+          <DetailRow label="Kaufpreis" value={chf(i.purchase)} />
+          {i.reno > 0 && <DetailRow label="+ Renovationskosten" value={chf(i.reno)} />}
+          <DetailRow label="= Gesamtinvestition" value={chf(i.total)} bold divider />
+          <DetailRow label={`Eigenmittel total (${pct(i.equityRatio)})`} value={chf(i.equity)} divider />
+          <DetailRow label="davon Barvermögen" value={chf(i.hardEquity)} indent />
+          <DetailRow label="davon PK / Freizügigkeit" value={chf(i.pension + i.vested)} indent />
+          <DetailRow label={`Hypothek gesamt (${pct(i.ltv)})`} value={chf(i.mortgage)} divider />
+          <DetailRow label="1. Hypothek (≤ 65%)" value={chf(i.firstMortgage)} indent />
+          <DetailRow label="2. Hypothek (65–80%)" value={chf(i.secondMortgage)} indent />
+          <DetailRow label={`Amortisation 2. Hypo (über ${i.amortYears} J.)`} value={`${chf(i.amort)}/J`} divider />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="p-4 space-y-1">
+          <h3 className="font-semibold mb-2">Jahreskosten (Tragbarkeit)</h3>
+          <DetailRow label={`Kalk. Zinssatz (${i.rate.toFixed(1)}%)`} value={chf(i.interest)} />
+          <DetailRow label={`Nebenkosten (${i.ancillaryPct.toFixed(1)}%)`} value={chf(i.ancillary)} />
+          <DetailRow label="Amortisation" value={chf(i.amort)} />
+          <DetailRow label="Total Wohnkosten p.a." value={chf(i.yearly)} bold divider />
+          <DetailRow label="Bruttoeinkommen p.a." value={chf(i.income)} />
+          <div className="my-2 border-t" />
+          <div className="flex justify-between gap-4 text-sm">
+            <span>Tragbarkeitsquote</span>
+            <span className={cn("font-semibold tabular-nums", toneText(affTone))}>{pct(i.affordability)}</span>
+          </div>
+          <DetailRow label="Mindesteinkommen (33%)" value={chf(i.minIncome)} />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
+  const i = deriveInputs(dossier);
+  const priceSteps = [-200000, -100000, 0, 100000, 200000];
+  const incomeSteps = [-40000, -20000, 0, 20000, 40000];
+
+  type Cell = { affordability: number; tone: "ok" | "warn" | "bad" | "gray"; label: string; isCurrent: boolean };
+  const matrix: Cell[][] = incomeSteps.map((dInc) =>
+    priceSteps.map((dPrice) => {
+      const purchase = Math.max(0, i.purchase + dPrice);
+      const total = purchase + i.reno;
+      const newReno = i.reno;
+      const newAncillary = total * (i.ancillaryPct / 100);
+      const firstMortgageMax = total * 0.6667;
+      const newSecond = Math.max(0, i.mortgage - firstMortgageMax);
+      const newAmort = newSecond / i.amortYears;
+      const result = calcQuickCheck({
+        purchase_price: purchase,
+        renovation_costs: newReno,
+        requested_mortgage: i.mortgage,
+        own_funds_total: i.equity,
+        own_funds_pension_fund: i.pension,
+        own_funds_vested_benefits: i.vested,
+        gross_income_yearly: Math.max(0, i.income + dInc),
+        calculated_interest_rate: i.rate,
+        ancillary_costs_yearly: newAncillary,
+        amortisation_yearly: newAmort,
+      });
+      const eqRatio = total > 0 ? (i.equity / total) * 100 : 0;
+      const aff = result.affordability_ratio;
+      let tone: Cell["tone"];
+      let label: string;
+      if (eqRatio < 10) {
+        tone = "gray";
+        label = "EK!";
+      } else if (aff > 38 || eqRatio < 15) {
+        tone = "bad";
+        label = pct(aff);
+      } else if (aff > 33 || eqRatio < 20) {
+        tone = "warn";
+        label = pct(aff);
+      } else {
+        tone = "ok";
+        label = pct(aff);
+      }
+      return { affordability: aff, tone, label, isCurrent: dPrice === 0 && dInc === 0 };
+    })
+  );
+
+  const cellTone = (t: Cell["tone"]) =>
+    t === "ok" ? "bg-emerald-100 text-emerald-800"
+    : t === "warn" ? "bg-amber-100 text-amber-800"
+    : t === "bad" ? "bg-red-100 text-red-800"
+    : "bg-muted text-muted-foreground";
+  const borderTone = (t: Cell["tone"]) =>
+    t === "ok" ? "border-emerald-600"
+    : t === "warn" ? "border-amber-600"
+    : t === "bad" ? "border-red-600"
+    : "border-muted-foreground";
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <h3 className="font-semibold">Sensitivitätsanalyse — Einkommen vs. Kaufpreis</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] border-separate border-spacing-1 text-sm">
+            <thead>
+              <tr>
+                <th className="p-2 text-left text-xs text-muted-foreground">Einkommen \ Kaufpreis</th>
+                {priceSteps.map((dp) => {
+                  const v = Math.max(0, i.purchase + dp);
+                  return (
+                    <th key={dp} className="p-2 text-center text-xs text-muted-foreground tabular-nums">
+                      {chfCompact(v)}
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody>
+              {incomeSteps.map((di, rowIdx) => {
+                const incomeV = Math.max(0, i.income + di);
+                return (
+                  <tr key={di}>
+                    <th className="p-2 text-left text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                      {chfCompact(incomeV)}/J
+                    </th>
+                    {matrix[rowIdx].map((cell, colIdx) => (
+                      <td key={colIdx} className="p-0">
+                        <div
+                          className={cn(
+                            "rounded px-2 py-3 text-center text-xs font-medium tabular-nums border-2",
+                            cellTone(cell.tone),
+                            cell.isCurrent ? borderTone(cell.tone) : "border-transparent",
+                          )}
+                        >
+                          {cell.label}
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex flex-wrap gap-3 text-xs">
+          <LegendDot tone="ok" label="Realistisch" />
+          <LegendDot tone="warn" label="Kritisch" />
+          <LegendDot tone="bad" label="Nicht finanzierbar" />
+          <LegendDot tone="gray" label="EK ungenügend" />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Eigenmittel {chf(i.equity)} · Zinssatz {i.rate.toFixed(1)}% · Nebenkosten {i.ancillaryPct.toFixed(1)}% · Alle anderen Werte konstant
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function LegendDot({ tone, label }: { tone: "ok" | "warn" | "bad" | "gray"; label: string }) {
+  const cls =
+    tone === "ok" ? "bg-emerald-500"
+    : tone === "warn" ? "bg-amber-500"
+    : tone === "bad" ? "bg-red-500"
+    : "bg-muted-foreground";
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={cn("h-3 w-3 rounded", cls)} />
+      <span className="text-muted-foreground">{label}</span>
+    </span>
+  );
+}
