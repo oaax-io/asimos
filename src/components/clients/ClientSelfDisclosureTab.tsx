@@ -1,34 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Save, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Pencil, Upload, FilePlus, FileText } from "lucide-react";
 import {
   calculateBenchmark,
-  employmentStatusOptions,
   expenseFields,
   expenseLabels,
   formatCHF,
   incomeFields,
   incomeLabels,
-  maritalStatusOptions,
-  salutationOptions,
-  type ExpenseField,
-  type IncomeField,
 } from "@/lib/self-disclosure";
 import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
+import { ClientSelfDisclosureWizard } from "@/components/clients/ClientSelfDisclosureWizard";
 
 type DisclosureRow = Record<string, unknown> & { id?: string };
 
@@ -36,97 +21,8 @@ interface Props {
   clientId: string;
 }
 
-const STAMM_FIELDS: { key: string; label: string; type?: string; placeholder?: string }[] = [
-  { key: "first_name", label: "Vorname" },
-  { key: "last_name", label: "Name" },
-  { key: "birth_name", label: "Ledigname" },
-  { key: "street", label: "Strasse" },
-  { key: "street_number", label: "Nr." },
-  { key: "postal_code", label: "PLZ" },
-  { key: "city", label: "Ort" },
-  { key: "country", label: "Land", placeholder: "CH" },
-  { key: "resident_since", label: "Wohnhaft seit", type: "date" },
-  { key: "phone", label: "Telefon" },
-  { key: "mobile", label: "Mobil" },
-  { key: "email", label: "E-Mail", type: "email" },
-  { key: "birth_date", label: "Geburtsdatum", type: "date" },
-  { key: "nationality", label: "Staatsbürgerschaft" },
-  { key: "birth_place", label: "Geburtsort" },
-  { key: "birth_country", label: "Geburtsland" },
-  { key: "tax_id_ch", label: "Steuer-ID-Nr. CH" },
-];
-
-const JOB_TEXT_FIELDS = [
-  { key: "employer_name", label: "Arbeitgeber" },
-  { key: "employer_address", label: "Adresse Arbeitgeber" },
-  { key: "employer_phone", label: "Telefon Arbeitgeber" },
-  { key: "employed_as", label: "Beschäftigt als" },
-];
-
-const DATE_FIELDS = new Set([
-  "birth_date",
-  "employed_since",
-  "resident_since",
-  "disclosure_date",
-]);
-
-const NUMERIC_FIELDS = new Set([
-  "salary_net_monthly",
-  "additional_income",
-  "income_job_two",
-  "income_rental",
-  "annual_net_salary",
-  "total_income_monthly",
-  "mortgage_expense",
-  "rent_expense",
-  "leasing_expense",
-  "credit_expense",
-  "life_insurance_expense",
-  "alimony_expense",
-  "health_insurance_expense",
-  "property_insurance_expense",
-  "utilities_expense",
-  "telecom_expense",
-  "living_costs_expense",
-  "taxes_expense",
-  "miscellaneous_expense",
-  "total_expenses_monthly",
-  "reserve_total",
-  "reserve_ratio",
-]);
-
-function sanitizeDisclosure(src: DisclosureRow): DisclosureRow {
-  const out: DisclosureRow = {};
-
-  for (const [key, value] of Object.entries(src)) {
-    if (value === "" || value === undefined) {
-      out[key] = null;
-      continue;
-    }
-
-    if (DATE_FIELDS.has(key)) {
-      out[key] = value;
-      continue;
-    }
-
-    if (NUMERIC_FIELDS.has(key)) {
-      if (value === null) {
-        out[key] = null;
-      } else {
-        const n = Number(value);
-        out[key] = Number.isFinite(n) ? n : null;
-      }
-      continue;
-    }
-
-    out[key] = value;
-  }
-
-  return out;
-}
-
 export function ClientSelfDisclosureTab({ clientId }: Props) {
-  const qc = useQueryClient();
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["client_self_disclosure", clientId],
@@ -138,7 +34,6 @@ export function ClientSelfDisclosureTab({ clientId }: Props) {
         .maybeSingle();
       if (error) throw error;
 
-      // Prefill aus clients, wenn noch keine Selbstauskunft existiert
       if (!disc) {
         const { data: client } = await supabase
           .from("clients")
@@ -170,249 +65,179 @@ export function ClientSelfDisclosureTab({ clientId }: Props) {
     },
   });
 
-  const [form, setForm] = useState<DisclosureRow>({});
-
-  useEffect(() => {
-    setForm(data ?? {});
-  }, [data]);
-
-  const set = (k: string, v: unknown) => setForm((p) => ({ ...p, [k]: v }));
-
   const benchmark = useMemo(
-    () => calculateBenchmark(form as Record<string, number | string | null>),
-    [form],
+    () => calculateBenchmark((data ?? {}) as Record<string, number | string | null>),
+    [data],
   );
 
-  const save = useMutation({
-    mutationFn: async () => {
-      const cleaned = sanitizeDisclosure(form);
-      const payload = {
-        ...cleaned,
-        client_id: clientId,
-        total_income_monthly: benchmark.totalIncome,
-        total_expenses_monthly: benchmark.totalExpenses,
-        reserve_total: benchmark.reserveTotal,
-        reserve_ratio: Number(benchmark.reserveRatio.toFixed(2)),
-        benchmark_status: benchmark.status,
-      };
-      // upsert: client_id ist UNIQUE
-      const { error } = await supabase
-        .from("client_self_disclosures")
-        .upsert(payload, { onConflict: "client_id" });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Selbstauskunft gespeichert");
-      qc.invalidateQueries({ queryKey: ["client_self_disclosure", clientId] });
-      qc.invalidateQueries({ queryKey: ["client_benchmark", clientId] });
-    },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Speichern fehlgeschlagen"),
-  });
+  const hasSaved = !!data && !!data.id;
 
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">Lädt…</div>;
   }
 
+  if (!hasSaved) {
+    return (
+      <>
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center gap-4 p-10 text-center">
+            <div className="rounded-full bg-primary/10 p-4">
+              <FileText className="h-7 w-7 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-display text-xl font-semibold">
+                Noch keine Selbstauskunft
+              </h3>
+              <p className="mt-1 max-w-md text-sm text-muted-foreground">
+                Erfasse die Selbstauskunft im Wizard – oder lade ein bestehendes
+                ASIMO-PDF hoch und lass die Felder automatisch erkennen.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => setWizardOpen(true)}>
+                <FilePlus className="mr-2 h-4 w-4" />
+                Wizard starten
+              </Button>
+              <Button variant="outline" onClick={() => setWizardOpen(true)}>
+                <Upload className="mr-2 h-4 w-4" />
+                PDF hochladen
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        <ClientSelfDisclosureWizard
+          clientId={clientId}
+          open={wizardOpen}
+          onOpenChange={setWizardOpen}
+          initial={data}
+        />
+      </>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Live-Benchmark immer sichtbar */}
-      <BenchmarkCard benchmark={benchmark} />
-
-      {/* Stammdaten */}
-      <Section title="Grunddaten">
-        <FieldGrid>
-          <Field label="Anrede">
-            <Select
-              value={(form.salutation as string) ?? ""}
-              onValueChange={(v) => set("salutation", v)}
-            >
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>
-                {salutationOptions.map((o) => (
-                  <SelectItem key={o} value={o}>{o}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Titel">
-            <Input
-              value={(form.title as string) ?? ""}
-              onChange={(e) => set("title", e.target.value)}
-              placeholder="Dr., Prof., …"
-            />
-          </Field>
-          <Field label="Familienstand">
-            <Select
-              value={(form.marital_status as string) ?? ""}
-              onValueChange={(v) => set("marital_status", v)}
-            >
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>
-                {maritalStatusOptions.map((o) => (
-                  <SelectItem key={o} value={o}>{o}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-
-          {STAMM_FIELDS.map((f) => (
-            <Field key={f.key} label={f.label}>
-              <Input
-                type={f.type ?? "text"}
-                value={(form[f.key] as string) ?? ""}
-                placeholder={f.placeholder}
-                onChange={(e) => set(f.key, e.target.value)}
-              />
-            </Field>
-          ))}
-        </FieldGrid>
-      </Section>
-
-      {/* Beruf */}
-      <Section title="Beruf">
-        <FieldGrid>
-          <Field label="Status">
-            <Select
-              value={(form.employment_status as string) ?? ""}
-              onValueChange={(v) => set("employment_status", v)}
-            >
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>
-                {employmentStatusOptions.map((o) => (
-                  <SelectItem key={o} value={o}>{o}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-          {JOB_TEXT_FIELDS.map((f) => (
-            <Field key={f.key} label={f.label}>
-              <Input
-                value={(form[f.key] as string) ?? ""}
-                onChange={(e) => set(f.key, e.target.value)}
-              />
-            </Field>
-          ))}
-          <Field label="Beschäftigt seit">
-            <Input
-              type="date"
-              value={(form.employed_since as string) ?? ""}
-              onChange={(e) => set("employed_since", e.target.value)}
-            />
-          </Field>
-          <Field label="Gehaltstyp">
-            <Select
-              value={(form.salary_type as string) ?? ""}
-              onValueChange={(v) => set("salary_type", v)}
-            >
-              <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Fixum">Fixum</SelectItem>
-                <SelectItem value="Provision">Provision</SelectItem>
-                <SelectItem value="Fixum + Provision">Fixum + Provision</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Jahresgehalt netto (Lohnausweis)">
-            <CurrencyInput
-              value={form.annual_net_salary as number | string | null}
-              onChange={(n) => set("annual_net_salary", n)}
-            />
-          </Field>
-        </FieldGrid>
-      </Section>
-
-      {/* Einnahmen */}
-      <Section
-        title="Einnahmen monatlich"
-        right={
-          <span className="text-sm text-muted-foreground">
-            Total: <strong className="text-foreground">{formatCHF(benchmark.totalIncome)}</strong>
-          </span>
-        }
-      >
-        <FieldGrid>
-          {incomeFields.map((f: IncomeField) => (
-            <Field key={f} label={incomeLabels[f]}>
-              <CurrencyInput
-                value={form[f] as number | string | null}
-                onChange={(n) => set(f, n)}
-              />
-            </Field>
-          ))}
-        </FieldGrid>
-      </Section>
-
-      {/* Ausgaben */}
-      <Section
-        title="Ausgaben monatlich"
-        right={
-          <span className="text-sm text-muted-foreground">
-            Total: <strong className="text-foreground">{formatCHF(benchmark.totalExpenses)}</strong>
-          </span>
-        }
-      >
-        <FieldGrid>
-          {expenseFields.map((f: ExpenseField) => (
-            <Field key={f} label={expenseLabels[f]}>
-              <CurrencyInput
-                value={form[f] as number | string | null}
-                onChange={(n) => set(f, n)}
-              />
-            </Field>
-          ))}
-        </FieldGrid>
-      </Section>
-
-      {/* Abschluss */}
-      <Section title="Abschluss">
-        <FieldGrid>
-          <Field label="Berater">
-            <Input
-              value={(form.advisor_id as string) ?? ""}
-              onChange={(e) => set("advisor_id", e.target.value)}
-              placeholder="Name oder ID"
-            />
-          </Field>
-          <Field label="Datum">
-            <Input
-              type="date"
-              value={(form.disclosure_date as string) ?? ""}
-              onChange={(e) => set("disclosure_date", e.target.value)}
-            />
-          </Field>
-          <Field label="Ort">
-            <Input
-              value={(form.disclosure_place as string) ?? ""}
-              onChange={(e) => set("disclosure_place", e.target.value)}
-            />
-          </Field>
-        </FieldGrid>
-        <div className="mt-4">
-          <Label className="mb-1 block text-xs text-muted-foreground">Interne Notizen</Label>
-          <Textarea
-            rows={3}
-            value={(form.internal_notes as string) ?? ""}
-            onChange={(e) => set("internal_notes", e.target.value)}
-          />
+    <>
+      <div className="space-y-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-display text-2xl font-semibold">Selbstauskunft</h2>
+            <p className="text-sm text-muted-foreground">
+              Übersicht der erfassten finanziellen Situation
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setWizardOpen(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              PDF hochladen
+            </Button>
+            <Button onClick={() => setWizardOpen(true)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Bearbeiten
+            </Button>
+          </div>
         </div>
-      </Section>
 
-      <div className="sticky bottom-4 z-10 flex justify-end">
-        <Button onClick={() => save.mutate()} disabled={save.isPending} size="lg" className="shadow-glow">
-          {save.isPending ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="mr-2 h-4 w-4" />
-          )}
-          Selbstauskunft speichern
-        </Button>
+        <BenchmarkCard benchmark={benchmark} />
+
+        <SummaryCard title="Personendaten">
+          <SummaryGrid>
+            <SummaryItem label="Name" value={
+              `${(data?.salutation as string) ?? ""} ${(data?.first_name as string) ?? ""} ${(data?.last_name as string) ?? ""}`.trim()
+            } />
+            <SummaryItem label="Geburtsdatum" value={data?.birth_date as string} />
+            <SummaryItem label="Staatsbürgerschaft" value={data?.nationality as string} />
+            <SummaryItem label="Familienstand" value={data?.marital_status as string} />
+            <SummaryItem
+              label="Adresse"
+              value={[
+                `${(data?.street as string) ?? ""} ${(data?.street_number as string) ?? ""}`.trim(),
+                `${(data?.postal_code as string) ?? ""} ${(data?.city as string) ?? ""}`.trim(),
+                data?.country as string,
+              ]
+                .filter(Boolean)
+                .join(", ")}
+            />
+            <SummaryItem label="E-Mail" value={data?.email as string} />
+            <SummaryItem label="Telefon" value={(data?.phone as string) || (data?.mobile as string)} />
+            <SummaryItem label="Steuer-ID CH" value={data?.tax_id_ch as string} />
+          </SummaryGrid>
+        </SummaryCard>
+
+        <SummaryCard title="Beruf">
+          <SummaryGrid>
+            <SummaryItem label="Status" value={data?.employment_status as string} />
+            <SummaryItem label="Arbeitgeber" value={data?.employer_name as string} />
+            <SummaryItem label="Position" value={data?.employed_as as string} />
+            <SummaryItem label="Beschäftigt seit" value={data?.employed_since as string} />
+            <SummaryItem
+              label="Jahresgehalt netto"
+              value={formatCHF(data?.annual_net_salary as number)}
+            />
+          </SummaryGrid>
+        </SummaryCard>
+
+        <SummaryCard
+          title="Einnahmen monatlich"
+          right={<TotalBadge value={benchmark.totalIncome} />}
+        >
+          <SummaryGrid>
+            {incomeFields.map((f) => (
+              <SummaryItem
+                key={f}
+                label={incomeLabels[f]}
+                value={formatCHF(data?.[f] as number)}
+              />
+            ))}
+          </SummaryGrid>
+        </SummaryCard>
+
+        <SummaryCard
+          title="Ausgaben monatlich"
+          right={<TotalBadge value={benchmark.totalExpenses} />}
+        >
+          <SummaryGrid>
+            {expenseFields.map((f) => (
+              <SummaryItem
+                key={f}
+                label={expenseLabels[f]}
+                value={formatCHF(data?.[f] as number)}
+              />
+            ))}
+          </SummaryGrid>
+        </SummaryCard>
+
+        {(data?.internal_notes || data?.advisor_id || data?.disclosure_date) && (
+          <SummaryCard title="Abschluss">
+            <SummaryGrid>
+              <SummaryItem label="Berater" value={data?.advisor_id as string} />
+              <SummaryItem label="Datum" value={data?.disclosure_date as string} />
+              <SummaryItem label="Ort" value={data?.disclosure_place as string} />
+            </SummaryGrid>
+            {data?.internal_notes ? (
+              <div className="mt-4">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Interne Notizen
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-sm">
+                  {data.internal_notes as string}
+                </p>
+              </div>
+            ) : null}
+          </SummaryCard>
+        )}
       </div>
-    </div>
+
+      <ClientSelfDisclosureWizard
+        clientId={clientId}
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        initial={data}
+      />
+    </>
   );
 }
 
-function Section({
+function SummaryCard({
   title,
   right,
   children,
@@ -434,41 +259,33 @@ function Section({
   );
 }
 
-function FieldGrid({ children }: { children: React.ReactNode }) {
+function SummaryGrid({ children }: { children: React.ReactNode }) {
   return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function SummaryItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | null | undefined;
+}) {
   return (
     <div>
-      <Label className="mb-1 block text-xs text-muted-foreground">{label}</Label>
-      {children}
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-0.5 text-sm font-medium">
+        {value && String(value).trim() !== "" ? value : "—"}
+      </div>
     </div>
   );
 }
 
-function CurrencyInput({
-  value,
-  onChange,
-}: {
-  value: number | string | null | undefined;
-  onChange: (n: number | null) => void;
-}) {
+function TotalBadge({ value }: { value: number }) {
   return (
-    <Input
-      type="number"
-      inputMode="decimal"
-      step="0.01"
-      placeholder="0"
-      value={value === null || value === undefined ? "" : String(value)}
-      onChange={(e) => {
-        const v = e.target.value;
-        if (v === "") onChange(null);
-        else {
-          const n = Number(v);
-          onChange(Number.isFinite(n) ? n : null);
-        }
-      }}
-    />
+    <span className="text-sm text-muted-foreground">
+      Total: <strong className="text-foreground">{formatCHF(value)}</strong>
+    </span>
   );
 }
