@@ -158,6 +158,10 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
             </div>
 
             <div className="ml-auto flex items-center gap-2">
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate({ to: "/feedback" })}>
+                <MessageSquarePlus className="h-4 w-4" />
+                <span className="hidden sm:inline">Feedback</span>
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 px-2">
