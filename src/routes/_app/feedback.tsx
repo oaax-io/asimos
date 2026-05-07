@@ -409,8 +409,8 @@ function FeedbackDetailDialog({ id, onClose }: { id: string | null; onClose: () 
               <div className="rounded-md border bg-muted/20 p-3 text-sm whitespace-pre-wrap">{item.description}</div>
             )}
 
-            {item.attachments?.length > 0 && (
-              <AttachmentGrid attachments={item.attachments as Attachment[]} />
+            {Array.isArray(item.attachments) && item.attachments.length > 0 && (
+              <AttachmentGrid attachments={item.attachments as unknown as Attachment[]} />
             )}
 
             <div className="space-y-3">
