@@ -59,6 +59,8 @@ const MODULE_OPTIONS: { key: WizardModule; label: string; description: string; i
 type PropertySource = "crm" | "manual" | "later";
 type ClientSource = "crm" | "manual";
 
+type CoApplicantRole = "ehepartner" | "mitantragsteller";
+
 export type WizardForm = {
   modules: WizardModule[];
 
@@ -75,6 +77,14 @@ export type WizardForm = {
   gross_income_yearly: string;
   own_funds_total: string;
   own_funds_pension_fund: string;
+
+  // Mitantragsteller (optional)
+  co_applicant_enabled: boolean;
+  co_applicant_role: CoApplicantRole | "";
+  co_applicant_client_id: string;
+  co_applicant_einkommen: string;
+  co_applicant_eigenkapital: string;
+  co_applicant_pk_anteil: string;
 
   // Reserved für spätere Schritte (4–6)
   renovation_costs: string;
@@ -97,6 +107,12 @@ const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
   gross_income_yearly: "",
   own_funds_total: "",
   own_funds_pension_fund: "",
+  co_applicant_enabled: false,
+  co_applicant_role: "",
+  co_applicant_client_id: "",
+  co_applicant_einkommen: "",
+  co_applicant_eigenkapital: "",
+  co_applicant_pk_anteil: "",
   renovation_costs: "",
   existing_mortgage: "",
   requested_mortgage: "",
