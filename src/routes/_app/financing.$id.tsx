@@ -531,6 +531,33 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
               <li key={idx} className={toneText(t.tone)}>• {t.text}</li>
             ))}
           </ul>
+          {(() => {
+            const coIncome = n(dossier.co_applicant_einkommen);
+            const coName = dossier.co_applicant?.full_name;
+            const coId = dossier.co_applicant_client_id;
+            const mainIncome = n(dossier.gross_income_yearly);
+            const mainName = dossier.clients?.full_name ?? "Hauptantragsteller";
+            if (coId && coName && coIncome > 0) {
+              return (
+                <div className="mt-3 rounded-md border border-blue-300/60 bg-blue-50 dark:bg-blue-950/30 p-3 text-xs text-blue-900 dark:text-blue-100">
+                  Berechnung mit kombiniertem Einkommen:{" "}
+                  <span className="font-medium">{mainName}</span> {chf(mainIncome)} +{" "}
+                  <span className="font-medium">{coName}</span> {chf(coIncome)} ={" "}
+                  <span className="font-semibold">{chf(i.income)}</span> / Jahr
+                </div>
+              );
+            }
+            if (coId && coName && coIncome <= 0) {
+              return (
+                <div className="mt-3 rounded-md border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs text-amber-900 dark:text-amber-100">
+                  Einkommen von <span className="font-medium">{coName}</span> nicht erfasst —
+                  Berechnung basiert nur auf Einkommen des Hauptantragstellers.{" "}
+                  <a href={`/clients/${coId}`} className="underline font-medium">→ Zum Kundenprofil</a>
+                </div>
+              );
+            }
+            return null;
+          })()}
         </CardContent>
       </Card>
     </>
