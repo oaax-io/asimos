@@ -427,7 +427,7 @@ export function FinancingQuickCheckWizard({
 
       const { data, error } = await supabase
         .from("financing_dossiers")
-        .insert(payload)
+        .insert(payload as never)
         .select("id")
         .single();
       if (error) throw error;
