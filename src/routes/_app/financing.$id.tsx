@@ -346,6 +346,8 @@ type Dossier = Record<string, unknown> & {
   einkommen_kombiniert?: number | string | null;
   eigenkapital_kombiniert?: number | string | null;
   pk_anteil_kombiniert?: number | string | null;
+  co_applicant?: { id: string; full_name: string } | null;
+  clients?: { id: string; full_name: string; email?: string | null; phone?: string | null } | null;
 };
 
 function n(v: unknown, fallback = 0): number {
