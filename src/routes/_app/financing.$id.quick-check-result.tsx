@@ -90,28 +90,31 @@ function QuickCheckResultPage() {
         }
       />
 
-      <Tabs defaultValue="vorpruefung">
-        <TabsList>
-          <TabsTrigger value="vorpruefung">Vorprüfung</TabsTrigger>
-          <TabsTrigger value="detail">Detailrechnung</TabsTrigger>
-          <TabsTrigger value="szenarien">Szenarien</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="vorpruefung" className="space-y-4">
-          <VorpruefungTab dossier={dossier} />
-        </TabsContent>
-        <TabsContent value="detail">
-          <Card><CardContent className="p-6 text-sm text-muted-foreground">
-            Detailrechnung folgt in einer späteren Phase.
-          </CardContent></Card>
-        </TabsContent>
-        <TabsContent value="szenarien">
-          <Card><CardContent className="p-6 text-sm text-muted-foreground">
-            Szenarien folgen in einer späteren Phase.
-          </CardContent></Card>
-        </TabsContent>
-      </Tabs>
+      <ResultTabs dossier={dossier} />
     </div>
+  );
+}
+
+function ResultTabs({ dossier }: { dossier: any }) {
+  const [tab, setTab] = useState("vorpruefung");
+  return (
+    <Tabs value={tab} onValueChange={setTab}>
+      <TabsList>
+        <TabsTrigger value="vorpruefung">Vorprüfung</TabsTrigger>
+        <TabsTrigger value="detail">Detailrechnung</TabsTrigger>
+        <TabsTrigger value="szenarien">Szenarien</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="vorpruefung" className="space-y-4">
+        <VorpruefungTab dossier={dossier} />
+      </TabsContent>
+      <TabsContent value="detail" className="space-y-4">
+        <DetailTab dossier={dossier} />
+      </TabsContent>
+      <TabsContent value="szenarien" className="space-y-4">
+        <ScenariosTab dossier={dossier} onSaved={() => setTab("vorpruefung")} />
+      </TabsContent>
+    </Tabs>
   );
 }
 
