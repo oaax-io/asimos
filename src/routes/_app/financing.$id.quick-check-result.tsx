@@ -1,16 +1,22 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, RotateCcw, Save } from "lucide-react";
+import { toast } from "sonner";
 import { FinancingQuickCheckActions } from "@/components/financing/FinancingQuickCheckActions";
 import {
-  FINANCING_TYPE_LABELS, QUICK_CHECK_LABELS,
+  FINANCING_TYPE_LABELS, QUICK_CHECK_LABELS, calcQuickCheck,
   type FinancingType, type QuickCheckStatus,
 } from "@/lib/financing";
 
