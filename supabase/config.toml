@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.team-update-member]
 verify_jwt = true
+
+[functions.parse-self-disclosure]
+verify_jwt = false
