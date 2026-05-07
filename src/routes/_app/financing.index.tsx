@@ -166,7 +166,15 @@ function FinancingPage() {
         />
       ) : (
         <div className="grid gap-3">
-          {filtered.map((d: any) => <DossierCard key={d.id} d={d} />)}
+          {filtered.map((d: any) => (
+            <DossierCard
+              key={d.id}
+              d={d}
+              canDelete={canDelete}
+              onDelete={() => deleteMutation.mutate(d.id)}
+              isDeleting={deleteMutation.isPending}
+            />
+          ))}
         </div>
       )}
 
