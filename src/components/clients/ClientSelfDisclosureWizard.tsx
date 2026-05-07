@@ -500,7 +500,7 @@ export function ClientSelfDisclosureWizard({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[92vh] overflow-hidden p-0">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] max-h-[92vh]">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] max-h-[92vh]">
           {/* Main */}
           <div className="flex flex-col overflow-hidden">
             <DialogHeader className="border-b p-6">
