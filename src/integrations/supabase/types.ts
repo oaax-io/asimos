@@ -1441,6 +1441,65 @@ export type Database = {
         }
         Relationships: []
       }
+      financing_dossiers_scenarios: {
+        Row: {
+          belehnung: number | null
+          bezeichnung: string
+          bruttoeinkommen: number | null
+          created_at: string
+          dossier_id: string
+          eigenmittel: number | null
+          eigenmittelquote: number | null
+          harte_eigenmittel: number | null
+          hypothek: number | null
+          id: string
+          kalk_zinssatz: number | null
+          kaufpreis: number | null
+          status: string | null
+          tragbarkeit: number | null
+        }
+        Insert: {
+          belehnung?: number | null
+          bezeichnung: string
+          bruttoeinkommen?: number | null
+          created_at?: string
+          dossier_id: string
+          eigenmittel?: number | null
+          eigenmittelquote?: number | null
+          harte_eigenmittel?: number | null
+          hypothek?: number | null
+          id?: string
+          kalk_zinssatz?: number | null
+          kaufpreis?: number | null
+          status?: string | null
+          tragbarkeit?: number | null
+        }
+        Update: {
+          belehnung?: number | null
+          bezeichnung?: string
+          bruttoeinkommen?: number | null
+          created_at?: string
+          dossier_id?: string
+          eigenmittel?: number | null
+          eigenmittelquote?: number | null
+          harte_eigenmittel?: number | null
+          hypothek?: number | null
+          id?: string
+          kalk_zinssatz?: number | null
+          kaufpreis?: number | null
+          status?: string | null
+          tragbarkeit?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financing_dossiers_scenarios_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "financing_dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financing_links: {
         Row: {
           agency_id: string | null
