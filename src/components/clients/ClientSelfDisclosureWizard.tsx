@@ -854,18 +854,32 @@ function ExpenseStep({
 function ClosingStep({
   form,
   set,
+  employees,
 }: {
   form: DisclosureRow;
   set: (k: string, v: unknown) => void;
+  employees: EmployeeOption[];
 }) {
   return (
     <div className="space-y-4">
       <Grid>
         <FieldBox label="Berater">
-          <Input
-            value={(form.advisor_id as string) ?? ""}
-            onChange={(e) => set("advisor_id", e.target.value)}
-          />
+          <Select
+            value={((form.advisor_id as string) ?? "") || "unassigned"}
+            onValueChange={(value) => set("advisor_id", value === "unassigned" ? null : value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Berater auswählen" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unassigned">Kein Berater</SelectItem>
+              {employees.map((employee) => (
+                <SelectItem key={employee.id} value={employee.id}>
+                  {employee.full_name || employee.email || "Ohne Name"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </FieldBox>
         <FieldBox label="Datum">
           <Input
