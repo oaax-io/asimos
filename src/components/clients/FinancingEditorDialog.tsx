@@ -84,10 +84,44 @@ export function FinancingEditorDialog({ open, onOpenChange, clientId, onSaved }:
 
   const benchmark = calculateBenchmark(disc as any);
 
+  const DATE_FIELDS = new Set([
+    "birth_date", "employed_since", "resident_since", "disclosure_date",
+  ]);
+  const NUMERIC_FIELDS = new Set([
+    "salary_net_monthly", "additional_income", "income_job_two", "income_rental",
+    "annual_net_salary", "total_income_monthly",
+    "mortgage_expense", "rent_expense", "leasing_expense", "credit_expense",
+    "life_insurance_expense", "alimony_expense", "health_insurance_expense",
+    "property_insurance_expense", "utilities_expense", "telecom_expense",
+    "living_costs_expense", "taxes_expense", "miscellaneous_expense",
+    "total_expenses_monthly", "reserve_total", "reserve_ratio",
+  ]);
+
+  const sanitizeDisc = (src: Row): Row => {
+    const out: Row = {};
+    for (const [k, v] of Object.entries(src)) {
+      if (v === "" || v === undefined) {
+        out[k] = null;
+      } else if (DATE_FIELDS.has(k)) {
+        out[k] = v;
+      } else if (NUMERIC_FIELDS.has(k)) {
+        if (v === null) out[k] = null;
+        else {
+          const n = Number(v);
+          out[k] = Number.isFinite(n) ? n : null;
+        }
+      } else {
+        out[k] = v;
+      }
+    }
+    return out;
+  };
+
   const save = useMutation({
     mutationFn: async () => {
+      const cleaned = sanitizeDisc(disc);
       const discPayload = {
-        ...disc,
+        ...cleaned,
         client_id: clientId,
         total_income_monthly: benchmark.totalIncome,
         total_expenses_monthly: benchmark.totalExpenses,
