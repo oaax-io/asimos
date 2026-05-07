@@ -482,26 +482,10 @@ export function ClientSelfDisclosureWizard({
 
   const save = useMutation({
     mutationFn: async () => {
-      const cleaned = sanitize(form);
-      const payload = {
-        ...cleaned,
-        client_id: clientId,
-        total_income_monthly: benchmark.totalIncome,
-        total_expenses_monthly: benchmark.totalExpenses,
-        reserve_total: benchmark.reserveTotal,
-        reserve_ratio: Number(benchmark.reserveRatio.toFixed(2)),
-        benchmark_status: benchmark.status,
-      };
-      const { error } = await supabase
-        .from("client_self_disclosures")
-        .upsert(payload, { onConflict: "client_id" });
-      if (error) throw error;
+      await persistDisclosure({ manual: true, closeOnSuccess: true });
     },
     onSuccess: () => {
-      toast.success("Selbstauskunft gespeichert");
-      qc.invalidateQueries({ queryKey: ["client_self_disclosure", clientId] });
-      qc.invalidateQueries({ queryKey: ["client_benchmark", clientId] });
-      onOpenChange(false);
+      // handled in persistDisclosure
     },
     onError: (e: unknown) =>
       toast.error(e instanceof Error ? e.message : "Speichern fehlgeschlagen"),
@@ -576,10 +560,17 @@ export function ClientSelfDisclosureWizard({
               {step === 2 && <JobStep form={form} set={set} />}
               {step === 3 && <IncomeStep form={form} set={set} />}
               {step === 4 && <ExpenseStep form={form} set={set} />}
-              {step === 5 && <ClosingStep form={form} set={set} />}
+              {step === 5 && <ClosingStep form={form} set={set} employees={employees} />}
             </div>
 
             <div className="flex items-center justify-between border-t p-4 bg-muted/30">
+              <div className="text-xs text-muted-foreground">
+                {autosaveState === "saving" && "Speichert automatisch…"}
+                {autosaveState === "saved" && lastSavedAt && `Automatisch gespeichert · ${new Date(lastSavedAt).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}`}
+                {autosaveState === "offline" && "Offline – Änderungen werden lokal gesichert und später synchronisiert."}
+                {autosaveState === "error" && "Automatisches Speichern pausiert – bitte manuell speichern."}
+                {autosaveState === "idle" && pendingSync && "Änderungen stehen zur Synchronisierung bereit."}
+              </div>
               <Button
                 variant="ghost"
                 onClick={() => setStep((s) => Math.max(1, s - 1))}
@@ -594,7 +585,7 @@ export function ClientSelfDisclosureWizard({
                   <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
               ) : (
-                <Button onClick={() => save.mutate()} disabled={save.isPending}>
+                <Button onClick={() => save.mutate()} disabled={save.isPending || parsing}>
                   {save.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
