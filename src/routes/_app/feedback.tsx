@@ -366,7 +366,7 @@ function FeedbackDetailDialog({ id, onClose }: { id: string | null; onClose: () 
   if (!id) return null;
   const sm = item ? statusMeta(item.status) : null;
   const tm = item ? typeMeta(item.type) : null;
-  const author = item ? profileById.get(item.created_by) : null;
+  const author = item?.created_by ? profileById.get(item.created_by) : null;
   const Icon = tm?.icon ?? MessageSquarePlus;
 
   return (
