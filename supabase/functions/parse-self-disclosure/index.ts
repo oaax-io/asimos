@@ -70,6 +70,15 @@ const FIELD_SCHEMA = {
     disclosure_place: { type: "string" },
     advisor_id: { type: "string" },
   },
+  required: [
+    "first_name",
+    "last_name",
+    "city",
+    "employer_name",
+    "salary_net_monthly",
+    "rent_expense",
+    "disclosure_date",
+  ],
   additionalProperties: false,
 };
 
