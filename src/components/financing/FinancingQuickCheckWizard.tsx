@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -10,6 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
@@ -17,13 +25,23 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "sonner";
 import {
   Home, Hammer, ArrowUpCircle, Repeat2, TrendingUp,
-  CheckCircle2, ArrowLeft, ArrowRight, ChevronsUpDown, Check,
+  CheckCircle2, ArrowLeft, ArrowRight, ChevronsUpDown, Check, ChevronDown, Settings2,
 } from "lucide-react";
 import {
-  FINANCING_TYPE_LABELS, type FinancingType,
+  FINANCING_TYPE_LABELS, calcQuickCheck, type FinancingType,
 } from "@/lib/financing";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
+const num = (v: string) => {
+  const n = parseFloat(String(v ?? "").replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+};
+const numOrNull = (v: string) => {
+  if (v == null || v === "") return null;
+  const n = parseFloat(String(v).replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+};
 
 // Nur die fünf neuen, gewünschten Module (kein new_build)
 type WizardModule = "purchase" | "renovation" | "increase" | "refinance" | "mortgage_increase";
