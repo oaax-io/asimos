@@ -169,9 +169,21 @@ export function buildReportHtml(input: ReportInput, recs: Recommendation[]): str
   const statusLabel = QUICK_CHECK_LABELS[status];
   const color = statusColor(status);
   const reasons = input.quick_check_reasons ?? [];
+  const total = num(input.total_investment);
+  const mort = num(input.effective_mortgage);
   const equity = num(input.own_funds_total);
   const pension = num(input.own_funds_pension_fund) + num(input.own_funds_vested_benefits);
   const hard = Math.max(0, equity - pension);
+  const ltv = num(input.loan_to_value_ratio);
+  const afford = num(input.affordability_ratio);
+  const equityRatio = total > 0 ? (equity / total) * 100 : 0;
+  const hardRatio = total > 0 ? (hard / total) * 100 : 0;
+  const pensionShare = equity > 0 ? (pension / equity) * 100 : 0;
+
+  const summaryNarrative = buildSummaryNarrative(status, input.financing_type, total, mort, equity, ltv, afford);
+  const ltvAssessment = assessLtv(ltv);
+  const equityAssessment = assessEquity(equityRatio, hardRatio);
+  const affordAssessment = assessAffordability(afford);
 
   const reasonLi = reasons.map((r) => {
     const c = r.tone === "ok" ? "#059669" : r.tone === "warn" ? "#d97706" : r.tone === "bad" ? "#dc2626" : "#374151";
