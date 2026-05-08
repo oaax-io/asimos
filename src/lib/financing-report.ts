@@ -14,6 +14,17 @@ export type Recommendation = {
   items: string[];
 };
 
+export type ReportBrand = {
+  company_name?: string | null;
+  company_address?: string | null;
+  company_email?: string | null;
+  company_website?: string | null;
+  logo_url?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  font_family?: string | null;
+};
+
 export type ReportInput = {
   client_name?: string | null;
   client_email?: string | null;
@@ -31,6 +42,9 @@ export type ReportInput = {
 
   quick_check_status?: QuickCheckStatus | null;
   quick_check_reasons?: { key: string; label: string; tone: string }[] | null;
+
+  brand?: ReportBrand | null;
+  agent_name?: string | null;
 };
 
 export function buildRecommendations(input: ReportInput): Recommendation[] {
