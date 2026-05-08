@@ -190,6 +190,11 @@ export function FinancingQuickCheckActions({
     : [];
 
   const hasReport = !!reportQuery.data?.id;
+  // Always-fresh HTML for the PDF download (uses current brand + dossier data,
+  // even if the saved report was generated before the brandkit was updated).
+  const liveInput = buildInput();
+  const liveHtml = buildReportHtml(liveInput, buildRecommendations(liveInput));
+  const reportTitle = `Finanzierungs Quick-Check – ${dossier.clients?.full_name ?? ""}`.trim();
 
   return (
     <>
@@ -201,6 +206,15 @@ export function FinancingQuickCheckActions({
         <Button variant="outline" onClick={() => openPreview()} disabled={!hasReport}>
           <Eye className="mr-1 h-4 w-4" />Bericht ansehen
         </Button>
+        <GeneratePdfButton
+          html={liveHtml}
+          title={reportTitle}
+          documentType="financing_quick_check"
+          clientName={dossier.clients?.full_name ?? null}
+          companyName={brandQuery.data?.company_name ?? null}
+          variant="outline"
+          size="default"
+        />
         <Button variant="outline" onClick={onSend}>
           <Send className="mr-1 h-4 w-4" />An Kunde senden
         </Button>
