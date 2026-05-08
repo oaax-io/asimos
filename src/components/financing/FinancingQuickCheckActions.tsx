@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { FileText, Eye, Send, ArrowRight, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { SendDocumentDialog } from "@/components/documents/SendDocumentDialog";
+import { GeneratePdfButton } from "@/components/documents/GeneratePdfButton";
 import {
-  buildRecommendations, buildReportHtml, type ReportInput,
+  buildRecommendations, buildReportHtml, type ReportInput, type ReportBrand,
 } from "@/lib/financing-report";
 import type { FinancingType, QuickCheckStatus } from "@/lib/financing";
 
