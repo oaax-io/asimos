@@ -138,6 +138,12 @@ export function FinancingQuickCheckActions({
         .select("id")
         .single();
       if (error) throw error;
+      await logActivity({
+        relatedType: "financing_dossier",
+        relatedId: dossierId,
+        action: `Quick-Check-Bericht generiert (Status: ${dossier.quick_check_status ?? "—"})`,
+        metadata: { generated_document_id: data.id },
+      });
       return data.id as string;
     },
     onSuccess: (id) => {
@@ -145,6 +151,7 @@ export function FinancingQuickCheckActions({
       qc.invalidateQueries({ queryKey: ["financing_quick_check_report", dossierId] });
       qc.invalidateQueries({ queryKey: ["financing_documents"] });
       qc.invalidateQueries({ queryKey: ["generated-documents"] });
+      qc.invalidateQueries({ queryKey: ["activity_logs", "financing_dossier", dossierId] });
       openPreview(id);
     },
     onError: (e: any) => toast.error(e.message ?? "Fehler beim Generieren"),
