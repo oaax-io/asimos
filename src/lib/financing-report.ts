@@ -409,3 +409,12 @@ function escapeHtml(s: any): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
+
+function hexAlpha(hex: string, alpha: number): string {
+  const m = /^#?([a-f\d]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const r = parseInt(m[1].slice(0, 2), 16);
+  const g = parseInt(m[1].slice(2, 4), 16);
+  const b = parseInt(m[1].slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
