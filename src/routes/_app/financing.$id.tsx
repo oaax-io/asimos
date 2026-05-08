@@ -33,6 +33,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { ActivityTab, logActivity } from "@/components/ActivityTab";
 
 export const Route = createFileRoute("/_app/financing/$id")({ component: FinancingDetailPage });
 
