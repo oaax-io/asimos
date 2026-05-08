@@ -6,6 +6,7 @@ import { FileText, Eye, Send, ArrowRight, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { SendDocumentDialog } from "@/components/documents/SendDocumentDialog";
 import { GeneratePdfButton } from "@/components/documents/GeneratePdfButton";
+import { logActivity } from "@/components/ActivityTab";
 import {
   buildRecommendations, buildReportHtml, type ReportInput, type ReportBrand,
 } from "@/lib/financing-report";
