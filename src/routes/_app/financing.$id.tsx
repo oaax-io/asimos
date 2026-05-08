@@ -76,12 +76,18 @@ function FinancingDetailPage() {
         .update({ quick_check_status: "incomplete" })
         .eq("id", id);
       if (error) throw error;
+      await logActivity({
+        relatedType: "financing_dossier",
+        relatedId: id,
+        action: "Quick Check zurückgesetzt",
+      });
     },
     onSuccess: () => {
       toast.success("Quick Check zurückgesetzt");
       setResetOpen(false);
       queryClient.invalidateQueries({ queryKey: ["financing_dossier", id] });
       queryClient.invalidateQueries({ queryKey: ["financing_dossiers"] });
+      queryClient.invalidateQueries({ queryKey: ["activity_logs", "financing_dossier", id] });
     },
     onError: (e: any) => toast.error(e.message ?? "Zurücksetzen fehlgeschlagen"),
   });
