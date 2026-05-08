@@ -246,7 +246,7 @@ function FinancingDetailPage() {
           <BankSubmissionTab dossierId={dossier.id} />
         </TabsContent>
         <TabsContent value="activity">
-          <p className="text-sm text-muted-foreground">Aktivitätenverlauf folgt in einer späteren Phase.</p>
+          <ActivityTab relatedType="financing_dossier" relatedId={id} />
         </TabsContent>
       </Tabs>
 
