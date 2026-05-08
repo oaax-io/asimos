@@ -14,6 +14,17 @@ export type Recommendation = {
   items: string[];
 };
 
+export type ReportBrand = {
+  company_name?: string | null;
+  company_address?: string | null;
+  company_email?: string | null;
+  company_website?: string | null;
+  logo_url?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  font_family?: string | null;
+};
+
 export type ReportInput = {
   client_name?: string | null;
   client_email?: string | null;
@@ -31,6 +42,9 @@ export type ReportInput = {
 
   quick_check_status?: QuickCheckStatus | null;
   quick_check_reasons?: { key: string; label: string; tone: string }[] | null;
+
+  brand?: ReportBrand | null;
+  agent_name?: string | null;
 };
 
 export function buildRecommendations(input: ReportInput): Recommendation[] {
@@ -165,43 +179,71 @@ export function buildReportHtml(input: ReportInput, recs: Recommendation[]): str
   }).join("");
 
   const recsHtml = recs.map((r) => `
-    <div style="margin-top:16px;">
-      <h3 style="font-size:14px; margin:0 0 6px; color:#111827;">${escapeHtml(r.title)}</h3>
-      <ul style="margin:0; padding-left:18px; color:#374151; font-size:13px;">
-        ${r.items.map((i) => `<li style="margin:3px 0;">${escapeHtml(i)}</li>`).join("")}
+    <div class="rec">
+      <h3>${escapeHtml(r.title)}</h3>
+      <ul>
+        ${r.items.map((i) => `<li>${escapeHtml(i)}</li>`).join("")}
       </ul>
     </div>
   `).join("");
 
   const today = new Date().toLocaleDateString("de-CH");
+  const brand = input.brand ?? {};
+  const primary = (brand.primary_color || "#324642").trim();
+  const secondary = (brand.secondary_color || "#8a9a96").trim();
+  const fontFamily = (brand.font_family || `-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`).trim();
+  const companyName = (brand.company_name || "ASIMO").trim();
+  const companyAddress = brand.company_address ?? "";
+  const companyEmail = brand.company_email ?? "";
+  const companyWebsite = brand.company_website ?? "";
+  const logoUrl = brand.logo_url ?? "";
+  const footerLine = [companyName, companyAddress, [companyEmail, companyWebsite].filter(Boolean).join(" · ")]
+    .filter(Boolean).join(" · ");
 
   return `<!doctype html>
 <html lang="de-CH"><head><meta charset="utf-8"/>
-<title>ASIMO Finanzierungs Quick-Check</title>
+<title>${escapeHtml(companyName)} – Finanzierungs Quick-Check</title>
 <style>
-  @page { size: A4; margin: 18mm; }
-  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color:#111827; font-size:13px; line-height:1.5; }
-  h1 { font-size:22px; margin:0 0 4px; }
-  h2 { font-size:15px; margin:24px 0 8px; border-bottom:1px solid #e5e7eb; padding-bottom:4px; }
+  @page { size: A4; margin: 18mm 16mm 22mm; }
+  * { box-sizing: border-box; }
+  body { font-family: ${fontFamily}; color:#111827; font-size:12.5px; line-height:1.55; margin:0; }
+  h1 { font-size:24px; margin:0 0 4px; color:${primary}; letter-spacing:-0.01em; }
+  h2 { font-size:13px; margin:22px 0 10px; color:${primary}; text-transform:uppercase; letter-spacing:0.06em; font-weight:600; padding-bottom:6px; border-bottom:1px solid ${hexAlpha(primary, 0.15)}; }
+  h3 { font-size:13px; margin:0 0 6px; color:${primary}; }
   table.kv { width:100%; border-collapse:collapse; }
-  table.kv td { padding:6px 8px; border-bottom:1px solid #f3f4f6; vertical-align:top; }
-  table.kv td.l { color:#6b7280; width:42%; }
-  .status { display:inline-block; padding:4px 10px; border-radius:999px; color:#fff; font-weight:600; font-size:12px; background:${color}; }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .box { border:1px solid #e5e7eb; border-radius:8px; padding:12px; }
+  table.kv td { padding:7px 0; border-bottom:1px solid #f1f3f5; vertical-align:top; }
+  table.kv td.l { color:#6b7280; width:38%; }
+  .status { display:inline-block; padding:6px 14px; border-radius:999px; color:#fff; font-weight:600; font-size:12px; background:${color}; letter-spacing:0.02em; }
+  .grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .box { border:1px solid ${hexAlpha(primary, 0.18)}; border-radius:10px; padding:12px 14px; background:${hexAlpha(primary, 0.04)}; }
+  .box .label { color:#6b7280; font-size:10px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px; }
+  .box .value { font-size:16px; font-weight:600; color:#111827; }
   .muted { color:#6b7280; font-size:11px; }
-  .disclaimer { margin-top:28px; padding:10px 12px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; font-size:11px; color:#6b7280; }
-  .header { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid #111827; padding-bottom:8px; }
-  .brand { font-weight:700; letter-spacing:0.5px; }
+  .disclaimer { margin-top:28px; padding:12px 14px; background:${hexAlpha(secondary, 0.08)}; border-left:3px solid ${secondary}; border-radius:6px; font-size:10.5px; color:#4b5563; line-height:1.5; }
+  .header { display:flex; justify-content:space-between; align-items:center; padding-bottom:14px; margin-bottom:18px; border-bottom:2px solid ${primary}; }
+  .header-left { display:flex; align-items:center; gap:14px; }
+  .logo { max-height:46px; max-width:160px; object-fit:contain; }
+  .brand-text { font-weight:700; font-size:18px; color:${primary}; letter-spacing:0.04em; }
+  .meta { text-align:right; font-size:10.5px; color:#6b7280; line-height:1.5; }
+  .recs { display:grid; gap:10px; }
+  .rec { border:1px solid #e5e7eb; border-radius:8px; padding:12px 14px; background:#fff; }
+  .rec ul { margin:6px 0 0; padding-left:18px; color:#374151; font-size:12px; }
+  .rec li { margin:3px 0; }
+  .footer { position:fixed; bottom:8mm; left:16mm; right:16mm; text-align:center; font-size:9.5px; color:#9ca3af; border-top:1px solid #e5e7eb; padding-top:6px; }
   @media print { .no-print { display:none; } }
 </style></head>
 <body>
   <div class="header">
-    <div>
-      <div class="brand">ASIMO</div>
-      <h1>Finanzierungs Quick-Check</h1>
+    <div class="header-left">
+      ${logoUrl ? `<img class="logo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(companyName)}"/>` : `<div class="brand-text">${escapeHtml(companyName)}</div>`}
+      <div>
+        <h1>Finanzierungs Quick-Check</h1>
+        <div class="muted">Unverbindliche Vorprüfung</div>
+      </div>
     </div>
-    <div class="muted">Erstellt am ${today}</div>
+    <div class="meta">
+      Erstellt am ${today}${input.agent_name ? `<br/>von ${escapeHtml(input.agent_name)}` : ""}
+    </div>
   </div>
 
   <h2>Übersicht</h2>
@@ -214,27 +256,40 @@ export function buildReportHtml(input: ReportInput, recs: Recommendation[]): str
 
   <h2>Finanzierungskennzahlen</h2>
   <div class="grid">
-    <div class="box"><div class="muted">Gesamtinvestition</div><div style="font-size:16px; font-weight:600;">${fmt(input.total_investment)}</div></div>
-    <div class="box"><div class="muted">Gewünschte Hypothek</div><div style="font-size:16px; font-weight:600;">${fmt(input.effective_mortgage)}</div></div>
-    <div class="box"><div class="muted">Eigenmittel</div><div style="font-size:16px; font-weight:600;">${fmt(input.own_funds_total)}</div></div>
-    <div class="box"><div class="muted">Harte Eigenmittel</div><div style="font-size:16px; font-weight:600;">${fmt(hard)}</div></div>
-    <div class="box"><div class="muted">Belehnung</div><div style="font-size:16px; font-weight:600;">${pct(input.loan_to_value_ratio)}</div></div>
-    <div class="box"><div class="muted">Tragbarkeit</div><div style="font-size:16px; font-weight:600;">${pct(input.affordability_ratio)}</div></div>
+    <div class="box"><div class="label">Gesamtinvestition</div><div class="value">${fmt(input.total_investment)}</div></div>
+    <div class="box"><div class="label">Gewünschte Hypothek</div><div class="value">${fmt(input.effective_mortgage)}</div></div>
+    <div class="box"><div class="label">Eigenmittel</div><div class="value">${fmt(input.own_funds_total)}</div></div>
+    <div class="box"><div class="label">Harte Eigenmittel</div><div class="value">${fmt(hard)}</div></div>
+    <div class="box"><div class="label">Belehnung (LTV)</div><div class="value">${pct(input.loan_to_value_ratio)}</div></div>
+    <div class="box"><div class="label">Tragbarkeit</div><div class="value">${pct(input.affordability_ratio)}</div></div>
   </div>
 
   <h2>Ergebnis</h2>
-  <p><span class="status">${escapeHtml(statusLabel)}</span></p>
-  ${reasons.length ? `<ul style="margin:8px 0 0; padding-left:18px;">${reasonLi}</ul>` : ""}
+  <p style="margin:6px 0 0;"><span class="status">${escapeHtml(statusLabel)}</span></p>
+  ${reasons.length ? `<ul style="margin:12px 0 0; padding-left:18px;">${reasonLi}</ul>` : ""}
 
   <h2>Empfehlungen</h2>
-  ${recsHtml || '<p class="muted">Keine spezifischen Empfehlungen.</p>'}
+  <div class="recs">
+    ${recsHtml || '<p class="muted">Keine spezifischen Empfehlungen.</p>'}
+  </div>
 
   <div class="disclaimer">
-    Disclaimer: Dies ist eine unverbindliche Vorprüfung und keine definitive Finanzierungszusage.
+    <strong>Disclaimer:</strong> Dies ist eine unverbindliche Vorprüfung und keine definitive Finanzierungszusage.
     Eine verbindliche Finanzierungsbestätigung erfolgt ausschliesslich durch den finanzierenden Bankpartner
     nach vollständiger Prüfung aller Unterlagen.
   </div>
+
+  <div class="footer">${escapeHtml(footerLine)}</div>
 </body></html>`;
+}
+
+function hexAlpha(hex: string, alpha: number): string {
+  const m = /^#?([a-f\d]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const r = parseInt(m[1].slice(0, 2), 16);
+  const g = parseInt(m[1].slice(2, 4), 16);
+  const b = parseInt(m[1].slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function escapeHtml(s: any): string {

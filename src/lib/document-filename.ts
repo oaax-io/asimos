@@ -9,6 +9,7 @@ export type DocumentTypeKey =
   | "reservation_receipt"
   | "nda"
   | "financing_check"
+  | "financing_quick_check"
   | "expose"
   | "contract"
   | "other"
@@ -21,6 +22,7 @@ const DOCUMENT_LABELS: Record<string, string> = {
   reservation_receipt: "Reservation",
   nda: "NDA",
   financing_check: "FinanzierungsCheck",
+  financing_quick_check: "FinanzierungsQuickCheck",
   expose: "Expose",
   contract: "Vertrag",
   other: "Dokument",

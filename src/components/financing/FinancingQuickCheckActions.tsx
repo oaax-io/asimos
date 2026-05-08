@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { FileText, Eye, Send, ArrowRight, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { SendDocumentDialog } from "@/components/documents/SendDocumentDialog";
+import { GeneratePdfButton } from "@/components/documents/GeneratePdfButton";
 import {
-  buildRecommendations, buildReportHtml, type ReportInput,
+  buildRecommendations, buildReportHtml, type ReportInput, type ReportBrand,
 } from "@/lib/financing-report";
 import type { FinancingType, QuickCheckStatus } from "@/lib/financing";
 
@@ -24,6 +25,32 @@ export function FinancingQuickCheckActions({
   const qc = useQueryClient();
   const [sendOpen, setSendOpen] = useState(false);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
+
+  // Brand-Settings (für Logo, Farben, Firmenangaben im PDF)
+  const brandQuery = useQuery({
+    queryKey: ["brand-settings"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("brand_settings" as any)
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return (data as any) ?? null;
+    },
+  });
+
+  // Aktueller Berater-Name (Profilname) für die Kopfzeile
+  const agentQuery = useQuery({
+    queryKey: ["current-agent-name"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u?.user?.id) return null;
+      const { data: prof } = await supabase
+        .from("profiles").select("full_name, email").eq("id", u.user.id).maybeSingle();
+      return prof?.full_name ?? prof?.email ?? null;
+    },
+  });
 
   // Existierenden Bericht laden
   const reportQuery = useQuery({
@@ -47,6 +74,17 @@ export function FinancingQuickCheckActions({
     const propLabel = dossier.properties?.title
       || (dossier.property_snapshot && (dossier.property_snapshot as any).title)
       || null;
+    const b = brandQuery.data;
+    const brand: ReportBrand | null = b ? {
+      company_name: b.company_name,
+      company_address: b.company_address,
+      company_email: b.company_email,
+      company_website: b.company_website,
+      logo_url: b.logo_url,
+      primary_color: b.primary_color,
+      secondary_color: b.secondary_color,
+      font_family: b.font_family,
+    } : null;
     return {
       client_name: dossier.clients?.full_name ?? null,
       client_email: dossier.clients?.email ?? null,
@@ -62,6 +100,8 @@ export function FinancingQuickCheckActions({
       affordability_ratio: dossier.affordability_ratio,
       quick_check_status: dossier.quick_check_status as QuickCheckStatus,
       quick_check_reasons: dossier.quick_check_reasons as any,
+      brand,
+      agent_name: agentQuery.data ?? null,
     };
   };
 
@@ -150,6 +190,11 @@ export function FinancingQuickCheckActions({
     : [];
 
   const hasReport = !!reportQuery.data?.id;
+  // Always-fresh HTML for the PDF download (uses current brand + dossier data,
+  // even if the saved report was generated before the brandkit was updated).
+  const liveInput = buildInput();
+  const liveHtml = buildReportHtml(liveInput, buildRecommendations(liveInput));
+  const reportTitle = `Finanzierungs Quick-Check – ${dossier.clients?.full_name ?? ""}`.trim();
 
   return (
     <>
@@ -161,6 +206,15 @@ export function FinancingQuickCheckActions({
         <Button variant="outline" onClick={() => openPreview()} disabled={!hasReport}>
           <Eye className="mr-1 h-4 w-4" />Bericht ansehen
         </Button>
+        <GeneratePdfButton
+          html={liveHtml}
+          title={reportTitle}
+          documentType="financing_quick_check"
+          clientName={dossier.clients?.full_name ?? null}
+          companyName={brandQuery.data?.company_name ?? null}
+          variant="outline"
+          size="default"
+        />
         <Button variant="outline" onClick={onSend}>
           <Send className="mr-1 h-4 w-4" />An Kunde senden
         </Button>
