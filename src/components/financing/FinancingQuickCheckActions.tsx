@@ -26,6 +26,32 @@ export function FinancingQuickCheckActions({
   const [sendOpen, setSendOpen] = useState(false);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
 
+  // Brand-Settings (für Logo, Farben, Firmenangaben im PDF)
+  const brandQuery = useQuery({
+    queryKey: ["brand-settings"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("brand_settings" as any)
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return (data as any) ?? null;
+    },
+  });
+
+  // Aktueller Berater-Name (Profilname) für die Kopfzeile
+  const agentQuery = useQuery({
+    queryKey: ["current-agent-name"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u?.user?.id) return null;
+      const { data: prof } = await supabase
+        .from("profiles").select("full_name, email").eq("id", u.user.id).maybeSingle();
+      return prof?.full_name ?? prof?.email ?? null;
+    },
+  });
+
   // Existierenden Bericht laden
   const reportQuery = useQuery({
     queryKey: ["financing_quick_check_report", dossierId],
@@ -48,6 +74,17 @@ export function FinancingQuickCheckActions({
     const propLabel = dossier.properties?.title
       || (dossier.property_snapshot && (dossier.property_snapshot as any).title)
       || null;
+    const b = brandQuery.data;
+    const brand: ReportBrand | null = b ? {
+      company_name: b.company_name,
+      company_address: b.company_address,
+      company_email: b.company_email,
+      company_website: b.company_website,
+      logo_url: b.logo_url,
+      primary_color: b.primary_color,
+      secondary_color: b.secondary_color,
+      font_family: b.font_family,
+    } : null;
     return {
       client_name: dossier.clients?.full_name ?? null,
       client_email: dossier.clients?.email ?? null,
@@ -63,6 +100,8 @@ export function FinancingQuickCheckActions({
       affordability_ratio: dossier.affordability_ratio,
       quick_check_status: dossier.quick_check_status as QuickCheckStatus,
       quick_check_reasons: dossier.quick_check_reasons as any,
+      brand,
+      agent_name: agentQuery.data ?? null,
     };
   };
 
