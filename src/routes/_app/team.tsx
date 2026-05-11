@@ -35,7 +35,10 @@ function TeamPage() {
     email: "",
     phone: "",
     role: "agent" as (typeof ROLES)[number],
+    mode: "direct" as "direct" | "invite",
+    password: "",
   });
+  const [createdPassword, setCreatedPassword] = useState<string | null>(null);
 
   const meQuery = useQuery({
     queryKey: ["me-team"],
