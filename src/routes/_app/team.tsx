@@ -220,6 +220,35 @@ function TeamPage() {
           onSaved={() => qc.invalidateQueries({ queryKey: ["team"] })}
         />
       )}
+
+      <Dialog open={!!createdPassword} onOpenChange={(o) => { if (!o) { setCreatedPassword(null); setOpen(false); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Mitarbeiter angelegt</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Generiertes Passwort — bitte jetzt notieren oder kopieren. Es wird nicht erneut angezeigt.
+            </p>
+            <div className="flex items-center gap-2">
+              <Input readOnly value={createdPassword ?? ""} className="font-mono" />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  if (createdPassword) {
+                    navigator.clipboard.writeText(createdPassword);
+                    toast.success("Passwort kopiert");
+                  }
+                }}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => { setCreatedPassword(null); setOpen(false); }}>Fertig</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
