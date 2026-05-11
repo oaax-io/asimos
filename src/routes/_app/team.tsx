@@ -35,7 +35,10 @@ function TeamPage() {
     email: "",
     phone: "",
     role: "agent" as (typeof ROLES)[number],
+    mode: "direct" as "direct" | "invite",
+    password: "",
   });
+  const [createdPassword, setCreatedPassword] = useState<string | null>(null);
 
   const meQuery = useQuery({
     queryKey: ["me-team"],
@@ -74,17 +77,25 @@ function TeamPage() {
           email: form.email.trim(),
           phone: form.phone.trim(),
           role: form.role,
+          mode: form.mode,
+          password: form.mode === "direct" ? form.password : "",
           redirect_to: redirectTo,
         },
       });
       if (error) throw error;
       if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-      return data;
+      return data as { mode: string; password: string | null };
     },
-    onSuccess: () => {
-      toast.success("Einladung per E-Mail gesendet");
-      setForm({ full_name: "", email: "", phone: "", role: "agent" });
-      setOpen(false);
+    onSuccess: (data) => {
+      if (data.mode === "direct") {
+        toast.success("Mitarbeiter angelegt");
+        if (data.password) setCreatedPassword(data.password);
+        else setOpen(false);
+      } else {
+        toast.success("Einladung per E-Mail gesendet");
+        setOpen(false);
+      }
+      setForm({ full_name: "", email: "", phone: "", role: "agent", mode: "direct", password: "" });
       qc.invalidateQueries({ queryKey: ["team"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -122,9 +133,34 @@ function TeamPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Der Mitarbeiter erhält eine Einladungs-E-Mail mit einem Link, über den er sein Passwort selbst festlegt.
-                  </p>
+                  <div>
+                    <Label>Anlage-Modus</Label>
+                    <Select value={form.mode} onValueChange={(v) => setForm({ ...form, mode: v as "direct" | "invite" })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="direct">Direkt anlegen (Passwort vergeben)</SelectItem>
+                        <SelectItem value="invite">Einladung per E-Mail</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {form.mode === "direct" ? (
+                    <div>
+                      <Label>Passwort (optional)</Label>
+                      <Input
+                        type="text"
+                        placeholder="Leer lassen für automatisch generiert"
+                        value={form.password}
+                        onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Mind. 8 Zeichen. Bei leerem Feld wird ein sicheres Passwort generiert und einmalig angezeigt.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Der Mitarbeiter erhält eine Einladungs-E-Mail mit einem Link, über den er sein Passwort selbst festlegt.
+                    </p>
+                  )}
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
@@ -184,6 +220,35 @@ function TeamPage() {
           onSaved={() => qc.invalidateQueries({ queryKey: ["team"] })}
         />
       )}
+
+      <Dialog open={!!createdPassword} onOpenChange={(o) => { if (!o) { setCreatedPassword(null); setOpen(false); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Mitarbeiter angelegt</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Generiertes Passwort — bitte jetzt notieren oder kopieren. Es wird nicht erneut angezeigt.
+            </p>
+            <div className="flex items-center gap-2">
+              <Input readOnly value={createdPassword ?? ""} className="font-mono" />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  if (createdPassword) {
+                    navigator.clipboard.writeText(createdPassword);
+                    toast.success("Passwort kopiert");
+                  }
+                }}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => { setCreatedPassword(null); setOpen(false); }}>Fertig</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
