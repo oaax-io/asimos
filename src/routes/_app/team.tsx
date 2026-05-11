@@ -133,9 +133,34 @@ function TeamPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Der Mitarbeiter erhält eine Einladungs-E-Mail mit einem Link, über den er sein Passwort selbst festlegt.
-                  </p>
+                  <div>
+                    <Label>Anlage-Modus</Label>
+                    <Select value={form.mode} onValueChange={(v) => setForm({ ...form, mode: v as "direct" | "invite" })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="direct">Direkt anlegen (Passwort vergeben)</SelectItem>
+                        <SelectItem value="invite">Einladung per E-Mail</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {form.mode === "direct" ? (
+                    <div>
+                      <Label>Passwort (optional)</Label>
+                      <Input
+                        type="text"
+                        placeholder="Leer lassen für automatisch generiert"
+                        value={form.password}
+                        onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Mind. 8 Zeichen. Bei leerem Feld wird ein sicheres Passwort generiert und einmalig angezeigt.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Der Mitarbeiter erhält eine Einladungs-E-Mail mit einem Link, über den er sein Passwort selbst festlegt.
+                    </p>
+                  )}
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
