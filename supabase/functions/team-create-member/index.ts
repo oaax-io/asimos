@@ -47,23 +47,43 @@ Deno.serve(async (req) => {
     const email = String(body.email ?? "").trim().toLowerCase();
     const fullName = String(body.full_name ?? "").trim();
     const phone = String(body.phone ?? "").trim();
-    const role = (["owner", "agent", "assistant"].includes(body.role) ? body.role : "agent") as
-      | "owner" | "agent" | "assistant";
+    const role = (["owner", "admin", "manager", "agent", "assistant"].includes(body.role) ? body.role : "agent") as
+      | "owner" | "admin" | "manager" | "agent" | "assistant";
+    const mode = body.mode === "invite" ? "invite" : "direct";
+    const password = String(body.password ?? "").trim();
     const redirectTo = String(body.redirect_to ?? "");
 
     if (!email) return json({ error: "E-Mail erforderlich" }, 400);
-    if (!redirectTo) return json({ error: "redirect_to fehlt" }, 400);
 
-    // Send invitation email — user clicks link and sets their own password
-    const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo,
-      data: { full_name: fullName },
-    });
-    if (inviteErr || !invited.user) {
-      return json({ error: inviteErr?.message ?? "Einladung konnte nicht gesendet werden" }, 400);
+    let newUserId: string;
+    let generatedPassword: string | null = null;
+
+    if (mode === "invite") {
+      if (!redirectTo) return json({ error: "redirect_to fehlt" }, 400);
+      const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
+        redirectTo,
+        data: { full_name: fullName },
+      });
+      if (inviteErr || !invited.user) {
+        return json({ error: inviteErr?.message ?? "Einladung konnte nicht gesendet werden" }, 400);
+      }
+      newUserId = invited.user.id;
+    } else {
+      // Direct creation with password (no invitation email)
+      const finalPassword = password.length >= 8 ? password : generatePassword();
+      generatedPassword = password.length >= 8 ? null : finalPassword;
+
+      const { data: created, error: createErr } = await admin.auth.admin.createUser({
+        email,
+        password: finalPassword,
+        email_confirm: true,
+        user_metadata: { full_name: fullName },
+      });
+      if (createErr || !created.user) {
+        return json({ error: createErr?.message ?? "Nutzer konnte nicht angelegt werden" }, 400);
+      }
+      newUserId = created.user.id;
     }
-
-    const newUserId = invited.user.id;
 
     const { error: updErr } = await admin
       .from("profiles")
@@ -75,11 +95,18 @@ Deno.serve(async (req) => {
       .eq("id", newUserId);
     if (updErr) return json({ error: updErr.message }, 400);
 
-    return json({ ok: true, user_id: newUserId });
+    return json({ ok: true, user_id: newUserId, password: generatedPassword, mode });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }
 });
+
+function generatePassword(length = 14): string {
+  const chars = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%";
+  const arr = new Uint32Array(length);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, (n) => chars[n % chars.length]).join("");
+}
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
