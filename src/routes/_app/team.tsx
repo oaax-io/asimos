@@ -77,17 +77,25 @@ function TeamPage() {
           email: form.email.trim(),
           phone: form.phone.trim(),
           role: form.role,
+          mode: form.mode,
+          password: form.mode === "direct" ? form.password : "",
           redirect_to: redirectTo,
         },
       });
       if (error) throw error;
       if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-      return data;
+      return data as { mode: string; password: string | null };
     },
-    onSuccess: () => {
-      toast.success("Einladung per E-Mail gesendet");
-      setForm({ full_name: "", email: "", phone: "", role: "agent" });
-      setOpen(false);
+    onSuccess: (data) => {
+      if (data.mode === "direct") {
+        toast.success("Mitarbeiter angelegt");
+        if (data.password) setCreatedPassword(data.password);
+        else setOpen(false);
+      } else {
+        toast.success("Einladung per E-Mail gesendet");
+        setOpen(false);
+      }
+      setForm({ full_name: "", email: "", phone: "", role: "agent", mode: "direct", password: "" });
       qc.invalidateQueries({ queryKey: ["team"] });
     },
     onError: (e: Error) => toast.error(e.message),
