@@ -2679,6 +2679,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      can_access_client: { Args: { _client_id: string }; Returns: boolean }
       current_agency_id: { Args: never; Returns: string }
       financing_link_resolve: {
         Args: { _token: string }
