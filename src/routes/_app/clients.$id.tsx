@@ -977,23 +977,39 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
           </DialogContent>
         </Dialog>
       </div>
-      {isLoading ? <p className="text-sm text-muted-foreground">Lädt…</p>
-        : docs.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine hochgeladenen Dokumente.</p>
-        : <div className="space-y-2">
-            {docs.map((d: any) => (
-              <button key={d.id} type="button" onClick={() => openDocument(d)}
-                className="flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition hover:border-primary hover:bg-accent/30">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{d.file_name ?? d.file_url}</p>
-                    <p className="text-xs text-muted-foreground">{d.document_type} · {formatDate(d.created_at)}</p>
+      <div
+        onDragOver={(e) => { e.preventDefault(); setListDragOver(true); }}
+        onDragLeave={() => setListDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setListDragOver(false);
+          const f = e.dataTransfer.files?.[0];
+          if (f) { setFile(f); setMode("upload"); setOpen(true); }
+        }}
+        className={`rounded-xl transition ${listDragOver ? "ring-2 ring-primary ring-offset-2 bg-primary/5" : ""}`}
+      >
+        {isLoading ? <p className="text-sm text-muted-foreground">Lädt…</p>
+          : docs.length === 0 ? (
+              <div className="rounded-xl border-2 border-dashed border-muted-foreground/30 p-6 text-center text-sm text-muted-foreground">
+                Datei hierher ziehen oder oben auf „Dokument hinzufügen" klicken.
+              </div>
+            )
+          : <div className="space-y-2">
+              {docs.map((d: any) => (
+                <button key={d.id} type="button" onClick={() => openDocument(d)}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition hover:border-primary hover:bg-accent/30">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{d.file_name ?? d.file_url}</p>
+                      <p className="text-xs text-muted-foreground">{d.document_type} · {formatDate(d.created_at)}</p>
+                    </div>
                   </div>
-                </div>
-                <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </button>
-            ))}
-          </div>}
+                  <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </button>
+              ))}
+            </div>}
+      </div>
 
       <div className="mt-8">
         <h3 className="mb-3 font-display text-lg font-semibold">Generierte Dokumente</h3>
