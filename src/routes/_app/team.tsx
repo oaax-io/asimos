@@ -116,8 +116,12 @@ function TeamPage() {
         description="Mitarbeitende deiner Firma verwalten"
         action={
           canManage ? (
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Mitarbeiter hinzufügen</Button></DialogTrigger>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setPermsOpen(true)}>
+                <ShieldCheck className="mr-1 h-4 w-4" />Rollen & Module
+              </Button>
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Mitarbeiter hinzufügen</Button></DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Neuer Mitarbeiter</DialogTitle></DialogHeader>
                 <div className="space-y-3">
