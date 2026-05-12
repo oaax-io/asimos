@@ -645,6 +645,39 @@ function Step3Client({
   clients: ClientLite[];
   loading: boolean;
 }) {
+  // Verknüpfte Personen des Hauptkunden (Ehepartner, Mitantragsteller, …)
+  const relatedQuery = useQuery({
+    queryKey: ["wizard_client_relationships", form.client_id],
+    enabled: !!form.client_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_relationships")
+        .select("related_client_id, relationship_type")
+        .eq("client_id", form.client_id);
+      if (error) throw error;
+      return (data ?? []) as { related_client_id: string; relationship_type: string }[];
+    },
+  });
+  const relatedMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const r of relatedQuery.data ?? []) m.set(r.related_client_id, r.relationship_type);
+    return m;
+  }, [relatedQuery.data]);
+
+  // Auto-Aktivierung: genau ein Ehepartner verknüpft → vorschlagen
+  useEffect(() => {
+    if (!form.client_id || form.co_applicant_enabled) return;
+    const list = relatedQuery.data ?? [];
+    const spouses = list.filter((r) => r.relationship_type === "spouse");
+    const candidates = spouses.length > 0 ? spouses : list.filter((r) => r.relationship_type === "co_applicant");
+    if (candidates.length === 1) {
+      update("co_applicant_enabled", true);
+      update("co_applicant_client_id", candidates[0].related_client_id);
+      update("co_applicant_role", spouses.length === 1 ? "ehepartner" : "mitantragsteller");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [relatedQuery.data, form.client_id]);
+
   const toggleCoApplicant = (enabled: boolean) => {
     if (enabled) {
       update("co_applicant_enabled", true);
