@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, UserPlus, Building2, Calendar, Target,
   Settings, LogOut, Search, Shield, Users2, CheckSquare, FileText,
   Image as ImageIcon, ListChecks, FileSignature, FileCheck2, FileBadge, FileLock2,
-  Banknote, BarChart3, MessageSquarePlus,
+  Banknote, BarChart3, MessageSquarePlus, BookOpen,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,7 @@ const NAV_GROUPS = [
     items: [
       { to: "/team", label: "Mitarbeiter", icon: Users2 },
       { to: "/feedback", label: "Feedback", icon: MessageSquarePlus },
+      { to: "/docs", label: "Dokumentation", icon: BookOpen },
       { to: "/settings", label: "Einstellungen", icon: Settings },
     ],
   },
