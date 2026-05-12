@@ -520,16 +520,8 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       qc.invalidateQueries({ queryKey: ["properties"] });
       onCreated?.(clientId);
 
-      // Rollenabhängige Folgeaktion
-      if (role === "buyer" || role === "tenant" || role === "investor") {
-        navigate({ to: "/matching", search: {} } as any).catch(() => {});
-      } else if ((role === "seller_owner" || role === "landlord") && propertyId) {
-        navigate({ to: "/properties/$id", params: { id: propertyId } }).catch(() => {});
-      } else if (role === "financing_applicant") {
-        navigate({ to: "/financing" }).catch(() => {});
-      } else {
-        navigate({ to: "/clients/$id", params: { id: clientId } }).catch(() => {});
-      }
+      // Immer zum Kundenprofil
+      navigate({ to: "/clients/$id", params: { id: clientId } }).catch(() => {});
 
       reset();
       onOpenChange(false);
