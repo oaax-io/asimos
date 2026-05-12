@@ -61,11 +61,11 @@ const FAQS = [
   },
   {
     q: "Warum kann sich ein Makler nicht einloggen?",
-    a: "Meist falsches Passwort (Tippfehler, unsichtbare Leerzeichen beim Kopieren). Passwort im Mitarbeiter-Dialog im Tab „Passwort" neu setzen.",
+    a: "Meist falsches Passwort (Tippfehler, unsichtbare Leerzeichen beim Kopieren). Passwort im Mitarbeiter-Dialog im Tab „Passwort“ neu setzen.",
   },
   {
     q: "Wie lade ich ein Dokument zu einem Kunden hoch?",
-    a: "Kundenprofil → Tab „Dokumente" → Datei in die Dropzone ziehen oder „Dokument hinzufügen" klicken.",
+    a: "Kundenprofil → Tab „Dokumente“ → Datei in die Dropzone ziehen oder „Dokument hinzufügen“ klicken.",
   },
   {
     q: "PDF-Generierung funktioniert nicht (404)",
