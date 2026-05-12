@@ -811,7 +811,9 @@ function CoApplicantSection({
               Mitantragsteller / Ehepartner hinzufügen
             </Label>
             <p className="text-xs text-muted-foreground">
-              Optional — kombiniert Einkommen und Eigenmittel für die Berechnung.
+              {hasRelated
+                ? "Verknüpfte Personen aus dem Kundenprofil werden zuerst angezeigt."
+                : "Optional — kombiniert Einkommen und Eigenmittel für die Berechnung."}
             </p>
           </div>
         </div>
