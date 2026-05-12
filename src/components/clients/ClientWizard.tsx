@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { propertyTypeLabels } from "@/lib/format";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 // ----- Typen -----
 type EntityType = "person" | "company";
