@@ -4,7 +4,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Mail, Phone, Shield, KeyRound, Pencil, Copy, RefreshCw } from "lucide-react";
+import { Plus, Mail, Phone, Shield, KeyRound, Pencil, Copy, RefreshCw, ShieldCheck } from "lucide-react";
+import { RolePermissionsDialog } from "@/components/team/RolePermissionsDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +40,7 @@ function TeamPage() {
     password: "",
   });
   const [createdPassword, setCreatedPassword] = useState<string | null>(null);
+  const [permsOpen, setPermsOpen] = useState(false);
 
   const meQuery = useQuery({
     queryKey: ["me-team"],
@@ -114,8 +116,12 @@ function TeamPage() {
         description="Mitarbeitende deiner Firma verwalten"
         action={
           canManage ? (
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Mitarbeiter hinzufügen</Button></DialogTrigger>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setPermsOpen(true)}>
+                <ShieldCheck className="mr-1 h-4 w-4" />Rollen & Module
+              </Button>
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Mitarbeiter hinzufügen</Button></DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Neuer Mitarbeiter</DialogTitle></DialogHeader>
                 <div className="space-y-3">
@@ -170,6 +176,7 @@ function TeamPage() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            </div>
           ) : null
         }
       />
@@ -220,6 +227,8 @@ function TeamPage() {
           onSaved={() => qc.invalidateQueries({ queryKey: ["team"] })}
         />
       )}
+
+      <RolePermissionsDialog open={permsOpen} onOpenChange={setPermsOpen} />
 
       <Dialog open={!!createdPassword} onOpenChange={(o) => { if (!o) { setCreatedPassword(null); setOpen(false); } }}>
         <DialogContent>
