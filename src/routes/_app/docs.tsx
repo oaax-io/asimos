@@ -16,32 +16,66 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.5.0",
+    date: "12.05.2026",
+    changes: [
+      { type: "feature", text: "Dokumentations-Bereich mit Changelog, Roadmap, Anleitung & Support" },
+      { type: "improvement", text: "Vollständige historische Übersicht aller Releases ergänzt" },
+    ],
+  },
+  {
     version: "1.4.0",
     date: "12.05.2026",
     changes: [
       { type: "feature", text: "Drag-and-Drop Upload für Kunden-Dokumente" },
       { type: "feature", text: "Datei-Upload zusätzlich zu Link-Hinterlegung im Kunden-Tab" },
-      { type: "improvement", text: "Nach Anlage eines Kunden direkt zum Kundenprofil statt Matching" },
-      { type: "feature", text: "Dokumentation & Changelog unter Administration" },
+      { type: "improvement", text: "Nach Anlage eines Kunden direkt zum Kundenprofil statt Matching-Seite" },
+      { type: "fix", text: "PDF-Generierung: Browser-Druck-Fallback bei Service-Ausfall (404)" },
     ],
   },
   {
     version: "1.3.0",
     date: "11.05.2026",
     changes: [
-      { type: "feature", text: "Admin kann Benutzer direkt anlegen und Passwort vergeben (ohne Einladung)" },
+      { type: "feature", text: "Admin kann Mitarbeiter direkt anlegen und Passwort vergeben (ohne E-Mail-Einladung)" },
       { type: "improvement", text: "E-Mail-Bestätigung für admin-erstellte Benutzer entfällt" },
       { type: "fix", text: "Berechtigungen für is_superadmin / has_role korrigiert (Kunden-Zuweisung)" },
     ],
   },
   {
     version: "1.2.0",
-    date: "Frühjahr 2026",
+    date: "05.05.2026",
+    changes: [
+      { type: "feature", text: "UBS-Checkliste & Bank-Submission-Tab in der Finanzierung" },
+      { type: "feature", text: "Dossier-Qualitäts-Score für Finanzierungsanfragen" },
+      { type: "improvement", text: "Generierte Dokumente pro Kunde & Immobilie auflistbar" },
+      { type: "improvement", text: "Verbessertes Matching mit Benchmark-Karten" },
+    ],
+  },
+  {
+    version: "1.1.0",
+    date: "20.04.2026",
     changes: [
       { type: "feature", text: "Finanzierungs-Quick-Check mit PDF-Export" },
-      { type: "feature", text: "Selbstauskunft per Token-Link an Kunden" },
+      { type: "feature", text: "Selbstauskunft per Token-Link an Kunden senden" },
+      { type: "feature", text: "Parsen hochgeladener Selbstauskunfts-PDFs via KI" },
       { type: "feature", text: "Matching zwischen Suchprofilen und Immobilien" },
-      { type: "improvement", text: "Generierte Dokumente pro Kunde / Immobilie auflistbar" },
+    ],
+  },
+  {
+    version: "1.0.0",
+    date: "01.04.2026",
+    changes: [
+      { type: "feature", text: "Kunden-, Lead-, Immobilien- & Mandatsverwaltung" },
+      { type: "feature", text: "Mandate, Reservationen, NDAs, Exposés" },
+      { type: "feature", text: "Termine, Aufgaben, Checklisten & Aktivitäten-Tracking" },
+      { type: "feature", text: "Dokumentvorlagen mit Rich-Text-Editor & Generator" },
+      { type: "feature", text: "Mehrere Bankkonten & Brandkit pro Firma" },
+      { type: "feature", text: "Marktanalyse für Immobilien (KI-gestützt)" },
+      { type: "feature", text: "Mehrbenutzer-Support mit Rollen & Rechten" },
+      { type: "feature", text: "Lead-Import aus externen Quellen" },
+      { type: "feature", text: "Property-Import & Owners-Tab" },
+      { type: "feature", text: "Analytics-Dashboard mit Kennzahlen" },
     ],
   },
 ];
