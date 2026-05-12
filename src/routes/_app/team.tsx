@@ -40,6 +40,7 @@ function TeamPage() {
     password: "",
   });
   const [createdPassword, setCreatedPassword] = useState<string | null>(null);
+  const [permsOpen, setPermsOpen] = useState(false);
 
   const meQuery = useQuery({
     queryKey: ["me-team"],
