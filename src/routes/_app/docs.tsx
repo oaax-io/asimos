@@ -57,7 +57,7 @@ const ROADMAP = [
 const FAQS = [
   {
     q: "Wie lege ich einen neuen Mitarbeiter an?",
-    a: "Administration → Mitarbeiter → „Mitarbeiter hinzufügen". Du kannst direkt ein Passwort vergeben oder generieren — keine Einladung nötig.",
+    a: "Administration → Mitarbeiter → „Mitarbeiter hinzufügen“. Du kannst direkt ein Passwort vergeben oder generieren — keine Einladung nötig.",
   },
   {
     q: "Warum kann sich ein Makler nicht einloggen?",
