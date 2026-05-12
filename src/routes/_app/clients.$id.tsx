@@ -924,7 +924,26 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
               <TabsContent value="upload" className="space-y-3 pt-3">
                 <div>
                   <Label>Datei</Label>
-                  <Input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                  <label
+                    htmlFor="client-doc-file"
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragOver(false);
+                      const f = e.dataTransfer.files?.[0];
+                      if (f) setFile(f);
+                    }}
+                    className={`mt-1 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed p-6 text-center transition ${
+                      dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/30 hover:border-primary/60 hover:bg-accent/30"
+                    }`}
+                  >
+                    <Plus className="h-5 w-5 text-muted-foreground" />
+                    <p className="text-sm font-medium">Datei hierher ziehen oder klicken</p>
+                    <p className="text-xs text-muted-foreground">PDF, Bilder, Office-Dokumente …</p>
+                    <input id="client-doc-file" type="file" className="hidden"
+                      onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                  </label>
                   {file && <p className="mt-1 text-xs text-muted-foreground">{file.name} · {(file.size / 1024).toFixed(0)} KB</p>}
                 </div>
                 <div><Label>Name (optional)</Label><Input value={form.file_name} onChange={(e) => setForm({ ...form, file_name: e.target.value })} placeholder="Dateiname" /></div>
