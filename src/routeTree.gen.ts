@@ -30,6 +30,7 @@ import { Route as AppGeneratedDocumentsRouteImport } from './routes/_app/generat
 import { Route as AppFeedbackRouteImport } from './routes/_app/feedback'
 import { Route as AppExposesRouteImport } from './routes/_app/exposes'
 import { Route as AppDocumentsRouteImport } from './routes/_app/documents'
+import { Route as AppDocsRouteImport } from './routes/_app/docs'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppClientsRouteImport } from './routes/_app/clients'
 import { Route as AppChecklistsRouteImport } from './routes/_app/checklists'
@@ -150,6 +151,11 @@ const AppDocumentsRoute = AppDocumentsRouteImport.update({
   path: '/documents',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDocsRoute = AppDocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -237,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/checklists': typeof AppChecklistsRoute
   '/clients': typeof AppClientsRouteWithChildren
   '/dashboard': typeof AppDashboardRoute
+  '/docs': typeof AppDocsRoute
   '/documents': typeof AppDocumentsRoute
   '/exposes': typeof AppExposesRoute
   '/feedback': typeof AppFeedbackRoute
@@ -273,6 +280,7 @@ export interface FileRoutesByTo {
   '/appointments': typeof AppAppointmentsRoute
   '/checklists': typeof AppChecklistsRoute
   '/dashboard': typeof AppDashboardRoute
+  '/docs': typeof AppDocsRoute
   '/documents': typeof AppDocumentsRoute
   '/exposes': typeof AppExposesRoute
   '/feedback': typeof AppFeedbackRoute
@@ -311,6 +319,7 @@ export interface FileRoutesById {
   '/_app/checklists': typeof AppChecklistsRoute
   '/_app/clients': typeof AppClientsRouteWithChildren
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/docs': typeof AppDocsRoute
   '/_app/documents': typeof AppDocumentsRoute
   '/_app/exposes': typeof AppExposesRoute
   '/_app/feedback': typeof AppFeedbackRoute
@@ -350,6 +359,7 @@ export interface FileRouteTypes {
     | '/checklists'
     | '/clients'
     | '/dashboard'
+    | '/docs'
     | '/documents'
     | '/exposes'
     | '/feedback'
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/appointments'
     | '/checklists'
     | '/dashboard'
+    | '/docs'
     | '/documents'
     | '/exposes'
     | '/feedback'
@@ -423,6 +434,7 @@ export interface FileRouteTypes {
     | '/_app/checklists'
     | '/_app/clients'
     | '/_app/dashboard'
+    | '/_app/docs'
     | '/_app/documents'
     | '/_app/exposes'
     | '/_app/feedback'
@@ -610,6 +622,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDocumentsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/docs': {
+      id: '/_app/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof AppDocsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -776,6 +795,7 @@ interface AppRouteChildren {
   AppChecklistsRoute: typeof AppChecklistsRoute
   AppClientsRoute: typeof AppClientsRouteWithChildren
   AppDashboardRoute: typeof AppDashboardRoute
+  AppDocsRoute: typeof AppDocsRoute
   AppDocumentsRoute: typeof AppDocumentsRoute
   AppExposesRoute: typeof AppExposesRoute
   AppFeedbackRoute: typeof AppFeedbackRoute
@@ -802,6 +822,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppChecklistsRoute: AppChecklistsRoute,
   AppClientsRoute: AppClientsRouteWithChildren,
   AppDashboardRoute: AppDashboardRoute,
+  AppDocsRoute: AppDocsRoute,
   AppDocumentsRoute: AppDocumentsRoute,
   AppExposesRoute: AppExposesRoute,
   AppFeedbackRoute: AppFeedbackRoute,
