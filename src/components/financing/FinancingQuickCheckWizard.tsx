@@ -645,6 +645,39 @@ function Step3Client({
   clients: ClientLite[];
   loading: boolean;
 }) {
+  // Verknüpfte Personen des Hauptkunden (Ehepartner, Mitantragsteller, …)
+  const relatedQuery = useQuery({
+    queryKey: ["wizard_client_relationships", form.client_id],
+    enabled: !!form.client_id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_relationships")
+        .select("related_client_id, relationship_type")
+        .eq("client_id", form.client_id);
+      if (error) throw error;
+      return (data ?? []) as { related_client_id: string; relationship_type: string }[];
+    },
+  });
+  const relatedMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const r of relatedQuery.data ?? []) m.set(r.related_client_id, r.relationship_type);
+    return m;
+  }, [relatedQuery.data]);
+
+  // Auto-Aktivierung: genau ein Ehepartner verknüpft → vorschlagen
+  useEffect(() => {
+    if (!form.client_id || form.co_applicant_enabled) return;
+    const list = relatedQuery.data ?? [];
+    const spouses = list.filter((r) => r.relationship_type === "spouse");
+    const candidates = spouses.length > 0 ? spouses : list.filter((r) => r.relationship_type === "co_applicant");
+    if (candidates.length === 1) {
+      update("co_applicant_enabled", true);
+      update("co_applicant_client_id", candidates[0].related_client_id);
+      update("co_applicant_role", spouses.length === 1 ? "ehepartner" : "mitantragsteller");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [relatedQuery.data, form.client_id]);
+
   const toggleCoApplicant = (enabled: boolean) => {
     if (enabled) {
       update("co_applicant_enabled", true);
@@ -713,6 +746,7 @@ function Step3Client({
           clients={clients}
           loading={loading}
           toggle={toggleCoApplicant}
+          relatedMap={relatedMap}
         />
       )}
     </div>
@@ -720,18 +754,35 @@ function Step3Client({
 }
 
 function CoApplicantSection({
-  form, update, clients, loading, toggle,
+  form, update, clients, loading, toggle, relatedMap,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   clients: ClientLite[];
   loading: boolean;
   toggle: (enabled: boolean) => void;
+  relatedMap: Map<string, string>;
 }) {
+  const relLabel: Record<string, string> = {
+    spouse: "Ehepartner", co_applicant: "Mitantragsteller",
+    co_investor: "Mitinvestor", other: "Verbunden",
+  };
   const selected = clients.find((c) => c.id === form.co_applicant_client_id);
-  const items = clients
-    .filter((c) => c.id !== form.client_id)
-    .map((c) => ({ value: c.id, label: c.full_name, hint: c.email ?? undefined }));
+  const filtered = clients.filter((c) => c.id !== form.client_id);
+  const hasRelated = relatedMap.size > 0;
+  const sorted = [...filtered].sort((a, b) => {
+    const ar = relatedMap.has(a.id) ? 0 : 1;
+    const br = relatedMap.has(b.id) ? 0 : 1;
+    if (ar !== br) return ar - br;
+    return a.full_name.localeCompare(b.full_name);
+  });
+  const items = sorted.map((c) => {
+    const rel = relatedMap.get(c.id);
+    const hint = rel
+      ? `${relLabel[rel] ?? "Verbunden"}${c.email ? ` · ${c.email}` : ""}`
+      : (c.email ?? undefined);
+    return { value: c.id, label: c.full_name, hint };
+  });
 
   const incomeNum = num(form.co_applicant_einkommen);
   const equityNum = num(form.co_applicant_eigenkapital);
@@ -760,7 +811,9 @@ function CoApplicantSection({
               Mitantragsteller / Ehepartner hinzufügen
             </Label>
             <p className="text-xs text-muted-foreground">
-              Optional — kombiniert Einkommen und Eigenmittel für die Berechnung.
+              {hasRelated
+                ? "Verknüpfte Personen aus dem Kundenprofil werden zuerst angezeigt."
+                : "Optional — kombiniert Einkommen und Eigenmittel für die Berechnung."}
             </p>
           </div>
         </div>
