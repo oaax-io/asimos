@@ -228,6 +228,8 @@ function TeamPage() {
         />
       )}
 
+      <RolePermissionsDialog open={permsOpen} onOpenChange={setPermsOpen} />
+
       <Dialog open={!!createdPassword} onOpenChange={(o) => { if (!o) { setCreatedPassword(null); setOpen(false); } }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Mitarbeiter angelegt</DialogTitle></DialogHeader>
