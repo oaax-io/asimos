@@ -754,18 +754,35 @@ function Step3Client({
 }
 
 function CoApplicantSection({
-  form, update, clients, loading, toggle,
+  form, update, clients, loading, toggle, relatedMap,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   clients: ClientLite[];
   loading: boolean;
   toggle: (enabled: boolean) => void;
+  relatedMap: Map<string, string>;
 }) {
+  const relLabel: Record<string, string> = {
+    spouse: "Ehepartner", co_applicant: "Mitantragsteller",
+    co_investor: "Mitinvestor", other: "Verbunden",
+  };
   const selected = clients.find((c) => c.id === form.co_applicant_client_id);
-  const items = clients
-    .filter((c) => c.id !== form.client_id)
-    .map((c) => ({ value: c.id, label: c.full_name, hint: c.email ?? undefined }));
+  const filtered = clients.filter((c) => c.id !== form.client_id);
+  const hasRelated = relatedMap.size > 0;
+  const sorted = [...filtered].sort((a, b) => {
+    const ar = relatedMap.has(a.id) ? 0 : 1;
+    const br = relatedMap.has(b.id) ? 0 : 1;
+    if (ar !== br) return ar - br;
+    return a.full_name.localeCompare(b.full_name);
+  });
+  const items = sorted.map((c) => {
+    const rel = relatedMap.get(c.id);
+    const hint = rel
+      ? `${relLabel[rel] ?? "Verbunden"}${c.email ? ` · ${c.email}` : ""}`
+      : (c.email ?? undefined);
+    return { value: c.id, label: c.full_name, hint };
+  });
 
   const incomeNum = num(form.co_applicant_einkommen);
   const equityNum = num(form.co_applicant_eigenkapital);
