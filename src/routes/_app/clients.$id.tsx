@@ -833,6 +833,8 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"upload" | "link">("upload");
   const [file, setFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [listDragOver, setListDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ file_name: "", file_url: "", document_type: "other", notes: "" });
 
