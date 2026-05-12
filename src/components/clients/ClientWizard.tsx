@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { propertyTypeLabels } from "@/lib/format";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 // ----- Typen -----
 type EntityType = "person" | "company";
@@ -658,7 +659,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                   </>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <div className="md:col-span-2"><Label>Strasse</Label><Input value={form.street} onChange={(e) => set("street", e.target.value)} /></div>
+                  <div className="md:col-span-2"><Label>Strasse</Label><AddressAutocomplete value={form.street} onChange={(v) => set("street", v)} onSelect={(s) => { set("street", s.street || s.label); if (s.postal_code) set("postal_code", s.postal_code); if (s.city) set("city", s.city); if (s.country_code) set("country", s.country_code); }} /></div>
                   <div><Label>PLZ</Label><Input value={form.postal_code} onChange={(e) => set("postal_code", e.target.value)} /></div>
                   <div><Label>Ort</Label><Input value={form.city} onChange={(e) => set("city", e.target.value)} /></div>
                 </div>
@@ -977,7 +978,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                   <div className="space-y-3">
                     <div><Label>Titel *</Label><Input value={form.new_property_title} onChange={(e) => set("new_property_title", e.target.value)} /></div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <div className="md:col-span-2"><Label>Adresse</Label><Input value={form.new_property_address} onChange={(e) => set("new_property_address", e.target.value)} /></div>
+                      <div className="md:col-span-2"><Label>Adresse</Label><AddressAutocomplete value={form.new_property_address} onChange={(v) => set("new_property_address", v)} onSelect={(s) => { set("new_property_address", s.street || s.label); if (s.postal_code) set("new_property_postal_code", s.postal_code); }} /></div>
                       <div><Label>PLZ</Label><Input value={form.new_property_postal_code} onChange={(e) => set("new_property_postal_code", e.target.value)} /></div>
                       <div><Label>Ort</Label><Input value={form.new_property_city} onChange={(e) => set("new_property_city", e.target.value)} /></div>
                     </div>
