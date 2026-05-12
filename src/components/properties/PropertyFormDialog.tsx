@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { propertyStatusLabels, propertyTypeLabels } from "@/lib/format";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 const PROP_TYPES = ["apartment","house","commercial","land","parking","mixed_use","other"] as const;
 const STATUSES = ["draft","preparation","active","available","reserved","sold","rented","archived"] as const;
@@ -174,7 +175,7 @@ export function PropertyFormDialog({
           </div>
 
           <div className="grid grid-cols-6 gap-3">
-            <div className="col-span-3"><Label>Adresse</Label><Input value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} /></div>
+            <div className="col-span-3"><Label>Adresse</Label><AddressAutocomplete value={f.address} onChange={(v) => setF({ ...f, address: v })} onSelect={(s) => setF({ ...f, address: s.street || s.label, postal_code: s.postal_code || f.postal_code, city: s.city || f.city, country: s.country_code || f.country })} /></div>
             <div className="col-span-1"><Label>PLZ</Label><Input value={f.postal_code} onChange={(e) => setF({ ...f, postal_code: e.target.value })} /></div>
             <div className="col-span-2"><Label>Ort</Label><Input value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} /></div>
           </div>
