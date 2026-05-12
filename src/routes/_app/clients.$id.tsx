@@ -833,6 +833,8 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"upload" | "link">("upload");
   const [file, setFile] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [listDragOver, setListDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ file_name: "", file_url: "", document_type: "other", notes: "" });
 
@@ -922,7 +924,26 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
               <TabsContent value="upload" className="space-y-3 pt-3">
                 <div>
                   <Label>Datei</Label>
-                  <Input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                  <label
+                    htmlFor="client-doc-file"
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragOver(false);
+                      const f = e.dataTransfer.files?.[0];
+                      if (f) setFile(f);
+                    }}
+                    className={`mt-1 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed p-6 text-center transition ${
+                      dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/30 hover:border-primary/60 hover:bg-accent/30"
+                    }`}
+                  >
+                    <Plus className="h-5 w-5 text-muted-foreground" />
+                    <p className="text-sm font-medium">Datei hierher ziehen oder klicken</p>
+                    <p className="text-xs text-muted-foreground">PDF, Bilder, Office-Dokumente …</p>
+                    <input id="client-doc-file" type="file" className="hidden"
+                      onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                  </label>
                   {file && <p className="mt-1 text-xs text-muted-foreground">{file.name} · {(file.size / 1024).toFixed(0)} KB</p>}
                 </div>
                 <div><Label>Name (optional)</Label><Input value={form.file_name} onChange={(e) => setForm({ ...form, file_name: e.target.value })} placeholder="Dateiname" /></div>
@@ -956,23 +977,39 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
           </DialogContent>
         </Dialog>
       </div>
-      {isLoading ? <p className="text-sm text-muted-foreground">Lädt…</p>
-        : docs.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine hochgeladenen Dokumente.</p>
-        : <div className="space-y-2">
-            {docs.map((d: any) => (
-              <button key={d.id} type="button" onClick={() => openDocument(d)}
-                className="flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition hover:border-primary hover:bg-accent/30">
-                <div className="flex items-center gap-3 min-w-0">
-                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{d.file_name ?? d.file_url}</p>
-                    <p className="text-xs text-muted-foreground">{d.document_type} · {formatDate(d.created_at)}</p>
+      <div
+        onDragOver={(e) => { e.preventDefault(); setListDragOver(true); }}
+        onDragLeave={() => setListDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setListDragOver(false);
+          const f = e.dataTransfer.files?.[0];
+          if (f) { setFile(f); setMode("upload"); setOpen(true); }
+        }}
+        className={`rounded-xl transition ${listDragOver ? "ring-2 ring-primary ring-offset-2 bg-primary/5" : ""}`}
+      >
+        {isLoading ? <p className="text-sm text-muted-foreground">Lädt…</p>
+          : docs.length === 0 ? (
+              <div className="rounded-xl border-2 border-dashed border-muted-foreground/30 p-6 text-center text-sm text-muted-foreground">
+                Datei hierher ziehen oder oben auf „Dokument hinzufügen" klicken.
+              </div>
+            )
+          : <div className="space-y-2">
+              {docs.map((d: any) => (
+                <button key={d.id} type="button" onClick={() => openDocument(d)}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition hover:border-primary hover:bg-accent/30">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{d.file_name ?? d.file_url}</p>
+                      <p className="text-xs text-muted-foreground">{d.document_type} · {formatDate(d.created_at)}</p>
+                    </div>
                   </div>
-                </div>
-                <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </button>
-            ))}
-          </div>}
+                  <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </button>
+              ))}
+            </div>}
+      </div>
 
       <div className="mt-8">
         <h3 className="mb-3 font-display text-lg font-semibold">Generierte Dokumente</h3>
