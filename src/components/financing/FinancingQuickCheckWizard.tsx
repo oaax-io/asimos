@@ -746,6 +746,7 @@ function Step3Client({
           clients={clients}
           loading={loading}
           toggle={toggleCoApplicant}
+          relatedMap={relatedMap}
         />
       )}
     </div>
