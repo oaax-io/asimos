@@ -831,7 +831,16 @@ function ClientTasksTab({ clientId, userId }: { clientId: string; userId: string
 function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<"upload" | "link">("upload");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ file_name: "", file_url: "", document_type: "other", notes: "" });
+
+  const resetForm = () => {
+    setForm({ file_name: "", file_url: "", document_type: "other", notes: "" });
+    setFile(null);
+    setMode("upload");
+  };
 
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ["client_documents", clientId],
@@ -845,9 +854,28 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.file_url.trim()) throw new Error("URL erforderlich");
+      let fileUrl = form.file_url.trim();
+      let fileName = form.file_name.trim();
+
+      if (mode === "upload") {
+        if (!file) throw new Error("Bitte Datei auswählen");
+        setUploading(true);
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const path = `clients/${clientId}/${Date.now()}-${safe}`;
+        const { error: upErr } = await supabase.storage.from("documents").upload(path, file, {
+          contentType: file.type || undefined,
+          upsert: false,
+        });
+        setUploading(false);
+        if (upErr) throw upErr;
+        fileUrl = path; // storage path
+        if (!fileName) fileName = file.name;
+      } else {
+        if (!fileUrl) throw new Error("URL erforderlich");
+      }
+
       const { error } = await supabase.from("documents").insert({
-        file_url: form.file_url.trim(), file_name: form.file_name || null,
+        file_url: fileUrl, file_name: fileName || null,
         document_type: form.document_type as any, notes: form.notes || null,
         related_type: "client", related_id: clientId, uploaded_by: userId,
       });
@@ -855,23 +883,56 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
     },
     onSuccess: () => {
       toast.success("Dokument hinzugefügt");
-      setOpen(false); setForm({ file_name: "", file_url: "", document_type: "other", notes: "" });
+      setOpen(false); resetForm();
       qc.invalidateQueries({ queryKey: ["client_documents", clientId] });
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => {
+      setUploading(false);
+      toast.error(e.message);
+    },
   });
+
+  const openDocument = async (d: any) => {
+    const url: string = d.file_url ?? "";
+    if (/^https?:\/\//i.test(url)) {
+      window.open(url, "_blank", "noreferrer");
+      return;
+    }
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl(url, 60 * 10);
+    if (error || !data?.signedUrl) {
+      toast.error("Datei konnte nicht geöffnet werden");
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noreferrer");
+  };
 
   return (
     <Card><CardContent className="p-6">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold">Dokumente</h3>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
           <Button size="sm" onClick={() => setOpen(true)}><Plus className="mr-1.5 h-4 w-4" />Dokument hinzufügen</Button>
           <DialogContent>
             <DialogHeader><DialogTitle>Dokument hinzufügen</DialogTitle></DialogHeader>
+            <Tabs value={mode} onValueChange={(v) => setMode(v as "upload" | "link")}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="upload">Datei hochladen</TabsTrigger>
+                <TabsTrigger value="link">Link</TabsTrigger>
+              </TabsList>
+              <TabsContent value="upload" className="space-y-3 pt-3">
+                <div>
+                  <Label>Datei</Label>
+                  <Input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                  {file && <p className="mt-1 text-xs text-muted-foreground">{file.name} · {(file.size / 1024).toFixed(0)} KB</p>}
+                </div>
+                <div><Label>Name (optional)</Label><Input value={form.file_name} onChange={(e) => setForm({ ...form, file_name: e.target.value })} placeholder="Dateiname" /></div>
+              </TabsContent>
+              <TabsContent value="link" className="space-y-3 pt-3">
+                <div><Label>Name</Label><Input value={form.file_name} onChange={(e) => setForm({ ...form, file_name: e.target.value })} /></div>
+                <div><Label>URL</Label><Input value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })} placeholder="https://…" /></div>
+              </TabsContent>
+            </Tabs>
             <div className="space-y-3">
-              <div><Label>Name</Label><Input value={form.file_name} onChange={(e) => setForm({ ...form, file_name: e.target.value })} /></div>
-              <div><Label>URL / Link</Label><Input value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })} /></div>
               <div>
                 <Label>Typ</Label>
                 <Select value={form.document_type} onValueChange={(v) => setForm({ ...form, document_type: v })}>
@@ -887,7 +948,11 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
               </div>
               <div><Label>Notizen</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
             </div>
-            <DialogFooter><Button onClick={() => create.mutate()} disabled={!form.file_url || create.isPending}>Speichern</Button></DialogFooter>
+            <DialogFooter>
+              <Button onClick={() => create.mutate()} disabled={create.isPending || uploading || (mode === "upload" ? !file : !form.file_url)}>
+                {uploading ? "Lädt hoch…" : "Speichern"}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -895,8 +960,8 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
         : docs.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine hochgeladenen Dokumente.</p>
         : <div className="space-y-2">
             {docs.map((d: any) => (
-              <a key={d.id} href={d.file_url} target="_blank" rel="noreferrer"
-                className="flex items-center justify-between gap-3 rounded-xl border p-3 transition hover:border-primary hover:bg-accent/30">
+              <button key={d.id} type="button" onClick={() => openDocument(d)}
+                className="flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition hover:border-primary hover:bg-accent/30">
                 <div className="flex items-center gap-3 min-w-0">
                   <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0">
@@ -905,7 +970,7 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
                   </div>
                 </div>
                 <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </a>
+              </button>
             ))}
           </div>}
 
@@ -916,6 +981,7 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
     </CardContent></Card>
   );
 }
+
 
 function ClientActivityTab({ clientId, userId, notes }: { clientId: string; userId: string; notes: string | null }) {
   const qc = useQueryClient();
