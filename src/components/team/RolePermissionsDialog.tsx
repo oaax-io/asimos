@@ -203,8 +203,8 @@ export function RolePermissionsDialog({ open, onOpenChange }: { open: boolean; o
                 </thead>
                 <tbody>
                   {MODULE_GROUPS.map((group) => (
-                    <>
-                      <tr key={`grp-${group.label}`} className="bg-muted/20">
+                    <Fragment key={`grp-${group.label}`}>
+                      <tr className="bg-muted/20">
                         <td colSpan={1 + ROLE_COLUMNS.length} className="px-4 py-2">
                           <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
                             {group.label}
@@ -231,7 +231,7 @@ export function RolePermissionsDialog({ open, onOpenChange }: { open: boolean; o
                           })}
                         </tr>
                       ))}
-                    </>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
