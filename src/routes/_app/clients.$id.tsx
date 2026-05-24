@@ -30,6 +30,7 @@ import { ClientSelfDisclosureTab } from "@/components/clients/ClientSelfDisclosu
 import { ClientRelationshipsTab } from "@/components/clients/ClientRelationshipsTab";
 import { ClientProfileSummary } from "@/components/clients/ClientProfileSummary";
 import { ClientEditDialog } from "@/components/clients/ClientEditDialog";
+import { ClientQuickActions } from "@/components/clients/ClientQuickActions";
 import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
 import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkCard";
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
@@ -190,15 +191,15 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
           </Button>
         )}
         <div className="flex gap-2">
-          <ClientEditDialog client={client} onSaved={() => qc.invalidateQueries({ queryKey: ["client", id] })} />
+          <ClientQuickActions client={client} />
+          <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
           {inDialog && (
             <Button variant="outline" size="icon" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           )}
-          <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 
