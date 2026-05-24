@@ -70,6 +70,21 @@ function ClientsPage() {
   const employees = employeesQuery.data ?? [];
   const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
 
+  const disclosuresQuery = useQuery({
+    queryKey: ["clients_disclosures_contact"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("client_self_disclosures")
+        .select("client_id,email,phone,mobile,street,street_number,postal_code,city");
+      return data ?? [];
+    },
+  });
+  const disclosureMap = useMemo(() => {
+    const m = new Map<string, any>();
+    (disclosuresQuery.data ?? []).forEach((d: any) => { m.set(d.client_id, d); });
+    return m;
+  }, [disclosuresQuery.data]);
+
   const showError = clientsQuery.error && !isBackendUnavailableError(clientsQuery.error);
   const queryErrorMessage = showError ? getBackendErrorMessage(clientsQuery.error) : null;
 
