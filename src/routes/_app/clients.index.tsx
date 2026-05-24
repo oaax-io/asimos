@@ -327,9 +327,9 @@ function ClientsPage() {
                         <div className="mt-1 flex flex-wrap gap-1">
                           <Badge variant="secondary">{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                           {c.is_archived && <Badge variant="outline">Archiviert</Badge>}
-                          {c.assigned_to && employeeMap.get(c.assigned_to) && (
+                          {(c.assigned_to ?? c.owner_id) && employeeMap.get(c.assigned_to ?? c.owner_id) && (
                             <Badge variant="outline" className="text-xs">
-                              {(employeeMap.get(c.assigned_to) as any).full_name ?? (employeeMap.get(c.assigned_to) as any).email}
+                              {(employeeMap.get(c.assigned_to ?? c.owner_id) as any).full_name ?? (employeeMap.get(c.assigned_to ?? c.owner_id) as any).email}
                             </Badge>
                           )}
                         </div>
