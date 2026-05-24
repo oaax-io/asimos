@@ -30,6 +30,7 @@ import { ClientSelfDisclosureTab } from "@/components/clients/ClientSelfDisclosu
 import { ClientRelationshipsTab } from "@/components/clients/ClientRelationshipsTab";
 import { ClientProfileSummary } from "@/components/clients/ClientProfileSummary";
 import { ClientEditDialog } from "@/components/clients/ClientEditDialog";
+import { ClientQuickActions } from "@/components/clients/ClientQuickActions";
 import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
 import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkCard";
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
