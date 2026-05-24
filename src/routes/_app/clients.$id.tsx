@@ -17,7 +17,7 @@ import {
   ArrowLeft, Mail, Phone, Trash2, RefreshCw, Pencil, FileSignature,
   Calendar, Target, Home, MapPin, Banknote, Ruler, BedDouble, Building2, MessageSquare,
   CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
-  ClipboardList, Heart, X,
+  ClipboardList, Heart, X, User,
 } from "lucide-react";
 import {
   clientTypeLabels, formatCurrency, formatDate, formatDateTime,
@@ -151,6 +151,20 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
   const { data: benchmarkData } = useClientBenchmark(id);
   const benchmark = benchmarkData?.benchmark ?? null;
 
+  const ownerUserId = (client as any)?.assigned_to ?? (client as any)?.owner_id ?? null;
+  const { data: ownerProfile } = useQuery({
+    queryKey: ["client_owner_profile", ownerUserId],
+    enabled: !!ownerUserId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles").select("id,full_name,email")
+        .eq("id", ownerUserId).maybeSingle();
+      return data;
+    },
+    retry: false,
+  });
+  const ownerLabel = ownerProfile?.full_name || ownerProfile?.email || null;
+
   const del = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("clients").delete().eq("id", id);
@@ -249,6 +263,11 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
               <span className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" />Angelegt {formatDate(client.created_at)}
               </span>
+              {ownerLabel && (
+                <span className="flex items-center gap-1.5">
+                  <User className="h-4 w-4" />Ansprechpartner: {ownerLabel}
+                </span>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -1045,7 +1064,7 @@ function ClientActivityTab({ clientId, userId, notes: _notes }: { clientId: stri
         clientRes, logsRes, apptRes, tasksRes, finRes, discRes,
         docsRes, genDocsRes, matchRes, relRes, mandRes, ndaRes,
       ] = await Promise.all([
-        supabase.from("clients").select("created_at,updated_at,full_name").eq("id", clientId).maybeSingle(),
+        supabase.from("clients").select("created_at,updated_at,full_name,owner_id,assigned_to").eq("id", clientId).maybeSingle(),
         supabase.from("activity_logs").select("id,action,created_at,metadata")
           .eq("related_type", "client").eq("related_id", clientId).order("created_at", { ascending: false }).limit(200),
         supabase.from("appointments").select("id,title,starts_at,created_at,updated_at,status").eq("client_id", clientId),
@@ -1063,10 +1082,19 @@ function ClientActivityTab({ clientId, userId, notes: _notes }: { clientId: stri
 
       const events: TimelineEvent[] = [];
 
+      const creatorId = (clientRes.data as any)?.owner_id ?? (clientRes.data as any)?.assigned_to ?? null;
+      let creatorLabel: string | null = null;
+      if (creatorId) {
+        const { data: prof } = await supabase
+          .from("profiles").select("full_name,email").eq("id", creatorId).maybeSingle();
+        creatorLabel = (prof as any)?.full_name || (prof as any)?.email || null;
+      }
+
       if (clientRes.data) {
         events.push({
           id: `client-create-${clientId}`, at: clientRes.data.created_at,
-          icon: "create", title: "Kunde angelegt", detail: clientRes.data.full_name,
+          icon: "create", title: "Kunde angelegt",
+          detail: [clientRes.data.full_name, creatorLabel ? `durch ${creatorLabel}` : null].filter(Boolean).join(" · "),
         });
         if (clientRes.data.updated_at && clientRes.data.updated_at !== clientRes.data.created_at) {
           events.push({

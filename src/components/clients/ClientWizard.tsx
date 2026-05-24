@@ -318,6 +318,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
         client_type: ROLE_TO_CLIENT_TYPE[role] as any,
         notes: form.notes || null,
         owner_id,
+        assigned_to: owner_id,
         address: form.street || null,
         postal_code: form.postal_code || null,
         city: form.city || null,
