@@ -193,6 +193,9 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
         )}
         <div className="flex gap-2">
           <ClientQuickActions client={client} />
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="mr-1.5 h-4 w-4" />Kunde bearbeiten
+          </Button>
           <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -203,6 +206,12 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
           )}
         </div>
       </div>
+
+      <ClientSelfDisclosureWizard
+        clientId={id}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
 
       {/* Hero */}
       <div className="mb-6 rounded-2xl border bg-gradient-to-br from-primary/5 via-background to-background p-6">
