@@ -1,0 +1,1 @@
+UPDATE public.clients SET assigned_to = owner_id WHERE assigned_to IS NULL AND owner_id IS NOT NULL;
