@@ -17,7 +17,7 @@ import {
   ArrowLeft, Mail, Phone, Trash2, RefreshCw, Pencil, FileSignature,
   Calendar, Target, Home, MapPin, Banknote, Ruler, BedDouble, Building2, MessageSquare,
   CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
-  ClipboardList, Heart,
+  ClipboardList, Heart, X,
 } from "lucide-react";
 import {
   clientTypeLabels, formatCurrency, formatDate, formatDateTime,
@@ -191,6 +191,11 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
         )}
         <div className="flex gap-2">
           <ClientEditDialog client={client} onSaved={() => qc.invalidateQueries({ queryKey: ["client", id] })} />
+          {inDialog && (
+            <Button variant="outline" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
           <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -254,16 +259,16 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
         </div>
 
         {/* KPIs */}
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat icon={<Target className="h-4 w-4" />} label="Matches" value={matches.length} />
-          <Stat icon={<Calendar className="h-4 w-4" />} label="Termine" value={appointments.length} />
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Stat icon={<Target className="h-3.5 w-3.5" />} label="Matches" value={matches.length} />
+          <Stat icon={<Calendar className="h-3.5 w-3.5" />} label="Termine" value={appointments.length} />
           <Stat
-            icon={<FileSignature className="h-4 w-4" />}
+            icon={<FileSignature className="h-3.5 w-3.5" />}
             label="Finanzierung"
             value={dossier ? `${dossier.completion_percent}%` : "—"}
           />
           <Stat
-            icon={<Home className="h-4 w-4" />}
+            icon={<Home className="h-3.5 w-3.5" />}
             label={isSeller ? "Eigene Objekte" : "Budget"}
             value={isSeller ? ownProperties.length : (client.budget_max ? formatCurrency(Number(client.budget_max)) : "—")}
           />
@@ -301,7 +306,7 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
 
         {/* 1. Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
-          <BenchmarkOrPlaceholder benchmark={benchmark} />
+          <BenchmarkOrPlaceholder benchmark={benchmark} compact />
           <ClientProfileSummary clientId={id} entityType={client.entity_type} />
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
@@ -539,9 +544,9 @@ function BenchmarkOrPlaceholder({
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-background/60 p-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{icon}{label}</div>
-      <p className="mt-1 text-lg font-semibold">{value}</p>
+    <div className="rounded-lg border bg-background/60 px-2.5 py-2">
+      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">{icon}{label}</div>
+      <p className="mt-0.5 text-base font-semibold">{value}</p>
     </div>
   );
 }
