@@ -21,6 +21,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { getClients } from "@/server/crm.functions";
 import { ClientWizard } from "@/components/clients/ClientWizard";
 import { SampleClientDialog } from "@/components/clients/SampleClientDialog";
+import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
@@ -42,6 +43,7 @@ function ClientsPage() {
   const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
   const [view, setView] = useState<ViewMode>("list");
   const [open, setOpen] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -304,7 +306,7 @@ function ClientsPage() {
                         aria-label="Auswählen"
                         className="mt-1"
                       />
-                      <Link to="/clients/$id" params={{ id: c.id }} className="flex-1 min-w-0">
+                      <button type="button" onClick={() => setDetailId(c.id)} className="flex-1 min-w-0 text-left">
                         <p className="font-semibold hover:text-primary truncate">{c.full_name}</p>
                         <div className="mt-1 flex flex-wrap gap-1">
                           <Badge variant="secondary">{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
@@ -315,13 +317,13 @@ function ClientsPage() {
                             </Badge>
                           )}
                         </div>
-                      </Link>
+                      </button>
                     </div>
                     <Link to="/matching" search={{ clientId: c.id }} className="rounded-lg border p-2 text-primary transition hover:bg-accent" title="Matching">
                       <Target className="h-4 w-4" />
                     </Link>
                   </div>
-                  <Link to="/clients/$id" params={{ id: c.id }} className="block">
+                  <button type="button" onClick={() => setDetailId(c.id)} className="block w-full text-left">
                     <div className="mt-3 space-y-1 text-sm text-muted-foreground">
                       {c.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{c.email}</p>}
                       {c.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{c.phone}</p>}
@@ -333,7 +335,7 @@ function ClientsPage() {
                         {c.rooms_min ? <p>Zimmer ab: {c.rooms_min}</p> : null}
                       </div>
                     )}
-                  </Link>
+                  </button>
                 </CardContent>
               </Card>
             );
@@ -364,9 +366,9 @@ function ClientsPage() {
                       <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} aria-label="Auswählen" />
                     </TableCell>
                     <TableCell>
-                      <Link to="/clients/$id" params={{ id: c.id }} className="font-medium hover:text-primary">
+                      <button type="button" onClick={() => setDetailId(c.id)} className="font-medium hover:text-primary">
                         {c.full_name}
-                      </Link>
+                      </button>
                       {c.is_archived && <Badge variant="outline" className="ml-2">Archiviert</Badge>}
                     </TableCell>
                     <TableCell>
@@ -386,9 +388,7 @@ function ClientsPage() {
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link to="/clients/$id" params={{ id: c.id }}>Öffnen</Link>
-                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDetailId(c.id)}>Öffnen</DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link to="/matching" search={{ clientId: c.id }}>Matching</Link>
                           </DropdownMenuItem>
@@ -458,6 +458,8 @@ function ClientsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ClientDetailDialog clientId={detailId} open={!!detailId} onOpenChange={(o) => !o && setDetailId(null)} />
     </>
   );
 }
