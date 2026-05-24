@@ -10,7 +10,7 @@ interface Props {
 export function ClientDetailDialog({ clientId, open, onOpenChange }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto p-6">
+      <DialogContent className="max-w-6xl max-h-[92vh] overflow-y-auto p-6 [&>button]:hidden">
         {clientId && <ClientDetail id={clientId} inDialog onClose={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>
