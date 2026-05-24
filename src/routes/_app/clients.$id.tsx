@@ -1064,7 +1064,7 @@ function ClientActivityTab({ clientId, userId, notes: _notes }: { clientId: stri
         clientRes, logsRes, apptRes, tasksRes, finRes, discRes,
         docsRes, genDocsRes, matchRes, relRes, mandRes, ndaRes,
       ] = await Promise.all([
-        supabase.from("clients").select("created_at,updated_at,full_name").eq("id", clientId).maybeSingle(),
+        supabase.from("clients").select("created_at,updated_at,full_name,owner_id,assigned_to").eq("id", clientId).maybeSingle(),
         supabase.from("activity_logs").select("id,action,created_at,metadata")
           .eq("related_type", "client").eq("related_id", clientId).order("created_at", { ascending: false }).limit(200),
         supabase.from("appointments").select("id,title,starts_at,created_at,updated_at,status").eq("client_id", clientId),
