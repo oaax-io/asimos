@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { MatchPanel } from "@/components/matching/MatchPanel";
 import { ClientSelfDisclosureTab } from "@/components/clients/ClientSelfDisclosureTab";
+import { ClientSelfDisclosureWizard } from "@/components/clients/ClientSelfDisclosureWizard";
 import { ClientRelationshipsTab } from "@/components/clients/ClientRelationshipsTab";
 import { ClientProfileSummary } from "@/components/clients/ClientProfileSummary";
 import { ClientEditDialog } from "@/components/clients/ClientEditDialog";
