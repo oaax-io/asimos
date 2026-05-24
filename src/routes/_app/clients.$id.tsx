@@ -36,11 +36,14 @@ import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 
-export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetail });
+export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetailRoute });
 
-
-function ClientDetail() {
+function ClientDetailRoute() {
   const { id } = Route.useParams();
+  return <ClientDetail id={id} />;
+}
+
+export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?: boolean; onClose?: () => void }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -150,7 +153,11 @@ function ClientDetail() {
       const { error } = await supabase.from("clients").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Gelöscht"); navigate({ to: "/clients" }); },
+    onSuccess: () => {
+      toast.success("Gelöscht");
+      if (inDialog) { onClose?.(); qc.invalidateQueries({ queryKey: ["clients"] }); }
+      else navigate({ to: "/clients" });
+    },
     onError: (e: any) => toast.error(e.message ?? "Fehler beim Löschen"),
   });
 
@@ -177,9 +184,11 @@ function ClientDetail() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <Button variant="ghost" asChild>
-          <Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
-        </Button>
+        {inDialog ? <div /> : (
+          <Button variant="ghost" asChild>
+            <Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
+          </Button>
+        )}
         <div className="flex gap-2">
           <ClientEditDialog client={client} onSaved={() => qc.invalidateQueries({ queryKey: ["client", id] })} />
           <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
