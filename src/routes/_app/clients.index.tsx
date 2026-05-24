@@ -20,6 +20,7 @@ import { clientTypeLabels, formatCurrency } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 import { getClients } from "@/server/crm.functions";
 import { ClientWizard } from "@/components/clients/ClientWizard";
+import { SampleClientDialog } from "@/components/clients/SampleClientDialog";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
@@ -182,6 +183,7 @@ function ClientsPage() {
                 <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
               </TabsList>
             </Tabs>
+            <SampleClientDialog />
             <Button onClick={() => setOpen(true)}>
               <Plus className="mr-1 h-4 w-4" />Neuer Kunde
             </Button>
