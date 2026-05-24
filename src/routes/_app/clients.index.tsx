@@ -93,8 +93,9 @@ function ClientsPage() {
     if (archivedFilter === "archived" && !c.is_archived) return false;
     if (typeFilter !== ALL && c.client_type !== typeFilter) return false;
     if (assignedFilter !== ALL) {
-      if (assignedFilter === UNASSIGNED && c.assigned_to) return false;
-      if (assignedFilter !== UNASSIGNED && c.assigned_to !== assignedFilter) return false;
+      const eff = c.assigned_to ?? c.owner_id;
+      if (assignedFilter === UNASSIGNED && eff) return false;
+      if (assignedFilter !== UNASSIGNED && eff !== assignedFilter) return false;
     }
     if (financingFilter !== ALL) {
       if (financingFilter === NO_FIN && c.financing_status) return false;
