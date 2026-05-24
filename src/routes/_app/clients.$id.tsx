@@ -425,7 +425,6 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
         {/* 3. Finanzierung & Selbstauskunft */}
         <TabsContent value="financing" className="mt-6">
           <div className="space-y-4">
-            <BenchmarkOrPlaceholder benchmark={benchmark} compact />
             <Tabs defaultValue="disclosure">
               <TabsList>
                 <TabsTrigger value="disclosure">
