@@ -151,6 +151,20 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
   const { data: benchmarkData } = useClientBenchmark(id);
   const benchmark = benchmarkData?.benchmark ?? null;
 
+  const ownerUserId = (client as any)?.assigned_to ?? (client as any)?.owner_id ?? null;
+  const { data: ownerProfile } = useQuery({
+    queryKey: ["client_owner_profile", ownerUserId],
+    enabled: !!ownerUserId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles").select("id,full_name,email")
+        .eq("id", ownerUserId).maybeSingle();
+      return data;
+    },
+    retry: false,
+  });
+  const ownerLabel = ownerProfile?.full_name || ownerProfile?.email || null;
+
   const del = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("clients").delete().eq("id", id);
