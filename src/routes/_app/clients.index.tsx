@@ -70,6 +70,21 @@ function ClientsPage() {
   const employees = employeesQuery.data ?? [];
   const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
 
+  const disclosuresQuery = useQuery({
+    queryKey: ["clients_disclosures_contact"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("client_self_disclosures")
+        .select("client_id,email,phone,mobile,street,street_number,postal_code,city");
+      return data ?? [];
+    },
+  });
+  const disclosureMap = useMemo(() => {
+    const m = new Map<string, any>();
+    (disclosuresQuery.data ?? []).forEach((d: any) => { m.set(d.client_id, d); });
+    return m;
+  }, [disclosuresQuery.data]);
+
   const showError = clientsQuery.error && !isBackendUnavailableError(clientsQuery.error);
   const queryErrorMessage = showError ? getBackendErrorMessage(clientsQuery.error) : null;
 
@@ -78,8 +93,9 @@ function ClientsPage() {
     if (archivedFilter === "archived" && !c.is_archived) return false;
     if (typeFilter !== ALL && c.client_type !== typeFilter) return false;
     if (assignedFilter !== ALL) {
-      if (assignedFilter === UNASSIGNED && c.assigned_to) return false;
-      if (assignedFilter !== UNASSIGNED && c.assigned_to !== assignedFilter) return false;
+      const eff = c.assigned_to ?? c.owner_id;
+      if (assignedFilter === UNASSIGNED && eff) return false;
+      if (assignedFilter !== UNASSIGNED && eff !== assignedFilter) return false;
     }
     if (financingFilter !== ALL) {
       if (financingFilter === NO_FIN && c.financing_status) return false;
@@ -311,9 +327,9 @@ function ClientsPage() {
                         <div className="mt-1 flex flex-wrap gap-1">
                           <Badge variant="secondary">{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                           {c.is_archived && <Badge variant="outline">Archiviert</Badge>}
-                          {c.assigned_to && employeeMap.get(c.assigned_to) && (
+                          {(c.assigned_to ?? c.owner_id) && employeeMap.get(c.assigned_to ?? c.owner_id) && (
                             <Badge variant="outline" className="text-xs">
-                              {(employeeMap.get(c.assigned_to) as any).full_name ?? (employeeMap.get(c.assigned_to) as any).email}
+                              {(employeeMap.get(c.assigned_to ?? c.owner_id) as any).full_name ?? (employeeMap.get(c.assigned_to ?? c.owner_id) as any).email}
                             </Badge>
                           )}
                         </div>
@@ -359,7 +375,15 @@ function ClientsPage() {
             </TableHeader>
             <TableBody>
               {paginated.map((c: any) => {
-                const emp = c.assigned_to ? (employeeMap.get(c.assigned_to) as any) : null;
+                const assignedId = c.assigned_to ?? c.owner_id;
+                const emp = assignedId ? (employeeMap.get(assignedId) as any) : null;
+                const disc = disclosureMap.get(c.id);
+                const email = c.email || disc?.email;
+                const phone = c.phone || disc?.mobile || disc?.phone;
+                const addr = [
+                  [disc?.street, disc?.street_number].filter(Boolean).join(" "),
+                  [disc?.postal_code, disc?.city].filter(Boolean).join(" "),
+                ].filter(Boolean).join(", ") || [c.address, [c.postal_code, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
                 return (
                   <TableRow key={c.id} data-state={selected.has(c.id) ? "selected" : undefined}>
                     <TableCell>
@@ -376,8 +400,10 @@ function ClientsPage() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       <div className="space-y-0.5">
-                        {c.email && <div>{c.email}</div>}
-                        {c.phone && <div>{c.phone}</div>}
+                        {email && <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" />{email}</div>}
+                        {phone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" />{phone}</div>}
+                        {addr && <div className="text-xs">{addr}</div>}
+                        {!email && !phone && !addr && <span>—</span>}
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
