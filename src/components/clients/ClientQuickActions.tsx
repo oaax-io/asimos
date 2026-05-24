@@ -59,16 +59,6 @@ export function ClientQuickActions({ client }: { client: any }) {
           <DropdownMenuItem onSelect={() => setAction("note")}>
             <MessageSquare className="mr-2 h-4 w-4" />Neue Notiz
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <ClientEditDialog
-            client={client}
-            onSaved={() => qc.invalidateQueries({ queryKey: ["client", client.id] })}
-            trigger={
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <Pencil className="mr-2 h-4 w-4" />Stammdaten bearbeiten
-              </DropdownMenuItem>
-            }
-          />
         </DropdownMenuContent>
       </DropdownMenu>
 
