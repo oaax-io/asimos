@@ -291,28 +291,31 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
         <TabsList className="flex-wrap">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="consulting">
-            <MessageSquare className="mr-1.5 h-4 w-4" />Beratung & Aktivität
+            <MessageSquare className="mr-1.5 h-4 w-4" />Beratung
             {appointments.length > 0 && (
               <Badge variant="secondary" className="ml-2">{appointments.length}</Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="disclosure">
+            <ClipboardList className="mr-1.5 h-4 w-4" />Selbstauskunft
+          </TabsTrigger>
           <TabsTrigger value="financing">
-            <FileSignature className="mr-1.5 h-4 w-4" />Finanzierung & Selbstauskunft
+            <FileSignature className="mr-1.5 h-4 w-4" />Finanzierung
             {dossier && (
               <Badge variant="secondary" className="ml-2">{dossier.completion_percent}%</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="search">
-            <Target className="mr-1.5 h-4 w-4" />Suchprofil & Matching
+          <TabsTrigger value="matching">
+            <Target className="mr-1.5 h-4 w-4" />Matching
             {matches.length > 0 && (
               <Badge variant="secondary" className="ml-2">{matches.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="relationships">
-            <Heart className="mr-1.5 h-4 w-4" />Beziehungen
-          </TabsTrigger>
           <TabsTrigger value="documents">
             <FileText className="mr-1.5 h-4 w-4" />Dokumente
+          </TabsTrigger>
+          <TabsTrigger value="activity">
+            <Activity className="mr-1.5 h-4 w-4" />Aktivitäten
           </TabsTrigger>
         </TabsList>
 
@@ -320,43 +323,19 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
         <TabsContent value="overview" className="mt-6 space-y-4">
           <BenchmarkOrPlaceholder benchmark={benchmark} compact />
           <ClientProfileSummary clientId={id} entityType={client.entity_type} />
-          <div className="grid gap-4 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <CardContent className="p-6">
-                <h3 className="mb-4 font-display text-lg font-semibold">Suchprofil</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <Field icon={<Banknote className="h-4 w-4" />} label="Budget" value={
-                    client.budget_min || client.budget_max
-                      ? `${client.budget_min ? formatCurrency(Number(client.budget_min)) : "—"} – ${client.budget_max ? formatCurrency(Number(client.budget_max)) : "—"}`
-                      : "—"
-                  } />
-                  <Field icon={<MapPin className="h-4 w-4" />} label="Städte" value={client.preferred_cities?.length ? client.preferred_cities.join(", ") : "—"} />
-                  <Field icon={<BedDouble className="h-4 w-4" />} label="Zimmer ab" value={client.rooms_min ?? "—"} />
-                  <Field icon={<Ruler className="h-4 w-4" />} label="Fläche ab" value={client.area_min ? `${client.area_min} m²` : "—"} />
-                  <Field icon={<Home className="h-4 w-4" />} label="Vermarktung" value={client.preferred_listing ? listingTypeLabels[client.preferred_listing as keyof typeof listingTypeLabels] : "—"} />
-                  <Field icon={<Building2 className="h-4 w-4" />} label="Objekttypen" value={
-                    client.preferred_types?.length
-                      ? client.preferred_types.map((t: string) => propertyTypeLabels[t as keyof typeof propertyTypeLabels]).join(", ")
-                      : "—"
-                  } />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="mb-3 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-display text-lg font-semibold">Notizen</h3>
-                </div>
-                {client.notes ? (
-                  <p className="whitespace-pre-wrap text-sm text-muted-foreground">{client.notes}</p>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Keine Notizen hinterlegt.</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="mb-3 flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                <h3 className="font-display text-lg font-semibold">Notizen</h3>
+              </div>
+              {client.notes ? (
+                <p className="whitespace-pre-wrap text-sm text-muted-foreground">{client.notes}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">Keine Notizen hinterlegt.</p>
+              )}
+            </CardContent>
+          </Card>
 
           {upcoming.length > 0 && (
             <Card>
@@ -368,7 +347,7 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
           )}
         </TabsContent>
 
-        {/* 2. Beratung & Aktivität */}
+        {/* 2. Beratung */}
         <TabsContent value="consulting" className="mt-6">
           <Tabs defaultValue="appointments">
             <TabsList>
@@ -377,9 +356,6 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
               </TabsTrigger>
               <TabsTrigger value="tasks">
                 <CheckSquare className="mr-1.5 h-4 w-4" />Aufgaben
-              </TabsTrigger>
-              <TabsTrigger value="activity">
-                <Activity className="mr-1.5 h-4 w-4" />Notizen & Aktivität
               </TabsTrigger>
             </TabsList>
             <TabsContent value="appointments" className="mt-4 space-y-4">
@@ -416,55 +392,44 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
             <TabsContent value="tasks" className="mt-4">
               <ClientTasksTab clientId={id} userId={user!.id} />
             </TabsContent>
-            <TabsContent value="activity" className="mt-4">
-              <ClientActivityTab clientId={id} userId={user!.id} notes={client.notes} />
-            </TabsContent>
           </Tabs>
         </TabsContent>
 
-        {/* 3. Finanzierung & Selbstauskunft */}
-        <TabsContent value="financing" className="mt-6">
-          <div className="space-y-4">
-            <Tabs defaultValue="disclosure">
-              <TabsList>
-                <TabsTrigger value="disclosure">
-                  <ClipboardList className="mr-1.5 h-4 w-4" />Selbstauskunft
-                </TabsTrigger>
-                <TabsTrigger value="dossier">
-                  <FileSignature className="mr-1.5 h-4 w-4" />Finanzierungs-Dossier
-                  {dossier && (
-                    <Badge variant="secondary" className="ml-2">{dossier.completion_percent}%</Badge>
-                  )}
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="disclosure" className="mt-4 space-y-4">
-                <SelfDisclosureLinkCard
-                  clientId={id}
-                  clientEmail={client.email}
-                  userId={user!.id}
-                />
-                <ClientSelfDisclosureTab clientId={id} />
-              </TabsContent>
-              <TabsContent value="dossier" className="mt-4">
-                <FinancingTab
-                  clientId={id}
-                  dossiers={dossiers}
-                  onChange={() => {
-                    qc.invalidateQueries({ queryKey: ["client_financing_dossiers", id] });
-                  }}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
+        {/* 3. Selbstauskunft (inkl. Beziehungen) */}
+        <TabsContent value="disclosure" className="mt-6 space-y-4">
+          <SelfDisclosureLinkCard
+            clientId={id}
+            clientEmail={client.email}
+            userId={user!.id}
+          />
+          <ClientSelfDisclosureTab clientId={id} />
+          <Card><CardContent className="p-6">
+            <div className="mb-4 flex items-center gap-2">
+              <Heart className="h-4 w-4 text-muted-foreground" />
+              <h3 className="font-display text-lg font-semibold">Beziehungen</h3>
+            </div>
+            <ClientRelationshipsTab clientId={id} />
+          </CardContent></Card>
         </TabsContent>
 
-        {/* 4. Suchprofil & Matching */}
-        <TabsContent value="search" className="mt-6 space-y-4">
+        {/* 4. Finanzierung */}
+        <TabsContent value="financing" className="mt-6">
+          <FinancingTab
+            clientId={id}
+            dossiers={dossiers}
+            onChange={() => {
+              qc.invalidateQueries({ queryKey: ["client_financing_dossiers", id] });
+            }}
+          />
+        </TabsContent>
+
+        {/* 5. Matching */}
+        <TabsContent value="matching" className="mt-6 space-y-4">
           <Card><CardContent className="p-6">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="font-display text-lg font-semibold">Passende Objekte</h3>
-                <p className="text-xs text-muted-foreground">Auf Basis von Suchprofil, Budget, Lage und Eckdaten.</p>
+                <p className="text-xs text-muted-foreground">Auf Basis von Budget, Lage und Eckdaten aus Selbstauskunft & Profil.</p>
               </div>
               <Button size="sm" variant="outline" asChild>
                 <Link to="/matching" search={{ clientId: id }}>
@@ -506,14 +471,14 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
           )}
         </TabsContent>
 
-        {/* 5. Beziehungen */}
-        <TabsContent value="relationships" className="mt-6">
-          <ClientRelationshipsTab clientId={id} />
-        </TabsContent>
-
         {/* 6. Dokumente */}
         <TabsContent value="documents" className="mt-6">
           <ClientDocumentsTab clientId={id} userId={user!.id} />
+        </TabsContent>
+
+        {/* 7. Aktivitäten */}
+        <TabsContent value="activity" className="mt-6">
+          <ClientActivityTab clientId={id} userId={user!.id} notes={client.notes} />
         </TabsContent>
       </Tabs>
     </div>
