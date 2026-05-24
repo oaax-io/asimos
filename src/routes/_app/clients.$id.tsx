@@ -191,6 +191,11 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
         )}
         <div className="flex gap-2">
           <ClientEditDialog client={client} onSaved={() => qc.invalidateQueries({ queryKey: ["client", id] })} />
+          {inDialog && (
+            <Button variant="outline" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
           <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
             <Trash2 className="h-4 w-4" />
           </Button>
