@@ -259,16 +259,16 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
         </div>
 
         {/* KPIs */}
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat icon={<Target className="h-4 w-4" />} label="Matches" value={matches.length} />
-          <Stat icon={<Calendar className="h-4 w-4" />} label="Termine" value={appointments.length} />
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Stat icon={<Target className="h-3.5 w-3.5" />} label="Matches" value={matches.length} />
+          <Stat icon={<Calendar className="h-3.5 w-3.5" />} label="Termine" value={appointments.length} />
           <Stat
-            icon={<FileSignature className="h-4 w-4" />}
+            icon={<FileSignature className="h-3.5 w-3.5" />}
             label="Finanzierung"
             value={dossier ? `${dossier.completion_percent}%` : "—"}
           />
           <Stat
-            icon={<Home className="h-4 w-4" />}
+            icon={<Home className="h-3.5 w-3.5" />}
             label={isSeller ? "Eigene Objekte" : "Budget"}
             value={isSeller ? ownProperties.length : (client.budget_max ? formatCurrency(Number(client.budget_max)) : "—")}
           />
