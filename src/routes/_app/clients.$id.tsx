@@ -263,6 +263,11 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
               <span className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" />Angelegt {formatDate(client.created_at)}
               </span>
+              {ownerLabel && (
+                <span className="flex items-center gap-1.5">
+                  <User className="h-4 w-4" />Ansprechpartner: {ownerLabel}
+                </span>
+              )}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
