@@ -374,7 +374,15 @@ function ClientsPage() {
             </TableHeader>
             <TableBody>
               {paginated.map((c: any) => {
-                const emp = c.assigned_to ? (employeeMap.get(c.assigned_to) as any) : null;
+                const assignedId = c.assigned_to ?? c.owner_id;
+                const emp = assignedId ? (employeeMap.get(assignedId) as any) : null;
+                const disc = disclosureMap.get(c.id);
+                const email = c.email || disc?.email;
+                const phone = c.phone || disc?.mobile || disc?.phone;
+                const addr = [
+                  [disc?.street, disc?.street_number].filter(Boolean).join(" "),
+                  [disc?.postal_code, disc?.city].filter(Boolean).join(" "),
+                ].filter(Boolean).join(", ") || [c.address, [c.postal_code, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
                 return (
                   <TableRow key={c.id} data-state={selected.has(c.id) ? "selected" : undefined}>
                     <TableCell>
@@ -391,8 +399,10 @@ function ClientsPage() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       <div className="space-y-0.5">
-                        {c.email && <div>{c.email}</div>}
-                        {c.phone && <div>{c.phone}</div>}
+                        {email && <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" />{email}</div>}
+                        {phone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" />{phone}</div>}
+                        {addr && <div className="text-xs">{addr}</div>}
+                        {!email && !phone && !addr && <span>—</span>}
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
