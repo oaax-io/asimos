@@ -544,9 +544,9 @@ function BenchmarkOrPlaceholder({
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-background/60 p-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{icon}{label}</div>
-      <p className="mt-1 text-lg font-semibold">{value}</p>
+    <div className="rounded-lg border bg-background/60 px-2.5 py-2">
+      <div className="flex items-center gap-1 text-[11px] text-muted-foreground">{icon}{label}</div>
+      <p className="mt-0.5 text-base font-semibold">{value}</p>
     </div>
   );
 }
