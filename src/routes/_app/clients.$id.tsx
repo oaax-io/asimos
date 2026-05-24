@@ -1010,17 +1010,190 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
 }
 
 
-function ClientActivityTab({ clientId, userId, notes }: { clientId: string; userId: string; notes: string | null }) {
+type TimelineEvent = {
+  id: string;
+  at: string;
+  icon: "create" | "edit" | "note" | "appointment" | "task" | "financing" | "disclosure" | "document" | "match" | "relationship" | "mandate" | "nda" | "delete";
+  title: string;
+  detail?: string | null;
+};
+
+const iconColor: Record<TimelineEvent["icon"], string> = {
+  create: "bg-emerald-500",
+  edit: "bg-blue-500",
+  note: "bg-primary",
+  appointment: "bg-violet-500",
+  task: "bg-amber-500",
+  financing: "bg-cyan-500",
+  disclosure: "bg-indigo-500",
+  document: "bg-slate-500",
+  match: "bg-pink-500",
+  relationship: "bg-rose-500",
+  mandate: "bg-orange-500",
+  nda: "bg-teal-500",
+  delete: "bg-red-500",
+};
+
+function ClientActivityTab({ clientId, userId, notes: _notes }: { clientId: string; userId: string; notes: string | null }) {
   const qc = useQueryClient();
   const [note, setNote] = useState("");
 
-  const { data: activity = [], isLoading } = useQuery({
-    queryKey: ["client_activity", clientId],
-    queryFn: async () => {
-      const { data } = await supabase.from("activity_logs").select("*")
-        .eq("related_type", "client").eq("related_id", clientId)
-        .order("created_at", { ascending: false }).limit(100);
-      return data ?? [];
+  const { data: timeline = [], isLoading } = useQuery({
+    queryKey: ["client_timeline", clientId],
+    queryFn: async (): Promise<TimelineEvent[]> => {
+      const [
+        clientRes, logsRes, apptRes, tasksRes, finRes, discRes,
+        docsRes, genDocsRes, matchRes, relRes, mandRes, ndaRes,
+      ] = await Promise.all([
+        supabase.from("clients").select("created_at,updated_at,full_name").eq("id", clientId).maybeSingle(),
+        supabase.from("activity_logs").select("id,action,created_at,metadata")
+          .eq("related_type", "client").eq("related_id", clientId).order("created_at", { ascending: false }).limit(200),
+        supabase.from("appointments").select("id,title,starts_at,created_at,updated_at,status").eq("client_id", clientId),
+        supabase.from("tasks").select("id,title,created_at,updated_at,status,due_date")
+          .eq("related_type", "client").eq("related_id", clientId),
+        supabase.from("financing_dossiers").select("id,title,created_at,updated_at,status,submitted_at,bank_decision_at").eq("client_id", clientId),
+        supabase.from("client_self_disclosures").select("id,status,created_at,updated_at,sent_at,submitted_at,reviewed_at").eq("client_id", clientId),
+        supabase.from("documents").select("id,file_name,created_at,document_type").eq("related_type", "client").eq("related_id", clientId),
+        supabase.from("generated_documents").select("id,title,created_at,sent_at,esign_signed_at,document_type").eq("related_type", "client").eq("related_id", clientId),
+        supabase.from("matches").select("id,created_at,status,property_id").eq("client_id", clientId),
+        supabase.from("client_relationships").select("id,created_at,relationship_type,related_client_id").eq("client_id", clientId),
+        supabase.from("mandates").select("id,created_at,updated_at,status,mandate_type").eq("client_id", clientId),
+        supabase.from("nda_agreements").select("id,created_at,updated_at,status,nda_type").eq("client_id", clientId),
+      ]);
+
+      const events: TimelineEvent[] = [];
+
+      if (clientRes.data) {
+        events.push({
+          id: `client-create-${clientId}`, at: clientRes.data.created_at,
+          icon: "create", title: "Kunde angelegt", detail: clientRes.data.full_name,
+        });
+        if (clientRes.data.updated_at && clientRes.data.updated_at !== clientRes.data.created_at) {
+          events.push({
+            id: `client-update-${clientId}`, at: clientRes.data.updated_at,
+            icon: "edit", title: "Stammdaten zuletzt geändert",
+          });
+        }
+      }
+
+      (logsRes.data ?? []).forEach((a: any) => {
+        const meta = a.metadata ?? {};
+        events.push({
+          id: `log-${a.id}`, at: a.created_at,
+          icon: meta.type === "note" ? "note" : "edit",
+          title: a.action,
+        });
+      });
+
+      (apptRes.data ?? []).forEach((x: any) => {
+        events.push({
+          id: `appt-${x.id}-c`, at: x.created_at, icon: "appointment",
+          title: `Termin angelegt: ${x.title}`,
+          detail: formatDateTime(x.starts_at),
+        });
+        if (x.updated_at && x.updated_at !== x.created_at) {
+          events.push({
+            id: `appt-${x.id}-u`, at: x.updated_at, icon: "edit",
+            title: `Termin geändert: ${x.title}`, detail: `Status: ${x.status}`,
+          });
+        }
+      });
+
+      (tasksRes.data ?? []).forEach((x: any) => {
+        events.push({
+          id: `task-${x.id}-c`, at: x.created_at, icon: "task",
+          title: `Aufgabe erstellt: ${x.title}`,
+          detail: x.due_date ? `Fällig: ${formatDate(x.due_date)}` : null,
+        });
+        if (x.updated_at && x.updated_at !== x.created_at) {
+          events.push({
+            id: `task-${x.id}-u`, at: x.updated_at, icon: "edit",
+            title: `Aufgabe aktualisiert: ${x.title}`, detail: `Status: ${x.status}`,
+          });
+        }
+      });
+
+      (finRes.data ?? []).forEach((x: any) => {
+        events.push({
+          id: `fin-${x.id}-c`, at: x.created_at, icon: "financing",
+          title: `Finanzierung erstellt${x.title ? `: ${x.title}` : ""}`,
+        });
+        if (x.submitted_at) events.push({
+          id: `fin-${x.id}-s`, at: x.submitted_at, icon: "financing",
+          title: "Finanzierung eingereicht",
+        });
+        if (x.bank_decision_at) events.push({
+          id: `fin-${x.id}-b`, at: x.bank_decision_at, icon: "financing",
+          title: "Bank-Entscheidung erhalten",
+        });
+        if (x.updated_at && x.updated_at !== x.created_at) events.push({
+          id: `fin-${x.id}-u`, at: x.updated_at, icon: "edit",
+          title: "Finanzierung aktualisiert", detail: `Status: ${x.status}`,
+        });
+      });
+
+      (discRes.data ?? []).forEach((x: any) => {
+        events.push({
+          id: `disc-${x.id}-c`, at: x.created_at, icon: "disclosure",
+          title: "Selbstauskunft angelegt",
+        });
+        if (x.sent_at) events.push({ id: `disc-${x.id}-s`, at: x.sent_at, icon: "disclosure", title: "Selbstauskunft versendet" });
+        if (x.submitted_at) events.push({ id: `disc-${x.id}-sub`, at: x.submitted_at, icon: "disclosure", title: "Selbstauskunft eingereicht" });
+        if (x.reviewed_at) events.push({ id: `disc-${x.id}-r`, at: x.reviewed_at, icon: "disclosure", title: "Selbstauskunft geprüft" });
+      });
+
+      (docsRes.data ?? []).forEach((x: any) => {
+        events.push({
+          id: `doc-${x.id}`, at: x.created_at, icon: "document",
+          title: `Dokument hochgeladen: ${x.file_name ?? "Datei"}`,
+          detail: x.document_type,
+        });
+      });
+
+      (genDocsRes.data ?? []).forEach((x: any) => {
+        events.push({
+          id: `gen-${x.id}-c`, at: x.created_at, icon: "document",
+          title: `Dokument generiert${x.title ? `: ${x.title}` : ""}`,
+        });
+        if (x.sent_at) events.push({ id: `gen-${x.id}-s`, at: x.sent_at, icon: "document", title: `Dokument versendet${x.title ? `: ${x.title}` : ""}` });
+        if (x.esign_signed_at) events.push({ id: `gen-${x.id}-sig`, at: x.esign_signed_at, icon: "document", title: `Dokument unterzeichnet${x.title ? `: ${x.title}` : ""}` });
+      });
+
+      (matchRes.data ?? []).forEach((x: any) => {
+        events.push({
+          id: `match-${x.id}`, at: x.created_at, icon: "match",
+          title: "Match-Vorschlag", detail: `Status: ${x.status}`,
+        });
+      });
+
+      (relRes.data ?? []).forEach((x: any) => {
+        events.push({
+          id: `rel-${x.id}`, at: x.created_at, icon: "relationship",
+          title: `Beziehung hinzugefügt: ${x.relationship_type}`,
+        });
+      });
+
+      (mandRes.data ?? []).forEach((x: any) => {
+        events.push({
+          id: `mand-${x.id}-c`, at: x.created_at, icon: "mandate",
+          title: `Mandat erstellt (${x.mandate_type})`, detail: `Status: ${x.status}`,
+        });
+        if (x.updated_at && x.updated_at !== x.created_at) events.push({
+          id: `mand-${x.id}-u`, at: x.updated_at, icon: "edit",
+          title: "Mandat aktualisiert", detail: `Status: ${x.status}`,
+        });
+      });
+
+      (ndaRes.data ?? []).forEach((x: any) => {
+        events.push({
+          id: `nda-${x.id}`, at: x.created_at, icon: "nda",
+          title: `NDA (${x.nda_type})`, detail: `Status: ${x.status}`,
+        });
+      });
+
+      return events
+        .filter((e) => e.at)
+        .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
     },
   });
 
@@ -1035,19 +1208,20 @@ function ClientActivityTab({ clientId, userId, notes }: { clientId: string; user
     },
     onSuccess: () => {
       toast.success("Notiz hinzugefügt"); setNote("");
-      qc.invalidateQueries({ queryKey: ["client_activity", clientId] });
+      qc.invalidateQueries({ queryKey: ["client_timeline", clientId] });
     },
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Gruppierung nach Datum
+  const groups = timeline.reduce<Record<string, TimelineEvent[]>>((acc, ev) => {
+    const key = formatDate(ev.at);
+    (acc[key] = acc[key] ?? []).push(ev);
+    return acc;
+  }, {});
+
   return (
     <div className="space-y-4">
-      {notes && (
-        <Card><CardContent className="p-6">
-          <h3 className="mb-2 font-display text-lg font-semibold">Stammnotiz</h3>
-          <p className="whitespace-pre-wrap text-sm text-muted-foreground">{notes}</p>
-        </CardContent></Card>
-      )}
       <Card><CardContent className="p-6">
         <h3 className="mb-3 font-display text-lg font-semibold">Notiz hinzufügen</h3>
         <Textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Was ist passiert?" />
@@ -1057,21 +1231,36 @@ function ClientActivityTab({ clientId, userId, notes }: { clientId: string; user
           </Button>
         </div>
       </CardContent></Card>
+
       <Card><CardContent className="p-6">
-        <h3 className="mb-4 font-display text-lg font-semibold">Aktivitätsverlauf</h3>
-        {isLoading ? <p className="text-sm text-muted-foreground">Lädt…</p>
-          : activity.length === 0 ? <p className="text-sm text-muted-foreground">Noch keine Aktivität.</p>
-          : <div className="space-y-3">
-              {activity.map((a: any) => (
-                <div key={a.id} className="flex items-start gap-3 rounded-xl border p-3">
-                  <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
-                  <div className="flex-1">
-                    <p className="text-sm">{a.action}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{formatDateTime(a.created_at)}</p>
-                  </div>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-display text-lg font-semibold">Verlauf & Changelog</h3>
+          <Badge variant="secondary" className="text-xs">{timeline.length} Ereignisse</Badge>
+        </div>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Lädt…</p>
+        ) : timeline.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Noch keine Aktivität.</p>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(groups).map(([day, items]) => (
+              <div key={day}>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{day}</p>
+                <div className="relative space-y-3 border-l pl-5">
+                  {items.map((ev) => (
+                    <div key={ev.id} className="relative">
+                      <span className={`absolute -left-[23px] top-1.5 h-2.5 w-2.5 rounded-full ${iconColor[ev.icon]}`} />
+                      <p className="text-sm">{ev.title}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {formatDateTime(ev.at)}{ev.detail ? ` · ${ev.detail}` : ""}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>}
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent></Card>
     </div>
   );
