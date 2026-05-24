@@ -1082,10 +1082,19 @@ function ClientActivityTab({ clientId, userId, notes: _notes }: { clientId: stri
 
       const events: TimelineEvent[] = [];
 
+      const creatorId = (clientRes.data as any)?.owner_id ?? (clientRes.data as any)?.assigned_to ?? null;
+      let creatorLabel: string | null = null;
+      if (creatorId) {
+        const { data: prof } = await supabase
+          .from("profiles").select("full_name,email").eq("id", creatorId).maybeSingle();
+        creatorLabel = (prof as any)?.full_name || (prof as any)?.email || null;
+      }
+
       if (clientRes.data) {
         events.push({
           id: `client-create-${clientId}`, at: clientRes.data.created_at,
-          icon: "create", title: "Kunde angelegt", detail: clientRes.data.full_name,
+          icon: "create", title: "Kunde angelegt",
+          detail: [clientRes.data.full_name, creatorLabel ? `durch ${creatorLabel}` : null].filter(Boolean).join(" · "),
         });
         if (clientRes.data.updated_at && clientRes.data.updated_at !== clientRes.data.created_at) {
           events.push({
