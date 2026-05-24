@@ -45,6 +45,7 @@ function ClientDetailRoute() {
 }
 
 export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?: boolean; onClose?: () => void }) {
+  const [editOpen, setEditOpen] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { user } = useAuth();
