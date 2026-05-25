@@ -218,6 +218,22 @@ function MediaPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["property-media"] }),
   });
 
+  const rename = useMutation({
+    mutationFn: async ({ id, title }: { id: string; title: string }) => {
+      // We only update the display title; file_url and file_name in storage remain unchanged → keine Datei geht verloren.
+      const { error } = await supabase
+        .from("property_media")
+        .update({ title: title.trim() || null })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Umbenannt");
+      qc.invalidateQueries({ queryKey: ["property-media"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const filtered = useMemo(
     () =>
       media.filter((m) => {
