@@ -1055,25 +1055,70 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
       </div>
       <div
         onDragOver={(e) => { e.preventDefault(); setListDragOver(true); }}
-        onDragLeave={() => setListDragOver(false)}
-        onDrop={(e) => {
+        onDragEnter={(e) => { e.preventDefault(); setListDragOver(true); }}
+        onDragLeave={(e) => { if (e.currentTarget === e.target) setListDragOver(false); }}
+        onDrop={async (e) => {
           e.preventDefault();
           setListDragOver(false);
-          const f = e.dataTransfer.files?.[0];
-          if (f) { setFile(f); setMode("upload"); setOpen(true); }
+          const files = Array.from(e.dataTransfer.files ?? []);
+          if (files.length === 0) return;
+          setUploading(true);
+          try {
+            for (const f of files) {
+              const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+              const path = `clients/${clientId}/${Date.now()}-${safe}`;
+              const { error: upErr } = await supabase.storage.from("documents").upload(path, f, {
+                contentType: f.type || undefined, upsert: false,
+              });
+              if (upErr) throw upErr;
+              const { error } = await supabase.from("documents").insert({
+                file_url: path, file_name: f.name,
+                document_type: "other" as any,
+                related_type: "client", related_id: clientId, uploaded_by: userId,
+              });
+              if (error) throw error;
+            }
+            toast.success(files.length > 1 ? `${files.length} Dokumente hochgeladen` : "Dokument hochgeladen");
+            qc.invalidateQueries({ queryKey: ["client_documents", clientId] });
+          } catch (err: any) {
+            toast.error(err.message ?? "Upload fehlgeschlagen");
+          } finally {
+            setUploading(false);
+          }
         }}
-        className={`rounded-xl transition ${listDragOver ? "ring-2 ring-primary ring-offset-2 bg-primary/5" : ""}`}
+        className="space-y-3"
       >
+        <div
+          className={`relative overflow-hidden rounded-xl border-2 border-dashed p-8 text-center transition-all duration-300 ${
+            listDragOver
+              ? "scale-[1.02] border-primary bg-primary/10 shadow-lg shadow-primary/20"
+              : "border-muted-foreground/30 hover:border-primary/60 hover:bg-accent/20"
+          }`}
+        >
+          {listDragOver && (
+            <div className="pointer-events-none absolute inset-0 animate-pulse bg-gradient-to-br from-primary/10 via-transparent to-primary/10" />
+          )}
+          <div className={`pointer-events-none relative flex flex-col items-center gap-2 transition-transform duration-300 ${listDragOver ? "scale-110" : ""}`}>
+            <div className={`rounded-full bg-primary/10 p-3 transition-all duration-300 ${listDragOver ? "animate-bounce bg-primary/20" : ""}`}>
+              <Upload className={`h-6 w-6 transition-colors ${listDragOver ? "text-primary" : "text-muted-foreground"}`} />
+            </div>
+            <p className={`text-sm font-semibold transition-colors ${listDragOver ? "text-primary" : ""}`}>
+              {uploading ? "Lädt hoch…" : listDragOver ? "Jetzt loslassen zum Hochladen" : "Drag & Drop – Dateien hierher ziehen"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              PDF, Bilder, Office-Dokumente — oder oben auf „Dokument hinzufügen" klicken
+            </p>
+          </div>
+        </div>
+
         {isLoading ? <p className="text-sm text-muted-foreground">Lädt…</p>
           : docs.length === 0 ? (
-              <div className="rounded-xl border-2 border-dashed border-muted-foreground/30 p-6 text-center text-sm text-muted-foreground">
-                Datei hierher ziehen oder oben auf „Dokument hinzufügen" klicken.
-              </div>
+              <p className="py-2 text-center text-xs text-muted-foreground">Noch keine Dokumente vorhanden.</p>
             )
           : <div className="space-y-2">
               {docs.map((d: any) => (
                 <button key={d.id} type="button" onClick={() => openDocument(d)}
-                  className="flex w-full items-center justify-between gap-3 rounded-xl border p-3 text-left transition hover:border-primary hover:bg-accent/30">
+                  className="flex w-full animate-fade-in items-center justify-between gap-3 rounded-xl border p-3 text-left transition hover:border-primary hover:bg-accent/30">
                   <div className="flex items-center gap-3 min-w-0">
                     <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <div className="min-w-0">
