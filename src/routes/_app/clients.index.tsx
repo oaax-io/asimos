@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Mail, Phone, Target, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X } from "lucide-react";
+import { Plus, Search, Mail, Phone, Target, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Link2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
@@ -97,6 +97,40 @@ function ClientsPage() {
     (disclosuresQuery.data ?? []).forEach((d: any) => { m.set(d.client_id, d); });
     return m;
   }, [disclosuresQuery.data]);
+
+  const relationshipsQuery = useQuery({
+    queryKey: ["clients_relationships_all"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("client_relationships")
+        .select("client_id, related_client_id, relationship_type");
+      return data ?? [];
+    },
+  });
+  const relationshipLabels: Record<string, string> = {
+    spouse: "Ehepartner",
+    co_applicant: "Antragsteller",
+    co_investor: "Co-Investor",
+    other: "Weitere",
+  };
+  const relationshipsByClient = useMemo(() => {
+    const m = new Map<string, Array<{ id: string; type: string }>>();
+    const push = (key: string, val: { id: string; type: string }) => {
+      if (!m.has(key)) m.set(key, []);
+      const arr = m.get(key)!;
+      if (!arr.some((x) => x.id === val.id)) arr.push(val);
+    };
+    (relationshipsQuery.data ?? []).forEach((r: any) => {
+      push(r.client_id, { id: r.related_client_id, type: r.relationship_type });
+      push(r.related_client_id, { id: r.client_id, type: r.relationship_type });
+    });
+    return m;
+  }, [relationshipsQuery.data]);
+  const clientNameMap = useMemo(() => {
+    const m = new Map<string, string>();
+    clients.forEach((c: any) => m.set(c.id, c.full_name));
+    return m;
+  }, [clients]);
 
   const showError = clientsQuery.error && !isBackendUnavailableError(clientsQuery.error);
   const queryErrorMessage = showError ? getBackendErrorMessage(clientsQuery.error) : null;
@@ -357,6 +391,16 @@ function ClientsPage() {
                       {c.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{c.email}</p>}
                       {c.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{c.phone}</p>}
                     </div>
+                    {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 && (
+                      <div className="mt-3 flex flex-wrap items-center gap-1">
+                        <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        {relationshipsByClient.get(c.id)!.map((rel) => (
+                          <Badge key={rel.id + rel.type} variant="secondary" className="text-xs cursor-pointer" onClick={(e) => { e.stopPropagation(); setDetailId(rel.id); }}>
+                            {relationshipLabels[rel.type] ?? rel.type}: {clientNameMap.get(rel.id) ?? "—"}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                     {(c.budget_max || c.preferred_cities?.length) && (
                       <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
                         {c.budget_max && <p>Budget: bis {formatCurrency(Number(c.budget_max))}</p>}
@@ -365,6 +409,7 @@ function ClientsPage() {
                       </div>
                     )}
                   </button>
+
                 </CardContent>
               </Card>
             );
@@ -384,6 +429,7 @@ function ClientsPage() {
                 <TableHead>E-Mail</TableHead>
                 <TableHead>PLZ / Ort</TableHead>
                 <TableHead>Zugewiesen</TableHead>
+                <TableHead>Verknüpfungen</TableHead>
                 <TableHead>Finanzierung</TableHead>
                 <TableHead className="w-10"></TableHead>
               </TableRow>
@@ -424,6 +470,27 @@ function ClientsPage() {
                       {plzOrt || <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
+                    <TableCell className="text-sm">
+                      {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {relationshipsByClient.get(c.id)!.map((rel) => (
+                            <Badge
+                              key={rel.id + rel.type}
+                              variant="secondary"
+                              className="cursor-pointer text-xs"
+                              title={`${relationshipLabels[rel.type] ?? rel.type}: ${clientNameMap.get(rel.id) ?? ""}`}
+                              onClick={(e) => { e.stopPropagation(); setDetailId(rel.id); }}
+                            >
+                              <Link2 className="mr-1 h-3 w-3" />
+                              {clientNameMap.get(rel.id) ?? "—"}
+                              <span className="ml-1 opacity-70">({relationshipLabels[rel.type] ?? rel.type})</span>
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-sm">{c.financing_status ?? <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell>
                       <DropdownMenu>
