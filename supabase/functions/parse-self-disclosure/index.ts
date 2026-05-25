@@ -201,74 +201,80 @@ function sanitizeFields(input: unknown): Record<string, string | number> {
 
 function mapAsimoFormFields(
   fields: Record<string, string>,
+  prefix: "AN" | "MI" = "AN",
 ): Record<string, string | number> {
   const mapped: Record<string, string | number> = {};
+  const P = prefix;
 
-  const setString = (key: string, ...sourceKeys: string[]) => {
-    const value = pickValue(fields, ...sourceKeys);
+  const setString = (key: string, ...suffixes: string[]) => {
+    const value = pickValue(fields, ...suffixes.map((s) => `${P}${s}`));
     if (value) mapped[key] = value;
   };
-
-  const setNumber = (key: string, ...sourceKeys: string[]) => {
-    const value = pickValue(fields, ...sourceKeys);
+  const setNumber = (key: string, ...suffixes: string[]) => {
+    const value = pickValue(fields, ...suffixes.map((s) => `${P}${s}`));
     const parsed = normalizeNumber(value);
     if (parsed !== undefined) mapped[key] = parsed;
   };
-
-  const setDate = (key: string, ...sourceKeys: string[]) => {
-    const value = pickValue(fields, ...sourceKeys);
+  const setDate = (key: string, ...suffixes: string[]) => {
+    const value = pickValue(fields, ...suffixes.map((s) => `${P}${s}`));
     const parsed = normalizeDate(value);
     if (parsed) mapped[key] = parsed;
   };
 
-  setString("first_name", "AN02");
-  setString("last_name", "AN03");
-  setString("street", "AN16", "AN04");
-  setString("street_number", "AN16x", "AN04x");
-  setString("postal_code", "AN05plz");
-  setString("city", "AN05ort");
-  setString("resident_since", "AN06");
-  setString("phone", "AN07");
-  setString("mobile", "AN07x");
-  setString("email", "AN08");
-  setDate("birth_date", "AN09");
-  setString("nationality", "AN09x");
-  setString("birth_place", "AN10");
-  setString("birth_country", "AN10x");
-  setString("marital_status", "AN11");
-  setString("tax_id_ch", "AN12");
-  setString("employment_status", "AN13");
-  setString("employer_name", "AN14");
-  setString("employer_phone", "AN17");
-  setString("employed_as", "AN18");
-  setDate("employed_since", "AN18x");
-  setNumber("salary_net_monthly", "AN19");
-  setNumber("additional_income", "AN20");
-  setNumber("annual_net_salary", "AN21");
-  setNumber("mortgage_expense", "AN23");
-  setNumber("rent_expense", "AN24");
-  setNumber("leasing_expense", "AN25");
-  setNumber("credit_expense", "AN26");
-  setNumber("life_insurance_expense", "AN27");
-  setNumber("alimony_expense", "AN28");
-  setNumber("health_insurance_expense", "AN29");
-  setNumber("property_insurance_expense", "AN30");
-  setDate("disclosure_date", "Datum", "Datum1", "Date");
-  setString("disclosure_place", "Ort1", "Ort", "Place");
-  setString("advisor_id", "Berater", "Advisor");
+  setString("first_name", "02");
+  setString("last_name", "03");
+  setString("street", "16", "04");
+  setString("street_number", "16x", "04x");
+  setString("postal_code", "05plz");
+  setString("city", "05ort");
+  setString("resident_since", "06");
+  setString("phone", "07");
+  setString("mobile", "07x");
+  setString("email", "08");
+  setDate("birth_date", "09");
+  setString("nationality", "09x");
+  setString("birth_place", "10");
+  setString("birth_country", "10x");
+  setString("marital_status", "11");
+  setString("tax_id_ch", "12");
+  setString("employment_status", "13");
+  setString("employer_name", "14");
+  setString("employer_phone", "17");
+  setString("employed_as", "18");
+  setDate("employed_since", "18x");
+  setNumber("salary_net_monthly", "19");
+  setNumber("additional_income", "20");
+  setNumber("annual_net_salary", "21");
+  setNumber("mortgage_expense", "23");
+  setNumber("rent_expense", "24");
+  setNumber("leasing_expense", "25");
+  setNumber("credit_expense", "26");
+  setNumber("life_insurance_expense", "27");
+  setNumber("alimony_expense", "28");
+  setNumber("health_insurance_expense", "29");
+  setNumber("property_insurance_expense", "30");
 
-  const employerStreet = [pickValue(fields, "AN16"), pickValue(fields, "AN16x")]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
-  const employerCity = [pickValue(fields, "AN15plz"), pickValue(fields, "AN15ort")]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
+  if (P === "AN") {
+    const dDate = normalizeDate(pickValue(fields, "Datum", "Datum1", "Date"));
+    if (dDate) mapped.disclosure_date = dDate;
+    const dPlace = pickValue(fields, "Ort1", "Ort", "Place");
+    if (dPlace) mapped.disclosure_place = dPlace;
+    const dAdvisor = pickValue(fields, "Berater", "Advisor");
+    if (dAdvisor) mapped.advisor_id = dAdvisor;
+  }
+
+  const employerStreet = [pickValue(fields, `${P}16`), pickValue(fields, `${P}16x`)]
+    .filter(Boolean).join(" ").trim();
+  const employerCity = [pickValue(fields, `${P}15plz`), pickValue(fields, `${P}15ort`)]
+    .filter(Boolean).join(" ").trim();
   const employerAddress = [employerStreet, employerCity].filter(Boolean).join(", ");
   if (employerAddress) mapped.employer_address = employerAddress;
 
   return mapped;
+}
+
+function hasMeaningfulPerson(m: Record<string, string | number>): boolean {
+  return Boolean(m.first_name || m.last_name || m.email);
 }
 
 async function extractFormFields(
