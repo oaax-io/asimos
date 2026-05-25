@@ -30,6 +30,7 @@ import { ClientSelfDisclosureTab } from "@/components/clients/ClientSelfDisclosu
 import { ClientSelfDisclosureWizard } from "@/components/clients/ClientSelfDisclosureWizard";
 import { ClientRelationshipsTab } from "@/components/clients/ClientRelationshipsTab";
 import { ClientProfileSummary } from "@/components/clients/ClientProfileSummary";
+import { ClientSmartOverview } from "@/components/clients/ClientSmartOverview";
 import { ClientEditDialog } from "@/components/clients/ClientEditDialog";
 import { ClientQuickActions } from "@/components/clients/ClientQuickActions";
 import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
@@ -37,6 +38,8 @@ import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkC
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetailRoute });
 
@@ -47,6 +50,8 @@ function ClientDetailRoute() {
 
 export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: { id: string; inDialog?: boolean; onClose?: () => void; clientIds?: string[]; onNavigate?: (id: string) => void }) {
   const [editOpen, setEditOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -339,7 +344,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex-wrap">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="consulting">
@@ -380,30 +385,33 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         {/* 1. Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
           <BenchmarkOrPlaceholder benchmark={benchmark} compact />
-          <ClientProfileSummary clientId={id} entityType={client.entity_type} />
-          <Card>
-            <CardContent className="p-6">
-              <div className="mb-3 flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                <h3 className="font-display text-lg font-semibold">Notizen</h3>
-              </div>
-              {client.notes ? (
-                <p className="whitespace-pre-wrap text-sm text-muted-foreground">{client.notes}</p>
-              ) : (
-                <p className="text-sm text-muted-foreground">Keine Notizen hinterlegt.</p>
-              )}
-            </CardContent>
-          </Card>
 
-          {upcoming.length > 0 && (
+          <ClientSmartOverview clientId={id} client={client} onJumpTab={setActiveTab} />
+
+          {client.notes && (
             <Card>
               <CardContent className="p-6">
-                <h3 className="mb-3 font-display text-lg font-semibold">Nächster Termin</h3>
-                <AppointmentRow appt={upcoming[upcoming.length - 1]} />
+                <div className="mb-3 flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-display text-lg font-semibold">Notizen</h3>
+                </div>
+                <p className="whitespace-pre-wrap text-sm text-muted-foreground">{client.notes}</p>
               </CardContent>
             </Card>
           )}
+
+          <Accordion type="single" collapsible>
+            <AccordionItem value="profile-details" className="rounded-xl border bg-card px-4">
+              <AccordionTrigger className="text-sm font-medium">
+                Profil-Details (Rollen, Suchprofile, Eigentum)
+              </AccordionTrigger>
+              <AccordionContent className="pt-2">
+                <ClientProfileSummary clientId={id} entityType={client.entity_type} />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </TabsContent>
+
 
         {/* 2. Beratung */}
         <TabsContent value="consulting" className="mt-6">
