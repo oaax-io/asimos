@@ -293,9 +293,10 @@ export function ClientProfileSummary({ clientId, entityType, sections }: Props) 
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Firmenkontakte */}
-      {entityType === "company" && (
+      {show("contacts") && entityType === "company" && (
         <Card>
           <CardContent className="p-6">
             <div className="mb-4 flex items-center gap-2">
