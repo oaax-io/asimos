@@ -1310,7 +1310,11 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               onClick={() => setStepIdx((i) => Math.max(0, i - 1))}>
               <ChevronLeft className="mr-1 h-4 w-4" /> Zurück
             </Button>
-            {!isLast ? (
+            {currentStep === "method" && form.creation_method === "upload" ? (
+              <p className="text-xs text-muted-foreground">
+                Nach erfolgreichem Upload wird der Kunde automatisch angelegt.
+              </p>
+            ) : !isLast ? (
               <Button type="button" disabled={!canProceed}
                 onClick={() => setStepIdx((i) => Math.min(steps.length - 1, i + 1))}>
                 Weiter <ChevronRight className="ml-1 h-4 w-4" />
