@@ -225,7 +225,7 @@ function MediaPage() {
                   <Input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*,video/*,.pdf,.tif,.tiff,.heic,.heif"
+                    accept="image/*,video/*,.tif,.tiff,.heic,.heif"
                     multiple
                     onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
                   />
