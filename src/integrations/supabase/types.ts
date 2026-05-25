@@ -2399,6 +2399,7 @@ export type Database = {
           created_at: string
           description: string | null
           file_name: string | null
+          file_size: number | null
           file_type: string | null
           file_url: string
           id: string
@@ -2411,6 +2412,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           file_name?: string | null
+          file_size?: number | null
           file_type?: string | null
           file_url: string
           id?: string
@@ -2423,6 +2425,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           file_name?: string | null
+          file_size?: number | null
           file_type?: string | null
           file_url?: string
           id?: string

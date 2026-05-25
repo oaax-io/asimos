@@ -1,0 +1,1 @@
+ALTER TABLE public.property_media ADD COLUMN file_size BIGINT DEFAULT NULL;
