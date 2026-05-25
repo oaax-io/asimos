@@ -324,6 +324,12 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
               <Badge variant="secondary" className="ml-2">{dossier.completion_percent}%</Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="properties">
+            <Building2 className="mr-1.5 h-4 w-4" />Immobilien
+            {(ownProperties.length + matches.length) > 0 && (
+              <Badge variant="secondary" className="ml-2">{ownProperties.length + matches.length}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="matching">
             <Target className="mr-1.5 h-4 w-4" />Matching
             {matches.length > 0 && (
