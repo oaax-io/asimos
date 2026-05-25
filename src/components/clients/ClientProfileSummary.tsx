@@ -164,7 +164,9 @@ export function ClientProfileSummary({ clientId, entityType, sections }: Props) 
   return (
     <div className="space-y-4">
       {/* Rollen */}
+      {show("roles") && (
       <Card>
+
         <CardContent className="p-6">
           <div className="mb-4 flex items-center gap-2">
             <Briefcase className="h-4 w-4 text-muted-foreground" />
