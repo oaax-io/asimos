@@ -30,6 +30,7 @@ import { ClientSelfDisclosureTab } from "@/components/clients/ClientSelfDisclosu
 import { ClientSelfDisclosureWizard } from "@/components/clients/ClientSelfDisclosureWizard";
 import { ClientRelationshipsTab } from "@/components/clients/ClientRelationshipsTab";
 import { ClientProfileSummary } from "@/components/clients/ClientProfileSummary";
+import { ClientSmartOverview } from "@/components/clients/ClientSmartOverview";
 import { ClientEditDialog } from "@/components/clients/ClientEditDialog";
 import { ClientQuickActions } from "@/components/clients/ClientQuickActions";
 import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
@@ -37,6 +38,8 @@ import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkC
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetailRoute });
 
