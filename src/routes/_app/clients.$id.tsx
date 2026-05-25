@@ -38,6 +38,7 @@ import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkC
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { ClientDocumentsTab } from "@/components/clients/ClientDocumentsTab";
+import { AssignPropertyDialog } from "@/components/clients/AssignPropertyDialog";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 
 
@@ -507,21 +508,22 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
                     : "Objekte, die diesem Kunden zugewiesen sind."}
                 </p>
               </div>
-              <Button size="sm" asChild>
-                <Link to="/properties" search={{ sellerClientId: id }}>
-                  <Building2 className="mr-1.5 h-4 w-4" />Immobilie hinzufügen
-                </Link>
-              </Button>
+              <AssignPropertyDialog clientId={id} />
             </div>
             {ownProperties.length === 0 ? (
               <div className="rounded-xl border border-dashed p-8 text-center">
                 <Building2 className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">Dieser Kunde hat noch keine zugewiesene Immobilie.</p>
-                <Button size="sm" variant="outline" className="mt-3" asChild>
-                  <Link to="/properties" search={{ sellerClientId: id }}>
-                    <Building2 className="mr-1.5 h-4 w-4" />Immobilie hinzufügen
-                  </Link>
-                </Button>
+                <div className="mt-3 inline-flex">
+                  <AssignPropertyDialog
+                    clientId={id}
+                    trigger={
+                      <Button size="sm" variant="outline">
+                        <Building2 className="mr-1.5 h-4 w-4" />Immobilie zuweisen
+                      </Button>
+                    }
+                  />
+                </div>
               </div>
             ) : (
               <div className="grid gap-3 md:grid-cols-2">
