@@ -241,13 +241,10 @@ function Dashboard() {
       )}
 
       {/* KPI cards */}
-      <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-        <KpiCard icon={UserPlus} label="Neue Leads" value={kpis.data?.newLeads ?? "—"} hint="Letzte 7 Tage" loading={kpis.isLoading} to="/leads" />
+      <div className="grid gap-2 grid-cols-1 sm:grid-cols-3">
         <KpiCard icon={Users} label="Aktive Kunden" value={kpis.data?.clients ?? "—"} loading={kpis.isLoading} to="/clients" />
         <KpiCard icon={Building2} label="Aktive Immobilien" value={kpis.data?.activeProps ?? "—"} loading={kpis.isLoading} to="/properties" />
-        <KpiCard icon={CheckSquare} label="Offene Aufgaben" value={kpis.data?.openTasks ?? "—"} loading={kpis.isLoading} to="/tasks" />
-        <KpiCard icon={CalendarDays} label="Termine heute" value={kpis.data?.todayAppts ?? "—"} loading={kpis.isLoading} to="/appointments" />
-        <KpiCard icon={FileSignature} label="Reservationen" value={kpis.data?.activeRes ?? "—"} hint="Aktiv" loading={kpis.isLoading} to="/reservations" />
+        <KpiCard icon={FileSignature} label="Aktive Reservationen" value={kpis.data?.activeRes ?? "—"} loading={kpis.isLoading} to="/reservations" />
       </div>
 
       {/* Today panel */}
@@ -255,6 +252,7 @@ function Dashboard() {
         <TodayList
           title="Termine heute"
           icon={CalendarDays}
+          count={kpis.data?.todayAppts ?? undefined}
           loading={today.isLoading}
           empty="Keine Termine heute."
           items={today.data?.appts ?? []}
@@ -270,6 +268,7 @@ function Dashboard() {
         <TodayList
           title="Überfällige Aufgaben"
           icon={Clock}
+          count={kpis.data?.openTasks ?? undefined}
           loading={today.isLoading}
           empty="Keine überfälligen Aufgaben."
           items={today.data?.overdue ?? []}
@@ -286,6 +285,8 @@ function Dashboard() {
         <TodayList
           title="Neue Leads"
           icon={UserPlus}
+          count={kpis.data?.newLeads ?? undefined}
+          countHint="7 Tage"
           loading={today.isLoading}
           empty="Noch keine Leads."
           items={today.data?.leads ?? []}
@@ -370,16 +371,23 @@ function Dashboard() {
 }
 
 // ---------- subcomponents ----------
-function TodayList({ title, icon: Icon, items, render, loading, empty }: {
+function TodayList({ title, icon: Icon, items, render, loading, empty, count, countHint }: {
   title: string; icon: any; items: any[]; render: (i: any) => React.ReactNode;
-  loading?: boolean; empty: string;
+  loading?: boolean; empty: string; count?: number | null; countHint?: string;
 }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Icon className="h-4 w-4 text-primary" />
-          {title}
+        <CardTitle className="flex items-center justify-between gap-2 text-base">
+          <span className="flex items-center gap-2">
+            <Icon className="h-4 w-4 text-primary" />
+            {title}
+          </span>
+          {count != null && (
+            <Badge variant="secondary" className="font-mono tabular-nums">
+              {count}{countHint ? <span className="ml-1 font-sans text-[10px] font-normal opacity-70">{countHint}</span> : null}
+            </Badge>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
