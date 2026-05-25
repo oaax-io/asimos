@@ -90,13 +90,20 @@ export function ClientRelationshipsTab({ clientId }: Props) {
   });
 
   const removeRel = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("client_relationships").delete().eq("id", id);
+    mutationFn: async (rel: Relationship) => {
+      const { error } = await supabase.from("client_relationships").delete().eq("id", rel.id);
       if (error) throw error;
+      // Reziproke Beziehung entfernen
+      await supabase
+        .from("client_relationships")
+        .delete()
+        .eq("client_id", rel.related_client_id)
+        .eq("related_client_id", clientId)
+        .eq("relationship_type", rel.relationship_type);
     },
     onSuccess: () => {
       toast.success("Beziehung entfernt");
-      qc.invalidateQueries({ queryKey: ["client_relationships", clientId] });
+      qc.invalidateQueries({ queryKey: ["client_relationships"] });
     },
   });
 
@@ -168,7 +175,7 @@ export function ClientRelationshipsTab({ clientId }: Props) {
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        if (confirm("Beziehung wirklich entfernen?")) removeRel.mutate(r.id);
+                        if (confirm("Beziehung wirklich entfernen?")) removeRel.mutate(r);
                       }}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -262,10 +269,26 @@ function AddRelationshipDialog({ clientId }: { clientId: string }) {
         notes: notes.trim() || null,
       });
       if (error) throw error;
+      // Reziproke Beziehung (umgekehrte Richtung) anlegen, falls noch nicht vorhanden
+      const { data: existing } = await supabase
+        .from("client_relationships")
+        .select("id")
+        .eq("client_id", selectedId)
+        .eq("related_client_id", clientId)
+        .eq("relationship_type", type)
+        .maybeSingle();
+      if (!existing) {
+        await supabase.from("client_relationships").insert({
+          client_id: selectedId,
+          related_client_id: clientId,
+          relationship_type: type,
+          notes: notes.trim() || null,
+        });
+      }
     },
     onSuccess: () => {
       toast.success("Beziehung hinzugefügt");
-      qc.invalidateQueries({ queryKey: ["client_relationships", clientId] });
+      qc.invalidateQueries({ queryKey: ["client_relationships"] });
       setOpen(false);
       setSelectedId(null);
       setNotes("");
