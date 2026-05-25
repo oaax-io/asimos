@@ -557,7 +557,7 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
           )}
         </TabsContent>
 
-        {/* 6. Dokumente */}
+        {/* 7. Dokumente */}
         <TabsContent value="documents" className="mt-6">
           <ClientDocumentsTab clientId={id} userId={user!.id} />
         </TabsContent>
