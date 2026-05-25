@@ -377,6 +377,9 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
           </TabsTrigger>
           <TabsTrigger value="documents">
             <FileText className="mr-1.5 h-4 w-4" />Dokumente
+            {documentsCount > 0 && (
+              <Badge variant="secondary" className="ml-2">{documentsCount}</Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="activity">
             <Activity className="mr-1.5 h-4 w-4" />Aktivitäten
