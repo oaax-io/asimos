@@ -281,11 +281,6 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
                 <a href={`tel:${client.phone}`}><Phone className="mr-1.5 h-4 w-4" />Anrufen</a>
               </Button>
             )}
-            <Button size="sm" asChild>
-              <Link to="/matching" search={{ clientId: id }}>
-                <Target className="mr-1.5 h-4 w-4" />Matching
-              </Link>
-            </Button>
           </div>
         </div>
 
@@ -493,20 +488,6 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
             </CardContent></Card>
           )}
 
-          <Card><CardContent className="p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h3 className="font-display text-lg font-semibold">Interessante Objekte</h3>
-                <p className="text-xs text-muted-foreground">Auf Basis von Budget, Lage und Eckdaten aus Selbstauskunft & Profil.</p>
-              </div>
-              <Button size="sm" variant="outline" asChild>
-                <Link to="/matching" search={{ clientId: id }}>
-                  <Target className="mr-1.5 h-4 w-4" />Matching-Übersicht
-                </Link>
-              </Button>
-            </div>
-            <MatchPanel direction="client-to-property" client={client} />
-          </CardContent></Card>
         </TabsContent>
 
         {/* 6. Matching */}
