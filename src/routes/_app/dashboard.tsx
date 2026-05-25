@@ -241,7 +241,7 @@ function Dashboard() {
       )}
 
       {/* KPI cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
         <KpiCard icon={UserPlus} label="Neue Leads" value={kpis.data?.newLeads ?? "—"} hint="Letzte 7 Tage" loading={kpis.isLoading} to="/leads" />
         <KpiCard icon={Users} label="Aktive Kunden" value={kpis.data?.clients ?? "—"} loading={kpis.isLoading} to="/clients" />
         <KpiCard icon={Building2} label="Aktive Immobilien" value={kpis.data?.activeProps ?? "—"} loading={kpis.isLoading} to="/properties" />
@@ -251,7 +251,7 @@ function Dashboard() {
       </div>
 
       {/* Today panel */}
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
         <TodayList
           title="Termine heute"
           icon={CalendarDays}
@@ -302,7 +302,7 @@ function Dashboard() {
       </div>
 
       {/* Pipeline */}
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <PipelineCard
           title="Leads nach Status"
           to="/leads"
@@ -322,7 +322,7 @@ function Dashboard() {
       </div>
 
       {/* Matching suggestions */}
-      <Card className="mt-6">
+      <Card className="mt-4">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Sparkles className="h-4 w-4 text-primary" />
