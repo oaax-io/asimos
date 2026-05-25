@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Search, Trash2, Upload, ExternalLink } from "lucide-react";
+import { FileText, Download, Search, Trash2, Upload, ExternalLink, HardDrive } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -46,8 +46,11 @@ function formatBytes(bytes: number | null | undefined) {
   if (!bytes) return "—";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
+
+const MAX_STORAGE = 20 * 1024 * 1024 * 1024; // 20 GB
 
 function DocumentsPage() {
   const qc = useQueryClient();
@@ -311,8 +314,31 @@ function DocumentsPage() {
         }
       />
 
+      {(() => {
+        const used = docs.reduce((sum, d) => sum + (d.size_bytes ?? 0), 0);
+        const pct = Math.min(100, Math.round((used / MAX_STORAGE) * 100));
+        return (
+          <div className="mb-4 flex items-center gap-4 rounded-xl border bg-card p-3 shadow-soft">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <HardDrive className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 flex items-center justify-between text-sm">
+                <span className="font-medium text-foreground">Speicherverbrauch</span>
+                <span className="text-muted-foreground">
+                  {formatBytes(used)} / {formatBytes(MAX_STORAGE)} ({pct}%)
+                </span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <Tabs defaultValue="uploaded" className="space-y-4">
+
         <TabsList>
           <TabsTrigger value="uploaded">Hochgeladene Dokumente</TabsTrigger>
           <TabsTrigger value="generated">Generierte Dokumente</TabsTrigger>
