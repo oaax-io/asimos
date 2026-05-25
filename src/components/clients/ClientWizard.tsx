@@ -5,7 +5,7 @@
 // client_relationships (Kontaktperson <-> Firma), activity_logs.
 // Schweizer Rechtschreibung, kein ß.
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
