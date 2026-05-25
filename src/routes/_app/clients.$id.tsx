@@ -50,6 +50,8 @@ function ClientDetailRoute() {
 
 export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: { id: string; inDialog?: boolean; onClose?: () => void; clientIds?: string[]; onNavigate?: (id: string) => void }) {
   const [editOpen, setEditOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { user } = useAuth();
