@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText, HardDrive } from "lucide-react";
+import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText, HardDrive, ChevronLeft, ChevronRight, Download, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -71,6 +71,7 @@ function MediaPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ property_id: "", title: "", description: "" });
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
   const { data: media = [], isLoading } = useQuery<MediaItem[]>({
     queryKey: ["property-media"],
@@ -372,18 +373,22 @@ function MediaPage() {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {filtered.map((m) => {
+          {filtered.map((m, idx) => {
             const url = getPublicUrl(m.file_url);
             const isVideo = m.file_type === "video";
             const isPdf = (m.file_name ?? m.file_url ?? "").toLowerCase().endsWith(".pdf");
             return (
               <div key={m.id} className="group relative overflow-hidden rounded-xl border bg-card shadow-soft">
-                <div className="relative aspect-square overflow-hidden bg-muted">
+                <button
+                  type="button"
+                  onClick={() => setViewerIndex(idx)}
+                  className="relative block aspect-square w-full overflow-hidden bg-muted text-left"
+                >
                   {isPdf ? (
-                    <a href={url} target="_blank" rel="noreferrer" className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted/60 text-muted-foreground hover:bg-muted">
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted/60 text-muted-foreground transition group-hover:bg-muted">
                       <FileText className="h-10 w-10" />
                       <span className="text-xs font-medium">PDF öffnen</span>
-                    </a>
+                    </div>
                   ) : isVideo ? (
                     <video src={url} className="h-full w-full object-cover" muted />
                   ) : url ? (
@@ -408,7 +413,7 @@ function MediaPage() {
                       {m.file_type === "floor_plan" ? "Grundriss" : m.file_type}
                     </Badge>
                   )}
-                </div>
+                </button>
                 <div className="p-3">
                   <p className="truncate text-sm font-medium">{m.title ?? m.file_name ?? "Ohne Titel"}</p>
                   {m.properties && (
@@ -466,6 +471,77 @@ function MediaPage() {
           })}
         </div>
       )}
+
+      {/* Viewer / Lightbox */}
+      {viewerIndex !== null && filtered[viewerIndex] && (() => {
+        const current = filtered[viewerIndex];
+        const url = getPublicUrl(current.file_url);
+        const isVideo = current.file_type === "video";
+        const isPdf = (current.file_name ?? current.file_url ?? "").toLowerCase().endsWith(".pdf");
+        const goPrev = () => setViewerIndex((i) => (i === null ? null : (i - 1 + filtered.length) % filtered.length));
+        const goNext = () => setViewerIndex((i) => (i === null ? null : (i + 1) % filtered.length));
+        return (
+          <div
+            className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setViewerIndex(null);
+              if (e.key === "ArrowLeft") goPrev();
+              if (e.key === "ArrowRight") goNext();
+            }}
+            tabIndex={-1}
+            ref={(el) => el?.focus()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b bg-card/80 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{current.title ?? current.file_name ?? "Ohne Titel"}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {viewerIndex + 1} / {filtered.length}
+                  {current.properties ? ` · ${current.properties.title}` : ""}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <a href={url} download={current.file_name ?? undefined} target="_blank" rel="noreferrer">
+                    <Download className="mr-1 h-4 w-4" /> Herunterladen
+                  </a>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setViewerIndex(null)} title="Schließen">
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+            <div className="relative flex flex-1 items-center justify-center overflow-hidden p-4">
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full shadow-lg"
+                onClick={goPrev}
+                title="Vorheriges"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <div className="flex h-full w-full max-w-6xl items-center justify-center">
+                {isPdf ? (
+                  <iframe src={url} className="h-full w-full rounded-lg border bg-white" title={current.file_name ?? "PDF"} />
+                ) : isVideo ? (
+                  <video src={url} controls className="max-h-full max-w-full rounded-lg" />
+                ) : (
+                  <img src={url} alt={current.title ?? current.file_name ?? ""} className="max-h-full max-w-full rounded-lg object-contain" />
+                )}
+              </div>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full shadow-lg"
+                onClick={goNext}
+                title="Nächstes"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 }
