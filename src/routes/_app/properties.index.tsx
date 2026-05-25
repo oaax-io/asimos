@@ -512,6 +512,8 @@ function PropertiesPage() {
             <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button>
           ) : undefined}
         />
+      ) : view === "map" ? (
+        <PropertiesMap properties={displayed} />
       ) : view === "grid" ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paginated.map((p: any) => {
