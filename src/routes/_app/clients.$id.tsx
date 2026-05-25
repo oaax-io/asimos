@@ -585,6 +585,8 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               )}
             </CardContent></Card>
           )}
+
+          <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["searchProfiles"]} />
         </TabsContent>
 
         {/* 7. Dokumente */}
@@ -593,7 +595,8 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         </TabsContent>
 
         {/* 8. Aktivitäten */}
-        <TabsContent value="activity" className="mt-6">
+        <TabsContent value="activity" className="mt-6 space-y-4">
+          <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["roles"]} />
           <ClientActivityTab clientId={id} userId={user!.id} notes={client.notes} />
         </TabsContent>
       </Tabs>
