@@ -399,6 +399,7 @@ function ClientsPage() {
                   [disc?.street, disc?.street_number].filter(Boolean).join(" "),
                   [disc?.postal_code, disc?.city].filter(Boolean).join(" "),
                 ].filter(Boolean).join(", ") || [c.address, [c.postal_code, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+                const plzOrt = [disc?.postal_code ?? c.postal_code, disc?.city ?? c.city].filter(Boolean).join(" ");
                 return (
                   <TableRow key={c.id} data-state={selected.has(c.id) ? "selected" : undefined}>
                     <TableCell>
@@ -411,15 +412,16 @@ function ClientsPage() {
                       {c.is_archived && <Badge variant="outline" className="ml-2">Archiviert</Badge>}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
+                      <Badge variant="outline" className={typeBadge(c.client_type)}>{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      <div className="space-y-0.5">
-                        {email && <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" />{email}</div>}
-                        {phone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" />{phone}</div>}
-                        {addr && <div className="text-xs">{addr}</div>}
-                        {!email && !phone && !addr && <span>—</span>}
-                      </div>
+                    <TableCell className="text-sm">
+                      {phone ? <a href={`tel:${phone}`} className="hover:text-primary">{phone}</a> : <span className="text-muted-foreground">—</span>}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {email ? <a href={`mailto:${email}`} className="hover:text-primary">{email}</a> : <span className="text-muted-foreground">—</span>}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {plzOrt || <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell className="text-sm">{c.financing_status ?? <span className="text-muted-foreground">—</span>}</TableCell>
