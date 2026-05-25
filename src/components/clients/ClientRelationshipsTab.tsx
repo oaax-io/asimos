@@ -90,13 +90,20 @@ export function ClientRelationshipsTab({ clientId }: Props) {
   });
 
   const removeRel = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("client_relationships").delete().eq("id", id);
+    mutationFn: async (rel: Relationship) => {
+      const { error } = await supabase.from("client_relationships").delete().eq("id", rel.id);
       if (error) throw error;
+      // Reziproke Beziehung entfernen
+      await supabase
+        .from("client_relationships")
+        .delete()
+        .eq("client_id", rel.related_client_id)
+        .eq("related_client_id", clientId)
+        .eq("relationship_type", rel.relationship_type);
     },
     onSuccess: () => {
       toast.success("Beziehung entfernt");
-      qc.invalidateQueries({ queryKey: ["client_relationships", clientId] });
+      qc.invalidateQueries({ queryKey: ["client_relationships"] });
     },
   });
 
