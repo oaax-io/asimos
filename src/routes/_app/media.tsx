@@ -108,6 +108,18 @@ function MediaPage() {
           }
         }
       }
+      // Fetch uploader profiles
+      const uploaderIds = Array.from(new Set(items.map((m) => m.uploaded_by).filter((x): x is string => !!x)));
+      if (uploaderIds.length > 0) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name, email").in("id", uploaderIds);
+        const map = new Map((profs ?? []).map((p) => [p.id, p]));
+        for (const m of items) {
+          if (m.uploaded_by) {
+            const p = map.get(m.uploaded_by);
+            if (p) m.uploader = { full_name: p.full_name, email: p.email };
+          }
+        }
+      }
       return items;
     },
   });
