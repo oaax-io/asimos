@@ -477,13 +477,12 @@ function ClientsPage() {
                             <Badge
                               key={rel.id + rel.type}
                               variant="secondary"
-                              className="cursor-pointer text-xs"
+                              className="cursor-pointer text-[10px] py-0 px-1.5 h-5"
                               title={`${relationshipLabels[rel.type] ?? rel.type}: ${clientNameMap.get(rel.id) ?? ""}`}
                               onClick={(e) => { e.stopPropagation(); setDetailId(rel.id); }}
                             >
-                              <Link2 className="mr-1 h-3 w-3" />
+                              <Link2 className="mr-0.5 h-2.5 w-2.5" />
                               {clientNameMap.get(rel.id) ?? "—"}
-                              <span className="ml-1 opacity-70">({relationshipLabels[rel.type] ?? rel.type})</span>
                             </Badge>
                           ))}
                         </div>
