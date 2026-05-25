@@ -930,46 +930,6 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
     },
   });
 
-  const create = useMutation({
-    mutationFn: async () => {
-      let fileUrl = form.file_url.trim();
-      let fileName = form.file_name.trim();
-
-      if (mode === "upload") {
-        if (!file) throw new Error("Bitte Datei auswählen");
-        setUploading(true);
-        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const path = `clients/${clientId}/${Date.now()}-${safe}`;
-        const { error: upErr } = await supabase.storage.from("documents").upload(path, file, {
-          contentType: file.type || undefined,
-          upsert: false,
-        });
-        setUploading(false);
-        if (upErr) throw upErr;
-        fileUrl = path; // storage path
-        if (!fileName) fileName = file.name;
-      } else {
-        if (!fileUrl) throw new Error("URL erforderlich");
-      }
-
-      const { error } = await supabase.from("documents").insert({
-        file_url: fileUrl, file_name: fileName || null,
-        document_type: form.document_type as any, notes: form.notes || null,
-        related_type: "client", related_id: clientId, uploaded_by: userId,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Dokument hinzugefügt");
-      setOpen(false); resetForm();
-      qc.invalidateQueries({ queryKey: ["client_documents", clientId] });
-    },
-    onError: (e: any) => {
-      setUploading(false);
-      toast.error(e.message);
-    },
-  });
-
   const openDocument = async (d: any) => {
     const url: string = d.file_url ?? "";
     if (/^https?:\/\//i.test(url)) {
