@@ -223,8 +223,10 @@ export function ClientProfileSummary({ clientId, entityType, sections }: Props) 
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Suchprofile */}
+      {show("searchProfiles") && (
       <Card>
         <CardContent className="p-6">
           <div className="mb-4 flex items-center gap-2">
