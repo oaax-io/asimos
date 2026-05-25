@@ -572,7 +572,7 @@ export function ClientSelfDisclosureWizard({
       }
       await supabase
         .from("client_self_disclosures")
-        .upsert(coPayload, { onConflict: "client_id" });
+        .upsert(coPayload as never, { onConflict: "client_id" });
 
       toast.success(`Mitantragsteller «${fullName}» angelegt und verknüpft.`);
       qc.invalidateQueries({ queryKey: ["clients"] });
