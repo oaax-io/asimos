@@ -1106,7 +1106,7 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
               {uploading ? "Lädt hoch…" : listDragOver ? "Jetzt loslassen zum Hochladen" : "Drag & Drop – Dateien hierher ziehen"}
             </p>
             <p className="text-xs text-muted-foreground">
-              PDF, Bilder, Office-Dokumente — oder oben auf „Dokument hinzufügen" klicken
+              PDF, Bilder, Office-Dokumente
             </p>
           </div>
         </div>
