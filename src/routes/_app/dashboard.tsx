@@ -52,26 +52,34 @@ function KpiCard({ icon: Icon, label, value, hint, accent, loading, to }: {
   accent?: string; loading?: boolean; to?: string;
 }) {
   const inner = (
-    <Card className="group transition hover:border-primary/40 hover:shadow-md">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
+    <Card className="group transition hover:border-primary/40 hover:shadow-sm">
+      <CardContent className="p-3">
+        <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className="text-xs text-muted-foreground">{label}</p>
             {loading ? (
-              <Skeleton className="mt-2 h-8 w-16" />
+              <Skeleton className="mt-1 h-6 w-12" />
             ) : (
-              <p className="mt-2 font-display text-3xl font-bold tracking-tight">{value}</p>
+              <p className="mt-0.5 font-display text-2xl font-bold leading-none tracking-tight">{value}</p>
             )}
-            {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+            {hint && <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>}
           </div>
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${accent ?? "bg-accent text-primary"}`}>
-            <Icon className="h-5 w-5" />
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${accent ?? "bg-accent text-primary"}`}>
+            <Icon className="h-4 w-4" />
           </div>
         </div>
       </CardContent>
     </Card>
   );
   return to ? <Link to={to}>{inner}</Link> : inner;
+}
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 5) return "Gute Nacht";
+  if (h < 12) return "Guten Morgen";
+  if (h < 18) return "Guten Tag";
+  return "Guten Abend";
 }
 
 // ---------- main ----------
