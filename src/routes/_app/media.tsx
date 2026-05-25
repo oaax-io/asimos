@@ -133,6 +133,7 @@ function MediaPage() {
           file_url: path,
           file_name: file.name,
           file_type: detectKind(file),
+          file_size: file.size,
           title: files.length === 1 && form.title ? form.title : null,
           description: files.length === 1 && form.description ? form.description : null,
           sort_order: maxSort + i + 1,
