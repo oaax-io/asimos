@@ -502,7 +502,13 @@ function ClientsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <ClientDetailDialog clientId={detailId} open={!!detailId} onOpenChange={(o) => !o && setDetailId(null)} />
+      <ClientDetailDialog
+        clientId={detailId}
+        open={!!detailId}
+        onOpenChange={(o) => !o && setDetailId(null)}
+        clientIds={filtered.map((c: any) => c.id)}
+        onNavigate={(nextId) => setDetailId(nextId)}
+      />
     </>
   );
 }

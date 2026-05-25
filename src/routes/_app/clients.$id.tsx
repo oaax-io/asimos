@@ -17,7 +17,7 @@ import {
   ArrowLeft, Mail, Phone, Trash2, RefreshCw, Pencil, FileSignature,
   Calendar, Target, Home, MapPin, Banknote, Ruler, BedDouble, Building2, MessageSquare,
   CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
-  ClipboardList, Heart, X, User, Upload,
+  ClipboardList, Heart, X, User, Upload, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import {
   clientTypeLabels, formatCurrency, formatDate, formatDateTime,
@@ -45,7 +45,7 @@ function ClientDetailRoute() {
   return <ClientDetail id={id} />;
 }
 
-export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?: boolean; onClose?: () => void }) {
+export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: { id: string; inDialog?: boolean; onClose?: () => void; clientIds?: string[]; onNavigate?: (id: string) => void }) {
   const [editOpen, setEditOpen] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -201,7 +201,45 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        {inDialog ? <div /> : (
+        {inDialog ? (
+          <div className="flex items-center gap-1">
+            {clientIds && clientIds.length > 1 && onNavigate ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={clientIds.indexOf(id) <= 0}
+                  onClick={() => {
+                    const idx = clientIds.indexOf(id);
+                    if (idx > 0) onNavigate(clientIds[idx - 1]);
+                  }}
+                  title="Vorheriger Kunde"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {clientIds.indexOf(id) + 1} / {clientIds.length}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={clientIds.indexOf(id) >= clientIds.length - 1}
+                  onClick={() => {
+                    const idx = clientIds.indexOf(id);
+                    if (idx < clientIds.length - 1) onNavigate(clientIds[idx + 1]);
+                  }}
+                  title="Nächster Kunde"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </>
+            ) : (
+              <div />
+            )}
+          </div>
+        ) : (
           <Button variant="ghost" asChild>
             <Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
           </Button>
