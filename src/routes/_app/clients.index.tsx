@@ -132,6 +132,11 @@ function ClientsPage() {
     clients.forEach((c: any) => m.set(c.id, c.full_name));
     return m;
   }, [clients]);
+  const clientInfoMap = useMemo(() => {
+    const m = new Map<string, any>();
+    clients.forEach((c: any) => m.set(c.id, c));
+    return m;
+  }, [clients]);
 
   const showError = clientsQuery.error && !isBackendUnavailableError(clientsQuery.error);
   const queryErrorMessage = showError ? getBackendErrorMessage(clientsQuery.error) : null;
