@@ -13,6 +13,17 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useAuth } from "@/lib/auth";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -220,6 +231,10 @@ export function ClientSelfDisclosureWizard({
   >("idle");
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [pendingSync, setPendingSync] = useState(false);
+  const [coApplicantPrompt, setCoApplicantPrompt] = useState<
+    null | { fields: Record<string, unknown>; creating: boolean }
+  >(null);
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastSyncedSnapshotRef = useRef("{}");
   const savingRef = useRef(false);
@@ -474,6 +489,13 @@ export function ClientSelfDisclosureWizard({
           ? `${count} Felder erkannt – bitte prüfen.`
           : `Keine zuordenbaren Felder erkannt (${data?.form_fields_count ?? 0} Formularfelder gelesen).`,
       );
+
+      const coFields = (data?.co_applicant_fields ?? null) as
+        | Record<string, unknown>
+        | null;
+      if (data?.has_co_applicant && coFields && Object.keys(coFields).length > 0) {
+        setCoApplicantPrompt({ fields: coFields, creating: false });
+      }
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : "PDF konnte nicht gelesen werden",
@@ -497,7 +519,73 @@ export function ClientSelfDisclosureWizard({
 
   const isLast = step === STEPS.length;
 
+  async function createCoApplicantClient() {
+    if (!coApplicantPrompt) return;
+    if (!user?.id) {
+      toast.error("Sie müssen angemeldet sein.");
+      return;
+    }
+    setCoApplicantPrompt({ ...coApplicantPrompt, creating: true });
+    try {
+      const f = coApplicantPrompt.fields;
+      const first = (f.first_name as string | undefined)?.trim() ?? "";
+      const last = (f.last_name as string | undefined)?.trim() ?? "";
+      const fullName = [first, last].filter(Boolean).join(" ") || "Mitantragsteller";
+
+      // 1) Mitantragsteller als Kunden anlegen
+      const { data: newClient, error: ce } = await supabase
+        .from("clients")
+        .insert({
+          full_name: fullName,
+          contact_first_name: first || null,
+          contact_last_name: last || null,
+          email: (f.email as string) ?? null,
+          phone: (f.phone as string) ?? (f.mobile as string) ?? null,
+          address: [f.street, f.street_number].filter(Boolean).join(" ") || null,
+          postal_code: (f.postal_code as string) ?? null,
+          city: (f.city as string) ?? null,
+          country: (f.country as string) ?? "CH",
+          client_type: "buyer" as const,
+          entity_type: "person",
+          owner_id: user.id,
+          assigned_to: user.id,
+        })
+        .select("id")
+        .single();
+      if (ce) throw ce;
+
+      // 2) Beziehung erfassen (Mitantragsteller / Ehepartner falls verheiratet)
+      const marital = (form.marital_status as string | undefined)?.toLowerCase() ?? "";
+      const relType = marital.includes("verheirat") || marital.includes("partner")
+        ? "spouse"
+        : "co_applicant";
+      await supabase.from("client_relationships").insert([
+        { client_id: clientId, related_client_id: newClient.id, relationship_type: relType },
+        { client_id: newClient.id, related_client_id: clientId, relationship_type: relType },
+      ]);
+
+      // 3) Eigene Selbstauskunft für Mitantragsteller anlegen
+      const coPayload: Record<string, unknown> = { client_id: newClient.id, status: "draft" };
+      for (const [k, v] of Object.entries(f)) {
+        if (v === null || v === undefined || v === "") continue;
+        coPayload[k] = v;
+      }
+      await supabase
+        .from("client_self_disclosures")
+        .upsert(coPayload as never, { onConflict: "client_id" });
+
+      toast.success(`Mitantragsteller «${fullName}» angelegt und verknüpft.`);
+      qc.invalidateQueries({ queryKey: ["clients"] });
+      qc.invalidateQueries({ queryKey: ["client_relationships", clientId] });
+      setCoApplicantPrompt(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Mitantragsteller konnte nicht angelegt werden");
+      setCoApplicantPrompt((prev) => (prev ? { ...prev, creating: false } : prev));
+    }
+  }
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[92vh] overflow-hidden p-0">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] max-h-[92vh]">
@@ -616,6 +704,51 @@ export function ClientSelfDisclosureWizard({
         </div>
       </DialogContent>
     </Dialog>
+    <AlertDialog
+      open={!!coApplicantPrompt}
+      onOpenChange={(o) => {
+        if (!o && !coApplicantPrompt?.creating) setCoApplicantPrompt(null);
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Mitantragsteller erkannt</AlertDialogTitle>
+          <AlertDialogDescription>
+            Im hochgeladenen PDF wurde ein zweiter Antragsteller gefunden
+            {coApplicantPrompt?.fields
+              ? ` (${[coApplicantPrompt.fields.first_name, coApplicantPrompt.fields.last_name]
+                  .filter(Boolean)
+                  .join(" ") || "ohne Namen"})`
+              : ""}
+            . Soll dafür ein eigener Kunde angelegt und als
+            {" "}Mitantragsteller verknüpft werden? Die Selbstauskunft des
+            Mitantragstellers wird dabei automatisch übernommen.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={coApplicantPrompt?.creating}>
+            Nein, ignorieren
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => {
+              e.preventDefault();
+              void createCoApplicantClient();
+            }}
+            disabled={coApplicantPrompt?.creating}
+          >
+            {coApplicantPrompt?.creating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Anlegen…
+              </>
+            ) : (
+              "Ja, anlegen"
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
