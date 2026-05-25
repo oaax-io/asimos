@@ -519,7 +519,73 @@ export function ClientSelfDisclosureWizard({
 
   const isLast = step === STEPS.length;
 
+  async function createCoApplicantClient() {
+    if (!coApplicantPrompt) return;
+    if (!user?.id) {
+      toast.error("Sie müssen angemeldet sein.");
+      return;
+    }
+    setCoApplicantPrompt({ ...coApplicantPrompt, creating: true });
+    try {
+      const f = coApplicantPrompt.fields;
+      const first = (f.first_name as string | undefined)?.trim() ?? "";
+      const last = (f.last_name as string | undefined)?.trim() ?? "";
+      const fullName = [first, last].filter(Boolean).join(" ") || "Mitantragsteller";
+
+      // 1) Mitantragsteller als Kunden anlegen
+      const { data: newClient, error: ce } = await supabase
+        .from("clients")
+        .insert({
+          full_name: fullName,
+          contact_first_name: first || null,
+          contact_last_name: last || null,
+          email: (f.email as string) ?? null,
+          phone: (f.phone as string) ?? (f.mobile as string) ?? null,
+          address: [f.street, f.street_number].filter(Boolean).join(" ") || null,
+          postal_code: (f.postal_code as string) ?? null,
+          city: (f.city as string) ?? null,
+          country: (f.country as string) ?? "CH",
+          client_type: "buyer" as const,
+          entity_type: "person",
+          owner_id: user.id,
+          assigned_to: user.id,
+        })
+        .select("id")
+        .single();
+      if (ce) throw ce;
+
+      // 2) Beziehung erfassen (Mitantragsteller / Ehepartner falls verheiratet)
+      const marital = (form.marital_status as string | undefined)?.toLowerCase() ?? "";
+      const relType = marital.includes("verheirat") || marital.includes("partner")
+        ? "spouse"
+        : "co_applicant";
+      await supabase.from("client_relationships").insert([
+        { client_id: clientId, related_client_id: newClient.id, relationship_type: relType },
+        { client_id: newClient.id, related_client_id: clientId, relationship_type: relType },
+      ]);
+
+      // 3) Eigene Selbstauskunft für Mitantragsteller anlegen
+      const coPayload: Record<string, unknown> = { client_id: newClient.id, status: "draft" };
+      for (const [k, v] of Object.entries(f)) {
+        if (v === null || v === undefined || v === "") continue;
+        coPayload[k] = v;
+      }
+      await supabase
+        .from("client_self_disclosures")
+        .upsert(coPayload, { onConflict: "client_id" });
+
+      toast.success(`Mitantragsteller «${fullName}» angelegt und verknüpft.`);
+      qc.invalidateQueries({ queryKey: ["clients"] });
+      qc.invalidateQueries({ queryKey: ["client_relationships", clientId] });
+      setCoApplicantPrompt(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Mitantragsteller konnte nicht angelegt werden");
+      setCoApplicantPrompt((prev) => (prev ? { ...prev, creating: false } : prev));
+    }
+  }
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[92vh] overflow-hidden p-0">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] max-h-[92vh]">
