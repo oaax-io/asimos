@@ -286,6 +286,7 @@ function PropertiesPage() {
               <TabsList>
                 <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />Kacheln</TabsTrigger>
                 <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
+                <TabsTrigger value="map"><MapIcon className="mr-1 h-4 w-4" />Karten</TabsTrigger>
               </TabsList>
             </Tabs>
             <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-1 h-4 w-4" />Immobilien importieren</Button>
