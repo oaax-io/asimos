@@ -20,11 +20,11 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "26.05.2026",
     changes: [
       { type: "feature", text: "Dokumentenverwaltung im Kundenprofil: Modal-Vorschau, Herunterladen, Umbenennen, Dokumententyp-Erkennung beim Upload, Anzahl im Tab-Badge" },
-      { type: "feature", text: "Immobilien-Zuweisung mit Rollen: Kunden können Immobilien als Eigentümer, Kaufinteressent, Mieter, Investor etc. zugewiesen werden — mit Doppelbelegungs-Warnung" },
-      { type: "feature", text: "Bidirektionale Kundenbeziehungen: Verknüpfungen (z. B. Ehepartner) sind jetzt von beiden Seiten sichtbar und lassen sich zentral verwalten" },
-      { type: "improvement", text: "Smart-Übersicht im Kunden-Modal erweitert: zeigt jetzt auch zugewiesene Immobilien (nicht nur Eigentum) und Beziehungen" },
+      { type: "feature", text: "Immobilien-Zuweisung mit Rollen: Kunden koennen Immobilien als Eigentuemer, Kaufinteressent, Mieter, Investor etc. zugewiesen werden — mit Doppelbelegungs-Warnung" },
+      { type: "feature", text: "Bidirektionale Kundenbeziehungen: Verknuepfungen (z. B. Ehepartner) sind jetzt von beiden Seiten sichtbar und lassen sich zentral verwalten" },
+      { type: "improvement", text: "Smart-Uebersicht im Kunden-Modal erweitert: zeigt jetzt auch zugewiesene Immobilien (nicht nur Eigentum) und Beziehungen" },
       { type: "improvement", text: "Immobilien-Tab im Kundenprofil zeigt eigene und zugewiesene Objekte getrennt mit Rollen-Label" },
-      { type: "fix", text: "Mediathek: Hover-Buttons über Bildern wieder korrekt sichtbar" },
+      { type: "fix", text: "Mediathek: Hover-Buttons ueber Bildern wieder korrekt sichtbar" },
       { type: "fix", text: "Dokumente nach Umbenennung konnten nicht mehr angezeigt werden — Storage-Pfad-Logik korrigiert" },
     ],
   },
@@ -33,27 +33,27 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "25.05.2026",
     changes: [
       { type: "feature", text: "Immobilien-Karten-Ansicht (Mapbox): alle Immobilien auf der Schweizer Karte, Klick zoomt zum Detail" },
-      { type: "feature", text: "Neuer Kunden-Wizard Schritt 2: manuelle Eingabe oder Selbstauskunft hochladen (KI füllt restliche Schritte automatisch)" },
-      { type: "improvement", text: "Kundenübersicht aufgeräumt: «Eigentum» unter Immobilien, «Suchprofile» unter Matching, «Rollen» unter Aktivitäten — Profil-Details-Accordion entfernt" },
-      { type: "improvement", text: "Sicherheits-Härtung: 18+ Tabellen mit striktem RLS (Besitzer/Admin), Storage-Bucket «feedback» privat, Funktionsrechte für anon/PUBLIC entzogen" },
+      { type: "feature", text: "Neuer Kunden-Wizard Schritt 2: manuelle Eingabe oder Selbstauskunft hochladen (KI fuellt restliche Schritte automatisch)" },
+      { type: "improvement", text: "Kundenuebersicht aufgeraeumt: Eigentum unter Immobilien, Suchprofile unter Matching, Rollen unter Aktivitaeten — Profil-Details-Accordion entfernt" },
+      { type: "improvement", text: "Sicherheits-Haertung: 18+ Tabellen mit striktem RLS (Besitzer/Admin), Storage-Bucket feedback privat, Funktionsrechte fuer anon/PUBLIC entzogen" },
       { type: "improvement", text: "Neue Sicherheits-Helper: can_access_property() und vereinheitlichte is_owner_or_admin() auf Basis von user_roles" },
-      { type: "improvement", text: "README & CHANGELOG im Repository ergänzt" },
-      { type: "fix", text: "«Muster-Kunde» Button aus der Kundenliste entfernt" },
+      { type: "improvement", text: "README & CHANGELOG im Repository ergaenzt" },
+      { type: "fix", text: "Muster-Kunde Button aus der Kundenliste entfernt" },
     ],
   },
   {
     version: "1.6.0",
     date: "25.05.2026",
     changes: [
-      { type: "feature", text: "Globale Suche in der Topbar: vergrößertes Overlay mit Hintergrund-Blur, durchsucht Kunden, Leads, Immobilien, Finanzierungen, Termine, Aufgaben, Dokumente & Mitarbeiter (⌘K)" },
-      { type: "feature", text: "Immobilien-Tab im Kunden-Modal mit Leerstands-Hinweis und «Immobilie hinzufügen»-Button" },
+      { type: "feature", text: "Globale Suche in der Topbar: vergroesserteres Overlay mit Hintergrund-Blur, durchsucht Kunden, Leads, Immobilien, Finanzierungen, Termine, Aufgaben, Dokumente & Mitarbeiter (⌘K)" },
+      { type: "feature", text: "Immobilien-Tab im Kunden-Modal mit Leerstands-Hinweis und Immobilie hinzufuegen-Button" },
       { type: "improvement", text: "Konsolidierung: nur noch ein einziger Matching-Tab im Kunden-Modal (Button oben & Duplikat in Immobilien-Tab entfernt)" },
-      { type: "improvement", text: "Drag-&-Drop-Upload als alleiniger Weg im Dokumente-Tab – manueller «Dokument hinzufügen»-Dialog entfernt" },
+      { type: "improvement", text: "Drag-&-Drop-Upload als alleiniger Weg im Dokumente-Tab – manueller Dokument hinzufuegen-Dialog entfernt" },
       { type: "improvement", text: "Animiertes Drag-&-Drop-Feedback (Skalierung, Puls, Bounce-Icon) beim Datei-Upload" },
-      { type: "improvement", text: "Kunden-Liste: separate Spalten für Telefon, E-Mail und PLZ/Ort statt vermischter Kontakt-Spalte" },
-      { type: "improvement", text: "Farbige Badges für Kunden-Typen (Käufer, Verkäufer, Sonstige …)" },
+      { type: "improvement", text: "Kunden-Liste: separate Spalten fuer Telefon, E-Mail und PLZ/Ort statt vermischter Kontakt-Spalte" },
+      { type: "improvement", text: "Farbige Badges fuer Kunden-Typen (Kaeufer, Verkaeufer, Sonstige …)" },
       { type: "improvement", text: "Kontakt-Tab zeigt jetzt die Angaben aus der Selbstauskunft" },
-      { type: "feature", text: "Ansprechpartner im Kunden-Modal sichtbar; Ersteller wird automatisch als Betreuer zugewiesen und in der Aktivität protokolliert" },
+      { type: "feature", text: "Ansprechpartner im Kunden-Modal sichtbar; Ersteller wird automatisch als Betreuer zugewiesen und in der Aktivitaet protokolliert" },
     ],
   },
   {
@@ -61,15 +61,15 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "12.05.2026",
     changes: [
       { type: "feature", text: "Dokumentations-Bereich mit Changelog, Roadmap, Anleitung & Support" },
-      { type: "improvement", text: "Vollständige historische Übersicht aller Releases ergänzt" },
+      { type: "improvement", text: "Vollstaendige historische Uebersicht aller Releases ergaenzt" },
     ],
   },
   {
     version: "1.4.0",
     date: "12.05.2026",
     changes: [
-      { type: "feature", text: "Drag-and-Drop Upload für Kunden-Dokumente" },
-      { type: "feature", text: "Datei-Upload zusätzlich zu Link-Hinterlegung im Kunden-Tab" },
+      { type: "feature", text: "Drag-and-Drop Upload fuer Kunden-Dokumente" },
+      { type: "feature", text: "Datei-Upload zusatzlich zu Link-Hinterlegung im Kunden-Tab" },
       { type: "improvement", text: "Nach Anlage eines Kunden direkt zum Kundenprofil statt Matching-Seite" },
       { type: "fix", text: "PDF-Generierung: Browser-Druck-Fallback bei Service-Ausfall (404)" },
     ],
@@ -79,8 +79,8 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "11.05.2026",
     changes: [
       { type: "feature", text: "Admin kann Mitarbeiter direkt anlegen und Passwort vergeben (ohne E-Mail-Einladung)" },
-      { type: "improvement", text: "E-Mail-Bestätigung für admin-erstellte Benutzer entfällt" },
-      { type: "fix", text: "Berechtigungen für is_superadmin / has_role korrigiert (Kunden-Zuweisung)" },
+      { type: "improvement", text: "E-Mail-Bestaetigung fuer admin-erstellte Benutzer entfaellt" },
+      { type: "fix", text: "Berechtigungen fuer is_superadmin / has_role korrigiert (Kunden-Zuweisung)" },
     ],
   },
   {
@@ -88,7 +88,7 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "05.05.2026",
     changes: [
       { type: "feature", text: "UBS-Checkliste & Bank-Submission-Tab in der Finanzierung" },
-      { type: "feature", text: "Dossier-Qualitäts-Score für Finanzierungsanfragen" },
+      { type: "feature", text: "Dossier-Qualitaets-Score fuer Finanzierungsanfragen" },
       { type: "improvement", text: "Generierte Dokumente pro Kunde & Immobilie auflistbar" },
       { type: "improvement", text: "Verbessertes Matching mit Benchmark-Karten" },
     ],
@@ -108,15 +108,16 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "01.04.2026",
     changes: [
       { type: "feature", text: "Kunden-, Lead-, Immobilien- & Mandatsverwaltung" },
-      { type: "feature", text: "Mandate, Reservationen, NDAs, Exposés" },
-      { type: "feature", text: "Termine, Aufgaben, Checklisten & Aktivitäten-Tracking" },
+      { type: "feature", text: "Mandate, Reservationen, NDAs, Exposees" },
+      { type: "feature", text: "Termine, Aufgaben, Checklisten & Aktivitaeten-Tracking" },
       { type: "feature", text: "Dokumentvorlagen mit Rich-Text-Editor & Generator" },
       { type: "feature", text: "Mehrere Bankkonten & Brandkit pro Firma" },
-      { type: "feature", text: "Marktanalyse für Immobilien (KI-gestützt)" },
+      { type: "feature", text: "Marktanalyse fuer Immobilien (KI-gestuetzt)" },
       { type: "feature", text: "Mehrbenutzer-Support mit Rollen & Rechten" },
       { type: "feature", text: "Lead-Import aus externen Quellen" },
       { type: "feature", text: "Property-Import & Owners-Tab" },
       { type: "feature", text: "Analytics-Dashboard mit Kennzahlen" },
+      { type: "feature", text: "Activity-Tracking: Vollstaendiger Aktivitaetslog fuer Audit-Trail" },
     ],
   },
 ];
@@ -125,26 +126,34 @@ const ROADMAP = [
   { title: "Mehrsprachigkeit (FR / IT)", status: "geplant" },
   { title: "Kalender-Sync mit Outlook & Google", status: "in Arbeit" },
   { title: "Mobile-App (iOS / Android)", status: "Konzept" },
-  { title: "KI-Assistent für E-Mail-Entwürfe", status: "geplant" },
+  { title: "KI-Assistent fuer E-Mail-Entwuerfe", status: "geplant" },
   { title: "Digitale Signatur direkt im Dossier", status: "in Arbeit" },
 ];
 
 const FAQS = [
   {
     q: "Wie lege ich einen neuen Mitarbeiter an?",
-    a: "Administration → Mitarbeiter → „Mitarbeiter hinzufügen“. Du kannst direkt ein Passwort vergeben oder generieren — keine Einladung nötig.",
+    a: "Administration → Mitarbeiter → 'Mitarbeiter hinzufuegen'. Du kannst direkt ein Passwort vergeben oder generieren — keine Einladung noetig.",
   },
   {
     q: "Warum kann sich ein Makler nicht einloggen?",
-    a: "Meist falsches Passwort (Tippfehler, unsichtbare Leerzeichen beim Kopieren). Passwort im Mitarbeiter-Dialog im Tab „Passwort“ neu setzen.",
+    a: "Meist falsches Passwort (Tippfehler, unsichtbare Leerzeichen beim Kopieren). Passwort im Mitarbeiter-Dialog im Tab 'Passwort' neu setzen.",
   },
   {
     q: "Wie lade ich ein Dokument zu einem Kunden hoch?",
-    a: "Kundenprofil → Tab „Dokumente“ → Datei in die Dropzone ziehen oder „Dokument hinzufügen“ klicken.",
+    a: "Kundenprofil → Tab 'Dokumente' → Datei in die Dropzone ziehen. Der Typ wird automatisch erkannt (z. B. Selbstauskunft, Vertrag, Pass).",
+  },
+  {
+    q: "Wie verknuepfe ich zwei Kunden (z. B. Ehepaar)?",
+    a: "Kundenprofil → Tab 'Beziehungen' → 'Beziehung hinzufuegen'. Die Verknuepfung ist automatisch bidirektional — beide Kontakte sehen einander.",
+  },
+  {
+    q: "Wie weise ich einem Kunden eine Immobilie zu?",
+    a: "Kundenprofil → Tab 'Immobilien' → 'Immobilie zuweisen'. Waehle die Immobilie und die Rolle (Eigentuemer, Kaufinteressent, Mieter etc.). Bereits als Eigentuemer zugewiesene Objekte werden blockiert.",
   },
   {
     q: "PDF-Generierung funktioniert nicht (404)",
-    a: "Der externe PDF-Service ist nicht erreichbar. Administrator muss die URL in den Cloud-Secrets prüfen.",
+    a: "Der externe PDF-Service ist nicht erreichbar. Administrator muss die URL in den Cloud-Secrets pruefen.",
   },
 ];
 
@@ -231,17 +240,17 @@ function DocsPage() {
               <section>
                 <h3 className="mb-2 font-display text-base font-semibold">Kunden & Matching</h3>
                 <p className="text-muted-foreground">
-                  Lege Kunden mit Rolle (Käufer, Verkäufer, Mieter, Vermieter, Finanzierungskunde)
-                  an. Käufer erhalten ein Suchprofil — Matching findet passende Immobilien automatisch.
-                  Verknüpfe Kunden über den Tab <strong>Beziehungen</strong> (z. B. Ehepaar, Familie).
+                  Lege Kunden mit Rolle (Kaeufer, Verkaeufer, Mieter, Vermieter, Finanzierungskunde)
+                  an. Kaeufer erhalten ein Suchprofil — Matching findet passende Immobilien automatisch.
+                  Verknuepfe Kunden ueber den Tab <strong>Beziehungen</strong> (z. B. Ehepaar, Familie).
                 </p>
               </section>
               <section>
                 <h3 className="mb-2 font-display text-base font-semibold">Immobilien-Zuweisung</h3>
                 <p className="text-muted-foreground">
                   Im Kundenprofil unter <strong>Immobilien → Immobilie zuweisen</strong> kannst du
-                  Objekte mit einer Rolle verknüpfen: Eigentümer, Kaufinteressent, Mieter, Investor
-                  etc. Doppelbelegungen als Eigentümer werden automatisch verhindert.
+                  Objekte mit einer Rolle verknuepfen: Eigentuemer, Kaufinteressent, Mieter, Investor
+                  etc. Doppelbelegungen als Eigentuemer werden automatisch verhindert.
                 </p>
               </section>
               <section>
@@ -256,7 +265,7 @@ function DocsPage() {
                 <h3 className="mb-2 font-display text-base font-semibold">Finanzierung</h3>
                 <p className="text-muted-foreground">
                   Quick-Check direkt im Kundenprofil starten, Selbstauskunft per Link einholen,
-                  PDF-Dossier für Banken generieren.
+                  PDF-Dossier fuer Banken generieren.
                 </p>
               </section>
             </CardContent>
@@ -267,7 +276,7 @@ function DocsPage() {
           <Card>
             <CardContent className="space-y-5 p-6">
               <div>
-                <h3 className="mb-3 font-display text-base font-semibold">Häufige Fragen</h3>
+                <h3 className="mb-3 font-display text-base font-semibold">Haeufige Fragen</h3>
                 <div className="space-y-3">
                   {FAQS.map((f, i) => (
                     <div key={i} className="rounded-xl border p-3">
@@ -278,9 +287,9 @@ function DocsPage() {
                 </div>
               </div>
               <div className="rounded-xl border bg-muted/30 p-4 text-sm">
-                <p className="font-medium">Weitere Hilfe nötig?</p>
+                <p className="font-medium">Weitere Hilfe noetig?</p>
                 <p className="mt-1 text-muted-foreground">
-                  Über <strong>Administration → Feedback</strong> kannst du Wünsche, Bugs und Fragen direkt einreichen.
+                  Ueber <strong>Administration → Feedback</strong> kannst du Wuensche, Bugs und Fragen direkt einreichen.
                 </p>
               </div>
             </CardContent>
