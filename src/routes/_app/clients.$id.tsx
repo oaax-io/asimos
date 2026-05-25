@@ -562,7 +562,7 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
           <ClientDocumentsTab clientId={id} userId={user!.id} />
         </TabsContent>
 
-        {/* 7. Aktivitäten */}
+        {/* 8. Aktivitäten */}
         <TabsContent value="activity" className="mt-6">
           <ClientActivityTab clientId={id} userId={user!.id} notes={client.notes} />
         </TabsContent>
