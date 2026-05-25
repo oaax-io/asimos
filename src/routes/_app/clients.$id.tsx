@@ -400,16 +400,6 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             </Card>
           )}
 
-          <Accordion type="single" collapsible>
-            <AccordionItem value="profile-details" className="rounded-xl border bg-card px-4">
-              <AccordionTrigger className="text-sm font-medium">
-                Profil-Details (Rollen, Suchprofile, Eigentum)
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <ClientProfileSummary clientId={id} entityType={client.entity_type} />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </TabsContent>
 
 
