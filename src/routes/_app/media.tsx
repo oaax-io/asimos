@@ -30,6 +30,7 @@ type MediaItem = {
   file_url: string;
   file_name: string | null;
   file_type: string | null;
+  file_size: number | null;
   title: string | null;
   description: string | null;
   is_cover: boolean;
