@@ -397,8 +397,8 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
           </TabsTrigger>
           <TabsTrigger value="properties">
             <Building2 className="mr-1.5 h-4 w-4" />Immobilien
-            {(ownProperties.length + matches.length) > 0 && (
-              <Badge variant="secondary" className="ml-2">{ownProperties.length + matches.length}</Badge>
+            {(ownProperties.length + assignedProperties.length) > 0 && (
+              <Badge variant="secondary" className="ml-2">{ownProperties.length + assignedProperties.length}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="matching">
