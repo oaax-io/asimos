@@ -172,7 +172,7 @@ type FormState = {
 };
 
 const empty: FormState = {
-  entity_type: "person", role_choice: "",
+  entity_type: "person", creation_method: "manual", role_choice: "",
   salutation: "", first_name: "", last_name: "",
   company_name: "", contact_mode: "manual", linked_contact_client_id: "",
   contact_first_name: "", contact_last_name: "",
