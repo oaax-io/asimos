@@ -338,11 +338,15 @@ Deno.serve(async (req: Request) => {
     const formFieldsCount = Object.keys(formFields).length;
     console.log("form fields extracted:", formFieldsCount);
 
-    const directFields = mapAsimoFormFields(formFields);
+    const directFields = mapAsimoFormFields(formFields, "AN");
+    const coApplicantFields = mapAsimoFormFields(formFields, "MI");
+    const hasCoApplicant = hasMeaningfulPerson(coApplicantFields);
     if (Object.keys(directFields).length > 0) {
       return new Response(
         JSON.stringify({
           fields: directFields,
+          co_applicant_fields: hasCoApplicant ? coApplicantFields : null,
+          has_co_applicant: hasCoApplicant,
           form_fields_count: formFieldsCount,
           source: "acroform",
         }),
