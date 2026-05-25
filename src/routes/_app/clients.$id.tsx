@@ -906,19 +906,8 @@ function ClientTasksTab({ clientId, userId }: { clientId: string; userId: string
 
 function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: string }) {
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<"upload" | "link">("upload");
-  const [file, setFile] = useState<File | null>(null);
-  const [dragOver, setDragOver] = useState(false);
   const [listDragOver, setListDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState({ file_name: "", file_url: "", document_type: "other", notes: "" });
-
-  const resetForm = () => {
-    setForm({ file_name: "", file_url: "", document_type: "other", notes: "" });
-    setFile(null);
-    setMode("upload");
-  };
 
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ["client_documents", clientId],
