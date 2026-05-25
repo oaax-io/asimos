@@ -392,10 +392,10 @@ function ClientsPage() {
                       {c.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{c.phone}</p>}
                     </div>
                     {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 && (
-                      <div className="mt-3 flex flex-wrap items-center gap-1">
-                        <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div className="mt-3 flex flex-wrap items-center gap-1">
+                        <Link2 className="h-3 w-3 text-muted-foreground" />
                         {relationshipsByClient.get(c.id)!.map((rel) => (
-                          <Badge key={rel.id + rel.type} variant="secondary" className="text-xs cursor-pointer" onClick={(e) => { e.stopPropagation(); setDetailId(rel.id); }}>
+                          <Badge key={rel.id + rel.type} variant="secondary" className="text-[10px] py-0 px-1.5 h-5 cursor-pointer" onClick={(e) => { e.stopPropagation(); setDetailId(rel.id); }}>
                             {relationshipLabels[rel.type] ?? rel.type}: {clientNameMap.get(rel.id) ?? "—"}
                           </Badge>
                         ))}
