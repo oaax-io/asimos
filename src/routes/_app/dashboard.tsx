@@ -371,16 +371,23 @@ function Dashboard() {
 }
 
 // ---------- subcomponents ----------
-function TodayList({ title, icon: Icon, items, render, loading, empty }: {
+function TodayList({ title, icon: Icon, items, render, loading, empty, count, countHint }: {
   title: string; icon: any; items: any[]; render: (i: any) => React.ReactNode;
-  loading?: boolean; empty: string;
+  loading?: boolean; empty: string; count?: number | null; countHint?: string;
 }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Icon className="h-4 w-4 text-primary" />
-          {title}
+        <CardTitle className="flex items-center justify-between gap-2 text-base">
+          <span className="flex items-center gap-2">
+            <Icon className="h-4 w-4 text-primary" />
+            {title}
+          </span>
+          {count != null && (
+            <Badge variant="secondary" className="font-mono tabular-nums">
+              {count}{countHint ? <span className="ml-1 font-sans text-[10px] font-normal opacity-70">{countHint}</span> : null}
+            </Badge>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
