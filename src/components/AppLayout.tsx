@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate, Outlet } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Users, UserPlus, Building2, Calendar, Target,
   Settings, LogOut, Search, Shield, Users2, CheckSquare, FileText,
@@ -20,6 +20,7 @@ import {
   SidebarProvider, SidebarTrigger, SidebarInset, useSidebar,
 } from "@/components/ui/sidebar";
 import logoAsimo from "@/assets/logo-asimo-real-estate.png";
+import { GlobalSearch } from "@/components/GlobalSearch";
 // touch
 
 const NAV_GROUPS = [
@@ -129,6 +130,18 @@ function AppSidebar() {
 export default function AppLayout({ children }: { children?: ReactNode }) {
   const { user, loading, signOut, isSuperadmin } = useAuth();
   const navigate = useNavigate();
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth", search: { mode: "signin" } });
