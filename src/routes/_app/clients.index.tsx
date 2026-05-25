@@ -22,6 +22,7 @@ import { getClients } from "@/server/crm.functions";
 import { ClientWizard } from "@/components/clients/ClientWizard";
 
 import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
