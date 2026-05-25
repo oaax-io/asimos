@@ -71,6 +71,7 @@ function MediaPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ property_id: "", title: "", description: "" });
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
   const { data: media = [], isLoading } = useQuery<MediaItem[]>({
     queryKey: ["property-media"],
