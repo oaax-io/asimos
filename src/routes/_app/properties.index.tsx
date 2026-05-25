@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, MapPin, Bed, Maximize, Search, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Upload, Building2, Layers3, ChevronRight, ChevronDown, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { Plus, MapPin, Bed, Maximize, Search, LayoutGrid, List as ListIcon, Map as MapIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Upload, Building2, Layers3, ChevronRight, ChevronDown, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { PropertiesMap } from "@/components/properties/PropertiesMap";
 import { PropertyImportDialog } from "@/components/properties/PropertyImportDialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,7 +32,7 @@ function getMediaPublicUrl(path?: string | null) {
   return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
 }
 
-type ViewMode = "grid" | "list";
+type ViewMode = "grid" | "list" | "map";
 
 function PropertiesPage() {
   const qc = useQueryClient();
@@ -285,6 +286,7 @@ function PropertiesPage() {
               <TabsList>
                 <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />Kacheln</TabsTrigger>
                 <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
+                <TabsTrigger value="map"><MapIcon className="mr-1 h-4 w-4" />Karten</TabsTrigger>
               </TabsList>
             </Tabs>
             <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-1 h-4 w-4" />Immobilien importieren</Button>
@@ -510,6 +512,8 @@ function PropertiesPage() {
             <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button>
           ) : undefined}
         />
+      ) : view === "map" ? (
+        <PropertiesMap properties={displayed} />
       ) : view === "grid" ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paginated.map((p: any) => {
@@ -689,7 +693,7 @@ function PropertiesPage() {
         </div>
       )}
 
-      {displayed.length > 0 && (
+      {displayed.length > 0 && view !== "map" && (
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <span>

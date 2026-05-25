@@ -13,6 +13,66 @@ export type AddressSuggestion = {
   latitude: number | null;
 };
 
+export const getMapboxToken = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ token: string | null }> => {
+    return { token: process.env.MAPBOX_PUBLIC_TOKEN ?? null };
+  },
+);
+
+export type GeocodedPoint = {
+  id: string;
+  longitude: number;
+  latitude: number;
+};
+
+export const geocodeAddresses = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z
+      .object({
+        items: z
+          .array(
+            z.object({
+              id: z.string(),
+              query: z.string().min(2),
+              country: z.string().optional(),
+            }),
+          )
+          .max(200),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }): Promise<GeocodedPoint[]> => {
+    const token = process.env.MAPBOX_PUBLIC_TOKEN;
+    if (!token) return [];
+
+    const out: GeocodedPoint[] = [];
+    await Promise.all(
+      data.items.map(async (it) => {
+        const params = new URLSearchParams({
+          access_token: token,
+          limit: "1",
+          language: "de",
+          types: "address,place,postcode,locality",
+        });
+        if (it.country) params.set("country", it.country);
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+          it.query,
+        )}.json?${params.toString()}`;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) return;
+          const json = (await res.json()) as any;
+          const f = json.features?.[0];
+          if (!f?.center) return;
+          out.push({ id: it.id, longitude: f.center[0], latitude: f.center[1] });
+        } catch {
+          /* ignore */
+        }
+      }),
+    );
+    return out;
+  });
+
 export const searchAddress = createServerFn({ method: "GET" })
   .inputValidator((data) =>
     z
