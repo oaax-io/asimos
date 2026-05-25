@@ -391,6 +391,16 @@ function ClientsPage() {
                       {c.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{c.email}</p>}
                       {c.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{c.phone}</p>}
                     </div>
+                    {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 && (
+                      <div className="mt-3 flex flex-wrap items-center gap-1">
+                        <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        {relationshipsByClient.get(c.id)!.map((rel) => (
+                          <Badge key={rel.id + rel.type} variant="secondary" className="text-xs cursor-pointer" onClick={(e) => { e.stopPropagation(); setDetailId(rel.id); }}>
+                            {relationshipLabels[rel.type] ?? rel.type}: {clientNameMap.get(rel.id) ?? "—"}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                     {(c.budget_max || c.preferred_cities?.length) && (
                       <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
                         {c.budget_max && <p>Budget: bis {formatCurrency(Number(c.budget_max))}</p>}
@@ -399,6 +409,7 @@ function ClientsPage() {
                       </div>
                     )}
                   </button>
+
                 </CardContent>
               </Card>
             );
