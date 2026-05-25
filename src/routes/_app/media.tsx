@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -225,7 +225,7 @@ function MediaPage() {
                   <Input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*,video/*,.pdf,.tif,.tiff,.heic,.heif"
+                    accept="image/*,video/*,.tif,.tiff,.heic,.heif"
                     multiple
                     onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
                   />
@@ -312,10 +312,16 @@ function MediaPage() {
           {filtered.map((m) => {
             const url = getPublicUrl(m.file_url);
             const isVideo = m.file_type === "video";
+            const isPdf = (m.file_name ?? m.file_url ?? "").toLowerCase().endsWith(".pdf");
             return (
               <div key={m.id} className="group relative overflow-hidden rounded-xl border bg-card shadow-soft">
                 <div className="relative aspect-square overflow-hidden bg-muted">
-                  {isVideo ? (
+                  {isPdf ? (
+                    <a href={url} target="_blank" rel="noreferrer" className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted/60 text-muted-foreground hover:bg-muted">
+                      <FileText className="h-10 w-10" />
+                      <span className="text-xs font-medium">PDF öffnen</span>
+                    </a>
+                  ) : isVideo ? (
                     <video src={url} className="h-full w-full object-cover" muted />
                   ) : url ? (
                     <img
@@ -357,7 +363,7 @@ function MediaPage() {
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="h-8 w-8 bg-card/95 border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+                      className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
                       title="Als Titelbild setzen"
                       onClick={() => setCover.mutate(m)}
                     >
@@ -367,7 +373,7 @@ function MediaPage() {
                   <Button
                     variant="secondary"
                     size="icon"
-                    className="h-8 w-8 bg-card/95 border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+                    className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
                     title="Nach oben"
                     onClick={() => moveSort.mutate({ item: m, dir: -1 })}
                   >
@@ -376,7 +382,7 @@ function MediaPage() {
                   <Button
                     variant="secondary"
                     size="icon"
-                    className="h-8 w-8 bg-card/95 border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+                    className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
                     title="Nach unten"
                     onClick={() => moveSort.mutate({ item: m, dir: 1 })}
                   >
@@ -385,7 +391,7 @@ function MediaPage() {
                   <Button
                     variant="secondary"
                     size="icon"
-                    className="h-8 w-8 bg-card/95 border border-border shadow-md backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                    className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground transition-colors"
                     title="Löschen"
                     onClick={() => remove.mutate(m)}
                   >
