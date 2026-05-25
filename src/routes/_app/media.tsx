@@ -36,7 +36,9 @@ type MediaItem = {
   is_cover: boolean;
   sort_order: number;
   created_at: string;
+  uploaded_by: string | null;
   properties?: { title: string; city: string | null } | null;
+  uploader?: { full_name: string | null; email: string | null } | null;
 };
 
 function getPublicUrl(path: string) {
