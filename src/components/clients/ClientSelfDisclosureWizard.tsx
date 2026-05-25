@@ -704,6 +704,51 @@ export function ClientSelfDisclosureWizard({
         </div>
       </DialogContent>
     </Dialog>
+    <AlertDialog
+      open={!!coApplicantPrompt}
+      onOpenChange={(o) => {
+        if (!o && !coApplicantPrompt?.creating) setCoApplicantPrompt(null);
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Mitantragsteller erkannt</AlertDialogTitle>
+          <AlertDialogDescription>
+            Im hochgeladenen PDF wurde ein zweiter Antragsteller gefunden
+            {coApplicantPrompt?.fields
+              ? ` (${[coApplicantPrompt.fields.first_name, coApplicantPrompt.fields.last_name]
+                  .filter(Boolean)
+                  .join(" ") || "ohne Namen"})`
+              : ""}
+            . Soll dafür ein eigener Kunde angelegt und als
+            {" "}Mitantragsteller verknüpft werden? Die Selbstauskunft des
+            Mitantragstellers wird dabei automatisch übernommen.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={coApplicantPrompt?.creating}>
+            Nein, ignorieren
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => {
+              e.preventDefault();
+              void createCoApplicantClient();
+            }}
+            disabled={coApplicantPrompt?.creating}
+          >
+            {coApplicantPrompt?.creating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Anlegen…
+              </>
+            ) : (
+              "Ja, anlegen"
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
