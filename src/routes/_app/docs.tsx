@@ -16,6 +16,19 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.7.0",
+    date: "25.05.2026",
+    changes: [
+      { type: "feature", text: "Immobilien-Karten-Ansicht (Mapbox): alle Immobilien auf der Schweizer Karte, Klick zoomt zum Detail" },
+      { type: "feature", text: "Neuer Kunden-Wizard Schritt 2: manuelle Eingabe oder Selbstauskunft hochladen (KI füllt restliche Schritte automatisch)" },
+      { type: "improvement", text: "Kundenübersicht aufgeräumt: «Eigentum» unter Immobilien, «Suchprofile» unter Matching, «Rollen» unter Aktivitäten — Profil-Details-Accordion entfernt" },
+      { type: "improvement", text: "Sicherheits-Härtung: 18+ Tabellen mit striktem RLS (Besitzer/Admin), Storage-Bucket «feedback» privat, Funktionsrechte für anon/PUBLIC entzogen" },
+      { type: "improvement", text: "Neue Sicherheits-Helper: can_access_property() und vereinheitlichte is_owner_or_admin() auf Basis von user_roles" },
+      { type: "improvement", text: "README & CHANGELOG im Repository ergänzt" },
+      { type: "fix", text: "«Muster-Kunde» Button aus der Kundenliste entfernt" },
+    ],
+  },
+  {
     version: "1.6.0",
     date: "25.05.2026",
     changes: [
