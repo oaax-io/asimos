@@ -21,7 +21,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
   ChevronLeft, ChevronRight, Check, Loader2, User, Building2, Mail,
-  Target, Wallet, Home, Users, ClipboardCheck, Tag, Briefcase,
+  Target, Wallet, Home, Users, ClipboardCheck, Tag, Briefcase, Upload, FileText, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { propertyTypeLabels } from "@/lib/format";
