@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/lib/auth";
 import {
   Building2, Users, UserPlus, CheckSquare, CalendarDays, FileSignature,
   ArrowRight, Plus, Upload, Sparkles, AlertTriangle, Clock, ChevronDown,
@@ -52,20 +52,20 @@ function KpiCard({ icon: Icon, label, value, hint, accent, loading, to }: {
   accent?: string; loading?: boolean; to?: string;
 }) {
   const inner = (
-    <Card className="group transition hover:border-primary/40 hover:shadow-md">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
+    <Card className="group transition hover:border-primary/40 hover:shadow-sm">
+      <CardContent className="p-3">
+        <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className="text-xs text-muted-foreground">{label}</p>
             {loading ? (
-              <Skeleton className="mt-2 h-8 w-16" />
+              <Skeleton className="mt-1 h-6 w-12" />
             ) : (
-              <p className="mt-2 font-display text-3xl font-bold tracking-tight">{value}</p>
+              <p className="mt-0.5 font-display text-2xl font-bold leading-none tracking-tight">{value}</p>
             )}
-            {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+            {hint && <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>}
           </div>
-          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${accent ?? "bg-accent text-primary"}`}>
-            <Icon className="h-5 w-5" />
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${accent ?? "bg-accent text-primary"}`}>
+            <Icon className="h-4 w-4" />
           </div>
         </div>
       </CardContent>
@@ -74,8 +74,29 @@ function KpiCard({ icon: Icon, label, value, hint, accent, loading, to }: {
   return to ? <Link to={to}>{inner}</Link> : inner;
 }
 
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 5) return "Gute Nacht";
+  if (h < 12) return "Guten Morgen";
+  if (h < 18) return "Guten Tag";
+  return "Guten Abend";
+}
+
 // ---------- main ----------
 function Dashboard() {
+  const { user } = useAuth();
+  const profile = useQuery({
+    queryKey: ["dashboard", "profile", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("full_name").eq("id", user!.id).maybeSingle();
+      return data;
+    },
+  });
+  const displayName = (profile.data?.full_name?.trim().split(/\s+/)[0])
+    || user?.user_metadata?.full_name?.trim().split(/\s+/)[0]
+    || user?.email?.split("@")[0]
+    || "";
   const kpis = useQuery({
     queryKey: ["dashboard", "kpis"],
     queryFn: async () => {
@@ -169,44 +190,48 @@ function Dashboard() {
 
   return (
     <>
-      <PageHeader
-        title="Dashboard"
-        description="Übersicht über dein Tagesgeschäft"
-        action={
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm">
-                <Plus className="mr-1 h-4 w-4" />
-                Schnellaktionen
-                <ChevronDown className="ml-1 h-4 w-4 opacity-70" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Neu erfassen</DropdownMenuLabel>
-              <DropdownMenuItem asChild>
-                <Link to="/leads"><UserPlus className="mr-2 h-4 w-4" />Lead erfassen</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/clients"><Users className="mr-2 h-4 w-4" />Kunde erfassen</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/properties"><Building2 className="mr-2 h-4 w-4" />Immobilie erfassen</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/appointments"><CalendarDays className="mr-2 h-4 w-4" />Termin erstellen</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/tasks"><CheckSquare className="mr-2 h-4 w-4" />Aufgabe erstellen</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/documents"><Upload className="mr-2 h-4 w-4" />Dokument hochladen</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        }
-      />
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold tracking-tight">
+            {getGreeting()}{displayName ? `, ${displayName}` : ""} 👋
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long" })} · Übersicht über dein Tagesgeschäft
+          </p>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm">
+              <Plus className="mr-1 h-4 w-4" />
+              Schnellaktionen
+              <ChevronDown className="ml-1 h-4 w-4 opacity-70" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Neu erfassen</DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+              <Link to="/leads"><UserPlus className="mr-2 h-4 w-4" />Lead erfassen</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/clients"><Users className="mr-2 h-4 w-4" />Kunde erfassen</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/properties"><Building2 className="mr-2 h-4 w-4" />Immobilie erfassen</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/appointments"><CalendarDays className="mr-2 h-4 w-4" />Termin erstellen</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/tasks"><CheckSquare className="mr-2 h-4 w-4" />Aufgabe erstellen</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/documents"><Upload className="mr-2 h-4 w-4" />Dokument hochladen</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       {anyError && (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -216,7 +241,7 @@ function Dashboard() {
       )}
 
       {/* KPI cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
         <KpiCard icon={UserPlus} label="Neue Leads" value={kpis.data?.newLeads ?? "—"} hint="Letzte 7 Tage" loading={kpis.isLoading} to="/leads" />
         <KpiCard icon={Users} label="Aktive Kunden" value={kpis.data?.clients ?? "—"} loading={kpis.isLoading} to="/clients" />
         <KpiCard icon={Building2} label="Aktive Immobilien" value={kpis.data?.activeProps ?? "—"} loading={kpis.isLoading} to="/properties" />
@@ -226,7 +251,7 @@ function Dashboard() {
       </div>
 
       {/* Today panel */}
-      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
         <TodayList
           title="Termine heute"
           icon={CalendarDays}
@@ -277,7 +302,7 @@ function Dashboard() {
       </div>
 
       {/* Pipeline */}
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <PipelineCard
           title="Leads nach Status"
           to="/leads"
@@ -297,7 +322,7 @@ function Dashboard() {
       </div>
 
       {/* Matching suggestions */}
-      <Card className="mt-6">
+      <Card className="mt-4">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Sparkles className="h-4 w-4 text-primary" />
