@@ -906,19 +906,8 @@ function ClientTasksTab({ clientId, userId }: { clientId: string; userId: string
 
 function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: string }) {
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<"upload" | "link">("upload");
-  const [file, setFile] = useState<File | null>(null);
-  const [dragOver, setDragOver] = useState(false);
   const [listDragOver, setListDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [form, setForm] = useState({ file_name: "", file_url: "", document_type: "other", notes: "" });
-
-  const resetForm = () => {
-    setForm({ file_name: "", file_url: "", document_type: "other", notes: "" });
-    setFile(null);
-    setMode("upload");
-  };
 
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ["client_documents", clientId],
@@ -927,46 +916,6 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
         .eq("related_type", "client").eq("related_id", clientId)
         .order("created_at", { ascending: false });
       return data ?? [];
-    },
-  });
-
-  const create = useMutation({
-    mutationFn: async () => {
-      let fileUrl = form.file_url.trim();
-      let fileName = form.file_name.trim();
-
-      if (mode === "upload") {
-        if (!file) throw new Error("Bitte Datei auswählen");
-        setUploading(true);
-        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const path = `clients/${clientId}/${Date.now()}-${safe}`;
-        const { error: upErr } = await supabase.storage.from("documents").upload(path, file, {
-          contentType: file.type || undefined,
-          upsert: false,
-        });
-        setUploading(false);
-        if (upErr) throw upErr;
-        fileUrl = path; // storage path
-        if (!fileName) fileName = file.name;
-      } else {
-        if (!fileUrl) throw new Error("URL erforderlich");
-      }
-
-      const { error } = await supabase.from("documents").insert({
-        file_url: fileUrl, file_name: fileName || null,
-        document_type: form.document_type as any, notes: form.notes || null,
-        related_type: "client", related_id: clientId, uploaded_by: userId,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Dokument hinzugefügt");
-      setOpen(false); resetForm();
-      qc.invalidateQueries({ queryKey: ["client_documents", clientId] });
-    },
-    onError: (e: any) => {
-      setUploading(false);
-      toast.error(e.message);
     },
   });
 
@@ -988,70 +937,6 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
     <Card><CardContent className="p-6">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold">Dokumente</h3>
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
-          <Button size="sm" onClick={() => setOpen(true)}><Plus className="mr-1.5 h-4 w-4" />Dokument hinzufügen</Button>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Dokument hinzufügen</DialogTitle></DialogHeader>
-            <Tabs value={mode} onValueChange={(v) => setMode(v as "upload" | "link")}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="upload">Datei hochladen</TabsTrigger>
-                <TabsTrigger value="link">Link</TabsTrigger>
-              </TabsList>
-              <TabsContent value="upload" className="space-y-3 pt-3">
-                <div>
-                  <Label>Datei</Label>
-                  <label
-                    htmlFor="client-doc-file"
-                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                    onDragLeave={() => setDragOver(false)}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      setDragOver(false);
-                      const f = e.dataTransfer.files?.[0];
-                      if (f) setFile(f);
-                    }}
-                    className={`mt-1 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed p-6 text-center transition ${
-                      dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/30 hover:border-primary/60 hover:bg-accent/30"
-                    }`}
-                  >
-                    <Plus className="h-5 w-5 text-muted-foreground" />
-                    <p className="text-sm font-medium">Datei hierher ziehen oder klicken</p>
-                    <p className="text-xs text-muted-foreground">PDF, Bilder, Office-Dokumente …</p>
-                    <input id="client-doc-file" type="file" className="hidden"
-                      onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-                  </label>
-                  {file && <p className="mt-1 text-xs text-muted-foreground">{file.name} · {(file.size / 1024).toFixed(0)} KB</p>}
-                </div>
-                <div><Label>Name (optional)</Label><Input value={form.file_name} onChange={(e) => setForm({ ...form, file_name: e.target.value })} placeholder="Dateiname" /></div>
-              </TabsContent>
-              <TabsContent value="link" className="space-y-3 pt-3">
-                <div><Label>Name</Label><Input value={form.file_name} onChange={(e) => setForm({ ...form, file_name: e.target.value })} /></div>
-                <div><Label>URL</Label><Input value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })} placeholder="https://…" /></div>
-              </TabsContent>
-            </Tabs>
-            <div className="space-y-3">
-              <div>
-                <Label>Typ</Label>
-                <Select value={form.document_type} onValueChange={(v) => setForm({ ...form, document_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="contract">Vertrag</SelectItem>
-                    <SelectItem value="id">Ausweis</SelectItem>
-                    <SelectItem value="financing">Finanzierung</SelectItem>
-                    <SelectItem value="expose">Exposé</SelectItem>
-                    <SelectItem value="other">Sonstige</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div><Label>Notizen</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-            </div>
-            <DialogFooter>
-              <Button onClick={() => create.mutate()} disabled={create.isPending || uploading || (mode === "upload" ? !file : !form.file_url)}>
-                {uploading ? "Lädt hoch…" : "Speichern"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
       <div
         onDragOver={(e) => { e.preventDefault(); setListDragOver(true); }}
@@ -1106,7 +991,7 @@ function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: st
               {uploading ? "Lädt hoch…" : listDragOver ? "Jetzt loslassen zum Hochladen" : "Drag & Drop – Dateien hierher ziehen"}
             </p>
             <p className="text-xs text-muted-foreground">
-              PDF, Bilder, Office-Dokumente — oder oben auf „Dokument hinzufügen" klicken
+              PDF, Bilder, Office-Dokumente
             </p>
           </div>
         </div>
