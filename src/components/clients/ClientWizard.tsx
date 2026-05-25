@@ -204,11 +204,16 @@ const num = (v: string): number | null => {
 };
 
 // ----- Dynamische Schritte je nach Rolle -----
-type StepKey = "entity" | "role" | "stamm" | "company_contact" | "search"
+type StepKey = "entity" | "method" | "role" | "stamm" | "company_contact" | "search"
   | "investment" | "financing" | "property" | "ownership" | "tags" | "review";
 
-function buildSteps(entity: EntityType, role: RoleChoice | ""): StepKey[] {
-  const s: StepKey[] = ["entity", "role"];
+function buildSteps(entity: EntityType, role: RoleChoice | "", method: "manual" | "upload"): StepKey[] {
+  const s: StepKey[] = ["entity"];
+  if (entity === "person") {
+    s.push("method");
+    if (method === "upload") return s; // Upload-Schritt ist terminal
+  }
+  s.push("role");
   if (!role) return s;
   s.push("stamm");
   if (entity === "company") s.push("company_contact");
@@ -238,6 +243,7 @@ function buildSteps(entity: EntityType, role: RoleChoice | ""): StepKey[] {
 
 const STEP_LABELS: Record<StepKey, string> = {
   entity: "Art",
+  method: "Erfassungsart",
   role: "Rolle",
   stamm: "Stammdaten",
   company_contact: "Kontaktperson",
