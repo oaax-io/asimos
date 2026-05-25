@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText } from "lucide-react";
+import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText, HardDrive } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +30,7 @@ type MediaItem = {
   file_url: string;
   file_name: string | null;
   file_type: string | null;
+  file_size: number | null;
   title: string | null;
   description: string | null;
   is_cover: boolean;
@@ -49,6 +50,16 @@ function detectKind(file: File): string {
   if (file.name.toLowerCase().includes("grundriss") || file.name.toLowerCase().includes("floor")) return "floor_plan";
   return "other";
 }
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+}
+
+const MAX_STORAGE = 20 * 1024 * 1024 * 1024; // 20 GB
 
 function MediaPage() {
   const qc = useQueryClient();
@@ -70,7 +81,31 @@ function MediaPage() {
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data as MediaItem[]) ?? [];
+      const items = (data as MediaItem[]) ?? [];
+      // Background: fill missing file_size from storage metadata
+      const missing = items.filter((m) => m.file_size == null && m.file_url && !m.file_url.startsWith("http"));
+      if (missing.length > 0) {
+        const folderMap = new Map<string, string[]>();
+        for (const m of missing) {
+          const folder = m.file_url.split("/")[0] ?? "";
+          if (!folderMap.has(folder)) folderMap.set(folder, []);
+          folderMap.get(folder)!.push(m.file_url);
+        }
+        for (const [folder, paths] of folderMap) {
+          const { data: listData } = await supabase.storage.from("media").list(folder);
+          if (listData) {
+            for (const m of missing) {
+              const fileName = m.file_url.split("/").pop();
+              const meta = listData.find((f) => f.name === fileName);
+              if (meta?.metadata?.size) {
+                await supabase.from("property_media").update({ file_size: meta.metadata.size }).eq("id", m.id);
+                m.file_size = meta.metadata.size;
+              }
+            }
+          }
+        }
+      }
+      return items;
     },
   });
 
@@ -108,6 +143,7 @@ function MediaPage() {
           file_url: path,
           file_name: file.name,
           file_type: detectKind(file),
+          file_size: file.size,
           title: files.length === 1 && form.title ? form.title : null,
           description: files.length === 1 && form.description ? form.description : null,
           sort_order: maxSort + i + 1,
@@ -262,6 +298,33 @@ function MediaPage() {
           </Dialog>
         }
       />
+
+      {/* Storage usage */}
+      {(() => {
+        const used = media.reduce((sum, m) => sum + (m.file_size ?? 0), 0);
+        const pct = Math.min(100, Math.round((used / MAX_STORAGE) * 100));
+        return (
+          <div className="mb-4 flex items-center gap-4 rounded-xl border bg-card p-3 shadow-soft">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <HardDrive className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 flex items-center justify-between text-sm">
+                <span className="font-medium text-foreground">Speicherverbrauch</span>
+                <span className="text-muted-foreground">
+                  {formatBytes(used)} / {formatBytes(MAX_STORAGE)} ({pct}%)
+                </span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="mb-4 flex flex-wrap gap-3">
         <div className="relative max-w-sm flex-1">
