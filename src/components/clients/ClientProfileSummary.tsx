@@ -59,12 +59,16 @@ const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
   cancelled: "outline",
 };
 
+type ProfileSection = "roles" | "searchProfiles" | "contacts" | "ownerships";
+
 interface Props {
   clientId: string;
   entityType: string | null | undefined;
+  sections?: ProfileSection[];
 }
 
-export function ClientProfileSummary({ clientId, entityType }: Props) {
+export function ClientProfileSummary({ clientId, entityType, sections }: Props) {
+  const show = (s: ProfileSection) => !sections || sections.includes(s);
   const { data: roles = [] } = useQuery({
     queryKey: ["client_roles", clientId],
     queryFn: async () => {
