@@ -148,6 +148,27 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
     retry: false,
   });
 
+  const { data: assignedProperties = [] } = useQuery({
+    queryKey: ["client_assigned_properties", id],
+    queryFn: async () => {
+      const { data: roles, error } = await supabase
+        .from("client_roles")
+        .select("id, role_type, related_id, start_date, notes")
+        .eq("client_id", id)
+        .eq("related_type", "property")
+        .eq("status", "active");
+      if (error) throw error;
+      const ids = (roles ?? []).map((r: any) => r.related_id).filter(Boolean);
+      if (ids.length === 0) return [] as any[];
+      const { data: props } = await supabase.from("properties").select("*").in("id", ids);
+      const byId = new Map((props ?? []).map((p: any) => [p.id, p]));
+      return (roles ?? [])
+        .map((r: any) => ({ ...r, property: byId.get(r.related_id) }))
+        .filter((r: any) => r.property);
+    },
+    retry: false,
+  });
+
   const { data: clientStatusFlags } = useQuery({
     queryKey: ["client_status_flags", id],
     queryFn: async () => {
@@ -376,8 +397,8 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
           </TabsTrigger>
           <TabsTrigger value="properties">
             <Building2 className="mr-1.5 h-4 w-4" />Immobilien
-            {(ownProperties.length + matches.length) > 0 && (
-              <Badge variant="secondary" className="ml-2">{ownProperties.length + matches.length}</Badge>
+            {(ownProperties.length + assignedProperties.length) > 0 && (
+              <Badge variant="secondary" className="ml-2">{ownProperties.length + assignedProperties.length}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="matching">
@@ -510,7 +531,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               </div>
               <AssignPropertyDialog clientId={id} />
             </div>
-            {ownProperties.length === 0 ? (
+            {ownProperties.length === 0 && assignedProperties.length === 0 ? (
               <div className="rounded-xl border border-dashed p-8 text-center">
                 <Building2 className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">Dieser Kunde hat noch keine zugewiesene Immobilie.</p>
@@ -528,7 +549,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             ) : (
               <div className="grid gap-3 md:grid-cols-2">
                 {ownProperties.map((p: any) => (
-                  <Link key={p.id} to="/properties/$id" params={{ id: p.id }}
+                  <Link key={`own-${p.id}`} to="/properties/$id" params={{ id: p.id }}
                     className="rounded-xl border p-4 transition hover:border-primary hover:shadow-glow"
                   >
                     <div className="flex items-start justify-between">
@@ -539,15 +560,40 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
                       {p.city ?? "—"} · {p.price ? formatCurrency(Number(p.price)) : p.rent ? formatCurrency(Number(p.rent)) + "/Monat" : "—"}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-1">
+                      <Badge variant="secondary" className="text-[10px]">Verkäufer</Badge>
                       <Badge variant="secondary" className="text-[10px]">
                         {propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels]}
-                      </Badge>
-                      <Badge variant="secondary" className="text-[10px]">
-                        {listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}
                       </Badge>
                     </div>
                   </Link>
                 ))}
+                {assignedProperties.map((r: any) => {
+                  const p = r.property;
+                  const roleLabels: Record<string, string> = {
+                    owner: "Eigentümer", buyer: "Kaufinteressent", former_owner: "Ehem. Eigentümer",
+                    seller: "Verkäufer", tenant: "Mieter", landlord: "Vermieter",
+                    investor: "Investor", contact_person: "Kontaktperson", general_contact: "Kontakt",
+                  };
+                  return (
+                    <Link key={`role-${r.id}`} to="/properties/$id" params={{ id: p.id }}
+                      className="rounded-xl border p-4 transition hover:border-primary hover:shadow-glow"
+                    >
+                      <div className="flex items-start justify-between">
+                        <p className="font-medium">{p.title}</p>
+                        <Badge variant="outline">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {p.city ?? "—"} · {p.price ? formatCurrency(Number(p.price)) : p.rent ? formatCurrency(Number(p.rent)) + "/Monat" : "—"}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        <Badge className="text-[10px]">{roleLabels[r.role_type] ?? r.role_type}</Badge>
+                        <Badge variant="secondary" className="text-[10px]">
+                          {propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels]}
+                        </Badge>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </CardContent></Card>

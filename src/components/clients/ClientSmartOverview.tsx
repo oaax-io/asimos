@@ -31,15 +31,32 @@ export function ClientSmartOverview({ clientId, client, onJumpTab }: Props) {
   const { data: properties = [] } = useQuery({
     queryKey: ["client_overview_props", clientId],
     queryFn: async () => {
-      const [own, ownerships] = await Promise.all([
+      const [own, ownerships, roles] = await Promise.all([
         supabase.from("properties").select("id,title,city,status,price").eq("seller_client_id", clientId),
         supabase.from("property_ownerships")
           .select("id, property:properties(id,title,city,status,price)")
           .eq("client_id", clientId).is("end_date", null),
+        supabase.from("client_roles")
+          .select("id, role_type, related_id")
+          .eq("client_id", clientId).eq("related_type", "property").eq("status", "active"),
       ]);
+      const roleIds = (roles.data ?? []).map((r: any) => r.related_id).filter(Boolean);
+      const { data: roleProps } = roleIds.length
+        ? await supabase.from("properties").select("id,title,city,status,price").in("id", roleIds)
+        : { data: [] as any[] };
+      const roleById = new Map((roleProps ?? []).map((p: any) => [p.id, p]));
+      const roleLabels: Record<string, string> = {
+        owner: "Eigentümer", buyer: "Kaufinteresse", former_owner: "Ehem. Eigentümer",
+        seller: "Verkäufer", tenant: "Mieter", landlord: "Vermieter",
+        investor: "Investor", contact_person: "Kontakt", general_contact: "Kontakt",
+      };
       const list: any[] = [];
       (own.data ?? []).forEach((p) => list.push({ ...p, _kind: "Eigene" }));
       (ownerships.data ?? []).forEach((o: any) => o.property && list.push({ ...o.property, _kind: "Eigentum" }));
+      (roles.data ?? []).forEach((r: any) => {
+        const p = roleById.get(r.related_id);
+        if (p) list.push({ ...p, _kind: roleLabels[r.role_type] ?? r.role_type });
+      });
       // dedupe
       const seen = new Set<string>();
       return list.filter((p) => p.id && !seen.has(p.id) && seen.add(p.id));
