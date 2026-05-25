@@ -363,7 +363,7 @@ function MediaPage() {
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="h-8 w-8 bg-card/95 border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+                      className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
                       title="Als Titelbild setzen"
                       onClick={() => setCover.mutate(m)}
                     >
@@ -373,7 +373,7 @@ function MediaPage() {
                   <Button
                     variant="secondary"
                     size="icon"
-                    className="h-8 w-8 bg-card/95 border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+                    className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
                     title="Nach oben"
                     onClick={() => moveSort.mutate({ item: m, dir: -1 })}
                   >
@@ -382,7 +382,7 @@ function MediaPage() {
                   <Button
                     variant="secondary"
                     size="icon"
-                    className="h-8 w-8 bg-card/95 border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+                    className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
                     title="Nach unten"
                     onClick={() => moveSort.mutate({ item: m, dir: 1 })}
                   >
@@ -391,7 +391,7 @@ function MediaPage() {
                   <Button
                     variant="secondary"
                     size="icon"
-                    className="h-8 w-8 bg-card/95 border border-border shadow-md backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                    className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground transition-colors"
                     title="Löschen"
                     onClick={() => remove.mutate(m)}
                   >
