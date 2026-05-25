@@ -20,9 +20,9 @@ const CHANGELOG: ChangelogEntry[] = [
     date: "25.05.2026",
     changes: [
       { type: "feature", text: "Globale Suche in der Topbar: vergrößertes Overlay mit Hintergrund-Blur, durchsucht Kunden, Leads, Immobilien, Finanzierungen, Termine, Aufgaben, Dokumente & Mitarbeiter (⌘K)" },
-      { type: "feature", text: "Immobilien-Tab im Kunden-Modal mit Leerstands-Hinweis und „Immobilie hinzufügen"-Button" },
+      { type: "feature", text: "Immobilien-Tab im Kunden-Modal mit Leerstands-Hinweis und «Immobilie hinzufügen»-Button" },
       { type: "improvement", text: "Konsolidierung: nur noch ein einziger Matching-Tab im Kunden-Modal (Button oben & Duplikat in Immobilien-Tab entfernt)" },
-      { type: "improvement", text: "Drag-&-Drop-Upload als alleiniger Weg im Dokumente-Tab – manueller „Dokument hinzufügen"-Dialog entfernt" },
+      { type: "improvement", text: "Drag-&-Drop-Upload als alleiniger Weg im Dokumente-Tab – manueller «Dokument hinzufügen»-Dialog entfernt" },
       { type: "improvement", text: "Animiertes Drag-&-Drop-Feedback (Skalierung, Puls, Bounce-Icon) beim Datei-Upload" },
       { type: "improvement", text: "Kunden-Liste: separate Spalten für Telefon, E-Mail und PLZ/Ort statt vermischter Kontakt-Spalte" },
       { type: "improvement", text: "Farbige Badges für Kunden-Typen (Käufer, Verkäufer, Sonstige …)" },
