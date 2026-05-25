@@ -148,6 +148,27 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
     retry: false,
   });
 
+  const { data: assignedProperties = [] } = useQuery({
+    queryKey: ["client_assigned_properties", id],
+    queryFn: async () => {
+      const { data: roles, error } = await supabase
+        .from("client_roles")
+        .select("id, role_type, related_id, start_date, notes")
+        .eq("client_id", id)
+        .eq("related_type", "property")
+        .eq("status", "active");
+      if (error) throw error;
+      const ids = (roles ?? []).map((r: any) => r.related_id).filter(Boolean);
+      if (ids.length === 0) return [] as any[];
+      const { data: props } = await supabase.from("properties").select("*").in("id", ids);
+      const byId = new Map((props ?? []).map((p: any) => [p.id, p]));
+      return (roles ?? [])
+        .map((r: any) => ({ ...r, property: byId.get(r.related_id) }))
+        .filter((r: any) => r.property);
+    },
+    retry: false,
+  });
+
   const { data: clientStatusFlags } = useQuery({
     queryKey: ["client_status_flags", id],
     queryFn: async () => {
