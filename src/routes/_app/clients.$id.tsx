@@ -125,6 +125,16 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
     retry: false,
   });
 
+  const { data: documentsCount = 0 } = useQuery({
+    queryKey: ["client_documents_count", id],
+    queryFn: async () => {
+      const { count } = await supabase.from("documents")
+        .select("id", { count: "exact", head: true })
+        .eq("related_type", "client").eq("related_id", id);
+      return count ?? 0;
+    },
+  });
+
   const { data: ownProperties = [] } = useQuery({
     queryKey: ["client_own_properties", id],
     queryFn: async () => {
