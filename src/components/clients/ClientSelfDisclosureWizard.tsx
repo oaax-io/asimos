@@ -231,6 +231,10 @@ export function ClientSelfDisclosureWizard({
   >("idle");
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [pendingSync, setPendingSync] = useState(false);
+  const [coApplicantPrompt, setCoApplicantPrompt] = useState<
+    null | { fields: Record<string, unknown>; creating: boolean }
+  >(null);
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastSyncedSnapshotRef = useRef("{}");
   const savingRef = useRef(false);
