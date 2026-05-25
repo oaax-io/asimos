@@ -52,15 +52,18 @@ supabase/
 ### Kunden (`/clients`)
 - **Kundenverwaltung** mit Personen- und Firmendatensätzen
 - **Kunden-Wizard**: Schritt-für-Schritt-Erfassung mit Wahl zwischen manuellem Eintragen oder **Selbstauskunft-Upload** (KI-gestütztes Auto-Fill via Gemini)
-- **Intelligente Übersicht** beim Öffnen eines Kunden: Beziehungen, Immobilien, Termine, Aufgaben, offene Finanzierung, Bankkonten
+- **Intelligente Übersicht** beim Öffnen eines Kunden: Beziehungen, Immobilien (Eigentum + zugewiesene), Termine, Aufgaben, offene Finanzierung, Bankkonten
 - **Selbstauskunft-Wizard**: 5-Schritt-Formular mit Live-Benchmark (Einnahmen vs. Ausgaben, Reserve/Quote)
 - **Finanzierungs-Quick-Check**: Direkt aus der Kundenseite heraus auslösbar
-- **Beziehungen, Rollen, Suchprofile**: Verknüpfungen zwischen Kontakten
+- **Beziehungen (bidirektional)**: Verknüpfungen zwischen Kontakten (Ehepartner, Familie etc.) — von beiden Seiten sichtbar
+- **Dokumenten-Tab**: Drag-and-Drop-Upload mit automatischer Typ-Erkennung, Modal-Vorschau, Umbenennen, Herunterladen
+- **Rollen, Suchprofile**: Verknüpfungen zwischen Kontakten und Objekten
 
 ### Immobilien (`/properties`)
 - **Objektverwaltung** mit vollständigem Datenmodell (Adresse, Merkmale, Preis, Zustand, Energieausweis etc.)
 - **Drei Ansichten**: Kacheln (Grid), Liste und **Kartenansicht** (Mapbox – Schweizerkarte mit Objekt-Markern)
 - **Eigentümer-Verknüpfung**: Objekte sind mit Kunden verknüpft (Eigentümer-Tabelle)
+- **Kunden-Zuweisung mit Rollen**: Immobilien können Kunden als Eigentümer, Kaufinteressent, Mieter, Investor etc. zugewiesen werden — mit Doppelbelegungs-Prüfung
 - **Exposé-Generator**: Automatisches Erstellen von PDF-Exposés
 - **Objekt-Wizard** zum schnellen Erfassen
 

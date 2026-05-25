@@ -2,6 +2,21 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 
+## [1.8.0] – 26.05.2026
+
+### Hinzugefügt
+- **Dokumentenverwaltung im Kundenprofil**: Modal-Vorschau, Herunterladen, Umbenennen, Dokumententyp-Erkennung beim Upload, Anzahl-Anzeige im Tab-Badge.
+- **Immobilien-Zuweisung mit Rollen**: Kunden können Immobilien als Eigentümer, Kaufinteressent, Mieter, Investor etc. zugewiesen werden — mit Doppelbelegungs-Warnung.
+- **Bidirektionale Kundenbeziehungen**: Verknüpfungen (z. B. Ehepartner) sind jetzt von beiden Seiten sichtbar.
+
+### Geändert
+- **Smart-Übersicht erweitert**: Zeigt jetzt auch zugewiesene Immobilien (nicht nur Eigentum) und Beziehungen.
+- **Immobilien-Tab im Kundenprofil**: Eigene und zugewiesene Objekte werden getrennt mit Rollen-Label angezeigt.
+
+### Behoben
+- Mediathek: Hover-Buttons über Bildern wieder korrekt sichtbar.
+- Dokumente nach Umbenennung konnten nicht mehr angezeigt werden — Storage-Pfad-Logik korrigiert.
+
 ## [Unreleased]
 
 ### Hinzugefügt
