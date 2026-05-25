@@ -269,10 +269,26 @@ function AddRelationshipDialog({ clientId }: { clientId: string }) {
         notes: notes.trim() || null,
       });
       if (error) throw error;
+      // Reziproke Beziehung (umgekehrte Richtung) anlegen, falls noch nicht vorhanden
+      const { data: existing } = await supabase
+        .from("client_relationships")
+        .select("id")
+        .eq("client_id", selectedId)
+        .eq("related_client_id", clientId)
+        .eq("relationship_type", type)
+        .maybeSingle();
+      if (!existing) {
+        await supabase.from("client_relationships").insert({
+          client_id: selectedId,
+          related_client_id: clientId,
+          relationship_type: type,
+          notes: notes.trim() || null,
+        });
+      }
     },
     onSuccess: () => {
       toast.success("Beziehung hinzugefügt");
-      qc.invalidateQueries({ queryKey: ["client_relationships", clientId] });
+      qc.invalidateQueries({ queryKey: ["client_relationships"] });
       setOpen(false);
       setSelectedId(null);
       setNotes("");
