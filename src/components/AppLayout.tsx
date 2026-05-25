@@ -81,14 +81,14 @@ function AppSidebar() {
 
       <SidebarContent className="gap-0 overflow-y-auto">
         {NAV_GROUPS.map((group) => (
-          <SidebarGroup key={group.label} className="px-2 py-1">
+          <SidebarGroup key={group.label} className="px-2 py-1.5">
             {!collapsed && (
               <SidebarGroupLabel className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
                 {group.label}
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5">
+              <SidebarMenu className="gap-1">
                 {group.items.map((item) => {
                   const active =
                     item.to === "/dashboard"
@@ -101,10 +101,10 @@ function AppSidebar() {
                         isActive={active}
                         tooltip={item.label}
                         size="sm"
-                        className="h-7 text-[13px] data-[active=true]:bg-sidebar-primary/15 data-[active=true]:text-sidebar-primary"
+                        className="h-8 text-sm data-[active=true]:bg-sidebar-primary/15 data-[active=true]:text-sidebar-primary"
                       >
                         <Link to={item.to}>
-                          <item.icon className="h-4 w-4" />
+                          <item.icon className="h-[18px] w-[18px]" />
                           <span>{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
