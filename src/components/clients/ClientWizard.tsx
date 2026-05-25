@@ -262,6 +262,8 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
   const navigate = useNavigate();
   const [stepIdx, setStepIdx] = useState(0);
   const [form, setForm] = useState<FormState>(empty);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
