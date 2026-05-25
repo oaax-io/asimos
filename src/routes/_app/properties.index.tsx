@@ -32,7 +32,7 @@ function getMediaPublicUrl(path?: string | null) {
   return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
 }
 
-type ViewMode = "grid" | "list";
+type ViewMode = "grid" | "list" | "map";
 
 function PropertiesPage() {
   const qc = useQueryClient();
