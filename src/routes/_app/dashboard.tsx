@@ -241,13 +241,10 @@ function Dashboard() {
       )}
 
       {/* KPI cards */}
-      <div className="grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-        <KpiCard icon={UserPlus} label="Neue Leads" value={kpis.data?.newLeads ?? "—"} hint="Letzte 7 Tage" loading={kpis.isLoading} to="/leads" />
+      <div className="grid gap-2 grid-cols-1 sm:grid-cols-3">
         <KpiCard icon={Users} label="Aktive Kunden" value={kpis.data?.clients ?? "—"} loading={kpis.isLoading} to="/clients" />
         <KpiCard icon={Building2} label="Aktive Immobilien" value={kpis.data?.activeProps ?? "—"} loading={kpis.isLoading} to="/properties" />
-        <KpiCard icon={CheckSquare} label="Offene Aufgaben" value={kpis.data?.openTasks ?? "—"} loading={kpis.isLoading} to="/tasks" />
-        <KpiCard icon={CalendarDays} label="Termine heute" value={kpis.data?.todayAppts ?? "—"} loading={kpis.isLoading} to="/appointments" />
-        <KpiCard icon={FileSignature} label="Reservationen" value={kpis.data?.activeRes ?? "—"} hint="Aktiv" loading={kpis.isLoading} to="/reservations" />
+        <KpiCard icon={FileSignature} label="Aktive Reservationen" value={kpis.data?.activeRes ?? "—"} loading={kpis.isLoading} to="/reservations" />
       </div>
 
       {/* Today panel */}
@@ -255,6 +252,7 @@ function Dashboard() {
         <TodayList
           title="Termine heute"
           icon={CalendarDays}
+          count={kpis.data?.todayAppts ?? undefined}
           loading={today.isLoading}
           empty="Keine Termine heute."
           items={today.data?.appts ?? []}
@@ -270,6 +268,7 @@ function Dashboard() {
         <TodayList
           title="Überfällige Aufgaben"
           icon={Clock}
+          count={kpis.data?.openTasks ?? undefined}
           loading={today.isLoading}
           empty="Keine überfälligen Aufgaben."
           items={today.data?.overdue ?? []}
@@ -286,6 +285,8 @@ function Dashboard() {
         <TodayList
           title="Neue Leads"
           icon={UserPlus}
+          count={kpis.data?.newLeads ?? undefined}
+          countHint="7 Tage"
           loading={today.isLoading}
           empty="Noch keine Leads."
           items={today.data?.leads ?? []}
