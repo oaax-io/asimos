@@ -312,7 +312,7 @@ function DocumentPreviewModal({
   const [loadingUrl, setLoadingUrl] = useState(false);
   const [editingName, setEditingName] = useState<string | null>(null);
 
-  useMemo(() => {
+  useEffect(() => {
     if (!d) { setPreviewUrl(null); return; }
     setLoadingUrl(true);
     setPreviewUrl(null);
