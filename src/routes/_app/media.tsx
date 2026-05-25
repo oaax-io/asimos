@@ -312,10 +312,16 @@ function MediaPage() {
           {filtered.map((m) => {
             const url = getPublicUrl(m.file_url);
             const isVideo = m.file_type === "video";
+            const isPdf = (m.file_name ?? m.file_url ?? "").toLowerCase().endsWith(".pdf");
             return (
               <div key={m.id} className="group relative overflow-hidden rounded-xl border bg-card shadow-soft">
                 <div className="relative aspect-square overflow-hidden bg-muted">
-                  {isVideo ? (
+                  {isPdf ? (
+                    <a href={url} target="_blank" rel="noreferrer" className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted/60 text-muted-foreground hover:bg-muted">
+                      <FileText className="h-10 w-10" />
+                      <span className="text-xs font-medium">PDF öffnen</span>
+                    </a>
+                  ) : isVideo ? (
                     <video src={url} className="h-full w-full object-cover" muted />
                   ) : url ? (
                     <img
