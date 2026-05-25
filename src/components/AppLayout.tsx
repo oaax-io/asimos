@@ -153,10 +153,17 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
           <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur lg:px-6">
             <SidebarTrigger />
 
-            <div className="relative hidden max-w-md flex-1 md:block">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Suchen…" />
-            </div>
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="relative hidden h-9 max-w-md flex-1 items-center gap-2 rounded-md border bg-background px-3 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-foreground md:flex"
+            >
+              <Search className="h-4 w-4" />
+              <span className="flex-1 text-left">Suchen…</span>
+              <kbd className="hidden rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium lg:inline">⌘K</kbd>
+            </button>
+            <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+
 
             <div className="ml-auto flex items-center gap-2">
               <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate({ to: "/feedback" })}>
