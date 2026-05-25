@@ -71,7 +71,31 @@ function MediaPage() {
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data as MediaItem[]) ?? [];
+      const items = (data as MediaItem[]) ?? [];
+      // Background: fill missing file_size from storage metadata
+      const missing = items.filter((m) => m.file_size == null && m.file_url && !m.file_url.startsWith("http"));
+      if (missing.length > 0) {
+        const folderMap = new Map<string, string[]>();
+        for (const m of missing) {
+          const folder = m.file_url.split("/")[0] ?? "";
+          if (!folderMap.has(folder)) folderMap.set(folder, []);
+          folderMap.get(folder)!.push(m.file_url);
+        }
+        for (const [folder, paths] of folderMap) {
+          const { data: listData } = await supabase.storage.from("media").list(folder);
+          if (listData) {
+            for (const m of missing) {
+              const fileName = m.file_url.split("/").pop();
+              const meta = listData.find((f) => f.name === fileName);
+              if (meta?.metadata?.size) {
+                await supabase.from("property_media").update({ file_size: meta.metadata.size }).eq("id", m.id);
+                m.file_size = meta.metadata.size;
+              }
+            }
+          }
+        }
+      }
+      return items;
     },
   });
 
