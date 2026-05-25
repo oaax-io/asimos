@@ -190,44 +190,48 @@ function Dashboard() {
 
   return (
     <>
-      <PageHeader
-        title="Dashboard"
-        description="Übersicht über dein Tagesgeschäft"
-        action={
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm">
-                <Plus className="mr-1 h-4 w-4" />
-                Schnellaktionen
-                <ChevronDown className="ml-1 h-4 w-4 opacity-70" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Neu erfassen</DropdownMenuLabel>
-              <DropdownMenuItem asChild>
-                <Link to="/leads"><UserPlus className="mr-2 h-4 w-4" />Lead erfassen</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/clients"><Users className="mr-2 h-4 w-4" />Kunde erfassen</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/properties"><Building2 className="mr-2 h-4 w-4" />Immobilie erfassen</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/appointments"><CalendarDays className="mr-2 h-4 w-4" />Termin erstellen</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/tasks"><CheckSquare className="mr-2 h-4 w-4" />Aufgabe erstellen</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/documents"><Upload className="mr-2 h-4 w-4" />Dokument hochladen</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        }
-      />
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold tracking-tight">
+            {getGreeting()}{displayName ? `, ${displayName}` : ""} 👋
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long" })} · Übersicht über dein Tagesgeschäft
+          </p>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm">
+              <Plus className="mr-1 h-4 w-4" />
+              Schnellaktionen
+              <ChevronDown className="ml-1 h-4 w-4 opacity-70" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Neu erfassen</DropdownMenuLabel>
+            <DropdownMenuItem asChild>
+              <Link to="/leads"><UserPlus className="mr-2 h-4 w-4" />Lead erfassen</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/clients"><Users className="mr-2 h-4 w-4" />Kunde erfassen</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/properties"><Building2 className="mr-2 h-4 w-4" />Immobilie erfassen</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/appointments"><CalendarDays className="mr-2 h-4 w-4" />Termin erstellen</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/tasks"><CheckSquare className="mr-2 h-4 w-4" />Aufgabe erstellen</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/documents"><Upload className="mr-2 h-4 w-4" />Dokument hochladen</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       {anyError && (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
