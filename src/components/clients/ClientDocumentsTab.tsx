@@ -292,7 +292,10 @@ export function ClientDocumentsTab({ clientId, userId }: { clientId: string; use
         onDelete={deleteDoc}
         onTypeChange={updateType}
         onRename={async (d, newName) => {
-          const { error } = await supabase.from("documents").update({ file_name: newName }).eq("id", d.id);
+          const ext = (d.file_name ?? d.file_url).split(".").pop()?.toLowerCase() ?? "";
+          const finalName = ext && ext.length <= 5 && !newName.toLowerCase().endsWith(`.${ext}`)
+            ? `${newName}.${ext}` : newName;
+          const { error } = await supabase.from("documents").update({ file_name: finalName }).eq("id", d.id);
           if (error) { toast.error(error.message); return; }
           toast.success("Umbenannt");
           qc.invalidateQueries({ queryKey: ["client_documents", clientId] });
