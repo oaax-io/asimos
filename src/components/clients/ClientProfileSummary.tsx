@@ -390,6 +390,7 @@ export function ClientProfileSummary({ clientId, entityType, sections }: Props) 
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
