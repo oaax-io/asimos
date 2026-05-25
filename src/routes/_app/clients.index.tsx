@@ -26,6 +26,19 @@ import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
 const TYPES = ["buyer","seller","owner","tenant","landlord","investor","other"] as const;
+
+const clientTypeBadgeClass: Record<string, string> = {
+  buyer:     "bg-blue-500/15 text-blue-700 border-blue-500/30 dark:text-blue-300",
+  seller:    "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-300",
+  owner:     "bg-violet-500/15 text-violet-700 border-violet-500/30 dark:text-violet-300",
+  tenant:    "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300",
+  landlord:  "bg-teal-500/15 text-teal-700 border-teal-500/30 dark:text-teal-300",
+  investor:  "bg-fuchsia-500/15 text-fuchsia-700 border-fuchsia-500/30 dark:text-fuchsia-300",
+  other:     "bg-slate-500/15 text-slate-700 border-slate-500/30 dark:text-slate-300",
+};
+function typeBadge(t: string) {
+  return clientTypeBadgeClass[t] ?? clientTypeBadgeClass.other;
+}
 const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
 const FINANCING_OPTIONS = ["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"];
 const ALL = "__all__";
