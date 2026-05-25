@@ -373,18 +373,22 @@ function MediaPage() {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {filtered.map((m) => {
+          {filtered.map((m, idx) => {
             const url = getPublicUrl(m.file_url);
             const isVideo = m.file_type === "video";
             const isPdf = (m.file_name ?? m.file_url ?? "").toLowerCase().endsWith(".pdf");
             return (
               <div key={m.id} className="group relative overflow-hidden rounded-xl border bg-card shadow-soft">
-                <div className="relative aspect-square overflow-hidden bg-muted">
+                <button
+                  type="button"
+                  onClick={() => setViewerIndex(idx)}
+                  className="relative block aspect-square w-full overflow-hidden bg-muted text-left"
+                >
                   {isPdf ? (
-                    <a href={url} target="_blank" rel="noreferrer" className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted/60 text-muted-foreground hover:bg-muted">
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted/60 text-muted-foreground transition group-hover:bg-muted">
                       <FileText className="h-10 w-10" />
                       <span className="text-xs font-medium">PDF öffnen</span>
-                    </a>
+                    </div>
                   ) : isVideo ? (
                     <video src={url} className="h-full w-full object-cover" muted />
                   ) : url ? (
@@ -409,7 +413,7 @@ function MediaPage() {
                       {m.file_type === "floor_plan" ? "Grundriss" : m.file_type}
                     </Badge>
                   )}
-                </div>
+                </button>
                 <div className="p-3">
                   <p className="truncate text-sm font-medium">{m.title ?? m.file_name ?? "Ohne Titel"}</p>
                   {m.properties && (
