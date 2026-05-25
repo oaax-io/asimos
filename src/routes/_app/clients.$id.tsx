@@ -342,7 +342,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         </div>
       </div>
 
-      <Tabs defaultValue="overview">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex-wrap">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="consulting">
