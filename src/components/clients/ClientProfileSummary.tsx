@@ -349,6 +349,7 @@ export function ClientProfileSummary({ clientId, entityType, sections }: Props) 
       )}
 
       {/* Eigentum */}
+      {show("ownerships") && (
       <Card>
         <CardContent className="p-6">
           <div className="mb-4 flex items-center gap-2">
