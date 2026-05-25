@@ -489,6 +489,18 @@ function MediaPage() {
                   <Button
                     variant="secondary"
                     size="icon"
+                    className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+                    title="Umbenennen"
+                    onClick={() => {
+                      const next = window.prompt("Neuer Titel", m.title ?? m.file_name ?? "");
+                      if (next !== null) rename.mutate({ id: m.id, title: next });
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
                     className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground transition-colors"
                     title="Löschen"
                     onClick={() => remove.mutate(m)}
