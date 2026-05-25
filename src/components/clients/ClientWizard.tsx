@@ -5,7 +5,7 @@
 // client_relationships (Kontaktperson <-> Firma), activity_logs.
 // Schweizer Rechtschreibung, kein ß.
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
   ChevronLeft, ChevronRight, Check, Loader2, User, Building2, Mail,
-  Target, Wallet, Home, Users, ClipboardCheck, Tag, Briefcase,
+  Target, Wallet, Home, Users, ClipboardCheck, Tag, Briefcase, Upload, FileText, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { propertyTypeLabels } from "@/lib/format";
@@ -91,7 +91,9 @@ const FINANCING_GOALS: { value: string; label: string }[] = [
 // ----- Form State -----
 type FormState = {
   entity_type: EntityType;
+  creation_method: "manual" | "upload";
   role_choice: RoleChoice | "";
+
 
   // Person
   salutation: string;
@@ -170,7 +172,7 @@ type FormState = {
 };
 
 const empty: FormState = {
-  entity_type: "person", role_choice: "",
+  entity_type: "person", creation_method: "manual", role_choice: "",
   salutation: "", first_name: "", last_name: "",
   company_name: "", contact_mode: "manual", linked_contact_client_id: "",
   contact_first_name: "", contact_last_name: "",
@@ -202,11 +204,16 @@ const num = (v: string): number | null => {
 };
 
 // ----- Dynamische Schritte je nach Rolle -----
-type StepKey = "entity" | "role" | "stamm" | "company_contact" | "search"
+type StepKey = "entity" | "method" | "role" | "stamm" | "company_contact" | "search"
   | "investment" | "financing" | "property" | "ownership" | "tags" | "review";
 
-function buildSteps(entity: EntityType, role: RoleChoice | ""): StepKey[] {
-  const s: StepKey[] = ["entity", "role"];
+function buildSteps(entity: EntityType, role: RoleChoice | "", method: "manual" | "upload"): StepKey[] {
+  const s: StepKey[] = ["entity"];
+  if (entity === "person") {
+    s.push("method");
+    if (method === "upload") return s; // Upload-Schritt ist terminal
+  }
+  s.push("role");
   if (!role) return s;
   s.push("stamm");
   if (entity === "company") s.push("company_contact");
@@ -236,6 +243,7 @@ function buildSteps(entity: EntityType, role: RoleChoice | ""): StepKey[] {
 
 const STEP_LABELS: Record<StepKey, string> = {
   entity: "Art",
+  method: "Erfassungsart",
   role: "Rolle",
   stamm: "Stammdaten",
   company_contact: "Kontaktperson",
@@ -254,11 +262,13 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
   const navigate = useNavigate();
   const [stepIdx, setStepIdx] = useState(0);
   const [form, setForm] = useState<FormState>(empty);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  const steps = useMemo(() => buildSteps(form.entity_type, form.role_choice as RoleChoice | ""), [form.entity_type, form.role_choice]);
+  const steps = useMemo(() => buildSteps(form.entity_type, form.role_choice as RoleChoice | "", form.creation_method), [form.entity_type, form.role_choice, form.creation_method]);
   const currentStep = steps[Math.min(stepIdx, steps.length - 1)];
 
   // ---- Daten für Selects ----
@@ -289,6 +299,143 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
   const canSave = !!form.role_choice && fullName.length > 0;
 
   const reset = () => { setForm(empty); setStepIdx(0); };
+
+  // ---- Upload-Flow: Selbstauskunft hochladen, Kunde(n) automatisch anlegen ----
+  const handleSelfDisclosureUpload = async (file: File) => {
+    if (file.type !== "application/pdf") {
+      toast.error("Bitte eine PDF-Datei hochladen");
+      return;
+    }
+    setUploading(true);
+    try {
+      const buf = await file.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
+      }
+      const base64 = btoa(binary);
+
+      const { data, error } = await supabase.functions.invoke("parse-self-disclosure", {
+        body: { pdf_base64: base64, mime_type: file.type },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(String(data.error));
+
+      const fields = (data?.fields ?? {}) as Record<string, any>;
+      const coFields = (data?.co_applicant_fields ?? null) as Record<string, any> | null;
+      const hasCo = !!data?.has_co_applicant && coFields && Object.keys(coFields).length > 0;
+
+      const first = (fields.first_name as string | undefined)?.trim() ?? "";
+      const last = (fields.last_name as string | undefined)?.trim() ?? "";
+      const fullName = [first, last].filter(Boolean).join(" ");
+      if (!fullName) throw new Error("Kein Name in der Selbstauskunft erkannt – bitte manuell erfassen.");
+
+      const { data: userData } = await supabase.auth.getUser();
+      const owner_id = userData.user?.id ?? null;
+
+      // 1) Hauptantragsteller anlegen
+      const { data: newClient, error: ce } = await supabase
+        .from("clients")
+        .insert({
+          full_name: fullName,
+          contact_first_name: first || null,
+          contact_last_name: last || null,
+          email: (fields.email as string) ?? null,
+          phone: (fields.phone as string) ?? (fields.mobile as string) ?? null,
+          address: [fields.street, fields.street_number].filter(Boolean).join(" ") || null,
+          postal_code: (fields.postal_code as string) ?? null,
+          city: (fields.city as string) ?? null,
+          country: (fields.country as string) ?? "CH",
+          client_type: "other" as any,
+          entity_type: "person",
+          owner_id,
+          assigned_to: owner_id,
+        })
+        .select("id")
+        .single();
+      if (ce) throw ce;
+      const clientId = newClient.id as string;
+
+      // Rolle: Finanzierungskunde (Selbstauskunft ist Finanzierungsdokument)
+      await supabase.from("client_roles").insert({
+        client_id: clientId,
+        role_type: "financing_applicant" as any,
+        status: "active",
+        start_date: new Date().toISOString().slice(0, 10),
+      });
+
+      // Selbstauskunft speichern
+      const sdPayload: Record<string, unknown> = { client_id: clientId, status: "draft" };
+      for (const [k, v] of Object.entries(fields)) {
+        if (v === null || v === undefined || v === "") continue;
+        sdPayload[k] = v;
+      }
+      await supabase.from("client_self_disclosures").upsert(sdPayload as never, { onConflict: "client_id" });
+
+      // 2) Mitantragsteller automatisch anlegen + verknüpfen
+      if (hasCo && coFields) {
+        const coFirst = (coFields.first_name as string | undefined)?.trim() ?? "";
+        const coLast = (coFields.last_name as string | undefined)?.trim() ?? "";
+        const coName = [coFirst, coLast].filter(Boolean).join(" ") || "Mitantragsteller";
+
+        const { data: coClient, error: coErr } = await supabase
+          .from("clients")
+          .insert({
+            full_name: coName,
+            contact_first_name: coFirst || null,
+            contact_last_name: coLast || null,
+            email: (coFields.email as string) ?? null,
+            phone: (coFields.phone as string) ?? (coFields.mobile as string) ?? null,
+            address: [coFields.street, coFields.street_number].filter(Boolean).join(" ") || null,
+            postal_code: (coFields.postal_code as string) ?? null,
+            city: (coFields.city as string) ?? null,
+            country: (coFields.country as string) ?? "CH",
+            client_type: "other" as any,
+            entity_type: "person",
+            owner_id,
+            assigned_to: owner_id,
+          })
+          .select("id")
+          .single();
+        if (!coErr && coClient) {
+          const marital = (fields.marital_status as string | undefined)?.toLowerCase() ?? "";
+          const relType = marital.includes("verheirat") || marital.includes("partner") ? "spouse" : "co_applicant";
+          await supabase.from("client_relationships").insert([
+            { client_id: clientId, related_client_id: coClient.id, relationship_type: relType as any },
+            { client_id: coClient.id, related_client_id: clientId, relationship_type: relType as any },
+          ]);
+          await supabase.from("client_roles").insert({
+            client_id: coClient.id,
+            role_type: "financing_applicant" as any,
+            status: "active",
+            start_date: new Date().toISOString().slice(0, 10),
+          });
+          const coPayload: Record<string, unknown> = { client_id: coClient.id, status: "draft" };
+          for (const [k, v] of Object.entries(coFields)) {
+            if (v === null || v === undefined || v === "") continue;
+            coPayload[k] = v;
+          }
+          await supabase.from("client_self_disclosures").upsert(coPayload as never, { onConflict: "client_id" });
+        }
+      }
+
+      toast.success(hasCo
+        ? `Kunde «${fullName}» und Mitantragsteller wurden angelegt.`
+        : `Kunde «${fullName}» wurde aus der Selbstauskunft angelegt.`);
+      qc.invalidateQueries({ queryKey: ["clients"] });
+      onCreated?.(clientId);
+      navigate({ to: "/clients/$id", params: { id: clientId } }).catch(() => {});
+      reset();
+      onOpenChange(false);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Selbstauskunft konnte nicht verarbeitet werden");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   // ---- Save ----
   const create = useMutation({
@@ -590,6 +737,72 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                 </div>
               </div>
             )}
+
+            {/* METHOD: Manuell vs. Selbstauskunft-Upload */}
+            {currentStep === "method" && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-base font-semibold">Wie möchtest du den Kunden erfassen?</p>
+                  <p className="text-sm text-muted-foreground">
+                    Mit einer Selbstauskunft (PDF) füllen wir Stammdaten, Finanzen und
+                    Mitantragsteller automatisch aus.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {([
+                    { v: "manual", title: "Manuell erfassen", desc: "Schrittweise Eingabe mit Rolle und Stammdaten", Icon: ClipboardCheck },
+                    { v: "upload", title: "Selbstauskunft hochladen", desc: "PDF analysieren – Kunde wird automatisch angelegt", Icon: Sparkles },
+                  ] as const).map(({ v, title, desc, Icon }) => {
+                    const active = form.creation_method === v;
+                    return (
+                      <button type="button" key={v}
+                        onClick={() => set("creation_method", v)}
+                        className={`flex items-start gap-3 rounded-xl border p-4 text-left transition hover:border-primary/60 hover:bg-accent/40 ${
+                          active ? "border-primary bg-primary/5 ring-2 ring-primary/30" : ""
+                        }`}>
+                        <span className={`flex h-10 w-10 items-center justify-center rounded-lg ${active ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="flex-1">
+                          <span className="block font-semibold">{title}</span>
+                          <span className="block text-sm text-muted-foreground">{desc}</span>
+                        </span>
+                        {active && <Check className="h-5 w-5 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {form.creation_method === "upload" && (
+                  <div className="rounded-xl border border-dashed p-6 text-center space-y-3">
+                    <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Selbstauskunft als PDF hochladen</p>
+                      <p className="text-sm text-muted-foreground">
+                        Erkennt automatisch Antragsteller 1 und – falls vorhanden – Antragsteller 2.
+                      </p>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) void handleSelfDisclosureUpload(f);
+                      }}
+                    />
+                    <Button type="button" disabled={uploading}
+                      onClick={() => fileInputRef.current?.click()}>
+                      {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                      {uploading ? "Wird analysiert…" : "PDF auswählen"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+
 
             {/* ROLE */}
             {currentStep === "role" && (
@@ -1097,7 +1310,11 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               onClick={() => setStepIdx((i) => Math.max(0, i - 1))}>
               <ChevronLeft className="mr-1 h-4 w-4" /> Zurück
             </Button>
-            {!isLast ? (
+            {currentStep === "method" && form.creation_method === "upload" ? (
+              <p className="text-xs text-muted-foreground">
+                Nach erfolgreichem Upload wird der Kunde automatisch angelegt.
+              </p>
+            ) : !isLast ? (
               <Button type="button" disabled={!canProceed}
                 onClick={() => setStepIdx((i) => Math.min(steps.length - 1, i + 1))}>
                 Weiter <ChevronRight className="ml-1 h-4 w-4" />
