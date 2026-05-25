@@ -16,6 +16,19 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.8.0",
+    date: "26.05.2026",
+    changes: [
+      { type: "feature", text: "Dokumentenverwaltung im Kundenprofil: Modal-Vorschau, Herunterladen, Umbenennen, Dokumententyp-Erkennung beim Upload, Anzahl im Tab-Badge" },
+      { type: "feature", text: "Immobilien-Zuweisung mit Rollen: Kunden können Immobilien als Eigentümer, Kaufinteressent, Mieter, Investor etc. zugewiesen werden — mit Doppelbelegungs-Warnung" },
+      { type: "feature", text: "Bidirektionale Kundenbeziehungen: Verknüpfungen (z. B. Ehepartner) sind jetzt von beiden Seiten sichtbar und lassen sich zentral verwalten" },
+      { type: "improvement", text: "Smart-Übersicht im Kunden-Modal erweitert: zeigt jetzt auch zugewiesene Immobilien (nicht nur Eigentum) und Beziehungen" },
+      { type: "improvement", text: "Immobilien-Tab im Kundenprofil zeigt eigene und zugewiesene Objekte getrennt mit Rollen-Label" },
+      { type: "fix", text: "Mediathek: Hover-Buttons über Bildern wieder korrekt sichtbar" },
+      { type: "fix", text: "Dokumente nach Umbenennung konnten nicht mehr angezeigt werden — Storage-Pfad-Logik korrigiert" },
+    ],
+  },
+  {
     version: "1.7.0",
     date: "25.05.2026",
     changes: [
