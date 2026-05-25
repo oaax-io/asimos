@@ -300,6 +300,143 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
 
   const reset = () => { setForm(empty); setStepIdx(0); };
 
+  // ---- Upload-Flow: Selbstauskunft hochladen, Kunde(n) automatisch anlegen ----
+  const handleSelfDisclosureUpload = async (file: File) => {
+    if (file.type !== "application/pdf") {
+      toast.error("Bitte eine PDF-Datei hochladen");
+      return;
+    }
+    setUploading(true);
+    try {
+      const buf = await file.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
+      }
+      const base64 = btoa(binary);
+
+      const { data, error } = await supabase.functions.invoke("parse-self-disclosure", {
+        body: { pdf_base64: base64, mime_type: file.type },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(String(data.error));
+
+      const fields = (data?.fields ?? {}) as Record<string, any>;
+      const coFields = (data?.co_applicant_fields ?? null) as Record<string, any> | null;
+      const hasCo = !!data?.has_co_applicant && coFields && Object.keys(coFields).length > 0;
+
+      const first = (fields.first_name as string | undefined)?.trim() ?? "";
+      const last = (fields.last_name as string | undefined)?.trim() ?? "";
+      const fullName = [first, last].filter(Boolean).join(" ");
+      if (!fullName) throw new Error("Kein Name in der Selbstauskunft erkannt – bitte manuell erfassen.");
+
+      const { data: userData } = await supabase.auth.getUser();
+      const owner_id = userData.user?.id ?? null;
+
+      // 1) Hauptantragsteller anlegen
+      const { data: newClient, error: ce } = await supabase
+        .from("clients")
+        .insert({
+          full_name: fullName,
+          contact_first_name: first || null,
+          contact_last_name: last || null,
+          email: (fields.email as string) ?? null,
+          phone: (fields.phone as string) ?? (fields.mobile as string) ?? null,
+          address: [fields.street, fields.street_number].filter(Boolean).join(" ") || null,
+          postal_code: (fields.postal_code as string) ?? null,
+          city: (fields.city as string) ?? null,
+          country: (fields.country as string) ?? "CH",
+          client_type: "other" as any,
+          entity_type: "person",
+          owner_id,
+          assigned_to: owner_id,
+        })
+        .select("id")
+        .single();
+      if (ce) throw ce;
+      const clientId = newClient.id as string;
+
+      // Rolle: Finanzierungskunde (Selbstauskunft ist Finanzierungsdokument)
+      await supabase.from("client_roles").insert({
+        client_id: clientId,
+        role_type: "financing_applicant" as any,
+        status: "active",
+        start_date: new Date().toISOString().slice(0, 10),
+      });
+
+      // Selbstauskunft speichern
+      const sdPayload: Record<string, unknown> = { client_id: clientId, status: "draft" };
+      for (const [k, v] of Object.entries(fields)) {
+        if (v === null || v === undefined || v === "") continue;
+        sdPayload[k] = v;
+      }
+      await supabase.from("client_self_disclosures").upsert(sdPayload as never, { onConflict: "client_id" });
+
+      // 2) Mitantragsteller automatisch anlegen + verknüpfen
+      if (hasCo && coFields) {
+        const coFirst = (coFields.first_name as string | undefined)?.trim() ?? "";
+        const coLast = (coFields.last_name as string | undefined)?.trim() ?? "";
+        const coName = [coFirst, coLast].filter(Boolean).join(" ") || "Mitantragsteller";
+
+        const { data: coClient, error: coErr } = await supabase
+          .from("clients")
+          .insert({
+            full_name: coName,
+            contact_first_name: coFirst || null,
+            contact_last_name: coLast || null,
+            email: (coFields.email as string) ?? null,
+            phone: (coFields.phone as string) ?? (coFields.mobile as string) ?? null,
+            address: [coFields.street, coFields.street_number].filter(Boolean).join(" ") || null,
+            postal_code: (coFields.postal_code as string) ?? null,
+            city: (coFields.city as string) ?? null,
+            country: (coFields.country as string) ?? "CH",
+            client_type: "other" as any,
+            entity_type: "person",
+            owner_id,
+            assigned_to: owner_id,
+          })
+          .select("id")
+          .single();
+        if (!coErr && coClient) {
+          const marital = (fields.marital_status as string | undefined)?.toLowerCase() ?? "";
+          const relType = marital.includes("verheirat") || marital.includes("partner") ? "spouse" : "co_applicant";
+          await supabase.from("client_relationships").insert([
+            { client_id: clientId, related_client_id: coClient.id, relationship_type: relType as any },
+            { client_id: coClient.id, related_client_id: clientId, relationship_type: relType as any },
+          ]);
+          await supabase.from("client_roles").insert({
+            client_id: coClient.id,
+            role_type: "financing_applicant" as any,
+            status: "active",
+            start_date: new Date().toISOString().slice(0, 10),
+          });
+          const coPayload: Record<string, unknown> = { client_id: coClient.id, status: "draft" };
+          for (const [k, v] of Object.entries(coFields)) {
+            if (v === null || v === undefined || v === "") continue;
+            coPayload[k] = v;
+          }
+          await supabase.from("client_self_disclosures").upsert(coPayload as never, { onConflict: "client_id" });
+        }
+      }
+
+      toast.success(hasCo
+        ? `Kunde «${fullName}» und Mitantragsteller wurden angelegt.`
+        : `Kunde «${fullName}» wurde aus der Selbstauskunft angelegt.`);
+      qc.invalidateQueries({ queryKey: ["clients"] });
+      onCreated?.(clientId);
+      navigate({ to: "/clients/$id", params: { id: clientId } }).catch(() => {});
+      reset();
+      onOpenChange(false);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Selbstauskunft konnte nicht verarbeitet werden");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   // ---- Save ----
   const create = useMutation({
     mutationFn: async () => {
