@@ -26,6 +26,19 @@ import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
 const TYPES = ["buyer","seller","owner","tenant","landlord","investor","other"] as const;
+
+const clientTypeBadgeClass: Record<string, string> = {
+  buyer:     "bg-blue-500/15 text-blue-700 border-blue-500/30 dark:text-blue-300",
+  seller:    "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-300",
+  owner:     "bg-violet-500/15 text-violet-700 border-violet-500/30 dark:text-violet-300",
+  tenant:    "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300",
+  landlord:  "bg-teal-500/15 text-teal-700 border-teal-500/30 dark:text-teal-300",
+  investor:  "bg-fuchsia-500/15 text-fuchsia-700 border-fuchsia-500/30 dark:text-fuchsia-300",
+  other:     "bg-slate-500/15 text-slate-700 border-slate-500/30 dark:text-slate-300",
+};
+function typeBadge(t: string) {
+  return clientTypeBadgeClass[t] ?? clientTypeBadgeClass.other;
+}
 const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
 const FINANCING_OPTIONS = ["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"];
 const ALL = "__all__";
@@ -325,7 +338,7 @@ function ClientsPage() {
                       <button type="button" onClick={() => setDetailId(c.id)} className="flex-1 min-w-0 text-left">
                         <p className="font-semibold hover:text-primary truncate">{c.full_name}</p>
                         <div className="mt-1 flex flex-wrap gap-1">
-                          <Badge variant="secondary">{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
+                          <Badge variant="outline" className={typeBadge(c.client_type)}>{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                           {c.is_archived && <Badge variant="outline">Archiviert</Badge>}
                           {(c.assigned_to ?? c.owner_id) && employeeMap.get(c.assigned_to ?? c.owner_id) && (
                             <Badge variant="outline" className="text-xs">
@@ -367,7 +380,9 @@ function ClientsPage() {
                 </TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Typ</TableHead>
-                <TableHead>Kontakt</TableHead>
+                <TableHead>Telefon</TableHead>
+                <TableHead>E-Mail</TableHead>
+                <TableHead>PLZ / Ort</TableHead>
                 <TableHead>Zugewiesen</TableHead>
                 <TableHead>Finanzierung</TableHead>
                 <TableHead className="w-10"></TableHead>
@@ -384,6 +399,7 @@ function ClientsPage() {
                   [disc?.street, disc?.street_number].filter(Boolean).join(" "),
                   [disc?.postal_code, disc?.city].filter(Boolean).join(" "),
                 ].filter(Boolean).join(", ") || [c.address, [c.postal_code, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+                const plzOrt = [disc?.postal_code ?? c.postal_code, disc?.city ?? c.city].filter(Boolean).join(" ");
                 return (
                   <TableRow key={c.id} data-state={selected.has(c.id) ? "selected" : undefined}>
                     <TableCell>
@@ -396,15 +412,16 @@ function ClientsPage() {
                       {c.is_archived && <Badge variant="outline" className="ml-2">Archiviert</Badge>}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
+                      <Badge variant="outline" className={typeBadge(c.client_type)}>{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      <div className="space-y-0.5">
-                        {email && <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" />{email}</div>}
-                        {phone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" />{phone}</div>}
-                        {addr && <div className="text-xs">{addr}</div>}
-                        {!email && !phone && !addr && <span>—</span>}
-                      </div>
+                    <TableCell className="text-sm">
+                      {phone ? <a href={`tel:${phone}`} className="hover:text-primary">{phone}</a> : <span className="text-muted-foreground">—</span>}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {email ? <a href={`mailto:${email}`} className="hover:text-primary">{email}</a> : <span className="text-muted-foreground">—</span>}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {plzOrt || <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell className="text-sm">{c.financing_status ?? <span className="text-muted-foreground">—</span>}</TableCell>
