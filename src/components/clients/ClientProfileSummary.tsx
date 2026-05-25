@@ -59,12 +59,16 @@ const statusVariant: Record<string, "default" | "secondary" | "outline"> = {
   cancelled: "outline",
 };
 
+type ProfileSection = "roles" | "searchProfiles" | "contacts" | "ownerships";
+
 interface Props {
   clientId: string;
   entityType: string | null | undefined;
+  sections?: ProfileSection[];
 }
 
-export function ClientProfileSummary({ clientId, entityType }: Props) {
+export function ClientProfileSummary({ clientId, entityType, sections }: Props) {
+  const show = (s: ProfileSection) => !sections || sections.includes(s);
   const { data: roles = [] } = useQuery({
     queryKey: ["client_roles", clientId],
     queryFn: async () => {
@@ -160,7 +164,9 @@ export function ClientProfileSummary({ clientId, entityType }: Props) {
   return (
     <div className="space-y-4">
       {/* Rollen */}
+      {show("roles") && (
       <Card>
+
         <CardContent className="p-6">
           <div className="mb-4 flex items-center gap-2">
             <Briefcase className="h-4 w-4 text-muted-foreground" />
@@ -217,8 +223,10 @@ export function ClientProfileSummary({ clientId, entityType }: Props) {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Suchprofile */}
+      {show("searchProfiles") && (
       <Card>
         <CardContent className="p-6">
           <div className="mb-4 flex items-center gap-2">
@@ -285,9 +293,10 @@ export function ClientProfileSummary({ clientId, entityType }: Props) {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Firmenkontakte */}
-      {entityType === "company" && (
+      {show("contacts") && entityType === "company" && (
         <Card>
           <CardContent className="p-6">
             <div className="mb-4 flex items-center gap-2">
@@ -340,6 +349,7 @@ export function ClientProfileSummary({ clientId, entityType }: Props) {
       )}
 
       {/* Eigentum */}
+      {show("ownerships") && (
       <Card>
         <CardContent className="p-6">
           <div className="mb-4 flex items-center gap-2">
@@ -380,6 +390,7 @@ export function ClientProfileSummary({ clientId, entityType }: Props) {
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

@@ -38,7 +38,7 @@ import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkC
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+
 
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetailRoute });
@@ -400,16 +400,6 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             </Card>
           )}
 
-          <Accordion type="single" collapsible>
-            <AccordionItem value="profile-details" className="rounded-xl border bg-card px-4">
-              <AccordionTrigger className="text-sm font-medium">
-                Profil-Details (Rollen, Suchprofile, Eigentum)
-              </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <ClientProfileSummary clientId={id} entityType={client.entity_type} />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
         </TabsContent>
 
 
@@ -545,6 +535,8 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               </div>
             )}
           </CardContent></Card>
+
+          <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["ownerships", "contacts"]} />
         </TabsContent>
 
         {/* 6. Matching */}
@@ -593,6 +585,8 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               )}
             </CardContent></Card>
           )}
+
+          <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["searchProfiles"]} />
         </TabsContent>
 
         {/* 7. Dokumente */}
@@ -601,7 +595,8 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         </TabsContent>
 
         {/* 8. Aktivitäten */}
-        <TabsContent value="activity" className="mt-6">
+        <TabsContent value="activity" className="mt-6 space-y-4">
+          <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["roles"]} />
           <ClientActivityTab clientId={id} userId={user!.id} notes={client.notes} />
         </TabsContent>
       </Tabs>
