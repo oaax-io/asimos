@@ -98,6 +98,40 @@ function ClientsPage() {
     return m;
   }, [disclosuresQuery.data]);
 
+  const relationshipsQuery = useQuery({
+    queryKey: ["clients_relationships_all"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("client_relationships")
+        .select("client_id, related_client_id, relationship_type");
+      return data ?? [];
+    },
+  });
+  const relationshipLabels: Record<string, string> = {
+    spouse: "Ehepartner",
+    co_applicant: "Antragsteller",
+    co_investor: "Co-Investor",
+    other: "Weitere",
+  };
+  const relationshipsByClient = useMemo(() => {
+    const m = new Map<string, Array<{ id: string; type: string }>>();
+    const push = (key: string, val: { id: string; type: string }) => {
+      if (!m.has(key)) m.set(key, []);
+      const arr = m.get(key)!;
+      if (!arr.some((x) => x.id === val.id)) arr.push(val);
+    };
+    (relationshipsQuery.data ?? []).forEach((r: any) => {
+      push(r.client_id, { id: r.related_client_id, type: r.relationship_type });
+      push(r.related_client_id, { id: r.client_id, type: r.relationship_type });
+    });
+    return m;
+  }, [relationshipsQuery.data]);
+  const clientNameMap = useMemo(() => {
+    const m = new Map<string, string>();
+    clients.forEach((c: any) => m.set(c.id, c.full_name));
+    return m;
+  }, [clients]);
+
   const showError = clientsQuery.error && !isBackendUnavailableError(clientsQuery.error);
   const queryErrorMessage = showError ? getBackendErrorMessage(clientsQuery.error) : null;
 
