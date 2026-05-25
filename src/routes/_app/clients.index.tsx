@@ -470,6 +470,27 @@ function ClientsPage() {
                       {plzOrt || <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
+                    <TableCell className="text-sm">
+                      {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {relationshipsByClient.get(c.id)!.map((rel) => (
+                            <Badge
+                              key={rel.id + rel.type}
+                              variant="secondary"
+                              className="cursor-pointer text-xs"
+                              title={`${relationshipLabels[rel.type] ?? rel.type}: ${clientNameMap.get(rel.id) ?? ""}`}
+                              onClick={(e) => { e.stopPropagation(); setDetailId(rel.id); }}
+                            >
+                              <Link2 className="mr-1 h-3 w-3" />
+                              {clientNameMap.get(rel.id) ?? "—"}
+                              <span className="ml-1 opacity-70">({relationshipLabels[rel.type] ?? rel.type})</span>
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-sm">{c.financing_status ?? <span className="text-muted-foreground">—</span>}</TableCell>
                     <TableCell>
                       <DropdownMenu>
