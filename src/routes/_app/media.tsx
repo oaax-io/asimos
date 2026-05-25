@@ -299,6 +299,33 @@ function MediaPage() {
         }
       />
 
+      {/* Storage usage */}
+      {(() => {
+        const used = media.reduce((sum, m) => sum + (m.file_size ?? 0), 0);
+        const pct = Math.min(100, Math.round((used / MAX_STORAGE) * 100));
+        return (
+          <div className="mb-4 flex items-center gap-4 rounded-xl border bg-card p-3 shadow-soft">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <HardDrive className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 flex items-center justify-between text-sm">
+                <span className="font-medium text-foreground">Speicherverbrauch</span>
+                <span className="text-muted-foreground">
+                  {formatBytes(used)} / {formatBytes(MAX_STORAGE)} ({pct}%)
+                </span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="mb-4 flex flex-wrap gap-3">
         <div className="relative max-w-sm flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
