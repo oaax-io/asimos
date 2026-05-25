@@ -149,11 +149,19 @@ export function ClientDocumentsTab({ clientId, userId }: { clientId: string; use
     }
   };
 
+  const preserveExt = (oldName: string | null, fileUrl: string, newName: string) => {
+    const sourceExt = (oldName ?? fileUrl).split(".").pop()?.toLowerCase() ?? "";
+    if (!sourceExt || sourceExt.length > 5) return newName;
+    const hasExt = newName.toLowerCase().endsWith(`.${sourceExt}`);
+    return hasExt ? newName : `${newName}.${sourceExt}`;
+  };
+
   const saveRename = async (d: Doc) => {
     if (!renameValue.trim()) return;
     try {
+      const finalName = preserveExt(d.file_name, d.file_url, renameValue.trim());
       const { error } = await supabase.from("documents")
-        .update({ file_name: renameValue.trim() }).eq("id", d.id);
+        .update({ file_name: finalName }).eq("id", d.id);
       if (error) throw error;
       toast.success("Umbenannt");
       setRenameId(null);
@@ -284,7 +292,10 @@ export function ClientDocumentsTab({ clientId, userId }: { clientId: string; use
         onDelete={deleteDoc}
         onTypeChange={updateType}
         onRename={async (d, newName) => {
-          const { error } = await supabase.from("documents").update({ file_name: newName }).eq("id", d.id);
+          const ext = (d.file_name ?? d.file_url).split(".").pop()?.toLowerCase() ?? "";
+          const finalName = ext && ext.length <= 5 && !newName.toLowerCase().endsWith(`.${ext}`)
+            ? `${newName}.${ext}` : newName;
+          const { error } = await supabase.from("documents").update({ file_name: finalName }).eq("id", d.id);
           if (error) { toast.error(error.message); return; }
           toast.success("Umbenannt");
           qc.invalidateQueries({ queryKey: ["client_documents", clientId] });
@@ -338,7 +349,10 @@ function DocumentPreviewModal({
   );
 
   const mime = d.mime_type ?? "";
-  const ext = (d.file_name ?? d.file_url).split(".").pop()?.toLowerCase() ?? "";
+  // Endung IMMER aus dem Storage-Pfad ableiten — file_name kann nach Umbenennen ohne Endung sein
+  const extFromUrl = d.file_url.split("?")[0].split("#")[0].split(".").pop()?.toLowerCase() ?? "";
+  const extFromName = (d.file_name ?? "").split(".").pop()?.toLowerCase() ?? "";
+  const ext = ["pdf","png","jpg","jpeg","gif","webp","svg"].includes(extFromName) ? extFromName : extFromUrl;
   const isImage = mime.startsWith("image/") || ["png","jpg","jpeg","gif","webp","svg"].includes(ext);
   const isPdf = mime === "application/pdf" || ext === "pdf";
   const canPreview = isImage || isPdf;
