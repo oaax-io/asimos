@@ -471,6 +471,77 @@ function MediaPage() {
           })}
         </div>
       )}
+
+      {/* Viewer / Lightbox */}
+      {viewerIndex !== null && filtered[viewerIndex] && (() => {
+        const current = filtered[viewerIndex];
+        const url = getPublicUrl(current.file_url);
+        const isVideo = current.file_type === "video";
+        const isPdf = (current.file_name ?? current.file_url ?? "").toLowerCase().endsWith(".pdf");
+        const goPrev = () => setViewerIndex((i) => (i === null ? null : (i - 1 + filtered.length) % filtered.length));
+        const goNext = () => setViewerIndex((i) => (i === null ? null : (i + 1) % filtered.length));
+        return (
+          <div
+            className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setViewerIndex(null);
+              if (e.key === "ArrowLeft") goPrev();
+              if (e.key === "ArrowRight") goNext();
+            }}
+            tabIndex={-1}
+            ref={(el) => el?.focus()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b bg-card/80 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{current.title ?? current.file_name ?? "Ohne Titel"}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {viewerIndex + 1} / {filtered.length}
+                  {current.properties ? ` · ${current.properties.title}` : ""}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <a href={url} download={current.file_name ?? undefined} target="_blank" rel="noreferrer">
+                    <Download className="mr-1 h-4 w-4" /> Herunterladen
+                  </a>
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setViewerIndex(null)} title="Schließen">
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+            <div className="relative flex flex-1 items-center justify-center overflow-hidden p-4">
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full shadow-lg"
+                onClick={goPrev}
+                title="Vorheriges"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <div className="flex h-full w-full max-w-6xl items-center justify-center">
+                {isPdf ? (
+                  <iframe src={url} className="h-full w-full rounded-lg border bg-white" title={current.file_name ?? "PDF"} />
+                ) : isVideo ? (
+                  <video src={url} controls className="max-h-full max-w-full rounded-lg" />
+                ) : (
+                  <img src={url} alt={current.title ?? current.file_name ?? ""} className="max-h-full max-w-full rounded-lg object-contain" />
+                )}
+              </div>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full shadow-lg"
+                onClick={goNext}
+                title="Nächstes"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 }
