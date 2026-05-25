@@ -233,6 +233,23 @@ function DocsPage() {
                 <p className="text-muted-foreground">
                   Lege Kunden mit Rolle (Käufer, Verkäufer, Mieter, Vermieter, Finanzierungskunde)
                   an. Käufer erhalten ein Suchprofil — Matching findet passende Immobilien automatisch.
+                  Verknüpfe Kunden über den Tab <strong>Beziehungen</strong> (z. B. Ehepaar, Familie).
+                </p>
+              </section>
+              <section>
+                <h3 className="mb-2 font-display text-base font-semibold">Immobilien-Zuweisung</h3>
+                <p className="text-muted-foreground">
+                  Im Kundenprofil unter <strong>Immobilien → Immobilie zuweisen</strong> kannst du
+                  Objekte mit einer Rolle verknüpfen: Eigentümer, Kaufinteressent, Mieter, Investor
+                  etc. Doppelbelegungen als Eigentümer werden automatisch verhindert.
+                </p>
+              </section>
+              <section>
+                <h3 className="mb-2 font-display text-base font-semibold">Dokumente</h3>
+                <p className="text-muted-foreground">
+                  Im Kunden-Tab <strong>Dokumente</strong> per Drag-and-Drop hochladen. ASIMO erkennt
+                  den Dokumententyp automatisch. Dateien lassen sich umbenennen, in einer Vorschau
+                  ansehen und herunterladen.
                 </p>
               </section>
               <section>
