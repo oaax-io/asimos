@@ -38,6 +38,7 @@ import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkC
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { ClientDocumentsTab } from "@/components/clients/ClientDocumentsTab";
+import { AssignPropertyDialog } from "@/components/clients/AssignPropertyDialog";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 
 
