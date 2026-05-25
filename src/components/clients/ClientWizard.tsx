@@ -266,7 +266,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  const steps = useMemo(() => buildSteps(form.entity_type, form.role_choice as RoleChoice | ""), [form.entity_type, form.role_choice]);
+  const steps = useMemo(() => buildSteps(form.entity_type, form.role_choice as RoleChoice | "", form.creation_method), [form.entity_type, form.role_choice, form.creation_method]);
   const currentStep = steps[Math.min(stepIdx, steps.length - 1)];
 
   // ---- Daten für Selects ----
