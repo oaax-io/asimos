@@ -380,7 +380,9 @@ function ClientsPage() {
                 </TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Typ</TableHead>
-                <TableHead>Kontakt</TableHead>
+                <TableHead>Telefon</TableHead>
+                <TableHead>E-Mail</TableHead>
+                <TableHead>PLZ / Ort</TableHead>
                 <TableHead>Zugewiesen</TableHead>
                 <TableHead>Finanzierung</TableHead>
                 <TableHead className="w-10"></TableHead>
