@@ -492,18 +492,29 @@ function ClientsPage() {
                     <TableCell className="text-sm">
                       {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {relationshipsByClient.get(c.id)!.map((rel) => (
-                            <Badge
-                              key={rel.id + rel.type}
-                              variant="secondary"
-                              className="cursor-pointer text-[10px] py-0 px-1.5 h-5"
-                              title={`${relationshipLabels[rel.type] ?? rel.type}: ${clientNameMap.get(rel.id) ?? ""}`}
-                              onClick={(e) => { e.stopPropagation(); setDetailId(rel.id); }}
-                            >
-                              <Link2 className="mr-0.5 h-2.5 w-2.5" />
-                              {clientNameMap.get(rel.id) ?? "—"}
-                            </Badge>
-                          ))}
+                          {relationshipsByClient.get(c.id)!.map((rel) => {
+                            const partner = clientInfoMap.get(rel.id);
+                            return (
+                              <HoverCard key={rel.id + rel.type} openDelay={120} closeDelay={80}>
+                                <HoverCardTrigger asChild>
+                                  <Badge
+                                    variant="secondary"
+                                    className="cursor-pointer text-[10px] py-0 px-1.5 h-5"
+                                    onClick={(e) => { e.stopPropagation(); setDetailId(rel.id); }}
+                                  >
+                                    <Link2 className="mr-0.5 h-2.5 w-2.5" />
+                                    {relationshipLabels[rel.type] ?? rel.type}
+                                  </Badge>
+                                </HoverCardTrigger>
+                                <HoverCardContent className="w-64 text-sm" onClick={(e) => e.stopPropagation()}>
+                                  <p className="font-medium">{partner?.full_name ?? "Unbekannt"}</p>
+                                  <p className="text-xs text-muted-foreground mb-2">{relationshipLabels[rel.type] ?? rel.type}</p>
+                                  {partner?.email && <p className="flex items-center gap-2 text-xs"><Mail className="h-3 w-3" />{partner.email}</p>}
+                                  {partner?.phone && <p className="flex items-center gap-2 text-xs"><Phone className="h-3 w-3" />{partner.phone}</p>}
+                                </HoverCardContent>
+                              </HoverCard>
+                            );
+                          })}
                         </div>
                       ) : (
                         <span className="text-muted-foreground">—</span>
