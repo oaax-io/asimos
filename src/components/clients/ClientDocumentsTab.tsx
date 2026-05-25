@@ -338,7 +338,10 @@ function DocumentPreviewModal({
   );
 
   const mime = d.mime_type ?? "";
-  const ext = (d.file_name ?? d.file_url).split(".").pop()?.toLowerCase() ?? "";
+  // Endung IMMER aus dem Storage-Pfad ableiten — file_name kann nach Umbenennen ohne Endung sein
+  const extFromUrl = d.file_url.split("?")[0].split("#")[0].split(".").pop()?.toLowerCase() ?? "";
+  const extFromName = (d.file_name ?? "").split(".").pop()?.toLowerCase() ?? "";
+  const ext = ["pdf","png","jpg","jpeg","gif","webp","svg"].includes(extFromName) ? extFromName : extFromUrl;
   const isImage = mime.startsWith("image/") || ["png","jpg","jpeg","gif","webp","svg"].includes(ext);
   const isPdf = mime === "application/pdf" || ext === "pdf";
   const canPreview = isImage || isPdf;
