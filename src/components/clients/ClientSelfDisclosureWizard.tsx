@@ -489,6 +489,13 @@ export function ClientSelfDisclosureWizard({
           ? `${count} Felder erkannt – bitte prüfen.`
           : `Keine zuordenbaren Felder erkannt (${data?.form_fields_count ?? 0} Formularfelder gelesen).`,
       );
+
+      const coFields = (data?.co_applicant_fields ?? null) as
+        | Record<string, unknown>
+        | null;
+      if (data?.has_co_applicant && coFields && Object.keys(coFields).length > 0) {
+        setCoApplicantPrompt({ fields: coFields, creating: false });
+      }
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : "PDF konnte nicht gelesen werden",
