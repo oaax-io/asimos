@@ -69,30 +69,26 @@ function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border">
-        <Link to="/dashboard" className="flex items-center justify-center px-2 py-3">
+      <SidebarHeader className="border-b border-sidebar-border py-1">
+        <Link to="/dashboard" className="flex items-center justify-center px-2 py-1">
           {collapsed ? (
-            <Building2 className="h-7 w-7 text-sidebar-primary" />
+            <Building2 className="h-6 w-6 text-sidebar-primary" />
           ) : (
-            <img
-              src={logoAsimo}
-              alt="ASIMO"
-              className="h-9 w-auto"
-            />
+            <img src={logoAsimo} alt="ASIMO" className="h-7 w-auto" />
           )}
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="gap-0">
+      <SidebarContent className="gap-0 overflow-y-auto">
         {NAV_GROUPS.map((group) => (
-          <SidebarGroup key={group.label}>
+          <SidebarGroup key={group.label} className="px-2 py-1">
             {!collapsed && (
-              <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+              <SidebarGroupLabel className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
                 {group.label}
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-0.5">
                 {group.items.map((item) => {
                   const active =
                     item.to === "/dashboard"
@@ -104,7 +100,8 @@ function AppSidebar() {
                         asChild
                         isActive={active}
                         tooltip={item.label}
-                        className="data-[active=true]:bg-sidebar-primary/15 data-[active=true]:text-sidebar-primary"
+                        size="sm"
+                        className="h-7 text-[13px] data-[active=true]:bg-sidebar-primary/15 data-[active=true]:text-sidebar-primary"
                       >
                         <Link to={item.to}>
                           <item.icon className="h-4 w-4" />
@@ -120,9 +117,9 @@ function AppSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-2">
+      <SidebarFooter className="border-t border-sidebar-border p-1">
         {!collapsed && (
-          <p className="px-2 py-1 text-[10px] uppercase tracking-wider text-sidebar-foreground/40">
+          <p className="px-2 text-[9px] uppercase tracking-wider text-sidebar-foreground/40">
             ASIMO CRM
           </p>
         )}
