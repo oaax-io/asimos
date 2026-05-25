@@ -69,12 +69,12 @@ function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border py-1">
-        <Link to="/dashboard" className="flex items-center justify-center px-2 py-1">
+      <SidebarHeader className="h-16 border-b border-sidebar-border p-0">
+        <Link to="/dashboard" className="flex h-16 items-center justify-center px-2">
           {collapsed ? (
-            <Building2 className="h-6 w-6 text-sidebar-primary" />
+            <Building2 className="h-7 w-7 text-sidebar-primary" />
           ) : (
-            <img src={logoAsimo} alt="ASIMO" className="h-7 w-auto" />
+            <img src={logoAsimo} alt="ASIMO" className="h-9 w-auto" />
           )}
         </Link>
       </SidebarHeader>
