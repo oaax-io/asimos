@@ -149,11 +149,19 @@ export function ClientDocumentsTab({ clientId, userId }: { clientId: string; use
     }
   };
 
+  const preserveExt = (oldName: string | null, fileUrl: string, newName: string) => {
+    const sourceExt = (oldName ?? fileUrl).split(".").pop()?.toLowerCase() ?? "";
+    if (!sourceExt || sourceExt.length > 5) return newName;
+    const hasExt = newName.toLowerCase().endsWith(`.${sourceExt}`);
+    return hasExt ? newName : `${newName}.${sourceExt}`;
+  };
+
   const saveRename = async (d: Doc) => {
     if (!renameValue.trim()) return;
     try {
+      const finalName = preserveExt(d.file_name, d.file_url, renameValue.trim());
       const { error } = await supabase.from("documents")
-        .update({ file_name: renameValue.trim() }).eq("id", d.id);
+        .update({ file_name: finalName }).eq("id", d.id);
       if (error) throw error;
       toast.success("Umbenannt");
       setRenameId(null);
