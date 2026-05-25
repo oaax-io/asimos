@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText, HardDrive, ChevronLeft, ChevronRight, Download, X } from "lucide-react";
+import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText, HardDrive, ChevronLeft, ChevronRight, Download, X, Pencil, Check, Calendar, User as UserIcon, Building2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,7 +36,9 @@ type MediaItem = {
   is_cover: boolean;
   sort_order: number;
   created_at: string;
+  uploaded_by: string | null;
   properties?: { title: string; city: string | null } | null;
+  uploader?: { full_name: string | null; email: string | null } | null;
 };
 
 function getPublicUrl(path: string) {
@@ -72,6 +74,7 @@ function MediaPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ property_id: "", title: "", description: "" });
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const [editingTitle, setEditingTitle] = useState<string | null>(null);
 
   const { data: media = [], isLoading } = useQuery<MediaItem[]>({
     queryKey: ["property-media"],
@@ -103,6 +106,18 @@ function MediaPage() {
                 m.file_size = meta.metadata.size;
               }
             }
+          }
+        }
+      }
+      // Fetch uploader profiles
+      const uploaderIds = Array.from(new Set(items.map((m) => m.uploaded_by).filter((x): x is string => !!x)));
+      if (uploaderIds.length > 0) {
+        const { data: profs } = await supabase.from("profiles").select("id, full_name, email").in("id", uploaderIds);
+        const map = new Map((profs ?? []).map((p) => [p.id, p]));
+        for (const m of items) {
+          if (m.uploaded_by) {
+            const p = map.get(m.uploaded_by);
+            if (p) m.uploader = { full_name: p.full_name, email: p.email };
           }
         }
       }
@@ -202,6 +217,22 @@ function MediaPage() {
       await supabase.from("property_media").update({ sort_order: item.sort_order }).eq("id", target.id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["property-media"] }),
+  });
+
+  const rename = useMutation({
+    mutationFn: async ({ id, title }: { id: string; title: string }) => {
+      // We only update the display title; file_url and file_name in storage remain unchanged → keine Datei geht verloren.
+      const { error } = await supabase
+        .from("property_media")
+        .update({ title: title.trim() || null })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Umbenannt");
+      qc.invalidateQueries({ queryKey: ["property-media"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const filtered = useMemo(
@@ -459,6 +490,18 @@ function MediaPage() {
                   <Button
                     variant="secondary"
                     size="icon"
+                    className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
+                    title="Umbenennen"
+                    onClick={() => {
+                      const next = window.prompt("Neuer Titel", m.title ?? m.file_name ?? "");
+                      if (next !== null) rename.mutate({ id: m.id, title: next });
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
                     className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground transition-colors"
                     title="Löschen"
                     onClick={() => remove.mutate(m)}
@@ -493,11 +536,67 @@ function MediaPage() {
           >
             <div className="flex items-center justify-between gap-3 border-b bg-card/80 px-4 py-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{current.title ?? current.file_name ?? "Ohne Titel"}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {viewerIndex + 1} / {filtered.length}
-                  {current.properties ? ` · ${current.properties.title}` : ""}
-                </p>
+                {editingTitle !== null ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      rename.mutate({ id: current.id, title: editingTitle });
+                      setEditingTitle(null);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Input
+                      autoFocus
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Escape") setEditingTitle(null); }}
+                      className="h-8 max-w-md"
+                    />
+                    <Button type="submit" size="icon" variant="secondary" className="h-8 w-8" title="Speichern">
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title="Abbrechen" onClick={() => setEditingTitle(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium">{current.title ?? current.file_name ?? "Ohne Titel"}</p>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0"
+                      title="Umbenennen"
+                      onClick={() => setEditingTitle(current.title ?? current.file_name ?? "")}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                  <span>{viewerIndex + 1} / {filtered.length}</span>
+                  {current.properties && (
+                    <Link
+                      to="/properties/$id"
+                      params={{ id: current.property_id }}
+                      className="inline-flex items-center gap-1 hover:text-primary"
+                    >
+                      <Building2 className="h-3 w-3" />
+                      {current.properties.title}
+                    </Link>
+                  )}
+                  <span className="inline-flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(current.created_at).toLocaleString("de-CH", { dateStyle: "medium", timeStyle: "short" })}
+                  </span>
+                  {(current.uploader?.full_name || current.uploader?.email) && (
+                    <span className="inline-flex items-center gap-1">
+                      <UserIcon className="h-3 w-3" />
+                      {current.uploader.full_name ?? current.uploader.email}
+                    </span>
+                  )}
+                  {current.file_size != null && <span>{formatBytes(current.file_size)}</span>}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button asChild variant="outline" size="sm">
