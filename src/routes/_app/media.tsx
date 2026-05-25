@@ -536,11 +536,67 @@ function MediaPage() {
           >
             <div className="flex items-center justify-between gap-3 border-b bg-card/80 px-4 py-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{current.title ?? current.file_name ?? "Ohne Titel"}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {viewerIndex + 1} / {filtered.length}
-                  {current.properties ? ` · ${current.properties.title}` : ""}
-                </p>
+                {editingTitle !== null ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      rename.mutate({ id: current.id, title: editingTitle });
+                      setEditingTitle(null);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Input
+                      autoFocus
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Escape") setEditingTitle(null); }}
+                      className="h-8 max-w-md"
+                    />
+                    <Button type="submit" size="icon" variant="secondary" className="h-8 w-8" title="Speichern">
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title="Abbrechen" onClick={() => setEditingTitle(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium">{current.title ?? current.file_name ?? "Ohne Titel"}</p>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0"
+                      title="Umbenennen"
+                      onClick={() => setEditingTitle(current.title ?? current.file_name ?? "")}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                  <span>{viewerIndex + 1} / {filtered.length}</span>
+                  {current.properties && (
+                    <Link
+                      to="/properties/$id"
+                      params={{ id: current.property_id }}
+                      className="inline-flex items-center gap-1 hover:text-primary"
+                    >
+                      <Building2 className="h-3 w-3" />
+                      {current.properties.title}
+                    </Link>
+                  )}
+                  <span className="inline-flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {new Date(current.created_at).toLocaleString("de-CH", { dateStyle: "medium", timeStyle: "short" })}
+                  </span>
+                  {(current.uploader?.full_name || current.uploader?.email) && (
+                    <span className="inline-flex items-center gap-1">
+                      <UserIcon className="h-3 w-3" />
+                      {current.uploader.full_name ?? current.uploader.email}
+                    </span>
+                  )}
+                  {current.file_size != null && <span>{formatBytes(current.file_size)}</span>}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button asChild variant="outline" size="sm">
