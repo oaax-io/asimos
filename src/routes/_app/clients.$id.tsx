@@ -445,49 +445,60 @@ export function ClientDetail({ id, inDialog, onClose }: { id: string; inDialog?:
 
         {/* 5. Immobilien */}
         <TabsContent value="properties" className="mt-6 space-y-4">
-          {isSeller && (
-            <Card><CardContent className="p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h3 className="font-display text-lg font-semibold">Eigene Objekte</h3>
-                  <p className="text-xs text-muted-foreground">Objekte, bei denen dieser Kunde als Verkäufer/Vermieter eingetragen ist.</p>
-                </div>
-                <Button size="sm" variant="outline" asChild>
+          <Card><CardContent className="p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="font-display text-lg font-semibold">
+                  {isSeller ? "Eigene Objekte" : "Zugewiesene Objekte"}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {isSeller
+                    ? "Objekte, bei denen dieser Kunde als Verkäufer/Vermieter eingetragen ist."
+                    : "Objekte, die diesem Kunden zugewiesen sind."}
+                </p>
+              </div>
+              <Button size="sm" asChild>
+                <Link to="/properties" search={{ sellerClientId: id }}>
+                  <Building2 className="mr-1.5 h-4 w-4" />Immobilie hinzufügen
+                </Link>
+              </Button>
+            </div>
+            {ownProperties.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-8 text-center">
+                <Building2 className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Dieser Kunde hat noch keine zugewiesene Immobilie.</p>
+                <Button size="sm" variant="outline" className="mt-3" asChild>
                   <Link to="/properties" search={{ sellerClientId: id }}>
-                    <Building2 className="mr-1.5 h-4 w-4" />Zur Objektübersicht
+                    <Building2 className="mr-1.5 h-4 w-4" />Immobilie hinzufügen
                   </Link>
                 </Button>
               </div>
-              {ownProperties.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Diesem Kunden sind noch keine Objekte zugeordnet.</p>
-              ) : (
-                <div className="grid gap-3 md:grid-cols-2">
-                  {ownProperties.map((p: any) => (
-                    <Link key={p.id} to="/properties/$id" params={{ id: p.id }}
-                      className="rounded-xl border p-4 transition hover:border-primary hover:shadow-glow"
-                    >
-                      <div className="flex items-start justify-between">
-                        <p className="font-medium">{p.title}</p>
-                        <Badge variant="outline">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {p.city ?? "—"} · {p.price ? formatCurrency(Number(p.price)) : p.rent ? formatCurrency(Number(p.rent)) + "/Monat" : "—"}
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        <Badge variant="secondary" className="text-[10px]">
-                          {propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels]}
-                        </Badge>
-                        <Badge variant="secondary" className="text-[10px]">
-                          {listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}
-                        </Badge>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent></Card>
-          )}
-
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {ownProperties.map((p: any) => (
+                  <Link key={p.id} to="/properties/$id" params={{ id: p.id }}
+                    className="rounded-xl border p-4 transition hover:border-primary hover:shadow-glow"
+                  >
+                    <div className="flex items-start justify-between">
+                      <p className="font-medium">{p.title}</p>
+                      <Badge variant="outline">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {p.city ?? "—"} · {p.price ? formatCurrency(Number(p.price)) : p.rent ? formatCurrency(Number(p.rent)) + "/Monat" : "—"}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      <Badge variant="secondary" className="text-[10px]">
+                        {propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels]}
+                      </Badge>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}
+                      </Badge>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent></Card>
         </TabsContent>
 
         {/* 6. Matching */}
