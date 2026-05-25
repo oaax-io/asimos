@@ -91,7 +91,9 @@ const FINANCING_GOALS: { value: string; label: string }[] = [
 // ----- Form State -----
 type FormState = {
   entity_type: EntityType;
+  creation_method: "manual" | "upload";
   role_choice: RoleChoice | "";
+
 
   // Person
   salutation: string;
