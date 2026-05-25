@@ -175,7 +175,7 @@ export function ClientRelationshipsTab({ clientId }: Props) {
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        if (confirm("Beziehung wirklich entfernen?")) removeRel.mutate(r.id);
+                        if (confirm("Beziehung wirklich entfernen?")) removeRel.mutate(r);
                       }}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
