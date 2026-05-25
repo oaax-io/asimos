@@ -535,6 +535,8 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               </div>
             )}
           </CardContent></Card>
+
+          <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["ownerships", "contacts"]} />
         </TabsContent>
 
         {/* 6. Matching */}
