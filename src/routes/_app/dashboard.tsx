@@ -84,6 +84,19 @@ function getGreeting() {
 
 // ---------- main ----------
 function Dashboard() {
+  const { user } = useAuth();
+  const profile = useQuery({
+    queryKey: ["dashboard", "profile", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("full_name").eq("id", user!.id).maybeSingle();
+      return data;
+    },
+  });
+  const displayName = (profile.data?.full_name?.trim().split(/\s+/)[0])
+    || user?.user_metadata?.full_name?.trim().split(/\s+/)[0]
+    || user?.email?.split("@")[0]
+    || "";
   const kpis = useQuery({
     queryKey: ["dashboard", "kpis"],
     queryFn: async () => {
