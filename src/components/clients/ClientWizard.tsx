@@ -738,6 +738,72 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               </div>
             )}
 
+            {/* METHOD: Manuell vs. Selbstauskunft-Upload */}
+            {currentStep === "method" && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-base font-semibold">Wie möchtest du den Kunden erfassen?</p>
+                  <p className="text-sm text-muted-foreground">
+                    Mit einer Selbstauskunft (PDF) füllen wir Stammdaten, Finanzen und
+                    Mitantragsteller automatisch aus.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {([
+                    { v: "manual", title: "Manuell erfassen", desc: "Schrittweise Eingabe mit Rolle und Stammdaten", Icon: ClipboardCheck },
+                    { v: "upload", title: "Selbstauskunft hochladen", desc: "PDF analysieren – Kunde wird automatisch angelegt", Icon: Sparkles },
+                  ] as const).map(({ v, title, desc, Icon }) => {
+                    const active = form.creation_method === v;
+                    return (
+                      <button type="button" key={v}
+                        onClick={() => set("creation_method", v)}
+                        className={`flex items-start gap-3 rounded-xl border p-4 text-left transition hover:border-primary/60 hover:bg-accent/40 ${
+                          active ? "border-primary bg-primary/5 ring-2 ring-primary/30" : ""
+                        }`}>
+                        <span className={`flex h-10 w-10 items-center justify-center rounded-lg ${active ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="flex-1">
+                          <span className="block font-semibold">{title}</span>
+                          <span className="block text-sm text-muted-foreground">{desc}</span>
+                        </span>
+                        {active && <Check className="h-5 w-5 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {form.creation_method === "upload" && (
+                  <div className="rounded-xl border border-dashed p-6 text-center space-y-3">
+                    <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">Selbstauskunft als PDF hochladen</p>
+                      <p className="text-sm text-muted-foreground">
+                        Erkennt automatisch Antragsteller 1 und – falls vorhanden – Antragsteller 2.
+                      </p>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) void handleSelfDisclosureUpload(f);
+                      }}
+                    />
+                    <Button type="button" disabled={uploading}
+                      onClick={() => fileInputRef.current?.click()}>
+                      {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                      {uploading ? "Wird analysiert…" : "PDF auswählen"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+
+
             {/* ROLE */}
             {currentStep === "role" && (
               <div className="space-y-4">
