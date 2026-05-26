@@ -17,7 +17,7 @@ import {
   ArrowLeft, Mail, Phone, Trash2, RefreshCw, Pencil, FileSignature,
   Calendar, Target, Home, MapPin, Banknote, Ruler, BedDouble, Building2, MessageSquare,
   CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
-  ClipboardList, Heart, X, User, Upload, ChevronLeft, ChevronRight,
+  ClipboardList, Heart, X, User, Upload, ChevronLeft, ChevronRight, Circle,
 } from "lucide-react";
 import {
   clientTypeLabels, formatCurrency, formatDate, formatDateTime,
@@ -40,6 +40,17 @@ import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumen
 import { ClientDocumentsTab } from "@/components/clients/ClientDocumentsTab";
 import { AssignPropertyDialog } from "@/components/clients/AssignPropertyDialog";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
+
+const CLIENT_STATUSES = [
+  { value: "entwurf",       label: "Entwurf",       dot: "bg-slate-400",   badge: "bg-slate-500/15 text-slate-700 border-slate-500/30 dark:text-slate-300" },
+  { value: "pendent",       label: "Pendent",       dot: "bg-amber-500",   badge: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300" },
+  { value: "vollstaendig",  label: "Vollständig",   dot: "bg-blue-500",    badge: "bg-blue-500/15 text-blue-700 border-blue-500/30 dark:text-blue-300" },
+  { value: "finanzierung",  label: "Finanzierung",  dot: "bg-violet-500",  badge: "bg-violet-500/15 text-violet-700 border-violet-500/30 dark:text-violet-300" },
+  { value: "abgeschlossen", label: "Abgeschlossen", dot: "bg-emerald-500", badge: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-300" },
+  { value: "abgelehnt",     label: "Abgelehnt",     dot: "bg-red-500",     badge: "bg-red-500/15 text-red-700 border-red-500/30 dark:text-red-300" },
+  { value: "storniert",     label: "Storniert",     dot: "bg-zinc-500",    badge: "bg-zinc-500/15 text-zinc-700 border-zinc-500/30 dark:text-zinc-300" },
+] as const;
+const statusMap = new Map<string, (typeof CLIENT_STATUSES)[number]>(CLIENT_STATUSES.map((s) => [s.value, s]));
 
 
 
@@ -216,6 +227,21 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
     onError: (e: any) => toast.error(e.message ?? "Fehler beim Löschen"),
   });
 
+  const statusUpdate = useMutation({
+    mutationFn: async (status: string) => {
+      const { error } = await supabase.from("clients").update({ status: status as any }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Status aktualisiert");
+      qc.invalidateQueries({ queryKey: ["client", id] });
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Fehler beim Aktualisieren"),
+  });
+
+  const currentStatus = statusMap.get(client?.status ?? "") ?? CLIENT_STATUSES[0];
+
   if (isLoading && !isError && !loadTimedOut) return <div className="text-sm text-muted-foreground">Lädt…</div>;
   if (clientError || !client) {
     return (
@@ -240,47 +266,91 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
     <div>
       <div className="mb-6 flex items-center justify-between">
         {inDialog ? (
-          <div className="flex items-center gap-1">
-            {clientIds && clientIds.length > 1 && onNavigate ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  disabled={clientIds.indexOf(id) <= 0}
-                  onClick={() => {
-                    const idx = clientIds.indexOf(id);
-                    if (idx > 0) onNavigate(clientIds[idx - 1]);
-                  }}
-                  title="Vorheriger Kunde"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  {clientIds.indexOf(id) + 1} / {clientIds.length}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  disabled={clientIds.indexOf(id) >= clientIds.length - 1}
-                  onClick={() => {
-                    const idx = clientIds.indexOf(id);
-                    if (idx < clientIds.length - 1) onNavigate(clientIds[idx + 1]);
-                  }}
-                  title="Nächster Kunde"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </>
-            ) : (
-              <div />
-            )}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              {clientIds && clientIds.length > 1 && onNavigate ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={clientIds.indexOf(id) <= 0}
+                    onClick={() => {
+                      const idx = clientIds.indexOf(id);
+                      if (idx > 0) onNavigate(clientIds[idx - 1]);
+                    }}
+                    title="Vorheriger Kunde"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {clientIds.indexOf(id) + 1} / {clientIds.length}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={clientIds.indexOf(id) >= clientIds.length - 1}
+                    onClick={() => {
+                      const idx = clientIds.indexOf(id);
+                      if (idx < clientIds.length - 1) onNavigate(clientIds[idx + 1]);
+                    }}
+                    title="Nächster Kunde"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <div />
+              )}
+            </div>
+            <Select
+              value={client?.status ?? "entwurf"}
+              onValueChange={(v) => statusUpdate.mutate(v)}
+              disabled={statusUpdate.isPending}
+            >
+              <SelectTrigger className={`h-8 gap-1.5 rounded-full border px-2.5 text-xs font-medium ${currentStatus.badge}`}>
+                <Circle className={`h-2.5 w-2.5 fill-current ${currentStatus.dot}`} />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CLIENT_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    <span className="flex items-center gap-2">
+                      <Circle className={`h-2 w-2 fill-current ${s.dot}`} />
+                      {s.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         ) : (
-          <Button variant="ghost" asChild>
-            <Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" asChild>
+              <Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
+            </Button>
+            <Select
+              value={client?.status ?? "entwurf"}
+              onValueChange={(v) => statusUpdate.mutate(v)}
+              disabled={statusUpdate.isPending}
+            >
+              <SelectTrigger className={`h-8 gap-1.5 rounded-full border px-2.5 text-xs font-medium ${currentStatus.badge}`}>
+                <Circle className={`h-2.5 w-2.5 fill-current ${currentStatus.dot}`} />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CLIENT_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    <span className="flex items-center gap-2">
+                      <Circle className={`h-2 w-2 fill-current ${s.dot}`} />
+                      {s.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
         <div className="flex gap-2">
           <ClientQuickActions client={client} />
