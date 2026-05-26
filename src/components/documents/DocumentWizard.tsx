@@ -124,10 +124,16 @@ export function DocumentWizard({
       setStep(0);
       setMissingValues({});
       setPartnerClientId("");
-      const def = banks.find((b) => b.is_default);
-      setBankAccountId(def?.id ?? "");
+      setBankAccountId("");
     }
-  }, [open, banks]);
+  }, [open]);
+
+  // Auto-select default bank once banks load
+  useEffect(() => {
+    if (!open || bankAccountId) return;
+    const def = banks.find((b) => b.is_default);
+    if (def?.id) setBankAccountId(def.id);
+  }, [open, banks, bankAccountId]);
 
   // Auto-select first template
   useEffect(() => {
