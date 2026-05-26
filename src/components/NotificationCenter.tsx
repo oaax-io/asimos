@@ -86,7 +86,24 @@ export function NotificationCenter() {
       .channel("notifications-stream")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          qc.invalidateQueries({ queryKey: ["notifications"] });
+          const n = payload.new as Notification;
+          playDing();
+          setShake(true);
+          setTimeout(() => setShake(false), 950);
+          toast(n.title, {
+            description: n.message ?? undefined,
+            action: n.link
+              ? { label: "Öffnen", onClick: () => navigateRef.current({ to: n.link as never }) }
+              : undefined,
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
         () => qc.invalidateQueries({ queryKey: ["notifications"] }),
       )
       .subscribe();
