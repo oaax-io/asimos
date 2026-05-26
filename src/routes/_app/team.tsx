@@ -228,7 +228,7 @@ function TeamPage() {
       {editing && (
         <EditMemberDialog
           member={editing}
-          isSuperadmin={!!isSuperadmin}
+          isSuperadmin={effectiveIsSuperadmin}
           onClose={() => setEditing(null)}
           onSaved={() => qc.invalidateQueries({ queryKey: ["team"] })}
         />
