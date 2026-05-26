@@ -126,9 +126,14 @@ function FinancingPage() {
         title="Finanzierungen"
         description="Übersicht aller Finanzierungs-Dossiers"
         action={
-          <Button onClick={() => setWizardOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Quick Check starten
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setHypoOpen(true)}>
+              <Calculator className="mr-2 h-4 w-4" /> Hyporechner Kosovo
+            </Button>
+            <Button onClick={() => setWizardOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Quick Check starten
+            </Button>
+          </div>
         }
       />
 
