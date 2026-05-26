@@ -839,6 +839,9 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
           dragOver={modalDragOver}
           setDragOver={setModalDragOver}
           onFiles={async (fs) => { await handleFiles(fs); setUploadOpen(false); }}
+          propertyId={propertyId}
+          existingPaths={images}
+          onPickFromLibrary={async (paths) => { await addFromLibrary(paths); setUploadOpen(false); }}
         />
       </>
     );
