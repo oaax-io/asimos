@@ -2,6 +2,21 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 
+## [Unreleased]
+
+### Hinzugefügt
+- **Kunden-Status-Workflow**: Neue `status`-Spalte auf der Kunden-Tabelle mit 7 farblich kodierten Stufen: Entwurf (Grau), Pendet (Gelb), Vollständig (Blau), Finanzierung (Indigo), Abgeschlossen (Grün), Abgelehnt (Rot), Storniert (Orange).
+- **Status-Filter in Kundenübersicht**: Dropdown-Filter mit farbigen Punkten zum schnellen Filtern nach Kundenstatus.
+- **Status-Bearbeitung im Kunden-Modal**: Direkt im Kunden-Detail (oben rechts neben den Navigationspfeilen) lässt sich der Status per Dropdown ändern — mit farblicher Kennzeichnung und verbesserter Lesbarkeit.
+
+### Geändert
+- **Kunden-Typ-Farben neu abgestuft**: Die Farben für Kundentypen (Käufer, Verkäufer, Eigentümer, Mieter, Vermieter, Investor, Sonstige) wurden von den Status-Farben entkoppelt und erhalten nun eine eigene, deutlich unterscheidbare Palette (Cyan, Teal, Indigo, Orange, Pink, Rose, Stone).
+
+### Entfernt
+- **"Finanzierung"-Spalte aus Kundenübersicht**: Die separate Finanzierungsspalte und der zugehörige Filter "Alle Finanzierungen" wurden entfernt — der Status-Workflow ersetzt diese Darstellung.
+
+---
+
 ## [1.8.0] – 26.05.2026
 
 ### Hinzugefügt
