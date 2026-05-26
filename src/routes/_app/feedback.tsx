@@ -56,6 +56,19 @@ type Attachment = { url: string; name: string; mime: string };
 function typeMeta(t: string) { return TYPES.find(x => x.value === t) ?? TYPES[3]; }
 function statusMeta(s: string) { return STATUSES.find(x => x.value === s) ?? STATUSES[0]; }
 
+function useIsSuperadmin() {
+  const { data } = useQuery({
+    queryKey: ["is-superadmin-local"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("is_superadmin");
+      if (error) return false;
+      return !!data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  return !!data;
+}
+
 async function uploadFiles(files: File[], userId: string): Promise<Attachment[]> {
   const out: Attachment[] = [];
   for (const f of files) {
