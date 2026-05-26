@@ -23,8 +23,8 @@ export const Route = createFileRoute("/_app/settings")({ component: SettingsPage
 function SettingsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const navigate = useNavigate({ from: Route.fullPath });
-  const search = useSearch({ from: Route.fullPath });
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false });
   const currentTab = (search as any)?.tab ?? "profile";
   const [profile, setProfile] = useState({ full_name: "", phone: "" });
 
