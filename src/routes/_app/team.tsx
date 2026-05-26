@@ -62,10 +62,13 @@ function TeamPage() {
         .select("id, full_name, email, phone, role, created_at")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      const { data: roles } = await supabase.from("user_roles").select("user_id, role");
+      const superadminIds = new Set((roles ?? []).filter((r) => r.role === "superadmin").map((r) => r.user_id));
+      return (data ?? []).map((m) => ({ ...m, isSystemowner: superadminIds.has(m.id) }));
     },
     enabled: !!meQuery.data,
   });
+
 
   const create = useMutation({
     mutationFn: async () => {
