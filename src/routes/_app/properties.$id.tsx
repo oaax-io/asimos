@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity, TrendingUp, Sparkles, RefreshCw } from "lucide-react";
+import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity, TrendingUp, Sparkles, RefreshCw, ChevronLeft, ChevronRight, UploadCloud } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -383,12 +383,8 @@ function PropertyDetail() {
       )}
 
       <div className="mb-6 grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 aspect-[16/10] overflow-hidden rounded-2xl border bg-muted">
-          {p.images?.[0] ? (
-            <img src={getMediaPublicUrl(p.images[0])} alt={p.title} className="h-full w-full object-cover" />
-          ) : (
-            <PropertyImageDropzone propertyId={id} existing={p.images ?? []} />
-          )}
+        <div className="lg:col-span-2 aspect-[16/10] overflow-hidden rounded-2xl">
+          <PropertyImageGallery propertyId={id} images={p.images ?? []} title={p.title} />
         </div>
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
@@ -682,10 +678,13 @@ function OwnerTab({ p }: { p: any }) {
   );
 }
 
-function PropertyImageDropzone({ propertyId, existing }: { propertyId: string; existing: string[] }) {
+function PropertyImageGallery({ propertyId, images, title }: { propertyId: string; images: string[]; title: string }) {
   const qc = useQueryClient();
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [idx, setIdx] = useState(0);
+  const hasImages = images.length > 0;
+  const current = hasImages ? images[Math.min(idx, images.length - 1)] : null;
 
   const handleFiles = async (files: FileList | File[]) => {
     const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
@@ -693,15 +692,30 @@ function PropertyImageDropzone({ propertyId, existing }: { propertyId: string; e
     setUploading(true);
     try {
       const paths: string[] = [];
-      for (const f of list) {
+      const mediaRows: any[] = [];
+      const baseSort = images.length;
+      for (let i = 0; i < list.length; i++) {
+        const f = list[i];
         const ext = f.name.split(".").pop() || "jpg";
         const path = `properties/${propertyId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
         const { error } = await supabase.storage.from("media").upload(path, f, { upsert: false, contentType: f.type });
         if (error) throw error;
         paths.push(path);
+        mediaRows.push({
+          property_id: propertyId,
+          file_url: path,
+          file_name: f.name,
+          file_type: "image",
+          file_size: f.size,
+          sort_order: baseSort + i,
+          is_cover: !hasImages && i === 0,
+        });
       }
-      const { error: upErr } = await supabase.from("properties").update({ images: [...paths, ...(existing ?? [])] }).eq("id", propertyId);
+      const newImages = hasImages ? [...images, ...paths] : [...paths, ...images];
+      const { error: upErr } = await supabase.from("properties").update({ images: newImages }).eq("id", propertyId);
       if (upErr) throw upErr;
+      const { error: medErr } = await supabase.from("property_media").insert(mediaRows);
+      if (medErr) console.warn("media insert failed", medErr);
       toast.success(`${paths.length} Bild(er) hochgeladen`);
       qc.invalidateQueries({ queryKey: ["property", propertyId] });
       qc.invalidateQueries({ queryKey: ["property_media", propertyId] });
@@ -712,27 +726,98 @@ function PropertyImageDropzone({ propertyId, existing }: { propertyId: string; e
     }
   };
 
+  const dropHandlers = {
+    onDragOver: (e: React.DragEvent) => { e.preventDefault(); setDragOver(true); },
+    onDragLeave: (e: React.DragEvent) => { e.preventDefault(); setDragOver(false); },
+    onDrop: (e: React.DragEvent) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files); },
+  };
+
+  const setAsCover = async (i: number) => {
+    if (i === 0) return;
+    const next = [images[i], ...images.filter((_, k) => k !== i)];
+    setIdx(0);
+    const { error } = await supabase.from("properties").update({ images: next }).eq("id", propertyId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Als Cover gesetzt");
+    qc.invalidateQueries({ queryKey: ["property", propertyId] });
+  };
+
+  if (!hasImages) {
+    return (
+      <label
+        {...dropHandlers}
+        className={`group relative flex h-full w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed bg-gradient-soft text-muted-foreground transition-all ${dragOver ? "border-primary bg-primary/10 scale-[1.01] ring-4 ring-primary/20" : "border-border hover:border-primary/60 hover:bg-primary/5"}`}
+      >
+        <div className={`rounded-full bg-background/60 p-4 shadow-sm transition-transform ${dragOver ? "scale-110" : "group-hover:scale-105"}`}>
+          <UploadCloud className={`h-8 w-8 ${dragOver ? "text-primary animate-pulse" : "text-muted-foreground group-hover:text-primary"}`} />
+        </div>
+        <div className="text-center">
+          <p className="text-base font-semibold text-foreground">{uploading ? "Wird hochgeladen…" : dragOver ? "Jetzt loslassen" : "Bilder hierher ziehen"}</p>
+          <p className="text-xs">oder <span className="font-medium text-primary underline-offset-2 group-hover:underline">klicken zum Auswählen</span> · JPG, PNG, WebP · mehrere möglich</p>
+        </div>
+        <input type="file" accept="image/*" multiple className="hidden" disabled={uploading}
+          onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ""; }} />
+      </label>
+    );
+  }
+
   return (
-    <label
-      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={(e) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files); }}
-      className={`flex h-full w-full cursor-pointer flex-col items-center justify-center gap-2 bg-gradient-soft text-muted-foreground transition ${dragOver ? "ring-2 ring-primary ring-inset bg-primary/5" : ""}`}
-    >
-      <ImageIcon className="h-10 w-10 opacity-60" />
-      <p className="text-sm font-medium">{uploading ? "Wird hochgeladen…" : "Bilder hierher ziehen oder klicken"}</p>
-      <p className="text-xs">JPG, PNG, WebP – mehrere möglich</p>
-      <input
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        disabled={uploading}
-        onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ""; }}
-      />
-    </label>
+    <div {...dropHandlers} className={`group relative h-full w-full overflow-hidden rounded-2xl border bg-muted transition-all ${dragOver ? "ring-4 ring-primary/40 ring-offset-2" : ""}`}>
+      <img src={getMediaPublicUrl(current!)} alt={title} className="h-full w-full object-cover" />
+
+      {idx === 0 && (
+        <Badge className="absolute left-3 top-3 shadow">Cover</Badge>
+      )}
+      {idx !== 0 && (
+        <button onClick={() => setAsCover(idx)} className="absolute left-3 top-3 rounded-md bg-background/85 px-2 py-1 text-xs font-medium shadow hover:bg-background">
+          Als Cover setzen
+        </button>
+      )}
+      <div className="absolute right-3 top-3 rounded-md bg-background/85 px-2 py-1 text-xs font-medium shadow">
+        {idx + 1} / {images.length}
+      </div>
+
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={() => setIdx((i) => (i - 1 + images.length) % images.length)}
+            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-background/85 p-2 shadow opacity-0 transition group-hover:opacity-100 hover:bg-background"
+            aria-label="Vorheriges Bild"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => setIdx((i) => (i + 1) % images.length)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-background/85 p-2 shadow opacity-0 transition group-hover:opacity-100 hover:bg-background"
+            aria-label="Nächstes Bild"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+            {images.map((_, i) => (
+              <button key={i} onClick={() => setIdx(i)} className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-white" : "w-1.5 bg-white/60 hover:bg-white/90"}`} aria-label={`Bild ${i + 1}`} />
+            ))}
+          </div>
+        </>
+      )}
+
+      <label className={`absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-2 bg-primary/20 backdrop-blur-sm transition ${dragOver ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+        <div className="rounded-full bg-background/90 p-4 shadow-lg">
+          <UploadCloud className="h-8 w-8 text-primary animate-pulse" />
+        </div>
+        <p className="rounded-md bg-background/90 px-3 py-1 text-sm font-semibold">{uploading ? "Wird hochgeladen…" : "Bilder hier ablegen"}</p>
+      </label>
+
+      <label className="absolute bottom-3 right-3 flex cursor-pointer items-center gap-1.5 rounded-md bg-background/85 px-2.5 py-1.5 text-xs font-medium shadow opacity-0 transition group-hover:opacity-100 hover:bg-background">
+        <Plus className="h-3.5 w-3.5" />
+        {uploading ? "Lädt…" : "Hinzufügen"}
+        <input type="file" accept="image/*" multiple className="hidden" disabled={uploading}
+          onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ""; }} />
+      </label>
+    </div>
   );
 }
+
 
 function MediaTab({ propertyId, cover }: { propertyId: string; cover?: string | null }) {
   const qc = useQueryClient();
