@@ -262,94 +262,75 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
   const upcoming = appointments.filter((a: any) => new Date(a.starts_at) >= new Date());
   const past = appointments.filter((a: any) => new Date(a.starts_at) < new Date());
 
+  const StatusSelect = (
+    <Select
+      value={client?.status ?? "entwurf"}
+      onValueChange={(v) => statusUpdate.mutate(v)}
+      disabled={statusUpdate.isPending}
+    >
+      <SelectTrigger className={`h-8 w-[160px] gap-2 rounded-full border px-3 text-xs font-medium ${currentStatus.badge}`}>
+        <span className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${currentStatus.dot}`} />
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {CLIENT_STATUSES.map((s) => (
+          <SelectItem key={s.value} value={s.value}>
+            <span className="flex items-center gap-2">
+              <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.dot}`} />
+              {s.label}
+            </span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         {inDialog ? (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              {clientIds && clientIds.length > 1 && onNavigate ? (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    disabled={clientIds.indexOf(id) <= 0}
-                    onClick={() => {
-                      const idx = clientIds.indexOf(id);
-                      if (idx > 0) onNavigate(clientIds[idx - 1]);
-                    }}
-                    title="Vorheriger Kunde"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    {clientIds.indexOf(id) + 1} / {clientIds.length}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    disabled={clientIds.indexOf(id) >= clientIds.length - 1}
-                    onClick={() => {
-                      const idx = clientIds.indexOf(id);
-                      if (idx < clientIds.length - 1) onNavigate(clientIds[idx + 1]);
-                    }}
-                    title="Nächster Kunde"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : (
-                <div />
-              )}
-            </div>
-            <Select
-              value={client?.status ?? "entwurf"}
-              onValueChange={(v) => statusUpdate.mutate(v)}
-              disabled={statusUpdate.isPending}
-            >
-              <SelectTrigger className={`h-8 gap-1.5 rounded-full border px-2.5 text-xs font-medium ${currentStatus.badge}`}>
-                <Circle className={`h-2.5 w-2.5 fill-current ${currentStatus.dot}`} />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CLIENT_STATUSES.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    <span className="flex items-center gap-2">
-                      <Circle className={`h-2 w-2 fill-current ${s.dot}`} />
-                      {s.label}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-wrap items-center gap-3">
+            {clientIds && clientIds.length > 1 && onNavigate && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={clientIds.indexOf(id) <= 0}
+                  onClick={() => {
+                    const idx = clientIds.indexOf(id);
+                    if (idx > 0) onNavigate(clientIds[idx - 1]);
+                  }}
+                  title="Vorheriger Kunde"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="min-w-[44px] text-center text-xs tabular-nums text-muted-foreground">
+                  {clientIds.indexOf(id) + 1} / {clientIds.length}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={clientIds.indexOf(id) >= clientIds.length - 1}
+                  onClick={() => {
+                    const idx = clientIds.indexOf(id);
+                    if (idx < clientIds.length - 1) onNavigate(clientIds[idx + 1]);
+                  }}
+                  title="Nächster Kunde"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+            {StatusSelect}
           </div>
         ) : (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Button variant="ghost" asChild>
               <Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
             </Button>
-            <Select
-              value={client?.status ?? "entwurf"}
-              onValueChange={(v) => statusUpdate.mutate(v)}
-              disabled={statusUpdate.isPending}
-            >
-              <SelectTrigger className={`h-8 gap-1.5 rounded-full border px-2.5 text-xs font-medium ${currentStatus.badge}`}>
-                <Circle className={`h-2.5 w-2.5 fill-current ${currentStatus.dot}`} />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CLIENT_STATUSES.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    <span className="flex items-center gap-2">
-                      <Circle className={`h-2 w-2 fill-current ${s.dot}`} />
-                      {s.label}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {StatusSelect}
           </div>
         )}
         <div className="flex gap-2">
