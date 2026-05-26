@@ -68,6 +68,18 @@ Deno.serve(async (req) => {
     const userId = String(body.user_id ?? "");
     if (!userId) return json({ error: "user_id fehlt" }, 400);
 
+    // Ziel-User Superadmin? Dann nur Superadmin darf editieren.
+    const { data: targetSuperRow } = await admin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "superadmin")
+      .maybeSingle();
+    if (targetSuperRow && !isSuper) {
+      return json({ error: "Der Systemowner kann nur vom Systemowner selbst geändert werden" }, 403);
+    }
+
+
     // ===== Profil-Update =====
     if (action === "update_profile") {
       const updates: Record<string, unknown> = {};
