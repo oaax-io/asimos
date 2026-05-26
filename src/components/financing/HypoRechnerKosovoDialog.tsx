@@ -496,3 +496,72 @@ function KV({ label, value, highlight }: { label: string; value: string; highlig
     </div>
   );
 }
+
+function AffordabilityCard({ a }: { a: any }) {
+  if (a.status === "no_data") {
+    return (
+      <Card className="border-amber-500/50 bg-amber-500/5">
+        <CardContent className="p-3 flex gap-2 text-sm">
+          <Info className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+          <p>{a.message}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  const tone =
+    a.status === "ok"
+      ? "border-emerald-500/50 bg-emerald-500/5"
+      : a.status === "tight"
+      ? "border-amber-500/50 bg-amber-500/5"
+      : "border-red-500/50 bg-red-500/5";
+  const Icon = a.status === "ok" ? CheckCircle2 : AlertTriangle;
+  const iconTone =
+    a.status === "ok" ? "text-emerald-600" : a.status === "tight" ? "text-amber-600" : "text-red-600";
+  const title =
+    a.status === "ok"
+      ? "Finanzierbar"
+      : a.status === "tight"
+      ? "Knapp finanzierbar"
+      : "Nicht finanzierbar";
+
+  return (
+    <Card className={tone}>
+      <CardContent className="p-3 space-y-2 text-sm">
+        <div className="flex items-center gap-2">
+          <Icon className={`h-4 w-4 ${iconTone}`} />
+          <p className="font-semibold">{title}</p>
+          <Badge variant="outline" className="ml-auto">
+            {a.ratio.toFixed(0)}% der Reserve
+          </Badge>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <p className="text-muted-foreground">Mtl. Reserve</p>
+            <p className="font-semibold">{formatCurrency(a.reserve)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Mtl. Belastung</p>
+            <p className="font-semibold">{formatCurrency(a.monthly)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Verbleibend</p>
+            <p className={`font-semibold ${a.remaining < 0 ? "text-red-600" : ""}`}>
+              {formatCurrency(a.remaining)}
+            </p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Max. Kaufpreis (Empfehlung)</p>
+            <p className="font-semibold text-primary">{formatCurrency(a.maxPrice)}</p>
+          </div>
+        </div>
+        {a.status !== "ok" && (
+          <p className="text-xs text-muted-foreground border-t pt-2">
+            {a.status === "not_ok"
+              ? `Die monatliche Belastung übersteigt die Reserve des Kunden. Empfehlung: Kaufpreis auf max. ${formatCurrency(a.maxPrice)} reduzieren, Eigenkapital erhöhen oder Laufzeit verlängern.`
+              : `Die Belastung beansprucht den Grossteil der Reserve. Empfehlung: Kaufpreis auf ca. ${formatCurrency(a.maxPrice)} prüfen oder Konditionen verbessern.`}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
