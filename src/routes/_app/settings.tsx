@@ -23,8 +23,8 @@ export const Route = createFileRoute("/_app/settings")({ component: SettingsPage
 function SettingsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const navigate = useNavigate({ from: Route.fullPath });
-  const search = useSearch({ from: Route.fullPath });
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false });
   const currentTab = (search as any)?.tab ?? "profile";
   const [profile, setProfile] = useState({ full_name: "", phone: "" });
 
@@ -55,7 +55,7 @@ function SettingsPage() {
   return (
     <>
       <PageHeader title="Einstellungen" description="Profil, Firma, Bankkonten, Vorlagen" />
-      <Tabs value={currentTab} onValueChange={(v) => navigate({ search: (prev: any) => ({ ...prev, tab: v }) })} className="space-y-4">
+      <Tabs value={currentTab} onValueChange={(v) => navigate({ to: "/settings", search: { tab: v } as any })} className="space-y-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="profile">Mein Profil</TabsTrigger>
           <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
