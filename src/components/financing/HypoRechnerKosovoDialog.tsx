@@ -24,11 +24,11 @@ import { formatCurrency } from "@/lib/format";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-type Props = { open: boolean; onOpenChange: (o: boolean) => void };
+type Props = { open: boolean; onOpenChange: (o: boolean) => void; calculationId?: string | null };
 
 const TERMS = [10, 15, 20, 25] as const;
 
-export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
+export function HypoRechnerKosovoDialog({ open, onOpenChange, calculationId }: Props) {
   const qc = useQueryClient();
   const [clientId, setClientId] = useState<string>("");
   const [purchasePrice, setPurchasePrice] = useState<number>(270000);
