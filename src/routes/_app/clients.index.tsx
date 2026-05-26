@@ -419,8 +419,18 @@ function ClientsPage() {
                       <button type="button" onClick={() => setDetailId(c.id)} className="flex-1 min-w-0 text-left">
                         <p className="font-semibold hover:text-primary truncate">{c.full_name}</p>
                         <div className="mt-1 flex flex-wrap gap-1">
+                          {(() => {
+                            const s = statusMap.get(c.status ?? "entwurf") ?? statusMap.get("entwurf")!;
+                            return (
+                              <Badge variant="outline" className={s.badge}>
+                                <span className={`mr-1.5 h-2 w-2 rounded-full ${s.dot}`} />
+                                {s.label}
+                              </Badge>
+                            );
+                          })()}
                           <Badge variant="outline" className={typeBadge(c.client_type)}>{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                           {c.is_archived && <Badge variant="outline">Archiviert</Badge>}
+
                           {(c.assigned_to ?? c.owner_id) && employeeMap.get(c.assigned_to ?? c.owner_id) && (
                             <Badge variant="outline" className="text-xs">
                               {(employeeMap.get(c.assigned_to ?? c.owner_id) as any).full_name ?? (employeeMap.get(c.assigned_to ?? c.owner_id) as any).email}
