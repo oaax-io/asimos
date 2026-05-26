@@ -207,7 +207,7 @@ function TeamPage() {
                   {m.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{m.email}</p>}
                   {m.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{m.phone}</p>}
                 </div>
-                {canManage && !(m.isSystemowner && !isSuperadmin) && (
+                {canManage && !(m.isSystemowner && !effectiveIsSuperadmin) && (
                   <div className="mt-3 flex justify-end">
                     <Button variant="outline" size="sm" onClick={() => setEditing(m)}>
                       <Pencil className="mr-1 h-3 w-3" /> Bearbeiten
