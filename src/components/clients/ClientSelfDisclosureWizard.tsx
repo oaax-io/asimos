@@ -234,6 +234,9 @@ export function ClientSelfDisclosureWizard({
   const [coApplicantPrompt, setCoApplicantPrompt] = useState<
     null | { fields: Record<string, unknown>; creating: boolean }
   >(null);
+  const [importedChildren, setImportedChildren] = useState<
+    Array<{ full_name: string; birth_date?: string }>
+  >([]);
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastSyncedSnapshotRef = useRef("{}");
@@ -496,6 +499,59 @@ export function ClientSelfDisclosureWizard({
       if (data?.has_co_applicant && coFields && Object.keys(coFields).length > 0) {
         setCoApplicantPrompt({ fields: coFields, creating: false });
       }
+
+      // Kinder aus PDF (Kind01.. / Geb01..) für Hauptantragsteller speichern
+      // und zwischenspeichern, um sie ggf. dem Mitantragsteller hinzuzufügen.
+      const parsedChildren = Array.isArray(data?.children)
+        ? (data.children as Array<{ full_name?: string; birth_date?: string }>)
+            .filter((c) => c?.full_name?.trim())
+            .map((c) => ({
+              full_name: c.full_name!.trim(),
+              birth_date: c.birth_date,
+            }))
+        : [];
+      if (parsedChildren.length > 0) {
+        setImportedChildren(parsedChildren);
+        try {
+          // Bestehende Kinder dieses Kunden lesen, um Duplikate (gleicher Name
+          // + Geburtsdatum) zu vermeiden.
+          const { data: existing } = await supabase
+            .from("client_children")
+            .select("full_name, birth_date")
+            .eq("client_id", clientId);
+          const existingKeys = new Set(
+            (existing ?? []).map(
+              (c) => `${(c.full_name ?? "").toLowerCase()}|${c.birth_date ?? ""}`,
+            ),
+          );
+          const toInsert = parsedChildren
+            .filter(
+              (c) =>
+                !existingKeys.has(
+                  `${c.full_name.toLowerCase()}|${c.birth_date ?? ""}`,
+                ),
+            )
+            .map((c, idx) => ({
+              client_id: clientId,
+              full_name: c.full_name,
+              birth_date: c.birth_date ?? null,
+              is_shared_child: true,
+              sort_order: (existing?.length ?? 0) + idx,
+            }));
+          if (toInsert.length > 0) {
+            const { error: childErr } = await supabase
+              .from("client_children")
+              .insert(toInsert);
+            if (childErr) throw childErr;
+            qc.invalidateQueries({ queryKey: ["client_children", clientId] });
+            toast.success(
+              `${toInsert.length} Kind${toInsert.length === 1 ? "" : "er"} aus PDF übernommen.`,
+            );
+          }
+        } catch (childError) {
+          console.warn("could not persist children", childError);
+        }
+      }
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : "PDF konnte nicht gelesen werden",
@@ -597,6 +653,22 @@ export function ClientSelfDisclosureWizard({
         .from("client_self_disclosures")
         .upsert(coPayload as never, { onConflict: "client_id" });
       if (coErr) throw coErr;
+
+      // 4) Kinder auch dem Mitantragsteller hinzufügen (gemeinsame Kinder).
+      if (importedChildren.length > 0) {
+        const childRows = importedChildren.map((c, idx) => ({
+          client_id: newClient.id,
+          full_name: c.full_name,
+          birth_date: c.birth_date ?? null,
+          is_shared_child: true,
+          sort_order: idx,
+        }));
+        const { error: cErr } = await supabase
+          .from("client_children")
+          .insert(childRows);
+        if (cErr) console.warn("could not insert co-applicant children", cErr);
+        else qc.invalidateQueries({ queryKey: ["client_children", newClient.id] });
+      }
 
       toast.success(`Mitantragsteller «${fullName}» angelegt und verknüpft.`);
       qc.invalidateQueries({ queryKey: ["clients"] });
