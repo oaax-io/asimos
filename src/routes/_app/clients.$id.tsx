@@ -41,6 +41,17 @@ import { ClientDocumentsTab } from "@/components/clients/ClientDocumentsTab";
 import { AssignPropertyDialog } from "@/components/clients/AssignPropertyDialog";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 
+const CLIENT_STATUSES = [
+  { value: "entwurf",       label: "Entwurf",       dot: "bg-slate-400",   badge: "bg-slate-500/15 text-slate-700 border-slate-500/30 dark:text-slate-300" },
+  { value: "pendent",       label: "Pendent",       dot: "bg-amber-500",   badge: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300" },
+  { value: "vollstaendig",  label: "Vollständig",   dot: "bg-blue-500",    badge: "bg-blue-500/15 text-blue-700 border-blue-500/30 dark:text-blue-300" },
+  { value: "finanzierung",  label: "Finanzierung",  dot: "bg-violet-500",  badge: "bg-violet-500/15 text-violet-700 border-violet-500/30 dark:text-violet-300" },
+  { value: "abgeschlossen", label: "Abgeschlossen", dot: "bg-emerald-500", badge: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-300" },
+  { value: "abgelehnt",     label: "Abgelehnt",     dot: "bg-red-500",     badge: "bg-red-500/15 text-red-700 border-red-500/30 dark:text-red-300" },
+  { value: "storniert",     label: "Storniert",     dot: "bg-zinc-500",    badge: "bg-zinc-500/15 text-zinc-700 border-zinc-500/30 dark:text-zinc-300" },
+] as const;
+const statusMap = new Map<string, (typeof CLIENT_STATUSES)[number]>(CLIENT_STATUSES.map((s) => [s.value, s]));
+
 
 
 export const Route = createFileRoute("/_app/clients/$id")({ component: ClientDetailRoute });
