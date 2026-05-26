@@ -494,7 +494,7 @@ function ClientsPage() {
                 <TableHead>PLZ / Ort</TableHead>
                 <TableHead>Zugewiesen</TableHead>
                 <TableHead>Verknüpfungen</TableHead>
-                <TableHead>Finanzierung</TableHead>
+                
                 <TableHead className="w-10"></TableHead>
               </TableRow>
             </TableHeader>
