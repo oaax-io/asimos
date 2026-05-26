@@ -240,31 +240,44 @@ function FeedbackPage() {
 }
 
 function CreateFeedbackDialog({
-  open, onOpenChange, userId, onCreated,
-}: { open: boolean; onOpenChange: (v: boolean) => void; userId: string | null; onCreated: () => void }) {
+  open, onOpenChange, userId, profiles, onCreated,
+}: { open: boolean; onOpenChange: (v: boolean) => void; userId: string | null; profiles: Array<{ id: string; full_name: string | null; email: string | null }>; onCreated: () => void }) {
+  const isSuperadmin = useIsSuperadmin();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<string>("idea");
   const [priority, setPriority] = useState<string>("medium");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [authorId, setAuthorId] = useState<string>("");
+  const [createdAt, setCreatedAt] = useState<string>("");
 
-  useEffect(() => { if (!open) { setTitle(""); setDescription(""); setType("idea"); setPriority("medium"); setFiles([]); } }, [open]);
+  useEffect(() => {
+    if (!open) {
+      setTitle(""); setDescription(""); setType("idea"); setPriority("medium");
+      setFiles([]); setAuthorId(""); setCreatedAt("");
+    }
+  }, [open]);
 
   const submit = async () => {
     if (!title.trim() || !userId) { toast.error("Titel erforderlich"); return; }
     setSubmitting(true);
     try {
+      const effectiveAuthor = isSuperadmin && authorId ? authorId : userId;
       const attachments = files.length ? await uploadFiles(files, userId) : [];
-      const { error } = await supabase.from("feedback").insert({
+      const payload: any = {
         title: title.trim(),
         description: description.trim() || null,
         type: type as any,
         priority: priority as any,
         attachments: attachments as any,
         page_url: typeof window !== "undefined" ? window.location.href : null,
-        created_by: userId,
-      });
+        created_by: effectiveAuthor,
+      };
+      if (isSuperadmin && createdAt) {
+        payload.created_at = new Date(createdAt).toISOString();
+      }
+      const { error } = await supabase.from("feedback").insert(payload);
       if (error) throw error;
       toast.success("Feedback erstellt");
       onOpenChange(false);
