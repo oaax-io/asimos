@@ -1,0 +1,1 @@
+UPDATE public.clients SET owner_id = '44160055-92ec-4f13-bea0-2cc4f068c880', assigned_to = '44160055-92ec-4f13-bea0-2cc4f068c880' WHERE id = 'd484df82-14f3-415d-ad3e-3c4b8005e5db';
