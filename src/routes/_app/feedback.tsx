@@ -34,10 +34,14 @@ const TYPES = [
 
 const STATUSES = [
   { value: "new", label: "Neu", color: "bg-slate-100 text-slate-800" },
-  { value: "planned", label: "Geplant", color: "bg-blue-100 text-blue-800" },
-  { value: "in_progress", label: "In Arbeit", color: "bg-amber-100 text-amber-800" },
-  { value: "done", label: "Erledigt", color: "bg-emerald-100 text-emerald-800" },
+  { value: "under_review", label: "In Prüfung", color: "bg-blue-100 text-blue-800" },
+  { value: "in_progress", label: "In Bearbeitung", color: "bg-amber-100 text-amber-800" },
+  { value: "updated", label: "Aktualisiert", color: "bg-emerald-100 text-emerald-800" },
+  { value: "duplicate", label: "Bereits vorhanden", color: "bg-violet-100 text-violet-800" },
   { value: "rejected", label: "Abgelehnt", color: "bg-rose-100 text-rose-800" },
+  // Legacy
+  { value: "planned", label: "Geplant", color: "bg-blue-100 text-blue-800" },
+  { value: "done", label: "Erledigt", color: "bg-emerald-100 text-emerald-800" },
 ] as const;
 
 const PRIORITIES = [
