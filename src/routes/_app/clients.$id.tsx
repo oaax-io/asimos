@@ -274,10 +274,10 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       </SelectTrigger>
       <SelectContent>
         {CLIENT_STATUSES.map((s) => (
-          <SelectItem key={s.value} value={s.value}>
-            <span className="flex items-center gap-2">
-              <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.dot}`} />
-              {s.label}
+          <SelectItem key={s.value} value={s.value} className="gap-3 pl-3 pr-8">
+            <span className="flex items-center gap-3">
+              <span className={`inline-block h-3 w-3 rounded-full ${s.dot}`} />
+              <span className="text-sm">{s.label}</span>
             </span>
           </SelectItem>
         ))}
