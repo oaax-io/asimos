@@ -227,8 +227,13 @@ function FeedbackPage() {
         </div>
       )}
 
-      <CreateFeedbackDialog open={createOpen} onOpenChange={setCreateOpen} userId={user?.id ?? null}
-        onCreated={() => qc.invalidateQueries({ queryKey: ["feedback"] })} />
+      <CreateFeedbackDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        userId={user?.id ?? null}
+        profiles={profiles as any}
+        onCreated={() => qc.invalidateQueries({ queryKey: ["feedback"] })}
+      />
       <FeedbackDetailDialog id={openId} onClose={() => setOpenId(null)} />
     </div>
   );
