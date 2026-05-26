@@ -438,18 +438,34 @@ function FeedbackDetailDialog({ id, onClose }: { id: string | null; onClose: () 
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Status</label>
-                <Select value={item.status} onValueChange={(v) => setStatusMut.mutate(v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
-                </Select>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Status {!isSuperadmin && <span className="ml-1">(nur Systemowner)</span>}
+                </label>
+                {isSuperadmin ? (
+                  <Select value={item.status} onValueChange={(v) => setStatusMut.mutate(v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{ACTIVE_STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                ) : sm ? (
+                  <div className="flex h-9 items-center">
+                    <Badge variant="secondary" className={sm.color}>{sm.label}</Badge>
+                  </div>
+                ) : null}
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Priorität</label>
-                <Select value={item.priority} onValueChange={(v) => setPriorityMut.mutate(v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{PRIORITIES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
-                </Select>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Priorität {!isSuperadmin && <span className="ml-1">(nur Systemowner)</span>}
+                </label>
+                {isSuperadmin ? (
+                  <Select value={item.priority} onValueChange={(v) => setPriorityMut.mutate(v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{PRIORITIES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex h-9 items-center text-sm capitalize">
+                    {PRIORITIES.find(p => p.value === item.priority)?.label ?? item.priority}
+                  </div>
+                )}
               </div>
             </div>
 
