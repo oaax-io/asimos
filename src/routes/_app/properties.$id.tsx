@@ -684,6 +684,9 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [idx, setIdx] = useState(0);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
+  const [modalDragOver, setModalDragOver] = useState(false);
   const hasImages = images.length > 0;
   const current = hasImages ? images[Math.min(idx, images.length - 1)] : null;
 
