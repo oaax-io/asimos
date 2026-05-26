@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Save, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
@@ -25,12 +29,15 @@ type Props = { open: boolean; onOpenChange: (o: boolean) => void };
 const TERMS = [10, 15, 20, 25] as const;
 
 export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
+  const qc = useQueryClient();
   const [clientId, setClientId] = useState<string>("");
   const [purchasePrice, setPurchasePrice] = useState<number>(270000);
   const [equityPct, setEquityPct] = useState<number>(10);
   const [interestPct, setInterestPct] = useState<number>(5.5);
   const [termYears, setTermYears] = useState<number>(20);
   const [adminPct, setAdminPct] = useState<number>(1.5);
+  const [label, setLabel] = useState<string>("");
+  const [calcNotes, setCalcNotes] = useState<string>("");
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().slice(0, 10),
   );
@@ -46,6 +53,21 @@ export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
       return data ?? [];
     },
     enabled: open,
+  });
+
+  // Selbstauskunft des gewählten Kunden laden (für Tragbarkeitsbewertung)
+  const { data: disclosure } = useQuery({
+    queryKey: ["hypo-disclosure", clientId],
+    queryFn: async () => {
+      if (!clientId) return null;
+      const { data } = await supabase
+        .from("client_self_disclosures")
+        .select("total_income_monthly, total_expenses_monthly, reserve_total, salary_net_monthly, additional_income, income_job_two, income_rental")
+        .eq("client_id", clientId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: open && !!clientId,
   });
 
   const calc = useMemo(() => {
@@ -89,6 +111,72 @@ export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
 
     return { equity, principal, monthly, totalPaid, totalInterest, adminYearly, schedule };
   }, [purchasePrice, equityPct, interestPct, termYears, adminPct, startDate]);
+
+  // Tragbarkeits-Bewertung basierend auf Selbstauskunft des Kunden
+  const affordability = useMemo(() => {
+    if (!clientId) return null;
+    if (!disclosure) {
+      return {
+        status: "no_data" as const,
+        message: "Keine Selbstauskunft vorhanden. Bitte zuerst Selbstauskunft beim Kunden erfassen.",
+      };
+    }
+    const income = Number(disclosure.total_income_monthly) || 0;
+    const expenses = Number(disclosure.total_expenses_monthly) || 0;
+    const reserve = Number(disclosure.reserve_total) || (income - expenses);
+    const monthly = calc.monthly + calc.adminYearly / 12;
+    const remaining = reserve - monthly;
+    const ratio = reserve > 0 ? (monthly / reserve) * 100 : 999;
+
+    // Max. tragbare Hypothek bei aktueller Rate für 80% der Reserve
+    const maxPayment = reserve * 0.8;
+    const r = interestPct / 100 / 12;
+    const n = termYears * 12;
+    const maxPrincipal = r > 0 ? (maxPayment * (1 - Math.pow(1 + r, -n))) / r : maxPayment * n;
+    const maxPrice = maxPrincipal / (1 - equityPct / 100);
+
+    let status: "ok" | "tight" | "not_ok" = "ok";
+    if (remaining < 0) status = "not_ok";
+    else if (ratio > 70) status = "tight";
+
+    return {
+      status,
+      reserve,
+      monthly,
+      remaining,
+      ratio,
+      maxPrice,
+      maxPrincipal,
+    };
+  }, [clientId, disclosure, calc.monthly, calc.adminYearly, interestPct, termYears, equityPct]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase.from("hypo_calculations").insert({
+        client_id: clientId || null,
+        created_by: userData.user?.id,
+        label: label || `Hyporechner ${termYears}J ${purchasePrice}€`,
+        purchase_price: purchasePrice,
+        equity_pct: equityPct,
+        interest_pct: interestPct,
+        term_years: termYears,
+        admin_pct: adminPct,
+        start_date: startDate,
+        monthly_payment: calc.monthly,
+        total_interest: calc.totalInterest,
+        total_paid: calc.totalPaid,
+        principal: calc.principal,
+        notes: calcNotes || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Berechnung gespeichert");
+      qc.invalidateQueries({ queryKey: ["hypo_calculations"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Speichern fehlgeschlagen"),
+  });
 
   const exportCsv = () => {
     const client = clients.find((c: any) => c.id === clientId);
@@ -324,9 +412,36 @@ export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
                 <KV label="Total Rückzahlung" value={formatCurrency(calc.totalPaid)} />
               </CardContent>
             </Card>
-            <div className="grid grid-cols-2 gap-2">
-              <Button onClick={exportPdf}>
-                <FileText className="mr-2 h-4 w-4" /> PDF für Kunde
+
+            {affordability && <AffordabilityCard a={affordability} />}
+
+            <div>
+              <Label>Bezeichnung (für Speicherung)</Label>
+              <Input
+                placeholder="z.B. Variante 20J, Szenario A"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Notizen</Label>
+              <Textarea
+                rows={2}
+                value={calcNotes}
+                onChange={(e) => setCalcNotes(e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                onClick={() => saveMutation.mutate()}
+                disabled={saveMutation.isPending}
+              >
+                <Save className="mr-2 h-4 w-4" />
+                {saveMutation.isPending ? "Speichert…" : "Speichern"}
+              </Button>
+              <Button variant="secondary" onClick={exportPdf}>
+                <FileText className="mr-2 h-4 w-4" /> PDF
               </Button>
               <Button variant="outline" onClick={exportCsv}>
                 <Download className="mr-2 h-4 w-4" /> CSV
@@ -379,5 +494,74 @@ function KV({ label, value, highlight }: { label: string; value: string; highlig
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className={highlight ? "text-lg font-bold text-primary" : "font-semibold"}>{value}</p>
     </div>
+  );
+}
+
+function AffordabilityCard({ a }: { a: any }) {
+  if (a.status === "no_data") {
+    return (
+      <Card className="border-amber-500/50 bg-amber-500/5">
+        <CardContent className="p-3 flex gap-2 text-sm">
+          <Info className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+          <p>{a.message}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  const tone =
+    a.status === "ok"
+      ? "border-emerald-500/50 bg-emerald-500/5"
+      : a.status === "tight"
+      ? "border-amber-500/50 bg-amber-500/5"
+      : "border-red-500/50 bg-red-500/5";
+  const Icon = a.status === "ok" ? CheckCircle2 : AlertTriangle;
+  const iconTone =
+    a.status === "ok" ? "text-emerald-600" : a.status === "tight" ? "text-amber-600" : "text-red-600";
+  const title =
+    a.status === "ok"
+      ? "Finanzierbar"
+      : a.status === "tight"
+      ? "Knapp finanzierbar"
+      : "Nicht finanzierbar";
+
+  return (
+    <Card className={tone}>
+      <CardContent className="p-3 space-y-2 text-sm">
+        <div className="flex items-center gap-2">
+          <Icon className={`h-4 w-4 ${iconTone}`} />
+          <p className="font-semibold">{title}</p>
+          <Badge variant="outline" className="ml-auto">
+            {a.ratio.toFixed(0)}% der Reserve
+          </Badge>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <p className="text-muted-foreground">Mtl. Reserve</p>
+            <p className="font-semibold">{formatCurrency(a.reserve)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Mtl. Belastung</p>
+            <p className="font-semibold">{formatCurrency(a.monthly)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Verbleibend</p>
+            <p className={`font-semibold ${a.remaining < 0 ? "text-red-600" : ""}`}>
+              {formatCurrency(a.remaining)}
+            </p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Max. Kaufpreis (Empfehlung)</p>
+            <p className="font-semibold text-primary">{formatCurrency(a.maxPrice)}</p>
+          </div>
+        </div>
+        {a.status !== "ok" && (
+          <p className="text-xs text-muted-foreground border-t pt-2">
+            {a.status === "not_ok"
+              ? `Die monatliche Belastung übersteigt die Reserve des Kunden. Empfehlung: Kaufpreis auf max. ${formatCurrency(a.maxPrice)} reduzieren, Eigenkapital erhöhen oder Laufzeit verlängern.`
+              : `Die Belastung beansprucht den Grossteil der Reserve. Empfehlung: Kaufpreis auf ca. ${formatCurrency(a.maxPrice)} prüfen oder Konditionen verbessern.`}
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
