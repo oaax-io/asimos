@@ -1157,6 +1157,27 @@ export type Database = {
           },
         ]
       }
+      feedback_votes: {
+        Row: {
+          created_at: string
+          feedback_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       financing_checklist_items: {
         Row: {
           created_at: string
@@ -2902,7 +2923,15 @@ export type Database = {
         | "reservation_receipt"
         | "mandate_partial"
       feedback_priority: "low" | "medium" | "high" | "critical"
-      feedback_status: "new" | "planned" | "in_progress" | "done" | "rejected"
+      feedback_status:
+        | "new"
+        | "planned"
+        | "in_progress"
+        | "done"
+        | "rejected"
+        | "under_review"
+        | "duplicate"
+        | "updated"
       feedback_type: "idea" | "bug" | "question" | "other"
       financing_checklist_section:
         | "customer"
@@ -3181,7 +3210,16 @@ export const Constants = {
         "mandate_partial",
       ],
       feedback_priority: ["low", "medium", "high", "critical"],
-      feedback_status: ["new", "planned", "in_progress", "done", "rejected"],
+      feedback_status: [
+        "new",
+        "planned",
+        "in_progress",
+        "done",
+        "rejected",
+        "under_review",
+        "duplicate",
+        "updated",
+      ],
       feedback_type: ["idea", "bug", "question", "other"],
       financing_checklist_section: [
         "customer",
