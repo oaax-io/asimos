@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,9 @@ export const Route = createFileRoute("/_app/settings")({ component: SettingsPage
 function SettingsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const search = useSearch({ from: Route.fullPath });
+  const currentTab = (search as any)?.tab ?? "profile";
   const [profile, setProfile] = useState({ full_name: "", phone: "" });
 
   const { data } = useQuery({
@@ -52,7 +55,7 @@ function SettingsPage() {
   return (
     <>
       <PageHeader title="Einstellungen" description="Profil, Firma, Bankkonten, Vorlagen" />
-      <Tabs defaultValue="profile" className="space-y-4">
+      <Tabs value={currentTab} onValueChange={(v) => navigate({ search: (prev: any) => ({ ...prev, tab: v }) })} className="space-y-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="profile">Mein Profil</TabsTrigger>
           <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
