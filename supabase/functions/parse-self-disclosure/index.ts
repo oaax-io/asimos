@@ -292,14 +292,76 @@ function mapAsimoFormFields(
     if (dAdvisor) mapped.advisor_id = dAdvisor;
   }
 
-  const employerStreet = [pickValue(fields, `${P}16`), pickValue(fields, `${P}16x`)]
-    .filter(Boolean).join(" ").trim();
-  const employerCity = [pickValue(fields, `${P}15plz`), pickValue(fields, `${P}15ort`)]
-    .filter(Boolean).join(" ").trim();
-  const employerAddress = [employerStreet, employerCity].filter(Boolean).join(", ");
+  // Personen-Land (z. B. AN_dp2 = "CH -")
+  const countryRaw = pickValue(fields, `${P}_dp2`, `${P}land`, `${P}country`);
+  if (countryRaw) {
+    const c = countryRaw.replace(/[-\s]+$/g, "").trim();
+    if (c) mapped.country = c;
+  }
+
+  // Arbeitgeber-Adresse. Beim Mitantragsteller verwendet das ASIMO-PDF
+  // AN15plzM/AN15ortM und M16/M16x statt MI15plz/MI15ort/MI16.
+  const empStreet = P === "MI"
+    ? [pickValue(fields, "M16", "MI16"), pickValue(fields, "M16x", "MI16x")]
+        .filter(Boolean).join(" ").trim()
+    : [pickValue(fields, `${P}16`), pickValue(fields, `${P}16x`)]
+        .filter(Boolean).join(" ").trim();
+  const empCity = P === "MI"
+    ? [pickValue(fields, "AN15plzM", "MI15plz"), pickValue(fields, "AN15ortM", "MI15ort")]
+        .filter(Boolean).join(" ").trim()
+    : [pickValue(fields, `${P}15plz`), pickValue(fields, `${P}15ort`)]
+        .filter(Boolean).join(" ").trim();
+  const employerAddress = [empStreet, empCity].filter(Boolean).join(", ");
   if (employerAddress) mapped.employer_address = employerAddress;
 
+  // Mitantragsteller: Beruf-/Einkommensfelder verwenden im ASIMO-PDF
+  // das Präfix "M" statt "MI" (M13, M14, M17, M18, M18x, M19, M22).
+  if (P === "MI") {
+    const setIfMissingStr = (key: string, ...names: string[]) => {
+      if (mapped[key] !== undefined) return;
+      const v = pickValue(fields, ...names);
+      if (v) mapped[key] = v;
+    };
+    const setIfMissingNum = (key: string, ...names: string[]) => {
+      if (mapped[key] !== undefined) return;
+      const v = normalizeNumber(pickValue(fields, ...names));
+      if (v !== undefined) mapped[key] = v;
+    };
+    const setIfMissingDate = (key: string, ...names: string[]) => {
+      if (mapped[key] !== undefined) return;
+      const v = normalizeDate(pickValue(fields, ...names));
+      if (v) mapped[key] = v;
+    };
+    setIfMissingStr("employment_status", "M13");
+    setIfMissingStr("employer_name", "M14");
+    setIfMissingStr("employer_phone", "M17");
+    setIfMissingStr("employed_as", "M18");
+    setIfMissingDate("employed_since", "M18x");
+    setIfMissingNum("salary_net_monthly", "M19");
+    setIfMissingNum("annual_net_salary", "M22");
+  }
+
   return mapped;
+}
+
+interface ChildEntry {
+  full_name: string;
+  birth_date?: string;
+}
+
+function extractChildren(fields: Record<string, string>): ChildEntry[] {
+  const out: ChildEntry[] = [];
+  for (let i = 1; i <= 10; i++) {
+    const idx = String(i).padStart(2, "0");
+    const name = pickValue(fields, `Kind${idx}`, `Kind${i}`);
+    const birth = normalizeDate(pickValue(fields, `Geb${idx}`, `Geb${i}`));
+    if (name) {
+      const entry: ChildEntry = { full_name: name.trim() };
+      if (birth) entry.birth_date = birth;
+      out.push(entry);
+    }
+  }
+  return out;
 }
 
 function hasMeaningfulPerson(m: Record<string, string | number>): boolean {
