@@ -227,6 +227,19 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
     onError: (e: any) => toast.error(e.message ?? "Fehler beim Löschen"),
   });
 
+  const statusUpdate = useMutation({
+    mutationFn: async (status: string) => {
+      const { error } = await supabase.from("clients").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Status aktualisiert");
+      qc.invalidateQueries({ queryKey: ["client", id] });
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Fehler beim Aktualisieren"),
+  });
+
   if (isLoading && !isError && !loadTimedOut) return <div className="text-sm text-muted-foreground">Lädt…</div>;
   if (clientError || !client) {
     return (
