@@ -18,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   MessageSquarePlus, Bug, Lightbulb, HelpCircle, Paperclip, X, Image as ImageIcon,
-  Send, Loader2, Filter,
+  Send, Loader2, Filter, ChevronUp,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/feedback")({
