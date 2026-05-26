@@ -69,8 +69,10 @@ async function uploadFiles(files: File[], userId: string): Promise<Attachment[]>
   return out;
 }
 
+const ACTIVE_STATUSES = STATUSES.filter(s => !["planned", "done"].includes(s.value));
+
 function FeedbackPage() {
-  const { user } = useAuth();
+  const { user, isSuperadmin } = useAuth();
   const qc = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
@@ -87,6 +89,35 @@ function FeedbackPage() {
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  const { data: votes = [] } = useQuery({
+    queryKey: ["feedback-votes"],
+    queryFn: async () => {
+      const { data } = await supabase.from("feedback_votes").select("feedback_id, user_id");
+      return data ?? [];
+    },
+  });
+  const voteCount = useMemo(() => {
+    const m = new Map<string, number>();
+    votes.forEach((v: any) => m.set(v.feedback_id, (m.get(v.feedback_id) ?? 0) + 1));
+    return m;
+  }, [votes]);
+  const myVotes = useMemo(() => new Set(votes.filter((v: any) => v.user_id === user?.id).map((v: any) => v.feedback_id)), [votes, user?.id]);
+
+  const toggleVote = useMutation({
+    mutationFn: async (feedbackId: string) => {
+      if (!user) throw new Error("Nicht angemeldet");
+      if (myVotes.has(feedbackId)) {
+        const { error } = await supabase.from("feedback_votes").delete().eq("feedback_id", feedbackId).eq("user_id", user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("feedback_votes").insert({ feedback_id: feedbackId, user_id: user.id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["feedback-votes"] }),
+    onError: (e: any) => toast.error(e.message),
   });
 
   const { data: profiles = [] } = useQuery({
