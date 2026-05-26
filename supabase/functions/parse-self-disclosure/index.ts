@@ -18,91 +18,83 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const PERSON_PROPERTIES = {
+  salutation: { type: "string", description: "Herr | Frau | Divers" },
+  title: { type: "string" },
+  first_name: { type: "string" },
+  last_name: { type: "string" },
+  birth_name: { type: "string" },
+  street: { type: "string" },
+  street_number: { type: "string" },
+  postal_code: { type: "string" },
+  city: { type: "string" },
+  country: { type: "string" },
+  resident_since: { type: "string", description: "ISO YYYY-MM-DD oder YYYY" },
+  phone: { type: "string" },
+  mobile: { type: "string" },
+  email: { type: "string" },
+  birth_date: { type: "string", description: "ISO YYYY-MM-DD (von DD.MM.YYYY konvertieren)" },
+  nationality: { type: "string" },
+  birth_place: { type: "string" },
+  birth_country: { type: "string" },
+  marital_status: { type: "string" },
+  tax_id_ch: { type: "string" },
+  employment_status: { type: "string" },
+  employer_name: { type: "string" },
+  employer_address: { type: "string" },
+  employer_phone: { type: "string" },
+  employed_as: { type: "string" },
+  employed_since: { type: "string" },
+  salary_type: { type: "string" },
+  annual_net_salary: { type: "number" },
+  salary_net_monthly: { type: "number" },
+  additional_income: { type: "number" },
+  income_job_two: { type: "number" },
+  income_rental: { type: "number" },
+  mortgage_expense: { type: "number" },
+  rent_expense: { type: "number" },
+  leasing_expense: { type: "number" },
+  credit_expense: { type: "number" },
+  life_insurance_expense: { type: "number" },
+  alimony_expense: { type: "number" },
+  health_insurance_expense: { type: "number" },
+  property_insurance_expense: { type: "number" },
+  utilities_expense: { type: "number" },
+  telecom_expense: { type: "number" },
+  living_costs_expense: { type: "number" },
+  taxes_expense: { type: "number" },
+  miscellaneous_expense: { type: "number" },
+  disclosure_date: { type: "string", description: "ISO date" },
+  disclosure_place: { type: "string" },
+  advisor_id: { type: "string" },
+} as const;
+
 const FIELD_SCHEMA = {
   type: "object",
   properties: {
-    salutation: { type: "string" },
-    title: { type: "string" },
-    first_name: { type: "string" },
-    last_name: { type: "string" },
-    birth_name: { type: "string" },
-    street: { type: "string" },
-    street_number: { type: "string" },
-    postal_code: { type: "string" },
-    city: { type: "string" },
-    country: { type: "string" },
-    resident_since: { type: "string", description: "ISO YYYY-MM-DD oder YYYY" },
-    phone: { type: "string" },
-    mobile: { type: "string" },
-    email: { type: "string" },
-    birth_date: { type: "string", description: "ISO YYYY-MM-DD (von DD.MM.YYYY konvertieren)" },
-    nationality: { type: "string" },
-    birth_place: { type: "string" },
-    birth_country: { type: "string" },
-    marital_status: { type: "string" },
-    tax_id_ch: { type: "string" },
-    employment_status: { type: "string" },
-    employer_name: { type: "string" },
-    employer_address: { type: "string" },
-    employer_phone: { type: "string" },
-    employed_as: { type: "string" },
-    employed_since: { type: "string" },
-    salary_type: { type: "string" },
-    annual_net_salary: { type: "number" },
-    salary_net_monthly: { type: "number" },
-    additional_income: { type: "number" },
-    income_job_two: { type: "number" },
-    income_rental: { type: "number" },
-    mortgage_expense: { type: "number" },
-    rent_expense: { type: "number" },
-    leasing_expense: { type: "number" },
-    credit_expense: { type: "number" },
-    life_insurance_expense: { type: "number" },
-    alimony_expense: { type: "number" },
-    health_insurance_expense: { type: "number" },
-    property_insurance_expense: { type: "number" },
-    utilities_expense: { type: "number" },
-    telecom_expense: { type: "number" },
-    living_costs_expense: { type: "number" },
-    taxes_expense: { type: "number" },
-    miscellaneous_expense: { type: "number" },
-    disclosure_date: { type: "string", description: "ISO date" },
-    disclosure_place: { type: "string" },
-    advisor_id: { type: "string" },
+    applicant: {
+      type: "object",
+      description: "Hauptantragsteller (AN-Felder im PDF)",
+      properties: PERSON_PROPERTIES,
+      additionalProperties: false,
+    },
+    co_applicant: {
+      type: "object",
+      description: "Mitantragsteller (MI-Felder). Nur ausfüllen wenn vorhanden.",
+      properties: PERSON_PROPERTIES,
+      additionalProperties: false,
+    },
   },
-  required: [
-    "first_name",
-    "last_name",
-    "city",
-    "employer_name",
-    "salary_net_monthly",
-    "rent_expense",
-    "disclosure_date",
-  ],
+  required: ["applicant"],
   additionalProperties: false,
 };
 
-const ALLOWED_KEYS = new Set(Object.keys(FIELD_SCHEMA.properties));
-const NUMERIC_KEYS = new Set([
-  "annual_net_salary",
-  "salary_net_monthly",
-  "additional_income",
-  "income_job_two",
-  "income_rental",
-  "mortgage_expense",
-  "rent_expense",
-  "leasing_expense",
-  "credit_expense",
-  "life_insurance_expense",
-  "alimony_expense",
-  "health_insurance_expense",
-  "property_insurance_expense",
-  "utilities_expense",
-  "telecom_expense",
-  "living_costs_expense",
-  "taxes_expense",
-  "miscellaneous_expense",
-]);
+const ALLOWED_KEYS = new Set(Object.keys(PERSON_PROPERTIES));
+const NUMERIC_KEYS = new Set(
+  Object.entries(PERSON_PROPERTIES)
+    .filter(([, v]) => (v as { type: string }).type === "number")
+    .map(([k]) => k),
+);
 const DATE_KEYS = new Set([
   "resident_since",
   "birth_date",
@@ -199,6 +191,33 @@ function sanitizeFields(input: unknown): Record<string, string | number> {
   return out;
 }
 
+function detectSalutation(
+  fields: Record<string, string>,
+  prefix: "AN" | "MI",
+): string | undefined {
+  // ASIMO PDFs verwenden meist Checkboxen wie "ANanrede_herr" / "ANherr" / "ANfrau".
+  const lcPrefix = prefix.toLowerCase();
+  for (const [k, v] of Object.entries(fields)) {
+    const lk = k.toLowerCase();
+    if (!lk.startsWith(lcPrefix)) continue;
+    const val = (v ?? "").toString().trim().toLowerCase();
+    const isChecked =
+      val === "true" || val === "yes" || val === "1" || val === "on" || val === "x";
+    if (!isChecked && val !== "herr" && val !== "frau" && val !== "divers") continue;
+    if (lk.includes("herr")) return "Herr";
+    if (lk.includes("frau")) return "Frau";
+    if (lk.includes("divers")) return "Divers";
+  }
+  const direct = pickValue(fields, `${prefix}anrede`, `${prefix}01`, `${prefix}salutation`);
+  if (direct) {
+    const d = direct.toLowerCase();
+    if (d.startsWith("h")) return "Herr";
+    if (d.startsWith("f")) return "Frau";
+    if (d.startsWith("d")) return "Divers";
+  }
+  return undefined;
+}
+
 function mapAsimoFormFields(
   fields: Record<string, string>,
   prefix: "AN" | "MI" = "AN",
@@ -221,13 +240,18 @@ function mapAsimoFormFields(
     if (parsed) mapped[key] = parsed;
   };
 
+  const sal = detectSalutation(fields, P);
+  if (sal) mapped.salutation = sal;
+
+  setString("title", "title", "01x");
   setString("first_name", "02");
   setString("last_name", "03");
+  setString("birth_name", "03x", "ledigname");
   setString("street", "16", "04");
   setString("street_number", "16x", "04x");
   setString("postal_code", "05plz");
   setString("city", "05ort");
-  setString("resident_since", "06");
+  setDate("resident_since", "06", "06x", "wohnhaft");
   setString("phone", "07");
   setString("mobile", "07x");
   setString("email", "08");
@@ -253,6 +277,11 @@ function mapAsimoFormFields(
   setNumber("alimony_expense", "28");
   setNumber("health_insurance_expense", "29");
   setNumber("property_insurance_expense", "30");
+  setNumber("utilities_expense", "31");
+  setNumber("telecom_expense", "32");
+  setNumber("living_costs_expense", "33");
+  setNumber("taxes_expense", "34");
+  setNumber("miscellaneous_expense", "35");
 
   if (P === "AN") {
     const dDate = normalizeDate(pickValue(fields, "Datum", "Datum1", "Date"));
@@ -337,57 +366,46 @@ Deno.serve(async (req: Request) => {
     const formFields = await extractFormFields(bytes);
     const formFieldsCount = Object.keys(formFields).length;
     console.log("form fields extracted:", formFieldsCount);
+    console.log("form field names:", Object.keys(formFields).sort().join(", "));
 
     const directFields = mapAsimoFormFields(formFields, "AN");
     const coApplicantFields = mapAsimoFormFields(formFields, "MI");
     const hasCoApplicant = hasMeaningfulPerson(coApplicantFields);
-    if (Object.keys(directFields).length > 0) {
-      return new Response(
-        JSON.stringify({
-          fields: directFields,
-          co_applicant_fields: hasCoApplicant ? coApplicantFields : null,
-          has_co_applicant: hasCoApplicant,
-          form_fields_count: formFieldsCount,
-          source: "acroform",
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+    // Hinweis: Wir returnen NICHT mehr früh, auch wenn AcroForm Daten lieferte.
+    // Die AI ergänzt Felder, die in den Formularfeldern fehlen oder nicht
+    // sauber benannt sind (z. B. Anrede-Checkboxen, Wohnhaft seit als Freitext).
+    // AcroForm-Werte haben am Ende Vorrang.
+
 
     const systemPrompt = `Du bist ein präziser Datenextraktor für die ASIMO-Selbstauskunft (Schweiz).
-Du erhältst (a) die rohen AcroForm-Feldwerte des PDFs als JSON und (b) zusätzlich die PDF-Datei.
+Du erhältst (a) die rohen AcroForm-Feldwerte des PDFs als JSON und (b) die PDF-Datei.
 
-WICHTIG – Feld-Kodierung der ASIMO-Selbstauskunft:
-- Felder mit Präfix "AN" gehören zum ANTRAGSTELLER → diese extrahieren.
-- Felder mit Präfix "MI" gehören zum MITANTRAGSTELLER → IGNORIEREN.
-- Investment-Checkliste (Seite 1) ignorieren – nur Selbstauskunft (Seite 2).
+WICHTIG – Feld-Kodierung:
+- Präfix "AN" = ANTRAGSTELLER → in "applicant" zurückgeben.
+- Präfix "MI" = MITANTRAGSTELLER → in "co_applicant" zurückgeben (falls vorhanden).
+- Investment-Checkliste (Seite 1) ignorieren – nur Selbstauskunft.
+- Anrede ("Herr" / "Frau" / "Divers") ist meist eine Checkbox – erkenne sie visuell und gib als salutation zurück.
 
-Mapping-Hinweise (typische ASIMO-Codes, nutze die Werte falls vorhanden):
-- AN02 → first_name | AN03 → last_name (kann auch Ledigname enthalten)
-- AN04 → street | AN04x → street_number
-- AN05plz → postal_code | AN05ort → city
-- AN06 → resident_since (Jahr) | Land falls separat, sonst "CH"
-- AN07 → phone | AN07x → mobile
-- AN08 → email
-- AN09 → birth_date (DD.MM.YYYY → YYYY-MM-DD) | AN09x → nationality
-- AN10 → birth_place | AN10x → birth_country
-- AN11 → marital_status | AN12 → tax_id_ch
-- AN13 → employment_status | AN14 → employer_name
-- AN15plz/AN15ort → employer_address (Ort) | AN16/AN16x → employer street+nr
-  Kombiniere AN16 + " " + AN16x + ", " + AN15plz + " " + AN15ort zu employer_address.
-- AN17 → employer_phone | AN18 → employed_as | AN18x → employed_since
-- AN19 → salary_net_monthly | AN20 → additional_income
-- AN21 → annual_net_salary | AN22 → total_income_monthly (NICHT setzen, wird berechnet)
-- Ausgaben AN23–AN30 (in PDF-Reihenfolge): typischerweise
-  AN23=mortgage_expense, AN24=rent_expense, AN25=leasing_expense,
-  AN26=credit_expense, AN27=life_insurance_expense, AN28=alimony_expense,
-  AN29=health_insurance_expense, AN30=property_insurance_expense.
-  Wenn Reihenfolge im Originaldokument abweicht, korrigiere anhand der visuellen Labels.
-- "Datum" → disclosure_date (DD.MM.YYYY → YYYY-MM-DD) | "Ort1" → disclosure_place
-- "Berater" → advisor_id (Name als String)
+Mapping (typische Codes):
+- 02→first_name | 03→last_name (kann Ledigname sein) | 03x→birth_name
+- 04/16→street | 04x/16x→street_number | 05plz→postal_code | 05ort→city
+- 06→resident_since (Jahr oder Datum) | Land→country (sonst "CH")
+- 07→phone | 07x→mobile | 08→email
+- 09→birth_date (DD.MM.YYYY → YYYY-MM-DD) | 09x→nationality
+- 10→birth_place | 10x→birth_country
+- 11→marital_status | 12→tax_id_ch
+- 13→employment_status | 14→employer_name
+- 15plz/15ort + 16/16x → employer_address (zusammensetzen)
+- 17→employer_phone | 18→employed_as | 18x→employed_since
+- 19→salary_net_monthly | 20→additional_income | 21→annual_net_salary
+- 23–30 Ausgaben: 23=mortgage, 24=rent, 25=leasing, 26=credit,
+  27=life_insurance, 28=alimony, 29=health_insurance, 30=property_insurance.
+- "Datum"→disclosure_date | "Ort1"→disclosure_place | "Berater"→advisor_id
 
 CHF-Beträge: nur Zahlen, ohne Tausender, ohne Währung.
-Lasse Felder weg, die leer/nicht vorhanden sind. Keine Halluzinationen.`;
+Felder die leer/nicht vorhanden sind weglassen. Keine Halluzinationen.
+Wenn kein Mitantragsteller im PDF erkennbar ist, co_applicant weglassen oder leer lassen.`;
+
 
     const userParts: Array<Record<string, unknown>> = [
       {
@@ -444,6 +462,19 @@ Lasse Felder weg, die leer/nicht vorhanden sind. Keine Halluzinationen.`;
     if (!aiResp.ok) {
       const txt = await aiResp.text();
       console.error("AI error", aiResp.status, txt);
+      // Bei AI-Fehler: AcroForm-Daten allein zurückgeben, falls vorhanden.
+      if (Object.keys(directFields).length > 0) {
+        return new Response(
+          JSON.stringify({
+            fields: directFields,
+            co_applicant_fields: hasCoApplicant ? coApplicantFields : null,
+            has_co_applicant: hasCoApplicant,
+            form_fields_count: formFieldsCount,
+            source: "acroform-only",
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       if (aiResp.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit erreicht – bitte gleich nochmals." }),
@@ -464,10 +495,7 @@ Lasse Felder weg, die leer/nicht vorhanden sind. Keine Halluzinationen.`;
           form_fields_count: formFieldsCount,
           source: "fallback",
         }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -475,33 +503,47 @@ Lasse Felder weg, die leer/nicht vorhanden sind. Keine Halluzinationen.`;
     const toolCall = json.choices?.[0]?.message?.tool_calls?.[0];
     const content = json.choices?.[0]?.message?.content;
 
-    let args: Record<string, string | number> = {};
+    let aiRaw: Record<string, unknown> = {};
     try {
       if (toolCall?.function?.arguments) {
-        args = sanitizeFields(parseJsonObject(toolCall.function.arguments));
+        aiRaw = parseJsonObject(toolCall.function.arguments) as Record<string, unknown>;
       } else if (typeof content === "string" && content.trim()) {
-        args = sanitizeFields(parseJsonObject(content));
+        aiRaw = parseJsonObject(content) as Record<string, unknown>;
       } else if (Array.isArray(content)) {
         const textPart = content.find(
           (part: Record<string, unknown>) =>
-            part?.type === "text" && typeof part?.text === "string" && part.text.trim(),
+            part?.type === "text" && typeof part?.text === "string" && (part.text as string).trim(),
         );
         if (textPart?.text && typeof textPart.text === "string") {
-          args = sanitizeFields(parseJsonObject(textPart.text));
+          aiRaw = parseJsonObject(textPart.text) as Record<string, unknown>;
         }
       }
     } catch (parseError) {
       console.warn("could not parse AI result", parseError);
     }
 
+    const aiApplicant = sanitizeFields(aiRaw.applicant ?? aiRaw);
+    const aiCoApplicant = sanitizeFields(aiRaw.co_applicant);
+
+    // AcroForm-Werte haben Vorrang. AI ergänzt nur fehlende Felder.
+    const mergedFields: Record<string, string | number> = { ...aiApplicant, ...directFields };
+    const mergedCoApplicant: Record<string, string | number> = {
+      ...aiCoApplicant,
+      ...coApplicantFields,
+    };
+    const finalHasCoApplicant = hasMeaningfulPerson(mergedCoApplicant);
+
     return new Response(
       JSON.stringify({
-        fields: args,
+        fields: mergedFields,
+        co_applicant_fields: finalHasCoApplicant ? mergedCoApplicant : null,
+        has_co_applicant: finalHasCoApplicant,
         form_fields_count: formFieldsCount,
-        source: "ai",
+        source: Object.keys(directFields).length > 0 ? "acroform+ai" : "ai",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   } catch (e) {
     console.error("parse-self-disclosure error", e);
     return new Response(
