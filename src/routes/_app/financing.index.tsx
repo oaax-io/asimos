@@ -17,6 +17,8 @@ import {
   type FinancingType, type DossierStatus, type QuickCheckStatus,
 } from "@/lib/financing";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
+import { HypoRechnerKosovoDialog } from "@/components/financing/HypoRechnerKosovoDialog";
+import { Calculator } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -39,6 +41,7 @@ function FinancingPage() {
   const [bankFilter, setBankFilter] = useState<string>(ALL);
   const [sourceFilter, setSourceFilter] = useState<string>(ALL);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [hypoOpen, setHypoOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const canDelete = useIsOwnerOrAdmin();
@@ -123,9 +126,14 @@ function FinancingPage() {
         title="Finanzierungen"
         description="Übersicht aller Finanzierungs-Dossiers"
         action={
-          <Button onClick={() => setWizardOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Quick Check starten
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setHypoOpen(true)}>
+              <Calculator className="mr-2 h-4 w-4" /> Hyporechner Kosovo
+            </Button>
+            <Button onClick={() => setWizardOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Quick Check starten
+            </Button>
+          </div>
         }
       />
 
@@ -257,6 +265,8 @@ function FinancingPage() {
         onOpenChange={setWizardOpen}
         onCreated={(id) => { setWizardOpen(false); navigate({ to: "/financing/$id", params: { id } }); }}
       />
+
+      <HypoRechnerKosovoDialog open={hypoOpen} onOpenChange={setHypoOpen} />
 
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent>
