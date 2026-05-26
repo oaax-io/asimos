@@ -462,6 +462,19 @@ Wenn kein Mitantragsteller im PDF erkennbar ist, co_applicant weglassen oder lee
     if (!aiResp.ok) {
       const txt = await aiResp.text();
       console.error("AI error", aiResp.status, txt);
+      // Bei AI-Fehler: AcroForm-Daten allein zurückgeben, falls vorhanden.
+      if (Object.keys(directFields).length > 0) {
+        return new Response(
+          JSON.stringify({
+            fields: directFields,
+            co_applicant_fields: hasCoApplicant ? coApplicantFields : null,
+            has_co_applicant: hasCoApplicant,
+            form_fields_count: formFieldsCount,
+            source: "acroform-only",
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       if (aiResp.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit erreicht – bitte gleich nochmals." }),
@@ -482,10 +495,7 @@ Wenn kein Mitantragsteller im PDF erkennbar ist, co_applicant weglassen oder lee
           form_fields_count: formFieldsCount,
           source: "fallback",
         }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -493,33 +503,47 @@ Wenn kein Mitantragsteller im PDF erkennbar ist, co_applicant weglassen oder lee
     const toolCall = json.choices?.[0]?.message?.tool_calls?.[0];
     const content = json.choices?.[0]?.message?.content;
 
-    let args: Record<string, string | number> = {};
+    let aiRaw: Record<string, unknown> = {};
     try {
       if (toolCall?.function?.arguments) {
-        args = sanitizeFields(parseJsonObject(toolCall.function.arguments));
+        aiRaw = parseJsonObject(toolCall.function.arguments) as Record<string, unknown>;
       } else if (typeof content === "string" && content.trim()) {
-        args = sanitizeFields(parseJsonObject(content));
+        aiRaw = parseJsonObject(content) as Record<string, unknown>;
       } else if (Array.isArray(content)) {
         const textPart = content.find(
           (part: Record<string, unknown>) =>
-            part?.type === "text" && typeof part?.text === "string" && part.text.trim(),
+            part?.type === "text" && typeof part?.text === "string" && (part.text as string).trim(),
         );
         if (textPart?.text && typeof textPart.text === "string") {
-          args = sanitizeFields(parseJsonObject(textPart.text));
+          aiRaw = parseJsonObject(textPart.text) as Record<string, unknown>;
         }
       }
     } catch (parseError) {
       console.warn("could not parse AI result", parseError);
     }
 
+    const aiApplicant = sanitizeFields(aiRaw.applicant ?? aiRaw);
+    const aiCoApplicant = sanitizeFields(aiRaw.co_applicant);
+
+    // AcroForm-Werte haben Vorrang. AI ergänzt nur fehlende Felder.
+    const mergedFields: Record<string, string | number> = { ...aiApplicant, ...directFields };
+    const mergedCoApplicant: Record<string, string | number> = {
+      ...aiCoApplicant,
+      ...coApplicantFields,
+    };
+    const finalHasCoApplicant = hasMeaningfulPerson(mergedCoApplicant);
+
     return new Response(
       JSON.stringify({
-        fields: args,
+        fields: mergedFields,
+        co_applicant_fields: finalHasCoApplicant ? mergedCoApplicant : null,
+        has_co_applicant: finalHasCoApplicant,
         form_fields_count: formFieldsCount,
-        source: "ai",
+        source: Object.keys(directFields).length > 0 ? "acroform+ai" : "ai",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   } catch (e) {
     console.error("parse-self-disclosure error", e);
     return new Response(
