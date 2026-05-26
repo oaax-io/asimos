@@ -654,6 +654,22 @@ export function ClientSelfDisclosureWizard({
         .upsert(coPayload as never, { onConflict: "client_id" });
       if (coErr) throw coErr;
 
+      // 4) Kinder auch dem Mitantragsteller hinzufügen (gemeinsame Kinder).
+      if (importedChildren.length > 0) {
+        const childRows = importedChildren.map((c, idx) => ({
+          client_id: newClient.id,
+          full_name: c.full_name,
+          birth_date: c.birth_date ?? null,
+          is_shared_child: true,
+          sort_order: idx,
+        }));
+        const { error: cErr } = await supabase
+          .from("client_children")
+          .insert(childRows);
+        if (cErr) console.warn("could not insert co-applicant children", cErr);
+        else qc.invalidateQueries({ queryKey: ["client_children", newClient.id] });
+      }
+
       toast.success(`Mitantragsteller «${fullName}» angelegt und verknüpft.`);
       qc.invalidateQueries({ queryKey: ["clients"] });
       qc.invalidateQueries({ queryKey: ["client_relationships", clientId] });
