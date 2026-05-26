@@ -324,9 +324,14 @@ export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
                 <KV label="Total Rückzahlung" value={formatCurrency(calc.totalPaid)} />
               </CardContent>
             </Card>
-            <Button variant="outline" className="w-full" onClick={exportCsv}>
-              <Download className="mr-2 h-4 w-4" /> Amortisationsplan als CSV exportieren
-            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button onClick={exportPdf}>
+                <FileText className="mr-2 h-4 w-4" /> PDF für Kunde
+              </Button>
+              <Button variant="outline" onClick={exportCsv}>
+                <Download className="mr-2 h-4 w-4" /> CSV
+              </Button>
+            </div>
           </div>
         </div>
 
