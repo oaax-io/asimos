@@ -279,7 +279,11 @@ function FinancingPage() {
         onCreated={(id) => { setWizardOpen(false); navigate({ to: "/financing/$id", params: { id } }); }}
       />
 
-      <HypoRechnerKosovoDialog open={hypoOpen} onOpenChange={setHypoOpen} />
+      <HypoRechnerKosovoDialog
+        open={hypoOpen}
+        onOpenChange={(o) => { setHypoOpen(o); if (!o) setHypoCalcId(null); }}
+        calculationId={hypoCalcId}
+      />
 
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent>
