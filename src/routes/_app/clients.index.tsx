@@ -42,9 +42,22 @@ function typeBadge(t: string) {
 }
 const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
 const FINANCING_OPTIONS = ["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"];
+
+const CLIENT_STATUSES = [
+  { value: "entwurf",       label: "Entwurf",       dot: "bg-slate-400",   badge: "bg-slate-500/15 text-slate-700 border-slate-500/30 dark:text-slate-300" },
+  { value: "pendent",       label: "Pendent",       dot: "bg-amber-500",   badge: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300" },
+  { value: "vollstaendig",  label: "Vollständig",   dot: "bg-blue-500",    badge: "bg-blue-500/15 text-blue-700 border-blue-500/30 dark:text-blue-300" },
+  { value: "finanzierung",  label: "Finanzierung",  dot: "bg-violet-500",  badge: "bg-violet-500/15 text-violet-700 border-violet-500/30 dark:text-violet-300" },
+  { value: "abgeschlossen", label: "Abgeschlossen", dot: "bg-emerald-500", badge: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-300" },
+  { value: "abgelehnt",     label: "Abgelehnt",     dot: "bg-red-500",     badge: "bg-red-500/15 text-red-700 border-red-500/30 dark:text-red-300" },
+  { value: "storniert",     label: "Storniert",     dot: "bg-zinc-500",    badge: "bg-zinc-500/15 text-zinc-700 border-zinc-500/30 dark:text-zinc-300" },
+] as const;
+const statusMap = new Map<string, (typeof CLIENT_STATUSES)[number]>(CLIENT_STATUSES.map((s) => [s.value, s]));
+
 const ALL = "__all__";
 const UNASSIGNED = "__unassigned__";
 const NO_FIN = "__none__";
+
 
 type ViewMode = "grid" | "list";
 
@@ -54,7 +67,9 @@ function ClientsPage() {
   const [typeFilter, setTypeFilter] = useState<string>(ALL);
   const [assignedFilter, setAssignedFilter] = useState<string>(ALL);
   const [financingFilter, setFinancingFilter] = useState<string>(ALL);
+  const [statusFilter, setStatusFilter] = useState<string>(ALL);
   const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
+
   const [view, setView] = useState<ViewMode>("list");
   const [open, setOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -154,17 +169,19 @@ function ClientsPage() {
       if (financingFilter === NO_FIN && c.financing_status) return false;
       if (financingFilter !== NO_FIN && c.financing_status !== financingFilter) return false;
     }
+    if (statusFilter !== ALL && c.status !== statusFilter) return false;
     if (search) {
       const q = search.toLowerCase();
       if (!c.full_name?.toLowerCase().includes(q) && !c.email?.toLowerCase().includes(q)) return false;
     }
     return true;
-  }), [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, search]);
+  }), [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search]);
 
   // Pagination
   const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [search, typeFilter, assignedFilter, financingFilter, archivedFilter, pageSize, view]);
+  useEffect(() => { setPage(1); }, [search, typeFilter, assignedFilter, financingFilter, statusFilter, archivedFilter, pageSize, view]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const paginated = useMemo(
@@ -292,6 +309,29 @@ function ClientsPage() {
             {FINANCING_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[170px]">
+            <SelectValue placeholder="Status">
+              {statusFilter !== ALL && statusMap.get(statusFilter) ? (
+                <span className="flex items-center gap-2">
+                  <span className={`h-2 w-2 rounded-full ${statusMap.get(statusFilter)!.dot}`} />
+                  {statusMap.get(statusFilter)!.label}
+                </span>
+              ) : "Alle Status"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Alle Status</SelectItem>
+            {CLIENT_STATUSES.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                <span className="flex items-center gap-2">
+                  <span className={`h-2.5 w-2.5 rounded-full ${s.dot}`} />
+                  {s.label}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={archivedFilter} onValueChange={(v) => setArchivedFilter(v as typeof archivedFilter)}>
           <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -300,11 +340,12 @@ function ClientsPage() {
             <SelectItem value="all">Alle</SelectItem>
           </SelectContent>
         </Select>
-        {(typeFilter !== ALL || assignedFilter !== ALL || financingFilter !== ALL || search) && (
-          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilter(ALL); setAssignedFilter(ALL); setFinancingFilter(ALL); }}>
+        {(typeFilter !== ALL || assignedFilter !== ALL || financingFilter !== ALL || statusFilter !== ALL || search) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilter(ALL); setAssignedFilter(ALL); setFinancingFilter(ALL); setStatusFilter(ALL); }}>
             Zurücksetzen
           </Button>
         )}
+
         <span className="ml-auto text-sm text-muted-foreground">{filtered.length} von {clients.length}</span>
       </div>
 
@@ -378,8 +419,18 @@ function ClientsPage() {
                       <button type="button" onClick={() => setDetailId(c.id)} className="flex-1 min-w-0 text-left">
                         <p className="font-semibold hover:text-primary truncate">{c.full_name}</p>
                         <div className="mt-1 flex flex-wrap gap-1">
+                          {(() => {
+                            const s = statusMap.get(c.status ?? "entwurf") ?? statusMap.get("entwurf")!;
+                            return (
+                              <Badge variant="outline" className={s.badge}>
+                                <span className={`mr-1.5 h-2 w-2 rounded-full ${s.dot}`} />
+                                {s.label}
+                              </Badge>
+                            );
+                          })()}
                           <Badge variant="outline" className={typeBadge(c.client_type)}>{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                           {c.is_archived && <Badge variant="outline">Archiviert</Badge>}
+
                           {(c.assigned_to ?? c.owner_id) && employeeMap.get(c.assigned_to ?? c.owner_id) && (
                             <Badge variant="outline" className="text-xs">
                               {(employeeMap.get(c.assigned_to ?? c.owner_id) as any).full_name ?? (employeeMap.get(c.assigned_to ?? c.owner_id) as any).email}
@@ -443,7 +494,9 @@ function ClientsPage() {
                   <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAll} aria-label="Alle auswählen" />
                 </TableHead>
                 <TableHead>Name</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Typ</TableHead>
+
                 <TableHead>Telefon</TableHead>
                 <TableHead>E-Mail</TableHead>
                 <TableHead>PLZ / Ort</TableHead>
@@ -477,8 +530,20 @@ function ClientsPage() {
                       {c.is_archived && <Badge variant="outline" className="ml-2">Archiviert</Badge>}
                     </TableCell>
                     <TableCell>
+                      {(() => {
+                        const s = statusMap.get(c.status ?? "entwurf") ?? statusMap.get("entwurf")!;
+                        return (
+                          <Badge variant="outline" className={s.badge}>
+                            <span className={`mr-1.5 h-2 w-2 rounded-full ${s.dot}`} />
+                            {s.label}
+                          </Badge>
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell>
                       <Badge variant="outline" className={typeBadge(c.client_type)}>{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                     </TableCell>
+
                     <TableCell className="text-sm">
                       {phone ? <a href={`tel:${phone}`} className="hover:text-primary">{phone}</a> : <span className="text-muted-foreground">—</span>}
                     </TableCell>

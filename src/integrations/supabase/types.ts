@@ -801,6 +801,7 @@ export type Database = {
             | null
           preferred_types: Database["public"]["Enums"]["property_type"][] | null
           rooms_min: number | null
+          status: Database["public"]["Enums"]["client_status"]
           updated_at: string
         }
         Insert: {
@@ -840,6 +841,7 @@ export type Database = {
             | Database["public"]["Enums"]["property_type"][]
             | null
           rooms_min?: number | null
+          status?: Database["public"]["Enums"]["client_status"]
           updated_at?: string
         }
         Update: {
@@ -879,6 +881,7 @@ export type Database = {
             | Database["public"]["Enums"]["property_type"][]
             | null
           rooms_min?: number | null
+          status?: Database["public"]["Enums"]["client_status"]
           updated_at?: string
         }
         Relationships: [
@@ -2870,6 +2873,14 @@ export type Database = {
         | "investor"
         | "contact_person"
         | "general_contact"
+      client_status:
+        | "entwurf"
+        | "pendent"
+        | "vollstaendig"
+        | "finanzierung"
+        | "abgeschlossen"
+        | "abgelehnt"
+        | "storniert"
       client_type:
         | "buyer"
         | "seller"
@@ -3137,6 +3148,15 @@ export const Constants = {
         "investor",
         "contact_person",
         "general_contact",
+      ],
+      client_status: [
+        "entwurf",
+        "pendent",
+        "vollstaendig",
+        "finanzierung",
+        "abgeschlossen",
+        "abgelehnt",
+        "storniert",
       ],
       client_type: [
         "buyer",
