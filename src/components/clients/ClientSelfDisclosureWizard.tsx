@@ -552,6 +552,10 @@ export function ClientSelfDisclosureWizard({
           console.warn("could not persist children", childError);
         }
       }
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "PDF konnte nicht gelesen werden",
+      );
     } finally {
       setParsing(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
