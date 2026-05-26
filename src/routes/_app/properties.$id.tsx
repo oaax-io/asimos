@@ -383,12 +383,8 @@ function PropertyDetail() {
       )}
 
       <div className="mb-6 grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 aspect-[16/10] overflow-hidden rounded-2xl border bg-muted">
-          {p.images?.[0] ? (
-            <img src={getMediaPublicUrl(p.images[0])} alt={p.title} className="h-full w-full object-cover" />
-          ) : (
-            <PropertyImageDropzone propertyId={id} existing={p.images ?? []} />
-          )}
+        <div className="lg:col-span-2 aspect-[16/10] overflow-hidden rounded-2xl">
+          <PropertyImageGallery propertyId={id} images={p.images ?? []} title={p.title} />
         </div>
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
