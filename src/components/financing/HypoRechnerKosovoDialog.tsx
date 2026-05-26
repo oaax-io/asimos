@@ -108,6 +108,129 @@ export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
     URL.revokeObjectURL(url);
   };
 
+  const exportPdf = async () => {
+    const client = clients.find((c: any) => c.id === clientId);
+    const { data: companyRows } = await supabase
+      .from("company")
+      .select("name, address, postal_code, city, country, phone, email, website, logo_url")
+      .limit(1);
+    const company = companyRows?.[0] as any | undefined;
+
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    let y = 15;
+
+    // Logo
+    if (company?.logo_url) {
+      try {
+        const res = await fetch(company.logo_url);
+        const blob = await res.blob();
+        const dataUrl: string = await new Promise((resolve) => {
+          const r = new FileReader();
+          r.onloadend = () => resolve(r.result as string);
+          r.readAsDataURL(blob);
+        });
+        doc.addImage(dataUrl, "PNG", 15, y, 30, 15, undefined, "FAST");
+      } catch { /* ignore */ }
+    }
+
+    // Header right
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    if (company) {
+      const lines = [
+        company.name,
+        [company.address].filter(Boolean).join(""),
+        [company.postal_code, company.city].filter(Boolean).join(" "),
+        company.phone,
+        company.email,
+      ].filter(Boolean) as string[];
+      lines.forEach((l, i) => doc.text(l, pageW - 15, y + 4 + i * 4, { align: "right" }));
+    }
+    y += 25;
+
+    doc.setTextColor(20);
+    doc.setFontSize(18);
+    doc.text("Hyporechner Kosovo", 15, y);
+    y += 6;
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text("Amortisationsplan für Immobilienfinanzierung", 15, y);
+    y += 8;
+
+    if (client) {
+      doc.setTextColor(20);
+      doc.setFontSize(11);
+      doc.text(`Kunde: ${client.full_name}`, 15, y);
+      y += 5;
+    }
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Erstellt am ${new Date().toLocaleDateString("de-CH")}`, 15, y);
+    y += 6;
+
+    // Summary table
+    autoTable(doc, {
+      startY: y,
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 2 },
+      headStyles: { fillColor: [30, 30, 30] },
+      head: [["Parameter", "Wert"]],
+      body: [
+        ["Kaufpreis", formatCurrency(purchasePrice)],
+        [`Eigenkapital (${equityPct}%)`, formatCurrency(calc.equity)],
+        ["Finanzierter Betrag", formatCurrency(calc.principal)],
+        ["Zinssatz p.a.", `${interestPct}%`],
+        ["Laufzeit", `${termYears} Jahre (${termYears * 12} Monate)`],
+        ["Verwaltungskosten p.a.", formatCurrency(calc.adminYearly)],
+        ["Monatliche Rate", formatCurrency(calc.monthly)],
+        ["Gesamtzinsen", formatCurrency(calc.totalInterest)],
+        ["Total Rückzahlung", formatCurrency(calc.totalPaid)],
+      ],
+    });
+
+    // Amortization table
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 8,
+      theme: "striped",
+      styles: { fontSize: 8, cellPadding: 1.5 },
+      headStyles: { fillColor: [30, 30, 30] },
+      head: [["#", "Datum", "Restschuld", "Zins", "Kapital", "Zahlung"]],
+      body: calc.schedule.map((s) => [
+        String(s.idx),
+        s.date,
+        formatCurrency(s.balance),
+        formatCurrency(s.interest),
+        formatCurrency(s.principal),
+        formatCurrency(s.payment),
+      ]),
+      columnStyles: {
+        0: { halign: "right", cellWidth: 12 },
+        2: { halign: "right" },
+        3: { halign: "right" },
+        4: { halign: "right" },
+        5: { halign: "right", fontStyle: "bold" },
+      },
+    });
+
+    // Footer page numbers
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Seite ${i} / ${pageCount}`,
+        pageW - 15,
+        doc.internal.pageSize.getHeight() - 8,
+        { align: "right" },
+      );
+    }
+
+    const fname = `hyporechner-kosovo-${client?.full_name?.replace(/\s+/g, "_") ?? "kunde"}-${termYears}j.pdf`;
+    doc.save(fname);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
