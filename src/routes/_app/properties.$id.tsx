@@ -961,10 +961,10 @@ function UploadModal({
   uploading: boolean;
   dragOver: boolean;
   setDragOver: (v: boolean) => void;
-  onFiles: (files: File[]) => void | Promise<void>;
+  onFiles: (files: File[]) => boolean | Promise<boolean>;
   propertyId: string;
   existingPaths: string[];
-  onPickFromLibrary: (paths: string[]) => void | Promise<void>;
+  onPickFromLibrary: (paths: string[]) => boolean | Promise<boolean>;
 }) {
   const [tab, setTab] = useState<"upload" | "library">("upload");
   const [search, setSearch] = useState("");
