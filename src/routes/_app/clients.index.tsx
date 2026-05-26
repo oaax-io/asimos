@@ -52,7 +52,7 @@ const CLIENT_STATUSES = [
   { value: "abgelehnt",     label: "Abgelehnt",     dot: "bg-red-500",     badge: "bg-red-500/15 text-red-700 border-red-500/30 dark:text-red-300" },
   { value: "storniert",     label: "Storniert",     dot: "bg-zinc-500",    badge: "bg-zinc-500/15 text-zinc-700 border-zinc-500/30 dark:text-zinc-300" },
 ] as const;
-const statusMap = new Map(CLIENT_STATUSES.map((s) => [s.value, s]));
+const statusMap = new Map<string, (typeof CLIENT_STATUSES)[number]>(CLIENT_STATUSES.map((s) => [s.value, s]));
 
 const ALL = "__all__";
 const UNASSIGNED = "__unassigned__";
