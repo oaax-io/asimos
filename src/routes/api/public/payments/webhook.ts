@@ -37,6 +37,14 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const periodStart = item?.current_period_start ?? subscription.current_period_start;
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
 
+  // Bestehende Zeile lesen, um neu vs. update zu unterscheiden
+  const { data: prev } = await (getSupabase() as any)
+    .from("subscriptions")
+    .select("status")
+    .eq("stripe_subscription_id", subscription.id)
+    .eq("environment", env)
+    .maybeSingle();
+
   await (getSupabase() as any).from("subscriptions").upsert(
     {
       user_id: userId,
@@ -54,7 +62,13 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
     },
     { onConflict: "stripe_subscription_id" },
   );
+
+  // Nur einmal benachrichtigen — beim ersten Aktivieren
+  if (!prev && (subscription.status === "active" || subscription.status === "trialing")) {
+    await notifySubscriptionActivated(agencyId, userId);
+  }
 }
+
 
 async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
   const item = subscription.items?.data?.[0];
