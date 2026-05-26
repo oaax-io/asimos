@@ -343,7 +343,7 @@ function FileDropzone({ files, setFiles }: { files: File[]; setFiles: (f: File[]
 }
 
 function FeedbackDetailDialog({ id, onClose }: { id: string | null; onClose: () => void }) {
-  const { user } = useAuth();
+  const { user, isSuperadmin } = useAuth();
   const qc = useQueryClient();
   const [comment, setComment] = useState("");
   const [files, setFiles] = useState<File[]>([]);
