@@ -531,6 +531,7 @@ Wenn kein Mitantragsteller im PDF erkennbar ist, co_applicant weglassen oder lee
             fields: directFields,
             co_applicant_fields: hasCoApplicant ? coApplicantFields : null,
             has_co_applicant: hasCoApplicant,
+            children: extractChildren(formFields),
             form_fields_count: formFieldsCount,
             source: "acroform-only",
           }),
