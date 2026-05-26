@@ -229,7 +229,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
 
   const statusUpdate = useMutation({
     mutationFn: async (status: string) => {
-      const { error } = await supabase.from("clients").update({ status }).eq("id", id);
+      const { error } = await supabase.from("clients").update({ status: status as any }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -239,6 +239,8 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
     },
     onError: (e: any) => toast.error(e.message ?? "Fehler beim Aktualisieren"),
   });
+
+  const currentStatus = statusMap.get(client?.status ?? "") ?? CLIENT_STATUSES[0];
 
   if (isLoading && !isError && !loadTimedOut) return <div className="text-sm text-muted-foreground">Lädt…</div>;
   if (clientError || !client) {
@@ -264,47 +266,91 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
     <div>
       <div className="mb-6 flex items-center justify-between">
         {inDialog ? (
-          <div className="flex items-center gap-1">
-            {clientIds && clientIds.length > 1 && onNavigate ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  disabled={clientIds.indexOf(id) <= 0}
-                  onClick={() => {
-                    const idx = clientIds.indexOf(id);
-                    if (idx > 0) onNavigate(clientIds[idx - 1]);
-                  }}
-                  title="Vorheriger Kunde"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  {clientIds.indexOf(id) + 1} / {clientIds.length}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  disabled={clientIds.indexOf(id) >= clientIds.length - 1}
-                  onClick={() => {
-                    const idx = clientIds.indexOf(id);
-                    if (idx < clientIds.length - 1) onNavigate(clientIds[idx + 1]);
-                  }}
-                  title="Nächster Kunde"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </>
-            ) : (
-              <div />
-            )}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              {clientIds && clientIds.length > 1 && onNavigate ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={clientIds.indexOf(id) <= 0}
+                    onClick={() => {
+                      const idx = clientIds.indexOf(id);
+                      if (idx > 0) onNavigate(clientIds[idx - 1]);
+                    }}
+                    title="Vorheriger Kunde"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {clientIds.indexOf(id) + 1} / {clientIds.length}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={clientIds.indexOf(id) >= clientIds.length - 1}
+                    onClick={() => {
+                      const idx = clientIds.indexOf(id);
+                      if (idx < clientIds.length - 1) onNavigate(clientIds[idx + 1]);
+                    }}
+                    title="Nächster Kunde"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <div />
+              )}
+            </div>
+            <Select
+              value={client?.status ?? "entwurf"}
+              onValueChange={(v) => statusUpdate.mutate(v)}
+              disabled={statusUpdate.isPending}
+            >
+              <SelectTrigger className={`h-8 gap-1.5 rounded-full border px-2.5 text-xs font-medium ${currentStatus.badge}`}>
+                <Circle className={`h-2.5 w-2.5 fill-current ${currentStatus.dot}`} />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CLIENT_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    <span className="flex items-center gap-2">
+                      <Circle className={`h-2 w-2 fill-current ${s.dot}`} />
+                      {s.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         ) : (
-          <Button variant="ghost" asChild>
-            <Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" asChild>
+              <Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
+            </Button>
+            <Select
+              value={client?.status ?? "entwurf"}
+              onValueChange={(v) => statusUpdate.mutate(v)}
+              disabled={statusUpdate.isPending}
+            >
+              <SelectTrigger className={`h-8 gap-1.5 rounded-full border px-2.5 text-xs font-medium ${currentStatus.badge}`}>
+                <Circle className={`h-2.5 w-2.5 fill-current ${currentStatus.dot}`} />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CLIENT_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    <span className="flex items-center gap-2">
+                      <Circle className={`h-2 w-2 fill-current ${s.dot}`} />
+                      {s.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         )}
         <div className="flex gap-2">
           <ClientQuickActions client={client} />
