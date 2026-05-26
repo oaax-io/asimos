@@ -29,13 +29,13 @@ export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage 
 const TYPES = ["buyer","seller","owner","tenant","landlord","investor","other"] as const;
 
 const clientTypeBadgeClass: Record<string, string> = {
-  buyer:     "bg-blue-500/15 text-blue-700 border-blue-500/30 dark:text-blue-300",
-  seller:    "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-300",
-  owner:     "bg-violet-500/15 text-violet-700 border-violet-500/30 dark:text-violet-300",
-  tenant:    "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300",
-  landlord:  "bg-teal-500/15 text-teal-700 border-teal-500/30 dark:text-teal-300",
-  investor:  "bg-fuchsia-500/15 text-fuchsia-700 border-fuchsia-500/30 dark:text-fuchsia-300",
-  other:     "bg-slate-500/15 text-slate-700 border-slate-500/30 dark:text-slate-300",
+  buyer:     "bg-cyan-500/15 text-cyan-700 border-cyan-500/30 dark:text-cyan-300",
+  seller:    "bg-teal-500/15 text-teal-700 border-teal-500/30 dark:text-teal-300",
+  owner:     "bg-indigo-500/15 text-indigo-700 border-indigo-500/30 dark:text-indigo-300",
+  tenant:    "bg-orange-500/15 text-orange-700 border-orange-500/30 dark:text-orange-300",
+  landlord:  "bg-pink-500/15 text-pink-700 border-pink-500/30 dark:text-pink-300",
+  investor:  "bg-rose-500/15 text-rose-700 border-rose-500/30 dark:text-rose-300",
+  other:     "bg-stone-500/15 text-stone-700 border-stone-500/30 dark:text-stone-300",
 };
 function typeBadge(t: string) {
   return clientTypeBadgeClass[t] ?? clientTypeBadgeClass.other;
@@ -301,14 +301,6 @@ function ClientsPage() {
             {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={financingFilter} onValueChange={setFinancingFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Finanzierung" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Alle Finanzierungen</SelectItem>
-            <SelectItem value={NO_FIN}>Keine Angabe</SelectItem>
-            {FINANCING_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[170px]">
             <SelectValue placeholder="Status">
@@ -502,7 +494,7 @@ function ClientsPage() {
                 <TableHead>PLZ / Ort</TableHead>
                 <TableHead>Zugewiesen</TableHead>
                 <TableHead>Verknüpfungen</TableHead>
-                <TableHead>Finanzierung</TableHead>
+                
                 <TableHead className="w-10"></TableHead>
               </TableRow>
             </TableHeader>
@@ -585,7 +577,7 @@ function ClientsPage() {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm">{c.financing_status ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                    
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
