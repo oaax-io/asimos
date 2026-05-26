@@ -484,7 +484,9 @@ function ClientsPage() {
                   <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAll} aria-label="Alle auswählen" />
                 </TableHead>
                 <TableHead>Name</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Typ</TableHead>
+
                 <TableHead>Telefon</TableHead>
                 <TableHead>E-Mail</TableHead>
                 <TableHead>PLZ / Ort</TableHead>
