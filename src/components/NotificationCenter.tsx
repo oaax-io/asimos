@@ -88,7 +88,7 @@ export function NotificationCenter() {
     if (!n.is_read) markRead.mutate(n.id);
     if (n.link) {
       setOpen(false);
-      navigate({ to: n.link });
+      navigate({ to: n.link as never });
     }
   };
 
