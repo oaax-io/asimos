@@ -199,6 +199,33 @@ function sanitizeFields(input: unknown): Record<string, string | number> {
   return out;
 }
 
+function detectSalutation(
+  fields: Record<string, string>,
+  prefix: "AN" | "MI",
+): string | undefined {
+  // ASIMO PDFs verwenden meist Checkboxen wie "ANanrede_herr" / "ANherr" / "ANfrau".
+  const lcPrefix = prefix.toLowerCase();
+  for (const [k, v] of Object.entries(fields)) {
+    const lk = k.toLowerCase();
+    if (!lk.startsWith(lcPrefix)) continue;
+    const val = (v ?? "").toString().trim().toLowerCase();
+    const isChecked =
+      val === "true" || val === "yes" || val === "1" || val === "on" || val === "x";
+    if (!isChecked && val !== "herr" && val !== "frau" && val !== "divers") continue;
+    if (lk.includes("herr")) return "Herr";
+    if (lk.includes("frau")) return "Frau";
+    if (lk.includes("divers")) return "Divers";
+  }
+  const direct = pickValue(fields, `${prefix}anrede`, `${prefix}01`, `${prefix}salutation`);
+  if (direct) {
+    const d = direct.toLowerCase();
+    if (d.startsWith("h")) return "Herr";
+    if (d.startsWith("f")) return "Frau";
+    if (d.startsWith("d")) return "Divers";
+  }
+  return undefined;
+}
+
 function mapAsimoFormFields(
   fields: Record<string, string>,
   prefix: "AN" | "MI" = "AN",
@@ -221,13 +248,18 @@ function mapAsimoFormFields(
     if (parsed) mapped[key] = parsed;
   };
 
+  const sal = detectSalutation(fields, P);
+  if (sal) mapped.salutation = sal;
+
+  setString("title", "title", "01x");
   setString("first_name", "02");
   setString("last_name", "03");
+  setString("birth_name", "03x", "ledigname");
   setString("street", "16", "04");
   setString("street_number", "16x", "04x");
   setString("postal_code", "05plz");
   setString("city", "05ort");
-  setString("resident_since", "06");
+  setDate("resident_since", "06", "06x", "wohnhaft");
   setString("phone", "07");
   setString("mobile", "07x");
   setString("email", "08");
@@ -253,6 +285,11 @@ function mapAsimoFormFields(
   setNumber("alimony_expense", "28");
   setNumber("health_insurance_expense", "29");
   setNumber("property_insurance_expense", "30");
+  setNumber("utilities_expense", "31");
+  setNumber("telecom_expense", "32");
+  setNumber("living_costs_expense", "33");
+  setNumber("taxes_expense", "34");
+  setNumber("miscellaneous_expense", "35");
 
   if (P === "AN") {
     const dDate = normalizeDate(pickValue(fields, "Datum", "Datum1", "Date"));
