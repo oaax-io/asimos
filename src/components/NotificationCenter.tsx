@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bell, Check, CheckCheck, Calendar, CheckSquare, UserPlus, Info } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type Notification = {
   id: string;
@@ -33,6 +34,37 @@ export function NotificationCenter() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [shake, setShake] = useState(false);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+
+  const playDing = () => {
+    try {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!Ctx) return;
+      if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
+      const ctx = audioCtxRef.current;
+      if (ctx.state === "suspended") void ctx.resume();
+      const now = ctx.currentTime;
+      const tones = [880, 1320];
+      tones.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const start = now + i * 0.12;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.18, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.4);
+      });
+    } catch {
+      // ignore
+    }
+  };
 
   const { data: notifications = [] } = useQuery({
     queryKey: ["notifications"],
@@ -54,7 +86,24 @@ export function NotificationCenter() {
       .channel("notifications-stream")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          qc.invalidateQueries({ queryKey: ["notifications"] });
+          const n = payload.new as Notification;
+          playDing();
+          setShake(true);
+          setTimeout(() => setShake(false), 950);
+          toast(n.title, {
+            description: n.message ?? undefined,
+            action: n.link
+              ? { label: "Öffnen", onClick: () => navigateRef.current({ to: n.link as never }) }
+              : undefined,
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
         () => qc.invalidateQueries({ queryKey: ["notifications"] }),
       )
       .subscribe();
@@ -96,7 +145,7 @@ export function NotificationCenter() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative h-9 w-9">
-          <Bell className="h-[18px] w-[18px]" />
+          <Bell className={cn("h-[18px] w-[18px]", shake && "animate-bell-shake")} />
           {unreadCount > 0 && (
             <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
               {unreadCount > 9 ? "9+" : unreadCount}

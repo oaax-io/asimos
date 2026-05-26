@@ -184,4 +184,17 @@
   .animate-window-flicker {
     animation: window-flicker 7s ease-in-out infinite;
   }
+
+  @keyframes bell-shake {
+    0%, 100% { transform: rotate(0); }
+    10%, 30%, 50% { transform: rotate(-14deg); }
+    20%, 40%, 60% { transform: rotate(14deg); }
+    70% { transform: rotate(-6deg); }
+    80% { transform: rotate(6deg); }
+    90% { transform: rotate(-2deg); }
+  }
+  .animate-bell-shake {
+    animation: bell-shake 0.9s ease-in-out;
+    transform-origin: top center;
+  }
 }
