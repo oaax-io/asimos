@@ -16,7 +16,7 @@ function resolvePriceId(item: any): string {
 
 async function resolveAgencyId(userId: string | undefined): Promise<string | null> {
   if (!userId) return null;
-  const { data } = await getSupabase()
+  const { data } = await (getSupabase() as any)
     .from("profiles")
     .select("agency_id")
     .eq("id", userId)
