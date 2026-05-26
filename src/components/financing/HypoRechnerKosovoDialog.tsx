@@ -55,6 +55,21 @@ export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
     enabled: open,
   });
 
+  // Selbstauskunft des gewählten Kunden laden (für Tragbarkeitsbewertung)
+  const { data: disclosure } = useQuery({
+    queryKey: ["hypo-disclosure", clientId],
+    queryFn: async () => {
+      if (!clientId) return null;
+      const { data } = await supabase
+        .from("client_self_disclosures")
+        .select("total_income_monthly, total_expenses_monthly, reserve_total, salary_net_monthly, additional_income, income_job_two, income_rental")
+        .eq("client_id", clientId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: open && !!clientId,
+  });
+
   const calc = useMemo(() => {
     const price = Math.max(0, purchasePrice || 0);
     const equity = price * (equityPct / 100);
