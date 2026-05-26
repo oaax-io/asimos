@@ -682,6 +682,58 @@ function OwnerTab({ p }: { p: any }) {
   );
 }
 
+function PropertyImageDropzone({ propertyId, existing }: { propertyId: string; existing: string[] }) {
+  const qc = useQueryClient();
+  const [dragOver, setDragOver] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFiles = async (files: FileList | File[]) => {
+    const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (list.length === 0) { toast.error("Bitte nur Bilddateien"); return; }
+    setUploading(true);
+    try {
+      const paths: string[] = [];
+      for (const f of list) {
+        const ext = f.name.split(".").pop() || "jpg";
+        const path = `properties/${propertyId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error } = await supabase.storage.from("media").upload(path, f, { upsert: false, contentType: f.type });
+        if (error) throw error;
+        paths.push(path);
+      }
+      const { error: upErr } = await supabase.from("properties").update({ images: [...paths, ...(existing ?? [])] }).eq("id", propertyId);
+      if (upErr) throw upErr;
+      toast.success(`${paths.length} Bild(er) hochgeladen`);
+      qc.invalidateQueries({ queryKey: ["property", propertyId] });
+      qc.invalidateQueries({ queryKey: ["property_media", propertyId] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload fehlgeschlagen");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <label
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files); }}
+      className={`flex h-full w-full cursor-pointer flex-col items-center justify-center gap-2 bg-gradient-soft text-muted-foreground transition ${dragOver ? "ring-2 ring-primary ring-inset bg-primary/5" : ""}`}
+    >
+      <ImageIcon className="h-10 w-10 opacity-60" />
+      <p className="text-sm font-medium">{uploading ? "Wird hochgeladen…" : "Bilder hierher ziehen oder klicken"}</p>
+      <p className="text-xs">JPG, PNG, WebP – mehrere möglich</p>
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        disabled={uploading}
+        onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ""; }}
+      />
+    </label>
+  );
+}
+
 function MediaTab({ propertyId, cover }: { propertyId: string; cover?: string | null }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
