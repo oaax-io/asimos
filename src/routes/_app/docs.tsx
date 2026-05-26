@@ -16,6 +16,18 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.9.0",
+    date: "26.05.2026",
+    changes: [
+      { type: "feature", text: "Kunden-Status-Workflow mit 7 farbcodierten Stufen: Entwurf (Grau), Pendent (Gelb), Vollstaendig (Blau), Finanzierung (Indigo), Abgeschlossen (Gruen), Abgelehnt (Rot), Storniert (Orange)" },
+      { type: "feature", text: "Status-Filter in der Kundenuebersicht" },
+      { type: "feature", text: "Status direkt im Kunden-Modal aenderbar (oben rechts neben den Pfeilen, mit farbigem Punkt)" },
+      { type: "improvement", text: "Kunden-Typ-Farben (Kaeufer, Verkaeufer, Eigentuemer, Mieter, Vermieter, Investor, Sonstige) klar von Status-Farben getrennt (Cyan, Teal, Indigo, Orange, Pink, Rose, Stone)" },
+      { type: "improvement", text: "Kundenuebersicht aufgeraeumt: Spalte 'Finanzierung' und Filter 'Alle Finanzierungen' entfernt" },
+      { type: "fix", text: "Doppelter Farb-Punkt im Status-Button des Kunden-Modals behoben" },
+    ],
+  },
+  {
     version: "1.8.0",
     date: "26.05.2026",
     changes: [
