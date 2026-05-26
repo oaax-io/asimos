@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity, TrendingUp, Sparkles, RefreshCw, ChevronLeft, ChevronRight, UploadCloud } from "lucide-react";
@@ -690,7 +690,7 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
   const hasImages = images.length > 0;
   const current = hasImages ? images[Math.min(idx, images.length - 1)] : null;
 
-  const handleFiles = async (files: FileList | File[]) => {
+  const handleFiles = async (files: FileList | File[]): Promise<boolean> => {
     const MAX_BYTES = 25 * 1024 * 1024; // 25 MB pro Datei
     const arr = Array.from(files);
     const isImageLike = (f: File) => {
@@ -698,13 +698,13 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
       return f.type.startsWith("image/") || /\.(jpe?g|png|webp|gif|avif|heic|heif|tiff?|bmp)$/.test(n);
     };
     const candidates = arr.filter(isImageLike);
-    if (candidates.length === 0) { toast.error("Bitte nur Bilddateien"); return; }
+    if (candidates.length === 0) { toast.error("Bitte nur Bilddateien"); return false; }
     const tooBig = candidates.filter((f) => f.size > MAX_BYTES);
     if (tooBig.length > 0) {
       toast.error(`${tooBig.length} Datei(en) über 25 MB werden übersprungen`);
     }
     const sized = candidates.filter((f) => f.size <= MAX_BYTES);
-    if (sized.length === 0) { return; }
+    if (sized.length === 0) { return false; }
 
     setUploading(true);
     try {
@@ -734,7 +734,7 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
           is_cover: !hasImages && i === 0,
         });
       }
-      if (paths.length === 0) { return; }
+      if (paths.length === 0) { return false; }
       const newImages = hasImages ? [...images, ...paths] : [...paths, ...images];
       const { error: upErr } = await supabase.from("properties").update({ images: newImages }).eq("id", propertyId);
       if (upErr) throw upErr;
@@ -743,9 +743,11 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
       toast.success(`${paths.length} Bild(er) hochgeladen`);
       qc.invalidateQueries({ queryKey: ["property", propertyId] });
       qc.invalidateQueries({ queryKey: ["property_media", propertyId] });
+      return true;
     } catch (e: any) {
       console.error("upload error", e);
       toast.error(e.message ?? "Upload fehlgeschlagen");
+      return false;
     } finally {
       setUploading(false);
     }
@@ -767,9 +769,9 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
     qc.invalidateQueries({ queryKey: ["property", propertyId] });
   };
 
-  const addFromLibrary = async (paths: string[]) => {
+  const addFromLibrary = async (paths: string[]): Promise<boolean> => {
     const unique = paths.filter((p) => !images.includes(p));
-    if (unique.length === 0) { toast.info("Bereits hinzugefügt"); return; }
+    if (unique.length === 0) { toast.info("Bereits hinzugefügt"); return false; }
     setUploading(true);
     try {
       const newImages = hasImages ? [...images, ...unique] : [...unique];
@@ -789,8 +791,10 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
       toast.success(`${unique.length} Bild(er) aus Mediathek hinzugefügt`);
       qc.invalidateQueries({ queryKey: ["property", propertyId] });
       qc.invalidateQueries({ queryKey: ["property_media", propertyId] });
+      return true;
     } catch (e: any) {
       toast.error(e.message ?? "Hinzufügen fehlgeschlagen");
+      return false;
     } finally {
       setUploading(false);
     }
