@@ -594,12 +594,14 @@ Wenn kein Mitantragsteller im PDF erkennbar ist, co_applicant weglassen oder lee
       ...coApplicantFields,
     };
     const finalHasCoApplicant = hasMeaningfulPerson(mergedCoApplicant);
+    const children = extractChildren(formFields);
 
     return new Response(
       JSON.stringify({
         fields: mergedFields,
         co_applicant_fields: finalHasCoApplicant ? mergedCoApplicant : null,
         has_co_applicant: finalHasCoApplicant,
+        children,
         form_fields_count: formFieldsCount,
         source: Object.keys(directFields).length > 0 ? "acroform+ai" : "ai",
       }),
