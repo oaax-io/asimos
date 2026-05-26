@@ -18,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   MessageSquarePlus, Bug, Lightbulb, HelpCircle, Paperclip, X, Image as ImageIcon,
-  Send, Loader2, Filter,
+  Send, Loader2, Filter, ChevronUp,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/feedback")({
@@ -34,10 +34,14 @@ const TYPES = [
 
 const STATUSES = [
   { value: "new", label: "Neu", color: "bg-slate-100 text-slate-800" },
-  { value: "planned", label: "Geplant", color: "bg-blue-100 text-blue-800" },
-  { value: "in_progress", label: "In Arbeit", color: "bg-amber-100 text-amber-800" },
-  { value: "done", label: "Erledigt", color: "bg-emerald-100 text-emerald-800" },
+  { value: "under_review", label: "In Prüfung", color: "bg-blue-100 text-blue-800" },
+  { value: "in_progress", label: "In Bearbeitung", color: "bg-amber-100 text-amber-800" },
+  { value: "updated", label: "Aktualisiert", color: "bg-emerald-100 text-emerald-800" },
+  { value: "duplicate", label: "Bereits vorhanden", color: "bg-violet-100 text-violet-800" },
   { value: "rejected", label: "Abgelehnt", color: "bg-rose-100 text-rose-800" },
+  // Legacy
+  { value: "planned", label: "Geplant", color: "bg-blue-100 text-blue-800" },
+  { value: "done", label: "Erledigt", color: "bg-emerald-100 text-emerald-800" },
 ] as const;
 
 const PRIORITIES = [
@@ -65,6 +69,8 @@ async function uploadFiles(files: File[], userId: string): Promise<Attachment[]>
   return out;
 }
 
+const ACTIVE_STATUSES = STATUSES.filter(s => !["planned", "done"].includes(s.value));
+
 function FeedbackPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -83,6 +89,35 @@ function FeedbackPage() {
       if (error) throw error;
       return data ?? [];
     },
+  });
+
+  const { data: votes = [] } = useQuery({
+    queryKey: ["feedback-votes"],
+    queryFn: async () => {
+      const { data } = await supabase.from("feedback_votes").select("feedback_id, user_id");
+      return data ?? [];
+    },
+  });
+  const voteCount = useMemo(() => {
+    const m = new Map<string, number>();
+    votes.forEach((v: any) => m.set(v.feedback_id, (m.get(v.feedback_id) ?? 0) + 1));
+    return m;
+  }, [votes]);
+  const myVotes = useMemo(() => new Set(votes.filter((v: any) => v.user_id === user?.id).map((v: any) => v.feedback_id)), [votes, user?.id]);
+
+  const toggleVote = useMutation({
+    mutationFn: async (feedbackId: string) => {
+      if (!user) throw new Error("Nicht angemeldet");
+      if (myVotes.has(feedbackId)) {
+        const { error } = await supabase.from("feedback_votes").delete().eq("feedback_id", feedbackId).eq("user_id", user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("feedback_votes").insert({ feedback_id: feedbackId, user_id: user.id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["feedback-votes"] }),
+    onError: (e: any) => toast.error(e.message),
   });
 
   const { data: profiles = [] } = useQuery({
@@ -111,7 +146,7 @@ function FeedbackPage() {
         <Tabs value={filterStatus} onValueChange={setFilterStatus}>
           <TabsList>
             <TabsTrigger value="all">Alle</TabsTrigger>
-            {STATUSES.map(s => <TabsTrigger key={s.value} value={s.value}>{s.label}</TabsTrigger>)}
+            {ACTIVE_STATUSES.map(s => <TabsTrigger key={s.value} value={s.value}>{s.label}</TabsTrigger>)}
           </TabsList>
         </Tabs>
         <Select value={filterType} onValueChange={setFilterType}>
@@ -139,6 +174,19 @@ function FeedbackPage() {
             return (
               <Card key={it.id} className="cursor-pointer transition-colors hover:bg-muted/30" onClick={() => setOpenId(it.id)}>
                 <CardContent className="flex items-start gap-4 p-4">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); toggleVote.mutate(it.id); }}
+                    className={`flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg border transition-colors ${
+                      myVotes.has(it.id)
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "hover:bg-muted"
+                    }`}
+                    title={myVotes.has(it.id) ? "Stimme zurückziehen" : "Hochstimmen"}
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                    <span className="text-xs font-semibold">{voteCount.get(it.id) ?? 0}</span>
+                  </button>
                   <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tm.color}`}>
                     <Icon className="h-5 w-5" />
                   </div>
@@ -295,7 +343,7 @@ function FileDropzone({ files, setFiles }: { files: File[]; setFiles: (f: File[]
 }
 
 function FeedbackDetailDialog({ id, onClose }: { id: string | null; onClose: () => void }) {
-  const { user } = useAuth();
+  const { user, isSuperadmin } = useAuth();
   const qc = useQueryClient();
   const [comment, setComment] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -331,7 +379,7 @@ function FeedbackDetailDialog({ id, onClose }: { id: string | null; onClose: () 
     mutationFn: async (status: string) => {
       const { error } = await supabase.from("feedback").update({
         status: status as any,
-        resolved_at: ["done", "rejected"].includes(status) ? new Date().toISOString() : null,
+        resolved_at: ["done", "rejected", "updated", "duplicate"].includes(status) ? new Date().toISOString() : null,
       }).eq("id", id!);
       if (error) throw error;
     },
@@ -390,18 +438,34 @@ function FeedbackDetailDialog({ id, onClose }: { id: string | null; onClose: () 
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Status</label>
-                <Select value={item.status} onValueChange={(v) => setStatusMut.mutate(v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
-                </Select>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Status {!isSuperadmin && <span className="ml-1">(nur Systemowner)</span>}
+                </label>
+                {isSuperadmin ? (
+                  <Select value={item.status} onValueChange={(v) => setStatusMut.mutate(v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{ACTIVE_STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                ) : sm ? (
+                  <div className="flex h-9 items-center">
+                    <Badge variant="secondary" className={sm.color}>{sm.label}</Badge>
+                  </div>
+                ) : null}
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Priorität</label>
-                <Select value={item.priority} onValueChange={(v) => setPriorityMut.mutate(v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{PRIORITIES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
-                </Select>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Priorität {!isSuperadmin && <span className="ml-1">(nur Systemowner)</span>}
+                </label>
+                {isSuperadmin ? (
+                  <Select value={item.priority} onValueChange={(v) => setPriorityMut.mutate(v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{PRIORITIES.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex h-9 items-center text-sm capitalize">
+                    {PRIORITIES.find(p => p.value === item.priority)?.label ?? item.priority}
+                  </div>
+                )}
               </div>
             </div>
 
