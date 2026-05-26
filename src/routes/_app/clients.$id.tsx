@@ -268,16 +268,16 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       onValueChange={(v) => statusUpdate.mutate(v)}
       disabled={statusUpdate.isPending}
     >
-      <SelectTrigger className={`h-8 w-[160px] gap-2 rounded-full border px-3 text-xs font-medium ${currentStatus.badge}`}>
+      <SelectTrigger className="h-8 w-[160px] gap-2 rounded-full border border-input bg-background px-3 text-xs font-medium text-foreground shadow-none hover:bg-accent">
         <span className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${currentStatus.dot}`} />
-        <SelectValue />
+        <SelectValue placeholder="Status" />
       </SelectTrigger>
       <SelectContent>
         {CLIENT_STATUSES.map((s) => (
-          <SelectItem key={s.value} value={s.value}>
-            <span className="flex items-center gap-2">
-              <span className={`inline-block h-2.5 w-2.5 rounded-full ${s.dot}`} />
-              {s.label}
+          <SelectItem key={s.value} value={s.value} className="gap-3 pl-3 pr-8">
+            <span className="flex items-center gap-3">
+              <span className={`inline-block h-3 w-3 rounded-full ${s.dot}`} />
+              <span className="text-sm">{s.label}</span>
             </span>
           </SelectItem>
         ))}
