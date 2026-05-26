@@ -378,39 +378,34 @@ Deno.serve(async (req: Request) => {
 
 
     const systemPrompt = `Du bist ein präziser Datenextraktor für die ASIMO-Selbstauskunft (Schweiz).
-Du erhältst (a) die rohen AcroForm-Feldwerte des PDFs als JSON und (b) zusätzlich die PDF-Datei.
+Du erhältst (a) die rohen AcroForm-Feldwerte des PDFs als JSON und (b) die PDF-Datei.
 
-WICHTIG – Feld-Kodierung der ASIMO-Selbstauskunft:
-- Felder mit Präfix "AN" gehören zum ANTRAGSTELLER → diese extrahieren.
-- Felder mit Präfix "MI" gehören zum MITANTRAGSTELLER → IGNORIEREN.
-- Investment-Checkliste (Seite 1) ignorieren – nur Selbstauskunft (Seite 2).
+WICHTIG – Feld-Kodierung:
+- Präfix "AN" = ANTRAGSTELLER → in "applicant" zurückgeben.
+- Präfix "MI" = MITANTRAGSTELLER → in "co_applicant" zurückgeben (falls vorhanden).
+- Investment-Checkliste (Seite 1) ignorieren – nur Selbstauskunft.
+- Anrede ("Herr" / "Frau" / "Divers") ist meist eine Checkbox – erkenne sie visuell und gib als salutation zurück.
 
-Mapping-Hinweise (typische ASIMO-Codes, nutze die Werte falls vorhanden):
-- AN02 → first_name | AN03 → last_name (kann auch Ledigname enthalten)
-- AN04 → street | AN04x → street_number
-- AN05plz → postal_code | AN05ort → city
-- AN06 → resident_since (Jahr) | Land falls separat, sonst "CH"
-- AN07 → phone | AN07x → mobile
-- AN08 → email
-- AN09 → birth_date (DD.MM.YYYY → YYYY-MM-DD) | AN09x → nationality
-- AN10 → birth_place | AN10x → birth_country
-- AN11 → marital_status | AN12 → tax_id_ch
-- AN13 → employment_status | AN14 → employer_name
-- AN15plz/AN15ort → employer_address (Ort) | AN16/AN16x → employer street+nr
-  Kombiniere AN16 + " " + AN16x + ", " + AN15plz + " " + AN15ort zu employer_address.
-- AN17 → employer_phone | AN18 → employed_as | AN18x → employed_since
-- AN19 → salary_net_monthly | AN20 → additional_income
-- AN21 → annual_net_salary | AN22 → total_income_monthly (NICHT setzen, wird berechnet)
-- Ausgaben AN23–AN30 (in PDF-Reihenfolge): typischerweise
-  AN23=mortgage_expense, AN24=rent_expense, AN25=leasing_expense,
-  AN26=credit_expense, AN27=life_insurance_expense, AN28=alimony_expense,
-  AN29=health_insurance_expense, AN30=property_insurance_expense.
-  Wenn Reihenfolge im Originaldokument abweicht, korrigiere anhand der visuellen Labels.
-- "Datum" → disclosure_date (DD.MM.YYYY → YYYY-MM-DD) | "Ort1" → disclosure_place
-- "Berater" → advisor_id (Name als String)
+Mapping (typische Codes):
+- 02→first_name | 03→last_name (kann Ledigname sein) | 03x→birth_name
+- 04/16→street | 04x/16x→street_number | 05plz→postal_code | 05ort→city
+- 06→resident_since (Jahr oder Datum) | Land→country (sonst "CH")
+- 07→phone | 07x→mobile | 08→email
+- 09→birth_date (DD.MM.YYYY → YYYY-MM-DD) | 09x→nationality
+- 10→birth_place | 10x→birth_country
+- 11→marital_status | 12→tax_id_ch
+- 13→employment_status | 14→employer_name
+- 15plz/15ort + 16/16x → employer_address (zusammensetzen)
+- 17→employer_phone | 18→employed_as | 18x→employed_since
+- 19→salary_net_monthly | 20→additional_income | 21→annual_net_salary
+- 23–30 Ausgaben: 23=mortgage, 24=rent, 25=leasing, 26=credit,
+  27=life_insurance, 28=alimony, 29=health_insurance, 30=property_insurance.
+- "Datum"→disclosure_date | "Ort1"→disclosure_place | "Berater"→advisor_id
 
 CHF-Beträge: nur Zahlen, ohne Tausender, ohne Währung.
-Lasse Felder weg, die leer/nicht vorhanden sind. Keine Halluzinationen.`;
+Felder die leer/nicht vorhanden sind weglassen. Keine Halluzinationen.
+Wenn kein Mitantragsteller im PDF erkennbar ist, co_applicant weglassen oder leer lassen.`;
+
 
     const userParts: Array<Record<string, unknown>> = [
       {
