@@ -169,17 +169,19 @@ function ClientsPage() {
       if (financingFilter === NO_FIN && c.financing_status) return false;
       if (financingFilter !== NO_FIN && c.financing_status !== financingFilter) return false;
     }
+    if (statusFilter !== ALL && c.status !== statusFilter) return false;
     if (search) {
       const q = search.toLowerCase();
       if (!c.full_name?.toLowerCase().includes(q) && !c.email?.toLowerCase().includes(q)) return false;
     }
     return true;
-  }), [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, search]);
+  }), [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search]);
 
   // Pagination
   const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [search, typeFilter, assignedFilter, financingFilter, archivedFilter, pageSize, view]);
+  useEffect(() => { setPage(1); }, [search, typeFilter, assignedFilter, financingFilter, statusFilter, archivedFilter, pageSize, view]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const paginated = useMemo(
