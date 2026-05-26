@@ -86,6 +86,18 @@ function FinancingPage() {
     },
   });
 
+  const { data: hypoCalcs = [] } = useQuery({
+    queryKey: ["hypo_calculations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("hypo_calculations")
+        .select("*, clients:client_id(id, full_name)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
     return dossiers.filter((d: any) => {
