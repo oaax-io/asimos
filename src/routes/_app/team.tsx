@@ -52,10 +52,6 @@ function TeamPage() {
     enabled: !!user,
   });
 
-  const meIsSystemowner = !!(teamQuery.data ?? []).find((m) => m.id === user?.id)?.isSystemowner;
-  const effectiveIsSuperadmin = isSuperadmin || meIsSystemowner;
-  const canManage = effectiveIsSuperadmin || meQuery.data?.role === "owner" || meQuery.data?.role === "admin";
-
   const teamQuery = useQuery({
     queryKey: ["team"],
     queryFn: async () => {
@@ -70,6 +66,11 @@ function TeamPage() {
     },
     enabled: !!meQuery.data,
   });
+
+  const meIsSystemowner = !!(teamQuery.data ?? []).find((m) => m.id === user?.id)?.isSystemowner;
+  const effectiveIsSuperadmin = isSuperadmin || meIsSystemowner;
+  const canManage = effectiveIsSuperadmin || meQuery.data?.role === "owner" || meQuery.data?.role === "admin";
+
 
 
   const create = useMutation({
