@@ -37,7 +37,7 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const periodStart = item?.current_period_start ?? subscription.current_period_start;
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
 
-  await getSupabase().from("subscriptions").upsert(
+  await (getSupabase() as any).from("subscriptions").upsert(
     {
       user_id: userId,
       agency_id: agencyId,
