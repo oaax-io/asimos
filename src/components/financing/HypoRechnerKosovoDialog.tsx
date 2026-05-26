@@ -29,12 +29,15 @@ type Props = { open: boolean; onOpenChange: (o: boolean) => void };
 const TERMS = [10, 15, 20, 25] as const;
 
 export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
+  const qc = useQueryClient();
   const [clientId, setClientId] = useState<string>("");
   const [purchasePrice, setPurchasePrice] = useState<number>(270000);
   const [equityPct, setEquityPct] = useState<number>(10);
   const [interestPct, setInterestPct] = useState<number>(5.5);
   const [termYears, setTermYears] = useState<number>(20);
   const [adminPct, setAdminPct] = useState<number>(1.5);
+  const [label, setLabel] = useState<string>("");
+  const [calcNotes, setCalcNotes] = useState<string>("");
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().slice(0, 10),
   );
@@ -42,6 +45,13 @@ export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-min"],
     queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, full_name")
+        .order("full_name");
+      if (error) throw error;
+      return data ?? [];
+    },
       const { data, error } = await supabase
         .from("clients")
         .select("id, full_name")
