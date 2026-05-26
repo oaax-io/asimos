@@ -63,6 +63,14 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
   const periodStart = item?.current_period_start ?? subscription.current_period_start;
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
 
+  // Vorherigen Status lesen, um nur bei Statuswechsel zu benachrichtigen
+  const { data: prev } = await (getSupabase() as any)
+    .from("subscriptions")
+    .select("status, user_id, agency_id")
+    .eq("stripe_subscription_id", subscription.id)
+    .eq("environment", env)
+    .maybeSingle();
+
   await (getSupabase() as any)
     .from("subscriptions")
     .update({
@@ -76,6 +84,72 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
     })
     .eq("stripe_subscription_id", subscription.id)
     .eq("environment", env);
+
+  // Benachrichtigung bei Eintritt in past_due / unpaid
+  const dunningStatuses = new Set(["past_due", "unpaid"]);
+  if (dunningStatuses.has(subscription.status) && !dunningStatuses.has(prev?.status ?? "")) {
+    await notifyPaymentFailed(prev?.agency_id ?? null, prev?.user_id ?? null);
+  }
+  // Benachrichtigung wenn Zahlung wieder erfolgreich
+  if (subscription.status === "active" && dunningStatuses.has(prev?.status ?? "")) {
+    await notifyPaymentRecovered(prev?.agency_id ?? null, prev?.user_id ?? null);
+  }
+}
+
+async function notifyPaymentFailed(agencyId: string | null, ownerUserId: string | null) {
+  const sb = getSupabase() as any;
+  const recipients = new Set<string>();
+
+  // Inhaber der Agentur
+  if (agencyId) {
+    const { data: owners } = await sb
+      .from("profiles")
+      .select("id")
+      .eq("agency_id", agencyId)
+      .eq("role", "owner");
+    for (const o of owners ?? []) recipients.add(o.id);
+  }
+  if (ownerUserId) recipients.add(ownerUserId);
+
+  // Superadmins (Systemowner)
+  const { data: sas } = await sb
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", "superadmin");
+  for (const s of sas ?? []) recipients.add(s.user_id);
+
+  for (const uid of recipients) {
+    await sb.rpc("create_notification", {
+      _user_id: uid,
+      _type: "task",
+      _title: "ASIMOS-Zahlung fehlgeschlagen",
+      _message: "Die monatliche Abrechnung konnte nicht eingezogen werden. Bitte Zahlungsmethode aktualisieren.",
+      _link: "/settings?tab=subscription",
+      _related_type: "subscription",
+      _related_id: null,
+    });
+  }
+}
+
+async function notifyPaymentRecovered(agencyId: string | null, ownerUserId: string | null) {
+  const sb = getSupabase() as any;
+  const recipients = new Set<string>();
+  if (agencyId) {
+    const { data: owners } = await sb.from("profiles").select("id").eq("agency_id", agencyId).eq("role", "owner");
+    for (const o of owners ?? []) recipients.add(o.id);
+  }
+  if (ownerUserId) recipients.add(ownerUserId);
+  for (const uid of recipients) {
+    await sb.rpc("create_notification", {
+      _user_id: uid,
+      _type: "task",
+      _title: "Zahlung erfolgreich",
+      _message: "Deine ASIMOS-Zahlung wurde erfolgreich eingezogen. Vielen Dank.",
+      _link: "/settings?tab=subscription",
+      _related_type: "subscription",
+      _related_id: null,
+    });
+  }
 }
 
 async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
