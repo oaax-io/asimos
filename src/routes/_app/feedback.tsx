@@ -317,6 +317,33 @@ function CreateFeedbackDialog({
             <Textarea rows={5} value={description} onChange={e => setDescription(e.target.value)} placeholder="Beschreibe Idee oder Fehler im Detail" />
           </div>
           <FileDropzone files={files} setFiles={setFiles} />
+          {isSuperadmin && (
+            <div className="rounded-md border border-dashed bg-muted/20 p-3 space-y-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                Systemowner: Feedback im Namen eines Mitarbeiters erfassen (z.B. nachträglich aus E-Mail)
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Mitarbeiter</label>
+                  <Select value={authorId || "self"} onValueChange={(v) => setAuthorId(v === "self" ? "" : v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="self">Ich selbst</SelectItem>
+                      {profiles.map(p => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.full_name || p.email || p.id}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Datum (optional)</label>
+                  <Input type="datetime-local" value={createdAt} onChange={e => setCreatedAt(e.target.value)} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Abbrechen</Button>
