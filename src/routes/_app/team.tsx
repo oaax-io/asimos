@@ -52,8 +52,6 @@ function TeamPage() {
     enabled: !!user,
   });
 
-  const canManage = isSuperadmin || meQuery.data?.role === "owner" || meQuery.data?.role === "admin";
-
   const teamQuery = useQuery({
     queryKey: ["team"],
     queryFn: async () => {
@@ -68,6 +66,11 @@ function TeamPage() {
     },
     enabled: !!meQuery.data,
   });
+
+  const meIsSystemowner = !!(teamQuery.data ?? []).find((m) => m.id === user?.id)?.isSystemowner;
+  const effectiveIsSuperadmin = isSuperadmin || meIsSystemowner;
+  const canManage = effectiveIsSuperadmin || meQuery.data?.role === "owner" || meQuery.data?.role === "admin";
+
 
 
   const create = useMutation({
@@ -204,7 +207,7 @@ function TeamPage() {
                   {m.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{m.email}</p>}
                   {m.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{m.phone}</p>}
                 </div>
-                {canManage && !(m.isSystemowner && !isSuperadmin) && (
+                {canManage && !(m.isSystemowner && !effectiveIsSuperadmin) && (
                   <div className="mt-3 flex justify-end">
                     <Button variant="outline" size="sm" onClick={() => setEditing(m)}>
                       <Pencil className="mr-1 h-3 w-3" /> Bearbeiten
@@ -225,7 +228,7 @@ function TeamPage() {
       {editing && (
         <EditMemberDialog
           member={editing}
-          isSuperadmin={!!isSuperadmin}
+          isSuperadmin={effectiveIsSuperadmin}
           onClose={() => setEditing(null)}
           onSaved={() => qc.invalidateQueries({ queryKey: ["team"] })}
         />
