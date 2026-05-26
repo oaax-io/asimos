@@ -67,7 +67,9 @@ function ClientsPage() {
   const [typeFilter, setTypeFilter] = useState<string>(ALL);
   const [assignedFilter, setAssignedFilter] = useState<string>(ALL);
   const [financingFilter, setFinancingFilter] = useState<string>(ALL);
+  const [statusFilter, setStatusFilter] = useState<string>(ALL);
   const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
+
   const [view, setView] = useState<ViewMode>("list");
   const [open, setOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
