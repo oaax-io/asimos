@@ -309,6 +309,29 @@ function ClientsPage() {
             {FINANCING_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[170px]">
+            <SelectValue placeholder="Status">
+              {statusFilter !== ALL && statusMap.get(statusFilter) ? (
+                <span className="flex items-center gap-2">
+                  <span className={`h-2 w-2 rounded-full ${statusMap.get(statusFilter)!.dot}`} />
+                  {statusMap.get(statusFilter)!.label}
+                </span>
+              ) : "Alle Status"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Alle Status</SelectItem>
+            {CLIENT_STATUSES.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                <span className="flex items-center gap-2">
+                  <span className={`h-2.5 w-2.5 rounded-full ${s.dot}`} />
+                  {s.label}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={archivedFilter} onValueChange={(v) => setArchivedFilter(v as typeof archivedFilter)}>
           <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -317,11 +340,12 @@ function ClientsPage() {
             <SelectItem value="all">Alle</SelectItem>
           </SelectContent>
         </Select>
-        {(typeFilter !== ALL || assignedFilter !== ALL || financingFilter !== ALL || search) && (
-          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilter(ALL); setAssignedFilter(ALL); setFinancingFilter(ALL); }}>
+        {(typeFilter !== ALL || assignedFilter !== ALL || financingFilter !== ALL || statusFilter !== ALL || search) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilter(ALL); setAssignedFilter(ALL); setFinancingFilter(ALL); setStatusFilter(ALL); }}>
             Zurücksetzen
           </Button>
         )}
+
         <span className="ml-auto text-sm text-muted-foreground">{filtered.length} von {clients.length}</span>
       </div>
 
