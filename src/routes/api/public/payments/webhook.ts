@@ -146,6 +146,32 @@ async function notifyPaymentFailed(agencyId: string | null, ownerUserId: string 
 }
 
 async function notifyPaymentRecovered(agencyId: string | null, ownerUserId: string | null) {
+  await notifyOwners(agencyId, ownerUserId, false, {
+    title: "Zahlung erfolgreich",
+    message: "Deine ASIMOS-Zahlung wurde erfolgreich eingezogen. Vielen Dank.",
+  });
+}
+
+async function notifySubscriptionActivated(agencyId: string | null, ownerUserId: string | null) {
+  await notifyOwners(agencyId, ownerUserId, true, {
+    title: "ASIMOS-Abonnement aktiviert",
+    message: "Willkommen! Dein Abonnement ist jetzt aktiv und wird monatlich automatisch verlängert.",
+  });
+}
+
+async function notifySubscriptionCanceled(agencyId: string | null, ownerUserId: string | null) {
+  await notifyOwners(agencyId, ownerUserId, true, {
+    title: "Abonnement gekündigt",
+    message: "Dein ASIMOS-Abonnement wurde gekündigt. Du kannst jederzeit ein neues Abo abschliessen.",
+  });
+}
+
+async function notifyOwners(
+  agencyId: string | null,
+  ownerUserId: string | null,
+  includeSuperadmins: boolean,
+  payload: { title: string; message: string },
+) {
   const sb = getSupabase() as any;
   const recipients = new Set<string>();
   if (agencyId) {
@@ -153,12 +179,16 @@ async function notifyPaymentRecovered(agencyId: string | null, ownerUserId: stri
     for (const o of owners ?? []) recipients.add(o.id);
   }
   if (ownerUserId) recipients.add(ownerUserId);
+  if (includeSuperadmins) {
+    const { data: sas } = await sb.from("user_roles").select("user_id").eq("role", "superadmin");
+    for (const s of sas ?? []) recipients.add(s.user_id);
+  }
   for (const uid of recipients) {
     await sb.rpc("create_notification", {
       _user_id: uid,
       _type: "task",
-      _title: "Zahlung erfolgreich",
-      _message: "Deine ASIMOS-Zahlung wurde erfolgreich eingezogen. Vielen Dank.",
+      _title: payload.title,
+      _message: payload.message,
       _link: "/settings?tab=subscription",
       _related_type: "subscription",
       _related_id: null,
@@ -167,12 +197,24 @@ async function notifyPaymentRecovered(agencyId: string | null, ownerUserId: stri
 }
 
 async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
+  const { data: prev } = await (getSupabase() as any)
+    .from("subscriptions")
+    .select("agency_id, user_id, status")
+    .eq("stripe_subscription_id", subscription.id)
+    .eq("environment", env)
+    .maybeSingle();
+
   await (getSupabase() as any)
     .from("subscriptions")
     .update({ status: "canceled", updated_at: new Date().toISOString() })
     .eq("stripe_subscription_id", subscription.id)
     .eq("environment", env);
+
+  if (prev && prev.status !== "canceled") {
+    await notifySubscriptionCanceled(prev.agency_id ?? null, prev.user_id ?? null);
+  }
 }
+
 
 async function handleWebhook(req: Request, env: StripeEnv) {
   const event = await verifyWebhook(req, env);
