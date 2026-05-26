@@ -174,6 +174,19 @@ function FeedbackPage() {
             return (
               <Card key={it.id} className="cursor-pointer transition-colors hover:bg-muted/30" onClick={() => setOpenId(it.id)}>
                 <CardContent className="flex items-start gap-4 p-4">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); toggleVote.mutate(it.id); }}
+                    className={`flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg border transition-colors ${
+                      myVotes.has(it.id)
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "hover:bg-muted"
+                    }`}
+                    title={myVotes.has(it.id) ? "Stimme zurückziehen" : "Hochstimmen"}
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                    <span className="text-xs font-semibold">{voteCount.get(it.id) ?? 0}</span>
+                  </button>
                   <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tm.color}`}>
                     <Icon className="h-5 w-5" />
                   </div>
