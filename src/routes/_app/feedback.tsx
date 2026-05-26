@@ -72,7 +72,7 @@ async function uploadFiles(files: File[], userId: string): Promise<Attachment[]>
 const ACTIVE_STATUSES = STATUSES.filter(s => !["planned", "done"].includes(s.value));
 
 function FeedbackPage() {
-  const { user, isSuperadmin } = useAuth();
+  const { user } = useAuth();
   const qc = useQueryClient();
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
