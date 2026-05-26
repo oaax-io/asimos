@@ -18,7 +18,6 @@ import {
 } from "@/lib/financing";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 import { HypoRechnerKosovoDialog } from "@/components/financing/HypoRechnerKosovoDialog";
-import { Calculator } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
