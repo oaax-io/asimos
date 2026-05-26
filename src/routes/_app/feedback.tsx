@@ -56,6 +56,19 @@ type Attachment = { url: string; name: string; mime: string };
 function typeMeta(t: string) { return TYPES.find(x => x.value === t) ?? TYPES[3]; }
 function statusMeta(s: string) { return STATUSES.find(x => x.value === s) ?? STATUSES[0]; }
 
+function useIsSuperadmin() {
+  const { data } = useQuery({
+    queryKey: ["is-superadmin-local"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("is_superadmin");
+      if (error) return false;
+      return !!data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  return !!data;
+}
+
 async function uploadFiles(files: File[], userId: string): Promise<Attachment[]> {
   const out: Attachment[] = [];
   for (const f of files) {
@@ -214,39 +227,57 @@ function FeedbackPage() {
         </div>
       )}
 
-      <CreateFeedbackDialog open={createOpen} onOpenChange={setCreateOpen} userId={user?.id ?? null}
-        onCreated={() => qc.invalidateQueries({ queryKey: ["feedback"] })} />
+      <CreateFeedbackDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        userId={user?.id ?? null}
+        profiles={profiles as any}
+        onCreated={() => qc.invalidateQueries({ queryKey: ["feedback"] })}
+      />
       <FeedbackDetailDialog id={openId} onClose={() => setOpenId(null)} />
     </div>
   );
 }
 
 function CreateFeedbackDialog({
-  open, onOpenChange, userId, onCreated,
-}: { open: boolean; onOpenChange: (v: boolean) => void; userId: string | null; onCreated: () => void }) {
+  open, onOpenChange, userId, profiles, onCreated,
+}: { open: boolean; onOpenChange: (v: boolean) => void; userId: string | null; profiles: Array<{ id: string; full_name: string | null; email: string | null }>; onCreated: () => void }) {
+  const isSuperadmin = useIsSuperadmin();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<string>("idea");
   const [priority, setPriority] = useState<string>("medium");
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [authorId, setAuthorId] = useState<string>("");
+  const [createdAt, setCreatedAt] = useState<string>("");
 
-  useEffect(() => { if (!open) { setTitle(""); setDescription(""); setType("idea"); setPriority("medium"); setFiles([]); } }, [open]);
+  useEffect(() => {
+    if (!open) {
+      setTitle(""); setDescription(""); setType("idea"); setPriority("medium");
+      setFiles([]); setAuthorId(""); setCreatedAt("");
+    }
+  }, [open]);
 
   const submit = async () => {
     if (!title.trim() || !userId) { toast.error("Titel erforderlich"); return; }
     setSubmitting(true);
     try {
+      const effectiveAuthor = isSuperadmin && authorId ? authorId : userId;
       const attachments = files.length ? await uploadFiles(files, userId) : [];
-      const { error } = await supabase.from("feedback").insert({
+      const payload: any = {
         title: title.trim(),
         description: description.trim() || null,
         type: type as any,
         priority: priority as any,
         attachments: attachments as any,
         page_url: typeof window !== "undefined" ? window.location.href : null,
-        created_by: userId,
-      });
+        created_by: effectiveAuthor,
+      };
+      if (isSuperadmin && createdAt) {
+        payload.created_at = new Date(createdAt).toISOString();
+      }
+      const { error } = await supabase.from("feedback").insert(payload);
       if (error) throw error;
       toast.success("Feedback erstellt");
       onOpenChange(false);
@@ -286,6 +317,33 @@ function CreateFeedbackDialog({
             <Textarea rows={5} value={description} onChange={e => setDescription(e.target.value)} placeholder="Beschreibe Idee oder Fehler im Detail" />
           </div>
           <FileDropzone files={files} setFiles={setFiles} />
+          {isSuperadmin && (
+            <div className="rounded-md border border-dashed bg-muted/20 p-3 space-y-3">
+              <p className="text-xs font-medium text-muted-foreground">
+                Systemowner: Feedback im Namen eines Mitarbeiters erfassen (z.B. nachträglich aus E-Mail)
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Mitarbeiter</label>
+                  <Select value={authorId || "self"} onValueChange={(v) => setAuthorId(v === "self" ? "" : v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="self">Ich selbst</SelectItem>
+                      {profiles.map(p => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.full_name || p.email || p.id}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Datum (optional)</label>
+                  <Input type="datetime-local" value={createdAt} onChange={e => setCreatedAt(e.target.value)} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Abbrechen</Button>
@@ -343,7 +401,8 @@ function FileDropzone({ files, setFiles }: { files: File[]; setFiles: (f: File[]
 }
 
 function FeedbackDetailDialog({ id, onClose }: { id: string | null; onClose: () => void }) {
-  const { user, isSuperadmin } = useAuth();
+  const { user } = useAuth();
+  const isSuperadmin = useIsSuperadmin();
   const qc = useQueryClient();
   const [comment, setComment] = useState("");
   const [files, setFiles] = useState<File[]>([]);
