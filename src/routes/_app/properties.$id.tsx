@@ -950,6 +950,7 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
 
 function UploadModal({
   open, onOpenChange, uploading, dragOver, setDragOver, onFiles,
+  propertyId, existingPaths, onPickFromLibrary,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -957,51 +958,148 @@ function UploadModal({
   dragOver: boolean;
   setDragOver: (v: boolean) => void;
   onFiles: (files: File[]) => void | Promise<void>;
+  propertyId: string;
+  existingPaths: string[];
+  onPickFromLibrary: (paths: string[]) => void | Promise<void>;
 }) {
+  const [tab, setTab] = useState<"upload" | "library">("upload");
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const { data: library = [], isLoading } = useQuery({
+    queryKey: ["media-library", "images"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("property_media")
+        .select("id, file_url, file_name, property_id, properties:property_id(title)")
+        .eq("file_type", "image")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      const seen = new Set<string>();
+      return (data ?? []).filter((m: any) => {
+        if (!m.file_url || seen.has(m.file_url)) return false;
+        seen.add(m.file_url);
+        return true;
+      });
+    },
+    enabled: open && tab === "library",
+  });
+
+  const filtered = library.filter((m: any) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (m.file_name?.toLowerCase().includes(q) || m.properties?.title?.toLowerCase().includes(q));
+  });
+
+  const toggle = (p: string) => {
+    setSelected((s) => s.includes(p) ? s.filter((x) => x !== p) : [...s, p]);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) { setSelected([]); setSearch(""); setTab("upload"); } }}>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Bilder hochladen</DialogTitle>
-          <DialogDescription>JPG, PNG, WebP oder HEIC · max. 25 MB pro Datei</DialogDescription>
+          <DialogTitle>Bilder hinzufügen</DialogTitle>
+          <DialogDescription>Neue Dateien hochladen oder aus der Mediathek auswählen.</DialogDescription>
         </DialogHeader>
-        <label
-          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            if (e.dataTransfer.files?.length) onFiles(Array.from(e.dataTransfer.files));
-          }}
-          className={`group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 text-muted-foreground transition-all ${dragOver ? "border-primary bg-primary/10 scale-[1.01] ring-4 ring-primary/20" : "border-border hover:border-primary/60 hover:bg-primary/5"}`}
-        >
-          <div className={`rounded-full bg-background p-4 shadow-sm transition-transform ${dragOver ? "scale-110" : "group-hover:scale-105"}`}>
-            <UploadCloud className={`h-8 w-8 ${dragOver ? "text-primary animate-pulse" : "text-muted-foreground group-hover:text-primary"}`} />
-          </div>
-          <div className="text-center">
-            <p className="text-base font-semibold text-foreground">
-              {uploading ? "Wird hochgeladen…" : dragOver ? "Jetzt loslassen" : "Bilder hierher ziehen"}
-            </p>
-            <p className="text-xs">oder unten auf „Dateien auswählen“ klicken</p>
-          </div>
-          <input
-            type="file" accept="image/*,.heic,.heif,.tif,.tiff" multiple className="hidden" disabled={uploading}
-            onChange={(e) => { if (e.target.files?.length) onFiles(Array.from(e.target.files)); e.target.value = ""; }}
-          />
-        </label>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={uploading}>Abbrechen</Button>
-          <Button asChild disabled={uploading}>
-            <label className="cursor-pointer">
-              <UploadCloud className="mr-2 h-4 w-4" />
-              {uploading ? "Lädt…" : "Dateien auswählen"}
+
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="upload">Hochladen</TabsTrigger>
+            <TabsTrigger value="library">Aus Mediathek</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="upload" className="mt-4">
+            <label
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                if (e.dataTransfer.files?.length) onFiles(Array.from(e.dataTransfer.files));
+              }}
+              className={`group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 text-muted-foreground transition-all ${dragOver ? "border-primary bg-primary/10 scale-[1.01] ring-4 ring-primary/20" : "border-border hover:border-primary/60 hover:bg-primary/5"}`}
+            >
+              <div className={`rounded-full bg-background p-4 shadow-sm transition-transform ${dragOver ? "scale-110" : "group-hover:scale-105"}`}>
+                <UploadCloud className={`h-8 w-8 ${dragOver ? "text-primary animate-pulse" : "text-muted-foreground group-hover:text-primary"}`} />
+              </div>
+              <div className="text-center">
+                <p className="text-base font-semibold text-foreground">
+                  {uploading ? "Wird hochgeladen…" : dragOver ? "Jetzt loslassen" : "Bilder hierher ziehen"}
+                </p>
+                <p className="text-xs">JPG, PNG, WebP, HEIC · max. 25 MB</p>
+              </div>
               <input
                 type="file" accept="image/*,.heic,.heif,.tif,.tiff" multiple className="hidden" disabled={uploading}
                 onChange={(e) => { if (e.target.files?.length) onFiles(Array.from(e.target.files)); e.target.value = ""; }}
               />
             </label>
-          </Button>
-        </DialogFooter>
+            <DialogFooter className="mt-4">
+              <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={uploading}>Abbrechen</Button>
+              <Button asChild disabled={uploading}>
+                <label className="cursor-pointer">
+                  <UploadCloud className="mr-2 h-4 w-4" />
+                  {uploading ? "Lädt…" : "Dateien auswählen"}
+                  <input
+                    type="file" accept="image/*,.heic,.heif,.tif,.tiff" multiple className="hidden" disabled={uploading}
+                    onChange={(e) => { if (e.target.files?.length) onFiles(Array.from(e.target.files)); e.target.value = ""; }}
+                  />
+                </label>
+              </Button>
+            </DialogFooter>
+          </TabsContent>
+
+          <TabsContent value="library" className="mt-4">
+            <Input
+              placeholder="Suche nach Dateiname oder Objekt…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="mb-3"
+            />
+            {isLoading ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">Lädt…</div>
+            ) : filtered.length === 0 ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">Keine Bilder gefunden</div>
+            ) : (
+              <div className="grid max-h-[420px] grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-4">
+                {filtered.map((m: any) => {
+                  const isSelected = selected.includes(m.file_url);
+                  const alreadyAdded = existingPaths.includes(m.file_url);
+                  return (
+                    <button
+                      type="button"
+                      key={m.id}
+                      onClick={() => !alreadyAdded && toggle(m.file_url)}
+                      disabled={alreadyAdded}
+                      className={`group relative aspect-square overflow-hidden rounded-lg border-2 transition ${alreadyAdded ? "cursor-not-allowed opacity-40" : isSelected ? "border-primary ring-2 ring-primary/40" : "border-transparent hover:border-primary/50"}`}
+                      title={m.file_name ?? ""}
+                    >
+                      <img src={getMediaPublicUrl(m.file_url)} alt={m.file_name ?? ""} className="h-full w-full object-cover" />
+                      {alreadyAdded && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-background/70 text-[10px] font-medium">Bereits hinzugefügt</div>
+                      )}
+                      {isSelected && !alreadyAdded && (
+                        <div className="absolute right-1 top-1 rounded-full bg-primary p-1 text-primary-foreground shadow">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <DialogFooter className="mt-4">
+              <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={uploading}>Abbrechen</Button>
+              <Button
+                onClick={() => onPickFromLibrary(selected)}
+                disabled={selected.length === 0 || uploading}
+              >
+                {selected.length > 0 ? `${selected.length} hinzufügen` : "Auswählen"}
+              </Button>
+            </DialogFooter>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
