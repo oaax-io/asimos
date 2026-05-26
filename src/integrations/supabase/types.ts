@@ -2771,6 +2771,18 @@ export type Database = {
       }
       can_access_client: { Args: { _client_id: string }; Returns: boolean }
       can_access_property: { Args: { _property_id: string }; Returns: boolean }
+      create_notification: {
+        Args: {
+          _link: string
+          _message: string
+          _related_id: string
+          _related_type: string
+          _title: string
+          _type: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       current_agency_id: { Args: never; Returns: string }
       financing_link_resolve: {
         Args: { _token: string }
