@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -24,11 +24,11 @@ import { formatCurrency } from "@/lib/format";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-type Props = { open: boolean; onOpenChange: (o: boolean) => void };
+type Props = { open: boolean; onOpenChange: (o: boolean) => void; calculationId?: string | null };
 
 const TERMS = [10, 15, 20, 25] as const;
 
-export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
+export function HypoRechnerKosovoDialog({ open, onOpenChange, calculationId }: Props) {
   const qc = useQueryClient();
   const [clientId, setClientId] = useState<string>("");
   const [purchasePrice, setPurchasePrice] = useState<number>(270000);
@@ -41,6 +41,29 @@ export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().slice(0, 10),
   );
+
+  // Bestehende Berechnung laden
+  useEffect(() => {
+    if (!open || !calculationId) return;
+    const load = async () => {
+      const { data, error } = await supabase
+        .from("hypo_calculations")
+        .select("*")
+        .eq("id", calculationId)
+        .single();
+      if (error || !data) return;
+      setClientId(data.client_id ?? "");
+      setPurchasePrice(Number(data.purchase_price));
+      setEquityPct(Number(data.equity_pct));
+      setInterestPct(Number(data.interest_pct));
+      setTermYears(Number(data.term_years));
+      setAdminPct(Number(data.admin_pct));
+      setLabel(data.label ?? "");
+      setCalcNotes(data.notes ?? "");
+      if (data.start_date) setStartDate(data.start_date);
+    };
+    load();
+  }, [open, calculationId]);
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-min"],

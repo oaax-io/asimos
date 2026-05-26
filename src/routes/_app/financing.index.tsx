@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/EmptyState";
-import { Plus, Search, Building2, User, Database, PencilLine, Trash2, UserPlus, FileText, X } from "lucide-react";
+import { Plus, Search, Building2, User, Database, PencilLine, Trash2, UserPlus, FileText, X, ArrowRight, Calculator } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
@@ -18,7 +18,6 @@ import {
 } from "@/lib/financing";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 import { HypoRechnerKosovoDialog } from "@/components/financing/HypoRechnerKosovoDialog";
-import { Calculator } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -42,6 +41,7 @@ function FinancingPage() {
   const [sourceFilter, setSourceFilter] = useState<string>(ALL);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [hypoOpen, setHypoOpen] = useState(false);
+  const [hypoCalcId, setHypoCalcId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const canDelete = useIsOwnerOrAdmin();
@@ -82,6 +82,18 @@ function FinancingPage() {
       const cMap = new Map((clients ?? []).map((c: any) => [c.id, c]));
       const pMap = new Map((props ?? []).map((p: any) => [p.id, p]));
       return rows.map((r: any) => ({ ...r, clients: cMap.get(r.client_id), properties: pMap.get(r.property_id) }));
+    },
+  });
+
+  const { data: hypoCalcs = [] } = useQuery({
+    queryKey: ["hypo_calculations"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("hypo_calculations")
+        .select("*, clients:client_id(id, full_name)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
@@ -260,13 +272,50 @@ function FinancingPage() {
         </div>
       )}
 
+      {/* Gespeicherte Hyporechner Kosovo */}
+      {hypoCalcs.length > 0 && (
+        <div className="space-y-3 pt-2">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Gespeicherte Hyporechner Kosovo
+          </h3>
+          <div className="grid gap-3">
+            {hypoCalcs.map((h: any) => (
+              <Card key={h.id} className="transition hover:shadow-md cursor-pointer" onClick={() => { setHypoCalcId(h.id); setHypoOpen(true); }}>
+                <CardContent className="flex flex-wrap items-center gap-4 p-4">
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium truncate">{h.label || `Hyporechner ${h.term_years}J`}</p>
+                      <Badge variant="outline">{h.term_years} Jahre</Badge>
+                      <Badge variant="secondary">{h.interest_pct}% Zins</Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                      {h.clients?.full_name && (
+                        <span className="inline-flex items-center gap-1"><User className="h-3.5 w-3.5" />{h.clients.full_name}</span>
+                      )}
+                      <span>Kaufpreis: {formatCurrency(Number(h.purchase_price))}</span>
+                      <span>Rate: {formatCurrency(Number(h.monthly_payment))}/Mo</span>
+                      <span>Erstellt {formatDate(h.created_at)}</span>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
       <FinancingQuickCheckWizard
         open={wizardOpen}
         onOpenChange={setWizardOpen}
         onCreated={(id) => { setWizardOpen(false); navigate({ to: "/financing/$id", params: { id } }); }}
       />
 
-      <HypoRechnerKosovoDialog open={hypoOpen} onOpenChange={setHypoOpen} />
+      <HypoRechnerKosovoDialog
+        open={hypoOpen}
+        onOpenChange={(o) => { setHypoOpen(o); if (!o) setHypoCalcId(null); }}
+        calculationId={hypoCalcId}
+      />
 
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent>
