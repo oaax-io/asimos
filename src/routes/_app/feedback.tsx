@@ -146,7 +146,7 @@ function FeedbackPage() {
         <Tabs value={filterStatus} onValueChange={setFilterStatus}>
           <TabsList>
             <TabsTrigger value="all">Alle</TabsTrigger>
-            {STATUSES.map(s => <TabsTrigger key={s.value} value={s.value}>{s.label}</TabsTrigger>)}
+            {ACTIVE_STATUSES.map(s => <TabsTrigger key={s.value} value={s.value}>{s.label}</TabsTrigger>)}
           </TabsList>
         </Tabs>
         <Select value={filterType} onValueChange={setFilterType}>
