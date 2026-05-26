@@ -20,6 +20,7 @@ import {
   propertyStatusLabels, propertyTypeLabels, leadStatusLabels,
 } from "@/lib/format";
 import { isBackendUnavailableError } from "@/lib/backend-errors";
+import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
