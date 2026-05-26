@@ -767,6 +767,35 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
     qc.invalidateQueries({ queryKey: ["property", propertyId] });
   };
 
+  const addFromLibrary = async (paths: string[]) => {
+    const unique = paths.filter((p) => !images.includes(p));
+    if (unique.length === 0) { toast.info("Bereits hinzugefügt"); return; }
+    setUploading(true);
+    try {
+      const newImages = hasImages ? [...images, ...unique] : [...unique];
+      const { error: upErr } = await supabase.from("properties").update({ images: newImages }).eq("id", propertyId);
+      if (upErr) throw upErr;
+      const baseSort = images.length;
+      const rows = unique.map((p, i) => ({
+        property_id: propertyId,
+        file_url: p,
+        file_name: p.split("/").pop() ?? null,
+        file_type: "image",
+        sort_order: baseSort + i,
+        is_cover: !hasImages && i === 0,
+      }));
+      const { error: medErr } = await supabase.from("property_media").insert(rows);
+      if (medErr) console.warn("media insert failed", medErr);
+      toast.success(`${unique.length} Bild(er) aus Mediathek hinzugefügt`);
+      qc.invalidateQueries({ queryKey: ["property", propertyId] });
+      qc.invalidateQueries({ queryKey: ["property_media", propertyId] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Hinzufügen fehlgeschlagen");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const deleteImage = async (i: number) => {
     const path = images[i];
     if (!path) return;
