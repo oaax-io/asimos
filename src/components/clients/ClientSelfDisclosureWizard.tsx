@@ -499,10 +499,59 @@ export function ClientSelfDisclosureWizard({
       if (data?.has_co_applicant && coFields && Object.keys(coFields).length > 0) {
         setCoApplicantPrompt({ fields: coFields, creating: false });
       }
-    } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : "PDF konnte nicht gelesen werden",
-      );
+
+      // Kinder aus PDF (Kind01.. / Geb01..) für Hauptantragsteller speichern
+      // und zwischenspeichern, um sie ggf. dem Mitantragsteller hinzuzufügen.
+      const parsedChildren = Array.isArray(data?.children)
+        ? (data.children as Array<{ full_name?: string; birth_date?: string }>)
+            .filter((c) => c?.full_name?.trim())
+            .map((c) => ({
+              full_name: c.full_name!.trim(),
+              birth_date: c.birth_date,
+            }))
+        : [];
+      if (parsedChildren.length > 0) {
+        setImportedChildren(parsedChildren);
+        try {
+          // Bestehende Kinder dieses Kunden lesen, um Duplikate (gleicher Name
+          // + Geburtsdatum) zu vermeiden.
+          const { data: existing } = await supabase
+            .from("client_children")
+            .select("full_name, birth_date")
+            .eq("client_id", clientId);
+          const existingKeys = new Set(
+            (existing ?? []).map(
+              (c) => `${(c.full_name ?? "").toLowerCase()}|${c.birth_date ?? ""}`,
+            ),
+          );
+          const toInsert = parsedChildren
+            .filter(
+              (c) =>
+                !existingKeys.has(
+                  `${c.full_name.toLowerCase()}|${c.birth_date ?? ""}`,
+                ),
+            )
+            .map((c, idx) => ({
+              client_id: clientId,
+              full_name: c.full_name,
+              birth_date: c.birth_date ?? null,
+              is_shared_child: true,
+              sort_order: (existing?.length ?? 0) + idx,
+            }));
+          if (toInsert.length > 0) {
+            const { error: childErr } = await supabase
+              .from("client_children")
+              .insert(toInsert);
+            if (childErr) throw childErr;
+            qc.invalidateQueries({ queryKey: ["client_children", clientId] });
+            toast.success(
+              `${toInsert.length} Kind${toInsert.length === 1 ? "" : "er"} aus PDF übernommen.`,
+            );
+          }
+        } catch (childError) {
+          console.warn("could not persist children", childError);
+        }
+      }
     } finally {
       setParsing(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
