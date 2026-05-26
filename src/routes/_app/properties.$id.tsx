@@ -842,10 +842,18 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
           uploading={uploading}
           dragOver={modalDragOver}
           setDragOver={setModalDragOver}
-          onFiles={async (fs) => { const ok = await handleFiles(fs); if (ok) setUploadOpen(false); }}
+          onFiles={async (fs) => {
+            const ok = await handleFiles(fs);
+            if (ok) setUploadOpen(false);
+            return ok;
+          }}
           propertyId={propertyId}
           existingPaths={images}
-          onPickFromLibrary={async (paths) => { const ok = await addFromLibrary(paths); if (ok) setUploadOpen(false); }}
+          onPickFromLibrary={async (paths) => {
+            const ok = await addFromLibrary(paths);
+            if (ok) setUploadOpen(false);
+            return ok;
+          }}
         />
       </>
     );
@@ -923,10 +931,18 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
         uploading={uploading}
         dragOver={modalDragOver}
         setDragOver={setModalDragOver}
-        onFiles={async (fs) => { const ok = await handleFiles(fs); if (ok) setUploadOpen(false); }}
+        onFiles={async (fs) => {
+          const ok = await handleFiles(fs);
+          if (ok) setUploadOpen(false);
+          return ok;
+        }}
         propertyId={propertyId}
         existingPaths={images}
-        onPickFromLibrary={async (paths) => { const ok = await addFromLibrary(paths); if (ok) setUploadOpen(false); }}
+        onPickFromLibrary={async (paths) => {
+          const ok = await addFromLibrary(paths);
+          if (ok) setUploadOpen(false);
+          return ok;
+        }}
       />
 
       <AlertDialog open={deleteIdx !== null} onOpenChange={(o) => { if (!o) setDeleteIdx(null); }}>
