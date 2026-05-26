@@ -379,7 +379,7 @@ function FeedbackDetailDialog({ id, onClose }: { id: string | null; onClose: () 
     mutationFn: async (status: string) => {
       const { error } = await supabase.from("feedback").update({
         status: status as any,
-        resolved_at: ["done", "rejected"].includes(status) ? new Date().toISOString() : null,
+        resolved_at: ["done", "rejected", "updated", "duplicate"].includes(status) ? new Date().toISOString() : null,
       }).eq("id", id!);
       if (error) throw error;
     },
