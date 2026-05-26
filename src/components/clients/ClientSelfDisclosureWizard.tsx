@@ -564,15 +564,39 @@ export function ClientSelfDisclosureWizard({
         { client_id: newClient.id, related_client_id: clientId, relationship_type: relType },
       ]);
 
-      // 3) Eigene Selbstauskunft für Mitantragsteller anlegen
-      const coPayload: Record<string, unknown> = { client_id: newClient.id, status: "draft" };
+      // 3) Eigene Selbstauskunft für Mitantragsteller anlegen.
+      // Haushalts-Einnahmen/-Ausgaben werden in der ASIMO-PDF oft nur einmal
+      // erfasst – als Fallback übernehmen wir sie aus dem Hauptantragsteller.
+      const coRaw: DisclosureRow = {};
+      // Personendaten + ggf. eigene Beruf-/Finanzdaten aus MI-Block
       for (const [k, v] of Object.entries(f)) {
         if (v === null || v === undefined || v === "") continue;
-        coPayload[k] = v;
+        coRaw[k] = v;
       }
-      await supabase
+      // Fallback: Einnahmen/Ausgaben aus Hauptantragsteller-Form übernehmen,
+      // wenn im MI-Block nicht vorhanden.
+      const sharedFields = [
+        ...incomeFields,
+        ...expenseFields,
+        "marital_status",
+        "disclosure_date",
+        "disclosure_place",
+        "advisor_id",
+      ] as const;
+      for (const k of sharedFields) {
+        if (coRaw[k] === undefined || coRaw[k] === null || coRaw[k] === "") {
+          const v = (form as DisclosureRow)[k];
+          if (v !== undefined && v !== null && v !== "") coRaw[k] = v;
+        }
+      }
+      const coBenchmark = calculateBenchmark(
+        coRaw as Record<string, number | string | null>,
+      );
+      const coPayload = buildPersistPayload(coRaw, newClient.id, coBenchmark, employees);
+      const { error: coErr } = await supabase
         .from("client_self_disclosures")
         .upsert(coPayload as never, { onConflict: "client_id" });
+      if (coErr) throw coErr;
 
       toast.success(`Mitantragsteller «${fullName}» angelegt und verknüpft.`);
       qc.invalidateQueries({ queryKey: ["clients"] });
