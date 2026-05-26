@@ -51,6 +51,7 @@ supabase/
 
 ### Kunden (`/clients`)
 - **Kundenverwaltung** mit Personen- und Firmendatensätzen
+- **Kunden-Status-Workflow**: 7 farblich kodierte Stufen (Entwurf, Pendet, Vollständig, Finanzierung, Abgeschlossen, Abgelehnt, Storniert) — filterbar in der Übersicht und direkt im Kunden-Modal änderbar
 - **Kunden-Wizard**: Schritt-für-Schritt-Erfassung mit Wahl zwischen manuellem Eintragen oder **Selbstauskunft-Upload** (KI-gestütztes Auto-Fill via Gemini)
 - **Intelligente Übersicht** beim Öffnen eines Kunden: Beziehungen, Immobilien (Eigentum + zugewiesene), Termine, Aufgaben, offene Finanzierung, Bankkonten
 - **Selbstauskunft-Wizard**: 5-Schritt-Formular mit Live-Benchmark (Einnahmen vs. Ausgaben, Reserve/Quote)
