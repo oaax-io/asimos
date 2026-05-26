@@ -863,21 +863,112 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
 
       <div className="absolute bottom-3 right-3 flex items-center gap-2 opacity-0 transition group-hover:opacity-100">
         <button
-          onClick={() => deleteImage(idx)}
+          type="button"
+          onClick={() => setDeleteIdx(idx)}
           className="flex items-center gap-1.5 rounded-md bg-destructive/90 px-2.5 py-1.5 text-xs font-medium text-destructive-foreground shadow hover:bg-destructive"
           aria-label="Bild löschen"
         >
           <Trash2 className="h-3.5 w-3.5" />
           Löschen
         </button>
-        <label className="flex cursor-pointer items-center gap-1.5 rounded-md bg-background/85 px-2.5 py-1.5 text-xs font-medium shadow hover:bg-background">
+        <button
+          type="button"
+          onClick={() => setUploadOpen(true)}
+          className="flex cursor-pointer items-center gap-1.5 rounded-md bg-background/85 px-2.5 py-1.5 text-xs font-medium shadow hover:bg-background"
+        >
           <Plus className="h-3.5 w-3.5" />
           {uploading ? "Lädt…" : "Hinzufügen"}
-          <input type="file" accept="image/*" multiple className="hidden" disabled={uploading}
-            onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ""; }} />
-        </label>
+        </button>
       </div>
+
+      <UploadModal
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        uploading={uploading}
+        dragOver={modalDragOver}
+        setDragOver={setModalDragOver}
+        onFiles={async (fs) => { await handleFiles(fs); setUploadOpen(false); }}
+      />
+
+      <AlertDialog open={deleteIdx !== null} onOpenChange={(o) => { if (!o) setDeleteIdx(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Bild löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Dieses Bild wird endgültig entfernt. Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => { const i = deleteIdx; setDeleteIdx(null); if (i !== null) await deleteImage(i); }}
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+  );
+}
+
+function UploadModal({
+  open, onOpenChange, uploading, dragOver, setDragOver, onFiles,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  uploading: boolean;
+  dragOver: boolean;
+  setDragOver: (v: boolean) => void;
+  onFiles: (files: File[]) => void | Promise<void>;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Bilder hochladen</DialogTitle>
+          <DialogDescription>JPG, PNG, WebP oder HEIC · max. 25 MB pro Datei</DialogDescription>
+        </DialogHeader>
+        <label
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            if (e.dataTransfer.files?.length) onFiles(Array.from(e.dataTransfer.files));
+          }}
+          className={`group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 text-muted-foreground transition-all ${dragOver ? "border-primary bg-primary/10 scale-[1.01] ring-4 ring-primary/20" : "border-border hover:border-primary/60 hover:bg-primary/5"}`}
+        >
+          <div className={`rounded-full bg-background p-4 shadow-sm transition-transform ${dragOver ? "scale-110" : "group-hover:scale-105"}`}>
+            <UploadCloud className={`h-8 w-8 ${dragOver ? "text-primary animate-pulse" : "text-muted-foreground group-hover:text-primary"}`} />
+          </div>
+          <div className="text-center">
+            <p className="text-base font-semibold text-foreground">
+              {uploading ? "Wird hochgeladen…" : dragOver ? "Jetzt loslassen" : "Bilder hierher ziehen"}
+            </p>
+            <p className="text-xs">oder unten auf „Dateien auswählen“ klicken</p>
+          </div>
+          <input
+            type="file" accept="image/*,.heic,.heif,.tif,.tiff" multiple className="hidden" disabled={uploading}
+            onChange={(e) => { if (e.target.files?.length) onFiles(Array.from(e.target.files)); e.target.value = ""; }}
+          />
+        </label>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={uploading}>Abbrechen</Button>
+          <Button asChild disabled={uploading}>
+            <label className="cursor-pointer">
+              <UploadCloud className="mr-2 h-4 w-4" />
+              {uploading ? "Lädt…" : "Dateien auswählen"}
+              <input
+                type="file" accept="image/*,.heic,.heif,.tif,.tiff" multiple className="hidden" disabled={uploading}
+                onChange={(e) => { if (e.target.files?.length) onFiles(Array.from(e.target.files)); e.target.value = ""; }}
+              />
+            </label>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
