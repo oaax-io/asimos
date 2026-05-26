@@ -55,7 +55,7 @@ function SettingsPage() {
   return (
     <>
       <PageHeader title="Einstellungen" description="Profil, Firma, Bankkonten, Vorlagen" />
-      <Tabs value={currentTab} onValueChange={(v) => navigate({ search: (prev) => ({ ...prev, tab: v }) })} className="space-y-4">
+      <Tabs value={currentTab} onValueChange={(v) => navigate({ search: (prev: any) => ({ ...prev, tab: v }) })} className="space-y-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="profile">Mein Profil</TabsTrigger>
           <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
