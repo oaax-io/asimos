@@ -52,13 +52,6 @@ export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
       if (error) throw error;
       return data ?? [];
     },
-      const { data, error } = await supabase
-        .from("clients")
-        .select("id, full_name")
-        .order("full_name");
-      if (error) throw error;
-      return data ?? [];
-    },
     enabled: open,
   });
 
