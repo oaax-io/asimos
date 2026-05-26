@@ -387,7 +387,7 @@ function PropertyDetail() {
           {p.images?.[0] ? (
             <img src={getMediaPublicUrl(p.images[0])} alt={p.title} className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">Kein Bild</div>
+            <PropertyImageDropzone propertyId={id} existing={p.images ?? []} />
           )}
         </div>
         <div className="space-y-3">
