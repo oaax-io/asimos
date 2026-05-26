@@ -795,15 +795,6 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
       <div className="absolute right-3 top-3 rounded-md bg-background/85 px-2 py-1 text-xs font-medium shadow">
         {idx + 1} / {images.length}
       </div>
-      <button
-        onClick={() => deleteImage(idx)}
-        className="absolute right-3 top-12 flex items-center gap-1.5 rounded-md bg-destructive/90 px-2.5 py-1.5 text-xs font-medium text-destructive-foreground shadow opacity-0 transition group-hover:opacity-100 hover:bg-destructive"
-        aria-label="Bild löschen"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-        Löschen
-      </button>
-
       {images.length > 1 && (
         <>
           <button
@@ -835,12 +826,22 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
         <p className="rounded-md bg-background/90 px-3 py-1 text-sm font-semibold">{uploading ? "Wird hochgeladen…" : "Bilder hier ablegen"}</p>
       </label>
 
-      <label className="absolute bottom-3 right-3 flex cursor-pointer items-center gap-1.5 rounded-md bg-background/85 px-2.5 py-1.5 text-xs font-medium shadow opacity-0 transition group-hover:opacity-100 hover:bg-background">
-        <Plus className="h-3.5 w-3.5" />
-        {uploading ? "Lädt…" : "Hinzufügen"}
-        <input type="file" accept="image/*" multiple className="hidden" disabled={uploading}
-          onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ""; }} />
-      </label>
+      <div className="absolute bottom-3 right-3 flex items-center gap-2 opacity-0 transition group-hover:opacity-100">
+        <button
+          onClick={() => deleteImage(idx)}
+          className="flex items-center gap-1.5 rounded-md bg-destructive/90 px-2.5 py-1.5 text-xs font-medium text-destructive-foreground shadow hover:bg-destructive"
+          aria-label="Bild löschen"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Löschen
+        </button>
+        <label className="flex cursor-pointer items-center gap-1.5 rounded-md bg-background/85 px-2.5 py-1.5 text-xs font-medium shadow hover:bg-background">
+          <Plus className="h-3.5 w-3.5" />
+          {uploading ? "Lädt…" : "Hinzufügen"}
+          <input type="file" accept="image/*" multiple className="hidden" disabled={uploading}
+            onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ""; }} />
+        </label>
+      </div>
     </div>
   );
 }
