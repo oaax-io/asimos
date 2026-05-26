@@ -14,6 +14,7 @@ import { CompanyProfileForm } from "@/components/settings/CompanyProfileForm";
 import { BankAccountsManager } from "@/components/settings/BankAccountsManager";
 import { BrandkitForm } from "@/components/settings/BrandkitForm";
 import { DocumentTemplatesManager } from "@/components/settings/DocumentTemplatesManager";
+import { NotificationPreferencesForm } from "@/components/settings/NotificationPreferencesForm";
 import { Tags, FileSignature } from "lucide-react";
 
 export const Route = createFileRoute("/_app/settings")({ component: SettingsPage });
@@ -53,6 +54,7 @@ function SettingsPage() {
       <Tabs defaultValue="profile" className="space-y-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="profile">Mein Profil</TabsTrigger>
+          <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
           <TabsTrigger value="company">Firmenprofile</TabsTrigger>
           <TabsTrigger value="brandkit">Brandkit</TabsTrigger>
           <TabsTrigger value="banks">Bankkonten</TabsTrigger>
@@ -60,6 +62,10 @@ function SettingsPage() {
           <TabsTrigger value="categories">Dokumentkategorien</TabsTrigger>
           <TabsTrigger value="esign">PDF / E-Sign</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="notifications">
+          <NotificationPreferencesForm />
+        </TabsContent>
 
         <TabsContent value="profile">
           <Card className="max-w-2xl">

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import logoAsimo from "@/assets/logo-asimo-real-estate.png";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { NotificationCenter } from "@/components/NotificationCenter";
 // touch
 
 const NAV_GROUPS = [
@@ -184,6 +185,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                 <MessageSquarePlus className="h-4 w-4" />
                 <span className="hidden sm:inline">Feedback</span>
               </Button>
+              <NotificationCenter />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 px-2">

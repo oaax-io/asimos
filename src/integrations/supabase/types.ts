@@ -2101,6 +2101,90 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          appointment_reminder_minutes: number
+          appointments_enabled: boolean
+          created_at: string
+          email_enabled: boolean
+          in_app_enabled: boolean
+          leads_enabled: boolean
+          task_due_reminder: boolean
+          task_overdue_reminder: boolean
+          tasks_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_reminder_minutes?: number
+          appointments_enabled?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          in_app_enabled?: boolean
+          leads_enabled?: boolean
+          task_due_reminder?: boolean
+          task_overdue_reminder?: boolean
+          tasks_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_reminder_minutes?: number
+          appointments_enabled?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          in_app_enabled?: boolean
+          leads_enabled?: boolean
+          task_due_reminder?: boolean
+          task_overdue_reminder?: boolean
+          tasks_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          link: string | null
+          message: string | null
+          read_at: string | null
+          related_id: string | null
+          related_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message?: string | null
+          read_at?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message?: string | null
+          read_at?: string | null
+          related_id?: string | null
+          related_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           agency_id: string | null
