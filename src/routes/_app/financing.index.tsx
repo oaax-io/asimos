@@ -266,6 +266,8 @@ function FinancingPage() {
         onCreated={(id) => { setWizardOpen(false); navigate({ to: "/financing/$id", params: { id } }); }}
       />
 
+      <HypoRechnerKosovoDialog open={hypoOpen} onOpenChange={setHypoOpen} />
+
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
