@@ -770,7 +770,7 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
   const deleteImage = async (i: number) => {
     const path = images[i];
     if (!path) return;
-    if (!confirm("Dieses Bild wirklich löschen?")) return;
+    
     const next = images.filter((_, k) => k !== i);
     try {
       const { error: upErr } = await supabase.from("properties").update({ images: next }).eq("id", propertyId);
