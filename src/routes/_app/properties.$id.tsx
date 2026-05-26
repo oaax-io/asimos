@@ -788,20 +788,30 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
 
   if (!hasImages) {
     return (
-      <label
-        {...dropHandlers}
-        className={`group relative flex h-full w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed bg-gradient-soft text-muted-foreground transition-all ${dragOver ? "border-primary bg-primary/10 scale-[1.01] ring-4 ring-primary/20" : "border-border hover:border-primary/60 hover:bg-primary/5"}`}
-      >
-        <div className={`rounded-full bg-background/60 p-4 shadow-sm transition-transform ${dragOver ? "scale-110" : "group-hover:scale-105"}`}>
-          <UploadCloud className={`h-8 w-8 ${dragOver ? "text-primary animate-pulse" : "text-muted-foreground group-hover:text-primary"}`} />
-        </div>
-        <div className="text-center">
-          <p className="text-base font-semibold text-foreground">{uploading ? "Wird hochgeladen…" : dragOver ? "Jetzt loslassen" : "Bilder hierher ziehen"}</p>
-          <p className="text-xs">oder <span className="font-medium text-primary underline-offset-2 group-hover:underline">klicken zum Auswählen</span> · JPG, PNG, WebP · mehrere möglich</p>
-        </div>
-        <input type="file" accept="image/*" multiple className="hidden" disabled={uploading}
-          onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ""; }} />
-      </label>
+      <>
+        <button
+          type="button"
+          {...dropHandlers}
+          onClick={() => setUploadOpen(true)}
+          className={`group relative flex h-full w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed bg-gradient-soft text-muted-foreground transition-all ${dragOver ? "border-primary bg-primary/10 scale-[1.01] ring-4 ring-primary/20" : "border-border hover:border-primary/60 hover:bg-primary/5"}`}
+        >
+          <div className={`rounded-full bg-background/60 p-4 shadow-sm transition-transform ${dragOver ? "scale-110" : "group-hover:scale-105"}`}>
+            <UploadCloud className={`h-8 w-8 ${dragOver ? "text-primary animate-pulse" : "text-muted-foreground group-hover:text-primary"}`} />
+          </div>
+          <div className="text-center">
+            <p className="text-base font-semibold text-foreground">{uploading ? "Wird hochgeladen…" : dragOver ? "Jetzt loslassen" : "Bilder hierher ziehen"}</p>
+            <p className="text-xs">oder <span className="font-medium text-primary underline-offset-2 group-hover:underline">klicken zum Hochladen</span> · JPG, PNG, WebP, HEIC · max. 25 MB</p>
+          </div>
+        </button>
+        <UploadModal
+          open={uploadOpen}
+          onOpenChange={setUploadOpen}
+          uploading={uploading}
+          dragOver={modalDragOver}
+          setDragOver={setModalDragOver}
+          onFiles={async (fs) => { await handleFiles(fs); setUploadOpen(false); }}
+        />
+      </>
     );
   }
 
