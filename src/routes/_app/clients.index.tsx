@@ -301,14 +301,6 @@ function ClientsPage() {
             {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={financingFilter} onValueChange={setFinancingFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Finanzierung" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Alle Finanzierungen</SelectItem>
-            <SelectItem value={NO_FIN}>Keine Angabe</SelectItem>
-            {FINANCING_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[170px]">
             <SelectValue placeholder="Status">
