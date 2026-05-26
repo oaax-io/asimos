@@ -520,8 +520,20 @@ function ClientsPage() {
                       {c.is_archived && <Badge variant="outline" className="ml-2">Archiviert</Badge>}
                     </TableCell>
                     <TableCell>
+                      {(() => {
+                        const s = statusMap.get(c.status ?? "entwurf") ?? statusMap.get("entwurf")!;
+                        return (
+                          <Badge variant="outline" className={s.badge}>
+                            <span className={`mr-1.5 h-2 w-2 rounded-full ${s.dot}`} />
+                            {s.label}
+                          </Badge>
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell>
                       <Badge variant="outline" className={typeBadge(c.client_type)}>{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                     </TableCell>
+
                     <TableCell className="text-sm">
                       {phone ? <a href={`tel:${phone}`} className="hover:text-primary">{phone}</a> : <span className="text-muted-foreground">—</span>}
                     </TableCell>
