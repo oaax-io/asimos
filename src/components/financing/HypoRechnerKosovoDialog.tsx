@@ -42,6 +42,29 @@ export function HypoRechnerKosovoDialog({ open, onOpenChange, calculationId }: P
     new Date().toISOString().slice(0, 10),
   );
 
+  // Bestehende Berechnung laden
+  useEffect(() => {
+    if (!open || !calculationId) return;
+    const load = async () => {
+      const { data, error } = await supabase
+        .from("hypo_calculations")
+        .select("*")
+        .eq("id", calculationId)
+        .single();
+      if (error || !data) return;
+      setClientId(data.client_id ?? "");
+      setPurchasePrice(Number(data.purchase_price));
+      setEquityPct(Number(data.equity_pct));
+      setInterestPct(Number(data.interest_pct));
+      setTermYears(Number(data.term_years));
+      setAdminPct(Number(data.admin_pct));
+      setLabel(data.label ?? "");
+      setCalcNotes(data.notes ?? "");
+      if (data.start_date) setStartDate(data.start_date);
+    };
+    load();
+  }, [open, calculationId]);
+
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-min"],
     queryFn: async () => {
