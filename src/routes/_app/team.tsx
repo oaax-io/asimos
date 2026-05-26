@@ -62,10 +62,13 @@ function TeamPage() {
         .select("id, full_name, email, phone, role, created_at")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      const { data: roles } = await supabase.from("user_roles").select("user_id, role");
+      const superadminIds = new Set((roles ?? []).filter((r) => r.role === "superadmin").map((r) => r.user_id));
+      return (data ?? []).map((m) => ({ ...m, isSystemowner: superadminIds.has(m.id) }));
     },
     enabled: !!meQuery.data,
   });
+
 
   const create = useMutation({
     mutationFn: async () => {
@@ -192,8 +195,8 @@ function TeamPage() {
                   <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials(m.full_name, m.email)}</AvatarFallback></Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{m.full_name || m.email}</p>
-                    <Badge variant="secondary" className="mt-1">
-                      <Shield className="mr-1 h-3 w-3" />{ROLE_LABELS[m.role as (typeof ROLES)[number]] ?? m.role}
+                    <Badge variant="secondary" className={`mt-1 ${m.isSystemowner ? "bg-purple-500/15 text-purple-700 border-purple-500/20" : ""}`}>
+                      <Shield className="mr-1 h-3 w-3" />{m.isSystemowner ? "Systemowner" : (ROLE_LABELS[m.role as (typeof ROLES)[number]] ?? m.role)}
                     </Badge>
                   </div>
                 </div>
