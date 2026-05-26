@@ -742,6 +742,25 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
     qc.invalidateQueries({ queryKey: ["property", propertyId] });
   };
 
+  const deleteImage = async (i: number) => {
+    const path = images[i];
+    if (!path) return;
+    if (!confirm("Dieses Bild wirklich löschen?")) return;
+    const next = images.filter((_, k) => k !== i);
+    try {
+      const { error: upErr } = await supabase.from("properties").update({ images: next }).eq("id", propertyId);
+      if (upErr) throw upErr;
+      await supabase.storage.from("media").remove([path]);
+      await supabase.from("property_media").delete().eq("property_id", propertyId).eq("file_url", path);
+      setIdx((cur) => Math.max(0, Math.min(cur, next.length - 1)));
+      toast.success("Bild gelöscht");
+      qc.invalidateQueries({ queryKey: ["property", propertyId] });
+      qc.invalidateQueries({ queryKey: ["property_media", propertyId] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Löschen fehlgeschlagen");
+    }
+  };
+
   if (!hasImages) {
     return (
       <label
