@@ -234,6 +234,9 @@ export function ClientSelfDisclosureWizard({
   const [coApplicantPrompt, setCoApplicantPrompt] = useState<
     null | { fields: Record<string, unknown>; creating: boolean }
   >(null);
+  const [importedChildren, setImportedChildren] = useState<
+    Array<{ full_name: string; birth_date?: string }>
+  >([]);
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastSyncedSnapshotRef = useRef("{}");
