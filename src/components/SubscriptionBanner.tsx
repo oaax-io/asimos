@@ -1,9 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { getStripeEnvironment } from "@/lib/stripe";
-import { AlertTriangle, Clock, CreditCard, Info } from "lucide-react";
+import { AlertTriangle, Clock, CreditCard, Info, X } from "lucide-react";
+
+const DISMISS_MS = 3 * 24 * 60 * 60 * 1000; // 3 Tage
+const DISMISS_KEY_PREFIX = "asimos:subscription-banner-dismissed:";
+
+function dismissKey(variant: string, agencyId?: string) {
+  return `${DISMISS_KEY_PREFIX}${agencyId ?? "anon"}:${variant}`;
+}
 
 /**
  * Abo-Banner für Dashboard.
@@ -11,6 +19,7 @@ import { AlertTriangle, Clock, CreditCard, Info } from "lucide-react";
  * - Superadmin (Systemowner): nur Info-Hinweis, keine Aktion.
  * - Andere Rollen: nichts.
  *
+ * Banner kann geschlossen werden und erscheint nach 3 Tagen wieder.
  * Es wird KEIN Zugriff blockiert – Banner ist rein informativ.
  */
 export function SubscriptionBanner() {
@@ -64,7 +73,7 @@ export function SubscriptionBanner() {
   // --- Fall 1: Kein Abo ---
   if (!sub) {
     return (
-      <BannerShell tone="warn" icon={CreditCard}>
+      <DismissibleBanner variant="no-sub" agencyId={agencyId} tone="warn" icon={CreditCard}>
         <div className="flex-1">
           <p className="font-medium">
             {isOwner ? "Bitte aktiviere dein ASIMOS-Abonnement." : "Diese Agentur hat noch kein aktives Abonnement."}
@@ -82,14 +91,14 @@ export function SubscriptionBanner() {
             Jetzt abonnieren
           </Link>
         )}
-      </BannerShell>
+      </DismissibleBanner>
     );
   }
 
   // --- Fall 2: Zahlung fehlgeschlagen / überfällig ---
   if (sub.status === "past_due" || sub.status === "unpaid" || sub.status === "incomplete") {
     return (
-      <BannerShell tone="danger" icon={AlertTriangle}>
+      <DismissibleBanner variant="past-due" agencyId={agencyId} tone="danger" icon={AlertTriangle}>
         <div className="flex-1">
           <p className="font-medium">
             {isOwner
@@ -109,14 +118,14 @@ export function SubscriptionBanner() {
             Zahlungsmethode aktualisieren
           </Link>
         )}
-      </BannerShell>
+      </DismissibleBanner>
     );
   }
 
   // --- Fall 3: Gekündigt (läuft noch bis Periodenende) ---
   if (sub.status === "canceled" && periodEnd && periodEnd > now) {
     return (
-      <BannerShell tone="warn" icon={Info}>
+      <DismissibleBanner variant="canceled" agencyId={agencyId} tone="warn" icon={Info}>
         <div className="flex-1">
           <p className="font-medium">
             Abonnement gekündigt – Zugriff bis {periodEnd.toLocaleDateString("de-CH")}.
@@ -133,21 +142,21 @@ export function SubscriptionBanner() {
             Reaktivieren
           </Link>
         )}
-      </BannerShell>
+      </DismissibleBanner>
     );
   }
 
   // --- Fall 4: Aktiv, kurz vor nächster Abbuchung ---
   if ((sub.status === "active" || sub.status === "trialing") && daysToEnd !== null && daysToEnd <= 7 && !sub.cancel_at_period_end) {
     return (
-      <BannerShell tone="info" icon={Clock}>
+      <DismissibleBanner variant={`upcoming-${periodEnd!.toISOString().slice(0, 10)}`} agencyId={agencyId} tone="info" icon={Clock}>
         <div className="flex-1">
           <p className="font-medium">
             Nächste Abbuchung (CHF 89.90) {daysToEnd <= 1 ? "morgen" : `in ${daysToEnd} Tagen`} – am {periodEnd!.toLocaleDateString("de-CH")}.
           </p>
           <p className="text-xs opacity-90">Stelle sicher, dass deine Zahlungsmethode aktuell ist.</p>
         </div>
-      </BannerShell>
+      </DismissibleBanner>
     );
   }
 
@@ -155,14 +164,69 @@ export function SubscriptionBanner() {
   return null;
 }
 
+function DismissibleBanner({
+  variant,
+  agencyId,
+  tone,
+  icon,
+  children,
+}: {
+  variant: string;
+  agencyId?: string;
+  tone: "danger" | "warn" | "info";
+  icon: any;
+  children: React.ReactNode;
+}) {
+  const key = dismissKey(variant, agencyId);
+  const [dismissed, setDismissed] = useState(true);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) {
+        setDismissed(false);
+        return;
+      }
+      const ts = parseInt(raw, 10);
+      if (!Number.isFinite(ts) || Date.now() - ts > DISMISS_MS) {
+        localStorage.removeItem(key);
+        setDismissed(false);
+      } else {
+        setDismissed(true);
+      }
+    } catch {
+      setDismissed(false);
+    }
+  }, [key]);
+
+  if (dismissed) return null;
+
+  const handleDismiss = () => {
+    try {
+      localStorage.setItem(key, Date.now().toString());
+    } catch {
+      // ignore
+    }
+    setDismissed(true);
+  };
+
+  return (
+    <BannerShell tone={tone} icon={icon} onDismiss={handleDismiss}>
+      {children}
+    </BannerShell>
+  );
+}
+
 function BannerShell({
   tone,
   icon: Icon,
   children,
+  onDismiss,
 }: {
   tone: "danger" | "warn" | "info";
   icon: any;
   children: React.ReactNode;
+  onDismiss?: () => void;
 }) {
   const cls =
     tone === "danger"
@@ -174,6 +238,17 @@ function BannerShell({
     <div className={`mb-4 flex items-start gap-3 rounded-lg border px-4 py-3 ${cls}`}>
       <Icon className="mt-0.5 h-5 w-5 shrink-0" />
       <div className="flex flex-1 flex-wrap items-center gap-3">{children}</div>
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Banner schliessen"
+          title="Schliessen (erscheint in 3 Tagen wieder)"
+          className="ml-2 rounded p-1 opacity-60 transition hover:bg-black/5 hover:opacity-100"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }
