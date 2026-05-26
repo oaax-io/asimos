@@ -112,6 +112,72 @@ export function HypoRechnerKosovoDialog({ open, onOpenChange }: Props) {
     return { equity, principal, monthly, totalPaid, totalInterest, adminYearly, schedule };
   }, [purchasePrice, equityPct, interestPct, termYears, adminPct, startDate]);
 
+  // Tragbarkeits-Bewertung basierend auf Selbstauskunft des Kunden
+  const affordability = useMemo(() => {
+    if (!clientId) return null;
+    if (!disclosure) {
+      return {
+        status: "no_data" as const,
+        message: "Keine Selbstauskunft vorhanden. Bitte zuerst Selbstauskunft beim Kunden erfassen.",
+      };
+    }
+    const income = Number(disclosure.total_income_monthly) || 0;
+    const expenses = Number(disclosure.total_expenses_monthly) || 0;
+    const reserve = Number(disclosure.reserve_total) || (income - expenses);
+    const monthly = calc.monthly + calc.adminYearly / 12;
+    const remaining = reserve - monthly;
+    const ratio = reserve > 0 ? (monthly / reserve) * 100 : 999;
+
+    // Max. tragbare Hypothek bei aktueller Rate für 80% der Reserve
+    const maxPayment = reserve * 0.8;
+    const r = interestPct / 100 / 12;
+    const n = termYears * 12;
+    const maxPrincipal = r > 0 ? (maxPayment * (1 - Math.pow(1 + r, -n))) / r : maxPayment * n;
+    const maxPrice = maxPrincipal / (1 - equityPct / 100);
+
+    let status: "ok" | "tight" | "not_ok" = "ok";
+    if (remaining < 0) status = "not_ok";
+    else if (ratio > 70) status = "tight";
+
+    return {
+      status,
+      reserve,
+      monthly,
+      remaining,
+      ratio,
+      maxPrice,
+      maxPrincipal,
+    };
+  }, [clientId, disclosure, calc.monthly, calc.adminYearly, interestPct, termYears, equityPct]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const { error } = await supabase.from("hypo_calculations").insert({
+        client_id: clientId || null,
+        created_by: userData.user?.id,
+        label: label || `Hyporechner ${termYears}J ${purchasePrice}€`,
+        purchase_price: purchasePrice,
+        equity_pct: equityPct,
+        interest_pct: interestPct,
+        term_years: termYears,
+        admin_pct: adminPct,
+        start_date: startDate,
+        monthly_payment: calc.monthly,
+        total_interest: calc.totalInterest,
+        total_paid: calc.totalPaid,
+        principal: calc.principal,
+        notes: calcNotes || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Berechnung gespeichert");
+      qc.invalidateQueries({ queryKey: ["hypo_calculations"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Speichern fehlgeschlagen"),
+  });
+
   const exportCsv = () => {
     const client = clients.find((c: any) => c.id === clientId);
     const head = `Hyporechner Kosovo${client ? " - " + client.full_name : ""}\nKaufpreis;${purchasePrice}\nEigenkapital %;${equityPct}\nFinanzierter Betrag;${calc.principal.toFixed(2)}\nZinssatz %;${interestPct}\nLaufzeit Jahre;${termYears}\nMonatliche Rate;${calc.monthly.toFixed(2)}\n\n#;Datum;Restschuld;Zins;Kapital;Zahlung\n`;
