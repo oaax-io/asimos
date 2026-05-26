@@ -191,6 +191,7 @@ function Dashboard() {
 
   return (
     <>
+      <SubscriptionBanner />
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-bold tracking-tight">
