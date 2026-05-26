@@ -374,22 +374,16 @@ Deno.serve(async (req: Request) => {
     const formFields = await extractFormFields(bytes);
     const formFieldsCount = Object.keys(formFields).length;
     console.log("form fields extracted:", formFieldsCount);
+    console.log("form field names:", Object.keys(formFields).sort().join(", "));
 
     const directFields = mapAsimoFormFields(formFields, "AN");
     const coApplicantFields = mapAsimoFormFields(formFields, "MI");
     const hasCoApplicant = hasMeaningfulPerson(coApplicantFields);
-    if (Object.keys(directFields).length > 0) {
-      return new Response(
-        JSON.stringify({
-          fields: directFields,
-          co_applicant_fields: hasCoApplicant ? coApplicantFields : null,
-          has_co_applicant: hasCoApplicant,
-          form_fields_count: formFieldsCount,
-          source: "acroform",
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+    // Hinweis: Wir returnen NICHT mehr früh, auch wenn AcroForm Daten lieferte.
+    // Die AI ergänzt Felder, die in den Formularfeldern fehlen oder nicht
+    // sauber benannt sind (z. B. Anrede-Checkboxen, Wohnhaft seit als Freitext).
+    // AcroForm-Werte haben am Ende Vorrang.
+
 
     const systemPrompt = `Du bist ein präziser Datenextraktor für die ASIMO-Selbstauskunft (Schweiz).
 Du erhältst (a) die rohen AcroForm-Feldwerte des PDFs als JSON und (b) zusätzlich die PDF-Datei.
