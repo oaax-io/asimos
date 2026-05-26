@@ -1761,6 +1761,74 @@ export type Database = {
           },
         ]
       }
+      hypo_calculations: {
+        Row: {
+          admin_pct: number
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          equity_pct: number
+          id: string
+          interest_pct: number
+          label: string | null
+          monthly_payment: number | null
+          notes: string | null
+          principal: number | null
+          purchase_price: number
+          start_date: string | null
+          term_years: number
+          total_interest: number | null
+          total_paid: number | null
+          updated_at: string
+        }
+        Insert: {
+          admin_pct?: number
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          equity_pct: number
+          id?: string
+          interest_pct: number
+          label?: string | null
+          monthly_payment?: number | null
+          notes?: string | null
+          principal?: number | null
+          purchase_price: number
+          start_date?: string | null
+          term_years: number
+          total_interest?: number | null
+          total_paid?: number | null
+          updated_at?: string
+        }
+        Update: {
+          admin_pct?: number
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          equity_pct?: number
+          id?: string
+          interest_pct?: number
+          label?: string | null
+          monthly_payment?: number | null
+          notes?: string | null
+          principal?: number | null
+          purchase_price?: number
+          start_date?: string | null
+          term_years?: number
+          total_interest?: number | null
+          total_paid?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hypo_calculations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           address: string | null
