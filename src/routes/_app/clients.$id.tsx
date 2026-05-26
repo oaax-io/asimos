@@ -269,7 +269,6 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       disabled={statusUpdate.isPending}
     >
       <SelectTrigger className="h-8 w-[160px] gap-2 rounded-full border border-input bg-background px-3 text-xs font-medium text-foreground shadow-none hover:bg-accent">
-        <span className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${currentStatus.dot}`} />
         <SelectValue placeholder="Status" />
       </SelectTrigger>
       <SelectContent>
