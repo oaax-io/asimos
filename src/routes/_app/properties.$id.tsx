@@ -687,19 +687,38 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
   const current = hasImages ? images[Math.min(idx, images.length - 1)] : null;
 
   const handleFiles = async (files: FileList | File[]) => {
-    const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
-    if (list.length === 0) { toast.error("Bitte nur Bilddateien"); return; }
+    const MAX_BYTES = 25 * 1024 * 1024; // 25 MB pro Datei
+    const arr = Array.from(files);
+    const isImageLike = (f: File) => {
+      const n = f.name.toLowerCase();
+      return f.type.startsWith("image/") || /\.(jpe?g|png|webp|gif|avif|heic|heif|tiff?|bmp)$/.test(n);
+    };
+    const candidates = arr.filter(isImageLike);
+    if (candidates.length === 0) { toast.error("Bitte nur Bilddateien"); return; }
+    const tooBig = candidates.filter((f) => f.size > MAX_BYTES);
+    if (tooBig.length > 0) {
+      toast.error(`${tooBig.length} Datei(en) über 25 MB werden übersprungen`);
+    }
+    const sized = candidates.filter((f) => f.size <= MAX_BYTES);
+    if (sized.length === 0) { return; }
+
     setUploading(true);
     try {
+      const { convertUnsupportedImages } = await import("@/lib/image-convert");
+      const list = await convertUnsupportedImages(sized);
       const paths: string[] = [];
       const mediaRows: any[] = [];
       const baseSort = images.length;
       for (let i = 0; i < list.length; i++) {
         const f = list[i];
-        const ext = f.name.split(".").pop() || "jpg";
+        const ext = (f.name.split(".").pop() || "jpg").toLowerCase();
         const path = `properties/${propertyId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error } = await supabase.storage.from("media").upload(path, f, { upsert: false, contentType: f.type });
-        if (error) throw error;
+        const { error } = await supabase.storage.from("media").upload(path, f, { upsert: false, contentType: f.type || "image/jpeg" });
+        if (error) {
+          console.error("upload failed", f.name, error);
+          toast.error(`${f.name}: ${error.message}`);
+          continue;
+        }
         paths.push(path);
         mediaRows.push({
           property_id: propertyId,
@@ -711,6 +730,7 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
           is_cover: !hasImages && i === 0,
         });
       }
+      if (paths.length === 0) { return; }
       const newImages = hasImages ? [...images, ...paths] : [...paths, ...images];
       const { error: upErr } = await supabase.from("properties").update({ images: newImages }).eq("id", propertyId);
       if (upErr) throw upErr;
@@ -720,6 +740,7 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
       qc.invalidateQueries({ queryKey: ["property", propertyId] });
       qc.invalidateQueries({ queryKey: ["property_media", propertyId] });
     } catch (e: any) {
+      console.error("upload error", e);
       toast.error(e.message ?? "Upload fehlgeschlagen");
     } finally {
       setUploading(false);
@@ -795,15 +816,6 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
       <div className="absolute right-3 top-3 rounded-md bg-background/85 px-2 py-1 text-xs font-medium shadow">
         {idx + 1} / {images.length}
       </div>
-      <button
-        onClick={() => deleteImage(idx)}
-        className="absolute right-3 top-12 flex items-center gap-1.5 rounded-md bg-destructive/90 px-2.5 py-1.5 text-xs font-medium text-destructive-foreground shadow opacity-0 transition group-hover:opacity-100 hover:bg-destructive"
-        aria-label="Bild löschen"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-        Löschen
-      </button>
-
       {images.length > 1 && (
         <>
           <button
@@ -835,12 +847,22 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
         <p className="rounded-md bg-background/90 px-3 py-1 text-sm font-semibold">{uploading ? "Wird hochgeladen…" : "Bilder hier ablegen"}</p>
       </label>
 
-      <label className="absolute bottom-3 right-3 flex cursor-pointer items-center gap-1.5 rounded-md bg-background/85 px-2.5 py-1.5 text-xs font-medium shadow opacity-0 transition group-hover:opacity-100 hover:bg-background">
-        <Plus className="h-3.5 w-3.5" />
-        {uploading ? "Lädt…" : "Hinzufügen"}
-        <input type="file" accept="image/*" multiple className="hidden" disabled={uploading}
-          onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ""; }} />
-      </label>
+      <div className="absolute bottom-3 right-3 flex items-center gap-2 opacity-0 transition group-hover:opacity-100">
+        <button
+          onClick={() => deleteImage(idx)}
+          className="flex items-center gap-1.5 rounded-md bg-destructive/90 px-2.5 py-1.5 text-xs font-medium text-destructive-foreground shadow hover:bg-destructive"
+          aria-label="Bild löschen"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Löschen
+        </button>
+        <label className="flex cursor-pointer items-center gap-1.5 rounded-md bg-background/85 px-2.5 py-1.5 text-xs font-medium shadow hover:bg-background">
+          <Plus className="h-3.5 w-3.5" />
+          {uploading ? "Lädt…" : "Hinzufügen"}
+          <input type="file" accept="image/*" multiple className="hidden" disabled={uploading}
+            onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); e.target.value = ""; }} />
+        </label>
+      </div>
     </div>
   );
 }
