@@ -969,6 +969,7 @@ function UploadModal({
   const [tab, setTab] = useState<"upload" | "library">("upload");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: library = [], isLoading } = useQuery({
     queryKey: ["media-library", "images"],
@@ -1015,7 +1016,8 @@ function UploadModal({
           </TabsList>
 
           <TabsContent value="upload" className="mt-4">
-            <label
+            <button
+              type="button"
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={(e) => { e.preventDefault(); setDragOver(false); }}
               onDrop={(e) => {
@@ -1023,6 +1025,7 @@ function UploadModal({
                 setDragOver(false);
                 if (e.dataTransfer.files?.length) onFiles(Array.from(e.dataTransfer.files));
               }}
+              onClick={() => fileInputRef.current?.click()}
               className={`group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 text-muted-foreground transition-all ${dragOver ? "border-primary bg-primary/10 scale-[1.01] ring-4 ring-primary/20" : "border-border hover:border-primary/60 hover:bg-primary/5"}`}
             >
               <div className={`rounded-full bg-background p-4 shadow-sm transition-transform ${dragOver ? "scale-110" : "group-hover:scale-105"}`}>
@@ -1035,21 +1038,16 @@ function UploadModal({
                 <p className="text-xs">JPG, PNG, WebP, HEIC · max. 25 MB</p>
               </div>
               <input
+                ref={fileInputRef}
                 type="file" accept="image/*,.heic,.heif,.tif,.tiff" multiple className="hidden" disabled={uploading}
                 onChange={(e) => { if (e.target.files?.length) onFiles(Array.from(e.target.files)); e.target.value = ""; }}
               />
-            </label>
+            </button>
             <DialogFooter className="mt-4">
               <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={uploading}>Abbrechen</Button>
-              <Button asChild disabled={uploading}>
-                <label className="cursor-pointer">
-                  <UploadCloud className="mr-2 h-4 w-4" />
-                  {uploading ? "Lädt…" : "Dateien auswählen"}
-                  <input
-                    type="file" accept="image/*,.heic,.heif,.tif,.tiff" multiple className="hidden" disabled={uploading}
-                    onChange={(e) => { if (e.target.files?.length) onFiles(Array.from(e.target.files)); e.target.value = ""; }}
-                  />
-                </label>
+              <Button type="button" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+                <UploadCloud className="mr-2 h-4 w-4" />
+                {uploading ? "Lädt…" : "Dateien auswählen"}
               </Button>
             </DialogFooter>
           </TabsContent>
