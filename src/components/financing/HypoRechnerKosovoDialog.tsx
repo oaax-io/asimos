@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calculator, Download } from "lucide-react";
+import { Calculator, Download, FileText } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type Props = { open: boolean; onOpenChange: (o: boolean) => void };
 
