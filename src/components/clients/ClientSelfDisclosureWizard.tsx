@@ -588,7 +588,18 @@ export function ClientSelfDisclosureWizard({
       const last = (f.last_name as string | undefined)?.trim() ?? "";
       const fullName = [first, last].filter(Boolean).join(" ") || "Mitantragsteller";
 
-      // 1) Mitantragsteller als Kunden anlegen
+      // 1) Mitantragsteller als Kunden anlegen.
+      // Owner/Assigned vom Hauptantragsteller übernehmen, damit beide
+      // Kunden für denselben Berater sichtbar sind (sonst greift RLS und
+      // die Beziehung erscheint als „Unbekannt" in der Übersicht).
+      const { data: mainClient } = await supabase
+        .from("clients")
+        .select("owner_id, assigned_to, agency_id")
+        .eq("id", clientId)
+        .maybeSingle();
+      const ownerId = mainClient?.owner_id ?? user.id;
+      const assignedTo = mainClient?.assigned_to ?? user.id;
+
       const { data: newClient, error: ce } = await supabase
         .from("clients")
         .insert({
@@ -603,12 +614,14 @@ export function ClientSelfDisclosureWizard({
           country: (f.country as string) ?? "CH",
           client_type: "buyer" as const,
           entity_type: "person",
-          owner_id: user.id,
-          assigned_to: user.id,
+          owner_id: ownerId,
+          assigned_to: assignedTo,
+          agency_id: mainClient?.agency_id ?? null,
         })
         .select("id")
         .single();
       if (ce) throw ce;
+
 
       // 2) Beziehung erfassen (Mitantragsteller / Ehepartner falls verheiratet)
       const marital = (form.marital_status as string | undefined)?.toLowerCase() ?? "";
