@@ -156,26 +156,68 @@ function ClientsPage() {
   const showError = clientsQuery.error && !isBackendUnavailableError(clientsQuery.error);
   const queryErrorMessage = showError ? getBackendErrorMessage(clientsQuery.error) : null;
 
-  const filtered = useMemo(() => clients.filter((c: any) => {
-    if (archivedFilter === "active" && c.is_archived) return false;
-    if (archivedFilter === "archived" && !c.is_archived) return false;
-    if (typeFilter !== ALL && c.client_type !== typeFilter) return false;
-    if (assignedFilter !== ALL) {
-      const eff = c.assigned_to ?? c.owner_id;
-      if (assignedFilter === UNASSIGNED && eff) return false;
-      if (assignedFilter !== UNASSIGNED && eff !== assignedFilter) return false;
-    }
-    if (financingFilter !== ALL) {
-      if (financingFilter === NO_FIN && c.financing_status) return false;
-      if (financingFilter !== NO_FIN && c.financing_status !== financingFilter) return false;
-    }
-    if (statusFilter !== ALL && c.status !== statusFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      if (!c.full_name?.toLowerCase().includes(q) && !c.email?.toLowerCase().includes(q)) return false;
-    }
-    return true;
-  }), [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search]);
+  // Union-Find: group linked partners so they appear together in the list
+  const groupInfo = useMemo(() => {
+    const parent = new Map<string, string>();
+    const find = (x: string): string => {
+      const p = parent.get(x) ?? x;
+      if (p === x) return x;
+      const r = find(p);
+      parent.set(x, r);
+      return r;
+    };
+    const union = (a: string, b: string) => {
+      const ra = find(a), rb = find(b);
+      if (ra !== rb) parent.set(ra, rb);
+    };
+    clients.forEach((c: any) => { if (!parent.has(c.id)) parent.set(c.id, c.id); });
+    (relationshipsQuery.data ?? []).forEach((r: any) => {
+      if (parent.has(r.client_id) && parent.has(r.related_client_id)) union(r.client_id, r.related_client_id);
+    });
+    const groupSize = new Map<string, number>();
+    const groupSortName = new Map<string, string>();
+    clients.forEach((c: any) => {
+      const root = find(c.id);
+      groupSize.set(root, (groupSize.get(root) ?? 0) + 1);
+      const cur = groupSortName.get(root);
+      const name = (c.full_name ?? "").toLowerCase();
+      if (cur === undefined || name < cur) groupSortName.set(root, name);
+    });
+    return { find, groupSize, groupSortName };
+  }, [clients, relationshipsQuery.data]);
+
+  const filtered = useMemo(() => {
+    const list = clients.filter((c: any) => {
+      if (archivedFilter === "active" && c.is_archived) return false;
+      if (archivedFilter === "archived" && !c.is_archived) return false;
+      if (typeFilter !== ALL && c.client_type !== typeFilter) return false;
+      if (assignedFilter !== ALL) {
+        const eff = c.assigned_to ?? c.owner_id;
+        if (assignedFilter === UNASSIGNED && eff) return false;
+        if (assignedFilter !== UNASSIGNED && eff !== assignedFilter) return false;
+      }
+      if (financingFilter !== ALL) {
+        if (financingFilter === NO_FIN && c.financing_status) return false;
+        if (financingFilter !== NO_FIN && c.financing_status !== financingFilter) return false;
+      }
+      if (statusFilter !== ALL && c.status !== statusFilter) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        if (!c.full_name?.toLowerCase().includes(q) && !c.email?.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+    // Sort: keep linked partners adjacent by sharing a group key (lead partner's name)
+    return list.sort((a: any, b: any) => {
+      const ra = groupInfo.find(a.id);
+      const rb = groupInfo.find(b.id);
+      const ga = groupInfo.groupSortName.get(ra) ?? (a.full_name ?? "").toLowerCase();
+      const gb = groupInfo.groupSortName.get(rb) ?? (b.full_name ?? "").toLowerCase();
+      if (ga !== gb) return ga.localeCompare(gb);
+      if (ra !== rb) return ra.localeCompare(rb);
+      return (a.full_name ?? "").localeCompare(b.full_name ?? "");
+    });
+  }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, groupInfo]);
 
   // Pagination
   const [pageSize, setPageSize] = useState<number>(20);
@@ -510,8 +552,15 @@ function ClientsPage() {
                   [disc?.postal_code, disc?.city].filter(Boolean).join(" "),
                 ].filter(Boolean).join(", ") || [c.address, [c.postal_code, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
                 const plzOrt = [disc?.postal_code ?? c.postal_code, disc?.city ?? c.city].filter(Boolean).join(" ");
+                const groupRoot = groupInfo.find(c.id);
+                const isLinked = (groupInfo.groupSize.get(groupRoot) ?? 1) > 1;
                 return (
-                  <TableRow key={c.id} data-state={selected.has(c.id) ? "selected" : undefined}>
+                  <TableRow
+                    key={c.id}
+                    data-state={selected.has(c.id) ? "selected" : undefined}
+                    className={isLinked ? "border-l-2 border-l-primary/60" : undefined}
+                  >
+                  
                     <TableCell>
                       <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} aria-label="Auswählen" />
                     </TableCell>
