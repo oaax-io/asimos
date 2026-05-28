@@ -4,7 +4,8 @@ import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText, HardDrive, ChevronLeft, ChevronRight, Download, X, Pencil, Check, Calendar, User as UserIcon, Building2, Folder, ArrowLeft, Copy, LayoutGrid } from "lucide-react";
+import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText, HardDrive, ChevronLeft, ChevronRight, Download, X, Pencil, Check, Calendar, User as UserIcon, Building2, Folder, ArrowLeft, Copy, LayoutGrid, List as ListIcon } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -107,7 +108,7 @@ function MediaPage() {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [viewMode, setViewMode] = useState<"folder" | "grid">("folder");
+  const [viewMode, setViewMode] = useState<"folder" | "grid">("grid");
 
   const { data: media = [], isLoading } = useQuery<MediaItem[]>({
     queryKey: ["property-media"],
@@ -511,28 +512,12 @@ function MediaPage() {
         description="Bilder, Videos und Grundrisse für alle Objekte"
         action={
           <div className="flex items-center gap-2">
-            <div className="flex items-center overflow-hidden rounded-lg border bg-card">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`rounded-none border-r px-3 ${viewMode === "folder" ? "bg-muted font-medium" : ""}`}
-                onClick={() => setViewMode("folder")}
-                title="Ordneransicht"
-              >
-                <Folder className="mr-1.5 h-4 w-4" />
-                Ordner
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`rounded-none px-3 ${viewMode === "grid" ? "bg-muted font-medium" : ""}`}
-                onClick={() => setViewMode("grid")}
-                title="Kachelansicht"
-              >
-                <LayoutGrid className="mr-1.5 h-4 w-4" />
-                Kacheln
-              </Button>
-            </div>
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "folder" | "grid")}>
+              <TabsList>
+                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />Kacheln</TabsTrigger>
+                <TabsTrigger value="folder"><ListIcon className="mr-1 h-4 w-4" />Ordner</TabsTrigger>
+              </TabsList>
+            </Tabs>
             <Dialog
               open={open}
               onOpenChange={(o) => {
@@ -796,7 +781,7 @@ function MediaPage() {
               <button
                 key={f.propertyId}
                 type="button"
-                onClick={() => setPropertyFilter(f.propertyId)}
+                onClick={() => { setPropertyFilter(f.propertyId); setViewMode("grid"); }}
                 className="grid w-full grid-cols-[1fr_120px_140px_80px] items-center gap-4 border-b px-4 py-2.5 text-left text-sm transition last:border-b-0 hover:bg-muted/50"
               >
                 <div className="flex min-w-0 items-center gap-3">
