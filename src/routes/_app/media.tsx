@@ -142,8 +142,33 @@ function MediaPage() {
 
   const { data: properties = [] } = useQuery({
     queryKey: ["properties-min"],
-    queryFn: async () => (await supabase.from("properties").select("id, title").order("title")).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("properties")
+          .select("id, title, city, parent_property_id, is_unit")
+          .order("title")
+      ).data ?? [],
   });
+
+  // Map every property to its "root" property (parent if unit, else itself).
+  // Units share the same folder as their parent property.
+  const propertyIndex = useMemo(() => {
+    const byId = new Map<string, { id: string; title: string; city: string | null; parent_property_id: string | null; is_unit: boolean | null }>();
+    for (const p of properties as any[]) byId.set(p.id, p);
+    const rootOf = (pid: string | null | undefined): string | null => {
+      if (!pid) return null;
+      const p = byId.get(pid);
+      if (!p) return pid;
+      return p.is_unit && p.parent_property_id ? p.parent_property_id : p.id;
+    };
+    return { byId, rootOf };
+  }, [properties]);
+
+  const rootProperties = useMemo(
+    () => (properties as any[]).filter((p) => !p.is_unit),
+    [properties],
+  );
 
   const reset = () => {
     setFiles([]);
