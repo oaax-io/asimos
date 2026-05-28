@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText, HardDrive, ChevronLeft, ChevronRight, Download, X, Pencil, Check, Calendar, User as UserIcon, Building2, Folder, ArrowLeft, Copy } from "lucide-react";
+import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText, HardDrive, ChevronLeft, ChevronRight, Download, X, Pencil, Check, Calendar, User as UserIcon, Building2, Folder, ArrowLeft, Copy, LayoutGrid } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -107,6 +107,7 @@ function MediaPage() {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [viewMode, setViewMode] = useState<"folder" | "grid">("folder");
 
   const { data: media = [], isLoading } = useQuery<MediaItem[]>({
     queryKey: ["property-media"],
@@ -455,7 +456,7 @@ function MediaPage() {
     [media, propertyFilter, typeFilter, search, propertyIndex],
   );
 
-  const showFolders = propertyFilter === "all" && !search;
+  const showFolders = viewMode === "folder";
 
   const folders = useMemo(() => {
     const map = new Map<string, { propertyId: string; title: string; city: string | null; items: MediaItem[]; cover: MediaItem | null; unitCount: number }>();
@@ -509,129 +510,153 @@ function MediaPage() {
         title="Mediathek"
         description="Bilder, Videos und Grundrisse für alle Objekte"
         action={
-          <Dialog
-            open={open}
-            onOpenChange={(o) => {
-              setOpen(o);
-              if (!o) reset();
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <Upload className="mr-1 h-4 w-4" />
-                Medien hochladen
+          <div className="flex items-center gap-2">
+            <div className="flex items-center overflow-hidden rounded-lg border bg-card">
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`rounded-none border-r px-3 ${viewMode === "folder" ? "bg-muted font-medium" : ""}`}
+                onClick={() => setViewMode("folder")}
+                title="Ordneransicht"
+              >
+                <Folder className="mr-1.5 h-4 w-4" />
+                Ordner
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Neue Medien</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3">
-                <div>
-                  <Label>Immobilie</Label>
-                  <Select value={form.property_id} onValueChange={(v) => setForm({ ...form, property_id: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Auswählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {rootProperties.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Dateien</Label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*,video/*,.tif,.tiff,.heic,.heif"
-                    multiple
-                    className="hidden"
-                    onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-                  />
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => fileInputRef.current?.click()}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
-                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
-                    onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
-                    onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); if (e.currentTarget === e.target) setDragActive(false); }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setDragActive(false);
-                      const dropped = Array.from(e.dataTransfer.files ?? []);
-                      if (dropped.length > 0) setFiles(dropped);
-                    }}
-                    className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-8 text-center transition ${
-                      dragActive
-                        ? "scale-[1.01] border-primary bg-primary/10"
-                        : "border-muted-foreground/30 hover:border-primary/60 hover:bg-accent/20"
-                    }`}
-                  >
-                    <div className={`rounded-full bg-primary/10 p-3 ${dragActive ? "animate-bounce" : ""}`}>
-                      <Upload className={`h-5 w-5 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />
-                    </div>
-                    <p className="text-sm font-medium">
-                      {dragActive ? "Jetzt loslassen" : "Dateien hierher ziehen oder klicken"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Bilder & Videos · mehrere möglich</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`rounded-none px-3 ${viewMode === "grid" ? "bg-muted font-medium" : ""}`}
+                onClick={() => setViewMode("grid")}
+                title="Kachelansicht"
+              >
+                <LayoutGrid className="mr-1.5 h-4 w-4" />
+                Kacheln
+              </Button>
+            </div>
+            <Dialog
+              open={open}
+              onOpenChange={(o) => {
+                setOpen(o);
+                if (!o) reset();
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button>
+                  <Upload className="mr-1 h-4 w-4" />
+                  Medien hochladen
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Neue Medien</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div>
+                    <Label>Immobilie</Label>
+                    <Select value={form.property_id} onValueChange={(v) => setForm({ ...form, property_id: v })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Auswählen" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {rootProperties.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  {files.length > 0 && (
-                    <p className="mt-2 text-xs text-muted-foreground">{files.length} Datei(en) ausgewählt</p>
-                  )}
-                </div>
-
-                {files.length === 1 && (
-                  <>
-                    <div>
-                      <Label>Titel (optional)</Label>
-                      <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                  <div>
+                    <Label>Dateien</Label>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,video/*,.tif,.tiff,.heic,.heif"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+                    />
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => fileInputRef.current?.click()}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
+                      onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
+                      onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
+                      onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); if (e.currentTarget === e.target) setDragActive(false); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragActive(false);
+                        const dropped = Array.from(e.dataTransfer.files ?? []);
+                        if (dropped.length > 0) setFiles(dropped);
+                      }}
+                      className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-8 text-center transition ${
+                        dragActive
+                          ? "scale-[1.01] border-primary bg-primary/10"
+                          : "border-muted-foreground/30 hover:border-primary/60 hover:bg-accent/20"
+                      }`}
+                    >
+                      <div className={`rounded-full bg-primary/10 p-3 ${dragActive ? "animate-bounce" : ""}`}>
+                        <Upload className={`h-5 w-5 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />
+                      </div>
+                      <p className="text-sm font-medium">
+                        {dragActive ? "Jetzt loslassen" : "Dateien hierher ziehen oder klicken"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Bilder & Videos · mehrere möglich</p>
                     </div>
-                    <div>
-                      <Label>Beschreibung (optional)</Label>
-                      <Textarea
-                        rows={2}
-                        value={form.description}
-                        onChange={(e) => setForm({ ...form, description: e.target.value })}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-              {uploading && uploadProgress.total > 0 && (() => {
-                const pct = Math.round((uploadProgress.done / uploadProgress.total) * 100);
-                return (
-                  <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium">
-                        {uploadProgress.done} / {uploadProgress.total} hochgeladen
-                      </span>
-                      <span className="text-muted-foreground">{pct}%</span>
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                      <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
-                    </div>
-                    {uploadProgress.currentName && (
-                      <p className="truncate text-xs text-muted-foreground">{uploadProgress.currentName}</p>
+                    {files.length > 0 && (
+                      <p className="mt-2 text-xs text-muted-foreground">{files.length} Datei(en) ausgewählt</p>
                     )}
                   </div>
-                );
-              })()}
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)} disabled={uploading}>
-                  Abbrechen
-                </Button>
-                <Button onClick={() => upload.mutate()} disabled={uploading || files.length === 0}>
-                  {uploading ? "Wird hochgeladen…" : "Hochladen"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+
+                  {files.length === 1 && (
+                    <>
+                      <div>
+                        <Label>Titel (optional)</Label>
+                        <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>Beschreibung (optional)</Label>
+                        <Textarea
+                          rows={2}
+                          value={form.description}
+                          onChange={(e) => setForm({ ...form, description: e.target.value })}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+                {uploading && uploadProgress.total > 0 && (() => {
+                  const pct = Math.round((uploadProgress.done / uploadProgress.total) * 100);
+                  return (
+                    <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium">
+                          {uploadProgress.done} / {uploadProgress.total} hochgeladen
+                        </span>
+                        <span className="text-muted-foreground">{pct}%</span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                      {uploadProgress.currentName && (
+                        <p className="truncate text-xs text-muted-foreground">{uploadProgress.currentName}</p>
+                      )}
+                    </div>
+                  );
+                })()}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setOpen(false)} disabled={uploading}>
+                    Abbrechen
+                  </Button>
+                  <Button onClick={() => upload.mutate()} disabled={uploading || files.length === 0}>
+                    {uploading ? "Wird hochgeladen…" : "Hochladen"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         }
       />
 
