@@ -255,6 +255,53 @@ function MediaPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const removeDuplicates = useMutation({
+    mutationFn: async (propertyId: string) => {
+      const items = media.filter((m) => m.property_id === propertyId);
+      // Group by file_size + file_type (keep earliest created_at, remove the rest)
+      const groups = new Map<string, MediaItem[]>();
+      for (const m of items) {
+        if (m.file_size == null) continue;
+        const key = `${m.file_type ?? ""}::${m.file_size}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push(m);
+      }
+      const toRemove: MediaItem[] = [];
+      for (const group of groups.values()) {
+        if (group.length < 2) continue;
+        const sorted = [...group].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+        );
+        // Keep first; remove rest. But prefer to keep the cover if any.
+        const coverIdx = sorted.findIndex((m) => m.is_cover);
+        const keepIdx = coverIdx >= 0 ? coverIdx : 0;
+        sorted.forEach((m, i) => {
+          if (i !== keepIdx) toRemove.push(m);
+        });
+      }
+      if (toRemove.length === 0) return 0;
+      const paths = toRemove
+        .map((m) => m.file_url)
+        .filter((p) => p && !p.startsWith("http"));
+      if (paths.length > 0) {
+        await supabase.storage.from("media").remove(paths);
+      }
+      const { error } = await supabase
+        .from("property_media")
+        .delete()
+        .in("id", toRemove.map((m) => m.id));
+      if (error) throw error;
+      await syncPropertyImages(propertyId);
+      return toRemove.length;
+    },
+    onSuccess: (count) => {
+      if (count === 0) toast.info("Keine Duplikate gefunden");
+      else toast.success(`${count} Duplikat(e) entfernt`);
+      qc.invalidateQueries({ queryKey: ["property-media"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const filtered = useMemo(
     () =>
       media.filter((m) => {
