@@ -423,7 +423,7 @@ function MediaPage() {
                       <SelectValue placeholder="Auswählen" />
                     </SelectTrigger>
                     <SelectContent>
-                      {properties.map((p) => (
+                      {rootProperties.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.title}
                         </SelectItem>
