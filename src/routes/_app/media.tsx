@@ -101,6 +101,7 @@ function MediaPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0, currentName: "" });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ property_id: "", title: "", description: "" });
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
