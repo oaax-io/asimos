@@ -552,7 +552,14 @@ function ClientsPage() {
                   [disc?.postal_code, disc?.city].filter(Boolean).join(" "),
                 ].filter(Boolean).join(", ") || [c.address, [c.postal_code, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
                 const plzOrt = [disc?.postal_code ?? c.postal_code, disc?.city ?? c.city].filter(Boolean).join(" ");
+                const groupRoot = groupInfo.find(c.id);
+                const isLinked = (groupInfo.groupSize.get(groupRoot) ?? 1) > 1;
                 return (
+                  <TableRow
+                    key={c.id}
+                    data-state={selected.has(c.id) ? "selected" : undefined}
+                    className={isLinked ? "border-l-2 border-l-primary/60" : undefined}
+                  >
                   <TableRow key={c.id} data-state={selected.has(c.id) ? "selected" : undefined}>
                     <TableCell>
                       <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} aria-label="Auswählen" />
