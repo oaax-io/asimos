@@ -623,7 +623,7 @@ function MediaPage() {
             <SelectItem value="image">Bilder</SelectItem>
             <SelectItem value="video">Videos</SelectItem>
             <SelectItem value="floor_plan">Grundrisse</SelectItem>
-            <SelectItem value="other">Sonstiges</SelectItem>
+            
           </SelectContent>
         </Select>
       </div>
