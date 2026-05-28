@@ -195,6 +195,12 @@ function MediaPage() {
     mutationFn: async () => {
       if (!form.property_id) throw new Error("Bitte Immobilie wählen");
       if (files.length === 0) throw new Error("Bitte mindestens eine Datei auswählen");
+      const rejected = files.filter((f) => !isAcceptedMediaFile(f));
+      if (rejected.length > 0) {
+        throw new Error(
+          `In der Mediathek sind nur Bilder und Videos erlaubt. Bitte lade Dokumente (PDF, DOCX, …) unter „Dokumente" hoch. Abgelehnt: ${rejected.map((f) => f.name).join(", ")}`,
+        );
+      }
       setUploading(true);
       const processed = await convertUnsupportedImages(files);
       const maxSort = Math.max(0, ...media.filter((m) => m.property_id === form.property_id).map((m) => m.sort_order));
