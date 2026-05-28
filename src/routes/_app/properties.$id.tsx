@@ -792,12 +792,22 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
 
   const setAsCover = async (i: number) => {
     if (i === 0) return;
-    const next = [images[i], ...images.filter((_, k) => k !== i)];
+    const coverPath = images[i];
     setIdx(0);
-    const { error } = await supabase.from("properties").update({ images: next }).eq("id", propertyId);
-    if (error) { toast.error(error.message); return; }
+    const { error: resetError } = await supabase.from("property_media").update({ is_cover: false }).eq("property_id", propertyId);
+    if (resetError) { toast.error(resetError.message); return; }
+
+    const { error: coverError } = await supabase
+      .from("property_media")
+      .update({ is_cover: true, sort_order: 1 })
+      .eq("property_id", propertyId)
+      .eq("file_url", coverPath);
+    if (coverError) { toast.error(coverError.message); return; }
+
+    await syncPropertyImagesFromMedia(propertyId);
     toast.success("Als Cover gesetzt");
     qc.invalidateQueries({ queryKey: ["property", propertyId] });
+    qc.invalidateQueries({ queryKey: ["property_media", propertyId] });
   };
 
   const addFromLibrary = async (paths: string[]): Promise<boolean> => {
