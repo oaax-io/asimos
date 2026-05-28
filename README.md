@@ -100,7 +100,9 @@ supabase/
 - **Suchprofil-Matching**: Automatisches Zusammenführen von Kunden-Suchprofilen mit verfügbaren Objekten
 
 ### Medien (`/media`)
-- **Medienverwaltung** (Bilder, Videos, Dokumente)
+- **Medienverwaltung** (Bilder, Videos, Dokumente) mit Ordner- und Kacheln-Ansicht
+- **Kacheln als Standard**: Beim Öffnen eines Ordners werden die enthaltenen Bilder direkt in der Kacheln-Ansicht angezeigt
+- Konsistentes Kachel-Design mit der Kunden-Übersicht
 
 ### Analytik (`/analytics`)
 - **Dashboards und Kennzahlen** für das Makler-Business
