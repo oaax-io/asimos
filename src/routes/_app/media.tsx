@@ -108,7 +108,7 @@ function MediaPage() {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [viewMode, setViewMode] = useState<"folder" | "grid">("folder");
+  const [viewMode, setViewMode] = useState<"folder" | "grid">("grid");
 
   const { data: media = [], isLoading } = useQuery<MediaItem[]>({
     queryKey: ["property-media"],
