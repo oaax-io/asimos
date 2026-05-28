@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Mail, Phone, Target, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Link2 } from "lucide-react";
+import { Plus, Search, Mail, Phone, Target, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Link2, CornerDownRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
@@ -175,15 +175,19 @@ function ClientsPage() {
       if (parent.has(r.client_id) && parent.has(r.related_client_id)) union(r.client_id, r.related_client_id);
     });
     const groupSize = new Map<string, number>();
-    const groupSortName = new Map<string, string>();
+    const groupLeader = new Map<string, { id: string; created: string; name: string }>();
     clients.forEach((c: any) => {
       const root = find(c.id);
       groupSize.set(root, (groupSize.get(root) ?? 0) + 1);
-      const cur = groupSortName.get(root);
+      const created = c.created_at ?? "";
       const name = (c.full_name ?? "").toLowerCase();
-      if (cur === undefined || name < cur) groupSortName.set(root, name);
+      const cur = groupLeader.get(root);
+      // Leader = earliest created_at; tie-break by name
+      if (!cur || created < cur.created || (created === cur.created && name < cur.name)) {
+        groupLeader.set(root, { id: c.id, created, name });
+      }
     });
-    return { find, groupSize, groupSortName };
+    return { find, groupSize, groupLeader };
   }, [clients, relationshipsQuery.data]);
 
   const filtered = useMemo(() => {
@@ -207,14 +211,22 @@ function ClientsPage() {
       }
       return true;
     });
-    // Sort: keep linked partners adjacent by sharing a group key (lead partner's name)
+    // Sort: group by leader, leader first, then partners directly below
     return list.sort((a: any, b: any) => {
       const ra = groupInfo.find(a.id);
       const rb = groupInfo.find(b.id);
-      const ga = groupInfo.groupSortName.get(ra) ?? (a.full_name ?? "").toLowerCase();
-      const gb = groupInfo.groupSortName.get(rb) ?? (b.full_name ?? "").toLowerCase();
-      if (ga !== gb) return ga.localeCompare(gb);
-      if (ra !== rb) return ra.localeCompare(rb);
+      const la = groupInfo.groupLeader.get(ra);
+      const lb = groupInfo.groupLeader.get(rb);
+      const ka = la ? `${la.created}|${la.name}|${la.id}` : `${a.created_at ?? ""}|${(a.full_name ?? "").toLowerCase()}|${a.id}`;
+      const kb = lb ? `${lb.created}|${lb.name}|${lb.id}` : `${b.created_at ?? ""}|${(b.full_name ?? "").toLowerCase()}|${b.id}`;
+      if (ka !== kb) return ka < kb ? -1 : 1;
+      // Same group: leader first, others by created_at then name
+      const aIsLeader = la?.id === a.id ? 0 : 1;
+      const bIsLeader = lb?.id === b.id ? 0 : 1;
+      if (aIsLeader !== bIsLeader) return aIsLeader - bIsLeader;
+      const ca = a.created_at ?? "";
+      const cb = b.created_at ?? "";
+      if (ca !== cb) return ca < cb ? -1 : 1;
       return (a.full_name ?? "").localeCompare(b.full_name ?? "");
     });
   }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, groupInfo]);
@@ -553,22 +565,30 @@ function ClientsPage() {
                 ].filter(Boolean).join(", ") || [c.address, [c.postal_code, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
                 const plzOrt = [disc?.postal_code ?? c.postal_code, disc?.city ?? c.city].filter(Boolean).join(" ");
                 const groupRoot = groupInfo.find(c.id);
-                const isLinked = (groupInfo.groupSize.get(groupRoot) ?? 1) > 1;
+                const groupSize = groupInfo.groupSize.get(groupRoot) ?? 1;
+                const leader = groupInfo.groupLeader.get(groupRoot);
+                const isLinked = groupSize > 1;
+                const isLeader = leader?.id === c.id;
+                const isPartner = isLinked && !isLeader;
                 return (
                   <TableRow
                     key={c.id}
                     data-state={selected.has(c.id) ? "selected" : undefined}
-                    className={isLinked ? "border-l-2 border-l-primary/60" : undefined}
+                    className={isPartner ? "bg-muted/30" : undefined}
                   >
-                  
                     <TableCell>
                       <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} aria-label="Auswählen" />
                     </TableCell>
                     <TableCell>
-                      <button type="button" onClick={() => setDetailId(c.id)} className="font-medium hover:text-primary">
-                        {c.full_name}
-                      </button>
-                      {c.is_archived && <Badge variant="outline" className="ml-2">Archiviert</Badge>}
+                      <div className="flex items-center gap-2">
+                        {isPartner && (
+                          <CornerDownRight className="h-4 w-4 shrink-0 text-muted-foreground ml-3" aria-hidden />
+                        )}
+                        <button type="button" onClick={() => setDetailId(c.id)} className="font-medium hover:text-primary text-left">
+                          {c.full_name}
+                        </button>
+                        {c.is_archived && <Badge variant="outline" className="ml-1">Archiviert</Badge>}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {(() => {
