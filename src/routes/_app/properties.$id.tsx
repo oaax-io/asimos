@@ -25,6 +25,7 @@ import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumen
 import { PropertyOwnersTab } from "@/components/properties/PropertyOwnersTab";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 import { useAuth } from "@/lib/auth";
+import { extractPropertyImagePaths } from "@/lib/property-media";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
@@ -34,6 +35,21 @@ function getMediaPublicUrl(path?: string | null) {
   if (!path) return "";
   if (path.startsWith("http")) return path;
   return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+}
+
+async function syncPropertyImagesFromMedia(propertyId: string) {
+  const { data: mediaRows, error: mediaError } = await supabase
+    .from("property_media")
+    .select("file_url, file_type, sort_order, is_cover, created_at")
+    .eq("property_id", propertyId);
+
+  if (mediaError) throw mediaError;
+
+  const images = extractPropertyImagePaths(mediaRows ?? []);
+  const { error: propertyError } = await supabase.from("properties").update({ images }).eq("id", propertyId);
+  if (propertyError) throw propertyError;
+
+  return images;
 }
 
 function PropertyDetail() {
@@ -730,16 +746,14 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
           file_name: f.name,
           file_type: "image",
           file_size: f.size,
-          sort_order: baseSort + i,
+          sort_order: baseSort + i + 1,
           is_cover: !hasImages && i === 0,
         });
       }
       if (paths.length === 0) { return false; }
-      const newImages = hasImages ? [...images, ...paths] : [...paths, ...images];
-      const { error: upErr } = await supabase.from("properties").update({ images: newImages }).eq("id", propertyId);
-      if (upErr) throw upErr;
       const { error: medErr } = await supabase.from("property_media").insert(mediaRows);
-      if (medErr) console.warn("media insert failed", medErr);
+      if (medErr) throw medErr;
+      await syncPropertyImagesFromMedia(propertyId);
       toast.success(`${paths.length} Bild(er) hochgeladen`);
       qc.invalidateQueries({ queryKey: ["property", propertyId] });
       qc.invalidateQueries({ queryKey: ["property_media", propertyId] });
@@ -774,20 +788,18 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
     if (unique.length === 0) { toast.info("Bereits hinzugefügt"); return false; }
     setUploading(true);
     try {
-      const newImages = hasImages ? [...images, ...unique] : [...unique];
-      const { error: upErr } = await supabase.from("properties").update({ images: newImages }).eq("id", propertyId);
-      if (upErr) throw upErr;
       const baseSort = images.length;
       const rows = unique.map((p, i) => ({
         property_id: propertyId,
         file_url: p,
         file_name: p.split("/").pop() ?? null,
         file_type: "image",
-        sort_order: baseSort + i,
+        sort_order: baseSort + i + 1,
         is_cover: !hasImages && i === 0,
       }));
       const { error: medErr } = await supabase.from("property_media").insert(rows);
-      if (medErr) console.warn("media insert failed", medErr);
+      if (medErr) throw medErr;
+      await syncPropertyImagesFromMedia(propertyId);
       toast.success(`${unique.length} Bild(er) aus Mediathek hinzugefügt`);
       qc.invalidateQueries({ queryKey: ["property", propertyId] });
       qc.invalidateQueries({ queryKey: ["property_media", propertyId] });
@@ -803,14 +815,20 @@ function PropertyImageGallery({ propertyId, images, title }: { propertyId: strin
   const deleteImage = async (i: number) => {
     const path = images[i];
     if (!path) return;
-    
-    const next = images.filter((_, k) => k !== i);
+
     try {
-      const { error: upErr } = await supabase.from("properties").update({ images: next }).eq("id", propertyId);
-      if (upErr) throw upErr;
-      await supabase.storage.from("media").remove([path]);
-      await supabase.from("property_media").delete().eq("property_id", propertyId).eq("file_url", path);
-      setIdx((cur) => Math.max(0, Math.min(cur, next.length - 1)));
+      const { error: storageError } = await supabase.storage.from("media").remove([path]);
+      if (storageError) throw storageError;
+
+      const { error: mediaDeleteError } = await supabase
+        .from("property_media")
+        .delete()
+        .eq("property_id", propertyId)
+        .eq("file_url", path);
+      if (mediaDeleteError) throw mediaDeleteError;
+
+      const nextImages = await syncPropertyImagesFromMedia(propertyId);
+      setIdx((cur) => Math.max(0, Math.min(cur, nextImages.length - 1)));
       toast.success("Bild gelöscht");
       qc.invalidateQueries({ queryKey: ["property", propertyId] });
       qc.invalidateQueries({ queryKey: ["property_media", propertyId] });
