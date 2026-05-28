@@ -105,6 +105,7 @@ function MediaPage() {
   const [form, setForm] = useState({ property_id: "", title: "", description: "" });
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   const { data: media = [], isLoading } = useQuery<MediaItem[]>({
     queryKey: ["property-media"],
