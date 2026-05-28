@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText, HardDrive, ChevronLeft, ChevronRight, Download, X, Pencil, Check, Calendar, User as UserIcon, Building2 } from "lucide-react";
+import { Search, Trash2, Image as ImageIcon, Upload, Star, ArrowUp, ArrowDown, FileText, HardDrive, ChevronLeft, ChevronRight, Download, X, Pencil, Check, Calendar, User as UserIcon, Building2, Folder, ArrowLeft, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -255,6 +255,53 @@ function MediaPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const removeDuplicates = useMutation({
+    mutationFn: async (propertyId: string) => {
+      const items = media.filter((m) => m.property_id === propertyId);
+      // Group by file_size + file_type (keep earliest created_at, remove the rest)
+      const groups = new Map<string, MediaItem[]>();
+      for (const m of items) {
+        if (m.file_size == null) continue;
+        const key = `${m.file_type ?? ""}::${m.file_size}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push(m);
+      }
+      const toRemove: MediaItem[] = [];
+      for (const group of groups.values()) {
+        if (group.length < 2) continue;
+        const sorted = [...group].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+        );
+        // Keep first; remove rest. But prefer to keep the cover if any.
+        const coverIdx = sorted.findIndex((m) => m.is_cover);
+        const keepIdx = coverIdx >= 0 ? coverIdx : 0;
+        sorted.forEach((m, i) => {
+          if (i !== keepIdx) toRemove.push(m);
+        });
+      }
+      if (toRemove.length === 0) return 0;
+      const paths = toRemove
+        .map((m) => m.file_url)
+        .filter((p) => p && !p.startsWith("http"));
+      if (paths.length > 0) {
+        await supabase.storage.from("media").remove(paths);
+      }
+      const { error } = await supabase
+        .from("property_media")
+        .delete()
+        .in("id", toRemove.map((m) => m.id));
+      if (error) throw error;
+      await syncPropertyImages(propertyId);
+      return toRemove.length;
+    },
+    onSuccess: (count) => {
+      if (count === 0) toast.info("Keine Duplikate gefunden");
+      else toast.success(`${count} Duplikat(e) entfernt`);
+      qc.invalidateQueries({ queryKey: ["property-media"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const filtered = useMemo(
     () =>
       media.filter((m) => {
@@ -268,6 +315,39 @@ function MediaPage() {
       }),
     [media, propertyFilter, typeFilter, search],
   );
+
+  const showFolders = propertyFilter === "all" && !search;
+
+  const folders = useMemo(() => {
+    const map = new Map<string, { propertyId: string; title: string; city: string | null; items: MediaItem[]; cover: MediaItem | null }>();
+    for (const m of filtered) {
+      if (!m.property_id) continue;
+      const f = map.get(m.property_id) ?? {
+        propertyId: m.property_id,
+        title: m.properties?.title ?? "Ohne Titel",
+        city: m.properties?.city ?? null,
+        items: [],
+        cover: null,
+      };
+      f.items.push(m);
+      if (!f.cover || m.is_cover) f.cover = f.cover && f.cover.is_cover ? f.cover : m;
+      map.set(m.property_id, f);
+    }
+    return Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title));
+  }, [filtered]);
+
+  const duplicateCount = useMemo(() => {
+    if (showFolders || propertyFilter === "all") return 0;
+    const items = media.filter((m) => m.property_id === propertyFilter && m.file_size != null);
+    const groups = new Map<string, number>();
+    for (const m of items) {
+      const key = `${m.file_type ?? ""}::${m.file_size}`;
+      groups.set(key, (groups.get(key) ?? 0) + 1);
+    }
+    let extras = 0;
+    for (const count of groups.values()) if (count > 1) extras += count - 1;
+    return extras;
+  }, [media, propertyFilter, showFolders]);
 
   return (
     <>
@@ -415,6 +495,33 @@ function MediaPage() {
         </Select>
       </div>
 
+      {propertyFilter !== "all" && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setPropertyFilter("all")}>
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Alle Ordner
+          </Button>
+          {duplicateCount > 0 && (
+            <div className="ml-auto flex items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-1.5 text-xs text-amber-900 dark:border-amber-700/40 dark:bg-amber-950/40 dark:text-amber-200">
+              <Copy className="h-3.5 w-3.5" />
+              <span>{duplicateCount} mögliche Duplikat(e) erkannt</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7"
+                onClick={() => {
+                  if (window.confirm(`${duplicateCount} doppelte Datei(en) löschen? Das älteste/Cover-Bild bleibt erhalten.`)) {
+                    removeDuplicates.mutate(propertyFilter);
+                  }
+                }}
+              >
+                Duplikate entfernen
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">Wird geladen…</div>
       ) : filtered.length === 0 ? (
@@ -422,6 +529,42 @@ function MediaPage() {
           title="Mediathek leer"
           description="Lade Bilder, Videos oder Grundrisse zu deinen Objekten hoch."
         />
+      ) : showFolders ? (
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {folders.map((f) => {
+            const coverUrl = f.cover ? getPublicUrl(f.cover.file_url) : null;
+            return (
+              <button
+                key={f.propertyId}
+                type="button"
+                onClick={() => setPropertyFilter(f.propertyId)}
+                className="group relative overflow-hidden rounded-xl border bg-card text-left shadow-soft transition hover:shadow-md"
+              >
+                <div className="relative aspect-square w-full overflow-hidden bg-muted">
+                  {coverUrl ? (
+                    <img
+                      src={coverUrl}
+                      alt={f.title}
+                      className="h-full w-full object-cover transition group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <Folder className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                  )}
+                  <Badge className="absolute right-2 top-2 bg-card/90 text-foreground border border-border">
+                    <Folder className="mr-1 h-3 w-3" />
+                    {f.items.length}
+                  </Badge>
+                </div>
+                <div className="p-3">
+                  <p className="truncate text-sm font-medium">{f.title}</p>
+                  {f.city && <p className="truncate text-xs text-muted-foreground">{f.city}</p>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {filtered.map((m, idx) => {
