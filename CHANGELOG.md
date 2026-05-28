@@ -8,45 +8,32 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 - **Kunden-Status-Workflow**: Neue `status`-Spalte auf der Kunden-Tabelle mit 7 farblich kodierten Stufen: Entwurf (Grau), Pendet (Gelb), Vollständig (Blau), Finanzierung (Indigo), Abgeschlossen (Grün), Abgelehnt (Rot), Storniert (Orange).
 - **Status-Filter in Kundenübersicht**: Dropdown-Filter mit farbigen Punkten zum schnellen Filtern nach Kundenstatus.
 - **Status-Bearbeitung im Kunden-Modal**: Direkt im Kunden-Detail (oben rechts neben den Navigationspfeilen) lässt sich der Status per Dropdown ändern — mit farblicher Kennzeichnung und verbesserter Lesbarkeit.
-
-### Geändert
-- **Kunden-Typ-Farben neu abgestuft**: Die Farben für Kundentypen (Käufer, Verkäufer, Eigentümer, Mieter, Vermieter, Investor, Sonstige) wurden von den Status-Farben entkoppelt und erhalten nun eine eigene, deutlich unterscheidbare Palette (Cyan, Teal, Indigo, Orange, Pink, Rose, Stone).
-
-### Entfernt
-- **"Finanzierung"-Spalte aus Kundenübersicht**: Die separate Finanzierungsspalte und der zugehörige Filter "Alle Finanzierungen" wurden entfernt — der Status-Workflow ersetzt diese Darstellung.
-
----
-
-## [1.8.0] – 26.05.2026
-
-### Hinzugefügt
 - **Dokumentenverwaltung im Kundenprofil**: Modal-Vorschau, Herunterladen, Umbenennen, Dokumententyp-Erkennung beim Upload, Anzahl-Anzeige im Tab-Badge.
 - **Immobilien-Zuweisung mit Rollen**: Kunden können Immobilien als Eigentümer, Kaufinteressent, Mieter, Investor etc. zugewiesen werden — mit Doppelbelegungs-Warnung.
 - **Bidirektionale Kundenbeziehungen**: Verknüpfungen (z. B. Ehepartner) sind jetzt von beiden Seiten sichtbar.
-
-### Geändert
-- **Smart-Übersicht erweitert**: Zeigt jetzt auch zugewiesene Immobilien (nicht nur Eigentum) und Beziehungen.
-- **Immobilien-Tab im Kundenprofil**: Eigene und zugewiesene Objekte werden getrennt mit Rollen-Label angezeigt.
-
-### Behoben
-- Mediathek: Hover-Buttons über Bildern wieder korrekt sichtbar.
-- Dokumente nach Umbenennung konnten nicht mehr angezeigt werden — Storage-Pfad-Logik korrigiert.
-
-## [Unreleased]
-
-### Hinzugefügt
 - **Kartenansicht für Immobilien**: Neue "Karten"-Ansicht im Immobilien-Modul mit Mapbox-Integration. Objekte werden auf der Schweizerkarte als Marker angezeigt, inklusive Preis-Labels und Klick-zu-Detail-Funktion.
 - **KI-gestützte Selbstauskunft-Auto-Fill**: Beim Kunden-Wizard (Schritt 2) kann nun eine bestehende Selbstauskunft hochgeladen werden. Die Felder werden automatisch via Gemini (Lovable AI Gateway) erkannt und vorbefüllt – inkl. Antragsteller 1 + 2 und Beziehungsverknüpfung.
 - **Intelligente Kunden-Übersicht**: Das Kunden-Modal zeigt nun eine Smart-Übersicht mit den für den Makler relevantesten Informationen: Beziehungen, Immobilien, Termine, Aufgaben, offene Finanzierung etc.
 - **Finanzierungs-Quick-Check**: Neuer Wizard für schnelle Finanzierungs-Prüfung direkt aus der Kundenseite.
+- **DB-Constraint für eindeutige Beziehungen**: `UNIQUE INDEX` auf `client_relationships` (gerichtetes Paar + Typ) verhindert doppelte Verknüpfungen zwischen denselben Kontakten.
 
 ### Geändert
+- **Kunden-Typ-Farben neu abgestuft**: Die Farben für Kundentypen (Käufer, Verkäufer, Eigentümer, Mieter, Vermieter, Investor, Sonstige) wurden von den Status-Farben entkoppelt und erhalten nun eine eigene, deutlich unterscheidbare Palette (Cyan, Teal, Indigo, Orange, Pink, Rose, Stone).
 - **Kunden-Wizard restrukturiert**: Schritt 2 bietet nun die Wahl zwischen "Manuell erfassen" und "Selbstauskunft hochladen".
 - **Objekt-Import-Dialog**: Verbesserte UX für den Massenimport von Immobilien.
 - **Profil-Details verschoben**: Suchprofile → Matching, Rollen → Aktivitäten, Eigentum → Immobilien. Das zuklappbare Accordion "Profil-Details" entfällt somit aus der Kunden-Übersicht.
 - **Kachel-Layout**: Kacheln verwenden nun konsistente Bild-Höhen und elegantere Hover-Zustände.
+- **Kunden-Gruppierung in Listenansicht**: Verknüpfte Partner (z. B. Ehepartner) werden unter dem Hauptkunden mit Einrückung und Pfeil-Indikator (`CornerDownRight`) dargestellt. Gruppenmitglieder stehen immer zusammen und werden nicht mehr über die gesamte Liste verteilt.
+- **Kunden-Sortierung**: Die Kundenübersicht sortiert jetzt standardmäßig nach `created_at` absteigend — der zuletzt hinzugefügte Kunde steht immer zuoberst.
+- **Medien-Ordner-Ansicht**: Ordner und Kacheln-Ansicht wurden an das Design der Kunden-Kacheln angeglichen. Die Kacheln-Ansicht ist jetzt der Standard; beim Öffnen eines Ordners werden die enthaltenen Bilder direkt in Kacheln dargestellt.
+
+### Behoben
+- Mediathek: Hover-Buttons über Bildern wieder korrekt sichtbar.
+- Dokumente nach Umbenennung konnten nicht mehr angezeigt werden — Storage-Pfad-Logik korrigiert.
+- **Doppelte Ehepartner-Badges**: Durch das neue DB-Constraint und Bereinigung identischer Datensätze (z. B. doppelte "Gjyle Krasniqi") werden Beziehungen jetzt korrekt dedupliziert.
 
 ### Entfernt
+- **"Finanzierung"-Spalte aus Kundenübersicht**: Die separate Finanzierungsspalte und der zugehörige Filter "Alle Finanzierungen" wurden entfernt — der Status-Workflow ersetzt diese Darstellung.
 - **"Muster-Kunde"-Button**: Der Button zum Erstellen eines Demo-Kunden wurde aus der Kundenübersicht entfernt.
 
 ---
