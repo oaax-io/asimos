@@ -16,6 +16,17 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.10.0",
+    date: "28.05.2026",
+    changes: [
+      { type: "feature", text: "Kunden-Liste gruppiert verknuepfte Partner (z. B. Ehepaare) visuell zusammen: Hauptkunde oben, Partner direkt darunter eingerueckt mit Pfeil-Symbol" },
+      { type: "improvement", text: "Kunden-Liste sortiert standardmaessig nach Erstellungsdatum absteigend — neueste Kunden zuoberst" },
+      { type: "improvement", text: "Medien-Ordner und Kacheln-Ansicht im Design an Kunden-Kacheln angeglichen (einheitlicher Look)" },
+      { type: "fix", text: "Doppelte Ehepartner-Badges entfernt (doppelter Kunden-Datensatz Gjyle Krasniqi bereinigt)" },
+      { type: "fix", text: "DB-Constraint hinzugefuegt: Kundenbeziehungen koennen nicht mehr doppelt angelegt werden (richtungsunabhaengig eindeutig)" },
+    ],
+  },
+  {
     version: "1.9.0",
     date: "26.05.2026",
     changes: [
