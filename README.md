@@ -56,9 +56,11 @@ supabase/
 - **Intelligente Übersicht** beim Öffnen eines Kunden: Beziehungen, Immobilien (Eigentum + zugewiesene), Termine, Aufgaben, offene Finanzierung, Bankkonten
 - **Selbstauskunft-Wizard**: 5-Schritt-Formular mit Live-Benchmark (Einnahmen vs. Ausgaben, Reserve/Quote)
 - **Finanzierungs-Quick-Check**: Direkt aus der Kundenseite heraus auslösbar
-- **Beziehungen (bidirektional)**: Verknüpfungen zwischen Kontakten (Ehepartner, Familie etc.) — von beiden Seiten sichtbar
+- **Beziehungen (bidirektional + gruppiert)**: Verknüpfungen zwischen Kontakten (Ehepartner, Familie etc.) — von beiden Seiten sichtbar und in der Listenansicht visuell gruppiert (Hauptkunde + eingerückter Partner)
 - **Dokumenten-Tab**: Drag-and-Drop-Upload mit automatischer Typ-Erkennung, Modal-Vorschau, Umbenennen, Herunterladen
+- **Sortierung**: Kunden werden nach Erstellungsdatum absteigend sortiert (neueste zuerst)
 - **Rollen, Suchprofile**: Verknüpfungen zwischen Kontakten und Objekten
+- **DB-Integrität**: Eindeutige Constraints verhindern doppelte Beziehungen
 
 ### Immobilien (`/properties`)
 - **Objektverwaltung** mit vollständigem Datenmodell (Adresse, Merkmale, Preis, Zustand, Energieausweis etc.)
@@ -98,7 +100,9 @@ supabase/
 - **Suchprofil-Matching**: Automatisches Zusammenführen von Kunden-Suchprofilen mit verfügbaren Objekten
 
 ### Medien (`/media`)
-- **Medienverwaltung** (Bilder, Videos, Dokumente)
+- **Medienverwaltung** (Bilder, Videos, Dokumente) mit Ordner- und Kacheln-Ansicht
+- **Kacheln als Standard**: Beim Öffnen eines Ordners werden die enthaltenen Bilder direkt in der Kacheln-Ansicht angezeigt
+- Konsistentes Kachel-Design mit der Kunden-Übersicht
 
 ### Analytik (`/analytics`)
 - **Dashboards und Kennzahlen** für das Makler-Business
