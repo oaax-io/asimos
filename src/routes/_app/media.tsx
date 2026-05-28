@@ -517,7 +517,7 @@ function MediaPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Alle Immobilien</SelectItem>
-            {properties.map((p) => (
+            {rootProperties.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.title}
               </SelectItem>
