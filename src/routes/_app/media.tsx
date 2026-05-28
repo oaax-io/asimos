@@ -348,9 +348,78 @@ function MediaPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const migrateDocuments = useMutation({
+    mutationFn: async () => {
+      const docs = media.filter(isDocumentLike);
+      if (docs.length === 0) return 0;
+      const { data: userData } = await supabase.auth.getUser();
+      const uploaderId = userData.user?.id ?? null;
+      const touchedProperties = new Set<string>();
+      let moved = 0;
+      for (const item of docs) {
+        if (!item.file_url || item.file_url.startsWith("http")) {
+          // Externally hosted — just delete the row, nothing to copy
+          await supabase.from("property_media").delete().eq("id", item.id);
+          moved++;
+          continue;
+        }
+        const { data: blob, error: dlErr } = await supabase.storage.from("media").download(item.file_url);
+        if (dlErr || !blob) {
+          console.warn("Download fehlgeschlagen", item.file_url, dlErr);
+          continue;
+        }
+        const safeName = (item.file_name ?? item.file_url.split("/").pop() ?? "dokument").replace(/[^a-zA-Z0-9._-]/g, "_");
+        const newPath = `properties/${item.property_id}/${Date.now()}-${safeName}`;
+        const lowerName = (item.file_name ?? item.file_url).toLowerCase();
+        const mime = lowerName.endsWith(".pdf")
+          ? "application/pdf"
+          : blob.type || "application/octet-stream";
+        const { error: upErr } = await supabase.storage.from("documents").upload(newPath, blob, {
+          contentType: mime,
+          upsert: false,
+        });
+        if (upErr) {
+          console.warn("Upload nach documents fehlgeschlagen", upErr);
+          continue;
+        }
+        const { error: insErr } = await supabase.from("documents").insert({
+          related_type: "property",
+          related_id: item.property_id,
+          document_type: "property_document" as any,
+          file_url: newPath,
+          file_name: item.file_name ?? safeName,
+          mime_type: mime,
+          size_bytes: item.file_size ?? blob.size ?? null,
+          uploaded_by: uploaderId,
+        });
+        if (insErr) {
+          console.warn("Documents-Insert fehlgeschlagen, räume auf", insErr);
+          await supabase.storage.from("documents").remove([newPath]);
+          continue;
+        }
+        await supabase.storage.from("media").remove([item.file_url]);
+        await supabase.from("property_media").delete().eq("id", item.id);
+        touchedProperties.add(item.property_id);
+        moved++;
+      }
+      for (const pid of touchedProperties) await syncPropertyImages(pid);
+      return moved;
+    },
+    onSuccess: (count) => {
+      if (count === 0) toast.info("Keine Dokumente in der Mediathek gefunden");
+      else toast.success(`${count} Datei(en) nach „Dokumente" verschoben`);
+      qc.invalidateQueries({ queryKey: ["property-media"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const documentLikeCount = useMemo(() => media.filter(isDocumentLike).length, [media]);
+
   const filtered = useMemo(
     () =>
       media.filter((m) => {
+        // Mediathek = nur Bilder & Videos. Dokumente (PDF etc.) gehören in "Dokumente".
+        if (isDocumentLike(m)) return false;
         if (propertyFilter !== "all") {
           const root = propertyIndex.rootOf(m.property_id);
           if (root !== propertyFilter) return false;
