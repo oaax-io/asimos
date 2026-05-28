@@ -560,7 +560,7 @@ function ClientsPage() {
                     data-state={selected.has(c.id) ? "selected" : undefined}
                     className={isLinked ? "border-l-2 border-l-primary/60" : undefined}
                   >
-                  <TableRow key={c.id} data-state={selected.has(c.id) ? "selected" : undefined}>
+                  
                     <TableCell>
                       <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} aria-label="Auswählen" />
                     </TableCell>
