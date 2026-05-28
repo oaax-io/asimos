@@ -68,6 +68,21 @@ function detectKind(file: File): string {
   return "other";
 }
 
+function isDocumentLike(item: { file_name?: string | null; file_url?: string | null; file_type?: string | null }): boolean {
+  const name = (item.file_name ?? item.file_url ?? "").toLowerCase();
+  if (/\.(pdf|docx?|xlsx?|pptx?|txt|csv|rtf|odt|ods|odp)$/i.test(name)) return true;
+  const t = (item.file_type ?? "").toLowerCase();
+  if (t === "document" || t === "pdf") return true;
+  return false;
+}
+
+function isAcceptedMediaFile(file: File): boolean {
+  if (file.type.startsWith("image/") || file.type.startsWith("video/")) return true;
+  // Some browsers report empty mime for HEIC/TIFF — fall back to extension
+  if (/\.(heic|heif|tif|tiff|avif)$/i.test(file.name)) return true;
+  return false;
+}
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
