@@ -211,14 +211,22 @@ function ClientsPage() {
       }
       return true;
     });
-    // Sort: keep linked partners adjacent by sharing a group key (lead partner's name)
+    // Sort: group by leader, leader first, then partners directly below
     return list.sort((a: any, b: any) => {
       const ra = groupInfo.find(a.id);
       const rb = groupInfo.find(b.id);
-      const ga = groupInfo.groupSortName.get(ra) ?? (a.full_name ?? "").toLowerCase();
-      const gb = groupInfo.groupSortName.get(rb) ?? (b.full_name ?? "").toLowerCase();
-      if (ga !== gb) return ga.localeCompare(gb);
-      if (ra !== rb) return ra.localeCompare(rb);
+      const la = groupInfo.groupLeader.get(ra);
+      const lb = groupInfo.groupLeader.get(rb);
+      const ka = la ? `${la.created}|${la.name}|${la.id}` : `${a.created_at ?? ""}|${(a.full_name ?? "").toLowerCase()}|${a.id}`;
+      const kb = lb ? `${lb.created}|${lb.name}|${lb.id}` : `${b.created_at ?? ""}|${(b.full_name ?? "").toLowerCase()}|${b.id}`;
+      if (ka !== kb) return ka < kb ? -1 : 1;
+      // Same group: leader first, others by created_at then name
+      const aIsLeader = la?.id === a.id ? 0 : 1;
+      const bIsLeader = lb?.id === b.id ? 0 : 1;
+      if (aIsLeader !== bIsLeader) return aIsLeader - bIsLeader;
+      const ca = a.created_at ?? "";
+      const cb = b.created_at ?? "";
+      if (ca !== cb) return ca < cb ? -1 : 1;
       return (a.full_name ?? "").localeCompare(b.full_name ?? "");
     });
   }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, groupInfo]);
