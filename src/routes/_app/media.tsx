@@ -101,6 +101,7 @@ function MediaPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0, currentName: "" });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({ property_id: "", title: "", description: "" });
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
@@ -205,42 +206,61 @@ function MediaPage() {
       setUploading(true);
       const processed = await convertUnsupportedImages(files);
       const maxSort = Math.max(0, ...media.filter((m) => m.property_id === form.property_id).map((m) => m.sort_order));
+      setUploadProgress({ done: 0, total: processed.length, currentName: processed[0]?.name ?? "" });
+      const toastId = toast.loading(`Lädt hoch… 0 / ${processed.length}`);
 
-      for (let i = 0; i < processed.length; i++) {
-        const file = processed[i];
-        const ext = file.name.split(".").pop() ?? "bin";
-        const path = `${form.property_id}/${crypto.randomUUID()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("media").upload(path, file, {
-          contentType: file.type || "application/octet-stream",
-          upsert: false,
-        });
-        if (upErr) throw upErr;
+      try {
+        for (let i = 0; i < processed.length; i++) {
+          const file = processed[i];
+          setUploadProgress({ done: i, total: processed.length, currentName: file.name });
+          toast.loading(`Lädt hoch… ${i} / ${processed.length} · ${file.name}`, { id: toastId });
 
-        const { error } = await supabase.from("property_media").insert({
-          property_id: form.property_id,
-          file_url: path,
-          file_name: file.name,
-          file_type: detectKind(file),
-          file_size: file.size,
-          title: files.length === 1 && form.title ? form.title : null,
-          description: files.length === 1 && form.description ? form.description : null,
-          sort_order: maxSort + i + 1,
-        });
-        if (error) throw error;
+          const ext = file.name.split(".").pop() ?? "bin";
+          const path = `${form.property_id}/${crypto.randomUUID()}.${ext}`;
+          const { error: upErr } = await supabase.storage.from("media").upload(path, file, {
+            contentType: file.type || "application/octet-stream",
+            upsert: false,
+          });
+          if (upErr) throw upErr;
+
+          const { error } = await supabase.from("property_media").insert({
+            property_id: form.property_id,
+            file_url: path,
+            file_name: file.name,
+            file_type: detectKind(file),
+            file_size: file.size,
+            title: files.length === 1 && form.title ? form.title : null,
+            description: files.length === 1 && form.description ? form.description : null,
+            sort_order: maxSort + i + 1,
+          });
+          if (error) throw error;
+
+          setUploadProgress({ done: i + 1, total: processed.length, currentName: file.name });
+        }
+
+        await syncPropertyImages(form.property_id);
+        toast.success(
+          processed.length === 1
+            ? "Bild hochgeladen"
+            : `Alle ${processed.length} Dateien hochgeladen`,
+          { id: toastId },
+        );
+      } catch (err) {
+        toast.dismiss(toastId);
+        throw err;
       }
-
-      await syncPropertyImages(form.property_id);
     },
     onSuccess: () => {
-      toast.success("Medien hochgeladen");
       qc.invalidateQueries({ queryKey: ["property-media"] });
       reset();
       setOpen(false);
       setUploading(false);
+      setUploadProgress({ done: 0, total: 0, currentName: "" });
     },
     onError: (e: Error) => {
       toast.error(e.message);
       setUploading(false);
+      setUploadProgress({ done: 0, total: 0, currentName: "" });
     },
   });
 
@@ -583,8 +603,27 @@ function MediaPage() {
                   </>
                 )}
               </div>
+              {uploading && uploadProgress.total > 0 && (() => {
+                const pct = Math.round((uploadProgress.done / uploadProgress.total) * 100);
+                return (
+                  <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium">
+                        {uploadProgress.done} / {uploadProgress.total} hochgeladen
+                      </span>
+                      <span className="text-muted-foreground">{pct}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                    {uploadProgress.currentName && (
+                      <p className="truncate text-xs text-muted-foreground">{uploadProgress.currentName}</p>
+                    )}
+                  </div>
+                );
+              })()}
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>
+                <Button variant="outline" onClick={() => setOpen(false)} disabled={uploading}>
                   Abbrechen
                 </Button>
                 <Button onClick={() => upload.mutate()} disabled={uploading || files.length === 0}>
