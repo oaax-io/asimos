@@ -602,7 +602,18 @@ function MediaPage() {
                 </div>
                 <div className="p-3">
                   <p className="truncate text-sm font-medium">{f.title}</p>
-                  {f.city && <p className="truncate text-xs text-muted-foreground">{f.city}</p>}
+                  <div className="flex items-center justify-between gap-2">
+                    {f.city ? (
+                      <p className="truncate text-xs text-muted-foreground">{f.city}</p>
+                    ) : (
+                      <span />
+                    )}
+                    {f.unitCount > 0 && (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {f.unitCount} Einheit{f.unitCount === 1 ? "" : "en"}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </button>
             );
