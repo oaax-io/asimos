@@ -603,8 +603,27 @@ function MediaPage() {
                   </>
                 )}
               </div>
+              {uploading && uploadProgress.total > 0 && (() => {
+                const pct = Math.round((uploadProgress.done / uploadProgress.total) * 100);
+                return (
+                  <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium">
+                        {uploadProgress.done} / {uploadProgress.total} hochgeladen
+                      </span>
+                      <span className="text-muted-foreground">{pct}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                    {uploadProgress.currentName && (
+                      <p className="truncate text-xs text-muted-foreground">{uploadProgress.currentName}</p>
+                    )}
+                  </div>
+                );
+              })()}
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOpen(false)}>
+                <Button variant="outline" onClick={() => setOpen(false)} disabled={uploading}>
                   Abbrechen
                 </Button>
                 <Button onClick={() => upload.mutate()} disabled={uploading || files.length === 0}>
