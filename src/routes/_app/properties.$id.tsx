@@ -252,6 +252,16 @@ function PropertyDetail() {
         }
       }
 
+      const { data: previousMedia, error: previousMediaError } = await supabase
+        .from("property_media")
+        .select("file_url")
+        .eq("property_id", id);
+      if (previousMediaError) throw previousMediaError;
+
+      const previousPaths = new Set((previousMedia ?? []).map((row) => row.file_url).filter(Boolean));
+      const nextPaths = new Set(payload.media.map((m) => m.file_url).filter(Boolean));
+      const removedPaths = [...previousPaths].filter((path) => !nextPaths.has(path));
+
       const { error: deleteMediaError } = await supabase.from("property_media").delete().eq("property_id", id);
       if (deleteMediaError) throw deleteMediaError;
 
@@ -268,6 +278,13 @@ function PropertyDetail() {
         const { error: mediaError } = await supabase.from("property_media").insert(mediaRows as any);
         if (mediaError) throw mediaError;
       }
+
+      if (removedPaths.length > 0) {
+        const { error: removeStorageError } = await supabase.storage.from("media").remove(removedPaths);
+        if (removeStorageError) throw removeStorageError;
+      }
+
+      await syncPropertyImagesFromMedia(id);
 
       const ownerChanged = !!(newOwnerId && newOwnerId !== prevOwnerId);
       // Nur loggen wenn es etwas zu loggen gibt
