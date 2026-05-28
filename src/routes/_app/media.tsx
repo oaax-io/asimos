@@ -495,6 +495,33 @@ function MediaPage() {
         </Select>
       </div>
 
+      {propertyFilter !== "all" && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setPropertyFilter("all")}>
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Alle Ordner
+          </Button>
+          {duplicateCount > 0 && (
+            <div className="ml-auto flex items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-1.5 text-xs text-amber-900 dark:border-amber-700/40 dark:bg-amber-950/40 dark:text-amber-200">
+              <Copy className="h-3.5 w-3.5" />
+              <span>{duplicateCount} mögliche Duplikat(e) erkannt</span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7"
+                onClick={() => {
+                  if (window.confirm(`${duplicateCount} doppelte Datei(en) löschen? Das älteste/Cover-Bild bleibt erhalten.`)) {
+                    removeDuplicates.mutate(propertyFilter);
+                  }
+                }}
+              >
+                Duplikate entfernen
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">Wird geladen…</div>
       ) : filtered.length === 0 ? (
@@ -502,6 +529,42 @@ function MediaPage() {
           title="Mediathek leer"
           description="Lade Bilder, Videos oder Grundrisse zu deinen Objekten hoch."
         />
+      ) : showFolders ? (
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {folders.map((f) => {
+            const coverUrl = f.cover ? getPublicUrl(f.cover.file_url) : null;
+            return (
+              <button
+                key={f.propertyId}
+                type="button"
+                onClick={() => setPropertyFilter(f.propertyId)}
+                className="group relative overflow-hidden rounded-xl border bg-card text-left shadow-soft transition hover:shadow-md"
+              >
+                <div className="relative aspect-square w-full overflow-hidden bg-muted">
+                  {coverUrl ? (
+                    <img
+                      src={coverUrl}
+                      alt={f.title}
+                      className="h-full w-full object-cover transition group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <Folder className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                  )}
+                  <Badge className="absolute right-2 top-2 bg-card/90 text-foreground border border-border">
+                    <Folder className="mr-1 h-3 w-3" />
+                    {f.items.length}
+                  </Badge>
+                </div>
+                <div className="p-3">
+                  <p className="truncate text-sm font-medium">{f.title}</p>
+                  {f.city && <p className="truncate text-xs text-muted-foreground">{f.city}</p>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {filtered.map((m, idx) => {
