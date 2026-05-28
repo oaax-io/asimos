@@ -316,6 +316,39 @@ function MediaPage() {
     [media, propertyFilter, typeFilter, search],
   );
 
+  const showFolders = propertyFilter === "all" && !search;
+
+  const folders = useMemo(() => {
+    const map = new Map<string, { propertyId: string; title: string; city: string | null; items: MediaItem[]; cover: MediaItem | null }>();
+    for (const m of filtered) {
+      if (!m.property_id) continue;
+      const f = map.get(m.property_id) ?? {
+        propertyId: m.property_id,
+        title: m.properties?.title ?? "Ohne Titel",
+        city: m.properties?.city ?? null,
+        items: [],
+        cover: null,
+      };
+      f.items.push(m);
+      if (!f.cover || m.is_cover) f.cover = f.cover && f.cover.is_cover ? f.cover : m;
+      map.set(m.property_id, f);
+    }
+    return Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title));
+  }, [filtered]);
+
+  const duplicateCount = useMemo(() => {
+    if (showFolders || propertyFilter === "all") return 0;
+    const items = media.filter((m) => m.property_id === propertyFilter && m.file_size != null);
+    const groups = new Map<string, number>();
+    for (const m of items) {
+      const key = `${m.file_type ?? ""}::${m.file_size}`;
+      groups.set(key, (groups.get(key) ?? 0) + 1);
+    }
+    let extras = 0;
+    for (const count of groups.values()) if (count > 1) extras += count - 1;
+    return extras;
+  }, [media, propertyFilter, showFolders]);
+
   return (
     <>
       <PageHeader
