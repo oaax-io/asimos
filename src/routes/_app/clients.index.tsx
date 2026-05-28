@@ -565,22 +565,30 @@ function ClientsPage() {
                 ].filter(Boolean).join(", ") || [c.address, [c.postal_code, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
                 const plzOrt = [disc?.postal_code ?? c.postal_code, disc?.city ?? c.city].filter(Boolean).join(" ");
                 const groupRoot = groupInfo.find(c.id);
-                const isLinked = (groupInfo.groupSize.get(groupRoot) ?? 1) > 1;
+                const groupSize = groupInfo.groupSize.get(groupRoot) ?? 1;
+                const leader = groupInfo.groupLeader.get(groupRoot);
+                const isLinked = groupSize > 1;
+                const isLeader = leader?.id === c.id;
+                const isPartner = isLinked && !isLeader;
                 return (
                   <TableRow
                     key={c.id}
                     data-state={selected.has(c.id) ? "selected" : undefined}
-                    className={isLinked ? "border-l-2 border-l-primary/60" : undefined}
+                    className={isPartner ? "bg-muted/30" : undefined}
                   >
-                  
                     <TableCell>
                       <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} aria-label="Auswählen" />
                     </TableCell>
                     <TableCell>
-                      <button type="button" onClick={() => setDetailId(c.id)} className="font-medium hover:text-primary">
-                        {c.full_name}
-                      </button>
-                      {c.is_archived && <Badge variant="outline" className="ml-2">Archiviert</Badge>}
+                      <div className="flex items-center gap-2">
+                        {isPartner && (
+                          <CornerDownRight className="h-4 w-4 shrink-0 text-muted-foreground ml-3" aria-hidden />
+                        )}
+                        <button type="button" onClick={() => setDetailId(c.id)} className="font-medium hover:text-primary text-left">
+                          {c.full_name}
+                        </button>
+                        {c.is_archived && <Badge variant="outline" className="ml-1">Archiviert</Badge>}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {(() => {
