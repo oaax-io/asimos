@@ -523,17 +523,48 @@ function MediaPage() {
                 </div>
                 <div>
                   <Label>Dateien</Label>
-                  <Input
+                  <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*,video/*,.tif,.tiff,.heic,.heif"
                     multiple
+                    className="hidden"
                     onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
                   />
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
+                    onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setDragActive(true); }}
+                    onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); if (e.currentTarget === e.target) setDragActive(false); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDragActive(false);
+                      const dropped = Array.from(e.dataTransfer.files ?? []);
+                      if (dropped.length > 0) setFiles(dropped);
+                    }}
+                    className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-8 text-center transition ${
+                      dragActive
+                        ? "scale-[1.01] border-primary bg-primary/10"
+                        : "border-muted-foreground/30 hover:border-primary/60 hover:bg-accent/20"
+                    }`}
+                  >
+                    <div className={`rounded-full bg-primary/10 p-3 ${dragActive ? "animate-bounce" : ""}`}>
+                      <Upload className={`h-5 w-5 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />
+                    </div>
+                    <p className="text-sm font-medium">
+                      {dragActive ? "Jetzt loslassen" : "Dateien hierher ziehen oder klicken"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Bilder & Videos · mehrere möglich</p>
+                  </div>
                   {files.length > 0 && (
-                    <p className="mt-1 text-xs text-muted-foreground">{files.length} Datei(en) ausgewählt</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{files.length} Datei(en) ausgewählt</p>
                   )}
                 </div>
+
                 {files.length === 1 && (
                   <>
                     <div>
