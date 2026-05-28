@@ -182,8 +182,8 @@ function ClientsPage() {
       const created = c.created_at ?? "";
       const name = (c.full_name ?? "").toLowerCase();
       const cur = groupLeader.get(root);
-      // Leader = earliest created_at; tie-break by name
-      if (!cur || created < cur.created || (created === cur.created && name < cur.name)) {
+      // Leader = latest created_at (neueste zuerst); tie-break by name
+      if (!cur || created > cur.created || (created === cur.created && name < cur.name)) {
         groupLeader.set(root, { id: c.id, created, name });
       }
     });
@@ -211,22 +211,23 @@ function ClientsPage() {
       }
       return true;
     });
-    // Sort: group by leader, leader first, then partners directly below
+    // Sort: group by leader (neueste zuerst), leader first, then partners directly below
     return list.sort((a: any, b: any) => {
       const ra = groupInfo.find(a.id);
       const rb = groupInfo.find(b.id);
       const la = groupInfo.groupLeader.get(ra);
       const lb = groupInfo.groupLeader.get(rb);
+      // Sort groups by leader created_at descending (neueste zuerst)
       const ka = la ? `${la.created}|${la.name}|${la.id}` : `${a.created_at ?? ""}|${(a.full_name ?? "").toLowerCase()}|${a.id}`;
       const kb = lb ? `${lb.created}|${lb.name}|${lb.id}` : `${b.created_at ?? ""}|${(b.full_name ?? "").toLowerCase()}|${b.id}`;
-      if (ka !== kb) return ka < kb ? -1 : 1;
-      // Same group: leader first, others by created_at then name
+      if (ka !== kb) return ka > kb ? -1 : 1;
+      // Same group: leader first, others by created_at descending then name
       const aIsLeader = la?.id === a.id ? 0 : 1;
       const bIsLeader = lb?.id === b.id ? 0 : 1;
       if (aIsLeader !== bIsLeader) return aIsLeader - bIsLeader;
       const ca = a.created_at ?? "";
       const cb = b.created_at ?? "";
-      if (ca !== cb) return ca < cb ? -1 : 1;
+      if (ca !== cb) return ca > cb ? -1 : 1;
       return (a.full_name ?? "").localeCompare(b.full_name ?? "");
     });
   }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, groupInfo]);
