@@ -781,7 +781,7 @@ function MediaPage() {
               <button
                 key={f.propertyId}
                 type="button"
-                onClick={() => setPropertyFilter(f.propertyId)}
+                onClick={() => { setPropertyFilter(f.propertyId); setViewMode("grid"); }}
                 className="grid w-full grid-cols-[1fr_120px_140px_80px] items-center gap-4 border-b px-4 py-2.5 text-left text-sm transition last:border-b-0 hover:bg-muted/50"
               >
                 <div className="flex min-w-0 items-center gap-3">
