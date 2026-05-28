@@ -142,8 +142,33 @@ function MediaPage() {
 
   const { data: properties = [] } = useQuery({
     queryKey: ["properties-min"],
-    queryFn: async () => (await supabase.from("properties").select("id, title").order("title")).data ?? [],
+    queryFn: async () =>
+      (
+        await supabase
+          .from("properties")
+          .select("id, title, city, parent_property_id, is_unit")
+          .order("title")
+      ).data ?? [],
   });
+
+  // Map every property to its "root" property (parent if unit, else itself).
+  // Units share the same folder as their parent property.
+  const propertyIndex = useMemo(() => {
+    const byId = new Map<string, { id: string; title: string; city: string | null; parent_property_id: string | null; is_unit: boolean | null }>();
+    for (const p of properties as any[]) byId.set(p.id, p);
+    const rootOf = (pid: string | null | undefined): string | null => {
+      if (!pid) return null;
+      const p = byId.get(pid);
+      if (!p) return pid;
+      return p.is_unit && p.parent_property_id ? p.parent_property_id : p.id;
+    };
+    return { byId, rootOf };
+  }, [properties]);
+
+  const rootProperties = useMemo(
+    () => (properties as any[]).filter((p) => !p.is_unit),
+    [properties],
+  );
 
   const reset = () => {
     setFiles([]);
@@ -305,7 +330,10 @@ function MediaPage() {
   const filtered = useMemo(
     () =>
       media.filter((m) => {
-        if (propertyFilter !== "all" && m.property_id !== propertyFilter) return false;
+        if (propertyFilter !== "all") {
+          const root = propertyIndex.rootOf(m.property_id);
+          if (root !== propertyFilter) return false;
+        }
         if (typeFilter !== "all" && m.file_type !== typeFilter) return false;
         if (search) {
           const q = search.toLowerCase();
@@ -313,32 +341,47 @@ function MediaPage() {
         }
         return true;
       }),
-    [media, propertyFilter, typeFilter, search],
+    [media, propertyFilter, typeFilter, search, propertyIndex],
   );
 
   const showFolders = propertyFilter === "all" && !search;
 
   const folders = useMemo(() => {
-    const map = new Map<string, { propertyId: string; title: string; city: string | null; items: MediaItem[]; cover: MediaItem | null }>();
+    const map = new Map<string, { propertyId: string; title: string; city: string | null; items: MediaItem[]; cover: MediaItem | null; unitCount: number }>();
+    const unitsSeen = new Map<string, Set<string>>();
     for (const m of filtered) {
       if (!m.property_id) continue;
-      const f = map.get(m.property_id) ?? {
-        propertyId: m.property_id,
-        title: m.properties?.title ?? "Ohne Titel",
-        city: m.properties?.city ?? null,
+      const rootId = propertyIndex.rootOf(m.property_id) ?? m.property_id;
+      const rootProp = propertyIndex.byId.get(rootId);
+      const f = map.get(rootId) ?? {
+        propertyId: rootId,
+        title: rootProp?.title ?? m.properties?.title ?? "Ohne Titel",
+        city: rootProp?.city ?? m.properties?.city ?? null,
         items: [],
         cover: null,
+        unitCount: 0,
       };
       f.items.push(m);
       if (!f.cover || m.is_cover) f.cover = f.cover && f.cover.is_cover ? f.cover : m;
-      map.set(m.property_id, f);
+      if (m.property_id !== rootId) {
+        const set = unitsSeen.get(rootId) ?? new Set<string>();
+        set.add(m.property_id);
+        unitsSeen.set(rootId, set);
+      }
+      map.set(rootId, f);
+    }
+    for (const [rootId, set] of unitsSeen) {
+      const f = map.get(rootId);
+      if (f) f.unitCount = set.size;
     }
     return Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title));
-  }, [filtered]);
+  }, [filtered, propertyIndex]);
 
   const duplicateCount = useMemo(() => {
     if (showFolders || propertyFilter === "all") return 0;
-    const items = media.filter((m) => m.property_id === propertyFilter && m.file_size != null);
+    const items = media.filter(
+      (m) => propertyIndex.rootOf(m.property_id) === propertyFilter && m.file_size != null,
+    );
     const groups = new Map<string, number>();
     for (const m of items) {
       const key = `${m.file_type ?? ""}::${m.file_size}`;
@@ -347,7 +390,7 @@ function MediaPage() {
     let extras = 0;
     for (const count of groups.values()) if (count > 1) extras += count - 1;
     return extras;
-  }, [media, propertyFilter, showFolders]);
+  }, [media, propertyFilter, showFolders, propertyIndex]);
 
   return (
     <>
@@ -380,7 +423,7 @@ function MediaPage() {
                       <SelectValue placeholder="Auswählen" />
                     </SelectTrigger>
                     <SelectContent>
-                      {properties.map((p) => (
+                      {rootProperties.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.title}
                         </SelectItem>
@@ -474,7 +517,7 @@ function MediaPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Alle Immobilien</SelectItem>
-            {properties.map((p) => (
+            {rootProperties.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.title}
               </SelectItem>
@@ -559,7 +602,18 @@ function MediaPage() {
                 </div>
                 <div className="p-3">
                   <p className="truncate text-sm font-medium">{f.title}</p>
-                  {f.city && <p className="truncate text-xs text-muted-foreground">{f.city}</p>}
+                  <div className="flex items-center justify-between gap-2">
+                    {f.city ? (
+                      <p className="truncate text-xs text-muted-foreground">{f.city}</p>
+                    ) : (
+                      <span />
+                    )}
+                    {f.unitCount > 0 && (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {f.unitCount} Einheit{f.unitCount === 1 ? "" : "en"}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </button>
             );
