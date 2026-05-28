@@ -456,7 +456,7 @@ function MediaPage() {
     [media, propertyFilter, typeFilter, search, propertyIndex],
   );
 
-  const showFolders = propertyFilter === "all" && !search;
+  const showFolders = viewMode === "folder";
 
   const folders = useMemo(() => {
     const map = new Map<string, { propertyId: string; title: string; city: string | null; items: MediaItem[]; cover: MediaItem | null; unitCount: number }>();
