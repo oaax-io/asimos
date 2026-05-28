@@ -512,28 +512,12 @@ function MediaPage() {
         description="Bilder, Videos und Grundrisse für alle Objekte"
         action={
           <div className="flex items-center gap-2">
-            <div className="flex items-center overflow-hidden rounded-lg border bg-card">
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`rounded-none border-r px-3 ${viewMode === "folder" ? "bg-muted font-medium" : ""}`}
-                onClick={() => setViewMode("folder")}
-                title="Ordneransicht"
-              >
-                <Folder className="mr-1.5 h-4 w-4" />
-                Ordner
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`rounded-none px-3 ${viewMode === "grid" ? "bg-muted font-medium" : ""}`}
-                onClick={() => setViewMode("grid")}
-                title="Kachelansicht"
-              >
-                <LayoutGrid className="mr-1.5 h-4 w-4" />
-                Kacheln
-              </Button>
-            </div>
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "folder" | "grid")}>
+              <TabsList>
+                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />Kacheln</TabsTrigger>
+                <TabsTrigger value="folder"><ListIcon className="mr-1 h-4 w-4" />Ordner</TabsTrigger>
+              </TabsList>
+            </Tabs>
             <Dialog
               open={open}
               onOpenChange={(o) => {
