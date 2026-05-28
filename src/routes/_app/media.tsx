@@ -782,51 +782,33 @@ function MediaPage() {
           description="Lade Bilder, Videos oder Grundrisse zu deinen Objekten hoch."
         />
       ) : showFolders ? (
-        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {folders.map((f) => {
-            const coverUrl = f.cover ? getPublicUrl(f.cover.file_url) : null;
-            return (
+        <div className="overflow-hidden rounded-xl border bg-card shadow-soft">
+          <div className="grid grid-cols-[1fr_120px_140px_80px] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div>Name</div>
+            <div className="text-right">Dateien</div>
+            <div>Ort</div>
+            <div className="text-right">Einheiten</div>
+          </div>
+          {folders.length === 0 ? (
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">Keine Ordner vorhanden</div>
+          ) : (
+            folders.map((f) => (
               <button
                 key={f.propertyId}
                 type="button"
                 onClick={() => setPropertyFilter(f.propertyId)}
-                className="group relative overflow-hidden rounded-xl border bg-card text-left shadow-soft transition hover:shadow-md"
+                className="grid w-full grid-cols-[1fr_120px_140px_80px] items-center gap-4 border-b px-4 py-2.5 text-left text-sm transition last:border-b-0 hover:bg-muted/50"
               >
-                <div className="relative aspect-square w-full overflow-hidden bg-muted">
-                  {coverUrl ? (
-                    <img
-                      src={coverUrl}
-                      alt={f.title}
-                      className="h-full w-full object-cover transition group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <Folder className="h-12 w-12 text-muted-foreground" />
-                    </div>
-                  )}
-                  <Badge className="absolute right-2 top-2 bg-card/90 text-foreground border border-border">
-                    <Folder className="mr-1 h-3 w-3" />
-                    {f.items.length}
-                  </Badge>
+                <div className="flex min-w-0 items-center gap-3">
+                  <Folder className="h-5 w-5 shrink-0 text-primary" fill="currentColor" />
+                  <span className="truncate font-medium">{f.title}</span>
                 </div>
-                <div className="p-3">
-                  <p className="truncate text-sm font-medium">{f.title}</p>
-                  <div className="flex items-center justify-between gap-2">
-                    {f.city ? (
-                      <p className="truncate text-xs text-muted-foreground">{f.city}</p>
-                    ) : (
-                      <span />
-                    )}
-                    {f.unitCount > 0 && (
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {f.unitCount} Einheit{f.unitCount === 1 ? "" : "en"}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <div className="text-right text-muted-foreground tabular-nums">{f.items.length}</div>
+                <div className="truncate text-muted-foreground">{f.city ?? "—"}</div>
+                <div className="text-right text-muted-foreground tabular-nums">{f.unitCount > 0 ? f.unitCount : "—"}</div>
               </button>
-            );
-          })}
+            ))
+          )}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
