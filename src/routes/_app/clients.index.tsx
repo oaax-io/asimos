@@ -175,15 +175,19 @@ function ClientsPage() {
       if (parent.has(r.client_id) && parent.has(r.related_client_id)) union(r.client_id, r.related_client_id);
     });
     const groupSize = new Map<string, number>();
-    const groupSortName = new Map<string, string>();
+    const groupLeader = new Map<string, { id: string; created: string; name: string }>();
     clients.forEach((c: any) => {
       const root = find(c.id);
       groupSize.set(root, (groupSize.get(root) ?? 0) + 1);
-      const cur = groupSortName.get(root);
+      const created = c.created_at ?? "";
       const name = (c.full_name ?? "").toLowerCase();
-      if (cur === undefined || name < cur) groupSortName.set(root, name);
+      const cur = groupLeader.get(root);
+      // Leader = earliest created_at; tie-break by name
+      if (!cur || created < cur.created || (created === cur.created && name < cur.name)) {
+        groupLeader.set(root, { id: c.id, created, name });
+      }
     });
-    return { find, groupSize, groupSortName };
+    return { find, groupSize, groupLeader };
   }, [clients, relationshipsQuery.data]);
 
   const filtered = useMemo(() => {
