@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { convertUnsupportedImages } from "@/lib/image-convert";
+import { extractPropertyImagePaths } from "@/lib/property-media";
 
 export const Route = createFileRoute("/_app/media")({ component: MediaPage });
 
@@ -44,6 +45,20 @@ type MediaItem = {
 function getPublicUrl(path: string) {
   if (path.startsWith("http")) return path;
   return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+}
+
+async function syncPropertyImages(propertyId: string) {
+  const { data, error } = await supabase
+    .from("property_media")
+    .select("file_url, file_type, sort_order, is_cover, created_at")
+    .eq("property_id", propertyId);
+  if (error) throw error;
+
+  const { error: updateError } = await supabase
+    .from("properties")
+    .update({ images: extractPropertyImagePaths(data ?? []) })
+    .eq("id", propertyId);
+  if (updateError) throw updateError;
 }
 
 function detectKind(file: File): string {
@@ -166,6 +181,8 @@ function MediaPage() {
         });
         if (error) throw error;
       }
+
+      await syncPropertyImages(form.property_id);
     },
     onSuccess: () => {
       toast.success("Medien hochgeladen");
@@ -187,6 +204,7 @@ function MediaPage() {
       }
       const { error } = await supabase.from("property_media").delete().eq("id", item.id);
       if (error) throw error;
+      await syncPropertyImages(item.property_id);
     },
     onSuccess: () => {
       toast.success("Gelöscht");
@@ -200,6 +218,7 @@ function MediaPage() {
       await supabase.from("property_media").update({ is_cover: false }).eq("property_id", item.property_id);
       const { error } = await supabase.from("property_media").update({ is_cover: true }).eq("id", item.id);
       if (error) throw error;
+      await syncPropertyImages(item.property_id);
     },
     onSuccess: () => {
       toast.success("Titelbild gesetzt");
@@ -215,6 +234,7 @@ function MediaPage() {
       if (!target) return;
       await supabase.from("property_media").update({ sort_order: target.sort_order }).eq("id", item.id);
       await supabase.from("property_media").update({ sort_order: item.sort_order }).eq("id", target.id);
+      await syncPropertyImages(item.property_id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["property-media"] }),
   });
