@@ -1292,6 +1292,7 @@ export type Database = {
             | null
           renovation_costs: number | null
           renovation_description: string | null
+          renovation_own_work: number | null
           renovation_value_increase: number | null
           requested_increase: number | null
           requested_mortgage: number | null
@@ -1377,6 +1378,7 @@ export type Database = {
             | null
           renovation_costs?: number | null
           renovation_description?: string | null
+          renovation_own_work?: number | null
           renovation_value_increase?: number | null
           requested_increase?: number | null
           requested_mortgage?: number | null
@@ -1462,6 +1464,7 @@ export type Database = {
             | null
           renovation_costs?: number | null
           renovation_description?: string | null
+          renovation_own_work?: number | null
           renovation_value_increase?: number | null
           requested_increase?: number | null
           requested_mortgage?: number | null

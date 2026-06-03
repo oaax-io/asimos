@@ -1,0 +1,1 @@
+ALTER TABLE public.financing_dossiers ADD COLUMN renovation_own_work NUMERIC DEFAULT 0;
