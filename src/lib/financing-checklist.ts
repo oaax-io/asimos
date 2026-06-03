@@ -163,7 +163,9 @@ export function checklistStats(rows: ChecklistRow[]) {
   const present = rows.filter((r) => r.is_present || r.status === "present").length;
   const missing = rows.filter((r) => r.status === "missing").length;
 
-  const requiredRows = rows.filter((r) => required.has(`${r.section}:${r.item_key}`));
+  const requiredRows = rows.filter(
+    (r) => required.has(`${r.section}:${r.item_key}`) && r.status !== "not_relevant"
+  );
   const requiredPresent = requiredRows.filter((r) => r.is_present || r.status === "present").length;
   const requiredTotal = requiredRows.length;
 
