@@ -492,7 +492,7 @@ export const listBankPackages = createServerFn({ method: "GET" })
         title: r.title,
         file_url: r.file_url,
         created_at: r.created_at,
-        variables: (r.variables ?? {}) as Record<string, unknown>,
+        variables: (r.variables ?? {}) as { [k: string]: unknown },
       })),
     };
   });
