@@ -255,6 +255,33 @@ function effectiveIncome(d: any): number {
   return main + co;
 }
 
+// Eigenmittel beider Partner zusammen
+function effectiveEquity(d: any): number {
+  const combined = numv(d?.eigenkapital_kombiniert);
+  if (combined > 0) return combined;
+  return numv(d?.own_funds_total) + numv(d?.co_applicant_eigenkapital);
+}
+
+// PK / Freizügigkeit beider Partner zusammen
+function effectivePension(d: any): number {
+  const combined = numv(d?.pk_anteil_kombiniert);
+  if (combined > 0) return combined;
+  const main = numv(d?.own_funds_pension_fund) + numv(d?.own_funds_vested_benefits);
+  return main + numv(d?.co_applicant_pk_anteil);
+}
+
+function hasCoApplicant(d: any): boolean {
+  return (
+    !!d?.co_applicant_client_id ||
+    numv(d?.co_applicant_einkommen) > 0 ||
+    numv(d?.einkommen_kombiniert) > 0 ||
+    numv(d?.co_applicant_eigenkapital) > 0 ||
+    numv(d?.eigenkapital_kombiniert) > 0 ||
+    numv(d?.co_applicant_pk_anteil) > 0 ||
+    numv(d?.pk_anteil_kombiniert) > 0
+  );
+}
+
 function chf(n: number): string {
   const rounded = Math.round(n);
   const sign = rounded < 0 ? "-" : "";
