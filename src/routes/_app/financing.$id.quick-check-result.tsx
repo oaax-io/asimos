@@ -479,12 +479,13 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const pensionUsed = Math.min(pension, s.equity);
+      const effectiveEq = s.equity + s.ownWork;
+      const pensionUsed = Math.min(pension, effectiveEq);
       const result = calcQuickCheck({
         purchase_price: s.purchase,
-        renovation_costs: reno,
+        renovation_costs: s.reno,
         requested_mortgage: s.mortgage,
-        own_funds_total: s.equity,
+        own_funds_total: effectiveEq,
         own_funds_pension_fund: pensionUsed,
         own_funds_vested_benefits: 0,
         gross_income_yearly: s.income,
@@ -501,6 +502,8 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
         : { own_funds_total: s.equity };
       const { error } = await supabase.from("financing_dossiers").update({
         purchase_price: s.purchase,
+        renovation_costs: s.reno,
+        renovation_own_work: s.ownWork,
         ...equityUpdate,
         ...incomeUpdate,
         calculated_interest_rate: s.rate,
@@ -513,6 +516,7 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
       }).eq("id", dossier.id);
       if (error) throw error;
     },
+
     onSuccess: () => {
       toast.success("Dossier aktualisiert");
       qc.invalidateQueries({ queryKey: ["financing_dossier", dossier.id] });
