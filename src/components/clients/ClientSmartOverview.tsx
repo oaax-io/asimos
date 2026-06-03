@@ -22,11 +22,25 @@ export function ClientSmartOverview({ clientId, client, onJumpTab }: Props) {
     queryFn: async () => {
       const { data } = await supabase
         .from("client_relationships")
-        .select("id, relationship_type, related:clients!client_relationships_related_client_id_fkey(id, full_name)")
-        .eq("client_id", clientId);
-      return data ?? [];
+        .select(
+          "id, client_id, related_client_id, relationship_type, related:clients!client_relationships_related_client_id_fkey(id, full_name), owner:clients!client_relationships_client_id_fkey(id, full_name)"
+        )
+        .or(`client_id.eq.${clientId},related_client_id.eq.${clientId}`);
+      const seen = new Set<string>();
+      const out: any[] = [];
+      for (const row of (data ?? []) as any[]) {
+        const isOwner = row.client_id === clientId;
+        const other = isOwner ? row.related : row.owner;
+        if (!other) continue;
+        const key = [row.client_id, row.related_client_id].sort().join("|") + "|" + row.relationship_type;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ id: row.id, relationship_type: row.relationship_type, related: other });
+      }
+      return out;
     },
   });
+
 
   const { data: properties = [] } = useQuery({
     queryKey: ["client_overview_props", clientId],
