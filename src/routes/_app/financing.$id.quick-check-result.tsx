@@ -443,10 +443,17 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
         ancillary_costs_yearly: dossier.ancillary_costs_yearly,
         amortisation_yearly: dossier.amortisation_yearly,
       });
+      const hasCoApplicant =
+        !!dossier.co_applicant_client_id ||
+        numv(dossier.co_applicant_einkommen) > 0 ||
+        numv(dossier.einkommen_kombiniert) > 0;
+      const incomeUpdate = hasCoApplicant
+        ? { einkommen_kombiniert: s.income }
+        : { gross_income_yearly: s.income };
       const { error } = await supabase.from("financing_dossiers").update({
         purchase_price: s.purchase,
         own_funds_total: s.equity,
-        gross_income_yearly: s.income,
+        ...incomeUpdate,
         calculated_interest_rate: s.rate,
         requested_mortgage: s.mortgage,
         total_investment: result.total_investment,
