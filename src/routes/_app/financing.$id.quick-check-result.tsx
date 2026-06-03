@@ -448,12 +448,16 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
   }, [s, reno, pension, dossier]);
 
 
-  const equityRatioLive = (s.purchase + reno) > 0 ? (s.equity / (s.purchase + reno)) * 100 : 0;
-  const equityRatioOrig = (original.purchase + reno) > 0 ? (original.equity / (original.purchase + reno)) * 100 : 0;
-  const hardLive = Math.max(0, s.equity - Math.min(pension, s.equity));
-  const hardRatioLive = (s.purchase + reno) > 0 ? (hardLive / (s.purchase + reno)) * 100 : 0;
-  const hardOrig = Math.max(0, original.equity - pension);
-  const hardRatioOrig = (original.purchase + reno) > 0 ? (hardOrig / (original.purchase + reno)) * 100 : 0;
+  const totalLive = s.purchase + s.reno;
+  const totalOrig = original.purchase + original.reno;
+  const eqLive = s.equity + s.ownWork;
+  const eqOrig = original.equity + original.ownWork;
+  const equityRatioLive = totalLive > 0 ? (eqLive / totalLive) * 100 : 0;
+  const equityRatioOrig = totalOrig > 0 ? (eqOrig / totalOrig) * 100 : 0;
+  const hardLive = Math.max(0, eqLive - Math.min(pension, eqLive));
+  const hardRatioLive = totalLive > 0 ? (hardLive / totalLive) * 100 : 0;
+  const hardOrig = Math.max(0, eqOrig - pension);
+  const hardRatioOrig = totalOrig > 0 ? (hardOrig / totalOrig) * 100 : 0;
 
   const tips: string[] = [];
   if (liveResult.affordability_ratio > 33) {
@@ -461,16 +465,17 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
     tips.push(`Einkommen müsste auf CHF ${chf(requiredIncome)} erhöht werden, um Tragbarkeit auf 33% zu bringen.`);
   }
   if (equityRatioLive < 20) {
-    const required = (s.purchase + reno) * 0.2;
-    tips.push(`Fehlende Eigenmittel: CHF ${chf(required - s.equity)} (mind. CHF ${chf(required)} erforderlich).`);
+    const required = totalLive * 0.2;
+    tips.push(`Fehlende Eigenmittel: CHF ${chf(required - eqLive)} (mind. CHF ${chf(required)} erforderlich).`);
   }
   if (hardRatioLive < 10) {
-    const required = (s.purchase + reno) * 0.1;
+    const required = totalLive * 0.1;
     tips.push(`Harte Eigenmittel zu tief — mindestens CHF ${chf(required)} aus Barvermögen erforderlich.`);
   }
   if (tips.length === 0) {
     tips.push("Alle Kennzahlen erfüllt — Finanzierung grundsätzlich bankfähig.");
   }
+
 
   const saveMutation = useMutation({
     mutationFn: async () => {
