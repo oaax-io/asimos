@@ -135,8 +135,8 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const reno = numv(dossier.renovation_costs);
     const total = numv(dossier.total_investment) || (purchase + reno);
     const mortgage = numv(dossier.requested_mortgage);
-    const equity = numv(dossier.own_funds_total);
-    const pension = numv(dossier.own_funds_pension_fund) + numv(dossier.own_funds_vested_benefits);
+    const equity = effectiveEquity(dossier);
+    const pension = effectivePension(dossier);
     const hardEquity = Math.max(0, equity - pension);
     const income = effectiveIncome(dossier);
     const yearly = numv(dossier.yearly_costs) ||
@@ -255,6 +255,33 @@ function effectiveIncome(d: any): number {
   return main + co;
 }
 
+// Eigenmittel beider Partner zusammen
+function effectiveEquity(d: any): number {
+  const combined = numv(d?.eigenkapital_kombiniert);
+  if (combined > 0) return combined;
+  return numv(d?.own_funds_total) + numv(d?.co_applicant_eigenkapital);
+}
+
+// PK / Freizügigkeit beider Partner zusammen
+function effectivePension(d: any): number {
+  const combined = numv(d?.pk_anteil_kombiniert);
+  if (combined > 0) return combined;
+  const main = numv(d?.own_funds_pension_fund) + numv(d?.own_funds_vested_benefits);
+  return main + numv(d?.co_applicant_pk_anteil);
+}
+
+function hasCoApplicant(d: any): boolean {
+  return (
+    !!d?.co_applicant_client_id ||
+    numv(d?.co_applicant_einkommen) > 0 ||
+    numv(d?.einkommen_kombiniert) > 0 ||
+    numv(d?.co_applicant_eigenkapital) > 0 ||
+    numv(d?.eigenkapital_kombiniert) > 0 ||
+    numv(d?.co_applicant_pk_anteil) > 0 ||
+    numv(d?.pk_anteil_kombiniert) > 0
+  );
+}
+
 function chf(n: number): string {
   const rounded = Math.round(n);
   const sign = rounded < 0 ? "-" : "";
@@ -267,8 +294,8 @@ function DetailTab({ dossier }: { dossier: any }) {
   const purchase = numv(dossier.purchase_price);
   const reno = numv(dossier.renovation_costs);
   const total = numv(dossier.total_investment) || (purchase + reno);
-  const equity = numv(dossier.own_funds_total);
-  const pension = numv(dossier.own_funds_pension_fund) + numv(dossier.own_funds_vested_benefits);
+  const equity = effectiveEquity(dossier);
+  const pension = effectivePension(dossier);
   const cash = Math.max(0, equity - pension);
   const mortgage = numv(dossier.requested_mortgage);
   const income = effectiveIncome(dossier);
@@ -360,7 +387,7 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
 
   const original: ScenarioState = useMemo(() => ({
     purchase: Math.round(numv(dossier.purchase_price)),
-    equity: Math.round(numv(dossier.own_funds_total)),
+    equity: Math.round(effectiveEquity(dossier)),
     income: Math.round(effectiveIncome(dossier)),
     rate: Math.round(numv(dossier.calculated_interest_rate, 5) * 10) / 10,
     mortgage: Math.round(numv(dossier.requested_mortgage)),
@@ -370,7 +397,7 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
   useEffect(() => { setS(original); }, [original]);
 
   const reno = numv(dossier.renovation_costs);
-  const pension = numv(dossier.own_funds_pension_fund) + numv(dossier.own_funds_vested_benefits);
+  const pension = effectivePension(dossier);
 
   // Original metrics
   const origResult = useMemo(() => calcQuickCheck({
@@ -443,16 +470,16 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
         ancillary_costs_yearly: dossier.ancillary_costs_yearly,
         amortisation_yearly: dossier.amortisation_yearly,
       });
-      const hasCoApplicant =
-        !!dossier.co_applicant_client_id ||
-        numv(dossier.co_applicant_einkommen) > 0 ||
-        numv(dossier.einkommen_kombiniert) > 0;
-      const incomeUpdate = hasCoApplicant
+      const coApp = hasCoApplicant(dossier);
+      const incomeUpdate = coApp
         ? { einkommen_kombiniert: s.income }
         : { gross_income_yearly: s.income };
+      const equityUpdate = coApp
+        ? { eigenkapital_kombiniert: s.equity }
+        : { own_funds_total: s.equity };
       const { error } = await supabase.from("financing_dossiers").update({
         purchase_price: s.purchase,
-        own_funds_total: s.equity,
+        ...equityUpdate,
         ...incomeUpdate,
         calculated_interest_rate: s.rate,
         requested_mortgage: s.mortgage,
