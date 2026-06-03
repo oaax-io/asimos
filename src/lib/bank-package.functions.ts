@@ -207,7 +207,7 @@ export const buildBankPackage = createServerFn({ method: "POST" })
     let totalBytes = 0;
 
     type DocSource = {
-      file_name: string | null;
+      file_name?: string | null;
       file_url: string | null;
       document_type?: string | null;
       related_type?: string | null;
