@@ -271,7 +271,7 @@ function DetailTab({ dossier }: { dossier: any }) {
   const pension = numv(dossier.own_funds_pension_fund) + numv(dossier.own_funds_vested_benefits);
   const cash = Math.max(0, equity - pension);
   const mortgage = numv(dossier.requested_mortgage);
-  const income = numv(dossier.gross_income_yearly);
+  const income = effectiveIncome(dossier);
   const rate = numv(dossier.calculated_interest_rate, 5);
 
   // 1./2. Hypothek (CH-Standard: 1. Hypo bis 65% des Wertes, 2. Hypo 65–80%)
