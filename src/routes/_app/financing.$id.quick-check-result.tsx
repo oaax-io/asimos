@@ -138,7 +138,7 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const equity = numv(dossier.own_funds_total);
     const pension = numv(dossier.own_funds_pension_fund) + numv(dossier.own_funds_vested_benefits);
     const hardEquity = Math.max(0, equity - pension);
-    const income = numv(dossier.gross_income_yearly);
+    const income = effectiveIncome(dossier);
     const yearly = numv(dossier.yearly_costs) ||
       (mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
         + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
