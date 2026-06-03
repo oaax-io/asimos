@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { ASIMO_TEMPLATES } from "@/lib/document-templates";
 
 /**
@@ -12,6 +11,7 @@ import { ASIMO_TEMPLATES } from "@/lib/document-templates";
  * - When no default exists for a given type, marks the ASIMO template as default.
  */
 export const seedAsimoTemplates = createServerFn({ method: "POST" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const results: Array<{ name: string; type: string; action: "inserted" | "updated" | "unchanged" }> = [];
 
   for (const tpl of ASIMO_TEMPLATES) {
@@ -77,6 +77,7 @@ export const seedAsimoTemplates = createServerFn({ method: "POST" }).handler(asy
 export const setDefaultTemplate = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ templateId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.rpc("set_default_template", { _template_id: data.templateId });
     if (error) throw new Error(error.message);
     return { ok: true };

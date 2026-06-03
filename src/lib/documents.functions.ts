@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 import { buildDocumentFileName } from "@/lib/document-filename";
 
@@ -62,6 +61,7 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
     },
   )
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const serviceUrl = process.env.PDF_SERVICE_URL;
     const serviceToken = process.env.PDF_SERVICE_TOKEN;
     const startedAt = Date.now();
@@ -332,6 +332,7 @@ export const getDocumentPdfUrl = createServerFn({ method: "POST" })
     return { documentId: input.documentId };
   })
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await supabaseAdmin
       .from("generated_documents")
       .select("pdf_url, file_url")
@@ -357,6 +358,7 @@ export const fetchDocumentPdfBytes = createServerFn({ method: "POST" })
     return { path: input.path };
   })
   .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: file, error } = await supabaseAdmin.storage.from(BUCKET).download(data.path);
     if (error || !file) {
       return { ok: false as const, base64: null as string | null, message: error?.message ?? "not_found" };
