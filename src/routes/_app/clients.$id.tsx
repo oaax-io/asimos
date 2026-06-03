@@ -40,6 +40,10 @@ import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumen
 import { ClientDocumentsTab } from "@/components/clients/ClientDocumentsTab";
 import { AssignPropertyDialog } from "@/components/clients/AssignPropertyDialog";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
+import {
+  QUICK_CHECK_LABELS, DOSSIER_STATUS_LABELS, FINANCING_TYPE_LABELS,
+  type QuickCheckStatus, type DossierStatus, type FinancingType,
+} from "@/lib/financing";
 
 const CLIENT_STATUSES = [
   { value: "entwurf",       label: "Entwurf",       dot: "bg-slate-400",   badge: "bg-slate-500/15 text-slate-700 border-slate-500/30 dark:text-slate-300" },
