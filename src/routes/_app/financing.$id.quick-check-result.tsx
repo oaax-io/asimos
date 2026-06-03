@@ -135,8 +135,8 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const reno = numv(dossier.renovation_costs);
     const total = numv(dossier.total_investment) || (purchase + reno);
     const mortgage = numv(dossier.requested_mortgage);
-    const equity = numv(dossier.own_funds_total);
-    const pension = numv(dossier.own_funds_pension_fund) + numv(dossier.own_funds_vested_benefits);
+    const equity = effectiveEquity(dossier);
+    const pension = effectivePension(dossier);
     const hardEquity = Math.max(0, equity - pension);
     const income = effectiveIncome(dossier);
     const yearly = numv(dossier.yearly_costs) ||
