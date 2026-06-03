@@ -901,44 +901,89 @@ function FinancingTab({
         </Card>
       ) : (
         <div className="grid gap-3">
-          {dossiers.map((d: any) => (
-            <Card key={d.id} className="transition hover:shadow-md">
-              <CardContent className="flex flex-wrap items-start gap-4 p-4">
-                <div className="flex-1 min-w-0 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium truncate">
-                      {d.title || `Dossier vom ${formatDate(d.created_at)}`}
-                    </p>
-                    {d.financing_type && (
-                      <Badge variant="secondary">{d.financing_type}</Badge>
-                    )}
-                    <Badge variant="outline">
-                      {d.dossier_status ?? "draft"}
-                    </Badge>
-                    {d.quick_check_status && (
-                      <Badge variant="outline">{d.quick_check_status}</Badge>
+          {dossiers.map((d: any) => {
+            const reasons: Array<{ key: string; label: string; tone: "ok" | "warn" | "bad" }> =
+              Array.isArray(d.quick_check_reasons) ? d.quick_check_reasons : [];
+            const qcStatus = d.quick_check_status as QuickCheckStatus | null;
+            const dossierStatus = (d.dossier_status ?? "draft") as DossierStatus;
+            const qcTone =
+              qcStatus === "realistic" ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+              : qcStatus === "critical" ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+              : qcStatus === "not_financeable" ? "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400"
+              : "border-border bg-muted/30 text-muted-foreground";
+            return (
+              <Card key={d.id} className="transition hover:shadow-md">
+                <CardContent className="space-y-3 p-4">
+                  <div className="flex flex-wrap items-start gap-4">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium truncate">
+                          {d.title || `Dossier vom ${formatDate(d.created_at)}`}
+                        </p>
+                        {d._role === "co_applicant" && (
+                          <Badge variant="secondary" className="bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-500/30">
+                            Als Ehepartner / Mitantragsteller
+                          </Badge>
+                        )}
+                        {d.financing_type && (
+                          <Badge variant="secondary">
+                            {FINANCING_TYPE_LABELS[d.financing_type as FinancingType] ?? d.financing_type}
+                          </Badge>
+                        )}
+                        <Badge variant="outline">
+                          {DOSSIER_STATUS_LABELS[dossierStatus] ?? dossierStatus}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        {d.bank_name && <span>Bank: {d.bank_name}</span>}
+                        <span>Aktualisiert {formatDate(d.updated_at)}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate({ to: "/financing/$id", params: { id: d.id } })}
+                      >
+                        <Pencil className="mr-1.5 h-4 w-4" />Bearbeiten
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Quick-Check Zusammenfassung */}
+                  <div className={`rounded-lg border p-3 ${qcTone}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-xs font-semibold uppercase tracking-wide">
+                        Quick Check: {qcStatus ? (QUICK_CHECK_LABELS[qcStatus] ?? qcStatus) : "Noch nicht durchgeführt"}
+                      </div>
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+                      <KPI label="Tragbarkeit" value={d.affordability_ratio != null ? `${Number(d.affordability_ratio).toFixed(1)}%` : "—"} />
+                      <KPI label="Belehnung" value={d.loan_to_value_ratio != null ? `${Number(d.loan_to_value_ratio).toFixed(1)}%` : "—"} />
+                      <KPI label="Hypothek" value={d.requested_mortgage != null ? formatCurrency(Number(d.requested_mortgage)) : "—"} />
+                      <KPI label="Eigenmittel" value={d.own_funds_total != null ? formatCurrency(Number(d.own_funds_total)) : "—"} />
+                    </div>
+                    {reasons.length > 0 && (
+                      <ul className="mt-3 space-y-1 text-xs">
+                        {reasons.map((r, i) => (
+                          <li key={`${r.key}-${i}`} className="flex items-start gap-1.5">
+                            <span className={
+                              r.tone === "ok" ? "text-emerald-600 dark:text-emerald-400"
+                              : r.tone === "warn" ? "text-amber-600 dark:text-amber-400"
+                              : "text-red-600 dark:text-red-400"
+                            }>
+                              {r.tone === "ok" ? "✓" : r.tone === "warn" ? "!" : "✕"}
+                            </span>
+                            <span>{r.label}</span>
+                          </li>
+                        ))}
+                      </ul>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    {d.requested_mortgage != null && <span>Hypothek: {formatCurrency(Number(d.requested_mortgage))}</span>}
-                    {d.loan_to_value_ratio != null && <span>Belehnung: {Number(d.loan_to_value_ratio).toFixed(1)}%</span>}
-                    {d.affordability_ratio != null && <span>Tragbarkeit: {Number(d.affordability_ratio).toFixed(1)}%</span>}
-                    {d.bank_name && <span>Bank: {d.bank_name}</span>}
-                    <span>Aktualisiert {formatDate(d.updated_at)}</span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate({ to: "/financing/$id", params: { id: d.id } })}
-                  >
-                    <Pencil className="mr-1.5 h-4 w-4" />Bearbeiten
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
