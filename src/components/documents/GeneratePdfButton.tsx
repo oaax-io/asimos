@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { getDocumentPdfUrl, renderDocumentPdf, fetchDocumentPdfBytes } from "@/server/documents.functions";
+import { getDocumentPdfUrl, renderDocumentPdf, fetchDocumentPdfBytes } from "@/lib/documents.functions";
 import { buildDocumentFileName, type DocumentTypeKey } from "@/lib/document-filename";
 
 type Props = {
