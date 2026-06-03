@@ -2,8 +2,6 @@
    OAAX Fluent Design (scoped to .fluent-scope)
 ───────────────────────────────────────────────────────── */
 
-@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap");
-
 .fluent-scope {
   font-family: 'Sora', sans-serif;
   -webkit-font-smoothing: antialiased;
