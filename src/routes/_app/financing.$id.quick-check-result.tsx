@@ -255,11 +255,17 @@ function effectiveIncome(d: any): number {
   return main + co;
 }
 
-// Eigenmittel beider Partner zusammen
+// Eigenmittel beider Partner zusammen (inkl. PK / Freizügigkeit – zählen als Eigenmittel)
 function effectiveEquity(d: any): number {
   const combined = numv(d?.eigenkapital_kombiniert);
   if (combined > 0) return combined;
-  return numv(d?.own_funds_total) + numv(d?.co_applicant_eigenkapital);
+  // own_funds_total enthält bereits die PK/Freizügigkeit des Hauptantragstellers.
+  // Beim Partner kommen Eigenkapital + PK-Anteil dazu.
+  return (
+    numv(d?.own_funds_total) +
+    numv(d?.co_applicant_eigenkapital) +
+    numv(d?.co_applicant_pk_anteil)
+  );
 }
 
 // PK / Freizügigkeit beider Partner zusammen
