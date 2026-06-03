@@ -23,7 +23,7 @@ import { getBackendErrorMessage, isBackendUnavailableError, throwIfError, unwrap
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Tables } from "@/integrations/supabase/types";
-import { addLead, getLeads } from "@/server/crm.functions";
+import { addLead, getLeads } from "@/lib/crm.functions";
 import { ConvertLeadDialog } from "@/components/leads/ConvertLeadDialog";
 import { useNavigate } from "@tanstack/react-router";
 

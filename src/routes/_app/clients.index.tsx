@@ -18,7 +18,7 @@ import { getBackendErrorMessage, isBackendUnavailableError, unwrapServerResult }
 import { toast } from "sonner";
 import { clientTypeLabels, formatCurrency } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
-import { getClients } from "@/server/crm.functions";
+import { getClients } from "@/lib/crm.functions";
 import { ClientWizard } from "@/components/clients/ClientWizard";
 
 import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";

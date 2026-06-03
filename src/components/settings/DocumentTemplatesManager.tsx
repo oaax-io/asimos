@@ -20,7 +20,7 @@ import {
   renderTemplate,
   wrapHtmlDocument,
 } from "@/lib/document-templates";
-import { seedAsimoTemplates, setDefaultTemplate } from "@/server/templates.functions";
+import { seedAsimoTemplates, setDefaultTemplate } from "@/lib/templates.functions";
 
 const TYPE_LABELS: Record<string, string> = {
   mandate: "Mandat (exklusiv)",
