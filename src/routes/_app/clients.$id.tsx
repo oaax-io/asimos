@@ -104,16 +104,21 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
     queryKey: ["client_financing_dossiers", id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("financing_dossiers").select("*").eq("client_id", id)
+        .from("financing_dossiers").select("*")
+        .or(`client_id.eq.${id},co_applicant_client_id.eq.${id}`)
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      // Mark role for display
+      return (data ?? []).map((d: any) => ({
+        ...d,
+        _role: d.client_id === id ? "primary" : "co_applicant",
+      }));
     },
     retry: false,
   });
 
   // Erstes/aktuelles Dossier (für Hero-KPI und Selbstauskunft-Link)
-  const dossier = dossiers[0] ?? null;
+  const dossier = dossiers.find((d: any) => d._role === "primary") ?? dossiers[0] ?? null;
 
   const { data: appointments = [] } = useQuery({
     queryKey: ["client_appointments", id],
