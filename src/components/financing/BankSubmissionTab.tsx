@@ -17,6 +17,7 @@ import {
   listBankPackages,
   getBankPackageSignedUrl,
   fetchBankPackageBytes,
+  createBankPackageShare,
 } from "@/lib/bank-package.functions";
 
 const BANK_TYPES = [

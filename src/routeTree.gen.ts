@@ -16,6 +16,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SelbstauskunftTokenRouteImport } from './routes/selbstauskunft.$token'
 import { Route as FinanzierungTokenRouteImport } from './routes/finanzierung.$token'
+import { Route as BankPaketTokenRouteImport } from './routes/bank-paket.$token'
 import { Route as AppTemplatesRouteImport } from './routes/_app/templates'
 import { Route as AppTeamRouteImport } from './routes/_app/team'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
@@ -81,6 +82,11 @@ const SelbstauskunftTokenRoute = SelbstauskunftTokenRouteImport.update({
 const FinanzierungTokenRoute = FinanzierungTokenRouteImport.update({
   id: '/finanzierung/$token',
   path: '/finanzierung/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BankPaketTokenRoute = BankPaketTokenRouteImport.update({
+  id: '/bank-paket/$token',
+  path: '/bank-paket/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppTemplatesRoute = AppTemplatesRouteImport.update({
@@ -271,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof AppTasksRoute
   '/team': typeof AppTeamRoute
   '/templates': typeof AppTemplatesRoute
+  '/bank-paket/$token': typeof BankPaketTokenRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
@@ -309,6 +316,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof AppTasksRoute
   '/team': typeof AppTeamRoute
   '/templates': typeof AppTemplatesRoute
+  '/bank-paket/$token': typeof BankPaketTokenRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
@@ -351,6 +359,7 @@ export interface FileRoutesById {
   '/_app/tasks': typeof AppTasksRoute
   '/_app/team': typeof AppTeamRoute
   '/_app/templates': typeof AppTemplatesRoute
+  '/bank-paket/$token': typeof BankPaketTokenRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
@@ -393,6 +402,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/team'
     | '/templates'
+    | '/bank-paket/$token'
     | '/finanzierung/$token'
     | '/selbstauskunft/$token'
     | '/clients/$id'
@@ -431,6 +441,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/team'
     | '/templates'
+    | '/bank-paket/$token'
     | '/finanzierung/$token'
     | '/selbstauskunft/$token'
     | '/clients/$id'
@@ -472,6 +483,7 @@ export interface FileRouteTypes {
     | '/_app/tasks'
     | '/_app/team'
     | '/_app/templates'
+    | '/bank-paket/$token'
     | '/finanzierung/$token'
     | '/selbstauskunft/$token'
     | '/_app/clients/$id'
@@ -494,6 +506,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   OaaxRoute: typeof OaaxRoute
   SetPasswordRoute: typeof SetPasswordRoute
+  BankPaketTokenRoute: typeof BankPaketTokenRoute
   FinanzierungTokenRoute: typeof FinanzierungTokenRoute
   SelbstauskunftTokenRoute: typeof SelbstauskunftTokenRoute
   ApiPublicBankPaketTokenRoute: typeof ApiPublicBankPaketTokenRoute
@@ -549,6 +562,13 @@ declare module '@tanstack/react-router' {
       path: '/finanzierung/$token'
       fullPath: '/finanzierung/$token'
       preLoaderRoute: typeof FinanzierungTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bank-paket/$token': {
+      id: '/bank-paket/$token'
+      path: '/bank-paket/$token'
+      fullPath: '/bank-paket/$token'
+      preLoaderRoute: typeof BankPaketTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/templates': {
@@ -892,6 +912,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   OaaxRoute: OaaxRoute,
   SetPasswordRoute: SetPasswordRoute,
+  BankPaketTokenRoute: BankPaketTokenRoute,
   FinanzierungTokenRoute: FinanzierungTokenRoute,
   SelbstauskunftTokenRoute: SelbstauskunftTokenRoute,
   ApiPublicBankPaketTokenRoute: ApiPublicBankPaketTokenRoute,
