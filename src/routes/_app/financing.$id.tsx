@@ -875,6 +875,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             max={equityMax}
             step={5000}
             onChange={setEquity}
+          />
           <SliderRow
             label="Renovationskosten"
             display={chf(reno)}
