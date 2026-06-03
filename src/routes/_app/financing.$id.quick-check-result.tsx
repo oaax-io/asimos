@@ -431,12 +431,13 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
   const liveResult = useMemo(() => {
 
     // Adjust pension share proportionally if equity changes? Keep absolute pension if equity covers it.
-    const pensionUsed = Math.min(pension, s.equity);
+    const effectiveEq = s.equity + s.ownWork;
+    const pensionUsed = Math.min(pension, effectiveEq);
     return calcQuickCheck({
       purchase_price: s.purchase,
       renovation_costs: reno,
       requested_mortgage: s.mortgage,
-      own_funds_total: s.equity,
+      own_funds_total: effectiveEq,
       own_funds_pension_fund: pensionUsed,
       own_funds_vested_benefits: 0,
       gross_income_yearly: s.income,
@@ -445,6 +446,7 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
       amortisation_yearly: dossier.amortisation_yearly,
     });
   }, [s, reno, pension, dossier]);
+
 
   const equityRatioLive = (s.purchase + reno) > 0 ? (s.equity / (s.purchase + reno)) * 100 : 0;
   const equityRatioOrig = (original.purchase + reno) > 0 ? (original.equity / (original.purchase + reno)) * 100 : 0;
