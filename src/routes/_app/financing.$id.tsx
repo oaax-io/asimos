@@ -668,17 +668,21 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
   const [income, setIncome] = useState<number>(Math.round(original.income));
   const [mortgage, setMortgage] = useState<number>(Math.round(original.mortgage));
   const [rate, setRate] = useState<number>(Math.round(original.rate * 10) / 10);
+  const [reno, setReno] = useState<number>(Math.round(original.reno));
+  const [ownWork, setOwnWork] = useState<number>(Math.round(n((dossier as { renovation_own_work?: number | string | null }).renovation_own_work)));
 
   const [saveOpen, setSaveOpen] = useState(false);
   const [scenarioName, setScenarioName] = useState("");
 
   const purchaseMin = Math.round(original.purchase * 0.5);
   const purchaseMax = Math.round(original.purchase * 1.5) || 100000;
-  const equityMax = Math.round(original.equity * 2.0) || 200000;
+  const equityMax = Math.max(Math.round((purchase + reno) * 0.5), Math.round(original.equity * 2.0), 200000);
   const incomeMin = Math.round(original.income * 0.5);
   const incomeMax = Math.round(original.income * 2.0) || 200000;
   const mortgageMin = Math.round(original.mortgage * 0.5);
   const mortgageMax = Math.round(original.mortgage * 1.3) || 100000;
+  const renoMax = Math.max(Math.round(original.reno * 2.0), Math.round(purchase * 0.5), 200000);
+  const ownWorkMax = Math.max(reno, 50000);
 
   // Live calculation based on slider values
   const live = useMemo(() => {
@@ -687,16 +691,19 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     const inc = Math.round(income);
     const mort = Math.round(mortgage);
     const r = Math.round(rate * 10) / 10;
-    const total = p + original.reno;
+    const rn = Math.round(reno);
+    const ow = Math.min(Math.round(ownWork), rn);
+    const effectiveEq = eq + ow;
+    const total = p + rn;
     const ancillary = total * (original.ancillaryPct / 100);
     const firstMortgageMax = total * 0.6667;
     const second = Math.max(0, mort - firstMortgageMax);
     const amort = second / original.amortYears;
     const result = calcQuickCheck({
       purchase_price: p,
-      renovation_costs: original.reno,
+      renovation_costs: rn,
       requested_mortgage: mort,
-      own_funds_total: eq,
+      own_funds_total: effectiveEq,
       own_funds_pension_fund: original.pension,
       own_funds_vested_benefits: original.vested,
       gross_income_yearly: inc,
@@ -704,8 +711,8 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       ancillary_costs_yearly: ancillary,
       amortisation_yearly: amort,
     });
-    return { p, eq, inc, mort, r, total, result };
-  }, [purchase, equity, income, mortgage, rate, original]);
+    return { p, eq: effectiveEq, inc, mort, r, total, rn, ow, result };
+  }, [purchase, equity, income, mortgage, rate, reno, ownWork, original]);
 
   const reset = () => {
     setPurchase(Math.round(original.purchase));
@@ -713,6 +720,8 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     setIncome(Math.round(original.income));
     setMortgage(Math.round(original.mortgage));
     setRate(Math.round(original.rate * 10) / 10);
+    setReno(Math.round(original.reno));
+    setOwnWork(Math.round(n((dossier as { renovation_own_work?: number | string | null }).renovation_own_work)));
   };
 
   const saveMutation = useMutation({
@@ -793,14 +802,14 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
   const matrix: Cell[][] = incomeSteps.map((dInc) =>
     priceSteps.map((dPrice) => {
       const p = Math.max(0, live.p + dPrice);
-      const total = p + original.reno;
+      const total = p + live.rn;
       const ancillary = total * (original.ancillaryPct / 100);
       const firstMortgageMax = total * 0.6667;
       const second = Math.max(0, live.mort - firstMortgageMax);
       const amort = second / original.amortYears;
       const result = calcQuickCheck({
         purchase_price: p,
-        renovation_costs: original.reno,
+        renovation_costs: live.rn,
         requested_mortgage: live.mort,
         own_funds_total: live.eq,
         own_funds_pension_fund: original.pension,
@@ -866,6 +875,24 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             max={equityMax}
             step={5000}
             onChange={setEquity}
+          />
+          <SliderRow
+            label="Renovationskosten"
+            display={chf(reno)}
+            value={reno}
+            min={0}
+            max={renoMax}
+            step={5000}
+            onChange={(v) => setReno(Math.round(v))}
+          />
+          <SliderRow
+            label="davon Eigenleistung"
+            display={chf(ownWork)}
+            value={ownWork}
+            min={0}
+            max={ownWorkMax}
+            step={1000}
+            onChange={(v) => setOwnWork(Math.round(v))}
           />
           <SliderRow
             label="Bruttoeinkommen"
