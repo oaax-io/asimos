@@ -1097,7 +1097,7 @@ function ClientActivityTab({ clientId, userId, notes: _notes }: { clientId: stri
         supabase.from("documents").select("id,file_name,created_at,document_type").eq("related_type", "client").eq("related_id", clientId),
         supabase.from("generated_documents").select("id,title,created_at,sent_at,esign_signed_at,document_type").eq("related_type", "client").eq("related_id", clientId),
         supabase.from("matches").select("id,created_at,status,property_id").eq("client_id", clientId),
-        supabase.from("client_relationships").select("id,created_at,relationship_type,related_client_id").eq("client_id", clientId),
+        supabase.from("client_relationships").select("id,created_at,relationship_type,client_id,related_client_id").or(`client_id.eq.${clientId},related_client_id.eq.${clientId}`),
         supabase.from("mandates").select("id,created_at,updated_at,status,mandate_type").eq("client_id", clientId),
         supabase.from("nda_agreements").select("id,created_at,updated_at,status,nda_type").eq("client_id", clientId),
       ]);
