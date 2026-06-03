@@ -67,11 +67,29 @@ export function ClientRelationshipsTab({ clientId }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("client_relationships")
-        .select("id, related_client_id, relationship_type, notes, related:clients!client_relationships_related_client_id_fkey(id, full_name, email)")
-        .eq("client_id", clientId)
+        .select("id, client_id, related_client_id, relationship_type, notes, created_at, related:clients!client_relationships_related_client_id_fkey(id, full_name, email), owner:clients!client_relationships_client_id_fkey(id, full_name, email)")
+        .or(`client_id.eq.${clientId},related_client_id.eq.${clientId}`)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as unknown as Relationship[];
+      // Normalize so "related" is always the other person; dedupe by pair+type
+      const seen = new Set<string>();
+      const out: Relationship[] = [];
+      for (const row of (data ?? []) as any[]) {
+        const isOwner = row.client_id === clientId;
+        const other = isOwner ? row.related : row.owner;
+        if (!other) continue;
+        const key = [row.client_id, row.related_client_id].sort().join("|") + "|" + row.relationship_type;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({
+          id: row.id,
+          related_client_id: other.id,
+          relationship_type: row.relationship_type,
+          notes: row.notes,
+          related: other,
+        });
+      }
+      return out;
     },
   });
 
@@ -93,7 +111,7 @@ export function ClientRelationshipsTab({ clientId }: Props) {
     mutationFn: async (rel: Relationship) => {
       const { error } = await supabase.from("client_relationships").delete().eq("id", rel.id);
       if (error) throw error;
-      // Reziproke Beziehung entfernen
+      // Falls eine reziproke Zeile (alte Daten) existiert, ebenfalls entfernen
       await supabase
         .from("client_relationships")
         .delete()
@@ -269,22 +287,7 @@ function AddRelationshipDialog({ clientId }: { clientId: string }) {
         notes: notes.trim() || null,
       });
       if (error) throw error;
-      // Reziproke Beziehung (umgekehrte Richtung) anlegen, falls noch nicht vorhanden
-      const { data: existing } = await supabase
-        .from("client_relationships")
-        .select("id")
-        .eq("client_id", selectedId)
-        .eq("related_client_id", clientId)
-        .eq("relationship_type", type)
-        .maybeSingle();
-      if (!existing) {
-        await supabase.from("client_relationships").insert({
-          client_id: selectedId,
-          related_client_id: clientId,
-          relationship_type: type,
-          notes: notes.trim() || null,
-        });
-      }
+      // Eine Zeile reicht – beide Seiten lesen aus beiden Richtungen.
     },
     onSuccess: () => {
       toast.success("Beziehung hinzugefügt");
