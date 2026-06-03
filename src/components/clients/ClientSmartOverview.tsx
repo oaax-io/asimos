@@ -17,43 +17,53 @@ interface Props {
 }
 
 export function ClientSmartOverview({ clientId, client, onJumpTab }: Props) {
-  const { data: relationships = [] } = useQuery({
-    queryKey: ["client_overview_rel", clientId],
+  // Eine einzige Query bündelt alle Overview-Daten -> reduziert Auth-Lock-
+  // Contention im Browser (jeder einzelne supabase.from() lockt sonst die
+  // Session). Interne Parallelisierung via Promise.all bleibt erhalten.
+  const { data: overview } = useQuery({
+    queryKey: ["client_overview_bundle", clientId],
+    staleTime: 60_000,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("client_relationships")
-        .select(
-          "id, client_id, related_client_id, relationship_type, related:clients!client_relationships_related_client_id_fkey(id, full_name), owner:clients!client_relationships_client_id_fkey(id, full_name)"
-        )
-        .or(`client_id.eq.${clientId},related_client_id.eq.${clientId}`);
-      const seen = new Set<string>();
-      const out: any[] = [];
-      for (const row of (data ?? []) as any[]) {
+      const [rel, own, ownerships, roles, appts, tsk, doss, disc] = await Promise.all([
+        supabase
+          .from("client_relationships")
+          .select(
+            "id, client_id, related_client_id, relationship_type, related:clients!client_relationships_related_client_id_fkey(id, full_name), owner:clients!client_relationships_client_id_fkey(id, full_name)"
+          )
+          .or(`client_id.eq.${clientId},related_client_id.eq.${clientId}`),
+        supabase.from("properties").select("id,title,city,status,price").eq("seller_client_id", clientId),
+        supabase
+          .from("property_ownerships")
+          .select("id, property:properties(id,title,city,status,price)")
+          .eq("client_id", clientId).is("end_date", null),
+        supabase
+          .from("client_roles")
+          .select("id, role_type, related_id")
+          .eq("client_id", clientId).eq("related_type", "property").eq("status", "active"),
+        supabase.from("appointments").select("id,title,starts_at,status,location")
+          .eq("client_id", clientId).order("starts_at", { ascending: true }),
+        supabase.from("tasks").select("id,title,status,due_date,priority")
+          .eq("related_type", "client").eq("related_id", clientId)
+          .order("due_date", { ascending: true, nullsFirst: false }),
+        supabase.from("financing_dossiers")
+          .select("id,title,completion_percent,dossier_status,quick_check_status,requested_mortgage,bank_name,updated_at")
+          .eq("client_id", clientId).order("updated_at", { ascending: false }),
+        supabase.from("client_self_disclosures")
+          .select("status,submitted_at,reviewed_at").eq("client_id", clientId).maybeSingle(),
+      ]);
+
+      const seenRel = new Set<string>();
+      const relationships: any[] = [];
+      for (const row of (rel.data ?? []) as any[]) {
         const isOwner = row.client_id === clientId;
         const other = isOwner ? row.related : row.owner;
         if (!other) continue;
         const key = [row.client_id, row.related_client_id].sort().join("|") + "|" + row.relationship_type;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        out.push({ id: row.id, relationship_type: row.relationship_type, related: other });
+        if (seenRel.has(key)) continue;
+        seenRel.add(key);
+        relationships.push({ id: row.id, relationship_type: row.relationship_type, related: other });
       }
-      return out;
-    },
-  });
 
-
-  const { data: properties = [] } = useQuery({
-    queryKey: ["client_overview_props", clientId],
-    queryFn: async () => {
-      const [own, ownerships, roles] = await Promise.all([
-        supabase.from("properties").select("id,title,city,status,price").eq("seller_client_id", clientId),
-        supabase.from("property_ownerships")
-          .select("id, property:properties(id,title,city,status,price)")
-          .eq("client_id", clientId).is("end_date", null),
-        supabase.from("client_roles")
-          .select("id, role_type, related_id")
-          .eq("client_id", clientId).eq("related_type", "property").eq("status", "active"),
-      ]);
       const roleIds = (roles.data ?? []).map((r: any) => r.related_id).filter(Boolean);
       const { data: roleProps } = roleIds.length
         ? await supabase.from("properties").select("id,title,city,status,price").in("id", roleIds)
@@ -71,49 +81,26 @@ export function ClientSmartOverview({ clientId, client, onJumpTab }: Props) {
         const p = roleById.get(r.related_id);
         if (p) list.push({ ...p, _kind: roleLabels[r.role_type] ?? r.role_type });
       });
-      // dedupe
-      const seen = new Set<string>();
-      return list.filter((p) => p.id && !seen.has(p.id) && seen.add(p.id));
+      const seenProp = new Set<string>();
+      const properties = list.filter((p) => p.id && !seenProp.has(p.id) && seenProp.add(p.id));
+
+      return {
+        relationships,
+        properties,
+        appointments: appts.data ?? [],
+        tasks: tsk.data ?? [],
+        dossiers: doss.data ?? [],
+        disclosure: disc.data ?? null,
+      };
     },
   });
 
-  const { data: appointments = [] } = useQuery({
-    queryKey: ["client_overview_appts", clientId],
-    queryFn: async () => {
-      const { data } = await supabase.from("appointments").select("id,title,starts_at,status,location")
-        .eq("client_id", clientId).order("starts_at", { ascending: true });
-      return data ?? [];
-    },
-  });
-
-  const { data: tasks = [] } = useQuery({
-    queryKey: ["client_overview_tasks", clientId],
-    queryFn: async () => {
-      const { data } = await supabase.from("tasks").select("id,title,status,due_date,priority")
-        .eq("related_type", "client").eq("related_id", clientId)
-        .order("due_date", { ascending: true, nullsFirst: false });
-      return data ?? [];
-    },
-  });
-
-  const { data: dossiers = [] } = useQuery({
-    queryKey: ["client_overview_dossiers", clientId],
-    queryFn: async () => {
-      const { data } = await supabase.from("financing_dossiers")
-        .select("id,title,completion_percent,dossier_status,quick_check_status,requested_mortgage,bank_name,updated_at")
-        .eq("client_id", clientId).order("updated_at", { ascending: false });
-      return data ?? [];
-    },
-  });
-
-  const { data: disclosure } = useQuery({
-    queryKey: ["client_overview_disc", clientId],
-    queryFn: async () => {
-      const { data } = await supabase.from("client_self_disclosures")
-        .select("status,submitted_at,reviewed_at").eq("client_id", clientId).maybeSingle();
-      return data;
-    },
-  });
+  const relationships = overview?.relationships ?? [];
+  const properties = overview?.properties ?? [];
+  const appointments = overview?.appointments ?? [];
+  const tasks = overview?.tasks ?? [];
+  const dossiers = overview?.dossiers ?? [];
+  const disclosure = overview?.disclosure;
 
   const now = new Date();
   const upcoming = appointments.filter((a: any) => new Date(a.starts_at) >= now);
