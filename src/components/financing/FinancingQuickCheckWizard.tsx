@@ -88,6 +88,7 @@ export type WizardForm = {
 
   // Reserved für spätere Schritte (4–6)
   renovation_costs: string;
+  renovation_own_work: string;
   existing_mortgage: string;
   requested_mortgage: string;
   calc_rate: string;
@@ -114,6 +115,7 @@ const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
   co_applicant_eigenkapital: "",
   co_applicant_pk_anteil: "",
   renovation_costs: "",
+  renovation_own_work: "",
   existing_mortgage: "",
   requested_mortgage: "",
   calc_rate: "5",
@@ -397,6 +399,7 @@ export function FinancingQuickCheckWizard({
         title: form.property_title || form.modules.map((m) => MODULE_OPTIONS.find((o) => o.key === m)?.label).filter(Boolean).join(" + "),
         purchase_price: purchase,
         renovation_costs: reno,
+        renovation_own_work: numOrNull(form.renovation_own_work),
         existing_mortgage: numOrNull(form.existing_mortgage),
         requested_mortgage: mortgage,
         // Hauptantragsteller-Einzelwerte (unverändert)
@@ -994,7 +997,10 @@ function Step4Metrics({
         <Field label="davon PK / Freizügigkeit (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
         <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
         {showRenovation && (
-          <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+          <>
+            <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+            <Field label="davon Eigenleistung (CHF)" type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
+          </>
         )}
         {showExisting && (
           <Field label="Bestehende Hypothek (CHF)" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
@@ -1116,6 +1122,7 @@ function Step6Summary({
       <SummaryGroup title="Kennzahlen">
         <SumRow label="Gewünschte Hypothek" value={formatCurrency(num(form.requested_mortgage))} />
         {form.renovation_costs && <SumRow label="Renovationskosten" value={formatCurrency(num(form.renovation_costs))} />}
+        {form.renovation_own_work && <SumRow label="davon Eigenleistung" value={formatCurrency(num(form.renovation_own_work))} />}
         {form.existing_mortgage && <SumRow label="Bestehende Hypothek" value={formatCurrency(num(form.existing_mortgage))} />}
         <SumRow label="Kalk. Zinssatz" value={`${num(form.calc_rate).toFixed(1)} %`} />
         <SumRow label="Nebenkosten" value={`${num(form.ancillary_pct).toFixed(1)} %`} />
