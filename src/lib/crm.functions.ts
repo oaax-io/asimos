@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 import { getBackendErrorMessage, isBackendUnavailableError } from "@/lib/backend-errors";
 
@@ -49,6 +48,7 @@ function toServerError<T>(fallbackData: T, error: unknown): ServerResult<T> {
 export const getLeads = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async (): Promise<ServerResult<Database["public"]["Tables"]["leads"]["Row"][]>> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("leads")
       .select("*")
@@ -62,6 +62,7 @@ export const addLead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => leadInputSchema.parse(data))
   .handler(async ({ data, context }): Promise<ServerResult<Database["public"]["Tables"]["leads"]["Row"] | null>> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const payload: Database["public"]["Tables"]["leads"]["Insert"] = {
       owner_id: context.userId,
       full_name: data.full_name,
@@ -84,6 +85,7 @@ export const addLead = createServerFn({ method: "POST" })
 export const getClients = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async (): Promise<ServerResult<Database["public"]["Tables"]["clients"]["Row"][]>> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("clients")
       .select("*")
@@ -97,6 +99,7 @@ export const addClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => clientInputSchema.parse(data))
   .handler(async ({ data, context }): Promise<ServerResult<Database["public"]["Tables"]["clients"]["Row"] | null>> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const payload: Database["public"]["Tables"]["clients"]["Insert"] = {
       owner_id: context.userId,
       full_name: data.full_name,
