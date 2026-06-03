@@ -88,6 +88,7 @@ export type WizardForm = {
 
   // Reserved für spätere Schritte (4–6)
   renovation_costs: string;
+  renovation_own_work: string;
   existing_mortgage: string;
   requested_mortgage: string;
   calc_rate: string;
