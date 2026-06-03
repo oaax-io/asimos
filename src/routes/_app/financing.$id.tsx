@@ -691,16 +691,19 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     const inc = Math.round(income);
     const mort = Math.round(mortgage);
     const r = Math.round(rate * 10) / 10;
-    const total = p + original.reno;
+    const rn = Math.round(reno);
+    const ow = Math.min(Math.round(ownWork), rn);
+    const effectiveEq = eq + ow;
+    const total = p + rn;
     const ancillary = total * (original.ancillaryPct / 100);
     const firstMortgageMax = total * 0.6667;
     const second = Math.max(0, mort - firstMortgageMax);
     const amort = second / original.amortYears;
     const result = calcQuickCheck({
       purchase_price: p,
-      renovation_costs: original.reno,
+      renovation_costs: rn,
       requested_mortgage: mort,
-      own_funds_total: eq,
+      own_funds_total: effectiveEq,
       own_funds_pension_fund: original.pension,
       own_funds_vested_benefits: original.vested,
       gross_income_yearly: inc,
@@ -708,8 +711,8 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       ancillary_costs_yearly: ancillary,
       amortisation_yearly: amort,
     });
-    return { p, eq, inc, mort, r, total, result };
-  }, [purchase, equity, income, mortgage, rate, original]);
+    return { p, eq: effectiveEq, inc, mort, r, total, rn, ow, result };
+  }, [purchase, equity, income, mortgage, rate, reno, ownWork, original]);
 
   const reset = () => {
     setPurchase(Math.round(original.purchase));
@@ -717,6 +720,8 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     setIncome(Math.round(original.income));
     setMortgage(Math.round(original.mortgage));
     setRate(Math.round(original.rate * 10) / 10);
+    setReno(Math.round(original.reno));
+    setOwnWork(Math.round(n((dossier as { renovation_own_work?: number | string | null }).renovation_own_work)));
   };
 
   const saveMutation = useMutation({
