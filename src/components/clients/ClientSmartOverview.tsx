@@ -24,33 +24,31 @@ export function ClientSmartOverview({ clientId, client, onJumpTab }: Props) {
     queryKey: ["client_overview_bundle", clientId],
     staleTime: 60_000,
     queryFn: async () => {
-      const [rel, own, ownerships, roles, appts, tsk, doss, disc] = await Promise.all([
-        supabase
-          .from("client_relationships")
-          .select(
-            "id, client_id, related_client_id, relationship_type, related:clients!client_relationships_related_client_id_fkey(id, full_name), owner:clients!client_relationships_client_id_fkey(id, full_name)"
-          )
-          .or(`client_id.eq.${clientId},related_client_id.eq.${clientId}`),
-        supabase.from("properties").select("id,title,city,status,price").eq("seller_client_id", clientId),
-        supabase
-          .from("property_ownerships")
-          .select("id, property:properties(id,title,city,status,price)")
-          .eq("client_id", clientId).is("end_date", null),
-        supabase
-          .from("client_roles")
-          .select("id, role_type, related_id")
-          .eq("client_id", clientId).eq("related_type", "property").eq("status", "active"),
-        supabase.from("appointments").select("id,title,starts_at,status,location")
-          .eq("client_id", clientId).order("starts_at", { ascending: true }),
-        supabase.from("tasks").select("id,title,status,due_date,priority")
-          .eq("related_type", "client").eq("related_id", clientId)
-          .order("due_date", { ascending: true, nullsFirst: false }),
-        supabase.from("financing_dossiers")
-          .select("id,title,completion_percent,dossier_status,quick_check_status,requested_mortgage,bank_name,updated_at")
-          .eq("client_id", clientId).order("updated_at", { ascending: false }),
-        supabase.from("client_self_disclosures")
-          .select("status,submitted_at,reviewed_at").eq("client_id", clientId).maybeSingle(),
-      ]);
+      const rel = await supabase
+        .from("client_relationships")
+        .select(
+          "id, client_id, related_client_id, relationship_type, related:clients!client_relationships_related_client_id_fkey(id, full_name), owner:clients!client_relationships_client_id_fkey(id, full_name)"
+        )
+        .or(`client_id.eq.${clientId},related_client_id.eq.${clientId}`);
+      const own = await supabase.from("properties").select("id,title,city,status,price").eq("seller_client_id", clientId);
+      const ownerships = await supabase
+        .from("property_ownerships")
+        .select("id, property:properties(id,title,city,status,price)")
+        .eq("client_id", clientId).is("end_date", null);
+      const roles = await supabase
+        .from("client_roles")
+        .select("id, role_type, related_id")
+        .eq("client_id", clientId).eq("related_type", "property").eq("status", "active");
+      const appts = await supabase.from("appointments").select("id,title,starts_at,status,location")
+        .eq("client_id", clientId).order("starts_at", { ascending: true });
+      const tsk = await supabase.from("tasks").select("id,title,status,due_date,priority")
+        .eq("related_type", "client").eq("related_id", clientId)
+        .order("due_date", { ascending: true, nullsFirst: false });
+      const doss = await supabase.from("financing_dossiers")
+        .select("id,title,completion_percent,dossier_status,quick_check_status,requested_mortgage,bank_name,updated_at")
+        .eq("client_id", clientId).order("updated_at", { ascending: false });
+      const disc = await supabase.from("client_self_disclosures")
+        .select("status,submitted_at,reviewed_at").eq("client_id", clientId).maybeSingle();
 
       const seenRel = new Set<string>();
       const relationships: any[] = [];

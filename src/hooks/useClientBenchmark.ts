@@ -2,9 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateBenchmark, type BenchmarkResult } from "@/lib/self-disclosure";
 
-export function useClientBenchmark(clientId: string) {
+export function useClientBenchmark(clientId: string, enabled = true) {
   return useQuery<{ disclosure: Record<string, unknown> | null; benchmark: BenchmarkResult | null }>({
     queryKey: ["client_benchmark", clientId],
+    enabled,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("client_self_disclosures")
