@@ -361,7 +361,7 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
   const original: ScenarioState = useMemo(() => ({
     purchase: Math.round(numv(dossier.purchase_price)),
     equity: Math.round(numv(dossier.own_funds_total)),
-    income: Math.round(numv(dossier.gross_income_yearly)),
+    income: Math.round(effectiveIncome(dossier)),
     rate: Math.round(numv(dossier.calculated_interest_rate, 5) * 10) / 10,
     mortgage: Math.round(numv(dossier.requested_mortgage)),
   }), [dossier]);
