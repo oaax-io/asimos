@@ -470,16 +470,16 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
         ancillary_costs_yearly: dossier.ancillary_costs_yearly,
         amortisation_yearly: dossier.amortisation_yearly,
       });
-      const hasCoApplicant =
-        !!dossier.co_applicant_client_id ||
-        numv(dossier.co_applicant_einkommen) > 0 ||
-        numv(dossier.einkommen_kombiniert) > 0;
-      const incomeUpdate = hasCoApplicant
+      const coApp = hasCoApplicant(dossier);
+      const incomeUpdate = coApp
         ? { einkommen_kombiniert: s.income }
         : { gross_income_yearly: s.income };
+      const equityUpdate = coApp
+        ? { eigenkapital_kombiniert: s.equity }
+        : { own_funds_total: s.equity };
       const { error } = await supabase.from("financing_dossiers").update({
         purchase_price: s.purchase,
-        own_funds_total: s.equity,
+        ...equityUpdate,
         ...incomeUpdate,
         calculated_interest_rate: s.rate,
         requested_mortgage: s.mortgage,
