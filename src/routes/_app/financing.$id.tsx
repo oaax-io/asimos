@@ -802,14 +802,14 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
   const matrix: Cell[][] = incomeSteps.map((dInc) =>
     priceSteps.map((dPrice) => {
       const p = Math.max(0, live.p + dPrice);
-      const total = p + original.reno;
+      const total = p + live.rn;
       const ancillary = total * (original.ancillaryPct / 100);
       const firstMortgageMax = total * 0.6667;
       const second = Math.max(0, live.mort - firstMortgageMax);
       const amort = second / original.amortYears;
       const result = calcQuickCheck({
         purchase_price: p,
-        renovation_costs: original.reno,
+        renovation_costs: live.rn,
         requested_mortgage: live.mort,
         own_funds_total: live.eq,
         own_funds_pension_fund: original.pension,
