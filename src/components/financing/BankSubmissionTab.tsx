@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Save, Banknote } from "lucide-react";
+import { Save, Banknote, Package, Download, Copy, Loader2, FileArchive } from "lucide-react";
 import { DOSSIER_STATUS_LABELS, type DossierStatus } from "@/lib/financing";
+import {
+  buildBankPackage,
+  listBankPackages,
+  getBankPackageSignedUrl,
+  fetchBankPackageBytes,
+} from "@/lib/bank-package.functions";
 
 const BANK_TYPES = [
   { value: "ubs", label: "UBS" },
@@ -124,6 +131,8 @@ export function BankSubmissionTab({ dossierId }: { dossierId: string }) {
         </CardContent>
       </Card>
 
+      <BankPackageCard dossierId={dossierId} />
+
       <div className="flex justify-end">
         <Button
           onClick={() => saveMutation.mutate(form)}
@@ -133,6 +142,145 @@ export function BankSubmissionTab({ dossierId }: { dossierId: string }) {
         </Button>
       </div>
     </div>
+  );
+}
+
+function formatBytes(n: number | null | undefined) {
+  if (!n) return "—";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function BankPackageCard({ dossierId }: { dossierId: string }) {
+  const qc = useQueryClient();
+  const build = useServerFn(buildBankPackage);
+  const list = useServerFn(listBankPackages);
+  const getUrl = useServerFn(getBankPackageSignedUrl);
+  const fetchBytes = useServerFn(fetchBankPackageBytes);
+
+  const packages = useQuery({
+    queryKey: ["bank_packages", dossierId],
+    queryFn: () => list({ data: { dossierId } }),
+  });
+
+  const create = useMutation({
+    mutationFn: () => build({ data: { dossierId, locale: "de" } }),
+    onSuccess: (res) => {
+      if (!res.ok) {
+        toast.error(res.message ?? "Paket konnte nicht erstellt werden.");
+        return;
+      }
+      toast.success(`Bank-Paket erstellt (${formatBytes(res.sizeBytes)}, ${res.attachmentCount} Anhänge)`);
+      qc.invalidateQueries({ queryKey: ["bank_packages", dossierId] });
+      if (res.fileUrl) downloadViaProxy(res.filePath ?? "", res.fileUrl);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  async function downloadViaProxy(path: string, fallbackUrl: string) {
+    try {
+      const res = await fetchBytes({ data: { path } });
+      if (res.ok && res.base64) {
+        const bin = atob(res.base64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const blobUrl = URL.createObjectURL(new Blob([bytes], { type: "application/zip" }));
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = path.split("/").pop() ?? "bank-paket.zip";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+      }
+    } catch {
+      // fall back
+    }
+    window.open(fallbackUrl, "_blank");
+  }
+
+  async function copyLink(path: string) {
+    const res = await getUrl({ data: { path } });
+    if (res.ok && res.fileUrl) {
+      await navigator.clipboard.writeText(res.fileUrl);
+      toast.success("Download-Link kopiert (24h gültig)");
+    } else {
+      toast.error(res.message ?? "Link konnte nicht erstellt werden.");
+    }
+  }
+
+  async function downloadPackage(path: string) {
+    const res = await getUrl({ data: { path } });
+    if (res.ok && res.fileUrl) downloadViaProxy(path, res.fileUrl);
+    else toast.error(res.message ?? "Download fehlgeschlagen.");
+  }
+
+  const items = packages.data?.ok ? packages.data.packages : [];
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold flex items-center gap-2">
+              <Package className="h-4 w-4" />Bank-Paket
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Erstellt ein ZIP mit Master-Dossier (PDF) + allen Unterlagen von Kunde, Ehepartner, Objekt &
+              Finanzierung. Kopierbarer Download-Link zur Weitergabe an die Bank.
+            </p>
+          </div>
+          <Button onClick={() => create.mutate()} disabled={create.isPending}>
+            {create.isPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FileArchive className="mr-2 h-4 w-4" />
+            )}
+            {create.isPending ? "Wird erstellt…" : "Bank-Paket erstellen"}
+          </Button>
+        </div>
+
+        {items.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-2">Noch keine Pakete erstellt.</p>
+        ) : (
+          <div className="space-y-2">
+            <Label className="text-xs">Historie</Label>
+            {items.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center gap-2 rounded-md border p-2 text-sm"
+              >
+                <FileArchive className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="truncate font-medium">{p.title ?? "Bank-Paket"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(p.created_at).toLocaleString("de-CH")} · {formatBytes(p.bytes)} ·{" "}
+                    {p.attachments ?? 0} Anhänge
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => p.file_url && copyLink(p.file_url)}
+                  title="Link kopieren (24h)"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => p.file_url && downloadPackage(p.file_url)}
+                  title="Herunterladen"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
