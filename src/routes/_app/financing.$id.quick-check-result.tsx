@@ -416,19 +416,20 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
   // Original metrics
   const origResult = useMemo(() => calcQuickCheck({
     purchase_price: original.purchase,
-    renovation_costs: reno,
+    renovation_costs: original.reno,
     requested_mortgage: original.mortgage,
-    own_funds_total: original.equity,
+    own_funds_total: original.equity + original.ownWork,
     own_funds_pension_fund: numv(dossier.own_funds_pension_fund),
     own_funds_vested_benefits: numv(dossier.own_funds_vested_benefits),
     gross_income_yearly: original.income,
     calculated_interest_rate: original.rate,
     ancillary_costs_yearly: dossier.ancillary_costs_yearly,
     amortisation_yearly: dossier.amortisation_yearly,
-  }), [original, reno, dossier]);
+  }), [original, dossier]);
 
   // Live metrics from sliders
   const liveResult = useMemo(() => {
+
     // Adjust pension share proportionally if equity changes? Keep absolute pension if equity covers it.
     const pensionUsed = Math.min(pension, s.equity);
     return calcQuickCheck({
