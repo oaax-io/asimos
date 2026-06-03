@@ -387,7 +387,7 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
 
   const original: ScenarioState = useMemo(() => ({
     purchase: Math.round(numv(dossier.purchase_price)),
-    equity: Math.round(numv(dossier.own_funds_total)),
+    equity: Math.round(effectiveEquity(dossier)),
     income: Math.round(effectiveIncome(dossier)),
     rate: Math.round(numv(dossier.calculated_interest_rate, 5) * 10) / 10,
     mortgage: Math.round(numv(dossier.requested_mortgage)),
@@ -397,7 +397,7 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
   useEffect(() => { setS(original); }, [original]);
 
   const reno = numv(dossier.renovation_costs);
-  const pension = numv(dossier.own_funds_pension_fund) + numv(dossier.own_funds_vested_benefits);
+  const pension = effectivePension(dossier);
 
   // Original metrics
   const origResult = useMemo(() => calcQuickCheck({
