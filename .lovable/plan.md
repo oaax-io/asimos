@@ -1,57 +1,51 @@
-# Selbstauskunft Wizard + PDF-Auto-Fill
 
-## Ziel
-Die heutige lange Single-Page-Selbstauskunft wird ersetzt durch:
-1. Eine **Detail-/Übersichtsansicht** auf der Kundenseite (nach Speichern bleibt sie sichtbar, wie heute aber kompakt).
-2. Einen **Wizard** in 5 Schritten zum Ausfüllen/Bearbeiten – mit **Live-Benchmark** in der Sidebar.
-3. Eine **PDF-Upload-Funktion**: bestehende ASIMO-Selbstauskunft hochladen → Felder werden via KI automatisch erkannt und ins Wizard-Formular vorbefüllt.
+# Dossier komplett an die Bank einreichen
 
-## Wizard-Struktur (5 Steps)
+Status: Damiano Guarino steht auf "Bereit für Bank". Heute gibt es zwar einen Tab "Bank-Einreichung" (Bankdaten + Status + Notizen), aber **kein Mechanismus, der das gesamte Dossier in einem Schritt bündelt und versendet**. Quick-Check-PDF, Selbstauskünfte (Kunde + Ehepartner), hochgeladene Dokumente, UBS-Checkliste, Notizen — alles liegt verstreut.
 
-```
-┌────────────────────────────┬───────────────────────┐
-│ Step-Indikator + Inhalt    │ Live-Benchmark Karte  │
-│                            │ • Einnahmen-Total     │
-│ [Schritt-Felder]           │ • Ausgaben-Total      │
-│                            │ • Reserve / Quote     │
-│ [Zurück] [Weiter/Speichern]│ • Status-Badge        │
-└────────────────────────────┴───────────────────────┘
-```
+Ich schlage 3 Lösungsstufen vor — du wählst die Tiefe. Sie bauen aufeinander auf.
 
-Steps:
-1. **Personendaten** (Anrede, Name, Adresse, Geburtsdatum, Steuer-ID …)
-2. **Beruf** (Status, Arbeitgeber, Position, Gehaltstyp, Jahresgehalt)
-3. **Einnahmen monatlich** (4 Felder → Live-Total)
-4. **Ausgaben monatlich** (13 Felder → Live-Total + Live-Benchmark)
-5. **Abschluss** (Berater, Datum, Ort, interne Notizen)
+## Stufe 1 — "Bank-Paket generieren" (sofort umsetzbar, ohne externe Dienste)
 
-Oben im Wizard ein Drop-Bereich **„Bestehende Selbstauskunft hochladen (PDF)"**, der das Formular vorbefüllt.
+Im Tab **Bank-Einreichung** ein neuer Button **"Bank-Paket erstellen"**, der:
 
-## PDF-Auto-Fill
+1. Ein **Dossier-PDF** zusammenstellt aus:
+   - Deckblatt (Kunde + Ehepartner/Mitantragsteller, Objekt, Finanzierungssumme)
+   - Quick-Check Resultat (Tragbarkeit, Belehnung, EK-Aufteilung inkl. PK / Freizügigkeit / Eigenleistung)
+   - Selbstauskunft Kunde + Selbstauskunft Ehepartner (aus `client_self_disclosures`)
+   - UBS-Checkliste (Status pro Position)
+   - Interne Notizen + Bank-Notizen
+   - Liste aller beigelegten Dokumente (Inventar)
+2. Erzeugt ein **ZIP** mit:
+   - `00_Dossier_<Kunde>.pdf` (das obige Master-PDF)
+   - `Unterlagen/` → alle Dateien aus `documents` (Kunde, Ehepartner, Objekt, Finanzierung)
+   - `Generiert/` → alle Einträge aus `generated_documents`
+3. Speichert das Paket in Cloud Storage (Bucket `bank-packages`) und legt einen Eintrag in `generated_documents` an (Typ `bank_package`) → erscheint im Dokumente-Tab und ist via Link teilbar.
 
-- **Edge Function** `parse-self-disclosure` (Supabase Edge Function, da Lovable AI Gateway-fähig):
-  - Empfängt PDF als Base64.
-  - Ruft `google/gemini-2.5-flash` über Lovable AI Gateway (`LOVABLE_API_KEY`) mit dem PDF als `inline_data` auf.
-  - Strikter JSON-Schema-Prompt mit allen Selbstauskunfts-Feldnamen (gleiche Keys wie DB-Spalten).
-  - Antwort: JSON mit erkannten Feldern. Frontend mergt in den Wizard-State (User kann anschliessend prüfen/korrigieren).
-- Im Wizard: Toast „X Felder erkannt – bitte prüfen". Checkliste im PDF wird ignoriert.
+Tab zeigt Historie aller erstellten Pakete (Datum, Ersteller, Download-Link).
 
-## Detail-Ansicht (nach Abschluss)
+## Stufe 2 — Versand an die Bank
 
-`ClientSelfDisclosureTab` zeigt nach gespeicherten Daten eine **kompakte, gruppierte Übersicht** (ähnlich PDF-Layout) mit Benchmark-Karte oben. Buttons: „Bearbeiten" (öffnet Wizard) · „PDF hochladen" (öffnet Wizard mit Drop-Bereich) · „Neue erfassen" (wenn leer).
+Auf dem erzeugten Paket zwei Versand-Optionen:
+
+- **E-Mail an Bankkontakt** (`bank_email` aus Dossier): vorgefertigter Text mit sicherem Download-Link (signed URL, 14 Tage gültig). Status springt automatisch auf `submitted_to_bank`, `submitted_to_bank_at` wird gesetzt, Activity-Log-Eintrag.
+- **Sicherer Sharing-Link** (falls Bank kein E-Mail möchte): kopierbarer Link mit Ablaufdatum + Passwortschutz optional.
+
+## Stufe 3 — UBS-Direkteinreichung (später)
+
+Für UBS-Dossiers (`bank_type = ubs`) Adapter vorbereiten, der das gleiche Paket in das UBS-Format mappt (KeyPlan / strukturiertes JSON). Heute Stub, später API-Anbindung. Andere Banken bleiben bei E-Mail.
 
 ## Technische Details
 
-- **Neue Datei** `src/components/clients/ClientSelfDisclosureWizard.tsx` — Dialog mit Steps, lokalem Form-State, Live-`calculateBenchmark`, PDF-Upload-Bereich, finalem Upsert in `client_self_disclosures`.
-- **Neue Edge Function** `supabase/functions/parse-self-disclosure/index.ts` — `verify_jwt = false`, ruft Gemini via Lovable AI Gateway, gibt strukturiertes JSON zurück. Nutzt vorhandenes `LOVABLE_API_KEY`-Secret.
-- **Refactor** `ClientSelfDisclosureTab.tsx` — alte Single-Page-Form entfernen, durch Summary + Wizard-Trigger ersetzen.
-- Wiederverwendung: `calculateBenchmark`, `BenchmarkCard`, alle Field-Konstanten aus `src/lib/self-disclosure.ts` — keine Logik-Änderungen.
-- Keine DB-Schema-Änderungen nötig (Spalten existieren bereits).
-- Keine neuen npm-Pakete.
+- **PDF**: serverseitig im bestehenden `pdf-service` (Puppeteer) — HTML-Template `bank-dossier.html` mit Sections, Brand-Settings, Print-CSS. Server-Funktion `buildBankPackage` (`createServerFn`, `requireSupabaseAuth`).
+- **ZIP**: `archiver` im pdf-service (Node), streamt direkt nach Storage.
+- **Storage**: privater Bucket `bank-packages`, signed URLs.
+- **Ehepartner**: aus `financing_dossiers.co_applicant_client_id` → Selbstauskunft + Dokumente automatisch mitziehen.
+- **Status-Flow**: `ready_for_bank` → "Paket erstellt" (intern) → `submitted_to_bank` (nach Versand) → `documents_missing` / `approved` / `rejected` (manuell wie heute).
+- **Audit**: jeder Paket-Build und Versand in `activity_logs`.
 
-## Out of scope
-- Checkliste aus dem PDF (explizit ignoriert).
-- Mitantragsteller (heute auch nicht im Form).
-- Signatur-Bilder.
+## Was ich von dir brauche
 
-Nach deiner Bestätigung lege ich los.
+1. Welche Stufe(n) soll ich bauen — nur Stufe 1, oder Stufe 1 + 2 zusammen?
+2. Versand bei Stufe 2: **E-Mail-Versand direkt aus Lovable** (via Resend/Lovable Mail) oder reicht ein **kopierbarer Download-Link**, den du selbst per Outlook/Bank-Portal versendest?
+3. PDF-Sprache: nur Deutsch, oder auch FR/IT vorbereiten?
