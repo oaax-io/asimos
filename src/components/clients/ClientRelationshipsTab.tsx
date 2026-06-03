@@ -111,7 +111,7 @@ export function ClientRelationshipsTab({ clientId }: Props) {
     mutationFn: async (rel: Relationship) => {
       const { error } = await supabase.from("client_relationships").delete().eq("id", rel.id);
       if (error) throw error;
-      // Reziproke Beziehung entfernen
+      // Falls eine reziproke Zeile (alte Daten) existiert, ebenfalls entfernen
       await supabase
         .from("client_relationships")
         .delete()
