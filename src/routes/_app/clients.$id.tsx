@@ -72,8 +72,9 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
 
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [loadTimedOut, setLoadTimedOut] = useState(false);
+  const canLoadProtectedData = !authLoading && !!user;
 
   useEffect(() => {
     setLoadTimedOut(false);
@@ -87,14 +88,13 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
 
   const { data: client, isLoading, isError, error: clientError, refetch } = useQuery({
     queryKey: ["client", id],
+    enabled: canLoadProtectedData,
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
       if (!data) throw new Error("Kunde nicht gefunden");
       return data;
     },
-    retry: 1,
-    retryDelay: 600,
   });
 
   useEffect(() => {
@@ -122,7 +122,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       }));
     },
     retry: false,
-    enabled: visitedTabs.includes("overview") || visitedTabs.includes("financing"),
+    enabled: canLoadProtectedData && (visitedTabs.includes("overview") || visitedTabs.includes("financing")),
   });
 
   // Erstes/aktuelles Dossier (für Hero-KPI und Selbstauskunft-Link)
@@ -138,7 +138,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       return data;
     },
     retry: false,
-    enabled: visitedTabs.includes("overview") || visitedTabs.includes("consulting"),
+    enabled: canLoadProtectedData && (visitedTabs.includes("overview") || visitedTabs.includes("consulting")),
   });
 
   const { data: matches = [] } = useQuery({
@@ -153,7 +153,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       return data as any[];
     },
     retry: false,
-    enabled: visitedTabs.includes("matching"),
+    enabled: canLoadProtectedData && visitedTabs.includes("matching"),
   });
 
   const { data: documentsCount = 0 } = useQuery({
@@ -164,7 +164,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         .eq("related_type", "client").eq("related_id", id);
       return count ?? 0;
     },
-    enabled: visitedTabs.includes("documents"),
+    enabled: canLoadProtectedData && visitedTabs.includes("documents"),
   });
 
   const { data: ownProperties = [] } = useQuery({
@@ -177,7 +177,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       return data;
     },
     retry: false,
-    enabled: visitedTabs.includes("overview") || visitedTabs.includes("properties"),
+    enabled: canLoadProtectedData && (visitedTabs.includes("overview") || visitedTabs.includes("properties")),
   });
 
   const { data: assignedProperties = [] } = useQuery({
@@ -199,7 +199,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         .filter((r: any) => r.property);
     },
     retry: false,
-    enabled: visitedTabs.includes("properties"),
+    enabled: canLoadProtectedData && visitedTabs.includes("properties"),
   });
 
   const { data: clientStatusFlags } = useQuery({
@@ -217,16 +217,16 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       };
     },
     retry: false,
-    enabled: visitedTabs.includes("overview"),
+    enabled: canLoadProtectedData && visitedTabs.includes("overview"),
   });
 
-  const { data: benchmarkData } = useClientBenchmark(id, visitedTabs.includes("overview") || visitedTabs.includes("matching"));
+  const { data: benchmarkData } = useClientBenchmark(id, canLoadProtectedData && (visitedTabs.includes("overview") || visitedTabs.includes("matching")));
   const benchmark = benchmarkData?.benchmark ?? null;
 
   const ownerUserId = (client as any)?.assigned_to ?? (client as any)?.owner_id ?? null;
   const { data: ownerProfile } = useQuery({
     queryKey: ["client_owner_profile", ownerUserId],
-    enabled: !!ownerUserId && visitedTabs.includes("overview"),
+    enabled: canLoadProtectedData && !!ownerUserId && visitedTabs.includes("overview"),
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles").select("id,full_name,email")
@@ -265,6 +265,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
 
   const currentStatus = statusMap.get(client?.status ?? "") ?? CLIENT_STATUSES[0];
 
+  if (authLoading) return <div className="text-sm text-muted-foreground">Authentifizierung wird geprüft…</div>;
   if (isLoading && !isError && !loadTimedOut) return <div className="text-sm text-muted-foreground">Lädt…</div>;
   if (isLoading && !isError && loadTimedOut) return <div className="text-sm text-muted-foreground">Lade Kundendaten…</div>;
   if (clientError || !client) {
