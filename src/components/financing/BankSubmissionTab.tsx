@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,8 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Save, Banknote } from "lucide-react";
+import { Save, Banknote, Package, Download, Copy, Loader2, FileArchive } from "lucide-react";
 import { DOSSIER_STATUS_LABELS, type DossierStatus } from "@/lib/financing";
+import {
+  buildBankPackage,
+  listBankPackages,
+  getBankPackageSignedUrl,
+  fetchBankPackageBytes,
+} from "@/lib/bank-package.functions";
 
 const BANK_TYPES = [
   { value: "ubs", label: "UBS" },
