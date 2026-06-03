@@ -246,6 +246,15 @@ function numv(v: unknown, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+// Berücksichtigt Mitantragsteller/Ehepartner: nutzt kombiniertes Einkommen sofern gesetzt.
+function effectiveIncome(d: any): number {
+  const combined = numv(d?.einkommen_kombiniert);
+  if (combined > 0) return combined;
+  const main = numv(d?.gross_income_yearly);
+  const co = numv(d?.co_applicant_einkommen);
+  return main + co;
+}
+
 function chf(n: number): string {
   const rounded = Math.round(n);
   const sign = rounded < 0 ? "-" : "";
