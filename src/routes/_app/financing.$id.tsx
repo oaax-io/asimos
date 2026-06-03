@@ -875,6 +875,23 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             max={equityMax}
             step={5000}
             onChange={setEquity}
+          <SliderRow
+            label="Renovationskosten"
+            display={chf(reno)}
+            value={reno}
+            min={0}
+            max={renoMax}
+            step={5000}
+            onChange={(v) => setReno(Math.round(v))}
+          />
+          <SliderRow
+            label="davon Eigenleistung"
+            display={chf(ownWork)}
+            value={ownWork}
+            min={0}
+            max={ownWorkMax}
+            step={1000}
+            onChange={(v) => setOwnWork(Math.round(v))}
           />
           <SliderRow
             label="Bruttoeinkommen"
