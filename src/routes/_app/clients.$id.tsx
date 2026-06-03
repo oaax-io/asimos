@@ -776,6 +776,15 @@ function Field({ icon, label, value }: { icon: React.ReactNode; label: string; v
   );
 }
 
+function KPI({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded-md border bg-background/60 px-2 py-1.5">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-0.5 text-sm font-semibold">{value}</div>
+    </div>
+  );
+}
+
 function AppointmentRow({ appt }: { appt: any }) {
   return (
     <div className="flex items-center justify-between rounded-xl border p-4">
