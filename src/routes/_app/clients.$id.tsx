@@ -68,26 +68,33 @@ function ClientDetailRoute() {
 export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: { id: string; inDialog?: boolean; onClose?: () => void; clientIds?: string[]; onNavigate?: (id: string) => void }) {
   const [editOpen, setEditOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [visitedTabs, setVisitedTabs] = useState<string[]>(["overview"]);
 
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [loadTimedOut, setLoadTimedOut] = useState(false);
+  const canLoadProtectedData = !authLoading && !!user;
 
   useEffect(() => {
     setLoadTimedOut(false);
+    setActiveTab("overview");
+    setVisitedTabs(["overview"]);
   }, [id]);
+
+  useEffect(() => {
+    setVisitedTabs((prev) => (prev.includes(activeTab) ? prev : [...prev, activeTab]));
+  }, [activeTab]);
 
   const { data: client, isLoading, isError, error: clientError, refetch } = useQuery({
     queryKey: ["client", id],
+    enabled: canLoadProtectedData,
     queryFn: async () => {
       const { data, error } = await supabase.from("clients").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
       if (!data) throw new Error("Kunde nicht gefunden");
       return data;
     },
-    retry: 1,
-    retryDelay: 600,
   });
 
   useEffect(() => {
@@ -115,6 +122,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       }));
     },
     retry: false,
+    enabled: canLoadProtectedData && (visitedTabs.includes("overview") || visitedTabs.includes("financing")),
   });
 
   // Erstes/aktuelles Dossier (für Hero-KPI und Selbstauskunft-Link)
@@ -130,6 +138,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       return data;
     },
     retry: false,
+    enabled: canLoadProtectedData && (visitedTabs.includes("overview") || visitedTabs.includes("consulting")),
   });
 
   const { data: matches = [] } = useQuery({
@@ -144,6 +153,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       return data as any[];
     },
     retry: false,
+    enabled: canLoadProtectedData && visitedTabs.includes("matching"),
   });
 
   const { data: documentsCount = 0 } = useQuery({
@@ -154,6 +164,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         .eq("related_type", "client").eq("related_id", id);
       return count ?? 0;
     },
+    enabled: canLoadProtectedData && visitedTabs.includes("documents"),
   });
 
   const { data: ownProperties = [] } = useQuery({
@@ -166,6 +177,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       return data;
     },
     retry: false,
+    enabled: canLoadProtectedData && (visitedTabs.includes("overview") || visitedTabs.includes("properties")),
   });
 
   const { data: assignedProperties = [] } = useQuery({
@@ -187,6 +199,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         .filter((r: any) => r.property);
     },
     retry: false,
+    enabled: canLoadProtectedData && visitedTabs.includes("properties"),
   });
 
   const { data: clientStatusFlags } = useQuery({
@@ -204,15 +217,16 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       };
     },
     retry: false,
+    enabled: canLoadProtectedData && visitedTabs.includes("overview"),
   });
 
-  const { data: benchmarkData } = useClientBenchmark(id);
+  const { data: benchmarkData } = useClientBenchmark(id, canLoadProtectedData && (visitedTabs.includes("overview") || visitedTabs.includes("matching")));
   const benchmark = benchmarkData?.benchmark ?? null;
 
   const ownerUserId = (client as any)?.assigned_to ?? (client as any)?.owner_id ?? null;
   const { data: ownerProfile } = useQuery({
     queryKey: ["client_owner_profile", ownerUserId],
-    enabled: !!ownerUserId,
+    enabled: canLoadProtectedData && !!ownerUserId && visitedTabs.includes("overview"),
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles").select("id,full_name,email")
@@ -251,7 +265,9 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
 
   const currentStatus = statusMap.get(client?.status ?? "") ?? CLIENT_STATUSES[0];
 
+  if (authLoading) return <div className="text-sm text-muted-foreground">Authentifizierung wird geprüft…</div>;
   if (isLoading && !isError && !loadTimedOut) return <div className="text-sm text-muted-foreground">Lädt…</div>;
+  if (isLoading && !isError && loadTimedOut) return <div className="text-sm text-muted-foreground">Lade Kundendaten…</div>;
   if (clientError || !client) {
     return (
       <div className="space-y-4">
