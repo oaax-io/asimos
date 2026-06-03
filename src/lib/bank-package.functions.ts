@@ -487,13 +487,17 @@ export const listBankPackages = createServerFn({ method: "GET" })
     return {
       ok: true as const,
       message: null as string | null,
-      packages: (rows ?? []).map((r) => ({
-        id: r.id,
-        title: r.title,
-        file_url: r.file_url,
-        created_at: r.created_at,
-        variables: (r.variables ?? {}) as { [k: string]: unknown },
-      })),
+      packages: (rows ?? []).map((r) => {
+        const vars = (r.variables ?? {}) as Record<string, unknown>;
+        return {
+          id: r.id,
+          title: r.title,
+          file_url: r.file_url,
+          created_at: r.created_at,
+          bytes: typeof vars.bytes === "number" ? vars.bytes : null,
+          attachments: typeof vars.attachments === "number" ? vars.attachments : null,
+        };
+      }),
     };
   });
 
