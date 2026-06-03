@@ -16,6 +16,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SelbstauskunftTokenRouteImport } from './routes/selbstauskunft.$token'
 import { Route as FinanzierungTokenRouteImport } from './routes/finanzierung.$token'
+import { Route as BankPaketTokenRouteImport } from './routes/bank-paket.$token'
 import { Route as AppTemplatesRouteImport } from './routes/_app/templates'
 import { Route as AppTeamRouteImport } from './routes/_app/team'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
@@ -45,6 +46,7 @@ import { Route as AppLeadsIdRouteImport } from './routes/_app/leads.$id'
 import { Route as AppFinancingIdRouteImport } from './routes/_app/financing.$id'
 import { Route as AppClientsIdRouteImport } from './routes/_app/clients.$id'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicBankPaketTokenRouteImport } from './routes/api/public/bank-paket.$token'
 import { Route as AppPropertiesIdExposeRouteImport } from './routes/_app/properties.$id.expose'
 import { Route as AppFinancingIdQuickCheckResultRouteImport } from './routes/_app/financing.$id.quick-check-result'
 
@@ -80,6 +82,11 @@ const SelbstauskunftTokenRoute = SelbstauskunftTokenRouteImport.update({
 const FinanzierungTokenRoute = FinanzierungTokenRouteImport.update({
   id: '/finanzierung/$token',
   path: '/finanzierung/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BankPaketTokenRoute = BankPaketTokenRouteImport.update({
+  id: '/bank-paket/$token',
+  path: '/bank-paket/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppTemplatesRoute = AppTemplatesRouteImport.update({
@@ -228,6 +235,11 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBankPaketTokenRoute = ApiPublicBankPaketTokenRouteImport.update({
+  id: '/api/public/bank-paket/$token',
+  path: '/api/public/bank-paket/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppPropertiesIdExposeRoute = AppPropertiesIdExposeRouteImport.update({
   id: '/expose',
   path: '/expose',
@@ -265,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof AppTasksRoute
   '/team': typeof AppTeamRoute
   '/templates': typeof AppTemplatesRoute
+  '/bank-paket/$token': typeof BankPaketTokenRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
@@ -277,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/properties/': typeof AppPropertiesIndexRoute
   '/financing/$id/quick-check-result': typeof AppFinancingIdQuickCheckResultRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
+  '/api/public/bank-paket/$token': typeof ApiPublicBankPaketTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -302,6 +316,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof AppTasksRoute
   '/team': typeof AppTeamRoute
   '/templates': typeof AppTemplatesRoute
+  '/bank-paket/$token': typeof BankPaketTokenRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/clients/$id': typeof AppClientsIdRoute
@@ -314,6 +329,7 @@ export interface FileRoutesByTo {
   '/properties': typeof AppPropertiesIndexRoute
   '/financing/$id/quick-check-result': typeof AppFinancingIdQuickCheckResultRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
+  '/api/public/bank-paket/$token': typeof ApiPublicBankPaketTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -343,6 +359,7 @@ export interface FileRoutesById {
   '/_app/tasks': typeof AppTasksRoute
   '/_app/team': typeof AppTeamRoute
   '/_app/templates': typeof AppTemplatesRoute
+  '/bank-paket/$token': typeof BankPaketTokenRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
@@ -355,6 +372,7 @@ export interface FileRoutesById {
   '/_app/properties/': typeof AppPropertiesIndexRoute
   '/_app/financing/$id/quick-check-result': typeof AppFinancingIdQuickCheckResultRoute
   '/_app/properties/$id/expose': typeof AppPropertiesIdExposeRoute
+  '/api/public/bank-paket/$token': typeof ApiPublicBankPaketTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -384,6 +402,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/team'
     | '/templates'
+    | '/bank-paket/$token'
     | '/finanzierung/$token'
     | '/selbstauskunft/$token'
     | '/clients/$id'
@@ -396,6 +415,7 @@ export interface FileRouteTypes {
     | '/properties/'
     | '/financing/$id/quick-check-result'
     | '/properties/$id/expose'
+    | '/api/public/bank-paket/$token'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -421,6 +441,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/team'
     | '/templates'
+    | '/bank-paket/$token'
     | '/finanzierung/$token'
     | '/selbstauskunft/$token'
     | '/clients/$id'
@@ -433,6 +454,7 @@ export interface FileRouteTypes {
     | '/properties'
     | '/financing/$id/quick-check-result'
     | '/properties/$id/expose'
+    | '/api/public/bank-paket/$token'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -461,6 +483,7 @@ export interface FileRouteTypes {
     | '/_app/tasks'
     | '/_app/team'
     | '/_app/templates'
+    | '/bank-paket/$token'
     | '/finanzierung/$token'
     | '/selbstauskunft/$token'
     | '/_app/clients/$id'
@@ -473,6 +496,7 @@ export interface FileRouteTypes {
     | '/_app/properties/'
     | '/_app/financing/$id/quick-check-result'
     | '/_app/properties/$id/expose'
+    | '/api/public/bank-paket/$token'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -482,8 +506,10 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   OaaxRoute: typeof OaaxRoute
   SetPasswordRoute: typeof SetPasswordRoute
+  BankPaketTokenRoute: typeof BankPaketTokenRoute
   FinanzierungTokenRoute: typeof FinanzierungTokenRoute
   SelbstauskunftTokenRoute: typeof SelbstauskunftTokenRoute
+  ApiPublicBankPaketTokenRoute: typeof ApiPublicBankPaketTokenRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -536,6 +562,13 @@ declare module '@tanstack/react-router' {
       path: '/finanzierung/$token'
       fullPath: '/finanzierung/$token'
       preLoaderRoute: typeof FinanzierungTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bank-paket/$token': {
+      id: '/bank-paket/$token'
+      path: '/bank-paket/$token'
+      fullPath: '/bank-paket/$token'
+      preLoaderRoute: typeof BankPaketTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/templates': {
@@ -741,6 +774,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/bank-paket/$token': {
+      id: '/api/public/bank-paket/$token'
+      path: '/api/public/bank-paket/$token'
+      fullPath: '/api/public/bank-paket/$token'
+      preLoaderRoute: typeof ApiPublicBankPaketTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/properties/$id/expose': {
       id: '/_app/properties/$id/expose'
       path: '/expose'
@@ -872,8 +912,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   OaaxRoute: OaaxRoute,
   SetPasswordRoute: SetPasswordRoute,
+  BankPaketTokenRoute: BankPaketTokenRoute,
   FinanzierungTokenRoute: FinanzierungTokenRoute,
   SelbstauskunftTokenRoute: SelbstauskunftTokenRoute,
+  ApiPublicBankPaketTokenRoute: ApiPublicBankPaketTokenRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport

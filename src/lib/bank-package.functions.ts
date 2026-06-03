@@ -542,3 +542,74 @@ export const fetchBankPackageBytes = createServerFn({ method: "POST" })
     }
     return { ok: true as const, base64: btoa(binary), message: null as string | null };
   });
+
+// ---------- createBankPackageShare (7-Tage öffentlicher Download-Link) ----------
+
+function randomToken(len = 40): string {
+  const bytes = new Uint8Array(len);
+  crypto.getRandomValues(bytes);
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let out = "";
+  for (let i = 0; i < bytes.length; i++) out += chars[bytes[i] % chars.length];
+  return out;
+}
+
+export const createBankPackageShare = createServerFn({ method: "POST" })
+  .inputValidator((input: { generatedDocumentId: string }) => {
+    if (!input?.generatedDocumentId) throw new Error("generatedDocumentId is required");
+    return { generatedDocumentId: input.generatedDocumentId };
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Lade Paket
+    const { data: pkg, error: pkgErr } = await supabaseAdmin
+      .from("generated_documents")
+      .select("id, title, file_url, related_id, variables")
+      .eq("id", data.generatedDocumentId)
+      .eq("document_type", "bank_package")
+      .maybeSingle();
+    if (pkgErr || !pkg || !pkg.file_url) {
+      return { ok: false as const, token: null as string | null, message: pkgErr?.message ?? "Paket nicht gefunden" };
+    }
+
+    // Kundenname aus Dossier
+    let clientName: string | null = null;
+    if (pkg.related_id) {
+      const { data: dossier } = await supabaseAdmin
+        .from("financing_dossiers")
+        .select("client_id")
+        .eq("id", pkg.related_id)
+        .maybeSingle();
+      if (dossier?.client_id) {
+        const { data: client } = await supabaseAdmin
+          .from("clients")
+          .select("full_name")
+          .eq("id", dossier.client_id)
+          .maybeSingle();
+        clientName = client?.full_name ?? null;
+      }
+    }
+
+    const vars = (pkg.variables ?? {}) as Record<string, unknown>;
+    const token = randomToken(40);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { error: insertErr } = await supabaseAdmin
+      .from("bank_package_shares")
+      .insert({
+        token,
+        dossier_id: pkg.related_id,
+        storage_path: pkg.file_url,
+        client_name: clientName,
+        package_title: pkg.title,
+        size_bytes: typeof vars.bytes === "number" ? vars.bytes : null,
+        attachment_count: typeof vars.attachments === "number" ? vars.attachments : null,
+        expires_at: expiresAt,
+      } as never);
+    if (insertErr) {
+      return { ok: false as const, token: null, message: insertErr.message };
+    }
+    return { ok: true as const, token, expiresAt, message: null as string | null };
+  });
+

@@ -17,6 +17,7 @@ import {
   listBankPackages,
   getBankPackageSignedUrl,
   fetchBankPackageBytes,
+  createBankPackageShare,
 } from "@/lib/bank-package.functions";
 
 const BANK_TYPES = [
@@ -158,6 +159,7 @@ function BankPackageCard({ dossierId }: { dossierId: string }) {
   const list = useServerFn(listBankPackages);
   const getUrl = useServerFn(getBankPackageSignedUrl);
   const fetchBytes = useServerFn(fetchBankPackageBytes);
+  const createShare = useServerFn(createBankPackageShare);
 
   const packages = useQuery({
     queryKey: ["bank_packages", dossierId],
@@ -200,11 +202,12 @@ function BankPackageCard({ dossierId }: { dossierId: string }) {
     window.open(fallbackUrl, "_blank");
   }
 
-  async function copyLink(path: string) {
-    const res = await getUrl({ data: { path } });
-    if (res.ok && res.fileUrl) {
-      await navigator.clipboard.writeText(res.fileUrl);
-      toast.success("Download-Link kopiert (24h gültig)");
+  async function copyShareLink(generatedDocumentId: string) {
+    const res = await createShare({ data: { generatedDocumentId } });
+    if (res.ok && res.token) {
+      const url = `${window.location.origin}/bank-paket/${res.token}`;
+      await navigator.clipboard.writeText(url);
+      toast.success("Öffentlicher Download-Link kopiert (7 Tage gültig)");
     } else {
       toast.error(res.message ?? "Link konnte nicht erstellt werden.");
     }
@@ -262,8 +265,8 @@ function BankPackageCard({ dossierId }: { dossierId: string }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => p.file_url && copyLink(p.file_url)}
-                  title="Link kopieren (24h)"
+                  onClick={() => copyShareLink(p.id)}
+                  title="Öffentlichen Download-Link kopieren (7 Tage gültig)"
                 >
                   <Copy className="h-4 w-4" />
                 </Button>

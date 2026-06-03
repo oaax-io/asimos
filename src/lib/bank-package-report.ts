@@ -254,9 +254,37 @@ export function buildBankPackageHtml(input: BankPackageInput): string {
   const quickCheckLabel = d.quick_check_status ? QUICK_CHECK_LABELS[d.quick_check_status] : "—";
   const dossierStatusLabel = d.dossier_status ? DOSSIER_STATUS_LABELS[d.dossier_status] : "—";
 
+  const CHECKLIST_SECTION_LABELS: Record<string, string> = {
+    customer: "Kundenangaben",
+    property_docs: "Objekt-Unterlagen",
+    financing_structure: "Finanzierungsstruktur",
+    income_employment: "Einkommen & Anstellung",
+    tax: "Steuern",
+    self_employed: "Selbstständige",
+    affordability: "Tragbarkeit",
+    additional_check: "Zusätzliche Prüfungen",
+    submission_quality: "Einreichungsqualität",
+    rejection_reasons: "Ablehnungsgründe",
+  };
+  const CHECKLIST_STATUS_LABELS: Record<string, { label: string; tag: string }> = {
+    present: { label: "Vorhanden", tag: "ok" },
+    complete: { label: "Vollständig", tag: "ok" },
+    done: { label: "Erledigt", tag: "ok" },
+    open: { label: "Offen", tag: "warn" },
+    missing: { label: "Fehlt", tag: "warn" },
+    pending: { label: "Ausstehend", tag: "warn" },
+    not_relevant: { label: "Nicht relevant", tag: "neutral" },
+    not_applicable: { label: "Nicht anwendbar", tag: "neutral" },
+    rejected: { label: "Abgelehnt", tag: "bad" },
+  };
+  const sectionLabel = (k: string | null | undefined) =>
+    !k ? "Allgemein" : (CHECKLIST_SECTION_LABELS[k] ?? k);
+  const statusInfo = (k: string) =>
+    CHECKLIST_STATUS_LABELS[k] ?? { label: k, tag: "neutral" };
+
   const checklistByGroup = new Map<string, ChecklistEntry[]>();
   for (const c of input.checklist) {
-    const k = c.section ?? "Allgemein";
+    const k = sectionLabel(c.section);
     const arr = checklistByGroup.get(k) ?? [];
     arr.push(c);
     checklistByGroup.set(k, arr);
@@ -269,22 +297,16 @@ export function buildBankPackageHtml(input: BankPackageInput): string {
         <h3>${escapeHtml(group)}</h3>
         <table class="kv">
           ${items
-            .map(
-              (c) =>
-                `<tr>
+            .map((c) => {
+              const s = statusInfo(c.status);
+              return `<tr>
                   <td class="l">${escapeHtml(c.label)}</td>
                   <td>
-                    <span class="tag ${
-                      c.status === "complete" || c.status === "done"
-                        ? "ok"
-                        : c.status === "missing" || c.status === "open"
-                          ? "warn"
-                          : "neutral"
-                    }">${escapeHtml(c.status)}</span>
+                    <span class="tag ${s.tag}">${escapeHtml(s.label)}</span>
                     ${c.note ? `<div class="muted" style="margin-top:2px;">${escapeHtml(c.note)}</div>` : ""}
                   </td>
-                </tr>`,
-            )
+                </tr>`;
+            })
             .join("")}
         </table>
       `,

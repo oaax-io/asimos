@@ -201,6 +201,45 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_package_shares: {
+        Row: {
+          attachment_count: number | null
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          dossier_id: string
+          expires_at: string
+          package_title: string | null
+          size_bytes: number | null
+          storage_path: string
+          token: string
+        }
+        Insert: {
+          attachment_count?: number | null
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id: string
+          expires_at: string
+          package_title?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          token: string
+        }
+        Update: {
+          attachment_count?: number | null
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          dossier_id?: string
+          expires_at?: string
+          package_title?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          token?: string
+        }
+        Relationships: []
+      }
       brand_settings: {
         Row: {
           company_address: string | null
@@ -2937,6 +2976,23 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      bank_package_share_resolve: {
+        Args: { _token: string }
+        Returns: {
+          attachment_count: number
+          client_name: string
+          company_email: string
+          company_name: string
+          company_website: string
+          expires_at: string
+          logo_url: string
+          package_title: string
+          primary_color: string
+          secondary_color: string
+          size_bytes: number
+          status: string
+        }[]
       }
       can_access_client: { Args: { _client_id: string }; Returns: boolean }
       can_access_property: { Args: { _property_id: string }; Returns: boolean }
