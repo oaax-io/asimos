@@ -265,7 +265,7 @@ function BankPackageCard({ dossierId }: { dossierId: string }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => p.file_url && copyLink(p.file_url)}
+                  onClick={() => copyShareLink(p.id)}
                   title="Link kopieren (24h)"
                 >
                   <Copy className="h-4 w-4" />
