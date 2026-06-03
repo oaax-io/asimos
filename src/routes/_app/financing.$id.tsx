@@ -668,17 +668,21 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
   const [income, setIncome] = useState<number>(Math.round(original.income));
   const [mortgage, setMortgage] = useState<number>(Math.round(original.mortgage));
   const [rate, setRate] = useState<number>(Math.round(original.rate * 10) / 10);
+  const [reno, setReno] = useState<number>(Math.round(original.reno));
+  const [ownWork, setOwnWork] = useState<number>(Math.round(n((dossier as { renovation_own_work?: number | string | null }).renovation_own_work)));
 
   const [saveOpen, setSaveOpen] = useState(false);
   const [scenarioName, setScenarioName] = useState("");
 
   const purchaseMin = Math.round(original.purchase * 0.5);
   const purchaseMax = Math.round(original.purchase * 1.5) || 100000;
-  const equityMax = Math.round(original.equity * 2.0) || 200000;
+  const equityMax = Math.max(Math.round((purchase + reno) * 0.5), Math.round(original.equity * 2.0), 200000);
   const incomeMin = Math.round(original.income * 0.5);
   const incomeMax = Math.round(original.income * 2.0) || 200000;
   const mortgageMin = Math.round(original.mortgage * 0.5);
   const mortgageMax = Math.round(original.mortgage * 1.3) || 100000;
+  const renoMax = Math.max(Math.round(original.reno * 2.0), Math.round(purchase * 0.5), 200000);
+  const ownWorkMax = Math.max(reno, 50000);
 
   // Live calculation based on slider values
   const live = useMemo(() => {
