@@ -388,6 +388,8 @@ type ScenarioState = {
   income: number;
   rate: number;
   mortgage: number;
+  reno: number;
+  ownWork: number;
 };
 
 function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void }) {
@@ -400,37 +402,42 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
     income: Math.round(effectiveIncome(dossier)),
     rate: Math.round(numv(dossier.calculated_interest_rate, 5) * 10) / 10,
     mortgage: Math.round(numv(dossier.requested_mortgage)),
+    reno: Math.round(numv(dossier.renovation_costs)),
+    ownWork: Math.round(numv(dossier.renovation_own_work)),
   }), [dossier]);
 
   const [s, setS] = useState<ScenarioState>(original);
   useEffect(() => { setS(original); }, [original]);
 
-  const reno = numv(dossier.renovation_costs);
+  const reno = s.reno;
   const pension = effectivePension(dossier);
+
 
   // Original metrics
   const origResult = useMemo(() => calcQuickCheck({
     purchase_price: original.purchase,
-    renovation_costs: reno,
+    renovation_costs: original.reno,
     requested_mortgage: original.mortgage,
-    own_funds_total: original.equity,
+    own_funds_total: original.equity + original.ownWork,
     own_funds_pension_fund: numv(dossier.own_funds_pension_fund),
     own_funds_vested_benefits: numv(dossier.own_funds_vested_benefits),
     gross_income_yearly: original.income,
     calculated_interest_rate: original.rate,
     ancillary_costs_yearly: dossier.ancillary_costs_yearly,
     amortisation_yearly: dossier.amortisation_yearly,
-  }), [original, reno, dossier]);
+  }), [original, dossier]);
 
   // Live metrics from sliders
   const liveResult = useMemo(() => {
+
     // Adjust pension share proportionally if equity changes? Keep absolute pension if equity covers it.
-    const pensionUsed = Math.min(pension, s.equity);
+    const effectiveEq = s.equity + s.ownWork;
+    const pensionUsed = Math.min(pension, effectiveEq);
     return calcQuickCheck({
       purchase_price: s.purchase,
       renovation_costs: reno,
       requested_mortgage: s.mortgage,
-      own_funds_total: s.equity,
+      own_funds_total: effectiveEq,
       own_funds_pension_fund: pensionUsed,
       own_funds_vested_benefits: 0,
       gross_income_yearly: s.income,
@@ -440,12 +447,17 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
     });
   }, [s, reno, pension, dossier]);
 
-  const equityRatioLive = (s.purchase + reno) > 0 ? (s.equity / (s.purchase + reno)) * 100 : 0;
-  const equityRatioOrig = (original.purchase + reno) > 0 ? (original.equity / (original.purchase + reno)) * 100 : 0;
-  const hardLive = Math.max(0, s.equity - Math.min(pension, s.equity));
-  const hardRatioLive = (s.purchase + reno) > 0 ? (hardLive / (s.purchase + reno)) * 100 : 0;
-  const hardOrig = Math.max(0, original.equity - pension);
-  const hardRatioOrig = (original.purchase + reno) > 0 ? (hardOrig / (original.purchase + reno)) * 100 : 0;
+
+  const totalLive = s.purchase + s.reno;
+  const totalOrig = original.purchase + original.reno;
+  const eqLive = s.equity + s.ownWork;
+  const eqOrig = original.equity + original.ownWork;
+  const equityRatioLive = totalLive > 0 ? (eqLive / totalLive) * 100 : 0;
+  const equityRatioOrig = totalOrig > 0 ? (eqOrig / totalOrig) * 100 : 0;
+  const hardLive = Math.max(0, eqLive - Math.min(pension, eqLive));
+  const hardRatioLive = totalLive > 0 ? (hardLive / totalLive) * 100 : 0;
+  const hardOrig = Math.max(0, eqOrig - pension);
+  const hardRatioOrig = totalOrig > 0 ? (hardOrig / totalOrig) * 100 : 0;
 
   const tips: string[] = [];
   if (liveResult.affordability_ratio > 33) {
@@ -453,25 +465,27 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
     tips.push(`Einkommen müsste auf CHF ${chf(requiredIncome)} erhöht werden, um Tragbarkeit auf 33% zu bringen.`);
   }
   if (equityRatioLive < 20) {
-    const required = (s.purchase + reno) * 0.2;
-    tips.push(`Fehlende Eigenmittel: CHF ${chf(required - s.equity)} (mind. CHF ${chf(required)} erforderlich).`);
+    const required = totalLive * 0.2;
+    tips.push(`Fehlende Eigenmittel: CHF ${chf(required - eqLive)} (mind. CHF ${chf(required)} erforderlich).`);
   }
   if (hardRatioLive < 10) {
-    const required = (s.purchase + reno) * 0.1;
+    const required = totalLive * 0.1;
     tips.push(`Harte Eigenmittel zu tief — mindestens CHF ${chf(required)} aus Barvermögen erforderlich.`);
   }
   if (tips.length === 0) {
     tips.push("Alle Kennzahlen erfüllt — Finanzierung grundsätzlich bankfähig.");
   }
 
+
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const pensionUsed = Math.min(pension, s.equity);
+      const effectiveEq = s.equity + s.ownWork;
+      const pensionUsed = Math.min(pension, effectiveEq);
       const result = calcQuickCheck({
         purchase_price: s.purchase,
-        renovation_costs: reno,
+        renovation_costs: s.reno,
         requested_mortgage: s.mortgage,
-        own_funds_total: s.equity,
+        own_funds_total: effectiveEq,
         own_funds_pension_fund: pensionUsed,
         own_funds_vested_benefits: 0,
         gross_income_yearly: s.income,
@@ -488,6 +502,8 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
         : { own_funds_total: s.equity };
       const { error } = await supabase.from("financing_dossiers").update({
         purchase_price: s.purchase,
+        renovation_costs: s.reno,
+        renovation_own_work: s.ownWork,
         ...equityUpdate,
         ...incomeUpdate,
         calculated_interest_rate: s.rate,
@@ -500,6 +516,7 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
       }).eq("id", dossier.id);
       if (error) throw error;
     },
+
     onSuccess: () => {
       toast.success("Dossier aktualisiert");
       qc.invalidateQueries({ queryKey: ["financing_dossier", dossier.id] });
@@ -533,12 +550,30 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
             display={(v) => `CHF ${chf(v)}`}
           />
           <SliderRow
-            label="Eigenmittel" unit="CHF"
+            label="Eigenmittel (bar / PK / FZ)" unit="CHF"
             value={s.equity}
             min={0}
-            max={Math.round(original.equity * 2.0) || 100000}
+            max={Math.max(Math.round((s.purchase + s.reno) * 0.5), Math.round(original.equity * 2.0), 200000)}
             step={5000}
             onChange={(v) => setS((p) => ({ ...p, equity: Math.round(v) }))}
+            display={(v) => `CHF ${chf(v)}`}
+          />
+          <SliderRow
+            label="Renovationskosten" unit="CHF"
+            value={s.reno}
+            min={0}
+            max={Math.max(Math.round(original.reno * 2.0), Math.round(s.purchase * 0.5), 200000)}
+            step={5000}
+            onChange={(v) => setS((p) => ({ ...p, reno: Math.round(v) }))}
+            display={(v) => `CHF ${chf(v)}`}
+          />
+          <SliderRow
+            label="davon Eigenleistung" unit="CHF"
+            value={s.ownWork}
+            min={0}
+            max={Math.max(s.reno, 50000)}
+            step={1000}
+            onChange={(v) => setS((p) => ({ ...p, ownWork: Math.round(v) }))}
             display={(v) => `CHF ${chf(v)}`}
           />
           <SliderRow
@@ -566,6 +601,7 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
             onChange={(v) => setS((p) => ({ ...p, mortgage: Math.round(v) }))}
             display={(v) => `CHF ${chf(v)}`}
           />
+
         </CardContent></Card>
 
         <Card><CardContent className="p-5 space-y-4">
