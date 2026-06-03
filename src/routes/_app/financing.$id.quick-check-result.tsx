@@ -550,12 +550,30 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
             display={(v) => `CHF ${chf(v)}`}
           />
           <SliderRow
-            label="Eigenmittel" unit="CHF"
+            label="Eigenmittel (bar / PK / FZ)" unit="CHF"
             value={s.equity}
             min={0}
-            max={Math.round(original.equity * 2.0) || 100000}
+            max={Math.max(Math.round((s.purchase + s.reno) * 0.5), Math.round(original.equity * 2.0), 200000)}
             step={5000}
             onChange={(v) => setS((p) => ({ ...p, equity: Math.round(v) }))}
+            display={(v) => `CHF ${chf(v)}`}
+          />
+          <SliderRow
+            label="Renovationskosten" unit="CHF"
+            value={s.reno}
+            min={0}
+            max={Math.max(Math.round(original.reno * 2.0), Math.round(s.purchase * 0.5), 200000)}
+            step={5000}
+            onChange={(v) => setS((p) => ({ ...p, reno: Math.round(v) }))}
+            display={(v) => `CHF ${chf(v)}`}
+          />
+          <SliderRow
+            label="davon Eigenleistung" unit="CHF"
+            value={s.ownWork}
+            min={0}
+            max={Math.max(s.reno, 50000)}
+            step={1000}
+            onChange={(v) => setS((p) => ({ ...p, ownWork: Math.round(v) }))}
             display={(v) => `CHF ${chf(v)}`}
           />
           <SliderRow
@@ -583,6 +601,7 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
             onChange={(v) => setS((p) => ({ ...p, mortgage: Math.round(v) }))}
             display={(v) => `CHF ${chf(v)}`}
           />
+
         </CardContent></Card>
 
         <Card><CardContent className="p-5 space-y-4">
