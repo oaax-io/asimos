@@ -331,6 +331,9 @@ function DetailTab({ dossier }: { dossier: any }) {
           <h3 className="font-semibold mb-3">Finanzierungsstruktur</h3>
           <Row label="Kaufpreis" value={`CHF ${chf(purchase)}`} />
           {reno > 0 && <Row label="+ Renovationskosten" value={`CHF ${chf(reno)}`} />}
+          {numv(dossier.renovation_own_work) > 0 && (
+            <Row label="davon Eigenleistung" value={`CHF ${chf(numv(dossier.renovation_own_work))}`} muted />
+          )}
           <Row label="= Gesamtinvestition" value={`CHF ${chf(total)}`} bold />
           <Divider />
           <Row label="Eigenmittel total" value={`CHF ${chf(equity)} (${equityRatio.toFixed(1)}%)`} />
