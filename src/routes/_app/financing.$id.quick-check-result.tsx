@@ -138,7 +138,7 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const equity = numv(dossier.own_funds_total);
     const pension = numv(dossier.own_funds_pension_fund) + numv(dossier.own_funds_vested_benefits);
     const hardEquity = Math.max(0, equity - pension);
-    const income = numv(dossier.gross_income_yearly);
+    const income = effectiveIncome(dossier);
     const yearly = numv(dossier.yearly_costs) ||
       (mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
         + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
@@ -246,6 +246,15 @@ function numv(v: unknown, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+// Berücksichtigt Mitantragsteller/Ehepartner: nutzt kombiniertes Einkommen sofern gesetzt.
+function effectiveIncome(d: any): number {
+  const combined = numv(d?.einkommen_kombiniert);
+  if (combined > 0) return combined;
+  const main = numv(d?.gross_income_yearly);
+  const co = numv(d?.co_applicant_einkommen);
+  return main + co;
+}
+
 function chf(n: number): string {
   const rounded = Math.round(n);
   const sign = rounded < 0 ? "-" : "";
@@ -262,7 +271,7 @@ function DetailTab({ dossier }: { dossier: any }) {
   const pension = numv(dossier.own_funds_pension_fund) + numv(dossier.own_funds_vested_benefits);
   const cash = Math.max(0, equity - pension);
   const mortgage = numv(dossier.requested_mortgage);
-  const income = numv(dossier.gross_income_yearly);
+  const income = effectiveIncome(dossier);
   const rate = numv(dossier.calculated_interest_rate, 5);
 
   // 1./2. Hypothek (CH-Standard: 1. Hypo bis 65% des Wertes, 2. Hypo 65–80%)
@@ -352,7 +361,7 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
   const original: ScenarioState = useMemo(() => ({
     purchase: Math.round(numv(dossier.purchase_price)),
     equity: Math.round(numv(dossier.own_funds_total)),
-    income: Math.round(numv(dossier.gross_income_yearly)),
+    income: Math.round(effectiveIncome(dossier)),
     rate: Math.round(numv(dossier.calculated_interest_rate, 5) * 10) / 10,
     mortgage: Math.round(numv(dossier.requested_mortgage)),
   }), [dossier]);
@@ -434,10 +443,17 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
         ancillary_costs_yearly: dossier.ancillary_costs_yearly,
         amortisation_yearly: dossier.amortisation_yearly,
       });
+      const hasCoApplicant =
+        !!dossier.co_applicant_client_id ||
+        numv(dossier.co_applicant_einkommen) > 0 ||
+        numv(dossier.einkommen_kombiniert) > 0;
+      const incomeUpdate = hasCoApplicant
+        ? { einkommen_kombiniert: s.income }
+        : { gross_income_yearly: s.income };
       const { error } = await supabase.from("financing_dossiers").update({
         purchase_price: s.purchase,
         own_funds_total: s.equity,
-        gross_income_yearly: s.income,
+        ...incomeUpdate,
         calculated_interest_rate: s.rate,
         requested_mortgage: s.mortgage,
         total_investment: result.total_investment,
