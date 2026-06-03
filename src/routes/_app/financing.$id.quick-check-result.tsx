@@ -388,6 +388,8 @@ type ScenarioState = {
   income: number;
   rate: number;
   mortgage: number;
+  reno: number;
+  ownWork: number;
 };
 
 function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void }) {
@@ -400,13 +402,16 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
     income: Math.round(effectiveIncome(dossier)),
     rate: Math.round(numv(dossier.calculated_interest_rate, 5) * 10) / 10,
     mortgage: Math.round(numv(dossier.requested_mortgage)),
+    reno: Math.round(numv(dossier.renovation_costs)),
+    ownWork: Math.round(numv(dossier.renovation_own_work)),
   }), [dossier]);
 
   const [s, setS] = useState<ScenarioState>(original);
   useEffect(() => { setS(original); }, [original]);
 
-  const reno = numv(dossier.renovation_costs);
+  const reno = s.reno;
   const pension = effectivePension(dossier);
+
 
   // Original metrics
   const origResult = useMemo(() => calcQuickCheck({
