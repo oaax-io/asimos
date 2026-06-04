@@ -777,6 +777,16 @@ export function buildBankPackageHtml(input: BankPackageInput): string {
   </div>
 
   <div class="section">
+    <h2>${escapeHtml(t(locale, "section_vorpruefung"))}</h2>
+    ${vorpruefungHtml(d)}
+  </div>
+
+  <div class="section">
+    <h2>${escapeHtml(t(locale, "section_detailrechnung"))}</h2>
+    ${detailRechnungHtml(d)}
+  </div>
+
+  <div class="section">
     <h2>${escapeHtml(t(locale, "section_applicants"))}</h2>
     <div class="two-col">
       <div>
@@ -789,6 +799,20 @@ export function buildBankPackageHtml(input: BankPackageInput): string {
       </div>
     </div>
   </div>
+
+  <div class="section">
+    <h2>${escapeHtml(t(locale, "section_self_disclosure"))} – ${escapeHtml(t(locale, "section_main_applicant"))}</h2>
+    ${disclosureBlock(input.applicant)}
+  </div>
+
+  ${
+    input.coApplicant
+      ? `<div class="section">
+    <h2>${escapeHtml(t(locale, "section_self_disclosure"))} – ${escapeHtml(t(locale, "section_co_applicant"))}</h2>
+    ${disclosureBlock(input.coApplicant)}
+  </div>`
+      : ""
+  }
 
   <div class="section">
     <h2>${escapeHtml(t(locale, "section_property"))}</h2>
