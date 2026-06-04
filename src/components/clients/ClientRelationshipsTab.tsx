@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,6 +62,7 @@ interface Props {
 
 export function ClientRelationshipsTab({ clientId }: Props) {
   const qc = useQueryClient();
+  const confirm = useConfirm();
 
   const { data: relationships = [] } = useQuery({
     queryKey: ["client_relationships", clientId],
@@ -192,8 +194,8 @@ export function ClientRelationshipsTab({ clientId }: Props) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => {
-                        if (confirm("Beziehung wirklich entfernen?")) removeRel.mutate(r);
+                      onClick={async () => {
+                        if (await confirm({ title: "Beziehung entfernen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Entfernen" })) removeRel.mutate(r);
                       }}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />

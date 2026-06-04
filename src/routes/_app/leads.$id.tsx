@@ -19,6 +19,7 @@ import { leadStatusLabels, leadStatuses, type LeadStatus, formatDate, formatDate
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { ConvertLeadDialog } from "@/components/leads/ConvertLeadDialog";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 
 export const Route = createFileRoute("/_app/leads/$id")({ component: LeadDetail });
 
@@ -28,6 +29,7 @@ function LeadDetail() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const confirm = useConfirm();
   const { user } = useAuth();
 
   const leadQuery = useQuery({
@@ -154,7 +156,7 @@ function LeadDetail() {
             onConverted={(clientId) => navigate({ to: "/clients/$id", params: { id: clientId } })}
           />
 
-          <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
+          <Button variant="outline" size="icon" onClick={async () => { if (await confirm({ title: "Lead löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Löschen" })) del.mutate(); }}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>

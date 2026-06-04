@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { apptTypeLabels, formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 
 export const Route = createFileRoute("/_app/appointments")({ component: AppointmentsPage });
 
@@ -38,6 +39,7 @@ const emptyForm = {
 };
 
 function AppointmentsPage() {
+  const confirm = useConfirm();
   const qc = useQueryClient();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -156,7 +158,7 @@ function AppointmentsPage() {
         properties={properties}
         employees={employees}
         onSave={(patch: any) => editing && update.mutate({ id: editing.id, patch }, { onSuccess: () => { toast.success("Aktualisiert"); setEditId(null); } })}
-        onDelete={() => { if (editing && confirm("Termin wirklich löschen?")) remove.mutate(editing.id); }}
+        onDelete={async () => { if (editing && await confirm({ title: "Termin löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Löschen" })) remove.mutate(editing.id); }}
       />
     </>
   );
