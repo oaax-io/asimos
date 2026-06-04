@@ -720,6 +720,17 @@ export function buildBankPackageHtml(input: BankPackageInput): string {
   .tag.neutral { background:#e5e7eb; color:#374151; }
   .footer { position:fixed; bottom:8mm; left:14mm; right:14mm; text-align:center; font-size:9px; color:#9ca3af; border-top:1px solid #e5e7eb; padding-top:5px; }
   .notes-block { white-space:pre-wrap; background:${hexAlpha(secondary, 0.06)}; border-left:3px solid ${secondary}; padding:9px 12px; border-radius:6px; font-size:11px; color:#374151; }
+  .kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .kpi { border:1px solid ${hexAlpha(primary, 0.18)}; border-radius:8px; padding:10px 12px; background:#ffffff; }
+  .kpi-head { display:flex; justify-content:space-between; align-items:baseline; }
+  .kpi-label { font-size:10.5px; color:#6b7280; }
+  .kpi-limit { font-size:9.5px; color:#9ca3af; }
+  .kpi-value { font-size:22px; font-weight:700; margin:4px 0 8px; letter-spacing:-0.01em; }
+  .kpi-bar { position:relative; height:8px; width:100%; background:#f1f3f5; border-radius:999px; overflow:hidden; }
+  .kpi-bar-fill { position:absolute; left:0; top:0; height:100%; border-radius:999px; }
+  .kpi-bar-limit { position:absolute; top:-2px; bottom:-2px; width:2px; background:#111827; opacity:0.65; }
+  .disclosure-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  td.l-muted { color:#6b7280; width:38%; padding-left:12px; }
 </style></head>
 <body>
   <div class="header">
