@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Star } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 
 type BankAccount = {
   id: string;
