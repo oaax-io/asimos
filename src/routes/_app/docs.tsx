@@ -176,12 +176,16 @@ const CHANGELOG: ChangelogEntry[] = [
 ];
 
 const ROADMAP = [
-  { title: "Mehrsprachigkeit (FR / IT)", status: "geplant" },
-  { title: "Kalender-Sync mit Outlook & Google", status: "in Arbeit" },
-  { title: "Mobile-App (iOS / Android)", status: "Konzept" },
-  { title: "KI-Assistent fuer E-Mail-Entwuerfe", status: "geplant" },
   { title: "Digitale Signatur direkt im Dossier", status: "in Arbeit" },
+  { title: "Kalender-Sync mit Outlook & Google", status: "in Arbeit" },
+  { title: "Bank-API-Anbindung fuer direkten Dossier-Versand", status: "in Arbeit" },
+  { title: "Mehrsprachigkeit (FR / IT / EN)", status: "geplant" },
+  { title: "KI-Assistent fuer E-Mail-Entwuerfe", status: "geplant" },
+  { title: "Automatische WhatsApp-Benachrichtigungen an Kunden", status: "geplant" },
+  { title: "Mobile-App (iOS / Android)", status: "Konzept" },
+  { title: "Marktplatz-Integrationen (Homegate, ImmoScout24)", status: "Konzept" },
 ];
+
 
 const FAQS = [
   {
