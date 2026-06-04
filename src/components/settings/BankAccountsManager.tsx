@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Star } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 
 type BankAccount = {
   id: string;
@@ -32,6 +33,7 @@ const emptyAccount: Omit<BankAccount, "id"> = {
 
 export function BankAccountsManager() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [editing, setEditing] = useState<BankAccount | null>(null);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Omit<BankAccount, "id">>(emptyAccount);
@@ -152,7 +154,7 @@ export function BankAccountsManager() {
                     </Button>
                   ) : null}
                   <Button variant="ghost" size="sm" onClick={() => openEdit(a)}><Pencil className="size-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => { if (confirm("Bankkonto wirklich löschen?")) remove.mutate(a.id); }}>
+                  <Button variant="ghost" size="sm" onClick={async () => { if (await confirm({ title: "Bankkonto löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Löschen" })) remove.mutate(a.id); }}>
                     <Trash2 className="size-4" />
                   </Button>
                 </div>

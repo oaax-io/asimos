@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
@@ -44,6 +45,7 @@ const emptyForm = {
 
 function TasksPage() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -301,7 +303,7 @@ function TasksPage() {
         employees={employees}
         optionsFor={optionsFor}
         onSave={(patch) => update.mutate({ id: editing!.id, patch }, { onSuccess: () => { toast.success("Aufgabe aktualisiert"); setEditId(null); } })}
-        onDelete={() => { if (confirm("Aufgabe wirklich löschen?")) remove.mutate(editing!.id); }}
+        onDelete={async () => { if (await confirm({ title: "Aufgabe löschen?", confirmText: "Löschen" })) remove.mutate(editing!.id); }}
       />
     </>
   );

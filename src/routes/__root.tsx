@@ -5,6 +5,7 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth";
 import { makeQueryClient } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/sonner";
+import { ConfirmProvider } from "@/components/confirm/ConfirmProvider";
 
 function NotFound() {
   return (
@@ -64,8 +65,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={qc}>
       <AuthProvider>
-        <Outlet />
-        <Toaster richColors position="top-right" />
+        <ConfirmProvider>
+          <Outlet />
+          <Toaster richColors position="top-right" />
+        </ConfirmProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Save, Banknote, Package, Download, Copy, Loader2, FileArchive } from "lucide-react";
+import { Save, Banknote, Package, Download, Copy, Loader2, FileArchive, Trash2 } from "lucide-react";
 import { DOSSIER_STATUS_LABELS, type DossierStatus } from "@/lib/financing";
 import {
   buildBankPackage,
@@ -18,7 +18,9 @@ import {
   getBankPackageSignedUrl,
   fetchBankPackageBytes,
   createBankPackageShare,
+  deleteBankPackage,
 } from "@/lib/bank-package.functions";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 
 const BANK_TYPES = [
   { value: "ubs", label: "UBS" },
@@ -155,15 +157,30 @@ function formatBytes(n: number | null | undefined) {
 
 function BankPackageCard({ dossierId }: { dossierId: string }) {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const build = useServerFn(buildBankPackage);
   const list = useServerFn(listBankPackages);
   const getUrl = useServerFn(getBankPackageSignedUrl);
   const fetchBytes = useServerFn(fetchBankPackageBytes);
   const createShare = useServerFn(createBankPackageShare);
+  const deletePkg = useServerFn(deleteBankPackage);
 
   const packages = useQuery({
     queryKey: ["bank_packages", dossierId],
     queryFn: () => list({ data: { dossierId } }),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deletePkg({ data: { generatedDocumentId: id } }),
+    onSuccess: (res) => {
+      if (!res.ok) {
+        toast.error(res.message ?? "Löschen fehlgeschlagen.");
+        return;
+      }
+      toast.success("Version gelöscht");
+      qc.invalidateQueries({ queryKey: ["bank_packages", dossierId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const create = useMutation({
@@ -278,6 +295,23 @@ function BankPackageCard({ dossierId }: { dossierId: string }) {
                 >
                   <Download className="h-4 w-4" />
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: "Version löschen?",
+                      description: `Diese Version vom ${formatZurich(p.created_at)} wird unwiderruflich entfernt.`,
+                      confirmText: "Löschen",
+                    });
+                    if (ok) remove.mutate(p.id);
+                  }}
+                  disabled={remove.isPending}
+                  title="Version löschen"
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             ))}
           </div>
@@ -285,6 +319,20 @@ function BankPackageCard({ dossierId }: { dossierId: string }) {
       </CardContent>
     </Card>
   );
+}
+
+function formatZurich(iso: string | null | undefined) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("de-CH", {
+    timeZone: "Europe/Zurich",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {

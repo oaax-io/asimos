@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 
 export const Route = createFileRoute("/oaax")({
   component: SuperadminPage,
@@ -232,6 +233,7 @@ function OverviewTab() {
 // ─── Agencies ───────────────────────────────────
 function AgenciesTab() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const { data: agencies, isLoading } = useQuery({
     queryKey: ["admin-agencies"],
@@ -324,8 +326,9 @@ function AgenciesTab() {
                   <button
                     className="fl-btn fl-btn-ghost"
                     style={{ padding: "5px 8px", color: "#D13438", borderColor: "rgba(209,52,56,0.25)" }}
-                    onClick={() => {
-                      if (confirm(`Agentur „${a.name}" wirklich löschen?`)) del.mutate(a.id);
+                    onClick={async () => {
+                      const ok = await confirm({ title: "Agentur löschen?", description: `Agentur „${a.name}" wird unwiderruflich entfernt.`, confirmText: "Löschen" });
+                      if (ok) del.mutate(a.id);
                     }}
                   >
                     <Trash2 size={13} />
