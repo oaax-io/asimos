@@ -102,7 +102,7 @@ export function buildRecommendations(input: ReportInput): Recommendation[] {
       items: [
         "Selbstauskunft vollständig erfassen",
         "Erforderliche Unterlagen sammeln",
-        "UBS Checkliste vorbereiten",
+        "Bank Checkliste vorbereiten",
         "Bankeinreichung starten",
       ],
     });
