@@ -324,9 +324,17 @@ function kpiCardHtml(opts: {
   mode: "max" | "min";
 }): string {
   const { label, value, limit, mode } = opts;
-  const ok = mode === "max" ? value <= limit * 0.9 : value >= limit;
-  const bad = mode === "max" ? value > limit : value < limit * 0.7;
-  const tone: "ok" | "warn" | "bad" = bad ? "bad" : ok ? "ok" : "warn";
+  // Spiegelt die App-Logik: bis Limit = grün, leichte Überschreitung = orange, deutlich darüber = rot
+  let tone: "ok" | "warn" | "bad";
+  if (mode === "max") {
+    if (value <= limit) tone = "ok";
+    else if (value <= limit * 1.1) tone = "warn";
+    else tone = "bad";
+  } else {
+    if (value >= limit) tone = "ok";
+    else if (value >= limit * 0.9) tone = "warn";
+    else tone = "bad";
+  }
   const c = TONE_COLORS[tone];
   const scaleMax = mode === "max" ? Math.max(limit * 1.25, value) : Math.max(limit * 1.5, value, 100);
   const valuePct = Math.min(100, (value / scaleMax) * 100);
@@ -473,99 +481,139 @@ function detailRechnungHtml(d: BankPackageInput["dossier"]): string {
   `;
 }
 
-// ---------- Vollständige Selbstauskunft ----------
+// ---------- Vollständige Selbstauskunft (Vergleichstabelle Haupt- / Mitantragsteller) ----------
 
-function disclosureBlock(a: Applicant): string {
-  const d = a.disclosure;
-  if (!d) {
-    return `<p class="muted">Keine Selbstauskunft erfasst.</p>`;
-  }
-  const fullName = [d.first_name, d.last_name].filter(Boolean).join(" ") || a.full_name || "—";
-  const addr = [
-    [d.street, d.street_number].filter(Boolean).join(" "),
-    [d.postal_code, d.city].filter(Boolean).join(" "),
-    d.country,
-  ]
-    .filter(Boolean)
-    .join(", ");
+type DiscRow = {
+  label: string;
+  main: string;
+  co: string;
+  group?: boolean;
+};
+
+function discValue(a: Applicant | null | undefined, picker: (d: Disclosure, a: Applicant) => unknown): string {
+  if (!a) return "—";
+  const d = (a.disclosure ?? {}) as Disclosure;
+  const v = picker(d, a);
+  if (v == null || String(v).trim() === "") return "—";
+  return escapeHtml(String(v));
+}
+function discDate(a: Applicant | null | undefined, picker: (d: Disclosure, a: Applicant) => string | null | undefined): string {
+  if (!a) return "—";
+  const d = (a.disclosure ?? {}) as Disclosure;
+  return formatDateCH(picker(d, a));
+}
+function discMoney(a: Applicant | null | undefined, picker: (d: Disclosure, a: Applicant) => number | null | undefined): string {
+  if (!a) return "—";
+  const d = (a.disclosure ?? {}) as Disclosure;
+  const v = picker(d, a);
+  return fmt(v == null ? null : Number(v));
+}
+
+function disclosureCompareTable(main: Applicant, co?: Applicant | null): string {
+  const fullName = (a: Applicant | null | undefined) => {
+    if (!a) return "—";
+    const d = a.disclosure;
+    const n = [d?.first_name, d?.last_name].filter(Boolean).join(" ");
+    return n || a.full_name || "—";
+  };
+  const addr = (a: Applicant | null | undefined) => {
+    if (!a) return "—";
+    const d = a.disclosure;
+    const parts = [
+      [d?.street, d?.street_number].filter(Boolean).join(" "),
+      [d?.postal_code, d?.city].filter(Boolean).join(" "),
+      d?.country,
+    ].filter(Boolean);
+    return parts.length ? parts.join(", ") : (a.address ?? "—");
+  };
+
+  const rows: DiscRow[] = [
+    { label: "Persönliche Angaben", main: "", co: "", group: true },
+    { label: "Anrede", main: discValue(main, (d) => d.salutation), co: discValue(co, (d) => d.salutation) },
+    { label: "Name", main: escapeHtml(fullName(main)), co: escapeHtml(fullName(co)) },
+    { label: "Geburtsname", main: discValue(main, (d) => d.birth_name), co: discValue(co, (d) => d.birth_name) },
+    { label: "Geburtsdatum", main: discDate(main, (_d, a) => a.birth_date), co: discDate(co, (_d, a) => a.birth_date) },
+    { label: "Geburtsort", main: discValue(main, (d) => d.birth_place), co: discValue(co, (d) => d.birth_place) },
+    { label: "Geburtsland", main: discValue(main, (d) => d.birth_country), co: discValue(co, (d) => d.birth_country) },
+    { label: "Nationalität", main: discValue(main, (d, a) => d.nationality ?? a.nationality), co: discValue(co, (d, a) => d.nationality ?? a.nationality) },
+    { label: "Zivilstand", main: discValue(main, (d, a) => d.marital_status ?? a.marital_status), co: discValue(co, (d, a) => d.marital_status ?? a.marital_status) },
+    { label: "Wohnhaft seit", main: discDate(main, (d) => d.resident_since), co: discDate(co, (d) => d.resident_since) },
+    { label: "Steuer-ID (CH)", main: discValue(main, (d) => d.tax_id_ch), co: discValue(co, (d) => d.tax_id_ch) },
+
+    { label: "Kontakt", main: "", co: "", group: true },
+    { label: "Adresse", main: addr(main), co: addr(co) },
+    { label: "Telefon", main: discValue(main, (d, a) => d.phone ?? a.phone), co: discValue(co, (d, a) => d.phone ?? a.phone) },
+    { label: "Mobile", main: discValue(main, (d) => d.mobile), co: discValue(co, (d) => d.mobile) },
+    { label: "E-Mail", main: discValue(main, (d, a) => d.email ?? a.email), co: discValue(co, (d, a) => d.email ?? a.email) },
+
+    { label: "Anstellung", main: "", co: "", group: true },
+    { label: "Status", main: discValue(main, (d, a) => d.employment_status ?? a.employment_status), co: discValue(co, (d, a) => d.employment_status ?? a.employment_status) },
+    { label: "Funktion", main: discValue(main, (d) => d.employed_as), co: discValue(co, (d) => d.employed_as) },
+    { label: "Arbeitgeber", main: discValue(main, (d, a) => d.employer_name ?? a.employer_name), co: discValue(co, (d, a) => d.employer_name ?? a.employer_name) },
+    { label: "Adresse Arbeitgeber", main: discValue(main, (d) => d.employer_address), co: discValue(co, (d) => d.employer_address) },
+    { label: "Telefon Arbeitgeber", main: discValue(main, (d) => d.employer_phone), co: discValue(co, (d) => d.employer_phone) },
+    { label: "Angestellt seit", main: discDate(main, (d) => d.employed_since), co: discDate(co, (d) => d.employed_since) },
+    { label: "Lohnart", main: discValue(main, (d) => d.salary_type), co: discValue(co, (d) => d.salary_type) },
+
+    { label: "Einkommen (monatlich)", main: "", co: "", group: true },
+    { label: "Nettolohn", main: discMoney(main, (d, a) => d.salary_net_monthly ?? a.salary_net_monthly), co: discMoney(co, (d, a) => d.salary_net_monthly ?? a.salary_net_monthly) },
+    { label: "Zweiteinkommen", main: discMoney(main, (d) => d.income_job_two), co: discMoney(co, (d) => d.income_job_two) },
+    { label: "Mieteinnahmen", main: discMoney(main, (d) => d.income_rental), co: discMoney(co, (d) => d.income_rental) },
+    { label: "Weitere Einkünfte", main: discMoney(main, (d) => d.additional_income), co: discMoney(co, (d) => d.additional_income) },
+    { label: "Total Einkommen (mtl.)", main: discMoney(main, (d, a) => d.total_income_monthly ?? a.total_income_monthly), co: discMoney(co, (d, a) => d.total_income_monthly ?? a.total_income_monthly) },
+    { label: "Jahres-Nettolohn", main: discMoney(main, (d, a) => d.annual_net_salary ?? a.annual_net_salary), co: discMoney(co, (d, a) => d.annual_net_salary ?? a.annual_net_salary) },
+
+    { label: "Ausgaben (monatlich)", main: "", co: "", group: true },
+    { label: "Miete", main: discMoney(main, (d) => d.rent_expense), co: discMoney(co, (d) => d.rent_expense) },
+    { label: "Hypothek", main: discMoney(main, (d) => d.mortgage_expense), co: discMoney(co, (d) => d.mortgage_expense) },
+    { label: "Nebenkosten", main: discMoney(main, (d) => d.utilities_expense), co: discMoney(co, (d) => d.utilities_expense) },
+    { label: "Steuern", main: discMoney(main, (d) => d.taxes_expense), co: discMoney(co, (d) => d.taxes_expense) },
+    { label: "Krankenkasse", main: discMoney(main, (d) => d.health_insurance_expense), co: discMoney(co, (d) => d.health_insurance_expense) },
+    { label: "Lebensversicherung", main: discMoney(main, (d) => d.life_insurance_expense), co: discMoney(co, (d) => d.life_insurance_expense) },
+    { label: "Sachversicherung", main: discMoney(main, (d) => d.property_insurance_expense), co: discMoney(co, (d) => d.property_insurance_expense) },
+    { label: "Telekom", main: discMoney(main, (d) => d.telecom_expense), co: discMoney(co, (d) => d.telecom_expense) },
+    { label: "Leasing", main: discMoney(main, (d) => d.leasing_expense), co: discMoney(co, (d) => d.leasing_expense) },
+    { label: "Kredite", main: discMoney(main, (d) => d.credit_expense), co: discMoney(co, (d) => d.credit_expense) },
+    { label: "Alimente", main: discMoney(main, (d) => d.alimony_expense), co: discMoney(co, (d) => d.alimony_expense) },
+    { label: "Lebenshaltung", main: discMoney(main, (d) => d.living_costs_expense), co: discMoney(co, (d) => d.living_costs_expense) },
+    { label: "Sonstiges", main: discMoney(main, (d) => d.miscellaneous_expense), co: discMoney(co, (d) => d.miscellaneous_expense) },
+    { label: "Total Ausgaben (mtl.)", main: discMoney(main, (d, a) => d.total_expenses_monthly ?? a.total_expenses_monthly), co: discMoney(co, (d, a) => d.total_expenses_monthly ?? a.total_expenses_monthly) },
+
+    { label: "Reserve & Status", main: "", co: "", group: true },
+    { label: "Verfügbare Reserve (mtl.)", main: discMoney(main, (d, a) => d.reserve_total ?? a.reserve_total), co: discMoney(co, (d, a) => d.reserve_total ?? a.reserve_total) },
+    { label: "Reservequote", main: discValue(main, (d) => (d.reserve_ratio != null ? `${Number(d.reserve_ratio).toFixed(1)}%` : null)), co: discValue(co, (d) => (d.reserve_ratio != null ? `${Number(d.reserve_ratio).toFixed(1)}%` : null)) },
+    { label: "Status Selbstauskunft", main: discValue(main, (d) => d.status), co: discValue(co, (d) => d.status) },
+    { label: "Eingereicht am", main: discDate(main, (d) => d.submitted_at), co: discDate(co, (d) => d.submitted_at) },
+    { label: "Geprüft am", main: discDate(main, (d) => d.reviewed_at), co: discDate(co, (d) => d.reviewed_at) },
+  ];
+
+  const mainHeader = escapeHtml(main.full_name ?? "Hauptantragsteller");
+  const coHeader = co ? escapeHtml(co.full_name ?? "Mitantragsteller / Ehepartner") : "—";
+
   return `
-    <div class="disclosure-grid">
-      <div>
-        <h3>Persönliche Angaben</h3>
-        <table class="kv">
-          ${kv("Anrede", dash(d.salutation))}
-          ${kv("Name", escapeHtml(fullName))}
-          ${kv("Geburtsname", dash(d.birth_name))}
-          ${kv("Geburtsdatum", formatDateCH(a.birth_date ?? null))}
-          ${kv("Geburtsort", dash(d.birth_place))}
-          ${kv("Geburtsland", dash(d.birth_country))}
-          ${kv("Nationalität", dash(d.nationality ?? a.nationality))}
-          ${kv("Zivilstand", dash(d.marital_status ?? a.marital_status))}
-          ${kv("Wohnhaft seit", formatDateCH(d.resident_since))}
-          ${kv("Steuer-ID (CH)", dash(d.tax_id_ch))}
-        </table>
-      </div>
-      <div>
-        <h3>Kontaktdaten</h3>
-        <table class="kv">
-          ${kv("Adresse", dash(addr || a.address))}
-          ${kv("Telefon", dash(d.phone ?? a.phone))}
-          ${kv("Mobile", dash(d.mobile))}
-          ${kv("E-Mail", dash(d.email ?? a.email))}
-        </table>
-        <h3>Anstellung</h3>
-        <table class="kv">
-          ${kv("Status", dash(d.employment_status ?? a.employment_status))}
-          ${kv("Funktion", dash(d.employed_as))}
-          ${kv("Arbeitgeber", dash(d.employer_name ?? a.employer_name))}
-          ${kv("Adresse Arbeitgeber", dash(d.employer_address))}
-          ${kv("Telefon Arbeitgeber", dash(d.employer_phone))}
-          ${kv("Angestellt seit", formatDateCH(d.employed_since))}
-          ${kv("Lohnart", dash(d.salary_type))}
-        </table>
-      </div>
-    </div>
-    <div class="two-col" style="margin-top:8px;">
-      <div>
-        <h3>Einkommen (monatlich)</h3>
-        <table class="kv">
-          ${kv("Nettolohn", fmt(d.salary_net_monthly ?? a.salary_net_monthly ?? null))}
-          ${kv("Zweiteinkommen", fmt(d.income_job_two ?? null))}
-          ${kv("Mieteinnahmen", fmt(d.income_rental ?? null))}
-          ${kv("Weitere Einkünfte", fmt(d.additional_income ?? null))}
-          ${kv("Total Einkommen (mtl.)", fmt(d.total_income_monthly ?? a.total_income_monthly ?? null))}
-          ${kv("Jahres-Nettolohn", fmt(d.annual_net_salary ?? a.annual_net_salary ?? null))}
-        </table>
-      </div>
-      <div>
-        <h3>Ausgaben (monatlich)</h3>
-        <table class="kv">
-          ${kv("Miete", fmt(d.rent_expense ?? null))}
-          ${kv("Hypothek", fmt(d.mortgage_expense ?? null))}
-          ${kv("Nebenkosten", fmt(d.utilities_expense ?? null))}
-          ${kv("Steuern", fmt(d.taxes_expense ?? null))}
-          ${kv("Krankenkasse", fmt(d.health_insurance_expense ?? null))}
-          ${kv("Lebensversicherung", fmt(d.life_insurance_expense ?? null))}
-          ${kv("Sachversicherung", fmt(d.property_insurance_expense ?? null))}
-          ${kv("Telekom", fmt(d.telecom_expense ?? null))}
-          ${kv("Leasing", fmt(d.leasing_expense ?? null))}
-          ${kv("Kredite", fmt(d.credit_expense ?? null))}
-          ${kv("Alimente", fmt(d.alimony_expense ?? null))}
-          ${kv("Lebenshaltung", fmt(d.living_costs_expense ?? null))}
-          ${kv("Sonstiges", fmt(d.miscellaneous_expense ?? null))}
-          ${kv("Total Ausgaben (mtl.)", fmt(d.total_expenses_monthly ?? a.total_expenses_monthly ?? null))}
-        </table>
-      </div>
-    </div>
-    <div style="margin-top:8px;">
-      <table class="kv">
-        ${kv("Verfügbare Reserve (mtl.)", fmt(d.reserve_total ?? a.reserve_total ?? null))}
-        ${kv("Reservequote", d.reserve_ratio != null ? `${Number(d.reserve_ratio).toFixed(1)}%` : "—")}
-        ${kv("Status Selbstauskunft", dash(d.status))}
-        ${kv("Eingereicht am", formatDateCH(d.submitted_at))}
-        ${kv("Geprüft am", formatDateCH(d.reviewed_at))}
-      </table>
-    </div>
+    <table class="disc">
+      <thead>
+        <tr>
+          <th class="disc-l">Feld</th>
+          <th>Hauptantragsteller<div class="muted-sm">${mainHeader}</div></th>
+          <th>Mitantragsteller / Ehepartner<div class="muted-sm">${coHeader}</div></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows
+          .map((r) => {
+            if (r.group) {
+              return `<tr class="disc-group"><td colspan="3">${escapeHtml(r.label)}</td></tr>`;
+            }
+            return `<tr>
+              <td class="disc-l">${escapeHtml(r.label)}</td>
+              <td>${r.main}</td>
+              <td>${r.co}</td>
+            </tr>`;
+          })
+          .join("")}
+      </tbody>
+    </table>
   `;
 }
 
@@ -731,6 +779,13 @@ export function buildBankPackageHtml(input: BankPackageInput): string {
   .kpi-bar-limit { position:absolute; top:-2px; bottom:-2px; width:2px; background:#111827; opacity:0.65; }
   .disclosure-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   td.l-muted { color:#6b7280; width:38%; padding-left:12px; }
+  table.disc { width:100%; border-collapse:collapse; font-size:10px; }
+  table.disc th { text-align:left; font-size:10px; font-weight:600; color:${primary}; padding:6px 8px; border-bottom:1.5px solid ${hexAlpha(primary, 0.25)}; background:${hexAlpha(primary, 0.04)}; }
+  table.disc th.disc-l { width:30%; }
+  table.disc td { padding:3px 8px; border-bottom:1px solid #f1f3f5; vertical-align:top; }
+  table.disc td.disc-l { color:#6b7280; width:30%; }
+  table.disc tr.disc-group td { background:${hexAlpha(primary, 0.06)}; color:${primary}; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.04em; padding:5px 8px; border-bottom:1px solid ${hexAlpha(primary, 0.18)}; }
+  .muted-sm { color:#9ca3af; font-size:9px; font-weight:400; margin-top:1px; }
 </style></head>
 <body>
   <div class="header">
@@ -787,32 +842,9 @@ export function buildBankPackageHtml(input: BankPackageInput): string {
   </div>
 
   <div class="section">
-    <h2>${escapeHtml(t(locale, "section_applicants"))}</h2>
-    <div class="two-col">
-      <div>
-        <h3>${escapeHtml(t(locale, "section_main_applicant"))}</h3>
-        ${applicantBlock(locale, input.applicant)}
-      </div>
-      <div>
-        <h3>${escapeHtml(t(locale, "section_co_applicant"))}</h3>
-        ${coAppHtml}
-      </div>
-    </div>
+    <h2>${escapeHtml(t(locale, "section_self_disclosure"))}</h2>
+    ${disclosureCompareTable(input.applicant, input.coApplicant ?? null)}
   </div>
-
-  <div class="section">
-    <h2>${escapeHtml(t(locale, "section_self_disclosure"))} – ${escapeHtml(t(locale, "section_main_applicant"))}</h2>
-    ${disclosureBlock(input.applicant)}
-  </div>
-
-  ${
-    input.coApplicant
-      ? `<div class="section">
-    <h2>${escapeHtml(t(locale, "section_self_disclosure"))} – ${escapeHtml(t(locale, "section_co_applicant"))}</h2>
-    ${disclosureBlock(input.coApplicant)}
-  </div>`
-      : ""
-  }
 
   <div class="section">
     <h2>${escapeHtml(t(locale, "section_property"))}</h2>
