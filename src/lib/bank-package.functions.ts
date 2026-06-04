@@ -277,6 +277,7 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       total_income_monthly: mainDisclosure?.total_income_monthly ?? null,
       total_expenses_monthly: mainDisclosure?.total_expenses_monthly ?? null,
       reserve_total: mainDisclosure?.reserve_total ?? null,
+      disclosure: (mainDisclosure ?? null) as never,
     };
 
     const coApplicantData = coClient
@@ -295,6 +296,7 @@ export const buildBankPackage = createServerFn({ method: "POST" })
           total_income_monthly: coDisclosure?.total_income_monthly ?? null,
           total_expenses_monthly: coDisclosure?.total_expenses_monthly ?? null,
           reserve_total: coDisclosure?.reserve_total ?? null,
+          disclosure: (coDisclosure ?? null) as never,
         }
       : null;
 
