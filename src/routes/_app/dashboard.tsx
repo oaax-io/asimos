@@ -355,6 +355,59 @@ function Dashboard() {
         />
       </div>
 
+      {/* Finanzierungs-KPIs */}
+      <div className="mt-4 grid gap-2 grid-cols-2 lg:grid-cols-4">
+        <KpiCard icon={Landmark} label="Dossiers gesamt" value={stats.data?.totalDossiers ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-primary/10 text-primary" />
+        <KpiCard icon={Send} label="Bei Bank eingereicht" value={stats.data?.submitted ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-blue-500/10 text-blue-600 dark:text-blue-400" />
+        <KpiCard icon={CheckCircle2} label="Genehmigt" value={stats.data?.approved ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" />
+        <KpiCard icon={XCircle} label="Abgelehnt" value={stats.data?.rejected ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-rose-500/10 text-rose-600 dark:text-rose-400" />
+      </div>
+
+      {/* Status-Visualisierungen */}
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        <StatusStackCard
+          title="Kunden nach Status"
+          icon={Users}
+          to="/clients"
+          loading={stats.isLoading}
+          counts={stats.data?.clientCounts ?? {}}
+          rows={[
+            { key: "entwurf", label: "Entwurf", color: "bg-slate-400" },
+            { key: "pendent", label: "Pendent", color: "bg-amber-500" },
+            { key: "vollstaendig", label: "Vollständig", color: "bg-sky-500" },
+            { key: "finanzierung", label: "In Finanzierung", color: "bg-violet-500" },
+            { key: "abgeschlossen", label: "Abgeschlossen", color: "bg-emerald-500" },
+            { key: "abgelehnt", label: "Abgelehnt", color: "bg-rose-500" },
+            { key: "storniert", label: "Storniert", color: "bg-zinc-500" },
+          ]}
+        />
+        <StatusStackCard
+          title="Finanzierungs-Dossiers nach Status"
+          icon={Wallet}
+          to="/financing"
+          loading={stats.isLoading}
+          counts={stats.data?.dossierCounts ?? {}}
+          rows={[
+            { key: "draft", label: "Entwurf", color: "bg-slate-400" },
+            { key: "quick_check", label: "Quick-Check", color: "bg-cyan-500" },
+            { key: "documents_missing", label: "Dokumente fehlen", color: "bg-amber-500" },
+            { key: "ready_for_bank", label: "Bereit für Bank", color: "bg-indigo-500" },
+            { key: "submitted_to_bank", label: "Bei Bank eingereicht", color: "bg-blue-500" },
+            { key: "approved", label: "Genehmigt", color: "bg-emerald-500" },
+            { key: "rejected", label: "Abgelehnt", color: "bg-rose-500" },
+            { key: "cancelled", label: "Storniert", color: "bg-zinc-500" },
+          ]}
+          footer={
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <QcChip label="Realistisch" value={stats.data?.qcCounts.pass ?? 0} icon={CheckCircle2} tone="emerald" />
+              <QcChip label="Grenzwertig" value={stats.data?.qcCounts.warn ?? 0} icon={AlertTriangle} tone="amber" />
+              <QcChip label="Nicht tragbar" value={stats.data?.qcCounts.fail ?? 0} icon={XCircle} tone="rose" />
+            </div>
+          }
+        />
+      </div>
+
+
       {/* Matching suggestions */}
       <Card className="mt-4">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
