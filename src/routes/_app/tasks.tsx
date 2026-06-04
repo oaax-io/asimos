@@ -303,7 +303,7 @@ function TasksPage() {
         employees={employees}
         optionsFor={optionsFor}
         onSave={(patch) => update.mutate({ id: editing!.id, patch }, { onSuccess: () => { toast.success("Aufgabe aktualisiert"); setEditId(null); } })}
-        onDelete={() => { if (confirm("Aufgabe wirklich löschen?")) remove.mutate(editing!.id); }}
+        onDelete={async () => { if (await confirm({ title: "Aufgabe löschen?", confirmText: "Löschen" })) remove.mutate(editing!.id); }}
       />
     </>
   );
