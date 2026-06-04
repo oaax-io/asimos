@@ -161,6 +161,36 @@ function Dashboard() {
     },
   });
 
+  const stats = useQuery({
+    queryKey: ["dashboard", "stats"],
+    queryFn: async () => {
+      const [clients, dossiers] = await Promise.all([
+        supabase.from("clients").select("status").eq("is_archived", false),
+        supabase.from("financing_dossiers").select("dossier_status, quick_check_status, submitted_to_bank_at"),
+      ]);
+      const clientCounts: Record<string, number> = {};
+      (clients.data ?? []).forEach((c: any) => { clientCounts[c.status] = (clientCounts[c.status] ?? 0) + 1; });
+      const dossierCounts: Record<string, number> = {};
+      const qcCounts: Record<string, number> = { pass: 0, warn: 0, fail: 0, none: 0 };
+      let submitted = 0;
+      (dossiers.data ?? []).forEach((d: any) => {
+        dossierCounts[d.dossier_status ?? "draft"] = (dossierCounts[d.dossier_status ?? "draft"] ?? 0) + 1;
+        const qc = (d.quick_check_status ?? "none") as string;
+        qcCounts[qc] = (qcCounts[qc] ?? 0) + 1;
+        if (d.submitted_to_bank_at) submitted += 1;
+      });
+      return {
+        clientCounts,
+        dossierCounts,
+        qcCounts,
+        totalDossiers: (dossiers.data ?? []).length,
+        submitted,
+        approved: dossierCounts["approved"] ?? 0,
+        rejected: dossierCounts["rejected"] ?? 0,
+      };
+    },
+  });
+
   const matches = useQuery({
     queryKey: ["dashboard", "matches"],
     queryFn: async () => {
