@@ -594,6 +594,39 @@ function QcChip({ label, value, icon: Icon, tone }: { label: string; value: numb
   );
 }
 
+function CompactList({ title, icon: Icon, items, render, loading, empty, count, countHint, to }: {
+  title: string; icon: any; items: any[]; render: (i: any) => React.ReactNode;
+  loading?: boolean; empty: string; count?: number | null; countHint?: string; to: string;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between p-3 pb-2">
+        <CardTitle className="flex items-center gap-1.5 text-xs font-medium">
+          <Icon className="h-3.5 w-3.5 text-primary" />
+          {title}
+          {count != null && (
+            <Badge variant="secondary" className="ml-1 h-4 px-1.5 font-mono text-[10px] tabular-nums">
+              {count}{countHint ? <span className="ml-0.5 opacity-70">{countHint}</span> : null}
+            </Badge>
+          )}
+        </CardTitle>
+        <Button variant="ghost" size="sm" asChild className="h-6 px-1.5 text-[10px]">
+          <Link to={to}><ArrowRight className="h-3 w-3" /></Link>
+        </Button>
+      </CardHeader>
+      <CardContent className="p-2 pt-0">
+        {loading ? (
+          <div className="space-y-1">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-5 w-full" />)}</div>
+        ) : items.length === 0 ? (
+          <p className="py-3 text-center text-[11px] text-muted-foreground">{empty}</p>
+        ) : (
+          <div className="space-y-0.5">{items.map(render)}</div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function EmptyState({ icon: Icon, text }: { icon: any; text: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 text-center">
