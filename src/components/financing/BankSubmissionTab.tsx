@@ -157,15 +157,30 @@ function formatBytes(n: number | null | undefined) {
 
 function BankPackageCard({ dossierId }: { dossierId: string }) {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const build = useServerFn(buildBankPackage);
   const list = useServerFn(listBankPackages);
   const getUrl = useServerFn(getBankPackageSignedUrl);
   const fetchBytes = useServerFn(fetchBankPackageBytes);
   const createShare = useServerFn(createBankPackageShare);
+  const deletePkg = useServerFn(deleteBankPackage);
 
   const packages = useQuery({
     queryKey: ["bank_packages", dossierId],
     queryFn: () => list({ data: { dossierId } }),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deletePkg({ data: { generatedDocumentId: id } }),
+    onSuccess: (res) => {
+      if (!res.ok) {
+        toast.error(res.message ?? "Löschen fehlgeschlagen.");
+        return;
+      }
+      toast.success("Version gelöscht");
+      qc.invalidateQueries({ queryKey: ["bank_packages", dossierId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const create = useMutation({
