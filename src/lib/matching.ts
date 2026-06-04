@@ -51,21 +51,36 @@ function scoreCriteria(criteria: Criterion[]): ScoreBreakdown {
 }
 
 /** Build the criteria array shared by both directions. */
-function buildCriteria(client: Client, property: Property): Criterion[] {
+function buildCriteria(client: Client, property: Property, capacity?: FinancialCapacity | null): Criterion[] {
   const price = property.price != null ? Number(property.price) : null;
   const rent = property.rent != null ? Number(property.rent) : null;
   const value = price ?? rent;
   const bMin = client.budget_min != null ? Number(client.budget_min) : null;
   const bMax = client.budget_max != null ? Number(client.budget_max) : null;
 
-  return [
+  // Wenn kein Budget gesetzt ist, aber finanzielle Kapazität bekannt → daraus Budgetdeckel ableiten
+  const derivedMax = (() => {
+    if (!capacity || capacity.grossIncomeYearly <= 0) return null;
+    // Tragbarkeitsgrenze 33% von Brutto-Jahreseinkommen, kalk. 5% Zins + 1% NK + 1% Amort = 7% jährl. Kosten auf Belehnung
+    // Belehnung max 80% → Preis ≈ (Einkommen * 0.33 / 0.07) / 0.80
+    const maxYearlyCost = capacity.grossIncomeYearly * 0.33;
+    const maxMortgage = maxYearlyCost / 0.07;
+    const equity = capacity.equity;
+    // Falls Eigenmittel >= 20% des resultierenden Preises, sonst durch Eigenmittel limitiert
+    const priceFromMortgage = maxMortgage / 0.8;
+    const priceFromEquity = equity > 0 ? equity / 0.2 : priceFromMortgage;
+    return Math.min(priceFromMortgage, priceFromEquity);
+  })();
+  const effectiveMax = bMax ?? derivedMax;
+
+  const criteria: Criterion[] = [
     {
       weight: 25,
-      label: "Im Budget",
+      label: bMax ? "Im Budget" : "Im finanziellen Rahmen",
       result:
-        value == null || (bMin == null && bMax == null)
+        value == null || (bMin == null && effectiveMax == null)
           ? null
-          : (bMax == null || value <= bMax) && (bMin == null || value >= bMin),
+          : (effectiveMax == null || value <= effectiveMax) && (bMin == null || value >= bMin),
     },
     {
       weight: 20,
@@ -107,11 +122,39 @@ function buildCriteria(client: Client, property: Property): Criterion[] {
             (client.area_max == null || Number(property.area) <= Number(client.area_max)),
     },
   ];
+
+  // Finanz-Kriterien (nur wenn Selbstauskunft vorhanden ist)
+  if (capacity && value != null && value > 0) {
+    if (capacity.grossIncomeYearly > 0) {
+      // Tragbarkeit
+      const mortgage = Math.max(0, value - capacity.equity);
+      const yearly = mortgage * 0.07; // 5% Zins + 1% NK + 1% Amort
+      const ratio = (yearly / capacity.grossIncomeYearly) * 100;
+      criteria.push({
+        weight: 20,
+        label: capacity.hasPartner
+          ? `Tragbarkeit ${ratio.toFixed(0)}% (inkl. Ehepartner)`
+          : `Tragbarkeit ${ratio.toFixed(0)}%`,
+        result: ratio <= 38,
+      });
+    }
+    if (capacity.equity > 0) {
+      const ltv = ((value - capacity.equity) / value) * 100;
+      criteria.push({
+        weight: 15,
+        label: `Belehnung ${Math.max(0, ltv).toFixed(0)}%`,
+        result: ltv <= 80,
+      });
+    }
+  }
+
+  return criteria;
 }
 
-export function scoreMatch(client: Client, property: Property): ScoreBreakdown {
-  return scoreCriteria(buildCriteria(client, property));
+export function scoreMatch(client: Client, property: Property, capacity?: FinancialCapacity | null): ScoreBreakdown {
+  return scoreCriteria(buildCriteria(client, property, capacity));
 }
+
 
 /** Direction 1: client → properties. Filters out non-available properties and weak matches. */
 export function matchClientToProperties(
