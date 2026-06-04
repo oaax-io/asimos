@@ -233,6 +233,7 @@ function OverviewTab() {
 // ─── Agencies ───────────────────────────────────
 function AgenciesTab() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [search, setSearch] = useState("");
   const { data: agencies, isLoading } = useQuery({
     queryKey: ["admin-agencies"],
