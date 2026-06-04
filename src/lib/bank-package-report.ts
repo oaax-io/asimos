@@ -309,7 +309,265 @@ function applicantBlock(locale: PackageLocale, a: Applicant): string {
   `;
 }
 
-// ---------- main ----------
+// ---------- Quick-Check Vorprüfung (Balken-Grafiken) ----------
+
+const TONE_COLORS = {
+  ok: { bar: "#10b981", text: "#047857", bg: "#d1fae5" },
+  warn: { bar: "#f59e0b", text: "#92400e", bg: "#fef3c7" },
+  bad: { bar: "#ef4444", text: "#991b1b", bg: "#fee2e2" },
+};
+
+function kpiCardHtml(opts: {
+  label: string;
+  value: number;
+  limit: number;
+  mode: "max" | "min";
+}): string {
+  const { label, value, limit, mode } = opts;
+  const ok = mode === "max" ? value <= limit * 0.9 : value >= limit;
+  const bad = mode === "max" ? value > limit : value < limit * 0.7;
+  const tone: "ok" | "warn" | "bad" = bad ? "bad" : ok ? "ok" : "warn";
+  const c = TONE_COLORS[tone];
+  const scaleMax = mode === "max" ? Math.max(limit * 1.25, value) : Math.max(limit * 1.5, value, 100);
+  const valuePct = Math.min(100, (value / scaleMax) * 100);
+  const limitPct = Math.min(100, (limit / scaleMax) * 100);
+  return `
+    <div class="kpi">
+      <div class="kpi-head">
+        <span class="kpi-label">${escapeHtml(label)}</span>
+        <span class="kpi-limit">Limit ${limit}%</span>
+      </div>
+      <div class="kpi-value" style="color:${c.text};">${value.toFixed(1)}%</div>
+      <div class="kpi-bar">
+        <div class="kpi-bar-fill" style="width:${valuePct.toFixed(1)}%; background:${c.bar};"></div>
+        <div class="kpi-bar-limit" style="left:${limitPct.toFixed(1)}%;"></div>
+      </div>
+    </div>
+  `;
+}
+
+function vorpruefungHtml(d: BankPackageInput["dossier"]): string {
+  const purchase = Number(d.purchase_price ?? 0) || 0;
+  const reno = Number(d.renovation_costs ?? 0) || 0;
+  const total = Number(d.total_investment ?? 0) || (purchase + reno);
+  const mortgage = Number(d.requested_mortgage ?? 0) || 0;
+  const equity =
+    Number(d.eigenkapital_kombiniert ?? 0) > 0
+      ? Number(d.eigenkapital_kombiniert)
+      : Number(d.own_funds_total ?? 0) +
+        Number(d.co_applicant_eigenkapital ?? 0) +
+        Number(d.co_applicant_pk_anteil ?? 0);
+  const pension =
+    Number(d.pk_anteil_kombiniert ?? 0) > 0
+      ? Number(d.pk_anteil_kombiniert)
+      : Number(d.own_funds_pension_fund ?? 0) +
+        Number(d.own_funds_vested_benefits ?? 0) +
+        Number(d.co_applicant_pk_anteil ?? 0);
+  const hardEquity = Math.max(0, equity - pension);
+  const income =
+    Number(d.einkommen_kombiniert ?? 0) > 0
+      ? Number(d.einkommen_kombiniert)
+      : Number(d.gross_income_yearly ?? 0) + Number(d.co_applicant_einkommen ?? 0);
+  const rate = Number(d.calculated_interest_rate ?? 5) || 5;
+  const ancillary =
+    d.ancillary_costs_yearly != null ? Number(d.ancillary_costs_yearly) : total * 0.01;
+  const amort = Number(d.amortisation_yearly ?? 0) || 0;
+  const yearly = Number(d.yearly_costs ?? 0) > 0
+    ? Number(d.yearly_costs)
+    : mortgage * (rate / 100) + ancillary + amort;
+
+  const ltv = total > 0 ? (mortgage / total) * 100 : 0;
+  const afford = income > 0 ? (yearly / income) * 100 : 0;
+  const equityRatio = total > 0 ? (equity / total) * 100 : 0;
+  const hardRatio = total > 0 ? (hardEquity / total) * 100 : 0;
+
+  return `
+    <div class="kpi-grid">
+      ${kpiCardHtml({ label: "Belehnung (LTV)", value: ltv, limit: 80, mode: "max" })}
+      ${kpiCardHtml({ label: "Tragbarkeit", value: afford, limit: 33, mode: "max" })}
+      ${kpiCardHtml({ label: "Eigenmittelquote", value: equityRatio, limit: 20, mode: "min" })}
+      ${kpiCardHtml({ label: "Harte Eigenmittel", value: hardRatio, limit: 10, mode: "min" })}
+    </div>
+  `;
+}
+
+// ---------- Detailrechnung ----------
+
+function detailRechnungHtml(d: BankPackageInput["dossier"]): string {
+  const purchase = Number(d.purchase_price ?? 0) || 0;
+  const reno = Number(d.renovation_costs ?? 0) || 0;
+  const ownWork = Number(d.renovation_own_work ?? 0) || 0;
+  const total = Number(d.total_investment ?? 0) || (purchase + reno);
+  const mortgage = Number(d.requested_mortgage ?? 0) || 0;
+  const equity =
+    Number(d.eigenkapital_kombiniert ?? 0) > 0
+      ? Number(d.eigenkapital_kombiniert)
+      : Number(d.own_funds_total ?? 0) +
+        Number(d.co_applicant_eigenkapital ?? 0) +
+        Number(d.co_applicant_pk_anteil ?? 0);
+  const pension =
+    Number(d.pk_anteil_kombiniert ?? 0) > 0
+      ? Number(d.pk_anteil_kombiniert)
+      : Number(d.own_funds_pension_fund ?? 0) +
+        Number(d.own_funds_vested_benefits ?? 0) +
+        Number(d.co_applicant_pk_anteil ?? 0);
+  const cash = Math.max(0, equity - pension);
+  const income =
+    Number(d.einkommen_kombiniert ?? 0) > 0
+      ? Number(d.einkommen_kombiniert)
+      : Number(d.gross_income_yearly ?? 0) + Number(d.co_applicant_einkommen ?? 0);
+  const rate = Number(d.calculated_interest_rate ?? 5) || 5;
+
+  const firstMortgageMax = total * 0.65;
+  const firstMortgage = Math.min(mortgage, firstMortgageMax);
+  const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
+  const amortYearly = secondMortgage / 15;
+  const interestCost = mortgage * (rate / 100);
+  const ancillary =
+    d.ancillary_costs_yearly != null ? Number(d.ancillary_costs_yearly) : total * 0.01;
+  const totalYearly = interestCost + ancillary + amortYearly;
+  const afford = income > 0 ? (totalYearly / income) * 100 : 0;
+  const minIncome = totalYearly / 0.33;
+  const equityRatio = total > 0 ? (equity / total) * 100 : 0;
+  const mortgageRatio = total > 0 ? (mortgage / total) * 100 : 0;
+  const affordColor = afford <= 33 ? TONE_COLORS.ok.text : afford <= 38 ? TONE_COLORS.warn.text : TONE_COLORS.bad.text;
+
+  const r = (label: string, value: string, opt?: { bold?: boolean; muted?: boolean }) =>
+    `<tr><td class="${opt?.muted ? "l-muted" : "l"}" style="${opt?.bold ? "font-weight:600;" : ""}">${escapeHtml(label)}</td><td style="${opt?.bold ? "font-weight:600;" : ""}">${value}</td></tr>`;
+  const divider = `<tr><td colspan="2" style="border-top:1px solid #e5e7eb; padding:2px 0;"></td></tr>`;
+
+  return `
+    <div class="two-col">
+      <div>
+        <h3>Finanzierungsstruktur</h3>
+        <table class="kv">
+          ${r("Kaufpreis", fmt(purchase))}
+          ${reno > 0 ? r("+ Renovationskosten", fmt(reno)) : ""}
+          ${ownWork > 0 ? r("davon Eigenleistung", fmt(ownWork), { muted: true }) : ""}
+          ${r("= Gesamtinvestition", fmt(total), { bold: true })}
+          ${divider}
+          ${r("Eigenmittel total", `${fmt(equity)} (${equityRatio.toFixed(1)}%)`)}
+          ${r("davon Barvermögen", fmt(cash), { muted: true })}
+          ${r("davon PK / Freizügigkeit", fmt(pension), { muted: true })}
+          ${r("Hypothek gesamt", `${fmt(mortgage)} (${mortgageRatio.toFixed(1)}%)`)}
+          ${r("1. Hypothek (≤ 65%)", fmt(firstMortgage), { muted: true })}
+          ${r("2. Hypothek (65–80%)", fmt(secondMortgage), { muted: true })}
+          ${r("Amortisation 2. Hypothek", `${fmt(amortYearly)} / Jahr (über 15 J.)`, { muted: true })}
+        </table>
+      </div>
+      <div>
+        <h3>Jahreskosten</h3>
+        <table class="kv">
+          ${r(`Kalk. Zinssatz (${rate.toFixed(1)}%)`, fmt(interestCost))}
+          ${r("Nebenkosten (1%)", fmt(ancillary))}
+          ${r("Amortisation", fmt(amortYearly))}
+          ${divider}
+          ${r("Total Wohnkosten p.a.", fmt(totalYearly), { bold: true })}
+          ${r("Bruttoeinkommen p.a.", fmt(income))}
+          ${divider}
+          <tr><td class="l" style="font-weight:600;">Tragbarkeitsquote</td><td style="font-weight:700; color:${affordColor};">${afford.toFixed(1)}%</td></tr>
+          ${r("Mindesteinkommen (33%)", fmt(minIncome), { muted: true })}
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ---------- Vollständige Selbstauskunft ----------
+
+function disclosureBlock(a: Applicant): string {
+  const d = a.disclosure;
+  if (!d) {
+    return `<p class="muted">Keine Selbstauskunft erfasst.</p>`;
+  }
+  const fullName = [d.first_name, d.last_name].filter(Boolean).join(" ") || a.full_name || "—";
+  const addr = [
+    [d.street, d.street_number].filter(Boolean).join(" "),
+    [d.postal_code, d.city].filter(Boolean).join(" "),
+    d.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  return `
+    <div class="disclosure-grid">
+      <div>
+        <h3>Persönliche Angaben</h3>
+        <table class="kv">
+          ${kv("Anrede", dash(d.salutation))}
+          ${kv("Name", escapeHtml(fullName))}
+          ${kv("Geburtsname", dash(d.birth_name))}
+          ${kv("Geburtsdatum", formatDateCH(a.birth_date ?? null))}
+          ${kv("Geburtsort", dash(d.birth_place))}
+          ${kv("Geburtsland", dash(d.birth_country))}
+          ${kv("Nationalität", dash(d.nationality ?? a.nationality))}
+          ${kv("Zivilstand", dash(d.marital_status ?? a.marital_status))}
+          ${kv("Wohnhaft seit", formatDateCH(d.resident_since))}
+          ${kv("Steuer-ID (CH)", dash(d.tax_id_ch))}
+        </table>
+      </div>
+      <div>
+        <h3>Kontaktdaten</h3>
+        <table class="kv">
+          ${kv("Adresse", dash(addr || a.address))}
+          ${kv("Telefon", dash(d.phone ?? a.phone))}
+          ${kv("Mobile", dash(d.mobile))}
+          ${kv("E-Mail", dash(d.email ?? a.email))}
+        </table>
+        <h3>Anstellung</h3>
+        <table class="kv">
+          ${kv("Status", dash(d.employment_status ?? a.employment_status))}
+          ${kv("Funktion", dash(d.employed_as))}
+          ${kv("Arbeitgeber", dash(d.employer_name ?? a.employer_name))}
+          ${kv("Adresse Arbeitgeber", dash(d.employer_address))}
+          ${kv("Telefon Arbeitgeber", dash(d.employer_phone))}
+          ${kv("Angestellt seit", formatDateCH(d.employed_since))}
+          ${kv("Lohnart", dash(d.salary_type))}
+        </table>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:8px;">
+      <div>
+        <h3>Einkommen (monatlich)</h3>
+        <table class="kv">
+          ${kv("Nettolohn", fmt(d.salary_net_monthly ?? a.salary_net_monthly ?? null))}
+          ${kv("Zweiteinkommen", fmt(d.income_job_two ?? null))}
+          ${kv("Mieteinnahmen", fmt(d.income_rental ?? null))}
+          ${kv("Weitere Einkünfte", fmt(d.additional_income ?? null))}
+          ${kv("Total Einkommen (mtl.)", fmt(d.total_income_monthly ?? a.total_income_monthly ?? null))}
+          ${kv("Jahres-Nettolohn", fmt(d.annual_net_salary ?? a.annual_net_salary ?? null))}
+        </table>
+      </div>
+      <div>
+        <h3>Ausgaben (monatlich)</h3>
+        <table class="kv">
+          ${kv("Miete", fmt(d.rent_expense ?? null))}
+          ${kv("Hypothek", fmt(d.mortgage_expense ?? null))}
+          ${kv("Nebenkosten", fmt(d.utilities_expense ?? null))}
+          ${kv("Steuern", fmt(d.taxes_expense ?? null))}
+          ${kv("Krankenkasse", fmt(d.health_insurance_expense ?? null))}
+          ${kv("Lebensversicherung", fmt(d.life_insurance_expense ?? null))}
+          ${kv("Sachversicherung", fmt(d.property_insurance_expense ?? null))}
+          ${kv("Telekom", fmt(d.telecom_expense ?? null))}
+          ${kv("Leasing", fmt(d.leasing_expense ?? null))}
+          ${kv("Kredite", fmt(d.credit_expense ?? null))}
+          ${kv("Alimente", fmt(d.alimony_expense ?? null))}
+          ${kv("Lebenshaltung", fmt(d.living_costs_expense ?? null))}
+          ${kv("Sonstiges", fmt(d.miscellaneous_expense ?? null))}
+          ${kv("Total Ausgaben (mtl.)", fmt(d.total_expenses_monthly ?? a.total_expenses_monthly ?? null))}
+        </table>
+      </div>
+    </div>
+    <div style="margin-top:8px;">
+      <table class="kv">
+        ${kv("Verfügbare Reserve (mtl.)", fmt(d.reserve_total ?? a.reserve_total ?? null))}
+        ${kv("Reservequote", d.reserve_ratio != null ? `${Number(d.reserve_ratio).toFixed(1)}%` : "—")}
+        ${kv("Status Selbstauskunft", dash(d.status))}
+        ${kv("Eingereicht am", formatDateCH(d.submitted_at))}
+        ${kv("Geprüft am", formatDateCH(d.reviewed_at))}
+      </table>
+    </div>
+  `;
+}
 
 export function buildBankPackageHtml(input: BankPackageInput): string {
   const locale: PackageLocale = input.locale ?? "de";
