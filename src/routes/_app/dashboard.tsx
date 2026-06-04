@@ -172,10 +172,21 @@ function Dashboard() {
       (clients.data ?? []).forEach((c: any) => { clientCounts[c.status] = (clientCounts[c.status] ?? 0) + 1; });
       const dossierCounts: Record<string, number> = {};
       const qcCounts: Record<string, number> = { pass: 0, warn: 0, fail: 0, none: 0 };
+      const qcMap: Record<string, "pass" | "warn" | "fail" | "none"> = {
+        realistic: "pass",
+        pass: "pass",
+        critical: "warn",
+        warn: "warn",
+        not_financeable: "fail",
+        fail: "fail",
+        incomplete: "none",
+        none: "none",
+      };
       let submitted = 0;
       (dossiers.data ?? []).forEach((d: any) => {
         dossierCounts[d.dossier_status ?? "draft"] = (dossierCounts[d.dossier_status ?? "draft"] ?? 0) + 1;
-        const qc = (d.quick_check_status ?? "none") as string;
+        const raw = (d.quick_check_status ?? "none") as string;
+        const qc = qcMap[raw] ?? "none";
         qcCounts[qc] = (qcCounts[qc] ?? 0) + 1;
         if (d.submitted_to_bank_at) submitted += 1;
       });
