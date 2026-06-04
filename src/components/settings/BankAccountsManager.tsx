@@ -33,6 +33,7 @@ const emptyAccount: Omit<BankAccount, "id"> = {
 
 export function BankAccountsManager() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [editing, setEditing] = useState<BankAccount | null>(null);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Omit<BankAccount, "id">>(emptyAccount);
