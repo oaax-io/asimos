@@ -280,81 +280,6 @@ function Dashboard() {
         <KpiCard icon={FileSignature} label="Aktive Reservationen" value={kpis.data?.activeRes ?? "—"} loading={kpis.isLoading} to="/reservations" />
       </div>
 
-      {/* Today panel */}
-      <div className="mt-4 grid gap-3 lg:grid-cols-3">
-        <TodayList
-          title="Termine heute"
-          icon={CalendarDays}
-          count={kpis.data?.todayAppts ?? undefined}
-          loading={today.isLoading}
-          empty="Keine Termine heute."
-          items={today.data?.appts ?? []}
-          render={(a: any) => (
-            <Link key={a.id} to="/appointments" className="block rounded-lg border p-3 transition hover:bg-accent/40">
-              <p className="truncate text-sm font-medium">{a.title}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {formatDateTime(a.starts_at)}{a.location ? ` · ${a.location}` : ""}
-              </p>
-            </Link>
-          )}
-        />
-        <TodayList
-          title="Überfällige Aufgaben"
-          icon={Clock}
-          count={kpis.data?.openTasks ?? undefined}
-          loading={today.isLoading}
-          empty="Keine überfälligen Aufgaben."
-          items={today.data?.overdue ?? []}
-          render={(t: any) => (
-            <Link key={t.id} to="/tasks" className="block rounded-lg border p-3 transition hover:bg-accent/40">
-              <div className="flex items-start justify-between gap-2">
-                <p className="truncate text-sm font-medium">{t.title}</p>
-                {t.priority && <Badge variant={t.priority === "high" || t.priority === "urgent" ? "destructive" : "secondary"} className="shrink-0 text-[10px]">{t.priority}</Badge>}
-              </div>
-              {t.due_date && <p className="mt-0.5 text-xs text-destructive">Fällig {formatDate(t.due_date)}</p>}
-            </Link>
-          )}
-        />
-        <TodayList
-          title="Neue Leads"
-          icon={UserPlus}
-          count={kpis.data?.newLeads ?? undefined}
-          countHint="7 Tage"
-          loading={today.isLoading}
-          empty="Noch keine Leads."
-          items={today.data?.leads ?? []}
-          render={(l: any) => (
-            <Link key={l.id} to="/leads" className="block rounded-lg border p-3 transition hover:bg-accent/40">
-              <div className="flex items-center justify-between gap-2">
-                <p className="truncate text-sm font-medium">{l.full_name}</p>
-                <Badge variant="secondary" className="shrink-0 text-[10px]">{leadStatusLabels[l.status as keyof typeof leadStatusLabels] ?? l.status}</Badge>
-              </div>
-              <p className="mt-0.5 text-xs text-muted-foreground">{l.source ?? "—"} · {formatDate(l.created_at)}</p>
-            </Link>
-          )}
-        />
-      </div>
-
-      {/* Pipeline */}
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <PipelineCard
-          title="Leads nach Status"
-          to="/leads"
-          loading={pipeline.isLoading}
-          counts={pipeline.data?.leadCounts ?? {}}
-          labels={leadStatusLabels as Record<string, string>}
-          order={["new", "contacted", "qualified", "viewing_planned", "converted", "lost"]}
-        />
-        <PipelineCard
-          title="Immobilien nach Status"
-          to="/properties"
-          loading={pipeline.isLoading}
-          counts={pipeline.data?.propCounts ?? {}}
-          labels={propertyStatusLabels as Record<string, string>}
-          order={["draft", "preparation", "active", "available", "reserved", "sold", "rented", "archived"]}
-        />
-      </div>
-
       {/* Finanzierungs-KPIs */}
       <div className="mt-4 grid gap-2 grid-cols-2 lg:grid-cols-4">
         <KpiCard icon={Landmark} label="Dossiers gesamt" value={stats.data?.totalDossiers ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-primary/10 text-primary" />
@@ -407,6 +332,25 @@ function Dashboard() {
         />
       </div>
 
+      {/* Pipeline */}
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        <PipelineCard
+          title="Leads nach Status"
+          to="/leads"
+          loading={pipeline.isLoading}
+          counts={pipeline.data?.leadCounts ?? {}}
+          labels={leadStatusLabels as Record<string, string>}
+          order={["new", "contacted", "qualified", "viewing_planned", "converted", "lost"]}
+        />
+        <PipelineCard
+          title="Immobilien nach Status"
+          to="/properties"
+          loading={pipeline.isLoading}
+          counts={pipeline.data?.propCounts ?? {}}
+          labels={propertyStatusLabels as Record<string, string>}
+          order={["draft", "preparation", "active", "available", "reserved", "sold", "rented", "archived"]}
+        />
+      </div>
 
       {/* Matching suggestions */}
       <Card className="mt-4">
@@ -452,6 +396,57 @@ function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Tagesübersicht – kompakt unten */}
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+        <CompactList
+          title="Termine heute"
+          icon={CalendarDays}
+          count={kpis.data?.todayAppts ?? undefined}
+          loading={today.isLoading}
+          empty="Keine Termine heute."
+          to="/appointments"
+          items={(today.data?.appts ?? []).slice(0, 4)}
+          render={(a: any) => (
+            <Link key={a.id} to="/appointments" className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-xs hover:bg-accent/40">
+              <span className="truncate">{a.title}</span>
+              <span className="shrink-0 text-[10px] text-muted-foreground">{formatDateTime(a.starts_at).split(",").pop()?.trim()}</span>
+            </Link>
+          )}
+        />
+        <CompactList
+          title="Überfällige Aufgaben"
+          icon={Clock}
+          count={kpis.data?.openTasks ?? undefined}
+          loading={today.isLoading}
+          empty="Keine überfälligen Aufgaben."
+          to="/tasks"
+          items={(today.data?.overdue ?? []).slice(0, 4)}
+          render={(t: any) => (
+            <Link key={t.id} to="/tasks" className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-xs hover:bg-accent/40">
+              <span className="truncate">{t.title}</span>
+              {t.due_date && <span className="shrink-0 text-[10px] text-destructive">{formatDate(t.due_date)}</span>}
+            </Link>
+          )}
+        />
+        <CompactList
+          title="Neue Leads"
+          icon={UserPlus}
+          count={kpis.data?.newLeads ?? undefined}
+          countHint="7T"
+          loading={today.isLoading}
+          empty="Noch keine Leads."
+          to="/leads"
+          items={(today.data?.leads ?? []).slice(0, 4)}
+          render={(l: any) => (
+            <Link key={l.id} to="/leads" className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-xs hover:bg-accent/40">
+              <span className="truncate">{l.full_name}</span>
+              <span className="shrink-0 text-[10px] text-muted-foreground">{formatDate(l.created_at)}</span>
+            </Link>
+          )}
+        />
+      </div>
+
     </>
   );
 }
@@ -596,6 +591,39 @@ function QcChip({ label, value, icon: Icon, tone }: { label: string; value: numb
       <span className="font-display text-lg font-bold leading-none tabular-nums">{value}</span>
       <span className="text-[10px] opacity-80">{label}</span>
     </div>
+  );
+}
+
+function CompactList({ title, icon: Icon, items, render, loading, empty, count, countHint, to }: {
+  title: string; icon: any; items: any[]; render: (i: any) => React.ReactNode;
+  loading?: boolean; empty: string; count?: number | null; countHint?: string; to: string;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between p-3 pb-2">
+        <CardTitle className="flex items-center gap-1.5 text-xs font-medium">
+          <Icon className="h-3.5 w-3.5 text-primary" />
+          {title}
+          {count != null && (
+            <Badge variant="secondary" className="ml-1 h-4 px-1.5 font-mono text-[10px] tabular-nums">
+              {count}{countHint ? <span className="ml-0.5 opacity-70">{countHint}</span> : null}
+            </Badge>
+          )}
+        </CardTitle>
+        <Button variant="ghost" size="sm" asChild className="h-6 px-1.5 text-[10px]">
+          <Link to={to}><ArrowRight className="h-3 w-3" /></Link>
+        </Button>
+      </CardHeader>
+      <CardContent className="p-2 pt-0">
+        {loading ? (
+          <div className="space-y-1">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-5 w-full" />)}</div>
+        ) : items.length === 0 ? (
+          <p className="py-3 text-center text-[11px] text-muted-foreground">{empty}</p>
+        ) : (
+          <div className="space-y-0.5">{items.map(render)}</div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
