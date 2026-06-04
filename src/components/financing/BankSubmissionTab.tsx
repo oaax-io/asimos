@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Save, Banknote, Package, Download, Copy, Loader2, FileArchive } from "lucide-react";
+import { Save, Banknote, Package, Download, Copy, Loader2, FileArchive, Trash2 } from "lucide-react";
 import { DOSSIER_STATUS_LABELS, type DossierStatus } from "@/lib/financing";
 import {
   buildBankPackage,
@@ -18,7 +18,9 @@ import {
   getBankPackageSignedUrl,
   fetchBankPackageBytes,
   createBankPackageShare,
+  deleteBankPackage,
 } from "@/lib/bank-package.functions";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 
 const BANK_TYPES = [
   { value: "ubs", label: "UBS" },
