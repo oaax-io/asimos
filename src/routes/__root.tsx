@@ -5,6 +5,7 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth";
 import { makeQueryClient } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/sonner";
+import { ConfirmProvider } from "@/components/confirm/ConfirmProvider";
 
 function NotFound() {
   return (
