@@ -3,7 +3,15 @@ import type { Tables } from "@/integrations/supabase/types";
 type Client = Tables<"clients">;
 type Property = Tables<"properties">;
 
+/** Vereinfachte finanzielle Tragfähigkeit eines Kunden (inkl. Ehepartner/Mitantragsteller). */
+export interface FinancialCapacity {
+  grossIncomeYearly: number; // CHF / Jahr (Kunde + Ehepartner)
+  equity: number;            // CHF (Kunde + Ehepartner)
+  hasPartner: boolean;
+}
+
 export interface ScoreBreakdown {
+
   score: number;       // 0..100
   reasons: string[];   // positive matches
   misses: string[];    // criteria that did not match
