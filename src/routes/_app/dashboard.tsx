@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth";
 import {
   Building2, Users, UserPlus, CheckSquare, CalendarDays, FileSignature,
   ArrowRight, Plus, Upload, Sparkles, AlertTriangle, Clock, ChevronDown,
-  Landmark, CheckCircle2, XCircle, Send, Wallet,
+  CheckCircle2, XCircle, Wallet,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -279,15 +279,6 @@ function Dashboard() {
         <KpiCard icon={Building2} label="Aktive Immobilien" value={kpis.data?.activeProps ?? "—"} loading={kpis.isLoading} to="/properties" />
         <KpiCard icon={FileSignature} label="Aktive Reservationen" value={kpis.data?.activeRes ?? "—"} loading={kpis.isLoading} to="/reservations" />
       </div>
-
-      {/* Finanzierungs-KPIs */}
-      <div className="mt-4 grid gap-2 grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Landmark} label="Dossiers gesamt" value={stats.data?.totalDossiers ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-primary/10 text-primary" />
-        <KpiCard icon={Send} label="Bei Bank eingereicht" value={stats.data?.submitted ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-blue-500/10 text-blue-600 dark:text-blue-400" />
-        <KpiCard icon={CheckCircle2} label="Genehmigt" value={stats.data?.approved ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" />
-        <KpiCard icon={XCircle} label="Abgelehnt" value={stats.data?.rejected ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-rose-500/10 text-rose-600 dark:text-rose-400" />
-      </div>
-
       {/* Status-Visualisierungen */}
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <StatusStackCard
