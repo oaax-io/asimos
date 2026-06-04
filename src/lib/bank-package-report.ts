@@ -324,9 +324,17 @@ function kpiCardHtml(opts: {
   mode: "max" | "min";
 }): string {
   const { label, value, limit, mode } = opts;
-  const ok = mode === "max" ? value <= limit * 0.9 : value >= limit;
-  const bad = mode === "max" ? value > limit : value < limit * 0.7;
-  const tone: "ok" | "warn" | "bad" = bad ? "bad" : ok ? "ok" : "warn";
+  // Spiegelt die App-Logik: bis Limit = grün, leichte Überschreitung = orange, deutlich darüber = rot
+  let tone: "ok" | "warn" | "bad";
+  if (mode === "max") {
+    if (value <= limit) tone = "ok";
+    else if (value <= limit * 1.1) tone = "warn";
+    else tone = "bad";
+  } else {
+    if (value >= limit) tone = "ok";
+    else if (value >= limit * 0.9) tone = "warn";
+    else tone = "bad";
+  }
   const c = TONE_COLORS[tone];
   const scaleMax = mode === "max" ? Math.max(limit * 1.25, value) : Math.max(limit * 1.5, value, 100);
   const valuePct = Math.min(100, (value / scaleMax) * 100);
