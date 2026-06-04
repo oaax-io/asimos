@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { matchClientToProperties, scoreMatch, type ScoreBreakdown } from "@/lib/matching";
+import { matchClientToProperties, scoreMatch, type ScoreBreakdown, type FinancialCapacity } from "@/lib/matching";
 import { formatCurrency, clientTypeLabels, propertyTypeLabels } from "@/lib/format";
 import { Sparkles, ExternalLink, Users, Search } from "lucide-react";
 import { toast } from "sonner";
