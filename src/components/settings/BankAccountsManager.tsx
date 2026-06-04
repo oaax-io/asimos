@@ -154,7 +154,7 @@ export function BankAccountsManager() {
                     </Button>
                   ) : null}
                   <Button variant="ghost" size="sm" onClick={() => openEdit(a)}><Pencil className="size-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => { if (confirm("Bankkonto wirklich löschen?")) remove.mutate(a.id); }}>
+                  <Button variant="ghost" size="sm" onClick={async () => { if (await confirm({ title: "Bankkonto löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Löschen" })) remove.mutate(a.id); }}>
                     <Trash2 className="size-4" />
                   </Button>
                 </div>
