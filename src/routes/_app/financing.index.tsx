@@ -357,28 +357,38 @@ function DossierCard({
     ?? [snap.address, snap.city].filter(Boolean).join(", ")
     ?? null;
 
+  const reasons: Array<{ key: string; label: string; tone: "ok" | "warn" | "bad" }> =
+    Array.isArray(d.quick_check_reasons) ? d.quick_check_reasons : [];
+  const qcStatus = d.quick_check_status as QuickCheckStatus | null;
+  const dossierStatus = (d.dossier_status ?? "draft") as DossierStatus;
+  const qcToneClass =
+    qcStatus === "realistic" ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+    : qcStatus === "critical" ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+    : qcStatus === "not_financeable" ? "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400"
+    : "border-border bg-muted/30 text-muted-foreground";
+
   return (
     <Card className={cn("transition hover:shadow-md", selected && "ring-2 ring-primary")}>
-      <CardContent className="flex flex-wrap items-start gap-4 p-4">
-        <div
-          className="flex items-center pt-1"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Checkbox
-            checked={selected}
-            onCheckedChange={onToggle}
-            aria-label="Auswählen"
-          />
-        </div>
-        <Link to="/financing/$id" params={{ id: d.id }} className="flex-1 min-w-0 flex flex-wrap items-start gap-4">
-          <div className="flex-1 min-w-0 space-y-2">
+      <CardContent className="space-y-3 p-4">
+        <div className="flex flex-wrap items-start gap-4">
+          <div
+            className="flex items-center pt-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Checkbox
+              checked={selected}
+              onCheckedChange={onToggle}
+              aria-label="Auswählen"
+            />
+          </div>
+          <Link to="/financing/$id" params={{ id: d.id }} className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="font-medium truncate">
                 {d.title || FINANCING_TYPE_LABELS[d.financing_type as FinancingType] || "Finanzierung"}
               </p>
               <Badge variant="secondary">{FINANCING_TYPE_LABELS[d.financing_type as FinancingType] ?? "—"}</Badge>
-              <Badge className={dossierTone(d.dossier_status)}>
-                {DOSSIER_STATUS_LABELS[d.dossier_status as DossierStatus] ?? "Entwurf"}
+              <Badge className={dossierTone(dossierStatus)}>
+                {DOSSIER_STATUS_LABELS[dossierStatus] ?? "Entwurf"}
               </Badge>
               <Badge variant="outline" className={qcTone(d.quick_check_status ?? "incomplete")}>
                 {QUICK_CHECK_LABELS[(d.quick_check_status ?? "incomplete") as QuickCheckStatus]}
@@ -400,23 +410,48 @@ function DossierCard({
               {!d.bank_name && d.bank_type && <span>Banktyp: {d.bank_type === "ubs" ? "UBS" : "andere"}</span>}
               <span>Aktualisiert {formatDate(d.updated_at)}</span>
             </div>
+          </Link>
+        </div>
+
+        {/* Quick-Check Zusammenfassung — gleiche Optik wie im Kunden-Tab */}
+        <Link to="/financing/$id" params={{ id: d.id }} className={`block rounded-lg border p-3 ${qcToneClass}`}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs font-semibold uppercase tracking-wide">
+              Quick Check: {qcStatus ? (QUICK_CHECK_LABELS[qcStatus] ?? qcStatus) : "Noch nicht durchgeführt"}
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-right text-xs">
-            <KV label="Hypothek" value={d.requested_mortgage ? formatCurrency(Number(d.requested_mortgage)) : "—"} />
-            <KV label="Investition" value={d.total_investment ? formatCurrency(Number(d.total_investment)) : "—"} />
-            <KV label="Belehnung" value={d.loan_to_value_ratio != null ? `${Number(d.loan_to_value_ratio).toFixed(1)}%` : "—"} />
-            <KV label="Tragbarkeit" value={d.affordability_ratio != null ? `${Number(d.affordability_ratio).toFixed(1)}%` : "—"} />
+          <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+            <KPI label="Tragbarkeit" value={d.affordability_ratio != null ? `${Number(d.affordability_ratio).toFixed(1)}%` : "—"} />
+            <KPI label="Belehnung" value={d.loan_to_value_ratio != null ? `${Number(d.loan_to_value_ratio).toFixed(1)}%` : "—"} />
+            <KPI label="Hypothek" value={d.requested_mortgage != null ? formatCurrency(Number(d.requested_mortgage)) : "—"} />
+            <KPI label="Eigenmittel" value={d.own_funds_total != null ? formatCurrency(Number(d.own_funds_total)) : "—"} />
           </div>
+          {reasons.length > 0 && (
+            <ul className="mt-3 space-y-1 text-xs">
+              {reasons.map((r, i) => (
+                <li key={`${r.key}-${i}`} className="flex items-start gap-1.5">
+                  <span className={
+                    r.tone === "ok" ? "text-emerald-600 dark:text-emerald-400"
+                    : r.tone === "warn" ? "text-amber-600 dark:text-amber-400"
+                    : "text-red-600 dark:text-red-400"
+                  }>
+                    {r.tone === "ok" ? "✓" : r.tone === "warn" ? "!" : "✕"}
+                  </span>
+                  <span>{r.label}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Link>
       </CardContent>
     </Card>
   );
 }
 
-function KV({ label, value }: { label: string; value: string }) {
+function KPI({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div>
-      <p className="text-muted-foreground">{label}</p>
+    <div className="rounded-md bg-background/60 p-2">
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="font-semibold text-foreground">{value}</p>
     </div>
   );
