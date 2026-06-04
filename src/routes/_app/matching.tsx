@@ -47,20 +47,86 @@ function MatchingPage() {
     queryKey: ["properties"],
     queryFn: async () => (await supabase.from("properties").select("*")).data ?? [],
   });
+  const { data: disclosures = [] } = useQuery({
+    queryKey: ["self_disclosures_all"],
+    queryFn: async () =>
+      (await supabase
+        .from("client_self_disclosures")
+        .select("client_id,total_income_monthly,salary_net_monthly,additional_income,income_job_two,income_rental,annual_net_salary")
+      ).data ?? [],
+  });
+  const { data: relationships = [] } = useQuery({
+    queryKey: ["client_relationships_all"],
+    queryFn: async () =>
+      (await supabase
+        .from("client_relationships")
+        .select("client_id,related_client_id,relationship_type")
+        .in("relationship_type", ["spouse", "co_applicant"])
+      ).data ?? [],
+  });
+
+  // Map: clientId → finanzielle Tragfähigkeit (inkl. Ehepartner/Mitantragsteller)
+  const capacityMap = useMemo(() => {
+    const incomeYearly = new Map<string, number>();
+    for (const d of disclosures as any[]) {
+      const monthly =
+        Number(d.total_income_monthly ?? 0) ||
+        (Number(d.salary_net_monthly ?? 0) +
+          Number(d.additional_income ?? 0) +
+          Number(d.income_job_two ?? 0) +
+          Number(d.income_rental ?? 0));
+      const yearly = monthly > 0 ? monthly * 12 : Number(d.annual_net_salary ?? 0);
+      if (yearly > 0) incomeYearly.set(d.client_id as string, (incomeYearly.get(d.client_id as string) ?? 0) + yearly);
+    }
+    const equityById = new Map<string, number>();
+    for (const c of clients) {
+      const eq = Number((c as any).equity ?? 0);
+      if (eq > 0) equityById.set(c.id, eq);
+    }
+    // Partner-Links beide Richtungen
+    const partnersOf = new Map<string, string[]>();
+    for (const r of relationships as any[]) {
+      const a = r.client_id as string;
+      const b = r.related_client_id as string;
+      partnersOf.set(a, [...(partnersOf.get(a) ?? []), b]);
+      partnersOf.set(b, [...(partnersOf.get(b) ?? []), a]);
+    }
+
+    const out = new Map<string, FinancialCapacity>();
+    for (const c of clients) {
+      const partners = partnersOf.get(c.id) ?? [];
+      const ownIncome = incomeYearly.get(c.id) ?? 0;
+      const ownEquity = equityById.get(c.id) ?? 0;
+      const partnerIncome = partners.reduce((s, pid) => s + (incomeYearly.get(pid) ?? 0), 0);
+      const partnerEquity = partners.reduce((s, pid) => s + (equityById.get(pid) ?? 0), 0);
+      const gross = ownIncome + partnerIncome;
+      const equity = ownEquity + partnerEquity;
+      if (gross > 0 || equity > 0) {
+        out.set(c.id, {
+          grossIncomeYearly: gross,
+          equity,
+          hasPartner: partners.length > 0 && partnerIncome > 0,
+        });
+      }
+    }
+    return out;
+  }, [disclosures, relationships, clients]);
 
   // Global matches: alle Kunde × Immobilie Paare, gefiltert + sortiert
   const globalMatches = useMemo<GlobalMatch[]>(() => {
     const seekers = clients.filter((c) => c.client_type === "buyer" || c.client_type === "tenant");
-    const available = properties.filter((p) => p.status === "available" || p.status === "draft");
+    const available = properties.filter(
+      (p) => p.status === "available" || p.status === "draft" || p.status === "active" || p.status === "preparation",
+    );
     const out: GlobalMatch[] = [];
     for (const c of seekers) {
       for (const p of available) {
-        const r = scoreMatch(c, p);
+        const r = scoreMatch(c, p, capacityMap.get(c.id) ?? null);
         if (r.score >= minScore) out.push({ client: c, property: p, ...r });
       }
     }
     return out.sort((a, b) => b.score - a.score);
-  }, [clients, properties, minScore]);
+  }, [clients, properties, minScore, capacityMap]);
 
   const filteredGlobal = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -76,9 +142,10 @@ function MatchingPage() {
   // Pro-Kunde Ansicht (alte Logik)
   const selected = clients.find((c) => c.id === clientId) ?? clients[0];
   const clientMatches = useMemo(
-    () => (selected ? matchClientToProperties(selected, properties) : []),
-    [selected, properties],
+    () => (selected ? matchClientToProperties(selected, properties, 40, capacityMap.get(selected.id) ?? null) : []),
+    [selected, properties, capacityMap],
   );
+
 
   // Top-Kunden mit den meisten guten Matches (für die Sidebar-Liste)
   const clientLeaderboard = useMemo(() => {
