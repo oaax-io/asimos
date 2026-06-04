@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
