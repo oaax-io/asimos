@@ -156,16 +156,19 @@ export function scoreMatch(client: Client, property: Property, capacity?: Financ
 }
 
 
+const AVAILABLE_STATUSES = new Set(["available", "active", "draft", "preparation"]);
+
 /** Direction 1: client → properties. Filters out non-available properties and weak matches. */
 export function matchClientToProperties(
   client: Client,
   properties: Property[],
   minScore = 40,
+  capacity?: FinancialCapacity | null,
 ): PropertyMatch[] {
   const out: PropertyMatch[] = [];
   for (const p of properties) {
-    if (p.status !== "available" && p.status !== "draft") continue;
-    const r = scoreMatch(client, p);
+    if (!AVAILABLE_STATUSES.has(p.status as string)) continue;
+    const r = scoreMatch(client, p, capacity);
     if (r.score >= minScore) out.push({ property: p, ...r });
   }
   return out.sort((a, b) => b.score - a.score);
@@ -176,12 +179,14 @@ export function matchPropertyToClients(
   property: Property,
   clients: Client[],
   minScore = 40,
+  capacityByClientId?: Map<string, FinancialCapacity>,
 ): ClientMatch[] {
   const out: ClientMatch[] = [];
   for (const c of clients) {
     if (c.client_type !== "buyer" && c.client_type !== "tenant") continue;
-    const r = scoreMatch(c, property);
+    const r = scoreMatch(c, property, capacityByClientId?.get(c.id) ?? null);
     if (r.score >= minScore) out.push({ client: c, ...r });
   }
   return out.sort((a, b) => b.score - a.score);
 }
+
