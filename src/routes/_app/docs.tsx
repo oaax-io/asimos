@@ -16,6 +16,35 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.13.0",
+    date: "04.06.2026",
+    changes: [
+      { type: "feature", text: "Smart-Matching: berechnet automatisch Tragbarkeit & Belehnung aus der Selbstauskunft (inkl. Ehepartner / Mitantragsteller) und matcht passende Immobilien — auch wenn Budget oder Stadt im Profil leer sind" },
+      { type: "improvement", text: "Matching beruecksichtigt jetzt auch Immobilien mit Status 'aktiv' und 'in Vorbereitung' (vorher nur 'verfuegbar' / 'Entwurf')" },
+      { type: "improvement", text: "Finanzierungs-Uebersicht im gleichen Look wie der Kunden-Finanzierungstab: farbcodierte Quick-Check-Kachel (Tragbarkeit, Belehnung, Hypothek, Eigenmittel) plus Begruendungsliste" },
+    ],
+  },
+  {
+    version: "1.12.0",
+    date: "03.06.2026",
+    changes: [
+      { type: "feature", text: "Einheitliches In-App-Bestaetigungs-Modal fuer alle Loeschvorgaenge (Kunden, Leads, Termine, Aufgaben, Properties, Medien, Beziehungen, Dokumente, Bankkonten, Agenturen, Bank-Paket-Versionen) — keine Browser-Popups mehr" },
+      { type: "feature", text: "Bank-Paket-Historie: einzelne Versionen koennen geloescht werden (inkl. Storage-Bereinigung)" },
+      { type: "improvement", text: "Bank-Paket-Historie zeigt Datum & Uhrzeit konsistent in Europe/Zurich" },
+    ],
+  },
+  {
+    version: "1.11.0",
+    date: "01.06.2026",
+    changes: [
+      { type: "feature", text: "Bank-Paket Master-Dossier: Quick-Check-Grafiken werden farbgetreu (gruen/gelb/rot) aus der Vorpruefung uebernommen, inkl. vollstaendiger Detailrechnung" },
+      { type: "feature", text: "Selbstauskunft im Master-Dossier wird komplett uebernommen — Hauptantragsteller und Mitantragsteller / Ehepartner stehen nebeneinander, alle Felder untereinander" },
+      { type: "improvement", text: "Selbstauskunft, Tragbarkeit und Detailrechnung passen jetzt auf 1-2 zusammenhaengende Seiten" },
+      { type: "fix", text: "Belehnung & Tragbarkeit werden im PDF korrekt gruen dargestellt (statt faelschlich orange)" },
+      { type: "fix", text: "Englische Restbegriffe im Master-Dossier vollstaendig auf Deutsch uebersetzt" },
+    ],
+  },
+  {
     version: "1.10.0",
     date: "28.05.2026",
     changes: [
@@ -26,6 +55,7 @@ const CHANGELOG: ChangelogEntry[] = [
       { type: "fix", text: "DB-Constraint hinzugefuegt: Kundenbeziehungen koennen nicht mehr doppelt angelegt werden (richtungsunabhaengig eindeutig)" },
     ],
   },
+
   {
     version: "1.9.0",
     date: "26.05.2026",
@@ -146,12 +176,16 @@ const CHANGELOG: ChangelogEntry[] = [
 ];
 
 const ROADMAP = [
-  { title: "Mehrsprachigkeit (FR / IT)", status: "geplant" },
-  { title: "Kalender-Sync mit Outlook & Google", status: "in Arbeit" },
-  { title: "Mobile-App (iOS / Android)", status: "Konzept" },
-  { title: "KI-Assistent fuer E-Mail-Entwuerfe", status: "geplant" },
   { title: "Digitale Signatur direkt im Dossier", status: "in Arbeit" },
+  { title: "Kalender-Sync mit Outlook & Google", status: "in Arbeit" },
+  { title: "Bank-API-Anbindung fuer direkten Dossier-Versand", status: "in Arbeit" },
+  { title: "Mehrsprachigkeit (FR / IT / EN)", status: "geplant" },
+  { title: "KI-Assistent fuer E-Mail-Entwuerfe", status: "geplant" },
+  { title: "Automatische WhatsApp-Benachrichtigungen an Kunden", status: "geplant" },
+  { title: "Mobile-App (iOS / Android)", status: "Konzept" },
+  { title: "Marktplatz-Integrationen (Homegate, ImmoScout24)", status: "Konzept" },
 ];
+
 
 const FAQS = [
   {
