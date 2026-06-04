@@ -779,6 +779,13 @@ export function buildBankPackageHtml(input: BankPackageInput): string {
   .kpi-bar-limit { position:absolute; top:-2px; bottom:-2px; width:2px; background:#111827; opacity:0.65; }
   .disclosure-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   td.l-muted { color:#6b7280; width:38%; padding-left:12px; }
+  table.disc { width:100%; border-collapse:collapse; font-size:10px; }
+  table.disc th { text-align:left; font-size:10px; font-weight:600; color:${primary}; padding:6px 8px; border-bottom:1.5px solid ${hexAlpha(primary, 0.25)}; background:${hexAlpha(primary, 0.04)}; }
+  table.disc th.disc-l { width:30%; }
+  table.disc td { padding:3px 8px; border-bottom:1px solid #f1f3f5; vertical-align:top; }
+  table.disc td.disc-l { color:#6b7280; width:30%; }
+  table.disc tr.disc-group td { background:${hexAlpha(primary, 0.06)}; color:${primary}; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.04em; padding:5px 8px; border-bottom:1px solid ${hexAlpha(primary, 0.18)}; }
+  .muted-sm { color:#9ca3af; font-size:9px; font-weight:400; margin-top:1px; }
 </style></head>
 <body>
   <div class="header">
