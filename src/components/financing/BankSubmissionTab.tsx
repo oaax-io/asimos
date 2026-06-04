@@ -278,6 +278,23 @@ function BankPackageCard({ dossierId }: { dossierId: string }) {
                 >
                   <Download className="h-4 w-4" />
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: "Version löschen?",
+                      description: `Diese Version vom ${formatZurich(p.created_at)} wird unwiderruflich entfernt.`,
+                      confirmText: "Löschen",
+                    });
+                    if (ok) remove.mutate(p.id);
+                  }}
+                  disabled={remove.isPending}
+                  title="Version löschen"
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             ))}
           </div>
@@ -285,6 +302,20 @@ function BankPackageCard({ dossierId }: { dossierId: string }) {
       </CardContent>
     </Card>
   );
+}
+
+function formatZurich(iso: string | null | undefined) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("de-CH", {
+    timeZone: "Europe/Zurich",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
