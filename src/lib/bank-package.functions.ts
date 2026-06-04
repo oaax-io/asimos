@@ -615,3 +615,33 @@ export const createBankPackageShare = createServerFn({ method: "POST" })
     return { ok: true as const, token, expiresAt, message: null as string | null };
   });
 
+
+// ---------- deleteBankPackage ----------
+
+export const deleteBankPackage = createServerFn({ method: "POST" })
+  .inputValidator((input: { generatedDocumentId: string }) => {
+    if (!input?.generatedDocumentId) throw new Error("generatedDocumentId is required");
+    return { generatedDocumentId: input.generatedDocumentId };
+  })
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: pkg, error: pkgErr } = await supabaseAdmin
+      .from("generated_documents")
+      .select("id, file_url")
+      .eq("id", data.generatedDocumentId)
+      .eq("document_type", "bank_package")
+      .maybeSingle();
+    if (pkgErr || !pkg) {
+      return { ok: false as const, message: pkgErr?.message ?? "Paket nicht gefunden" };
+    }
+    if (pkg.file_url) {
+      await supabaseAdmin.storage.from(BANK_PACKAGES_BUCKET).remove([pkg.file_url]);
+      await supabaseAdmin.from("bank_package_shares").delete().eq("storage_path", pkg.file_url);
+    }
+    const { error: delErr } = await supabaseAdmin
+      .from("generated_documents")
+      .delete()
+      .eq("id", data.generatedDocumentId);
+    if (delErr) return { ok: false as const, message: delErr.message };
+    return { ok: true as const, message: null as string | null };
+  });
