@@ -40,6 +40,68 @@ type Applicant = {
   total_income_monthly?: number | null;
   total_expenses_monthly?: number | null;
   reserve_total?: number | null;
+  // Erweiterte Selbstauskunft-Felder (für vollständige Übernahme im Bank-Paket)
+  disclosure?: Disclosure | null;
+};
+
+export type Disclosure = {
+  // Persönlich
+  salutation?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  birth_name?: string | null;
+  birth_place?: string | null;
+  birth_country?: string | null;
+  nationality?: string | null;
+  marital_status?: string | null;
+  resident_since?: string | null;
+  // Kontakt
+  street?: string | null;
+  street_number?: string | null;
+  postal_code?: string | null;
+  city?: string | null;
+  country?: string | null;
+  phone?: string | null;
+  mobile?: string | null;
+  email?: string | null;
+  tax_id_ch?: string | null;
+  // Anstellung
+  employment_status?: string | null;
+  employed_as?: string | null;
+  employer_name?: string | null;
+  employer_address?: string | null;
+  employer_phone?: string | null;
+  employed_since?: string | null;
+  salary_type?: string | null;
+  // Einkommen
+  salary_net_monthly?: number | null;
+  annual_net_salary?: number | null;
+  income_job_two?: number | null;
+  income_rental?: number | null;
+  additional_income?: number | null;
+  total_income_monthly?: number | null;
+  // Ausgaben
+  rent_expense?: number | null;
+  mortgage_expense?: number | null;
+  utilities_expense?: number | null;
+  taxes_expense?: number | null;
+  health_insurance_expense?: number | null;
+  life_insurance_expense?: number | null;
+  property_insurance_expense?: number | null;
+  telecom_expense?: number | null;
+  leasing_expense?: number | null;
+  credit_expense?: number | null;
+  alimony_expense?: number | null;
+  living_costs_expense?: number | null;
+  miscellaneous_expense?: number | null;
+  total_expenses_monthly?: number | null;
+  // Reserve
+  reserve_total?: number | null;
+  reserve_ratio?: number | null;
+  // Status
+  status?: string | null;
+  submitted_at?: string | null;
+  reviewed_at?: string | null;
 };
 
 type DocumentInventoryEntry = {
