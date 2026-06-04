@@ -2,39 +2,68 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 
-## [Unreleased]
+## [1.13.0] – 04.06.2026 – Smart Matching
 
 ### Hinzugefügt
-- **Kunden-Status-Workflow**: Neue `status`-Spalte auf der Kunden-Tabelle mit 7 farblich kodierten Stufen: Entwurf (Grau), Pendet (Gelb), Vollständig (Blau), Finanzierung (Indigo), Abgeschlossen (Grün), Abgelehnt (Rot), Storniert (Orange).
-- **Status-Filter in Kundenübersicht**: Dropdown-Filter mit farbigen Punkten zum schnellen Filtern nach Kundenstatus.
-- **Status-Bearbeitung im Kunden-Modal**: Direkt im Kunden-Detail (oben rechts neben den Navigationspfeilen) lässt sich der Status per Dropdown ändern — mit farblicher Kennzeichnung und verbesserter Lesbarkeit.
-- **Dokumentenverwaltung im Kundenprofil**: Modal-Vorschau, Herunterladen, Umbenennen, Dokumententyp-Erkennung beim Upload, Anzahl-Anzeige im Tab-Badge.
-- **Immobilien-Zuweisung mit Rollen**: Kunden können Immobilien als Eigentümer, Kaufinteressent, Mieter, Investor etc. zugewiesen werden — mit Doppelbelegungs-Warnung.
-- **Bidirektionale Kundenbeziehungen**: Verknüpfungen (z. B. Ehepartner) sind jetzt von beiden Seiten sichtbar.
-- **Kartenansicht für Immobilien**: Neue "Karten"-Ansicht im Immobilien-Modul mit Mapbox-Integration. Objekte werden auf der Schweizerkarte als Marker angezeigt, inklusive Preis-Labels und Klick-zu-Detail-Funktion.
-- **KI-gestützte Selbstauskunft-Auto-Fill**: Beim Kunden-Wizard (Schritt 2) kann nun eine bestehende Selbstauskunft hochgeladen werden. Die Felder werden automatisch via Gemini (Lovable AI Gateway) erkannt und vorbefüllt – inkl. Antragsteller 1 + 2 und Beziehungsverknüpfung.
-- **Intelligente Kunden-Übersicht**: Das Kunden-Modal zeigt nun eine Smart-Übersicht mit den für den Makler relevantesten Informationen: Beziehungen, Immobilien, Termine, Aufgaben, offene Finanzierung etc.
-- **Finanzierungs-Quick-Check**: Neuer Wizard für schnelle Finanzierungs-Prüfung direkt aus der Kundenseite.
-- **DB-Constraint für eindeutige Beziehungen**: `UNIQUE INDEX` auf `client_relationships` (gerichtetes Paar + Typ) verhindert doppelte Verknüpfungen zwischen denselben Kontakten.
+- **Smart-Matching mit Finanzkapazität**: Das Matching berechnet jetzt aus der Selbstauskunft (inkl. Ehepartner / Mitantragsteller) automatisch Tragbarkeit (≤ 38 %) und Belehnung (≤ 80 %) gegen jedes verfügbare Objekt — Käufer ohne Budget oder Stadtpräferenz erscheinen jetzt trotzdem im Matching, sofern die Finanzlage passt.
+- **Finanzierungs-Übersicht im Kacheldesign**: Die Dossier-Karte zeigt jetzt die farbcodierte Quick-Check-Kachel (Tragbarkeit, Belehnung, Hypothek, Eigenmittel) plus Begründungsliste – konsistent zum Kunden-Finanzierungstab.
 
 ### Geändert
-- **Kunden-Typ-Farben neu abgestuft**: Die Farben für Kundentypen (Käufer, Verkäufer, Eigentümer, Mieter, Vermieter, Investor, Sonstige) wurden von den Status-Farben entkoppelt und erhalten nun eine eigene, deutlich unterscheidbare Palette (Cyan, Teal, Indigo, Orange, Pink, Rose, Stone).
-- **Kunden-Wizard restrukturiert**: Schritt 2 bietet nun die Wahl zwischen "Manuell erfassen" und "Selbstauskunft hochladen".
-- **Objekt-Import-Dialog**: Verbesserte UX für den Massenimport von Immobilien.
-- **Profil-Details verschoben**: Suchprofile → Matching, Rollen → Aktivitäten, Eigentum → Immobilien. Das zuklappbare Accordion "Profil-Details" entfällt somit aus der Kunden-Übersicht.
-- **Kachel-Layout**: Kacheln verwenden nun konsistente Bild-Höhen und elegantere Hover-Zustände.
-- **Kunden-Gruppierung in Listenansicht**: Verknüpfte Partner (z. B. Ehepartner) werden unter dem Hauptkunden mit Einrückung und Pfeil-Indikator (`CornerDownRight`) dargestellt. Gruppenmitglieder stehen immer zusammen und werden nicht mehr über die gesamte Liste verteilt.
-- **Kunden-Sortierung**: Die Kundenübersicht sortiert jetzt standardmäßig nach `created_at` absteigend — der zuletzt hinzugefügte Kunde steht immer zuoberst.
-- **Medien-Ordner-Ansicht**: Ordner und Kacheln-Ansicht wurden an das Design der Kunden-Kacheln angeglichen. Die Kacheln-Ansicht ist jetzt der Standard; beim Öffnen eines Ordners werden die enthaltenen Bilder direkt in Kacheln dargestellt.
+- **Matching-Property-Filter erweitert**: Status `active` und `preparation` werden zusätzlich zu `available` / `draft` als matchbar gezählt.
+
+---
+
+## [1.12.0] – 03.06.2026 – Einheitliche Bestätigungs-Dialoge
+
+### Hinzugefügt
+- **In-App-Confirm-Provider**: Globaler `useConfirm`-Hook (`AlertDialog`) ersetzt alle nativen `window.confirm()`-Aufrufe. Eingebunden in Bank-Paket-Historie, Bankkonten, Agenturen, Aufgaben, Leads, Termine, Properties, Marktanalysen, Medien, Kunden-Profile, Beziehungen und Kunden-Dokumenten.
+- **Bank-Paket-Versionen löschbar**: Einzelne Versionen in der Bank-Paket-Historie können gelöscht werden – inkl. Bereinigung der Storage-Datei.
+
+### Geändert
+- **Zeitstempel in Europe/Zurich**: Bank-Paket-Historie zeigt Datum & Uhrzeit konsistent in der Schweizer Zeitzone (`formatZurich`).
+
+---
+
+## [1.11.0] – 01.06.2026 – Bank-Paket Master-Dossier
+
+### Hinzugefügt
+- **Quick-Check-Grafiken im Master-Dossier**: Tragbarkeit, Belehnung, Eigenmittel & Co. werden farbgetreu (Grün / Gelb / Rot) aus der Vorprüfung übernommen, inkl. vollständiger Detailrechnung.
+- **Selbstauskunft vollständig im Master-Dossier**: Hauptantragsteller und Mitantragsteller / Ehepartner werden nebeneinander dargestellt, alle Felder konsistent untereinander.
+
+### Geändert
+- **Kompaktes Seitenlayout**: Selbstauskunft, Tragbarkeit und Detailrechnung passen jetzt auf 1–2 zusammenhängende Seiten.
 
 ### Behoben
-- Mediathek: Hover-Buttons über Bildern wieder korrekt sichtbar.
-- Dokumente nach Umbenennung konnten nicht mehr angezeigt werden — Storage-Pfad-Logik korrigiert.
-- **Doppelte Ehepartner-Badges**: Durch das neue DB-Constraint und Bereinigung identischer Datensätze (z. B. doppelte "Gjyle Krasniqi") werden Beziehungen jetzt korrekt dedupliziert.
+- **Falsche Farbgebung** für Belehnung & Tragbarkeit im PDF (war orange statt grün) behoben.
+- **Englische Restbegriffe** im Master-Dossier vollständig auf Deutsch übersetzt.
+
+---
+
+## [1.10.0] – 28.05.2026 – Kunden-Gruppierung & Status-Workflow
+
+### Hinzugefügt
+- **Kunden-Status-Workflow**: 7 farblich kodierte Stufen (Entwurf, Pendent, Vollständig, Finanzierung, Abgeschlossen, Abgelehnt, Storniert) mit Filter und Inline-Bearbeitung im Kunden-Modal.
+- **Bidirektionale Kundenbeziehungen** mit eindeutigem DB-Constraint.
+- **Dokumentenverwaltung im Kundenprofil**: Modal-Vorschau, Download, Umbenennen, automatische Dokumententyp-Erkennung.
+- **Immobilien-Zuweisung mit Rollen**: Eigentümer, Kaufinteressent, Mieter, Investor — mit Doppelbelegungs-Warnung.
+- **Mapbox-Kartenansicht** für Immobilien mit Preis-Labels und Klick-zu-Detail.
+- **KI-Auto-Fill der Selbstauskunft** im Kunden-Wizard (Antragsteller 1 + 2 inkl. Beziehung).
+- **Finanzierungs-Quick-Check-Wizard** direkt aus dem Kundenprofil.
+
+### Geändert
+- **Kunden-Typ-Farben** von Status-Farben entkoppelt (Cyan, Teal, Indigo, Orange, Pink, Rose, Stone).
+- **Kunden-Gruppierung**: Verknüpfte Partner werden eingerückt unter dem Hauptkunden dargestellt (CornerDownRight-Indikator).
+- **Sortierung** standardmäßig nach `created_at` absteigend.
+- **Medien-Ansicht** an Kunden-Kacheldesign angeglichen.
+
+### Behoben
+- Mediathek: Hover-Buttons über Bildern wieder sichtbar.
+- Storage-Pfad-Logik bei umbenannten Dokumenten korrigiert.
+- Doppelte Ehepartner-Badges dedupliziert.
 
 ### Entfernt
-- **"Finanzierung"-Spalte aus Kundenübersicht**: Die separate Finanzierungsspalte und der zugehörige Filter "Alle Finanzierungen" wurden entfernt — der Status-Workflow ersetzt diese Darstellung.
-- **"Muster-Kunde"-Button**: Der Button zum Erstellen eines Demo-Kunden wurde aus der Kundenübersicht entfernt.
+- "Finanzierung"-Spalte und "Muster-Kunde"-Button aus der Kundenübersicht.
+
 
 ---
 
