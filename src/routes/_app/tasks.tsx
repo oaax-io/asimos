@@ -45,6 +45,7 @@ const emptyForm = {
 
 function TasksPage() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
