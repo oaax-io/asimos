@@ -28,6 +28,7 @@ import { useAuth } from "@/lib/auth";
 import { MatchPanel } from "@/components/matching/MatchPanel";
 import { ClientSelfDisclosureTab } from "@/components/clients/ClientSelfDisclosureTab";
 import { ClientSelfDisclosureWizard } from "@/components/clients/ClientSelfDisclosureWizard";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { ClientRelationshipsTab } from "@/components/clients/ClientRelationshipsTab";
 import { ClientProfileSummary } from "@/components/clients/ClientProfileSummary";
 import { ClientSmartOverview } from "@/components/clients/ClientSmartOverview";
@@ -66,6 +67,7 @@ function ClientDetailRoute() {
 }
 
 export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: { id: string; inDialog?: boolean; onClose?: () => void; clientIds?: string[]; onNavigate?: (id: string) => void }) {
+  const confirm = useConfirm();
   const [editOpen, setEditOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [visitedTabs, setVisitedTabs] = useState<string[]>(["overview"]);
@@ -362,7 +364,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
             <Pencil className="mr-1.5 h-4 w-4" />Kunde bearbeiten
           </Button>
-          <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
+          <Button variant="outline" size="icon" onClick={async () => { if (await confirm({ title: "Kunde löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Löschen" })) del.mutate(); }}>
             <Trash2 className="h-4 w-4" />
           </Button>
           {inDialog && (

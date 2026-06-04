@@ -23,6 +23,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { convertUnsupportedImages } from "@/lib/image-convert";
 import { extractPropertyImagePaths } from "@/lib/property-media";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 
 export const Route = createFileRoute("/_app/media")({ component: MediaPage });
 
@@ -95,6 +96,7 @@ function formatBytes(bytes: number): string {
 const MAX_STORAGE = 20 * 1024 * 1024 * 1024; // 20 GB
 
 function MediaPage() {
+  const confirm = useConfirm();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -682,8 +684,8 @@ function MediaPage() {
             size="sm"
             variant="outline"
             disabled={migrateDocuments.isPending}
-            onClick={() => {
-              if (window.confirm(`${documentLikeCount} Datei(en) nach „Dokumente" verschieben?`)) {
+            onClick={async () => {
+              if (await confirm({ title: "Dateien verschieben?", description: `${documentLikeCount} Datei(en) werden nach „Dokumente" verschoben.`, confirmText: "Verschieben" })) {
                 migrateDocuments.mutate();
               }
             }}
@@ -746,8 +748,8 @@ function MediaPage() {
                 size="sm"
                 variant="outline"
                 className="h-7"
-                onClick={() => {
-                  if (window.confirm(`${duplicateCount} doppelte Datei(en) löschen? Das älteste/Cover-Bild bleibt erhalten.`)) {
+                onClick={async () => {
+                  if (await confirm({ title: "Duplikate löschen?", description: `${duplicateCount} doppelte Datei(en) werden entfernt. Das älteste/Cover-Bild bleibt erhalten.`, confirmText: "Löschen" })) {
                     removeDuplicates.mutate(propertyFilter);
                   }
                 }}

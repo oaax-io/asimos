@@ -23,6 +23,7 @@ import { MatchPanel } from "@/components/matching/MatchPanel";
 import { matchPropertyToClients } from "@/lib/matching";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { PropertyOwnersTab } from "@/components/properties/PropertyOwnersTab";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 import { useAuth } from "@/lib/auth";
 import { extractPropertyImagePaths } from "@/lib/property-media";
@@ -53,6 +54,7 @@ async function syncPropertyImagesFromMedia(propertyId: string) {
 }
 
 function PropertyDetail() {
+  const confirm = useConfirm();
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -365,7 +367,7 @@ function PropertyDetail() {
               </SelectItem>
             ))}</SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={() => { if (confirm("Wirklich löschen?")) del.mutate(); }}>
+          <Button variant="outline" size="icon" onClick={async () => { if (await confirm({ title: "Immobilie löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Löschen" })) del.mutate(); }}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -1948,6 +1950,7 @@ const comparisonMap: Record<string, { label: string; cls: string }> = {
 };
 
 function MarketAnalysisTab({ property }: { property: any }) {
+  const confirm = useConfirm();
   const qc = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -1986,7 +1989,7 @@ function MarketAnalysisTab({ property }: { property: any }) {
   };
 
   const deleteAnalysis = async (id: string) => {
-    if (!confirm("Diese Analyse wirklich löschen?")) return;
+    if (!(await confirm({ title: "Analyse löschen?", description: "Diese Marktanalyse wird unwiderruflich entfernt.", confirmText: "Löschen" }))) return;
     const { error } = await supabase.from("property_market_analyses").delete().eq("id", id);
     if (error) return toast.error("Löschen fehlgeschlagen");
     if (selectedId === id) setSelectedId(null);

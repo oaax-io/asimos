@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { leadStatusLabels, leadStatuses, leadStatusColors, type LeadStatus } from "@/lib/format";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { useAuth } from "@/lib/auth";
 import { getBackendErrorMessage, isBackendUnavailableError, throwIfError, unwrapServerResult } from "@/lib/backend-errors";
 import { toast } from "sonner";
@@ -37,6 +38,7 @@ const UNASSIGNED = "__unassigned__";
 const LEAD_SOURCES = ["Eigenlead", "Website", "Empfehlung", "Tiktok", "Instagram", "Facebook"] as const;
 
 function LeadsPage() {
+  const confirm = useConfirm();
   const qc = useQueryClient();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -403,8 +405,8 @@ function LeadsPage() {
             size="sm"
             variant="outline"
             className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-            onClick={() => {
-              if (confirm(`${selected.size} Lead(s) wirklich löschen?`)) {
+            onClick={async () => {
+              if (await confirm({ title: "Leads löschen?", description: `${selected.size} Lead(s) werden unwiderruflich entfernt.`, confirmText: "Löschen" })) {
                 bulkDelete.mutate(Array.from(selected));
               }
             }}

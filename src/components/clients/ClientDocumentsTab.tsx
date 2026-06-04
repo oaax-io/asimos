@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import { formatDate } from "@/lib/format";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
 
 const DOC_TYPES = [
   "client_document", "property_document", "contract", "mandate", "mandate_partial",
@@ -66,6 +67,7 @@ async function getSignedUrl(path: string) {
 }
 
 export function ClientDocumentsTab({ clientId, userId }: { clientId: string; userId: string }) {
+  const confirm = useConfirm();
   const qc = useQueryClient();
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -133,7 +135,7 @@ export function ClientDocumentsTab({ clientId, userId }: { clientId: string; use
   };
 
   const deleteDoc = async (d: Doc) => {
-    if (!confirm(`Dokument "${d.file_name}" wirklich löschen?`)) return;
+    if (!(await confirm({ title: "Dokument löschen?", description: `„${d.file_name}" wird unwiderruflich entfernt.`, confirmText: "Löschen" }))) return;
     try {
       if (!/^https?:\/\//i.test(d.file_url)) {
         await supabase.storage.from("documents").remove([d.file_url]);
