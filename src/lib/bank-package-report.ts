@@ -160,6 +160,15 @@ export type BankPackageInput = {
     einkommen_kombiniert?: number | null;
     eigenkapital_kombiniert?: number | null;
     pk_anteil_kombiniert?: number | null;
+
+    // Felder für Detailrechnung
+    co_applicant_einkommen?: number | null;
+    co_applicant_eigenkapital?: number | null;
+    co_applicant_pk_anteil?: number | null;
+    yearly_costs?: number | null;
+    calculated_interest_rate?: number | null;
+    ancillary_costs_yearly?: number | null;
+    amortisation_yearly?: number | null;
   };
 
   applicant: Applicant;
