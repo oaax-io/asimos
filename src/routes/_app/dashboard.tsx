@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import {
   Building2, Users, UserPlus, CheckSquare, CalendarDays, FileSignature,
   ArrowRight, Plus, Upload, Sparkles, AlertTriangle, Clock, ChevronDown,
+  Landmark, CheckCircle2, XCircle, Send, Wallet,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -157,6 +158,36 @@ function Dashboard() {
       const propCounts: Record<string, number> = {};
       (unwrap(props).data ?? []).forEach((p: any) => { propCounts[p.status] = (propCounts[p.status] ?? 0) + 1; });
       return { leadCounts, propCounts };
+    },
+  });
+
+  const stats = useQuery({
+    queryKey: ["dashboard", "stats"],
+    queryFn: async () => {
+      const [clients, dossiers] = await Promise.all([
+        supabase.from("clients").select("status").eq("is_archived", false),
+        supabase.from("financing_dossiers").select("dossier_status, quick_check_status, submitted_to_bank_at"),
+      ]);
+      const clientCounts: Record<string, number> = {};
+      (clients.data ?? []).forEach((c: any) => { clientCounts[c.status] = (clientCounts[c.status] ?? 0) + 1; });
+      const dossierCounts: Record<string, number> = {};
+      const qcCounts: Record<string, number> = { pass: 0, warn: 0, fail: 0, none: 0 };
+      let submitted = 0;
+      (dossiers.data ?? []).forEach((d: any) => {
+        dossierCounts[d.dossier_status ?? "draft"] = (dossierCounts[d.dossier_status ?? "draft"] ?? 0) + 1;
+        const qc = (d.quick_check_status ?? "none") as string;
+        qcCounts[qc] = (qcCounts[qc] ?? 0) + 1;
+        if (d.submitted_to_bank_at) submitted += 1;
+      });
+      return {
+        clientCounts,
+        dossierCounts,
+        qcCounts,
+        totalDossiers: (dossiers.data ?? []).length,
+        submitted,
+        approved: dossierCounts["approved"] ?? 0,
+        rejected: dossierCounts["rejected"] ?? 0,
+      };
     },
   });
 
@@ -324,6 +355,59 @@ function Dashboard() {
         />
       </div>
 
+      {/* Finanzierungs-KPIs */}
+      <div className="mt-4 grid gap-2 grid-cols-2 lg:grid-cols-4">
+        <KpiCard icon={Landmark} label="Dossiers gesamt" value={stats.data?.totalDossiers ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-primary/10 text-primary" />
+        <KpiCard icon={Send} label="Bei Bank eingereicht" value={stats.data?.submitted ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-blue-500/10 text-blue-600 dark:text-blue-400" />
+        <KpiCard icon={CheckCircle2} label="Genehmigt" value={stats.data?.approved ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" />
+        <KpiCard icon={XCircle} label="Abgelehnt" value={stats.data?.rejected ?? "—"} loading={stats.isLoading} to="/financing" accent="bg-rose-500/10 text-rose-600 dark:text-rose-400" />
+      </div>
+
+      {/* Status-Visualisierungen */}
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        <StatusStackCard
+          title="Kunden nach Status"
+          icon={Users}
+          to="/clients"
+          loading={stats.isLoading}
+          counts={stats.data?.clientCounts ?? {}}
+          rows={[
+            { key: "entwurf", label: "Entwurf", color: "bg-slate-400" },
+            { key: "pendent", label: "Pendent", color: "bg-amber-500" },
+            { key: "vollstaendig", label: "Vollständig", color: "bg-sky-500" },
+            { key: "finanzierung", label: "In Finanzierung", color: "bg-violet-500" },
+            { key: "abgeschlossen", label: "Abgeschlossen", color: "bg-emerald-500" },
+            { key: "abgelehnt", label: "Abgelehnt", color: "bg-rose-500" },
+            { key: "storniert", label: "Storniert", color: "bg-zinc-500" },
+          ]}
+        />
+        <StatusStackCard
+          title="Finanzierungs-Dossiers nach Status"
+          icon={Wallet}
+          to="/financing"
+          loading={stats.isLoading}
+          counts={stats.data?.dossierCounts ?? {}}
+          rows={[
+            { key: "draft", label: "Entwurf", color: "bg-slate-400" },
+            { key: "quick_check", label: "Quick-Check", color: "bg-cyan-500" },
+            { key: "documents_missing", label: "Dokumente fehlen", color: "bg-amber-500" },
+            { key: "ready_for_bank", label: "Bereit für Bank", color: "bg-indigo-500" },
+            { key: "submitted_to_bank", label: "Bei Bank eingereicht", color: "bg-blue-500" },
+            { key: "approved", label: "Genehmigt", color: "bg-emerald-500" },
+            { key: "rejected", label: "Abgelehnt", color: "bg-rose-500" },
+            { key: "cancelled", label: "Storniert", color: "bg-zinc-500" },
+          ]}
+          footer={
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <QcChip label="Realistisch" value={stats.data?.qcCounts.pass ?? 0} icon={CheckCircle2} tone="emerald" />
+              <QcChip label="Grenzwertig" value={stats.data?.qcCounts.warn ?? 0} icon={AlertTriangle} tone="amber" />
+              <QcChip label="Nicht tragbar" value={stats.data?.qcCounts.fail ?? 0} icon={XCircle} tone="rose" />
+            </div>
+          }
+        />
+      </div>
+
+
       {/* Matching suggestions */}
       <Card className="mt-4">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -441,6 +525,77 @@ function PipelineCard({ title, to, counts, labels, order, loading }: {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function StatusStackCard({ title, icon: Icon, to, counts, rows, loading, footer }: {
+  title: string; icon: any; to: string; counts: Record<string, number>;
+  rows: { key: string; label: string; color: string }[]; loading?: boolean; footer?: React.ReactNode;
+}) {
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Icon className="h-4 w-4 text-primary" />
+          {title}
+        </CardTitle>
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={to}>Details <ArrowRight className="ml-1 h-3 w-3" /></Link>
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-6 w-full" />)}</div>
+        ) : total === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Noch keine Daten vorhanden.</p>
+        ) : (
+          <>
+            <div className="mb-3 flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
+              {rows.map((r) => {
+                const c = counts[r.key] ?? 0;
+                if (!c) return null;
+                const pct = (c / total) * 100;
+                return <div key={r.key} className={r.color} style={{ width: `${pct}%` }} title={`${r.label}: ${c}`} />;
+              })}
+            </div>
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+              {rows.map((r) => {
+                const c = counts[r.key] ?? 0;
+                const pct = total > 0 ? Math.round((c / total) * 100) : 0;
+                return (
+                  <div key={r.key} className="flex items-center justify-between gap-2 rounded-md px-2 py-1 text-xs hover:bg-accent/40">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${r.color}`} />
+                      <span className="truncate text-muted-foreground">{r.label}</span>
+                    </span>
+                    <span className="shrink-0 font-medium tabular-nums">
+                      {c}<span className="ml-1 text-[10px] text-muted-foreground">{pct}%</span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {footer}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function QcChip({ label, value, icon: Icon, tone }: { label: string; value: number; icon: any; tone: "emerald" | "amber" | "rose" }) {
+  const toneCls = {
+    emerald: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+    amber: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+    rose: "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400",
+  }[tone];
+  return (
+    <div className={`flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 ${toneCls}`}>
+      <Icon className="h-3.5 w-3.5" />
+      <span className="font-display text-lg font-bold leading-none tabular-nums">{value}</span>
+      <span className="text-[10px] opacity-80">{label}</span>
+    </div>
   );
 }
 
