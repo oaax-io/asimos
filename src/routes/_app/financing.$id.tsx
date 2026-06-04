@@ -137,7 +137,7 @@ function FinancingDetailPage() {
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="quickcheck">Quick Check</TabsTrigger>
           <TabsTrigger value="disclosure">Selbstauskunft</TabsTrigger>
-          <TabsTrigger value="ubs">UBS Checkliste</TabsTrigger>
+          <TabsTrigger value="ubs">Bank Checkliste</TabsTrigger>
           <TabsTrigger value="documents">Dokumente</TabsTrigger>
           <TabsTrigger value="bank">Bank Einreichung</TabsTrigger>
           <TabsTrigger value="activity">Aktivität</TabsTrigger>
