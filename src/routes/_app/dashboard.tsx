@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import {
   Building2, Users, UserPlus, CheckSquare, CalendarDays, FileSignature,
   ArrowRight, Plus, Upload, Sparkles, AlertTriangle, Clock, ChevronDown,
+  Landmark, CheckCircle2, XCircle, Send, FileCheck2, Wallet,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
