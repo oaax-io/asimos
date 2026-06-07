@@ -221,4 +221,18 @@
   .animate-cloud-drift {
     animation: cloud-drift linear infinite;
   }
+
+  @keyframes pool-shimmer {
+    0%   { background-position: 0% 50%, 0% 50%; }
+    100% { background-position: 200% 50%, -200% 50%; }
+  }
+  .animate-pool-shimmer {
+    background-image:
+      repeating-linear-gradient(115deg, transparent 0 22px, rgba(255,255,255,0.10) 22px 24px, transparent 24px 50px),
+      repeating-linear-gradient(65deg,  transparent 0 30px, rgba(180,220,255,0.10) 30px 32px, transparent 32px 70px);
+    background-size: 200% 100%, 200% 100%;
+    animation: pool-shimmer 9s linear infinite;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, black 35%, black 90%, transparent 100%);
+            mask-image: linear-gradient(180deg, transparent 0%, black 35%, black 90%, transparent 100%);
+  }
 }
