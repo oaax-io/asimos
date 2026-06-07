@@ -342,7 +342,7 @@ function SnowLayer() {
   );
 }
 
-function CloudsLayer() {
+function CloudsLayer({ dark = false }: { dark?: boolean }) {
   const clouds = useMemo(
     () =>
       Array.from({ length: 5 }).map((_, i) => ({
@@ -360,7 +360,7 @@ function CloudsLayer() {
       {clouds.map((c) => (
         <div
           key={c.key}
-          className="absolute h-24 w-72 rounded-full bg-white blur-2xl animate-cloud-drift"
+          className={`absolute h-24 w-72 rounded-full blur-2xl animate-cloud-drift ${dark ? "bg-slate-700" : "bg-white"}`}
           style={{
             top: `${c.top}%`,
             opacity: c.opacity,
