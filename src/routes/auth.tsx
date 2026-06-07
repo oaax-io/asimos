@@ -10,6 +10,9 @@ import { z } from "zod";
 import { Sun, Moon, CloudRain, Snowflake, Volume2, VolumeX } from "lucide-react";
 import logo from "@/assets/logo-asimo.png";
 import bgNight from "@/assets/login-bg-night.jpg";
+import bgDay from "@/assets/login-bg-day.jpg";
+import bgRain from "@/assets/login-bg-rain.jpg";
+import bgSnow from "@/assets/login-bg-snow.jpg";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
