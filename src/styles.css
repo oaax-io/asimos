@@ -197,4 +197,28 @@
     animation: bell-shake 0.9s ease-in-out;
     transform-origin: top center;
   }
+
+  @keyframes rain-fall {
+    0%   { transform: translateY(-10vh); }
+    100% { transform: translateY(115vh); }
+  }
+  .animate-rain-fall {
+    animation: rain-fall linear infinite;
+  }
+
+  @keyframes snow-fall {
+    0%   { transform: translate(0, -5vh) rotate(0deg); }
+    100% { transform: translate(var(--drift, 0), 110vh) rotate(360deg); }
+  }
+  .animate-snow-fall {
+    animation: snow-fall linear infinite;
+  }
+
+  @keyframes cloud-drift {
+    0%   { transform: translateX(-30vw); }
+    100% { transform: translateX(130vw); }
+  }
+  .animate-cloud-drift {
+    animation: cloud-drift linear infinite;
+  }
 }
