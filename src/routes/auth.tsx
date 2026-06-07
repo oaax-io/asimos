@@ -122,30 +122,17 @@ function AuthPage() {
     } finally { setLoading(false); }
   };
 
-  // Szenen-Tönung (statt nur Schwarz)
-  const sceneStyles: Record<Scene, { baseFilter: string; tint: string; glowOpacity: number }> = {
-    day: {
-      baseFilter: "brightness(1.05) saturate(1.05) contrast(0.95)",
-      tint: "linear-gradient(180deg, rgba(180,210,235,0.30) 0%, rgba(255,220,180,0.18) 60%, rgba(40,60,90,0.35) 100%)",
-      glowOpacity: 0,
-    },
-    night: {
-      baseFilter: "brightness(0.85) saturate(1.1)",
-      tint: "linear-gradient(180deg, rgba(10,20,45,0.45) 0%, rgba(15,25,55,0.35) 60%, rgba(0,0,0,0.55) 100%)",
-      glowOpacity: 0.85,
-    },
-    rain: {
-      baseFilter: "brightness(0.75) saturate(0.9) contrast(1.05)",
-      tint: "linear-gradient(180deg, rgba(20,30,50,0.55) 0%, rgba(30,40,60,0.45) 60%, rgba(5,10,20,0.65) 100%)",
-      glowOpacity: 0.6,
-    },
-    snow: {
-      baseFilter: "brightness(0.9) saturate(0.85) contrast(0.98)",
-      tint: "linear-gradient(180deg, rgba(180,200,225,0.40) 0%, rgba(210,220,235,0.30) 60%, rgba(40,55,80,0.55) 100%)",
-      glowOpacity: 0.5,
-    },
+  // Pro Szene ein eigenes Hintergrundbild (Haus, Pool, Himmel reagieren mit)
+  const sceneImages: Record<Scene, string> = {
+    day: bgDay,
+    night: bgNight,
+    rain: bgRain,
+    snow: bgSnow,
   };
-  const s = sceneStyles[scene];
+
+  // Leuchtende Fenster nur dort sinnvoll, wo es dunkel/dämmrig ist
+  const glowOpacity: Record<Scene, number> = { day: 0, night: 0.9, rain: 0.55, snow: 0.35 };
+  const shimmerOpacity: Record<Scene, number> = { day: 0.55, night: 0.35, rain: 0.7, snow: 0 };
 
   const sceneButtons: { key: Scene; icon: typeof Sun; label: string }[] = [
     { key: "day", icon: Sun, label: "Tag" },
@@ -156,34 +143,46 @@ function AuthPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-black p-6 overflow-hidden">
-      {/* Base image */}
+      {/* Alle Szenen-Bilder gestapelt, crossfade per opacity */}
+      {(Object.keys(sceneImages) as Scene[]).map((key) => (
+        <div
+          key={key}
+          className="absolute inset-0 bg-cover bg-center transition-opacity duration-[1500ms]"
+          style={{ backgroundImage: `url(${sceneImages[key]})`, opacity: scene === key ? 1 : 0 }}
+          aria-hidden
+        />
+      ))}
+
+      {/* Pool-Shimmer: animierter Glanz im unteren Drittel (Pool-Bereich) */}
       <div
-        className="absolute inset-0 bg-cover bg-center transition-[filter] duration-1000"
-        style={{ backgroundImage: `url(${bgNight})`, filter: s.baseFilter }}
+        className="absolute inset-x-0 bottom-0 h-[42%] pointer-events-none mix-blend-screen transition-opacity duration-1000 animate-pool-shimmer"
+        style={{ opacity: shimmerOpacity[scene] }}
         aria-hidden
       />
-      {/* Szenen-Tönung */}
+
+      {/* Leichte Vignette für Lesbarkeit der Karte */}
       <div
-        className="absolute inset-0 pointer-events-none transition-opacity duration-1000"
-        style={{ backgroundImage: s.tint }}
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,0.45) 100%)" }}
         aria-hidden
       />
-      {/* Leuchtende Fenster (nur sichtbar in Nacht/Regen/Schnee) */}
+
+      {/* Pulsierende Fenster (Nacht / dämmrig) */}
       <div
         className="absolute inset-0 bg-cover bg-center mix-blend-screen animate-window-glow pointer-events-none transition-opacity duration-1000"
-        style={{ backgroundImage: `url(${bgNight})`, opacity: s.glowOpacity }}
+        style={{ backgroundImage: `url(${bgNight})`, opacity: glowOpacity[scene] }}
         aria-hidden
       />
       <div
         className="absolute inset-0 bg-cover bg-center mix-blend-screen animate-window-flicker pointer-events-none transition-opacity duration-1000"
-        style={{ backgroundImage: `url(${bgNight})`, filter: "brightness(1.3) saturate(1.3)", opacity: s.glowOpacity * 0.7 }}
+        style={{ backgroundImage: `url(${bgNight})`, filter: "brightness(1.3) saturate(1.3)", opacity: glowOpacity[scene] * 0.6 }}
         aria-hidden
       />
 
       {/* Wetter-Layer */}
       {scene === "rain" && <RainLayer />}
       {scene === "snow" && <SnowLayer />}
-      {scene === "day" && <CloudsLayer />}
+      {(scene === "day" || scene === "rain") && <CloudsLayer dark={scene === "rain"} />}
 
       {/* Kontroll-Leiste */}
       <div className="absolute top-4 right-4 z-20 flex items-center gap-1 rounded-full border border-white/20 bg-black/40 backdrop-blur-md p-1 text-white">
