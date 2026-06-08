@@ -45,6 +45,43 @@ const numOrNull = (v: string) => {
   return Number.isFinite(n) ? n : null;
 };
 
+// Map property_type (CRM) → object_type (Wizard-Refi)
+function mapPropertyTypeToObject(t: string | null | undefined): "" | "house" | "apartment" | "commercial" | "mixed_use" | "other" {
+  switch (t) {
+    case "house": return "house";
+    case "apartment": return "apartment";
+    case "commercial": return "commercial";
+    case "mixed_use": return "mixed_use";
+    case "land":
+    case "parking":
+    case "other":
+      return "other";
+    default: return "";
+  }
+}
+
+// Max. Belehnung in % nach Nutzung
+function maxLtvForUsage(usage: string): number {
+  if (usage === "rental") return 75;
+  return 80; // owner_occupied oder unbekannt → konservativ Standard
+}
+
+const OBJECT_TYPE_LABELS: Record<string, string> = {
+  house: "Einfamilienhaus",
+  apartment: "Eigentumswohnung",
+  mixed_use: "Mehrfamilien-/Geschäftshaus",
+  commercial: "Gewerbe",
+  other: "Andere",
+};
+
+const REFI_PURPOSE_LABELS: Record<string, string> = {
+  rate_optimisation: "Zinsoptimierung",
+  bank_change: "Bankwechsel",
+  consolidation: "Konsolidierung",
+  cash_out: "Kapital-Auszahlung",
+  other: "Andere",
+};
+
 // Nur die fünf neuen, gewünschten Module (kein new_build)
 type WizardModule = "purchase" | "renovation" | "increase" | "refinance" | "mortgage_increase";
 
@@ -95,6 +132,15 @@ export type WizardForm = {
   calc_rate: string;
   ancillary_pct: string;
   amortisation_years: string;
+
+  // Refinanzierung – zusätzliche Felder (nur aktiv wenn isRefiOnly)
+  usage_type: "" | "owner_occupied" | "rental";
+  object_type: "" | "house" | "apartment" | "commercial" | "mixed_use" | "other";
+  current_bank: string;
+  interest_rate_current: string;
+  interest_rate_expiry: string;
+  refi_purpose: "" | "rate_optimisation" | "bank_change" | "consolidation" | "cash_out" | "other";
+  monthly_obligations: string;
 };
 
 const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
@@ -123,6 +169,13 @@ const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
   calc_rate: "5",
   ancillary_pct: "1",
   amortisation_years: "15",
+  usage_type: "",
+  object_type: "",
+  current_bank: "",
+  interest_rate_current: "",
+  interest_rate_expiry: "",
+  refi_purpose: "",
+  monthly_obligations: "",
   ...defaults,
 });
 
@@ -174,7 +227,7 @@ export function FinancingQuickCheckWizard({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("properties")
-        .select("id, title, address, city, postal_code, price")
+        .select("id, title, address, city, postal_code, price, property_type")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -205,6 +258,7 @@ export function FinancingQuickCheckWizard({
       property_title: f.property_title || p.title || "",
       property_address: f.property_address || [p.address, p.postal_code, p.city].filter(Boolean).join(", "),
       property_purchase_price: f.property_purchase_price || (p.price != null ? String(p.price) : ""),
+      object_type: f.object_type || mapPropertyTypeToObject(p.property_type),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.property_id, form.property_source, propertiesQuery.data]);
@@ -332,6 +386,10 @@ export function FinancingQuickCheckWizard({
     const rate = num(form.calc_rate) || 5;
     const ancPct = num(form.ancillary_pct) || 1;
     const years = num(form.amortisation_years) || 15;
+    // Refi: Verpflichtungen (CHF/Monat) → jährlich in Tragbarkeit
+    const obligationsYearly = isRefiOnly ? num(form.monthly_obligations) * 12 : 0;
+    // Max. Belehnung nach Nutzung (nur Refi; sonst Standard 80%)
+    const maxLtv = isRefiOnly && form.usage_type ? maxLtvForUsage(form.usage_type) : 80;
 
     const ltv = total > 0 ? (mortgage / total) * 100 : 0;
     const equityRatio = total > 0 ? (equity / total) * 100 : 0;
@@ -339,10 +397,13 @@ export function FinancingQuickCheckWizard({
     const firstMortgageMax = total * 0.6667;
     const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
     const amort = years > 0 ? secondMortgage / years : 0;
-    const yearly = mortgage * (rate / 100) + ancillary + amort;
+    const yearly = mortgage * (rate / 100) + ancillary + amort + obligationsYearly;
     const affordability = income > 0 ? (yearly / income) * 100 : 0;
-    return { ltv, equityRatio, affordability, total, ancillary, amort, yearly };
-  }, [form, combined, effectiveMortgage]);
+    // Aufstockungs-Plausibilität (Refi)
+    const maxMortgageAllowed = total * (maxLtv / 100);
+    const ltvExceeded = isRefiOnly && total > 0 && mortgage > maxMortgageAllowed;
+    return { ltv, equityRatio, affordability, total, ancillary, amort, yearly, obligationsYearly, maxLtv, maxMortgageAllowed, ltvExceeded };
+  }, [form, combined, effectiveMortgage, isRefiOnly]);
 
   // ---- Validierung ----
   const canNext = useMemo(() => {
@@ -357,14 +418,19 @@ export function FinancingQuickCheckWizard({
       return true;
     }
     if (step === 4) {
-      const equity = num(form.own_funds_total);
       const income = num(form.gross_income_yearly);
       if (isRefiOnly) {
         const existing = num(form.existing_mortgage);
         const mortgage = effectiveMortgage;
         const propertyVal = num(form.property_purchase_price); // dient als Objektwert
-        return propertyVal > 0 && existing > 0 && mortgage > 0 && equity >= 0 && income > 0;
+        return propertyVal > 0
+          && existing > 0
+          && mortgage > 0
+          && income > 0
+          && !!form.usage_type
+          && !!form.object_type;
       }
+      const equity = num(form.own_funds_total);
       const purchase = num(form.property_purchase_price);
       const mortgage = num(form.requested_mortgage);
       return purchase > 0 && equity >= 0 && income > 0 && mortgage > 0;
@@ -409,21 +475,33 @@ export function FinancingQuickCheckWizard({
       const payload: Record<string, unknown> = {
         client_id: form.client_source === "crm" && form.client_id ? form.client_id : null,
         property_id: form.property_source === "crm" && form.property_id ? form.property_id : null,
-        property_snapshot: form.property_source !== "crm" ? {
-          title: form.property_title || null,
-          address: form.property_address || null,
-          price: purchase,
-        } : {},
+        property_snapshot: {
+          ...(form.property_source !== "crm" ? {
+            title: form.property_title || null,
+            address: form.property_address || null,
+            price: purchase,
+          } : {}),
+          ...(isRefiOnly && form.object_type ? { object_type: form.object_type } : {}),
+        },
         data_source: form.property_source === "crm" ? "existing_property" : "quick_entry",
         financing_type: primaryType,
         financing_modules: form.modules,
         title: form.property_title || form.modules.map((m) => MODULE_OPTIONS.find((o) => o.key === m)?.label).filter(Boolean).join(" + "),
         purchase_price: purchase,
+        property_value: isRefiOnly ? purchase : null,
         renovation_costs: reno,
         renovation_own_work: numOrNull(form.renovation_own_work),
         existing_mortgage: numOrNull(form.existing_mortgage),
         requested_increase: numOrNull(form.requested_increase),
         requested_mortgage: mortgage,
+        new_total_mortgage: isRefiOnly ? effectiveMortgage : null,
+        // Refinanzierungs-Details
+        usage_type: isRefiOnly && form.usage_type ? form.usage_type : null,
+        refi_purpose: isRefiOnly && form.refi_purpose ? form.refi_purpose : null,
+        monthly_obligations: isRefiOnly ? (numOrNull(form.monthly_obligations) ?? null) : null,
+        current_bank: isRefiOnly && form.current_bank ? form.current_bank : null,
+        interest_rate_current: isRefiOnly ? (numOrNull(form.interest_rate_current) ?? null) : null,
+        interest_rate_expiry: isRefiOnly && form.interest_rate_expiry ? form.interest_rate_expiry : null,
         // Hauptantragsteller-Einzelwerte (unverändert)
         own_funds_total: combined.mainEquity || null,
         own_funds_pension_fund: combined.mainPk || null,
@@ -991,14 +1069,18 @@ function DataQualityChecklist({
 }
 
 /* ==================== Schritt 4 ==================== */
-type Kpis = { ltv: number; equityRatio: number; affordability: number; total: number; ancillary: number; amort: number; yearly: number };
+type Kpis = {
+  ltv: number; equityRatio: number; affordability: number;
+  total: number; ancillary: number; amort: number; yearly: number;
+  obligationsYearly: number; maxLtv: number; maxMortgageAllowed: number; ltvExceeded: boolean;
+};
 
-function KpiPreview({ kpis }: { kpis: Kpis }) {
+function KpiPreview({ kpis, hideEquity }: { kpis: Kpis; hideEquity?: boolean }) {
   return (
     <p className="text-xs text-muted-foreground">
       Belehnung: <span className="font-medium text-foreground">{kpis.ltv.toFixed(1)}%</span>
       {" · "}Tragbarkeit: <span className="font-medium text-foreground">{kpis.affordability.toFixed(1)}%</span>
-      {" · "}Eigenmittelquote: <span className="font-medium text-foreground">{kpis.equityRatio.toFixed(1)}%</span>
+      {!hideEquity && <>{" · "}Eigenmittelquote: <span className="font-medium text-foreground">{kpis.equityRatio.toFixed(1)}%</span></>}
     </p>
   );
 }
@@ -1013,55 +1095,135 @@ function Step4Metrics({
   effectiveMortgage: number;
 }) {
   const showRenovation = form.modules.includes("renovation");
+  const objectValueFromCrm = isRefiOnly && form.property_source === "crm" && !!form.property_purchase_price;
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        {isRefiOnly ? (
-          <>
-            <Field
-              label="Aktueller Objektwert / Verkehrswert (CHF) *"
-              type="number"
-              value={form.property_purchase_price}
-              onChange={(v) => update("property_purchase_price", v)}
-            />
-            <Field
-              label="Aktuelle Hypothek (CHF) *"
-              type="number"
-              value={form.existing_mortgage}
-              onChange={(v) => update("existing_mortgage", v)}
-            />
-            <Field
-              label="Aufstockungsbetrag (CHF)"
-              type="number"
-              value={form.requested_increase}
-              onChange={(v) => update("requested_increase", v)}
-            />
-            <div className="rounded-md border bg-muted/40 p-3 text-sm flex flex-col justify-center">
+      {isRefiOnly ? (
+        <>
+          {/* Objekt-Block */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {objectValueFromCrm ? (
+              <div className="sm:col-span-2 rounded-md border bg-muted/30 p-3 text-sm flex items-center justify-between">
+                <div>
+                  <span className="text-xs text-muted-foreground block">Aktueller Objektwert (aus CRM)</span>
+                  <span className="font-semibold text-base">{formatCurrency(num(form.property_purchase_price))}</span>
+                </div>
+                <span className="text-xs text-muted-foreground">Anpassen in Schritt 2</span>
+              </div>
+            ) : (
+              <Field
+                label="Aktueller Objektwert / Verkehrswert (CHF) *"
+                type="number"
+                value={form.property_purchase_price}
+                onChange={(v) => update("property_purchase_price", v)}
+              />
+            )}
+            <div className="space-y-1">
+              <Label className="text-xs">Nutzung *</Label>
+              <Select value={form.usage_type} onValueChange={(v) => update("usage_type", v as WizardForm["usage_type"])}>
+                <SelectTrigger><SelectValue placeholder="Bitte wählen…" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="owner_occupied">Eigennutzung (selbst bewohnt)</SelectItem>
+                  <SelectItem value="rental">Renditeobjekt (vermietet)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Objektart *</Label>
+              <Select value={form.object_type} onValueChange={(v) => update("object_type", v as WizardForm["object_type"])}>
+                <SelectTrigger><SelectValue placeholder="Bitte wählen…" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="house">Einfamilienhaus</SelectItem>
+                  <SelectItem value="apartment">Eigentumswohnung</SelectItem>
+                  <SelectItem value="mixed_use">Mehrfamilien-/Geschäftshaus</SelectItem>
+                  <SelectItem value="commercial">Gewerbe</SelectItem>
+                  <SelectItem value="other">Andere</SelectItem>
+                </SelectContent>
+              </Select>
+              {form.property_source === "crm" && form.object_type && (
+                <p className="text-[10px] text-muted-foreground">Vorausgefüllt aus CRM-Objekt</p>
+              )}
+            </div>
+          </div>
+
+          {/* Hypothek-Block */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Aktuelle Hypothek (CHF) *" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
+            <Field label="Aufstockungsbetrag (CHF)" type="number" value={form.requested_increase} onChange={(v) => update("requested_increase", v)} />
+            <div className="rounded-md border bg-muted/40 p-3 text-sm flex flex-col justify-center sm:col-span-2">
               <span className="text-xs text-muted-foreground">Neue Gesamthypothek</span>
               <span className="font-semibold text-base">{formatCurrency(effectiveMortgage)}</span>
-              <span className="text-xs text-muted-foreground mt-1">
-                = Aktuelle Hypothek + Aufstockungsbetrag
-              </span>
+              <span className="text-xs text-muted-foreground mt-1">= Aktuelle Hypothek + Aufstockungsbetrag</span>
             </div>
-          </>
-        ) : (
-          <>
-            <Field label="Kaufpreis (CHF) *" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
-            <Field label="Gewünschte Hypothek (CHF) *" type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
-          </>
-        )}
-        <Field label="Eigenmittel total (CHF) *" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
-        <Field label="davon PK / Freizügigkeit (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
-        <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
-        {showRenovation && (
-          <>
-            <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
-            <Field label="davon Eigenleistung (CHF)" type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
-          </>
-        )}
-      </div>
+            {kpis.ltvExceeded && (
+              <div className="sm:col-span-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
+                ⚠ Die neue Gesamthypothek übersteigt die max. Belehnung ({kpis.maxLtv}% des Objektwerts ={" "}
+                {formatCurrency(kpis.maxMortgageAllowed)}). Aufstockung ggf. reduzieren oder Eigenmittel einbringen.
+              </div>
+            )}
+          </div>
+
+          {/* Bestehende Finanzierung */}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label="Aktuelle Bank" value={form.current_bank} onChange={(v) => update("current_bank", v)} />
+            <Field label="Aktueller Zinssatz (%)" type="number" value={form.interest_rate_current} onChange={(v) => update("interest_rate_current", v)} />
+            <Field label="Ablauf Zinsbindung" type="date" value={form.interest_rate_expiry} onChange={(v) => update("interest_rate_expiry", v)} />
+          </div>
+
+          {/* Zweck + Verpflichtungen + Einkommen */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Refinanzierungs-Zweck</Label>
+              <Select value={form.refi_purpose} onValueChange={(v) => update("refi_purpose", v as WizardForm["refi_purpose"])}>
+                <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rate_optimisation">Zinsoptimierung</SelectItem>
+                  <SelectItem value="bank_change">Bankwechsel</SelectItem>
+                  <SelectItem value="consolidation">Konsolidierung</SelectItem>
+                  <SelectItem value="cash_out">Kapital-Auszahlung</SelectItem>
+                  <SelectItem value="other">Andere</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
+            <Field
+              label="Monatliche Verpflichtungen (CHF) — Leasing, Kredite, Alimente"
+              type="number"
+              value={form.monthly_obligations}
+              onChange={(v) => update("monthly_obligations", v)}
+            />
+            {showRenovation && (
+              <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+            )}
+          </div>
+
+          <p className="text-[11px] text-muted-foreground">
+            Hinweis: Bei reiner Refinanzierung sind Eigenmittel/PK nicht erforderlich. Die Belehnungsgrenze richtet sich nach der Nutzung
+            ({form.usage_type === "rental" ? "Renditeobjekt → max. 75 %" : "Eigennutzung → max. 80 %"}).
+          </p>
+        </>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Kaufpreis (CHF) *" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
+          <Field label="Gewünschte Hypothek (CHF) *" type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
+          <Field label="Eigenmittel total (CHF) *" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
+          <Field label="davon PK / Freizügigkeit (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+          <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
+          {showRenovation && (
+            <>
+              <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+              <Field label="davon Eigenleistung (CHF)" type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
+            </>
+          )}
+        </div>
+      )}
       <div className="rounded-lg bg-muted/50 p-3">
-        <KpiPreview kpis={kpis} />
+        <KpiPreview kpis={kpis} hideEquity={isRefiOnly} />
+        {isRefiOnly && kpis.obligationsYearly > 0 && (
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Inkl. Verpflichtungen {formatCurrency(kpis.obligationsYearly)}/Jahr in der Tragbarkeit.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -1167,14 +1329,26 @@ function Step6Summary({
         <SumRow label="Bezeichnung" value={propertyLabel} />
         {form.property_address && <SumRow label="Adresse" value={form.property_address} />}
         {form.property_purchase_price && <SumRow label={propertyValueLabel} value={formatCurrency(num(form.property_purchase_price))} />}
+        {isRefiOnly && form.object_type && <SumRow label="Objektart" value={OBJECT_TYPE_LABELS[form.object_type]} />}
+        {isRefiOnly && form.usage_type && <SumRow label="Nutzung" value={form.usage_type === "rental" ? "Renditeobjekt" : "Eigennutzung"} />}
       </SummaryGroup>
 
       <SummaryGroup title="Kunde">
         <SumRow label="Kunde" value={clientLabel} />
         {form.gross_income_yearly && <SumRow label="Brutto-Jahreseinkommen" value={formatCurrency(num(form.gross_income_yearly))} />}
-        {form.own_funds_total && <SumRow label="Eigenmittel total" value={formatCurrency(num(form.own_funds_total))} />}
-        {form.own_funds_pension_fund && <SumRow label="davon PK / Freizügigkeit" value={formatCurrency(num(form.own_funds_pension_fund))} />}
+        {!isRefiOnly && form.own_funds_total && <SumRow label="Eigenmittel total" value={formatCurrency(num(form.own_funds_total))} />}
+        {!isRefiOnly && form.own_funds_pension_fund && <SumRow label="davon PK / Freizügigkeit" value={formatCurrency(num(form.own_funds_pension_fund))} />}
+        {isRefiOnly && form.monthly_obligations && <SumRow label="Monatl. Verpflichtungen" value={formatCurrency(num(form.monthly_obligations))} />}
       </SummaryGroup>
+
+      {isRefiOnly && (form.current_bank || form.interest_rate_current || form.interest_rate_expiry || form.refi_purpose) && (
+        <SummaryGroup title="Bestehende Finanzierung">
+          {form.current_bank && <SumRow label="Aktuelle Bank" value={form.current_bank} />}
+          {form.interest_rate_current && <SumRow label="Aktueller Zinssatz" value={`${num(form.interest_rate_current).toFixed(2)} %`} />}
+          {form.interest_rate_expiry && <SumRow label="Ablauf Zinsbindung" value={form.interest_rate_expiry} />}
+          {form.refi_purpose && <SumRow label="Zweck" value={REFI_PURPOSE_LABELS[form.refi_purpose]} />}
+        </SummaryGroup>
+      )}
 
       <SummaryGroup title="Kennzahlen">
         {isRefiOnly ? (
@@ -1201,7 +1375,12 @@ function Step6Summary({
           <p className="font-semibold">Live-Vorschau</p>
           <StatusBadge status={status} />
         </div>
-        <KpiPreview kpis={kpis} />
+        <KpiPreview kpis={kpis} hideEquity={isRefiOnly} />
+        {isRefiOnly && kpis.ltvExceeded && (
+          <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
+            ⚠ Neue Gesamthypothek übersteigt max. Belehnung von {kpis.maxLtv}% ({formatCurrency(kpis.maxMortgageAllowed)}).
+          </p>
+        )}
       </div>
     </div>
   );

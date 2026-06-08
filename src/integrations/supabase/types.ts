@@ -1306,10 +1306,12 @@ export type Database = {
           financing_type: Database["public"]["Enums"]["financing_type"] | null
           gross_income_yearly: number | null
           id: string
+          interest_rate_current: number | null
           interest_rate_expiry: string | null
           internal_notes: string | null
           land_price: number | null
           loan_to_value_ratio: number | null
+          monthly_obligations: number | null
           new_total_mortgage: number | null
           own_funds_gift: number | null
           own_funds_inheritance: number | null
@@ -1329,6 +1331,7 @@ export type Database = {
           quick_check_status:
             | Database["public"]["Enums"]["financing_quick_check_status"]
             | null
+          refi_purpose: string | null
           renovation_costs: number | null
           renovation_description: string | null
           renovation_own_work: number | null
@@ -1351,6 +1354,7 @@ export type Database = {
           title: string | null
           total_investment: number | null
           updated_at: string
+          usage_type: string | null
           valuation_external_id: string | null
           valuation_price_per_sqm: number | null
           valuation_provider: string | null
@@ -1392,10 +1396,12 @@ export type Database = {
           financing_type?: Database["public"]["Enums"]["financing_type"] | null
           gross_income_yearly?: number | null
           id?: string
+          interest_rate_current?: number | null
           interest_rate_expiry?: string | null
           internal_notes?: string | null
           land_price?: number | null
           loan_to_value_ratio?: number | null
+          monthly_obligations?: number | null
           new_total_mortgage?: number | null
           own_funds_gift?: number | null
           own_funds_inheritance?: number | null
@@ -1415,6 +1421,7 @@ export type Database = {
           quick_check_status?:
             | Database["public"]["Enums"]["financing_quick_check_status"]
             | null
+          refi_purpose?: string | null
           renovation_costs?: number | null
           renovation_description?: string | null
           renovation_own_work?: number | null
@@ -1437,6 +1444,7 @@ export type Database = {
           title?: string | null
           total_investment?: number | null
           updated_at?: string
+          usage_type?: string | null
           valuation_external_id?: string | null
           valuation_price_per_sqm?: number | null
           valuation_provider?: string | null
@@ -1478,10 +1486,12 @@ export type Database = {
           financing_type?: Database["public"]["Enums"]["financing_type"] | null
           gross_income_yearly?: number | null
           id?: string
+          interest_rate_current?: number | null
           interest_rate_expiry?: string | null
           internal_notes?: string | null
           land_price?: number | null
           loan_to_value_ratio?: number | null
+          monthly_obligations?: number | null
           new_total_mortgage?: number | null
           own_funds_gift?: number | null
           own_funds_inheritance?: number | null
@@ -1501,6 +1511,7 @@ export type Database = {
           quick_check_status?:
             | Database["public"]["Enums"]["financing_quick_check_status"]
             | null
+          refi_purpose?: string | null
           renovation_costs?: number | null
           renovation_description?: string | null
           renovation_own_work?: number | null
@@ -1523,6 +1534,7 @@ export type Database = {
           title?: string | null
           total_investment?: number | null
           updated_at?: string
+          usage_type?: string | null
           valuation_external_id?: string | null
           valuation_price_per_sqm?: number | null
           valuation_provider?: string | null
