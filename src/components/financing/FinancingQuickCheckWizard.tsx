@@ -1001,19 +1001,52 @@ function KpiPreview({ kpis }: { kpis: Kpis }) {
 }
 
 function Step4Metrics({
-  form, update, kpis,
+  form, update, kpis, isRefiOnly, effectiveMortgage,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   kpis: Kpis;
+  isRefiOnly: boolean;
+  effectiveMortgage: number;
 }) {
   const showRenovation = form.modules.includes("renovation");
-  const showExisting = form.modules.includes("increase") || form.modules.includes("refinance") || form.modules.includes("mortgage_increase");
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Kaufpreis (CHF) *" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
-        <Field label="Gewünschte Hypothek (CHF) *" type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
+        {isRefiOnly ? (
+          <>
+            <Field
+              label="Aktueller Objektwert / Verkehrswert (CHF) *"
+              type="number"
+              value={form.property_purchase_price}
+              onChange={(v) => update("property_purchase_price", v)}
+            />
+            <Field
+              label="Aktuelle Hypothek (CHF) *"
+              type="number"
+              value={form.existing_mortgage}
+              onChange={(v) => update("existing_mortgage", v)}
+            />
+            <Field
+              label="Aufstockungsbetrag (CHF)"
+              type="number"
+              value={form.requested_increase}
+              onChange={(v) => update("requested_increase", v)}
+            />
+            <div className="rounded-md border bg-muted/40 p-3 text-sm flex flex-col justify-center">
+              <span className="text-xs text-muted-foreground">Neue Gesamthypothek</span>
+              <span className="font-semibold text-base">{formatCurrency(effectiveMortgage)}</span>
+              <span className="text-xs text-muted-foreground mt-1">
+                = Aktuelle Hypothek + Aufstockungsbetrag
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            <Field label="Kaufpreis (CHF) *" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
+            <Field label="Gewünschte Hypothek (CHF) *" type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
+          </>
+        )}
         <Field label="Eigenmittel total (CHF) *" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
         <Field label="davon PK / Freizügigkeit (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
         <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
@@ -1022,9 +1055,6 @@ function Step4Metrics({
             <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
             <Field label="davon Eigenleistung (CHF)" type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
           </>
-        )}
-        {showExisting && (
-          <Field label="Bestehende Hypothek (CHF)" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
         )}
       </div>
       <div className="rounded-lg bg-muted/50 p-3">
