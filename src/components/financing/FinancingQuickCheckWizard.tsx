@@ -1766,3 +1766,137 @@ function SearchableSelect({
     </Popover>
   );
 }
+
+/* ==================== Swiss Bank Combobox ==================== */
+const SWISS_BANKS: string[] = [
+  "UBS",
+  "Credit Suisse",
+  "Raiffeisen Schweiz",
+  "PostFinance",
+  "Zürcher Kantonalbank (ZKB)",
+  "Berner Kantonalbank (BEKB)",
+  "Basler Kantonalbank (BKB)",
+  "Basellandschaftliche Kantonalbank (BLKB)",
+  "Luzerner Kantonalbank (LUKB)",
+  "St. Galler Kantonalbank (SGKB)",
+  "Aargauische Kantonalbank (AKB)",
+  "Thurgauer Kantonalbank (TKB)",
+  "Graubündner Kantonalbank (GKB)",
+  "Banque Cantonale Vaudoise (BCV)",
+  "Banque Cantonale de Genève (BCGE)",
+  "Banque Cantonale du Jura (BCJ)",
+  "Banque Cantonale Neuchâteloise (BCN)",
+  "Banque Cantonale du Valais (BCVs / WKB)",
+  "Banque Cantonale de Fribourg (BCF / FKB)",
+  "Schwyzer Kantonalbank (SZKB)",
+  "Obwaldner Kantonalbank (OWKB)",
+  "Nidwaldner Kantonalbank (NWKB)",
+  "Urner Kantonalbank (URKB)",
+  "Zuger Kantonalbank (ZGKB)",
+  "Glarner Kantonalbank (GLKB)",
+  "Schaffhauser Kantonalbank (SHKB)",
+  "Appenzeller Kantonalbank (APPKB)",
+  "Migros Bank",
+  "Bank Cler",
+  "Bank WIR",
+  "Hypothekarbank Lenzburg",
+  "Valiant Bank",
+  "Clientis",
+  "Cembra Money Bank",
+  "Julius Bär",
+  "Pictet & Cie",
+  "Lombard Odier",
+  "Vontobel",
+  "EFG International",
+  "J. Safra Sarasin",
+  "VP Bank",
+  "Bank Linth",
+  "Aargauische Hypothekenbank",
+  "Acrevis Bank",
+  "Baloise Bank",
+  "Helvetia Versicherungen (Hypothek)",
+  "AXA Hypothek",
+  "Swiss Life Hypothek",
+  "Zurich Versicherungen (Hypothek)",
+];
+
+function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const isKnown = SWISS_BANKS.some((b) => b.toLowerCase() === value.toLowerCase());
+  const isCustom = !!value && !isKnown;
+
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">Aktuelle Bank</Label>
+      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSearch(""); }}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            role="combobox"
+            className="h-10 w-full justify-between bg-background font-normal"
+          >
+            <span className="min-w-0 truncate text-left text-sm">
+              {value ? (
+                <>
+                  {value}
+                  {isCustom && <span className="ml-2 text-[10px] text-muted-foreground">(Sonstige)</span>}
+                </>
+              ) : (
+                <span className="text-muted-foreground">Bank suchen oder eingeben…</span>
+              )}
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+          <Command
+            filter={(v, s) => (v.toLowerCase().includes(s.toLowerCase()) ? 1 : 0)}
+            className="flex max-h-[min(22rem,var(--radix-popover-content-available-height))] flex-col"
+          >
+            <CommandInput
+              placeholder="Bank suchen…"
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList className="max-h-none flex-1 overflow-y-auto overscroll-contain">
+              <CommandEmpty className="p-2">
+                <button
+                  type="button"
+                  className="w-full rounded-sm px-2 py-2 text-left text-sm hover:bg-accent"
+                  onClick={() => { onChange(search.trim()); setOpen(false); }}
+                >
+                  „{search}" als Sonstige übernehmen
+                </button>
+              </CommandEmpty>
+              <CommandGroup>
+                {SWISS_BANKS.map((b) => (
+                  <CommandItem
+                    key={b}
+                    value={b}
+                    onSelect={() => { onChange(b); setOpen(false); }}
+                  >
+                    <Check className={cn("mr-2 h-4 w-4 shrink-0", value === b ? "opacity-100" : "opacity-0")} />
+                    <span className="truncate text-sm">{b}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              {search.trim() && !SWISS_BANKS.some((b) => b.toLowerCase() === search.trim().toLowerCase()) && (
+                <CommandGroup heading="Sonstige">
+                  <CommandItem
+                    value={`__custom__${search}`}
+                    onSelect={() => { onChange(search.trim()); setOpen(false); }}
+                  >
+                    <Check className="mr-2 h-4 w-4 shrink-0 opacity-0" />
+                    <span className="truncate text-sm">„{search.trim()}" verwenden</span>
+                  </CommandItem>
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
