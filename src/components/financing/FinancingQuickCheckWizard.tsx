@@ -712,33 +712,33 @@ function Step2Property({
   properties: any[];
   loading: boolean;
 }) {
-  return (
-    <div className="space-y-4">
-      <RadioGroup
-        value={form.property_source}
-        onValueChange={(v) => update("property_source", v as PropertySource)}
-        className="grid gap-2"
-      >
-        <SourceRow value="crm" label="Immobilie aus CRM wählen" description="Bestehendes Objekt auswählen, Daten werden übernommen." />
-        <SourceRow value="manual" label="Manuell erfassen" description="Adresse und Kaufpreis selbst eingeben." />
-        <SourceRow value="later" label="Später erfassen" description="Schritt überspringen — Felder bleiben leer." />
-      </RadioGroup>
+  const selected: any = properties.find((p: any) => p.id === form.property_id);
+  const objectId: string | null = selected
+    ? (selected.is_unit ? (selected.parent_property_id ?? null) : selected.id)
+    : null;
+  const topLevel = properties.filter((p: any) => !p.is_unit);
+  const units = objectId
+    ? properties.filter((p: any) => p.is_unit && p.parent_property_id === objectId)
+    : [];
+  const unitSelectValue = selected?.is_unit ? selected.id : "__whole__";
 
-      {form.property_source === "crm" && (() => {
-        const selected: any = properties.find((p: any) => p.id === form.property_id);
-        // The "object" reference: if a unit is selected, its parent; else the selected itself
-        const objectId: string | null = selected
-          ? (selected.is_unit ? (selected.parent_property_id ?? null) : selected.id)
-          : null;
-        // Top-level objects to choose from = non-units (parents and standalone properties)
-        const topLevel = properties.filter((p: any) => !p.is_unit);
-        // Units belonging to the currently chosen object
-        const units = objectId
-          ? properties.filter((p: any) => p.is_unit && p.parent_property_id === objectId)
-          : [];
-        const unitSelectValue = selected?.is_unit ? selected.id : "__whole__";
-        return (
-          <div className="space-y-3">
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {/* === Linke Spalte: Quelle / Auswahl === */}
+      <section className="rounded-lg border bg-card p-4 space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quelle</h3>
+        <RadioGroup
+          value={form.property_source}
+          onValueChange={(v) => update("property_source", v as PropertySource)}
+          className="grid gap-2"
+        >
+          <SourceRow value="crm" label="Immobilie aus CRM wählen" description="Bestehendes Objekt auswählen, Daten werden übernommen." />
+          <SourceRow value="manual" label="Manuell erfassen" description="Adresse und Kaufpreis selbst eingeben." />
+          <SourceRow value="later" label="Später erfassen" description="Schritt überspringen — Felder bleiben leer." />
+        </RadioGroup>
+
+        {form.property_source === "crm" && (
+          <div className="space-y-3 pt-1">
             <div className="space-y-1">
               <Label className="text-xs">Objekt</Label>
               <SearchableSelect
@@ -799,36 +799,49 @@ function Step2Property({
                 />
               </div>
             )}
+          </div>
+        )}
 
-            {form.property_id && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Kaufpreis (CHF)" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
-                <div className="sm:col-span-2 sm:col-start-1">
-                  <Field label="Adresse" value={form.property_address} onChange={(v) => update("property_address", v)} />
-                </div>
-                <p className="sm:col-span-2 text-xs text-muted-foreground">
-                  Werte aus CRM vorausgefüllt. Anpassungen gelten nur für diesen Quick Check.
-                </p>
-              </div>
+        {form.property_source === "later" && (
+          <p className="text-xs text-muted-foreground pt-1">
+            Sie können die Immobiliendaten später im Dossier ergänzen.
+          </p>
+        )}
+      </section>
+
+      {/* === Rechte Spalte: Objektdaten === */}
+      <section className="rounded-lg border bg-card p-4 space-y-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Objektdaten</h3>
+
+        {form.property_source === "later" ? (
+          <p className="text-xs text-muted-foreground">
+            Keine Objektdaten erforderlich — werden später ergänzt.
+          </p>
+        ) : form.property_source === "crm" && !form.property_id ? (
+          <p className="text-xs text-muted-foreground">
+            Wählen Sie links ein Objekt aus dem CRM aus.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            <Field
+              label="Adresse"
+              value={form.property_address}
+              onChange={(v) => update("property_address", v)}
+            />
+            <Field
+              label="Kaufpreis (CHF)"
+              type="number"
+              value={form.property_purchase_price}
+              onChange={(v) => update("property_purchase_price", v)}
+            />
+            {form.property_source === "crm" && form.property_id && (
+              <p className="text-[11px] text-muted-foreground">
+                Werte aus CRM vorausgefüllt. Anpassungen gelten nur für diesen Quick Check.
+              </p>
             )}
           </div>
-        );
-      })()}
-
-      {form.property_source === "manual" && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <Field label="Adresse" value={form.property_address} onChange={(v) => update("property_address", v)} />
-          </div>
-          <Field label="Kaufpreis (CHF)" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
-        </div>
-      )}
-
-      {form.property_source === "later" && (
-        <p className="text-xs text-muted-foreground">
-          Sie können die Immobiliendaten später im Dossier ergänzen.
-        </p>
-      )}
+        )}
+      </section>
     </div>
   );
 }
@@ -1345,7 +1358,7 @@ function Step4Metrics({
             <div className="space-y-4">
               <section className="rounded-lg border bg-card p-4 space-y-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bestehende Finanzierung</h3>
-                <Field label="Aktuelle Bank" value={form.current_bank} onChange={(v) => update("current_bank", v)} />
+                <SwissBankSelect value={form.current_bank} onChange={(v) => update("current_bank", v)} />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field label="Aktueller Zinssatz (%)" type="number" value={form.interest_rate_current} onChange={(v) => update("interest_rate_current", v)} />
                   <Field label="Ablauf Zinsbindung" type="date" value={form.interest_rate_expiry} onChange={(v) => update("interest_rate_expiry", v)} />
@@ -1751,5 +1764,139 @@ function SearchableSelect({
         </Command>
       </PopoverContent>
     </Popover>
+  );
+}
+
+/* ==================== Swiss Bank Combobox ==================== */
+const SWISS_BANKS: string[] = [
+  "UBS",
+  "Credit Suisse",
+  "Raiffeisen Schweiz",
+  "PostFinance",
+  "Zürcher Kantonalbank (ZKB)",
+  "Berner Kantonalbank (BEKB)",
+  "Basler Kantonalbank (BKB)",
+  "Basellandschaftliche Kantonalbank (BLKB)",
+  "Luzerner Kantonalbank (LUKB)",
+  "St. Galler Kantonalbank (SGKB)",
+  "Aargauische Kantonalbank (AKB)",
+  "Thurgauer Kantonalbank (TKB)",
+  "Graubündner Kantonalbank (GKB)",
+  "Banque Cantonale Vaudoise (BCV)",
+  "Banque Cantonale de Genève (BCGE)",
+  "Banque Cantonale du Jura (BCJ)",
+  "Banque Cantonale Neuchâteloise (BCN)",
+  "Banque Cantonale du Valais (BCVs / WKB)",
+  "Banque Cantonale de Fribourg (BCF / FKB)",
+  "Schwyzer Kantonalbank (SZKB)",
+  "Obwaldner Kantonalbank (OWKB)",
+  "Nidwaldner Kantonalbank (NWKB)",
+  "Urner Kantonalbank (URKB)",
+  "Zuger Kantonalbank (ZGKB)",
+  "Glarner Kantonalbank (GLKB)",
+  "Schaffhauser Kantonalbank (SHKB)",
+  "Appenzeller Kantonalbank (APPKB)",
+  "Migros Bank",
+  "Bank Cler",
+  "Bank WIR",
+  "Hypothekarbank Lenzburg",
+  "Valiant Bank",
+  "Clientis",
+  "Cembra Money Bank",
+  "Julius Bär",
+  "Pictet & Cie",
+  "Lombard Odier",
+  "Vontobel",
+  "EFG International",
+  "J. Safra Sarasin",
+  "VP Bank",
+  "Bank Linth",
+  "Aargauische Hypothekenbank",
+  "Acrevis Bank",
+  "Baloise Bank",
+  "Helvetia Versicherungen (Hypothek)",
+  "AXA Hypothek",
+  "Swiss Life Hypothek",
+  "Zurich Versicherungen (Hypothek)",
+];
+
+function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const isKnown = SWISS_BANKS.some((b) => b.toLowerCase() === value.toLowerCase());
+  const isCustom = !!value && !isKnown;
+
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">Aktuelle Bank</Label>
+      <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSearch(""); }}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            role="combobox"
+            className="h-10 w-full justify-between bg-background font-normal"
+          >
+            <span className="min-w-0 truncate text-left text-sm">
+              {value ? (
+                <>
+                  {value}
+                  {isCustom && <span className="ml-2 text-[10px] text-muted-foreground">(Sonstige)</span>}
+                </>
+              ) : (
+                <span className="text-muted-foreground">Bank suchen oder eingeben…</span>
+              )}
+            </span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+          <Command
+            filter={(v, s) => (v.toLowerCase().includes(s.toLowerCase()) ? 1 : 0)}
+            className="flex max-h-[min(22rem,var(--radix-popover-content-available-height))] flex-col"
+          >
+            <CommandInput
+              placeholder="Bank suchen…"
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList className="max-h-none flex-1 overflow-y-auto overscroll-contain">
+              <CommandEmpty className="p-2">
+                <button
+                  type="button"
+                  className="w-full rounded-sm px-2 py-2 text-left text-sm hover:bg-accent"
+                  onClick={() => { onChange(search.trim()); setOpen(false); }}
+                >
+                  „{search}" als Sonstige übernehmen
+                </button>
+              </CommandEmpty>
+              <CommandGroup>
+                {SWISS_BANKS.map((b) => (
+                  <CommandItem
+                    key={b}
+                    value={b}
+                    onSelect={() => { onChange(b); setOpen(false); }}
+                  >
+                    <Check className={cn("mr-2 h-4 w-4 shrink-0", value === b ? "opacity-100" : "opacity-0")} />
+                    <span className="truncate text-sm">{b}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              {search.trim() && !SWISS_BANKS.some((b) => b.toLowerCase() === search.trim().toLowerCase()) && (
+                <CommandGroup heading="Sonstige">
+                  <CommandItem
+                    value={`__custom__${search}`}
+                    onSelect={() => { onChange(search.trim()); setOpen(false); }}
+                  >
+                    <Check className="mr-2 h-4 w-4 shrink-0 opacity-0" />
+                    <span className="truncate text-sm">„{search.trim()}" verwenden</span>
+                  </CommandItem>
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
