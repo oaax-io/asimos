@@ -422,6 +422,7 @@ export function FinancingQuickCheckWizard({
         renovation_costs: reno,
         renovation_own_work: numOrNull(form.renovation_own_work),
         existing_mortgage: numOrNull(form.existing_mortgage),
+        requested_increase: numOrNull(form.requested_increase),
         requested_mortgage: mortgage,
         // Hauptantragsteller-Einzelwerte (unverändert)
         own_funds_total: combined.mainEquity || null,
