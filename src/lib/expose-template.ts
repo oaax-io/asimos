@@ -58,7 +58,16 @@ function escape(str: string | null | undefined): string {
     .replace(/'/g, "&#39;");
 }
 
-export function renderExposeHTML(d: ExposeData): string {
+export function renderExposeHTML(d: ExposeData, theme?: ExposeTheme): string {
+  const t: ExposeTheme = theme ?? {
+    primary: "#14110f",
+    accent: "#2563EB",
+    pageBg: "#f5f3ef",
+    titleFont: "Georgia, 'Times New Roman', serif",
+    bodyFont: "'Helvetica Neue', Arial, sans-serif",
+    orientation: "portrait",
+  };
+  const orient = t.orientation ?? "portrait";
   const priceLine = d.price
     ? `<div><div class="kicker">${escape(d.listing_type_label ?? "")}preis</div><div class="price">${fmtCHF(d.price)}</div></div>`
     : d.rent
