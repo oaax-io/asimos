@@ -897,44 +897,57 @@ function Step3Client({
       <RadioGroup
         value={form.client_source}
         onValueChange={(v) => update("client_source", v as ClientSource)}
-        className="grid gap-2"
+        className="grid gap-2 sm:grid-cols-2"
       >
         <SourceRow value="crm" label="Kunde aus CRM wählen" description={isRefiOnly ? "Einkommen wird aus dem Kundenprofil vorausgefüllt." : "Selbstauskunft & Eigenkapital werden vorausgefüllt."} />
         <SourceRow value="manual" label="Ohne Kunde / manuell" description="Quick Check ohne Verknüpfung zu einem Kunden." />
       </RadioGroup>
 
       {form.client_source === "crm" && (
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label className="text-xs">Kunde</Label>
-            <SearchableSelect
-              placeholder={loading ? "Lade…" : "Kunde suchen…"}
-              emptyText="Keinen Kunden gefunden."
-              value={form.client_id}
-              onChange={(v) => update("client_id", v)}
-              items={clients.map((c) => ({
-                value: c.id,
-                label: c.full_name,
-                hint: c.email ?? undefined,
-              }))}
-            />
-          </div>
-          {form.client_id && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Brutto-Jahreseinkommen (CHF)" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
-              {!isRefiOnly && (
-                <>
-                  <Field label="Eigenmittel total (CHF)" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
-                  <Field label="davon Pensionskasse (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
-                </>
-              )}
-              <p className="sm:col-span-2 text-xs text-muted-foreground">
-                {isRefiOnly
-                  ? "Bei Refinanzierung sind Eigenmittel/PK nicht erforderlich — nur Einkommen für die Tragbarkeit."
-                  : "Werte aus Kundenprofil und Selbstauskunft vorausgefüllt — editierbar."}
-              </p>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="rounded-lg border bg-card p-4 space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hauptkunde</h3>
+            <div className="space-y-1">
+              <Label className="text-xs">Kunde</Label>
+              <SearchableSelect
+                placeholder={loading ? "Lade…" : "Kunde suchen…"}
+                emptyText="Keinen Kunden gefunden."
+                value={form.client_id}
+                onChange={(v) => update("client_id", v)}
+                items={clients.map((c) => ({
+                  value: c.id,
+                  label: c.full_name,
+                  hint: c.email ?? undefined,
+                }))}
+              />
             </div>
-          )}
+            {form.client_id && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Brutto-Jahreseinkommen (CHF)" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
+                {!isRefiOnly && (
+                  <>
+                    <Field label="Eigenmittel total (CHF)" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
+                    <Field label="davon Pensionskasse (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+                  </>
+                )}
+                <p className="sm:col-span-2 text-[11px] text-muted-foreground">
+                  {isRefiOnly
+                    ? "Bei Refinanzierung nur Einkommen für die Tragbarkeit."
+                    : "Werte aus Kundenprofil & Selbstauskunft — editierbar."}
+                </p>
+              </div>
+            )}
+          </section>
+
+          <CoApplicantSection
+            form={form}
+            update={update}
+            clients={clients}
+            loading={loading}
+            toggle={toggleCoApplicant}
+            relatedMap={relatedMap}
+            isRefiOnly={isRefiOnly}
+          />
         </div>
       )}
 
@@ -942,19 +955,6 @@ function Step3Client({
         <p className="text-xs text-muted-foreground">
           Quick Check wird ohne Kundenverknüpfung erstellt. Die Finanzdaten erfassen Sie in Schritt 4.
         </p>
-      )}
-
-      {/* === Mitantragsteller (optional) === */}
-      {form.client_source === "crm" && (
-        <CoApplicantSection
-          form={form}
-          update={update}
-          clients={clients}
-          loading={loading}
-          toggle={toggleCoApplicant}
-          relatedMap={relatedMap}
-          isRefiOnly={isRefiOnly}
-        />
       )}
     </div>
   );
