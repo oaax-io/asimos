@@ -926,7 +926,7 @@ function Step3Client({
 
 
 function CoApplicantSection({
-  form, update, clients, loading, toggle, relatedMap,
+  form, update, clients, loading, toggle, relatedMap, isRefiOnly,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
@@ -934,6 +934,7 @@ function CoApplicantSection({
   loading: boolean;
   toggle: (enabled: boolean) => void;
   relatedMap: Map<string, string>;
+  isRefiOnly: boolean;
 }) {
   const relLabel: Record<string, string> = {
     spouse: "Ehepartner", co_applicant: "Mitantragsteller",
