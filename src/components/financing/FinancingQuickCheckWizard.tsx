@@ -587,7 +587,7 @@ export function FinancingQuickCheckWizard({
         </DialogHeader>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 bg-card text-sm">
+        <div className="flex-1 overflow-y-auto px-5 py-4 bg-muted/50 text-sm">
 
           {step === 1 && <Step1Modules form={form} toggleModule={toggleModule} />}
           {step === 2 && (
