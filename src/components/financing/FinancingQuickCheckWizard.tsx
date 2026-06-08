@@ -698,8 +698,8 @@ function Step2Property({
               onChange={(v) => update("property_id", v)}
               items={properties.map((p) => ({
                 value: p.id,
-                label: p.title || "(ohne Titel)",
-                hint: [p.city, p.price ? formatCurrency(Number(p.price)) : null].filter(Boolean).join(" · "),
+                label: [p.city || "—", propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels] || "—"].filter(Boolean).join(" · "),
+                hint: p.price ? formatCurrency(Number(p.price)) : null,
               }))}
             />
           </div>
