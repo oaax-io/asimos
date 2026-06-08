@@ -1249,165 +1249,168 @@ function Step4Metrics({
     <div className="space-y-4">
       {isRefiOnly ? (
         <>
-          {/* Objekt-Block */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            {objectValueFromCrm ? (
-              <div className="sm:col-span-2 rounded-md border bg-card p-3 text-sm flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-muted-foreground block">Aktueller Objektwert (aus CRM)</span>
-                  <span className="font-semibold text-base">{formatCurrency(num(form.property_purchase_price))}</span>
-                </div>
-                <span className="text-xs text-muted-foreground">Anpassen in Schritt 2</span>
-              </div>
-            ) : (
-              <Field
-                label="Aktueller Objektwert / Verkehrswert (CHF) *"
-                type="number"
-                value={form.property_purchase_price}
-                onChange={(v) => update("property_purchase_price", v)}
-              />
-            )}
-            <div className="space-y-1">
-              <Label className="text-xs">Nutzung *</Label>
-              <Select value={form.usage_type} onValueChange={(v) => update("usage_type", v as WizardForm["usage_type"])}>
-                <SelectTrigger><SelectValue placeholder="Bitte wählen…" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="owner_occupied">Eigennutzung (selbst bewohnt)</SelectItem>
-                  <SelectItem value="rental">Renditeobjekt (vermietet)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Objektart *</Label>
-              <Select value={form.object_type} onValueChange={(v) => update("object_type", v as WizardForm["object_type"])}>
-                <SelectTrigger><SelectValue placeholder="Bitte wählen…" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="house">Einfamilienhaus</SelectItem>
-                  <SelectItem value="apartment">Eigentumswohnung</SelectItem>
-                  <SelectItem value="mixed_use">Mehrfamilien-/Geschäftshaus</SelectItem>
-                  <SelectItem value="commercial">Gewerbe</SelectItem>
-                  <SelectItem value="other">Andere</SelectItem>
-                </SelectContent>
-              </Select>
-              {form.property_source === "crm" && form.object_type && (
-                <p className="text-[10px] text-muted-foreground">Vorausgefüllt aus CRM-Objekt</p>
-              )}
-            </div>
-          </div>
-
-          {/* Hypothek-Block */}
-          {(() => {
-            const maxIncrease = Math.max(0, kpis.maxMortgageAllowed - num(form.existing_mortgage));
-            const requested = num(form.requested_increase);
-            const fits = !kpis.ltvExceeded;
-            const hasBase = kpis.maxMortgageAllowed > 0;
-            return (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Aktuelle Hypothek (CHF) *" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
-                <Field label="Aufstockungsbetrag (CHF)" type="number" value={form.requested_increase} onChange={(v) => update("requested_increase", v)} />
-                {hasBase && (
-                  <div
-                    className={`sm:col-span-2 rounded-md border p-3 text-sm flex items-center justify-between gap-3 ${
-                      fits
-                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                        : "border-destructive/50 bg-destructive/10 text-destructive"
-                    }`}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-xs opacity-80">Max. mögliche Aufstockung ({kpis.maxLtv}% Belehnung)</span>
-                      <span className="font-semibold text-base">{formatCurrency(maxIncrease)}</span>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {/* === Linke Spalte: Objekt + Hypothek === */}
+            <div className="space-y-4">
+              <section className="rounded-lg border bg-card p-4 space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Objekt</h3>
+                {objectValueFromCrm ? (
+                  <div className="rounded-md border bg-background p-3 text-sm flex items-center justify-between">
+                    <div>
+                      <span className="text-xs text-muted-foreground block">Objektwert (aus CRM)</span>
+                      <span className="font-semibold text-base">{formatCurrency(num(form.property_purchase_price))}</span>
                     </div>
-                    <div className="text-right">
-                      <span className="text-xs opacity-80">{fits ? "✓ möglich" : "✗ nicht möglich"}</span>
-                      <div className="text-xs">
-                        {fits
-                          ? `Spielraum: +${formatCurrency(Math.max(0, maxIncrease - requested))}`
-                          : `Überschreitung: −${formatCurrency(requested - maxIncrease)}`}
+                    <span className="text-xs text-muted-foreground">Schritt 2</span>
+                  </div>
+                ) : (
+                  <Field
+                    label="Objektwert / Verkehrswert (CHF) *"
+                    type="number"
+                    value={form.property_purchase_price}
+                    onChange={(v) => update("property_purchase_price", v)}
+                  />
+                )}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Nutzung *</Label>
+                    <Select value={form.usage_type} onValueChange={(v) => update("usage_type", v as WizardForm["usage_type"])}>
+                      <SelectTrigger><SelectValue placeholder="Bitte wählen…" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="owner_occupied">Eigennutzung</SelectItem>
+                        <SelectItem value="rental">Renditeobjekt</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Objektart *</Label>
+                    <Select value={form.object_type} onValueChange={(v) => update("object_type", v as WizardForm["object_type"])}>
+                      <SelectTrigger><SelectValue placeholder="Bitte wählen…" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="house">Einfamilienhaus</SelectItem>
+                        <SelectItem value="apartment">Eigentumswohnung</SelectItem>
+                        <SelectItem value="mixed_use">Mehrfamilien-/Geschäftshaus</SelectItem>
+                        <SelectItem value="commercial">Gewerbe</SelectItem>
+                        <SelectItem value="other">Andere</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </section>
+
+              {(() => {
+                const maxIncrease = Math.max(0, kpis.maxMortgageAllowed - num(form.existing_mortgage));
+                const requested = num(form.requested_increase);
+                const fits = !kpis.ltvExceeded;
+                const hasBase = kpis.maxMortgageAllowed > 0;
+                return (
+                  <section className="rounded-lg border bg-card p-4 space-y-3">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hypothek</h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field label="Aktuelle Hypothek (CHF) *" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
+                      <Field label="Aufstockung (CHF)" type="number" value={form.requested_increase} onChange={(v) => update("requested_increase", v)} />
+                    </div>
+                    {hasBase && (
+                      <div
+                        className={`rounded-md border p-3 text-sm flex items-center justify-between gap-3 ${
+                          fits
+                            ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                            : "border-destructive/50 bg-destructive/10 text-destructive"
+                        }`}
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-xs opacity-80">Max. Aufstockung ({kpis.maxLtv}%)</span>
+                          <span className="font-semibold text-base">{formatCurrency(maxIncrease)}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs opacity-80">{fits ? "✓ möglich" : "✗ nicht möglich"}</span>
+                          <div className="text-xs">
+                            {fits
+                              ? `+${formatCurrency(Math.max(0, maxIncrease - requested))} Spielraum`
+                              : `−${formatCurrency(requested - maxIncrease)} über Limit`}
+                          </div>
+                        </div>
                       </div>
+                    )}
+                    <div className="rounded-md border bg-background p-3 text-sm">
+                      <span className="text-xs text-muted-foreground">Neue Gesamthypothek</span>
+                      <div className="font-semibold text-base">{formatCurrency(effectiveMortgage)}</div>
+                      <span className="text-[11px] text-muted-foreground">= Aktuelle Hypothek + Aufstockung</span>
                     </div>
-                  </div>
-                )}
-                <div className="rounded-md border bg-card p-3 text-sm flex flex-col justify-center sm:col-span-2">
-                  <span className="text-xs text-muted-foreground">Neue Gesamthypothek</span>
-                  <span className="font-semibold text-base">{formatCurrency(effectiveMortgage)}</span>
-                  <span className="text-xs text-muted-foreground mt-1">= Aktuelle Hypothek + Aufstockungsbetrag</span>
-                </div>
-                {kpis.ltvExceeded && (
-                  <div className="sm:col-span-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
-                    ⚠ Die neue Gesamthypothek übersteigt die max. Belehnung ({kpis.maxLtv}% des Objektwerts ={" "}
-                    {formatCurrency(kpis.maxMortgageAllowed)}). Aufstockung ggf. reduzieren oder Eigenmittel einbringen.
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-
-          {/* Bestehende Finanzierung */}
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Field label="Aktuelle Bank" value={form.current_bank} onChange={(v) => update("current_bank", v)} />
-            <Field label="Aktueller Zinssatz (%)" type="number" value={form.interest_rate_current} onChange={(v) => update("interest_rate_current", v)} />
-            <Field label="Ablauf Zinsbindung" type="date" value={form.interest_rate_expiry} onChange={(v) => update("interest_rate_expiry", v)} />
-          </div>
-
-          {/* Zweck + Verpflichtungen + Einkommen */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label className="text-xs">Refinanzierungs-Zweck</Label>
-              <Select value={form.refi_purpose} onValueChange={(v) => update("refi_purpose", v as WizardForm["refi_purpose"])}>
-                <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="rate_optimisation">Zinsoptimierung</SelectItem>
-                  <SelectItem value="bank_change">Bankwechsel</SelectItem>
-                  <SelectItem value="consolidation">Konsolidierung</SelectItem>
-                  <SelectItem value="cash_out">Kapital-Auszahlung</SelectItem>
-                  <SelectItem value="other">Andere</SelectItem>
-                </SelectContent>
-              </Select>
+                  </section>
+                );
+              })()}
             </div>
-            <Field
-              label={coActive ? "Brutto-Jahreseinkommen Hauptkunde (CHF) *" : "Brutto-Jahreseinkommen (CHF) *"}
-              type="number"
-              value={form.gross_income_yearly}
-              onChange={(v) => update("gross_income_yearly", v)}
-            />
-            {coActive && (
-              <Field
-                label="Brutto-Jahreseinkommen Ehepartner/Mitantragsteller (CHF) *"
-                type="number"
-                value={form.co_applicant_einkommen}
-                onChange={(v) => update("co_applicant_einkommen", v)}
-              />
-            )}
-            <Field
-              label={coActive
-                ? "Monatliche Verpflichtungen kombiniert (CHF) — Leasing, Kredite, Alimente"
-                : "Monatliche Verpflichtungen (CHF) — Leasing, Kredite, Alimente"}
-              type="number"
-              value={form.monthly_obligations}
-              onChange={(v) => update("monthly_obligations", v)}
-            />
-            {showRenovation && (
-              <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
-            )}
+
+            {/* === Rechte Spalte: Bestehende Finanzierung + Einkommen === */}
+            <div className="space-y-4">
+              <section className="rounded-lg border bg-card p-4 space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bestehende Finanzierung</h3>
+                <Field label="Aktuelle Bank" value={form.current_bank} onChange={(v) => update("current_bank", v)} />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Aktueller Zinssatz (%)" type="number" value={form.interest_rate_current} onChange={(v) => update("interest_rate_current", v)} />
+                  <Field label="Ablauf Zinsbindung" type="date" value={form.interest_rate_expiry} onChange={(v) => update("interest_rate_expiry", v)} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Refinanzierungs-Zweck</Label>
+                  <Select value={form.refi_purpose} onValueChange={(v) => update("refi_purpose", v as WizardForm["refi_purpose"])}>
+                    <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rate_optimisation">Zinsoptimierung</SelectItem>
+                      <SelectItem value="bank_change">Bankwechsel</SelectItem>
+                      <SelectItem value="consolidation">Konsolidierung</SelectItem>
+                      <SelectItem value="cash_out">Kapital-Auszahlung</SelectItem>
+                      <SelectItem value="other">Andere</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </section>
+
+              <section className="rounded-lg border bg-card p-4 space-y-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Einkommen & Verpflichtungen</h3>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field
+                    label={coActive ? "Einkommen Hauptkunde (CHF/J) *" : "Brutto-Jahreseinkommen (CHF) *"}
+                    type="number"
+                    value={form.gross_income_yearly}
+                    onChange={(v) => update("gross_income_yearly", v)}
+                  />
+                  {coActive && (
+                    <Field
+                      label="Einkommen Partner (CHF/J) *"
+                      type="number"
+                      value={form.co_applicant_einkommen}
+                      onChange={(v) => update("co_applicant_einkommen", v)}
+                    />
+                  )}
+                  <Field
+                    label={coActive ? "Verpflichtungen kombiniert (CHF/M)" : "Monatl. Verpflichtungen (CHF)"}
+                    type="number"
+                    value={form.monthly_obligations}
+                    onChange={(v) => update("monthly_obligations", v)}
+                  />
+                  {showRenovation && (
+                    <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground">Leasing, Kredite, Alimente — automatisch aus Selbstauskunft summiert (anpassbar).</p>
+                {coActive && (
+                  <div className="rounded-md bg-background border p-2.5 text-xs flex justify-between">
+                    <span className="text-muted-foreground">Kombiniertes Einkommen:</span>
+                    <span className="font-semibold tabular-nums">{formatCurrency(combined.incomeCombined)} / J</span>
+                  </div>
+                )}
+              </section>
+            </div>
           </div>
 
-          {coActive && (
-            <div className="rounded-md bg-background border p-3 text-xs space-y-1">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Kombiniertes Einkommen (für Tragbarkeit):</span>
-                <span className="font-semibold tabular-nums">{formatCurrency(combined.incomeCombined)} / Jahr</span>
-              </div>
-              <p className="text-[10px] text-muted-foreground">
-                Verpflichtungen aus Selbstauskunft beider Personen werden automatisch summiert (sofern vorhanden) — manuell anpassbar.
-              </p>
+          {kpis.ltvExceeded && (
+            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
+              ⚠ Neue Gesamthypothek übersteigt max. Belehnung ({kpis.maxLtv}% = {formatCurrency(kpis.maxMortgageAllowed)}). Aufstockung reduzieren oder Eigenmittel einbringen.
             </div>
           )}
 
-
           <p className="text-[11px] text-muted-foreground">
-            Hinweis: Bei reiner Refinanzierung sind Eigenmittel/PK nicht erforderlich. Die Belehnungsgrenze richtet sich nach der Nutzung
-            ({form.usage_type === "rental" ? "Renditeobjekt → max. 75 %" : "Eigennutzung → max. 80 %"}).
+            Hinweis: Belehnungsgrenze {form.usage_type === "rental" ? "Renditeobjekt → max. 75 %" : "Eigennutzung → max. 80 %"}.
           </p>
         </>
       ) : (
