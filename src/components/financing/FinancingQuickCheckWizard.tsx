@@ -719,8 +719,10 @@ function Step2Property({
                     value: p.id,
                     label: [p.city || "—", typeLabel].filter(Boolean).join(" · "),
                     hint: [
+                      unitCount > 0
+                        ? `${unitCount} Einheit${unitCount === 1 ? "" : "en"}`
+                        : "Keine Einheiten",
                       p.address || p.title || null,
-                      unitCount > 0 ? `${unitCount} Einheit${unitCount === 1 ? "" : "en"}` : null,
                       p.price ? formatCurrency(Number(p.price)) : null,
                     ].filter(Boolean).join(" · ") || undefined,
                   };
@@ -730,7 +732,7 @@ function Step2Property({
 
             {objectId && units.length > 0 && (
               <div className="space-y-1">
-                <Label className="text-xs">Auswahl</Label>
+                <Label className="text-xs">Gesamtobjekt oder Einheit</Label>
                 <SearchableSelect
                   placeholder="Gesamtes Objekt oder Einheit wählen…"
                   emptyText="Keine Einheit gefunden."
@@ -763,9 +765,8 @@ function Step2Property({
 
             {form.property_id && (
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Objektbezeichnung" value={form.property_title} onChange={(v) => update("property_title", v)} />
                 <Field label="Kaufpreis (CHF)" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
-                <div className="sm:col-span-2">
+                <div className="sm:col-span-2 sm:col-start-1">
                   <Field label="Adresse" value={form.property_address} onChange={(v) => update("property_address", v)} />
                 </div>
                 <p className="sm:col-span-2 text-xs text-muted-foreground">
@@ -1546,18 +1547,26 @@ function SearchableSelect({
           type="button"
           variant="outline"
           role="combobox"
-          className="w-full justify-between font-normal"
+          className="h-auto min-h-10 w-full justify-between py-2 font-normal"
         >
-          <span className="truncate">
-            {selected
-              ? `${selected.label}${selected.hint ? ` · ${selected.hint}` : ""}`
-              : placeholder}
+          <span className="min-w-0 text-left">
+            {selected ? (
+              <span className="block min-w-0">
+                <span className="block truncate text-sm">{selected.label}</span>
+                {selected.hint && (
+                  <span className="block truncate text-xs text-muted-foreground">{selected.hint}</span>
+                )}
+              </span>
+            ) : (
+              <span className="block truncate text-sm">{placeholder}</span>
+            )}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command
+          className="flex max-h-[min(24rem,var(--radix-popover-content-available-height))] flex-col"
           filter={(value, search) => {
             const item = items.find((i) => i.value === value);
             if (!item) return 0;
@@ -1566,13 +1575,17 @@ function SearchableSelect({
           }}
         >
           <CommandInput placeholder="Suchen…" />
-          <CommandList className="max-h-72 overflow-y-auto overscroll-contain">
+          <CommandList
+            className="max-h-none flex-1 overflow-y-auto overscroll-contain"
+            onWheelCapture={(e) => e.stopPropagation()}
+          >
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {items.map((i) => (
                 <CommandItem
                   key={i.value}
                   value={i.value}
+                  className="items-start py-2"
                   onSelect={() => { onChange(i.value); setOpen(false); }}
                 >
                   <Check className={cn("mr-2 h-4 w-4 shrink-0", value === i.value ? "opacity-100" : "opacity-0")} />
