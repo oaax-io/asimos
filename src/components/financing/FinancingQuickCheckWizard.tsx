@@ -588,7 +588,8 @@ export function FinancingQuickCheckWizard({
         </DialogHeader>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 bg-muted text-sm [&_input]:bg-background [&_textarea]:bg-background [&_[role=combobox]]:bg-background [&_button[role=combobox]]:bg-background [&_input]:border-input [&_textarea]:border-input">
+        <div className="flex-1 overflow-y-auto px-6 py-5 bg-muted text-sm [&_input]:bg-background [&_textarea]:bg-background [&_[role=combobox]]:bg-background [&_button[role=combobox]]:bg-background [&_input]:border-input [&_textarea]:border-input [&_input[inputmode=decimal]]:max-w-[14rem] [&_input[type=date]]:max-w-[12rem]">
+
 
 
           {step === 1 && <Step1Modules form={form} toggleModule={toggleModule} />}
