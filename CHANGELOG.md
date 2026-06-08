@@ -2,6 +2,23 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 
+## [1.14.0] – 08.06.2026 – Finanzierungs-Quick-Check Redesign
+
+### Hinzugefügt
+- **Aufstockungsbetrag-Indikator bei Refinanzierung**: Live-Anzeige des maximal möglichen Aufstockungsbetrags — grün wenn möglich, rot wenn überschritten. Manuell anpassbar mit sofortiger Validierung.
+- **Schweizer-Banken-Dropdown**: Schritt 4 (Refinanzierung) nutzt nun ein durchsuchbares Dropdown mit 25+ Schweizer Banken (inkl. UBS, ZKB, Credit Suisse, Raiffeisen etc.) — eigene Eingaben als "Sonstige" möglich.
+
+### Geändert
+- **Zwei-Spalten-Layout im Quick-Check-Wizard**: Das Modal ist jetzt aufgeteilt wie ein aufgeschlagenes Buch (max-w-6xl). Links Quelle/Auswahl, rechts Daten — deutlich kompakter und übersichtlicher.
+  - Schritt 2 (Objekt): Links CRM-Objekt-Auswahl, rechts Adresse & Kaufpreis.
+  - Schritt 3 (Kunde): Links Hauptkunde, rechts Co-Applicant / Ehepartner.
+  - Schritt 4 (Refinanzierung): Links Objekt- & Hypothekendetails, rechts Bank & Einkommen.
+- **Kompakte Eingabefelder**: Numerische Felder auf max. 14rem, Datumsfelder auf 12rem begrenzt — keine überlangen Felder mehr für kleine Werte.
+- **Visuelles Kontrast-System**: Modal-Body (`bg-muted`), Step-Cards (`bg-card`), Formularfelder (`bg-background`) — drei klar abgestufte Ebenen statt gleichfarbiger Flächen.
+- **Sichtbarer Schliess-Button**: Weisser Kreis mit Rand und voller Deckkraft, hoverbar — immer erkennbar.
+
+---
+
 ## [1.13.0] – 04.06.2026 – Smart Matching
 
 ### Hinzugefügt
