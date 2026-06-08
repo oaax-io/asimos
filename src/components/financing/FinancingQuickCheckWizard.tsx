@@ -1133,13 +1133,15 @@ function Step5Advanced({
 
 /* ==================== Schritt 6 ==================== */
 function Step6Summary({
-  form, kpis, status, clients, properties,
+  form, kpis, status, clients, properties, isRefiOnly, effectiveMortgage,
 }: {
   form: WizardForm;
   kpis: Kpis;
   status: string;
   clients: any[];
   properties: any[];
+  isRefiOnly: boolean;
+  effectiveMortgage: number;
 }) {
   const client = clients.find((c) => c.id === form.client_id);
   const property = properties.find((p) => p.id === form.property_id);
@@ -1152,6 +1154,7 @@ function Step6Summary({
   const clientLabel = form.client_source === "crm"
     ? (client?.full_name ?? "—")
     : "Ohne Kunde";
+  const propertyValueLabel = isRefiOnly ? "Objektwert / Verkehrswert" : "Kaufpreis";
 
   return (
     <div className="space-y-4">
@@ -1162,7 +1165,7 @@ function Step6Summary({
       <SummaryGroup title="Immobilie">
         <SumRow label="Bezeichnung" value={propertyLabel} />
         {form.property_address && <SumRow label="Adresse" value={form.property_address} />}
-        {form.property_purchase_price && <SumRow label="Kaufpreis" value={formatCurrency(num(form.property_purchase_price))} />}
+        {form.property_purchase_price && <SumRow label={propertyValueLabel} value={formatCurrency(num(form.property_purchase_price))} />}
       </SummaryGroup>
 
       <SummaryGroup title="Kunde">
@@ -1173,10 +1176,20 @@ function Step6Summary({
       </SummaryGroup>
 
       <SummaryGroup title="Kennzahlen">
-        <SumRow label="Gewünschte Hypothek" value={formatCurrency(num(form.requested_mortgage))} />
+        {isRefiOnly ? (
+          <>
+            <SumRow label="Aktuelle Hypothek" value={formatCurrency(num(form.existing_mortgage))} />
+            <SumRow label="Aufstockungsbetrag" value={formatCurrency(num(form.requested_increase))} />
+            <SumRow label="Neue Gesamthypothek" value={formatCurrency(effectiveMortgage)} />
+          </>
+        ) : (
+          <>
+            <SumRow label="Gewünschte Hypothek" value={formatCurrency(num(form.requested_mortgage))} />
+            {form.existing_mortgage && <SumRow label="Bestehende Hypothek" value={formatCurrency(num(form.existing_mortgage))} />}
+          </>
+        )}
         {form.renovation_costs && <SumRow label="Renovationskosten" value={formatCurrency(num(form.renovation_costs))} />}
         {form.renovation_own_work && <SumRow label="davon Eigenleistung" value={formatCurrency(num(form.renovation_own_work))} />}
-        {form.existing_mortgage && <SumRow label="Bestehende Hypothek" value={formatCurrency(num(form.existing_mortgage))} />}
         <SumRow label="Kalk. Zinssatz" value={`${num(form.calc_rate).toFixed(1)} %`} />
         <SumRow label="Nebenkosten" value={`${num(form.ancillary_pct).toFixed(1)} %`} />
         <SumRow label="Amortisationsdauer" value={`${form.amortisation_years} Jahre`} />
