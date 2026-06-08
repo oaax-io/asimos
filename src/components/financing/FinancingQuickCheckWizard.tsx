@@ -371,7 +371,7 @@ export function FinancingQuickCheckWizard({
     }
     if (step === 5) return true;
     return true;
-  }, [step, form]);
+  }, [step, form, isRefiOnly, effectiveMortgage]);
 
   const navigate = useNavigate();
 
