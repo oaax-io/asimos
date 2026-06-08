@@ -1313,14 +1313,26 @@ function Step6Summary({
         <SumRow label="Bezeichnung" value={propertyLabel} />
         {form.property_address && <SumRow label="Adresse" value={form.property_address} />}
         {form.property_purchase_price && <SumRow label={propertyValueLabel} value={formatCurrency(num(form.property_purchase_price))} />}
+        {isRefiOnly && form.object_type && <SumRow label="Objektart" value={OBJECT_TYPE_LABELS[form.object_type]} />}
+        {isRefiOnly && form.usage_type && <SumRow label="Nutzung" value={form.usage_type === "rental" ? "Renditeobjekt" : "Eigennutzung"} />}
       </SummaryGroup>
 
       <SummaryGroup title="Kunde">
         <SumRow label="Kunde" value={clientLabel} />
         {form.gross_income_yearly && <SumRow label="Brutto-Jahreseinkommen" value={formatCurrency(num(form.gross_income_yearly))} />}
-        {form.own_funds_total && <SumRow label="Eigenmittel total" value={formatCurrency(num(form.own_funds_total))} />}
-        {form.own_funds_pension_fund && <SumRow label="davon PK / Freizügigkeit" value={formatCurrency(num(form.own_funds_pension_fund))} />}
+        {!isRefiOnly && form.own_funds_total && <SumRow label="Eigenmittel total" value={formatCurrency(num(form.own_funds_total))} />}
+        {!isRefiOnly && form.own_funds_pension_fund && <SumRow label="davon PK / Freizügigkeit" value={formatCurrency(num(form.own_funds_pension_fund))} />}
+        {isRefiOnly && form.monthly_obligations && <SumRow label="Monatl. Verpflichtungen" value={formatCurrency(num(form.monthly_obligations))} />}
       </SummaryGroup>
+
+      {isRefiOnly && (form.current_bank || form.interest_rate_current || form.interest_rate_expiry || form.refi_purpose) && (
+        <SummaryGroup title="Bestehende Finanzierung">
+          {form.current_bank && <SumRow label="Aktuelle Bank" value={form.current_bank} />}
+          {form.interest_rate_current && <SumRow label="Aktueller Zinssatz" value={`${num(form.interest_rate_current).toFixed(2)} %`} />}
+          {form.interest_rate_expiry && <SumRow label="Ablauf Zinsbindung" value={form.interest_rate_expiry} />}
+          {form.refi_purpose && <SumRow label="Zweck" value={REFI_PURPOSE_LABELS[form.refi_purpose]} />}
+        </SummaryGroup>
+      )}
 
       <SummaryGroup title="Kennzahlen">
         {isRefiOnly ? (
