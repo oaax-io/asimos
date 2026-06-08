@@ -32,7 +32,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   FINANCING_TYPE_LABELS, calcQuickCheck, type FinancingType,
 } from "@/lib/financing";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, propertyTypeLabels } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const num = (v: string) => {
