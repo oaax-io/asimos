@@ -402,14 +402,19 @@ export function FinancingQuickCheckWizard({
       return true;
     }
     if (step === 4) {
-      const equity = num(form.own_funds_total);
       const income = num(form.gross_income_yearly);
       if (isRefiOnly) {
         const existing = num(form.existing_mortgage);
         const mortgage = effectiveMortgage;
         const propertyVal = num(form.property_purchase_price); // dient als Objektwert
-        return propertyVal > 0 && existing > 0 && mortgage > 0 && equity >= 0 && income > 0;
+        return propertyVal > 0
+          && existing > 0
+          && mortgage > 0
+          && income > 0
+          && !!form.usage_type
+          && !!form.object_type;
       }
+      const equity = num(form.own_funds_total);
       const purchase = num(form.property_purchase_price);
       const mortgage = num(form.requested_mortgage);
       return purchase > 0 && equity >= 0 && income > 0 && mortgage > 0;
