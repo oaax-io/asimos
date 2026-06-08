@@ -1260,21 +1260,52 @@ function Step4Metrics({
           </div>
 
           {/* Hypothek-Block */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Aktuelle Hypothek (CHF) *" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
-            <Field label="Aufstockungsbetrag (CHF)" type="number" value={form.requested_increase} onChange={(v) => update("requested_increase", v)} />
-            <div className="rounded-md border bg-muted/40 p-3 text-sm flex flex-col justify-center sm:col-span-2">
-              <span className="text-xs text-muted-foreground">Neue Gesamthypothek</span>
-              <span className="font-semibold text-base">{formatCurrency(effectiveMortgage)}</span>
-              <span className="text-xs text-muted-foreground mt-1">= Aktuelle Hypothek + Aufstockungsbetrag</span>
-            </div>
-            {kpis.ltvExceeded && (
-              <div className="sm:col-span-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
-                ⚠ Die neue Gesamthypothek übersteigt die max. Belehnung ({kpis.maxLtv}% des Objektwerts ={" "}
-                {formatCurrency(kpis.maxMortgageAllowed)}). Aufstockung ggf. reduzieren oder Eigenmittel einbringen.
+          {(() => {
+            const maxIncrease = Math.max(0, kpis.maxMortgageAllowed - num(form.existing_mortgage));
+            const requested = num(form.requested_increase);
+            const fits = !kpis.ltvExceeded;
+            const hasBase = kpis.maxMortgageAllowed > 0;
+            return (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Aktuelle Hypothek (CHF) *" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
+                <Field label="Aufstockungsbetrag (CHF)" type="number" value={form.requested_increase} onChange={(v) => update("requested_increase", v)} />
+                {hasBase && (
+                  <div
+                    className={`sm:col-span-2 rounded-md border p-3 text-sm flex items-center justify-between gap-3 ${
+                      fits
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                        : "border-destructive/50 bg-destructive/10 text-destructive"
+                    }`}
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-xs opacity-80">Max. mögliche Aufstockung ({kpis.maxLtv}% Belehnung)</span>
+                      <span className="font-semibold text-base">{formatCurrency(maxIncrease)}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs opacity-80">{fits ? "✓ möglich" : "✗ nicht möglich"}</span>
+                      <div className="text-xs">
+                        {fits
+                          ? `Spielraum: +${formatCurrency(Math.max(0, maxIncrease - requested))}`
+                          : `Überschreitung: −${formatCurrency(requested - maxIncrease)}`}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className="rounded-md border bg-muted/40 p-3 text-sm flex flex-col justify-center sm:col-span-2">
+                  <span className="text-xs text-muted-foreground">Neue Gesamthypothek</span>
+                  <span className="font-semibold text-base">{formatCurrency(effectiveMortgage)}</span>
+                  <span className="text-xs text-muted-foreground mt-1">= Aktuelle Hypothek + Aufstockungsbetrag</span>
+                </div>
+                {kpis.ltvExceeded && (
+                  <div className="sm:col-span-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
+                    ⚠ Die neue Gesamthypothek übersteigt die max. Belehnung ({kpis.maxLtv}% des Objektwerts ={" "}
+                    {formatCurrency(kpis.maxMortgageAllowed)}). Aufstockung ggf. reduzieren oder Eigenmittel einbringen.
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()}
+
 
           {/* Bestehende Finanzierung */}
           <div className="grid gap-3 sm:grid-cols-3">
