@@ -4,7 +4,21 @@ import {
   MapPin, TrainFront, ShoppingBag, GraduationCap, TreePine, Utensils,
   Bed, Bath, Maximize as MaxIcon, Home, Building2,
 } from "lucide-react";
-import type { ExposeSections, ExposeTemplate, GalerieLayout } from "@/hooks/use-pdf-download";
+export type ExposeTemplate =
+  | "classic" | "modern" | "luxury"
+  | "noir" | "studio" | "pastell"
+  | "panorama" | "editorial-land" | "urban-land";
+export type GalerieLayout = "fullpage" | "halfpage" | "stack" | "grid2" | "grid4" | "grid6" | "magazine";
+export type ExposeSections = {
+  beschreibung?: boolean;
+  mikrolage?: boolean;
+  einheiten?: boolean;
+  grundriss?: boolean;
+  kontakt?: boolean;
+  galerie?: boolean;
+  galerieLayout?: GalerieLayout;
+  energieausweis?: boolean;
+};
 
 
 export type TemplateMeta = {
