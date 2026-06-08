@@ -1358,7 +1358,7 @@ function Step4Metrics({
             <div className="space-y-4">
               <section className="rounded-lg border bg-card p-4 space-y-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bestehende Finanzierung</h3>
-                <Field label="Aktuelle Bank" value={form.current_bank} onChange={(v) => update("current_bank", v)} />
+                <SwissBankSelect value={form.current_bank} onChange={(v) => update("current_bank", v)} />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field label="Aktueller Zinssatz (%)" type="number" value={form.interest_rate_current} onChange={(v) => update("interest_rate_current", v)} />
                   <Field label="Ablauf Zinsbindung" type="date" value={form.interest_rate_expiry} onChange={(v) => update("interest_rate_expiry", v)} />
