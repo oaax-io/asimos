@@ -164,7 +164,7 @@ export function renderExposeHTML(d: ExposeData, theme?: ExposeTheme): string {
     <header class="header">
       <div>
         <div class="brand">${escape(d.agency_name ?? "ASIMO Real Estate")}</div>
-        <div class="brand-sub">Immobilienexposé</div>
+        <div class="brand-sub">Exposé${t.templateLabel ? ` · ${escape(t.templateLabel)}` : ""}</div>
       </div>
       <div class="meta">${escape(d.generated_on ?? new Date().toLocaleDateString("de-CH"))}</div>
     </header>
