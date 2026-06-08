@@ -499,7 +499,7 @@ export function FinancingQuickCheckWizard({
             loading={clientsQuery.isLoading}
           />
         )}
-        {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} />}
+        {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} isRefiOnly={isRefiOnly} effectiveMortgage={effectiveMortgage} />}
         {step === 5 && <Step5Advanced form={form} update={update} kpis={liveKpis} />}
         {step === 6 && (
           <Step6Summary
