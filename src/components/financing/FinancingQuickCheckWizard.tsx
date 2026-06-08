@@ -1079,55 +1079,135 @@ function Step4Metrics({
   effectiveMortgage: number;
 }) {
   const showRenovation = form.modules.includes("renovation");
+  const objectValueFromCrm = isRefiOnly && form.property_source === "crm" && !!form.property_purchase_price;
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
-        {isRefiOnly ? (
-          <>
-            <Field
-              label="Aktueller Objektwert / Verkehrswert (CHF) *"
-              type="number"
-              value={form.property_purchase_price}
-              onChange={(v) => update("property_purchase_price", v)}
-            />
-            <Field
-              label="Aktuelle Hypothek (CHF) *"
-              type="number"
-              value={form.existing_mortgage}
-              onChange={(v) => update("existing_mortgage", v)}
-            />
-            <Field
-              label="Aufstockungsbetrag (CHF)"
-              type="number"
-              value={form.requested_increase}
-              onChange={(v) => update("requested_increase", v)}
-            />
-            <div className="rounded-md border bg-muted/40 p-3 text-sm flex flex-col justify-center">
+      {isRefiOnly ? (
+        <>
+          {/* Objekt-Block */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {objectValueFromCrm ? (
+              <div className="sm:col-span-2 rounded-md border bg-muted/30 p-3 text-sm flex items-center justify-between">
+                <div>
+                  <span className="text-xs text-muted-foreground block">Aktueller Objektwert (aus CRM)</span>
+                  <span className="font-semibold text-base">{formatCurrency(num(form.property_purchase_price))}</span>
+                </div>
+                <span className="text-xs text-muted-foreground">Anpassen in Schritt 2</span>
+              </div>
+            ) : (
+              <Field
+                label="Aktueller Objektwert / Verkehrswert (CHF) *"
+                type="number"
+                value={form.property_purchase_price}
+                onChange={(v) => update("property_purchase_price", v)}
+              />
+            )}
+            <div className="space-y-1">
+              <Label className="text-xs">Nutzung *</Label>
+              <Select value={form.usage_type} onValueChange={(v) => update("usage_type", v as WizardForm["usage_type"])}>
+                <SelectTrigger><SelectValue placeholder="Bitte wählen…" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="owner_occupied">Eigennutzung (selbst bewohnt)</SelectItem>
+                  <SelectItem value="rental">Renditeobjekt (vermietet)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Objektart *</Label>
+              <Select value={form.object_type} onValueChange={(v) => update("object_type", v as WizardForm["object_type"])}>
+                <SelectTrigger><SelectValue placeholder="Bitte wählen…" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="house">Einfamilienhaus</SelectItem>
+                  <SelectItem value="apartment">Eigentumswohnung</SelectItem>
+                  <SelectItem value="mixed_use">Mehrfamilien-/Geschäftshaus</SelectItem>
+                  <SelectItem value="commercial">Gewerbe</SelectItem>
+                  <SelectItem value="other">Andere</SelectItem>
+                </SelectContent>
+              </Select>
+              {form.property_source === "crm" && form.object_type && (
+                <p className="text-[10px] text-muted-foreground">Vorausgefüllt aus CRM-Objekt</p>
+              )}
+            </div>
+          </div>
+
+          {/* Hypothek-Block */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Aktuelle Hypothek (CHF) *" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
+            <Field label="Aufstockungsbetrag (CHF)" type="number" value={form.requested_increase} onChange={(v) => update("requested_increase", v)} />
+            <div className="rounded-md border bg-muted/40 p-3 text-sm flex flex-col justify-center sm:col-span-2">
               <span className="text-xs text-muted-foreground">Neue Gesamthypothek</span>
               <span className="font-semibold text-base">{formatCurrency(effectiveMortgage)}</span>
-              <span className="text-xs text-muted-foreground mt-1">
-                = Aktuelle Hypothek + Aufstockungsbetrag
-              </span>
+              <span className="text-xs text-muted-foreground mt-1">= Aktuelle Hypothek + Aufstockungsbetrag</span>
             </div>
-          </>
-        ) : (
-          <>
-            <Field label="Kaufpreis (CHF) *" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
-            <Field label="Gewünschte Hypothek (CHF) *" type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
-          </>
-        )}
-        <Field label="Eigenmittel total (CHF) *" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
-        <Field label="davon PK / Freizügigkeit (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
-        <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
-        {showRenovation && (
-          <>
-            <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
-            <Field label="davon Eigenleistung (CHF)" type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
-          </>
-        )}
-      </div>
+            {kpis.ltvExceeded && (
+              <div className="sm:col-span-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
+                ⚠ Die neue Gesamthypothek übersteigt die max. Belehnung ({kpis.maxLtv}% des Objektwerts ={" "}
+                {formatCurrency(kpis.maxMortgageAllowed)}). Aufstockung ggf. reduzieren oder Eigenmittel einbringen.
+              </div>
+            )}
+          </div>
+
+          {/* Bestehende Finanzierung */}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label="Aktuelle Bank" value={form.current_bank} onChange={(v) => update("current_bank", v)} />
+            <Field label="Aktueller Zinssatz (%)" type="number" value={form.interest_rate_current} onChange={(v) => update("interest_rate_current", v)} />
+            <Field label="Ablauf Zinsbindung" type="date" value={form.interest_rate_expiry} onChange={(v) => update("interest_rate_expiry", v)} />
+          </div>
+
+          {/* Zweck + Verpflichtungen + Einkommen */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Refinanzierungs-Zweck</Label>
+              <Select value={form.refi_purpose} onValueChange={(v) => update("refi_purpose", v as WizardForm["refi_purpose"])}>
+                <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rate_optimisation">Zinsoptimierung</SelectItem>
+                  <SelectItem value="bank_change">Bankwechsel</SelectItem>
+                  <SelectItem value="consolidation">Konsolidierung</SelectItem>
+                  <SelectItem value="cash_out">Kapital-Auszahlung</SelectItem>
+                  <SelectItem value="other">Andere</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
+            <Field
+              label="Monatliche Verpflichtungen (CHF) — Leasing, Kredite, Alimente"
+              type="number"
+              value={form.monthly_obligations}
+              onChange={(v) => update("monthly_obligations", v)}
+            />
+            {showRenovation && (
+              <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+            )}
+          </div>
+
+          <p className="text-[11px] text-muted-foreground">
+            Hinweis: Bei reiner Refinanzierung sind Eigenmittel/PK nicht erforderlich. Die Belehnungsgrenze richtet sich nach der Nutzung
+            ({form.usage_type === "rental" ? "Renditeobjekt → max. 75 %" : "Eigennutzung → max. 80 %"}).
+          </p>
+        </>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Kaufpreis (CHF) *" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
+          <Field label="Gewünschte Hypothek (CHF) *" type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
+          <Field label="Eigenmittel total (CHF) *" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
+          <Field label="davon PK / Freizügigkeit (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+          <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
+          {showRenovation && (
+            <>
+              <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+              <Field label="davon Eigenleistung (CHF)" type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
+            </>
+          )}
+        </div>
+      )}
       <div className="rounded-lg bg-muted/50 p-3">
-        <KpiPreview kpis={kpis} />
+        <KpiPreview kpis={kpis} hideEquity={isRefiOnly} />
+        {isRefiOnly && kpis.obligationsYearly > 0 && (
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Inkl. Verpflichtungen {formatCurrency(kpis.obligationsYearly)}/Jahr in der Tragbarkeit.
+          </p>
+        )}
       </div>
     </div>
   );
