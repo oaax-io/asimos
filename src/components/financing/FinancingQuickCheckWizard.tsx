@@ -687,58 +687,95 @@ function Step2Property({
         <SourceRow value="later" label="Später erfassen" description="Schritt überspringen — Felder bleiben leer." />
       </RadioGroup>
 
-      {form.property_source === "crm" && (
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label className="text-xs">Immobilie</Label>
-            <SearchableSelect
-              placeholder={loading ? "Lade…" : "Immobilie suchen…"}
-              emptyText="Keine Immobilie gefunden."
-              value={form.property_id}
-              onChange={(v) => update("property_id", v)}
-              items={properties.map((p) => {
-                const parent: any = p.parent_property_id
-                  ? properties.find((x: any) => x.id === p.parent_property_id)
-                  : null;
-                const typeLabel =
-                  propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels] || "—";
-                if (p.is_unit) {
-                  const unitBits = [
-                    p.unit_number ? `Nr. ${p.unit_number}` : null,
-                    p.unit_floor ? `${p.unit_floor}. OG` : null,
-                    p.unit_type || typeLabel,
-                  ].filter(Boolean);
-                  const parentBit = parent
-                    ? `${parent.city || "—"} · ${parent.address || parent.title || ""}`.trim()
-                    : p.city || "—";
+      {form.property_source === "crm" && (() => {
+        const selected: any = properties.find((p: any) => p.id === form.property_id);
+        // The "object" reference: if a unit is selected, its parent; else the selected itself
+        const objectId: string | null = selected
+          ? (selected.is_unit ? (selected.parent_property_id ?? null) : selected.id)
+          : null;
+        // Top-level objects to choose from = non-units (parents and standalone properties)
+        const topLevel = properties.filter((p: any) => !p.is_unit);
+        // Units belonging to the currently chosen object
+        const units = objectId
+          ? properties.filter((p: any) => p.is_unit && p.parent_property_id === objectId)
+          : [];
+        const unitSelectValue = selected?.is_unit ? selected.id : "__whole__";
+        return (
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Objekt</Label>
+              <SearchableSelect
+                placeholder={loading ? "Lade…" : "Objekt suchen…"}
+                emptyText="Kein Objekt gefunden."
+                value={objectId ?? ""}
+                onChange={(v) => update("property_id", v)}
+                items={topLevel.map((p: any) => {
+                  const typeLabel =
+                    propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels] || "—";
+                  const unitCount = properties.filter(
+                    (x: any) => x.is_unit && x.parent_property_id === p.id
+                  ).length;
                   return {
                     value: p.id,
-                    label: `Einheit · ${unitBits.join(" · ")}`,
-                    hint: `${parentBit}${p.price ? " · " + formatCurrency(Number(p.price)) : ""}`,
+                    label: [p.city || "—", typeLabel].filter(Boolean).join(" · "),
+                    hint: [
+                      p.address || p.title || null,
+                      unitCount > 0 ? `${unitCount} Einheit${unitCount === 1 ? "" : "en"}` : null,
+                      p.price ? formatCurrency(Number(p.price)) : null,
+                    ].filter(Boolean).join(" · ") || undefined,
                   };
-                }
-                return {
-                  value: p.id,
-                  label: [p.city || "—", typeLabel].filter(Boolean).join(" · "),
-                  hint: p.price ? formatCurrency(Number(p.price)) : undefined,
-                };
-              })}
-            />
-          </div>
-          {form.property_id && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Objektbezeichnung" value={form.property_title} onChange={(v) => update("property_title", v)} />
-              <Field label="Kaufpreis (CHF)" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
-              <div className="sm:col-span-2">
-                <Field label="Adresse" value={form.property_address} onChange={(v) => update("property_address", v)} />
-              </div>
-              <p className="sm:col-span-2 text-xs text-muted-foreground">
-                Werte aus CRM vorausgefüllt. Anpassungen gelten nur für diesen Quick Check.
-              </p>
+                })}
+              />
             </div>
-          )}
-        </div>
-      )}
+
+            {objectId && units.length > 0 && (
+              <div className="space-y-1">
+                <Label className="text-xs">Auswahl</Label>
+                <SearchableSelect
+                  placeholder="Gesamtes Objekt oder Einheit wählen…"
+                  emptyText="Keine Einheit gefunden."
+                  value={unitSelectValue}
+                  onChange={(v) => update("property_id", v === "__whole__" ? objectId : v)}
+                  items={[
+                    {
+                      value: "__whole__",
+                      label: "Gesamtes Objekt",
+                      hint: `Alle ${units.length} Einheit${units.length === 1 ? "" : "en"} inkl.`,
+                    },
+                    ...units.map((u: any) => {
+                      const typeLabel =
+                        propertyTypeLabels[u.property_type as keyof typeof propertyTypeLabels] || "—";
+                      const bits = [
+                        u.unit_number ? `Nr. ${u.unit_number}` : null,
+                        u.unit_floor ? `${u.unit_floor}. OG` : null,
+                        u.unit_type || typeLabel,
+                      ].filter(Boolean);
+                      return {
+                        value: u.id,
+                        label: `Einheit · ${bits.join(" · ")}`,
+                        hint: u.price ? formatCurrency(Number(u.price)) : undefined,
+                      };
+                    }),
+                  ]}
+                />
+              </div>
+            )}
+
+            {form.property_id && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Objektbezeichnung" value={form.property_title} onChange={(v) => update("property_title", v)} />
+                <Field label="Kaufpreis (CHF)" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
+                <div className="sm:col-span-2">
+                  <Field label="Adresse" value={form.property_address} onChange={(v) => update("property_address", v)} />
+                </div>
+                <p className="sm:col-span-2 text-xs text-muted-foreground">
+                  Werte aus CRM vorausgefüllt. Anpassungen gelten nur für diesen Quick Check.
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {form.property_source === "manual" && (
         <div className="grid gap-3 sm:grid-cols-2">
@@ -1520,21 +1557,28 @@ function SearchableSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
+        <Command
+          filter={(value, search) => {
+            const item = items.find((i) => i.value === value);
+            if (!item) return 0;
+            const hay = `${item.label} ${item.hint ?? ""}`.toLowerCase();
+            return hay.includes(search.toLowerCase()) ? 1 : 0;
+          }}
+        >
           <CommandInput placeholder="Suchen…" />
-          <CommandList>
+          <CommandList className="max-h-72 overflow-y-auto overscroll-contain">
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {items.map((i) => (
                 <CommandItem
                   key={i.value}
-                  value={`${i.label} ${i.hint ?? ""}`}
+                  value={i.value}
                   onSelect={() => { onChange(i.value); setOpen(false); }}
                 >
-                  <Check className={cn("mr-2 h-4 w-4", value === i.value ? "opacity-100" : "opacity-0")} />
-                  <div className="flex-1">
-                    <div className="text-sm">{i.label}</div>
-                    {i.hint && <div className="text-xs text-muted-foreground">{i.hint}</div>}
+                  <Check className={cn("mr-2 h-4 w-4 shrink-0", value === i.value ? "opacity-100" : "opacity-0")} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm truncate">{i.label}</div>
+                    {i.hint && <div className="text-xs text-muted-foreground truncate">{i.hint}</div>}
                   </div>
                 </CommandItem>
               ))}
