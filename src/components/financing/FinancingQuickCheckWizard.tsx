@@ -1298,9 +1298,24 @@ function Step4Metrics({
                 </SelectContent>
               </Select>
             </div>
-            <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
             <Field
-              label="Monatliche Verpflichtungen (CHF) — Leasing, Kredite, Alimente"
+              label={coActive ? "Brutto-Jahreseinkommen Hauptkunde (CHF) *" : "Brutto-Jahreseinkommen (CHF) *"}
+              type="number"
+              value={form.gross_income_yearly}
+              onChange={(v) => update("gross_income_yearly", v)}
+            />
+            {coActive && (
+              <Field
+                label="Brutto-Jahreseinkommen Ehepartner/Mitantragsteller (CHF) *"
+                type="number"
+                value={form.co_applicant_einkommen}
+                onChange={(v) => update("co_applicant_einkommen", v)}
+              />
+            )}
+            <Field
+              label={coActive
+                ? "Monatliche Verpflichtungen kombiniert (CHF) — Leasing, Kredite, Alimente"
+                : "Monatliche Verpflichtungen (CHF) — Leasing, Kredite, Alimente"}
               type="number"
               value={form.monthly_obligations}
               onChange={(v) => update("monthly_obligations", v)}
@@ -1309,6 +1324,19 @@ function Step4Metrics({
               <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
             )}
           </div>
+
+          {coActive && (
+            <div className="rounded-md bg-background border p-3 text-xs space-y-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Kombiniertes Einkommen (für Tragbarkeit):</span>
+                <span className="font-semibold tabular-nums">{formatCurrency(combined.incomeCombined)} / Jahr</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Verpflichtungen aus Selbstauskunft beider Personen werden automatisch summiert (sofern vorhanden) — manuell anpassbar.
+              </p>
+            </div>
+          )}
+
 
           <p className="text-[11px] text-muted-foreground">
             Hinweis: Bei reiner Refinanzierung sind Eigenmittel/PK nicht erforderlich. Die Belehnungsgrenze richtet sich nach der Nutzung
