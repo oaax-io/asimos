@@ -291,12 +291,26 @@ export function FinancingQuickCheckWizard({
     };
   }, [form]);
 
+  // ---- Refinanzierungs-Modus (kein Kauf/Neubau, nur Bestand) ----
+  const isRefiOnly = useMemo(() => {
+    const m = form.modules;
+    if (m.length === 0) return false;
+    if (m.includes("purchase")) return false;
+    return m.includes("refinance") || m.includes("increase") || m.includes("mortgage_increase");
+  }, [form.modules]);
+
+  // Effektive Hypothek: bei Refi = aktuelle Hypothek + Aufstockung
+  const effectiveMortgage = useMemo(() => {
+    if (isRefiOnly) return num(form.existing_mortgage) + num(form.requested_increase);
+    return num(form.requested_mortgage);
+  }, [isRefiOnly, form.existing_mortgage, form.requested_increase, form.requested_mortgage]);
+
   // ---- Live-KPIs (Schritt 4 + 5 + 6) ----
   const liveResult = useMemo(() => {
     return calcQuickCheck({
       purchase_price: numOrNull(form.property_purchase_price) ?? 0,
       renovation_costs: numOrNull(form.renovation_costs) ?? 0,
-      requested_mortgage: numOrNull(form.requested_mortgage) ?? 0,
+      requested_mortgage: effectiveMortgage,
       own_funds_total: combined.equityCombined,
       own_funds_pension_fund: combined.pkCombined || null,
       own_funds_vested_benefits: null,
@@ -305,14 +319,14 @@ export function FinancingQuickCheckWizard({
       ancillary_costs_yearly: null,
       amortisation_yearly: null,
     });
-  }, [form, combined]);
+  }, [form, combined, effectiveMortgage]);
 
   // Tatsächliche Live-Kennzahlen mit Nebenkosten-% und Amortisation aus Schritt 5
   const liveKpis = useMemo(() => {
     const purchase = num(form.property_purchase_price);
     const reno = num(form.renovation_costs);
     const total = purchase + reno;
-    const mortgage = num(form.requested_mortgage);
+    const mortgage = effectiveMortgage;
     const equity = combined.equityCombined;
     const income = combined.incomeCombined;
     const rate = num(form.calc_rate) || 5;
@@ -328,7 +342,7 @@ export function FinancingQuickCheckWizard({
     const yearly = mortgage * (rate / 100) + ancillary + amort;
     const affordability = income > 0 ? (yearly / income) * 100 : 0;
     return { ltv, equityRatio, affordability, total, ancillary, amort, yearly };
-  }, [form, combined]);
+  }, [form, combined, effectiveMortgage]);
 
   // ---- Validierung ----
   const canNext = useMemo(() => {
