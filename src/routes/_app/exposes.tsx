@@ -204,10 +204,58 @@ function ExposesPage() {
 
           <Button
             className="w-full"
-            disabled={!property}
-            onClick={() => window.print()}
+            disabled={!property || generating}
+            onClick={async () => {
+              if (!property) return;
+              setGenerating(true);
+              try {
+                const inner = renderToStaticMarkup(
+                  <TemplatePreview template={template} sections={sections} preview={previewData} scale="stack" />,
+                );
+                const safeTitle = property.title || "Exposé";
+                const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"/><title>${safeTitle}</title><script src="https://cdn.tailwindcss.com"></script><style>@page{size:${template.orientation === "landscape" ? "A4 landscape" : "A4"};margin:0}html,body{margin:0;padding:0;background:#fff}.expose-page{page-break-after:always}.expose-page:last-child{page-break-after:auto}</style></head><body>${inner}</body></html>`;
+                const fileName = `Expose-${safeTitle.replace(/[^\w\s-]/g, "").trim() || "Objekt"}-${template.label}.pdf`;
+                const res = await renderPdf({
+                  data: {
+                    html,
+                    title: safeTitle,
+                    fileName,
+                    documentType: "expose",
+                    propertyTitle: property.title,
+                  },
+                });
+                if (!res.ok || !res.fileUrl) {
+                  toast.error("PDF konnte nicht erstellt werden", { description: "message" in res ? res.message : undefined });
+                  return;
+                }
+                let url = res.fileUrl;
+                if (res.path) {
+                  try {
+                    const bytes = await fetchBytes({ data: { path: res.path } });
+                    if (bytes.ok && bytes.base64) {
+                      const bin = atob(bytes.base64);
+                      const arr = new Uint8Array(bin.length);
+                      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+                      url = URL.createObjectURL(new Blob([arr], { type: "application/pdf" }));
+                    }
+                  } catch {}
+                }
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                toast.success("PDF wurde erstellt");
+              } catch (err) {
+                toast.error("PDF konnte nicht erstellt werden", { description: (err as Error).message });
+              } finally {
+                setGenerating(false);
+              }
+            }}
           >
-            <Printer className="mr-2 h-4 w-4" />Exposé drucken / als PDF speichern
+            {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+            {generating ? "PDF wird erstellt…" : "Exposé als PDF generieren"}
           </Button>
 
         </div>
