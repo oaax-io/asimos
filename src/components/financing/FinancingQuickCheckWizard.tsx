@@ -801,12 +801,13 @@ function Step2Property({
 type ClientLite = { id: string; full_name: string; email: string | null; equity: number | null };
 
 function Step3Client({
-  form, update, clients, loading,
+  form, update, clients, loading, isRefiOnly,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   clients: ClientLite[];
   loading: boolean;
+  isRefiOnly: boolean;
 }) {
   // Verknüpfte Personen des Hauptkunden (Ehepartner, Mitantragsteller, …)
   const relatedQuery = useQuery({
@@ -862,7 +863,7 @@ function Step3Client({
         onValueChange={(v) => update("client_source", v as ClientSource)}
         className="grid gap-2"
       >
-        <SourceRow value="crm" label="Kunde aus CRM wählen" description="Selbstauskunft & Eigenkapital werden vorausgefüllt." />
+        <SourceRow value="crm" label="Kunde aus CRM wählen" description={isRefiOnly ? "Einkommen wird aus dem Kundenprofil vorausgefüllt." : "Selbstauskunft & Eigenkapital werden vorausgefüllt."} />
         <SourceRow value="manual" label="Ohne Kunde / manuell" description="Quick Check ohne Verknüpfung zu einem Kunden." />
       </RadioGroup>
 
@@ -885,10 +886,16 @@ function Step3Client({
           {form.client_id && (
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Brutto-Jahreseinkommen (CHF)" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
-              <Field label="Eigenmittel total (CHF)" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
-              <Field label="davon Pensionskasse (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+              {!isRefiOnly && (
+                <>
+                  <Field label="Eigenmittel total (CHF)" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
+                  <Field label="davon Pensionskasse (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+                </>
+              )}
               <p className="sm:col-span-2 text-xs text-muted-foreground">
-                Werte aus Kundenprofil und Selbstauskunft vorausgefüllt — editierbar.
+                {isRefiOnly
+                  ? "Bei Refinanzierung sind Eigenmittel/PK nicht erforderlich — nur Einkommen für die Tragbarkeit."
+                  : "Werte aus Kundenprofil und Selbstauskunft vorausgefüllt — editierbar."}
               </p>
             </div>
           )}
@@ -910,11 +917,13 @@ function Step3Client({
           loading={loading}
           toggle={toggleCoApplicant}
           relatedMap={relatedMap}
+          isRefiOnly={isRefiOnly}
         />
       )}
     </div>
   );
 }
+
 
 function CoApplicantSection({
   form, update, clients, loading, toggle, relatedMap,
