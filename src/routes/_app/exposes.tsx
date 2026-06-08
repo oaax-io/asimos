@@ -223,6 +223,50 @@ function ExposesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Template preview dialog */}
+      <Dialog open={!!previewTemplate} onOpenChange={(o) => { if (!o) setPreviewTemplate(null); }}>
+        <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Template: {previewTemplate?.label}
+              <Badge variant="secondary" className="ml-2 gap-1 border-0 bg-emerald-100 text-emerald-800">
+                <Check className="h-3 w-3" /> Verfügbar
+              </Badge>
+            </DialogTitle>
+            <DialogDescription>
+              {previewTemplate?.description} · {previewTemplate?.orientation === "landscape" ? "Querformat" : "Hochformat"} · {previewTemplate?.family}
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewTemplate && (
+            <div className="space-y-3 py-2">
+              <TemplatePreview
+                template={previewTemplate}
+                sections={sections}
+                preview={previewData}
+                scale="stack"
+              />
+              <p className="text-center text-[11px] text-muted-foreground">
+                {property ? "Vorschau mit gewähltem Objekt" : "Schematische Vorschau · scrollen für alle Seiten"}
+              </p>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Schliessen</Button>
+            <Button
+              onClick={() => {
+                if (previewTemplate) setTemplateId(previewTemplate.id);
+                setPreviewTemplate(null);
+              }}
+              className="gap-2"
+            >
+              <Sparkles className="h-4 w-4" /> Dieses Template wählen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
