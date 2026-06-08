@@ -66,6 +66,22 @@ function maxLtvForUsage(usage: string): number {
   return 80; // owner_occupied oder unbekannt → konservativ Standard
 }
 
+const OBJECT_TYPE_LABELS: Record<string, string> = {
+  house: "Einfamilienhaus",
+  apartment: "Eigentumswohnung",
+  mixed_use: "Mehrfamilien-/Geschäftshaus",
+  commercial: "Gewerbe",
+  other: "Andere",
+};
+
+const REFI_PURPOSE_LABELS: Record<string, string> = {
+  rate_optimisation: "Zinsoptimierung",
+  bank_change: "Bankwechsel",
+  consolidation: "Konsolidierung",
+  cash_out: "Kapital-Auszahlung",
+  other: "Andere",
+};
+
 // Nur die fünf neuen, gewünschten Module (kein new_build)
 type WizardModule = "purchase" | "renovation" | "increase" | "refinance" | "mortgage_increase";
 
