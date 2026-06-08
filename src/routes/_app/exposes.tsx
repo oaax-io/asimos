@@ -191,19 +191,11 @@ function ExposesPage() {
           <Button
             className="w-full"
             disabled={!property}
-            onClick={() => {
-              const w = window.open("", "_blank");
-              if (!w) return;
-              w.document.write(`<!doctype html><meta charset="utf-8"><title>Exposé · ${property?.title ?? ""}</title>
-                <script>window.onload = () => setTimeout(() => window.print(), 600);</script>
-                <body style="margin:0">
-                  <div id="root">Exposé wird vorbereitet…</div>
-                </body>`);
-              w.document.close();
-            }}
+            onClick={() => window.print()}
           >
-            <Printer className="mr-2 h-4 w-4" />Drucken / PDF (Browser)
+            <Printer className="mr-2 h-4 w-4" />Exposé drucken / als PDF speichern
           </Button>
+
         </div>
       </div>
 
