@@ -552,30 +552,30 @@ export function FinancingQuickCheckWizard({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[95vw] h-[92vh] p-0 gap-0 flex flex-col overflow-hidden border-2 shadow-2xl">
+      <DialogContent className="max-w-4xl w-[92vw] max-h-[88vh] p-0 gap-0 flex flex-col overflow-hidden border shadow-2xl bg-card">
         {/* Sticky Header */}
-        <DialogHeader className="px-6 pt-5 pb-4 border-b bg-card shrink-0">
-          <DialogTitle className="text-xl font-semibold text-foreground">
+        <DialogHeader className="px-5 pt-4 pb-3 border-b bg-secondary text-secondary-foreground shrink-0">
+          <DialogTitle className="text-base font-semibold">
             {headerTitle}
           </DialogTitle>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-2.5 flex items-center gap-1.5">
             {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
               const isDone = i < step - 1;
               const isCurrent = i === step - 1;
               return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
                   <div
-                    className={`h-1.5 w-full rounded-full transition-colors ${
-                      isDone ? "bg-primary" : isCurrent ? "bg-primary/60" : "bg-muted"
+                    className={`h-1 w-full rounded-full transition-colors ${
+                      isDone ? "bg-primary" : isCurrent ? "bg-primary/70" : "bg-secondary-foreground/20"
                     }`}
                   />
                   <span
-                    className={`text-[11px] font-medium leading-none ${
+                    className={`text-[10px] font-medium leading-none ${
                       isCurrent
-                        ? "text-foreground"
-                        : isDone
                         ? "text-primary"
-                        : "text-muted-foreground"
+                        : isDone
+                        ? "text-secondary-foreground/80"
+                        : "text-secondary-foreground/50"
                     }`}
                   >
                     {stepLabels[i]}
@@ -587,7 +587,8 @@ export function FinancingQuickCheckWizard({
         </DialogHeader>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 bg-background">
+        <div className="flex-1 overflow-y-auto px-5 py-4 bg-muted/40 text-sm">
+
           {step === 1 && <Step1Modules form={form} toggleModule={toggleModule} />}
           {step === 2 && (
             <Step2Property
