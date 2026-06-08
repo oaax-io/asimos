@@ -548,52 +548,81 @@ export function FinancingQuickCheckWizard({
 
   const headerTitle = `Quick Check Finanzierung – Schritt ${step} / ${TOTAL_STEPS}`;
 
+  const stepLabels = ["Module", "Objekt", "Kunde", "Kennzahlen", "Erweitert", "Zusammenfassung"];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{headerTitle}</DialogTitle>
+      <DialogContent className="max-w-5xl w-[95vw] h-[92vh] p-0 gap-0 flex flex-col overflow-hidden border-2 shadow-2xl">
+        {/* Sticky Header */}
+        <DialogHeader className="px-6 pt-5 pb-4 border-b bg-card shrink-0">
+          <DialogTitle className="text-xl font-semibold text-foreground">
+            {headerTitle}
+          </DialogTitle>
+          <div className="mt-3 flex items-center gap-2">
+            {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
+              const isDone = i < step - 1;
+              const isCurrent = i === step - 1;
+              return (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                  <div
+                    className={`h-1.5 w-full rounded-full transition-colors ${
+                      isDone ? "bg-primary" : isCurrent ? "bg-primary/60" : "bg-muted"
+                    }`}
+                  />
+                  <span
+                    className={`text-[11px] font-medium leading-none ${
+                      isCurrent
+                        ? "text-foreground"
+                        : isDone
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {stepLabels[i]}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </DialogHeader>
 
-        <div className="flex gap-1 my-2">
-          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-            <div key={i} className={`h-1 flex-1 rounded ${i < step ? "bg-primary" : "bg-muted"}`} />
-          ))}
+        {/* Scrollable Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 bg-background">
+          {step === 1 && <Step1Modules form={form} toggleModule={toggleModule} />}
+          {step === 2 && (
+            <Step2Property
+              form={form}
+              update={update}
+              properties={propertiesQuery.data ?? []}
+              loading={propertiesQuery.isLoading}
+            />
+          )}
+          {step === 3 && (
+            <Step3Client
+              form={form}
+              update={update}
+              clients={clientsQuery.data ?? []}
+              loading={clientsQuery.isLoading}
+              isRefiOnly={isRefiOnly}
+            />
+          )}
+          {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} isRefiOnly={isRefiOnly} effectiveMortgage={effectiveMortgage} combined={combined} />}
+          {step === 5 && <Step5Advanced form={form} update={update} kpis={liveKpis} />}
+          {step === 6 && (
+            <Step6Summary
+              form={form}
+              kpis={liveKpis}
+              status={liveResult.status}
+              clients={clientsQuery.data ?? []}
+              properties={propertiesQuery.data ?? []}
+              isRefiOnly={isRefiOnly}
+              effectiveMortgage={effectiveMortgage}
+            />
+          )}
         </div>
 
-        {step === 1 && <Step1Modules form={form} toggleModule={toggleModule} />}
-        {step === 2 && (
-          <Step2Property
-            form={form}
-            update={update}
-            properties={propertiesQuery.data ?? []}
-            loading={propertiesQuery.isLoading}
-          />
-        )}
-        {step === 3 && (
-          <Step3Client
-            form={form}
-            update={update}
-            clients={clientsQuery.data ?? []}
-            loading={clientsQuery.isLoading}
-            isRefiOnly={isRefiOnly}
-          />
-        )}
-        {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} isRefiOnly={isRefiOnly} effectiveMortgage={effectiveMortgage} combined={combined} />}
-        {step === 5 && <Step5Advanced form={form} update={update} kpis={liveKpis} />}
-        {step === 6 && (
-          <Step6Summary
-            form={form}
-            kpis={liveKpis}
-            status={liveResult.status}
-            clients={clientsQuery.data ?? []}
-            properties={propertiesQuery.data ?? []}
-            isRefiOnly={isRefiOnly}
-            effectiveMortgage={effectiveMortgage}
-          />
-        )}
-
-        <DialogFooter className="mt-4 flex-row justify-between sm:justify-between">
+        {/* Sticky Footer */}
+        <DialogFooter className="px-6 py-4 border-t bg-card shrink-0 flex-row justify-between sm:justify-between">
           <div>
             {step > 1 && (
               <Button variant="outline" onClick={() => setStep(step - 1)} disabled={createMutation.isPending}>
@@ -601,7 +630,10 @@ export function FinancingQuickCheckWizard({
               </Button>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              Schritt {step} von {TOTAL_STEPS}
+            </span>
             {step < TOTAL_STEPS && (
               <Button onClick={() => setStep(step + 1)} disabled={!canNext}>
                 Weiter <ArrowRight className="ml-1 h-4 w-4" />
