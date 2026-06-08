@@ -76,6 +76,7 @@ supabase/
 - **UBS-Checkliste**: Vollständige Checkliste für UBS-Standards
 - **Dokumenten-Management** innerhalb des Finanzierungs-Workflows
 - **Selbstauskunft-Integration**: Direkter Zugriff auf die Kunden-Selbstauskunft
+- **Quick-Check-Wizard**: Kompaktes 5-Schritt-Modal mit zwei-Spalten-Layout (Quelle links, Daten rechts), Schweizer-Banken-Dropdown, Live-Aufstockungs-Indikator bei Refinanzierung
 
 ### Leads (`/leads`)
 - **Lead-Pipeline** mit Status-Tracking
