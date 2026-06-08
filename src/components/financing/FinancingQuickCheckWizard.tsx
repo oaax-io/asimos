@@ -623,7 +623,7 @@ export function FinancingQuickCheckWizard({
         </div>
 
         {/* Sticky Footer */}
-        <DialogFooter className="px-6 py-4 border-t bg-card shrink-0 flex-row justify-between sm:justify-between">
+        <DialogFooter className="px-5 py-3 border-t bg-card shrink-0 flex-row justify-between sm:justify-between">
           <div>
             {step > 1 && (
               <Button variant="outline" onClick={() => setStep(step - 1)} disabled={createMutation.isPending}>
