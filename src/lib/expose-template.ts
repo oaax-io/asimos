@@ -35,6 +35,16 @@ export interface ExposeData {
   generated_on?: string;
 }
 
+export interface ExposeTheme {
+  primary: string;
+  accent: string;
+  pageBg: string;
+  titleFont: string;
+  bodyFont: string;
+  orientation?: "portrait" | "landscape";
+  templateLabel?: string;
+}
+
 const fmtCHF = (v: number) =>
   new Intl.NumberFormat("de-CH", { style: "currency", currency: "CHF", maximumFractionDigits: 0 }).format(v);
 
@@ -48,7 +58,16 @@ function escape(str: string | null | undefined): string {
     .replace(/'/g, "&#39;");
 }
 
-export function renderExposeHTML(d: ExposeData): string {
+export function renderExposeHTML(d: ExposeData, theme?: ExposeTheme): string {
+  const t: ExposeTheme = theme ?? {
+    primary: "#14110f",
+    accent: "#2563EB",
+    pageBg: "#f5f3ef",
+    titleFont: "Georgia, 'Times New Roman', serif",
+    bodyFont: "'Helvetica Neue', Arial, sans-serif",
+    orientation: "portrait",
+  };
+  const orient = t.orientation ?? "portrait";
   const priceLine = d.price
     ? `<div><div class="kicker">${escape(d.listing_type_label ?? "")}preis</div><div class="price">${fmtCHF(d.price)}</div></div>`
     : d.rent
@@ -104,40 +123,40 @@ export function renderExposeHTML(d: ExposeData): string {
 <title>${escape(d.title)} – Exposé</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { background: #f5f3ef; color: #14110f; font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.55; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .page { max-width: 880px; margin: 0 auto; padding: 56px 64px; background: #ffffff; }
-  .header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 24px; border-bottom: 1px solid #e5e1d8; margin-bottom: 40px; }
-  .brand { font-family: Georgia, 'Times New Roman', serif; font-size: 20px; font-weight: 700; letter-spacing: 0.02em; }
-  .brand-sub { font-size: 11px; color: #8a857c; text-transform: uppercase; letter-spacing: 0.18em; margin-top: 2px; }
-  .meta { font-size: 11px; color: #8a857c; text-transform: uppercase; letter-spacing: 0.16em; }
-  .cover { width: 100%; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 4px; background: #ece9e2; margin-bottom: 36px; }
+  html, body { background: ${t.pageBg}; color: ${t.primary}; font-family: ${t.bodyFont}; line-height: 1.55; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { max-width: ${orient === "landscape" ? "1180px" : "880px"}; margin: 0 auto; padding: 56px 64px; background: ${t.pageBg}; }
+  .header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 24px; border-bottom: 2px solid ${t.accent}; margin-bottom: 40px; }
+  .brand { font-family: ${t.titleFont}; font-size: 20px; font-weight: 700; letter-spacing: 0.02em; color: ${t.primary}; }
+  .brand-sub { font-size: 11px; color: ${t.accent}; text-transform: uppercase; letter-spacing: 0.18em; margin-top: 2px; }
+  .meta { font-size: 11px; color: ${t.primary}; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.16em; }
+  .cover { width: 100%; aspect-ratio: ${orient === "landscape" ? "21 / 9" : "16 / 10"}; overflow: hidden; border-radius: 4px; background: rgba(0,0,0,0.05); margin-bottom: 36px; }
   .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  h1.title { font-family: Georgia, 'Times New Roman', serif; font-size: 40px; line-height: 1.1; font-weight: 700; letter-spacing: -0.01em; }
-  .address { margin-top: 10px; color: #6e6a62; font-size: 15px; }
-  .price-row { display: flex; align-items: flex-end; justify-content: space-between; margin: 32px 0; padding: 24px 0; border-top: 1px solid #e5e1d8; border-bottom: 1px solid #e5e1d8; }
-  .kicker { font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; color: #8a857c; margin-bottom: 6px; }
-  .price { font-family: Georgia, 'Times New Roman', serif; font-size: 32px; font-weight: 700; }
-  .type-badge { font-size: 12px; color: #14110f; padding: 6px 14px; border: 1px solid #14110f; border-radius: 999px; }
-  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 40px; }
-  .fact { background: #f5f3ef; padding: 16px; border-radius: 4px; }
-  .fact-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; color: #8a857c; margin-bottom: 4px; }
+  h1.title { font-family: ${t.titleFont}; font-size: 40px; line-height: 1.1; font-weight: 700; letter-spacing: -0.01em; color: ${t.primary}; }
+  .address { margin-top: 10px; opacity: 0.7; font-size: 15px; }
+  .price-row { display: flex; align-items: flex-end; justify-content: space-between; margin: 32px 0; padding: 24px 0; border-top: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); }
+  .kicker { font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; color: ${t.accent}; margin-bottom: 6px; font-weight: 700; }
+  .price { font-family: ${t.titleFont}; font-size: 32px; font-weight: 700; color: ${t.primary}; }
+  .type-badge { font-size: 12px; color: ${t.primary}; padding: 6px 14px; border: 1px solid ${t.primary}; border-radius: 999px; }
+  .facts { display: grid; grid-template-columns: repeat(${orient === "landscape" ? 6 : 4}, 1fr); gap: 12px; margin-bottom: 40px; }
+  .fact { background: rgba(0,0,0,0.04); padding: 16px; border-radius: 4px; border-left: 3px solid ${t.accent}; }
+  .fact-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; opacity: 0.65; margin-bottom: 4px; }
   .fact-value { font-size: 16px; font-weight: 600; }
   section { margin-bottom: 40px; page-break-inside: avoid; }
-  h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #e5e1d8; }
-  .description { font-size: 14px; color: #36322c; white-space: pre-wrap; }
+  h2 { font-family: ${t.titleFont}; font-size: 22px; font-weight: 700; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid ${t.accent}; color: ${t.primary}; }
+  .description { font-size: 14px; opacity: 0.85; white-space: pre-wrap; }
   .features { columns: 2; column-gap: 32px; list-style: none; font-size: 14px; }
   .features li { padding: 6px 0 6px 18px; position: relative; break-inside: avoid; }
-  .features li::before { content: ""; position: absolute; left: 0; top: 14px; width: 6px; height: 6px; background: #14110f; border-radius: 999px; }
-  .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .gallery-item { aspect-ratio: 4 / 3; overflow: hidden; border-radius: 4px; background: #ece9e2; }
+  .features li::before { content: ""; position: absolute; left: 0; top: 14px; width: 6px; height: 6px; background: ${t.accent}; border-radius: 999px; }
+  .gallery { display: grid; grid-template-columns: ${orient === "landscape" ? "1fr 1fr 1fr" : "1fr 1fr"}; gap: 12px; }
+  .gallery-item { aspect-ratio: 4 / 3; overflow: hidden; border-radius: 4px; background: rgba(0,0,0,0.05); }
   .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .contact-card { background: #14110f; color: #f5f3ef; padding: 28px; border-radius: 4px; }
-  .contact-agency { font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; color: #b3aea4; margin-bottom: 8px; }
-  .contact-name { font-family: Georgia, serif; font-size: 22px; font-weight: 700; margin-bottom: 14px; }
+  .contact-card { background: ${t.primary}; color: ${t.pageBg}; padding: 28px; border-radius: 4px; border-top: 4px solid ${t.accent}; }
+  .contact-agency { font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.7; margin-bottom: 8px; color: ${t.accent}; }
+  .contact-name { font-family: ${t.titleFont}; font-size: 22px; font-weight: 700; margin-bottom: 14px; }
   .contact-meta { display: flex; gap: 24px; font-size: 14px; flex-wrap: wrap; }
-  .footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid #e5e1d8; text-align: center; font-size: 11px; color: #8a857c; letter-spacing: 0.06em; }
-  @page { size: A4; margin: 16mm; }
-  @media print { body { background: #fff; } .page { padding: 0; max-width: none; } }
+  .footer { margin-top: 48px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.12); text-align: center; font-size: 11px; opacity: 0.55; letter-spacing: 0.06em; }
+  @page { size: A4 ${orient}; margin: 12mm; }
+  @media print { .page { padding: 0; max-width: none; } }
 </style>
 </head>
 <body>
@@ -145,7 +164,7 @@ export function renderExposeHTML(d: ExposeData): string {
     <header class="header">
       <div>
         <div class="brand">${escape(d.agency_name ?? "ASIMO Real Estate")}</div>
-        <div class="brand-sub">Immobilienexposé</div>
+        <div class="brand-sub">Exposé${t.templateLabel ? ` · ${escape(t.templateLabel)}` : ""}</div>
       </div>
       <div class="meta">${escape(d.generated_on ?? new Date().toLocaleDateString("de-CH"))}</div>
     </header>
