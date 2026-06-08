@@ -95,6 +95,15 @@ export type WizardForm = {
   calc_rate: string;
   ancillary_pct: string;
   amortisation_years: string;
+
+  // Refinanzierung – zusätzliche Felder (nur aktiv wenn isRefiOnly)
+  usage_type: "" | "owner_occupied" | "rental";
+  object_type: "" | "house" | "apartment" | "commercial" | "mixed_use" | "other";
+  current_bank: string;
+  interest_rate_current: string;
+  interest_rate_expiry: string;
+  refi_purpose: "" | "rate_optimisation" | "bank_change" | "consolidation" | "cash_out" | "other";
+  monthly_obligations: string;
 };
 
 const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
