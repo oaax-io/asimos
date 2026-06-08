@@ -169,7 +169,7 @@ function PropertiesPage() {
     return true;
   });
 
-  // Units-by-parent map for badges + grouping
+  // Units-by-parent map, children sorted newest-first
   const unitsByParent = useMemo(() => {
     const m = new Map<string, any[]>();
     for (const p of properties as any[]) {
@@ -178,6 +178,13 @@ function PropertiesPage() {
         arr.push(p);
         m.set(p.parent_property_id, arr);
       }
+    }
+    for (const [key, arr] of m) {
+      m.set(key, arr.sort((a: any, b: any) => {
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
+      }));
     }
     return m;
   }, [properties]);
