@@ -576,6 +576,7 @@ export function FinancingQuickCheckWizard({
             update={update}
             clients={clientsQuery.data ?? []}
             loading={clientsQuery.isLoading}
+            isRefiOnly={isRefiOnly}
           />
         )}
         {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} isRefiOnly={isRefiOnly} effectiveMortgage={effectiveMortgage} />}
