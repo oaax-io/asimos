@@ -227,7 +227,7 @@ export function FinancingQuickCheckWizard({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("properties")
-        .select("id, title, address, city, postal_code, price, property_type")
+        .select("id, title, address, city, postal_code, price, property_type, is_unit, unit_number, unit_type, unit_floor, parent_property_id")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
