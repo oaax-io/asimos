@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -10,8 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Check, Printer, FileBadge, Eye, Sparkles } from "lucide-react";
+import { Check, FileDown, Loader2, FileBadge, Eye, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { renderDocumentPdf, fetchDocumentPdfBytes } from "@/lib/documents.functions";
 import {
   TEMPLATES,
   TemplatePreview,
