@@ -1101,10 +1101,11 @@ function CoApplicantSection({
 }
 
 function DataQualityChecklist({
-  hasIncome, hasEquity, income, equity, pk,
+  hasIncome, hasEquity, income, equity, pk, hideEquity,
 }: {
   hasIncome: boolean; hasEquity: boolean; hasPk: boolean;
   income: number; equity: number; pk: number;
+  hideEquity?: boolean;
 }) {
   const Row = ({ ok, label, value, fallback }: {
     ok: boolean; label: string; value: string; fallback: string;
@@ -1130,19 +1131,23 @@ function DataQualityChecklist({
         value={`${formatCurrency(income)} / Jahr (aus Selbstauskunft)`}
         fallback="nicht erfasst"
       />
-      <Row
-        ok={hasEquity}
-        label="Eigenkapital"
-        value={formatCurrency(equity)}
-        fallback="nicht erfasst"
-      />
-      {/* PK nicht aus dem CRM — optional, aber grün sobald manuell erfasst */}
-      <Row
-        ok={pk > 0}
-        label="PK / Freizügigkeit"
-        value={`${formatCurrency(pk)} (manuell)`}
-        fallback="optional — nicht im CRM (Standard: CHF 0)"
-      />
+      {!hideEquity && (
+        <>
+          <Row
+            ok={hasEquity}
+            label="Eigenkapital"
+            value={formatCurrency(equity)}
+            fallback="nicht erfasst"
+          />
+          {/* PK nicht aus dem CRM — optional, aber grün sobald manuell erfasst */}
+          <Row
+            ok={pk > 0}
+            label="PK / Freizügigkeit"
+            value={`${formatCurrency(pk)} (manuell)`}
+            fallback="optional — nicht im CRM (Standard: CHF 0)"
+          />
+        </>
+      )}
     </ul>
   );
 }
