@@ -91,6 +91,7 @@ export type WizardForm = {
   renovation_own_work: string;
   existing_mortgage: string;
   requested_mortgage: string;
+  requested_increase: string;
   calc_rate: string;
   ancillary_pct: string;
   amortisation_years: string;
@@ -118,6 +119,7 @@ const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
   renovation_own_work: "",
   existing_mortgage: "",
   requested_mortgage: "",
+  requested_increase: "",
   calc_rate: "5",
   ancillary_pct: "1",
   amortisation_years: "15",
@@ -289,12 +291,26 @@ export function FinancingQuickCheckWizard({
     };
   }, [form]);
 
+  // ---- Refinanzierungs-Modus (kein Kauf/Neubau, nur Bestand) ----
+  const isRefiOnly = useMemo(() => {
+    const m = form.modules;
+    if (m.length === 0) return false;
+    if (m.includes("purchase")) return false;
+    return m.includes("refinance") || m.includes("increase") || m.includes("mortgage_increase");
+  }, [form.modules]);
+
+  // Effektive Hypothek: bei Refi = aktuelle Hypothek + Aufstockung
+  const effectiveMortgage = useMemo(() => {
+    if (isRefiOnly) return num(form.existing_mortgage) + num(form.requested_increase);
+    return num(form.requested_mortgage);
+  }, [isRefiOnly, form.existing_mortgage, form.requested_increase, form.requested_mortgage]);
+
   // ---- Live-KPIs (Schritt 4 + 5 + 6) ----
   const liveResult = useMemo(() => {
     return calcQuickCheck({
       purchase_price: numOrNull(form.property_purchase_price) ?? 0,
       renovation_costs: numOrNull(form.renovation_costs) ?? 0,
-      requested_mortgage: numOrNull(form.requested_mortgage) ?? 0,
+      requested_mortgage: effectiveMortgage,
       own_funds_total: combined.equityCombined,
       own_funds_pension_fund: combined.pkCombined || null,
       own_funds_vested_benefits: null,
@@ -303,14 +319,14 @@ export function FinancingQuickCheckWizard({
       ancillary_costs_yearly: null,
       amortisation_yearly: null,
     });
-  }, [form, combined]);
+  }, [form, combined, effectiveMortgage]);
 
   // Tatsächliche Live-Kennzahlen mit Nebenkosten-% und Amortisation aus Schritt 5
   const liveKpis = useMemo(() => {
     const purchase = num(form.property_purchase_price);
     const reno = num(form.renovation_costs);
     const total = purchase + reno;
-    const mortgage = num(form.requested_mortgage);
+    const mortgage = effectiveMortgage;
     const equity = combined.equityCombined;
     const income = combined.incomeCombined;
     const rate = num(form.calc_rate) || 5;
@@ -326,7 +342,7 @@ export function FinancingQuickCheckWizard({
     const yearly = mortgage * (rate / 100) + ancillary + amort;
     const affordability = income > 0 ? (yearly / income) * 100 : 0;
     return { ltv, equityRatio, affordability, total, ancillary, amort, yearly };
-  }, [form, combined]);
+  }, [form, combined, effectiveMortgage]);
 
   // ---- Validierung ----
   const canNext = useMemo(() => {
@@ -341,16 +357,21 @@ export function FinancingQuickCheckWizard({
       return true;
     }
     if (step === 4) {
-      // Genau die vier Pflichtfelder — keine weiteren Checks
-      const purchase = num(form.property_purchase_price);
       const equity = num(form.own_funds_total);
       const income = num(form.gross_income_yearly);
+      if (isRefiOnly) {
+        const existing = num(form.existing_mortgage);
+        const mortgage = effectiveMortgage;
+        const propertyVal = num(form.property_purchase_price); // dient als Objektwert
+        return propertyVal > 0 && existing > 0 && mortgage > 0 && equity >= 0 && income > 0;
+      }
+      const purchase = num(form.property_purchase_price);
       const mortgage = num(form.requested_mortgage);
       return purchase > 0 && equity >= 0 && income > 0 && mortgage > 0;
     }
     if (step === 5) return true;
     return true;
-  }, [step, form]);
+  }, [step, form, isRefiOnly, effectiveMortgage]);
 
   const navigate = useNavigate();
 
@@ -358,7 +379,7 @@ export function FinancingQuickCheckWizard({
     mutationFn: async () => {
       const purchase = numOrNull(form.property_purchase_price);
       const reno = numOrNull(form.renovation_costs);
-      const mortgage = numOrNull(form.requested_mortgage);
+      const mortgage = isRefiOnly ? effectiveMortgage : (numOrNull(form.requested_mortgage) ?? 0);
       const rate = numOrNull(form.calc_rate) ?? 5;
       const ancillary = liveKpis.ancillary || null;
       const amort = liveKpis.amort || null;
@@ -401,6 +422,7 @@ export function FinancingQuickCheckWizard({
         renovation_costs: reno,
         renovation_own_work: numOrNull(form.renovation_own_work),
         existing_mortgage: numOrNull(form.existing_mortgage),
+        requested_increase: numOrNull(form.requested_increase),
         requested_mortgage: mortgage,
         // Hauptantragsteller-Einzelwerte (unverändert)
         own_funds_total: combined.mainEquity || null,
@@ -478,7 +500,7 @@ export function FinancingQuickCheckWizard({
             loading={clientsQuery.isLoading}
           />
         )}
-        {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} />}
+        {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} isRefiOnly={isRefiOnly} effectiveMortgage={effectiveMortgage} />}
         {step === 5 && <Step5Advanced form={form} update={update} kpis={liveKpis} />}
         {step === 6 && (
           <Step6Summary
@@ -487,6 +509,8 @@ export function FinancingQuickCheckWizard({
             status={liveResult.status}
             clients={clientsQuery.data ?? []}
             properties={propertiesQuery.data ?? []}
+            isRefiOnly={isRefiOnly}
+            effectiveMortgage={effectiveMortgage}
           />
         )}
 
@@ -980,19 +1004,52 @@ function KpiPreview({ kpis }: { kpis: Kpis }) {
 }
 
 function Step4Metrics({
-  form, update, kpis,
+  form, update, kpis, isRefiOnly, effectiveMortgage,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   kpis: Kpis;
+  isRefiOnly: boolean;
+  effectiveMortgage: number;
 }) {
   const showRenovation = form.modules.includes("renovation");
-  const showExisting = form.modules.includes("increase") || form.modules.includes("refinance") || form.modules.includes("mortgage_increase");
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Kaufpreis (CHF) *" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
-        <Field label="Gewünschte Hypothek (CHF) *" type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
+        {isRefiOnly ? (
+          <>
+            <Field
+              label="Aktueller Objektwert / Verkehrswert (CHF) *"
+              type="number"
+              value={form.property_purchase_price}
+              onChange={(v) => update("property_purchase_price", v)}
+            />
+            <Field
+              label="Aktuelle Hypothek (CHF) *"
+              type="number"
+              value={form.existing_mortgage}
+              onChange={(v) => update("existing_mortgage", v)}
+            />
+            <Field
+              label="Aufstockungsbetrag (CHF)"
+              type="number"
+              value={form.requested_increase}
+              onChange={(v) => update("requested_increase", v)}
+            />
+            <div className="rounded-md border bg-muted/40 p-3 text-sm flex flex-col justify-center">
+              <span className="text-xs text-muted-foreground">Neue Gesamthypothek</span>
+              <span className="font-semibold text-base">{formatCurrency(effectiveMortgage)}</span>
+              <span className="text-xs text-muted-foreground mt-1">
+                = Aktuelle Hypothek + Aufstockungsbetrag
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            <Field label="Kaufpreis (CHF) *" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
+            <Field label="Gewünschte Hypothek (CHF) *" type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
+          </>
+        )}
         <Field label="Eigenmittel total (CHF) *" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
         <Field label="davon PK / Freizügigkeit (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
         <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
@@ -1001,9 +1058,6 @@ function Step4Metrics({
             <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
             <Field label="davon Eigenleistung (CHF)" type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
           </>
-        )}
-        {showExisting && (
-          <Field label="Bestehende Hypothek (CHF)" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
         )}
       </div>
       <div className="rounded-lg bg-muted/50 p-3">
@@ -1080,13 +1134,15 @@ function Step5Advanced({
 
 /* ==================== Schritt 6 ==================== */
 function Step6Summary({
-  form, kpis, status, clients, properties,
+  form, kpis, status, clients, properties, isRefiOnly, effectiveMortgage,
 }: {
   form: WizardForm;
   kpis: Kpis;
   status: string;
   clients: any[];
   properties: any[];
+  isRefiOnly: boolean;
+  effectiveMortgage: number;
 }) {
   const client = clients.find((c) => c.id === form.client_id);
   const property = properties.find((p) => p.id === form.property_id);
@@ -1099,6 +1155,7 @@ function Step6Summary({
   const clientLabel = form.client_source === "crm"
     ? (client?.full_name ?? "—")
     : "Ohne Kunde";
+  const propertyValueLabel = isRefiOnly ? "Objektwert / Verkehrswert" : "Kaufpreis";
 
   return (
     <div className="space-y-4">
@@ -1109,7 +1166,7 @@ function Step6Summary({
       <SummaryGroup title="Immobilie">
         <SumRow label="Bezeichnung" value={propertyLabel} />
         {form.property_address && <SumRow label="Adresse" value={form.property_address} />}
-        {form.property_purchase_price && <SumRow label="Kaufpreis" value={formatCurrency(num(form.property_purchase_price))} />}
+        {form.property_purchase_price && <SumRow label={propertyValueLabel} value={formatCurrency(num(form.property_purchase_price))} />}
       </SummaryGroup>
 
       <SummaryGroup title="Kunde">
@@ -1120,10 +1177,20 @@ function Step6Summary({
       </SummaryGroup>
 
       <SummaryGroup title="Kennzahlen">
-        <SumRow label="Gewünschte Hypothek" value={formatCurrency(num(form.requested_mortgage))} />
+        {isRefiOnly ? (
+          <>
+            <SumRow label="Aktuelle Hypothek" value={formatCurrency(num(form.existing_mortgage))} />
+            <SumRow label="Aufstockungsbetrag" value={formatCurrency(num(form.requested_increase))} />
+            <SumRow label="Neue Gesamthypothek" value={formatCurrency(effectiveMortgage)} />
+          </>
+        ) : (
+          <>
+            <SumRow label="Gewünschte Hypothek" value={formatCurrency(num(form.requested_mortgage))} />
+            {form.existing_mortgage && <SumRow label="Bestehende Hypothek" value={formatCurrency(num(form.existing_mortgage))} />}
+          </>
+        )}
         {form.renovation_costs && <SumRow label="Renovationskosten" value={formatCurrency(num(form.renovation_costs))} />}
         {form.renovation_own_work && <SumRow label="davon Eigenleistung" value={formatCurrency(num(form.renovation_own_work))} />}
-        {form.existing_mortgage && <SumRow label="Bestehende Hypothek" value={formatCurrency(num(form.existing_mortgage))} />}
         <SumRow label="Kalk. Zinssatz" value={`${num(form.calc_rate).toFixed(1)} %`} />
         <SumRow label="Nebenkosten" value={`${num(form.ancillary_pct).toFixed(1)} %`} />
         <SumRow label="Amortisationsdauer" value={`${form.amortisation_years} Jahre`} />
