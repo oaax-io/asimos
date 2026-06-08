@@ -1053,14 +1053,18 @@ function DataQualityChecklist({
 }
 
 /* ==================== Schritt 4 ==================== */
-type Kpis = { ltv: number; equityRatio: number; affordability: number; total: number; ancillary: number; amort: number; yearly: number };
+type Kpis = {
+  ltv: number; equityRatio: number; affordability: number;
+  total: number; ancillary: number; amort: number; yearly: number;
+  obligationsYearly: number; maxLtv: number; maxMortgageAllowed: number; ltvExceeded: boolean;
+};
 
-function KpiPreview({ kpis }: { kpis: Kpis }) {
+function KpiPreview({ kpis, hideEquity }: { kpis: Kpis; hideEquity?: boolean }) {
   return (
     <p className="text-xs text-muted-foreground">
       Belehnung: <span className="font-medium text-foreground">{kpis.ltv.toFixed(1)}%</span>
       {" · "}Tragbarkeit: <span className="font-medium text-foreground">{kpis.affordability.toFixed(1)}%</span>
-      {" · "}Eigenmittelquote: <span className="font-medium text-foreground">{kpis.equityRatio.toFixed(1)}%</span>
+      {!hideEquity && <>{" · "}Eigenmittelquote: <span className="font-medium text-foreground">{kpis.equityRatio.toFixed(1)}%</span></>}
     </p>
   );
 }
