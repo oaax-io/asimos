@@ -552,33 +552,33 @@ export function FinancingQuickCheckWizard({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[92vw] max-h-[88vh] p-0 gap-0 flex flex-col overflow-hidden border shadow-2xl bg-card">
+      <DialogContent className="max-w-4xl w-[92vw] max-h-[88vh] p-0 gap-0 flex flex-col overflow-hidden border shadow-2xl bg-background [&>button]:top-3 [&>button]:right-3 [&>button]:z-10 [&>button]:rounded-full [&>button]:bg-background [&>button]:border [&>button]:border-border [&>button]:p-1.5 [&>button]:opacity-100 [&>button>svg]:h-4 [&>button>svg]:w-4 [&>button]:shadow-sm [&>button]:hover:bg-muted">
         {/* Sticky Header */}
-        <DialogHeader className="px-5 pt-4 pb-3 border-b bg-secondary text-secondary-foreground shrink-0">
-          <DialogTitle className="text-base font-semibold">
+        <DialogHeader className="px-5 pt-4 pb-3 border-b bg-card shrink-0 pr-14">
+          <DialogTitle className="text-base font-semibold text-foreground">
             {headerTitle}
           </DialogTitle>
-          <div className="mt-2.5 flex items-center gap-1.5">
+          <div className="mt-3 flex items-center gap-2">
             {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
               const isDone = i < step - 1;
               const isCurrent = i === step - 1;
               return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
                   <div
-                    className={`h-1 w-full rounded-full transition-colors ${
-                      isDone ? "bg-primary" : isCurrent ? "bg-primary/70" : "bg-secondary-foreground/20"
+                    className={`h-1.5 w-full rounded-full transition-colors ${
+                      isDone ? "bg-primary" : isCurrent ? "bg-primary/70" : "bg-muted"
                     }`}
                   />
                   <span
-                    className={`text-[10px] font-medium leading-none ${
+                    className={`text-xs font-medium leading-none whitespace-nowrap ${
                       isCurrent
-                        ? "text-primary"
+                        ? "text-primary font-semibold"
                         : isDone
-                        ? "text-secondary-foreground/80"
-                        : "text-secondary-foreground/50"
+                        ? "text-foreground/80"
+                        : "text-muted-foreground"
                     }`}
                   >
-                    {stepLabels[i]}
+                    {i + 1}. {stepLabels[i]}
                   </span>
                 </div>
               );
@@ -587,7 +587,8 @@ export function FinancingQuickCheckWizard({
         </DialogHeader>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 bg-muted/50 text-sm">
+        <div className="flex-1 overflow-y-auto px-5 py-4 bg-muted text-sm">
+
 
           {step === 1 && <Step1Modules form={form} toggleModule={toggleModule} />}
           {step === 2 && (
