@@ -9,7 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Check, Printer, FileBadge } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Check, Printer, FileBadge, Eye, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   TEMPLATES,
@@ -48,6 +49,7 @@ function ExposesPage() {
   const [templateId, setTemplateId] = useState<ExposeTemplate>("classic");
   const [propertyId, setPropertyId] = useState<string>("");
   const [sections, setSections] = useState<Required<ExposeSections>>(DEFAULT_SECTIONS);
+  const [previewTemplate, setPreviewTemplate] = useState<TemplateMeta | null>(null);
 
   const { data: properties = [] } = useQuery({
     queryKey: ["exposes-properties"],
@@ -109,7 +111,7 @@ function ExposesPage() {
                   <button
                     key={t.id}
                     type="button"
-                    onClick={() => setTemplateId(t.id)}
+                    onClick={() => setPreviewTemplate(t)}
                     className={cn(
                       "group relative flex flex-col rounded-lg border bg-card p-2 text-left transition",
                       active ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50",
@@ -117,6 +119,11 @@ function ExposesPage() {
                   >
                     <div className="relative w-full overflow-hidden rounded">
                       <TemplatePreview template={t} sections={sections} preview={previewData} scale="thumbnail" />
+                      <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100">
+                        <span className="mb-2 flex items-center gap-1.5 rounded-full bg-background px-2.5 py-1 text-[11px] font-semibold shadow">
+                          <Eye className="h-3 w-3" /> Vorschau
+                        </span>
+                      </div>
                     </div>
                     <div className="mt-2 flex items-center justify-between">
                       <div className="min-w-0">
@@ -216,6 +223,50 @@ function ExposesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Template preview dialog */}
+      <Dialog open={!!previewTemplate} onOpenChange={(o) => { if (!o) setPreviewTemplate(null); }}>
+        <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Template: {previewTemplate?.label}
+              <Badge variant="secondary" className="ml-2 gap-1 border-0 bg-emerald-100 text-emerald-800">
+                <Check className="h-3 w-3" /> Verfügbar
+              </Badge>
+            </DialogTitle>
+            <DialogDescription>
+              {previewTemplate?.description} · {previewTemplate?.orientation === "landscape" ? "Querformat" : "Hochformat"} · {previewTemplate?.family}
+            </DialogDescription>
+          </DialogHeader>
+
+          {previewTemplate && (
+            <div className="space-y-3 py-2">
+              <TemplatePreview
+                template={previewTemplate}
+                sections={sections}
+                preview={previewData}
+                scale="stack"
+              />
+              <p className="text-center text-[11px] text-muted-foreground">
+                {property ? "Vorschau mit gewähltem Objekt" : "Schematische Vorschau · scrollen für alle Seiten"}
+              </p>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setPreviewTemplate(null)}>Schliessen</Button>
+            <Button
+              onClick={() => {
+                if (previewTemplate) setTemplateId(previewTemplate.id);
+                setPreviewTemplate(null);
+              }}
+              className="gap-2"
+            >
+              <Sparkles className="h-4 w-4" /> Dieses Template wählen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
