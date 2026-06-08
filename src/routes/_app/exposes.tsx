@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Check, FileDown, Loader2, FileBadge, Eye, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { renderDocumentPdf, fetchDocumentPdfBytes } from "@/lib/documents.functions";
+import { renderExposeHTML } from "@/lib/expose-template";
 import {
   TEMPLATES,
   TemplatePreview,
