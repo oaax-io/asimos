@@ -111,7 +111,7 @@ function ExposesPage() {
                   <button
                     key={t.id}
                     type="button"
-                    onClick={() => setTemplateId(t.id)}
+                    onClick={() => setPreviewTemplate(t)}
                     className={cn(
                       "group relative flex flex-col rounded-lg border bg-card p-2 text-left transition",
                       active ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50",
@@ -119,6 +119,11 @@ function ExposesPage() {
                   >
                     <div className="relative w-full overflow-hidden rounded">
                       <TemplatePreview template={t} sections={sections} preview={previewData} scale="thumbnail" />
+                      <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100">
+                        <span className="mb-2 flex items-center gap-1.5 rounded-full bg-background px-2.5 py-1 text-[11px] font-semibold shadow">
+                          <Eye className="h-3 w-3" /> Vorschau
+                        </span>
+                      </div>
                     </div>
                     <div className="mt-2 flex items-center justify-between">
                       <div className="min-w-0">
