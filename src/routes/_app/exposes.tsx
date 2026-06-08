@@ -49,6 +49,7 @@ function ExposesPage() {
   const [templateId, setTemplateId] = useState<ExposeTemplate>("classic");
   const [propertyId, setPropertyId] = useState<string>("");
   const [sections, setSections] = useState<Required<ExposeSections>>(DEFAULT_SECTIONS);
+  const [previewTemplate, setPreviewTemplate] = useState<TemplateMeta | null>(null);
 
   const { data: properties = [] } = useQuery({
     queryKey: ["exposes-properties"],
