@@ -552,30 +552,30 @@ export function FinancingQuickCheckWizard({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[95vw] h-[92vh] p-0 gap-0 flex flex-col overflow-hidden border-2 shadow-2xl">
+      <DialogContent className="max-w-4xl w-[92vw] max-h-[88vh] p-0 gap-0 flex flex-col overflow-hidden border shadow-2xl bg-card">
         {/* Sticky Header */}
-        <DialogHeader className="px-6 pt-5 pb-4 border-b bg-card shrink-0">
-          <DialogTitle className="text-xl font-semibold text-foreground">
+        <DialogHeader className="px-5 pt-4 pb-3 border-b bg-secondary text-secondary-foreground shrink-0">
+          <DialogTitle className="text-base font-semibold">
             {headerTitle}
           </DialogTitle>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-2.5 flex items-center gap-1.5">
             {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
               const isDone = i < step - 1;
               const isCurrent = i === step - 1;
               return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                <div key={i} className="flex-1 flex flex-col items-center gap-1">
                   <div
-                    className={`h-1.5 w-full rounded-full transition-colors ${
-                      isDone ? "bg-primary" : isCurrent ? "bg-primary/60" : "bg-muted"
+                    className={`h-1 w-full rounded-full transition-colors ${
+                      isDone ? "bg-primary" : isCurrent ? "bg-primary/70" : "bg-secondary-foreground/20"
                     }`}
                   />
                   <span
-                    className={`text-[11px] font-medium leading-none ${
+                    className={`text-[10px] font-medium leading-none ${
                       isCurrent
-                        ? "text-foreground"
-                        : isDone
                         ? "text-primary"
-                        : "text-muted-foreground"
+                        : isDone
+                        ? "text-secondary-foreground/80"
+                        : "text-secondary-foreground/50"
                     }`}
                   >
                     {stepLabels[i]}
@@ -587,7 +587,8 @@ export function FinancingQuickCheckWizard({
         </DialogHeader>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 bg-background">
+        <div className="flex-1 overflow-y-auto px-5 py-4 bg-muted/50 text-sm">
+
           {step === 1 && <Step1Modules form={form} toggleModule={toggleModule} />}
           {step === 2 && (
             <Step2Property
@@ -622,7 +623,7 @@ export function FinancingQuickCheckWizard({
         </div>
 
         {/* Sticky Footer */}
-        <DialogFooter className="px-6 py-4 border-t bg-card shrink-0 flex-row justify-between sm:justify-between">
+        <DialogFooter className="px-5 py-3 border-t bg-card shrink-0 flex-row justify-between sm:justify-between">
           <div>
             {step > 1 && (
               <Button variant="outline" onClick={() => setStep(step - 1)} disabled={createMutation.isPending}>
@@ -1007,7 +1008,7 @@ function CoApplicantSection({
   const pkCombined = mainPk + pkNum;
 
   return (
-    <div className="rounded-lg border bg-muted/20 p-4 space-y-4">
+    <div className="rounded-lg border bg-card p-4 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <UserPlus className="h-4 w-4 text-muted-foreground" />
@@ -1248,7 +1249,7 @@ function Step4Metrics({
           {/* Objekt-Block */}
           <div className="grid gap-3 sm:grid-cols-2">
             {objectValueFromCrm ? (
-              <div className="sm:col-span-2 rounded-md border bg-muted/30 p-3 text-sm flex items-center justify-between">
+              <div className="sm:col-span-2 rounded-md border bg-card p-3 text-sm flex items-center justify-between">
                 <div>
                   <span className="text-xs text-muted-foreground block">Aktueller Objektwert (aus CRM)</span>
                   <span className="font-semibold text-base">{formatCurrency(num(form.property_purchase_price))}</span>
@@ -1323,7 +1324,7 @@ function Step4Metrics({
                     </div>
                   </div>
                 )}
-                <div className="rounded-md border bg-muted/40 p-3 text-sm flex flex-col justify-center sm:col-span-2">
+                <div className="rounded-md border bg-card p-3 text-sm flex flex-col justify-center sm:col-span-2">
                   <span className="text-xs text-muted-foreground">Neue Gesamthypothek</span>
                   <span className="font-semibold text-base">{formatCurrency(effectiveMortgage)}</span>
                   <span className="text-xs text-muted-foreground mt-1">= Aktuelle Hypothek + Aufstockungsbetrag</span>
@@ -1421,7 +1422,7 @@ function Step4Metrics({
           )}
         </div>
       )}
-      <div className="rounded-lg bg-muted/50 p-3">
+      <div className="rounded-lg bg-card p-3">
         <KpiPreview kpis={kpis} hideEquity={isRefiOnly} />
         {isRefiOnly && kpis.obligationsYearly > 0 && (
           <p className="text-[11px] text-muted-foreground mt-1">
@@ -1488,7 +1489,7 @@ function Step5Advanced({
           </div>
         </CollapsibleContent>
       </Collapsible>
-      <div className="rounded-lg bg-muted/50 p-3 space-y-1">
+      <div className="rounded-lg bg-card p-3 space-y-1">
         <KpiPreview kpis={kpis} />
         <p className="text-xs text-muted-foreground">
           Jährliche Belastung: {formatCurrency(kpis.yearly)} (Zins + Nebenkosten + Amortisation)
@@ -1574,7 +1575,7 @@ function Step6Summary({
         <SumRow label="Amortisationsdauer" value={`${form.amortisation_years} Jahre`} />
       </SummaryGroup>
 
-      <div className="rounded-lg border p-4 bg-muted/30">
+      <div className="rounded-lg border p-4 bg-card">
         <div className="flex items-center justify-between mb-2">
           <p className="font-semibold">Live-Vorschau</p>
           <StatusBadge status={status} />
