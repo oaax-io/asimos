@@ -579,7 +579,7 @@ export function FinancingQuickCheckWizard({
             isRefiOnly={isRefiOnly}
           />
         )}
-        {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} isRefiOnly={isRefiOnly} effectiveMortgage={effectiveMortgage} />}
+        {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} isRefiOnly={isRefiOnly} effectiveMortgage={effectiveMortgage} combined={combined} />}
         {step === 5 && <Step5Advanced form={form} update={update} kpis={liveKpis} />}
         {step === 6 && (
           <Step6Summary
@@ -1170,16 +1170,45 @@ function KpiPreview({ kpis, hideEquity }: { kpis: Kpis; hideEquity?: boolean }) 
 }
 
 function Step4Metrics({
-  form, update, kpis, isRefiOnly, effectiveMortgage,
+  form, update, kpis, isRefiOnly, effectiveMortgage, combined,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   kpis: Kpis;
   isRefiOnly: boolean;
   effectiveMortgage: number;
+  combined: {
+    coActive: boolean;
+    mainIncome: number;
+    coIncome: number;
+    incomeCombined: number;
+  };
 }) {
   const showRenovation = form.modules.includes("renovation");
   const objectValueFromCrm = isRefiOnly && form.property_source === "crm" && !!form.property_purchase_price;
+  const coActive = combined.coActive;
+
+  // Auto-Fill: monatliche Verpflichtungen aus Selbstauskunft (Leasing + Kredite + Alimente)
+  useEffect(() => {
+    if (!isRefiOnly) return;
+    if (form.monthly_obligations) return; // bereits gesetzt → nicht überschreiben
+    const ids = [form.client_id, coActive ? form.co_applicant_client_id : null].filter(Boolean) as string[];
+    if (ids.length === 0) return;
+    (async () => {
+      const { data } = await supabase
+        .from("client_self_disclosures")
+        .select("leasing_expense, credit_expense, alimony_expense")
+        .in("client_id", ids);
+      if (!data || data.length === 0) return;
+      const total = data.reduce((sum, r: any) =>
+        sum + Number(r.leasing_expense ?? 0) + Number(r.credit_expense ?? 0) + Number(r.alimony_expense ?? 0)
+      , 0);
+      if (total > 0) update("monthly_obligations", String(total));
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRefiOnly, form.client_id, form.co_applicant_client_id, coActive]);
+
+
   return (
     <div className="space-y-4">
       {isRefiOnly ? (
@@ -1269,9 +1298,24 @@ function Step4Metrics({
                 </SelectContent>
               </Select>
             </div>
-            <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
             <Field
-              label="Monatliche Verpflichtungen (CHF) — Leasing, Kredite, Alimente"
+              label={coActive ? "Brutto-Jahreseinkommen Hauptkunde (CHF) *" : "Brutto-Jahreseinkommen (CHF) *"}
+              type="number"
+              value={form.gross_income_yearly}
+              onChange={(v) => update("gross_income_yearly", v)}
+            />
+            {coActive && (
+              <Field
+                label="Brutto-Jahreseinkommen Ehepartner/Mitantragsteller (CHF) *"
+                type="number"
+                value={form.co_applicant_einkommen}
+                onChange={(v) => update("co_applicant_einkommen", v)}
+              />
+            )}
+            <Field
+              label={coActive
+                ? "Monatliche Verpflichtungen kombiniert (CHF) — Leasing, Kredite, Alimente"
+                : "Monatliche Verpflichtungen (CHF) — Leasing, Kredite, Alimente"}
               type="number"
               value={form.monthly_obligations}
               onChange={(v) => update("monthly_obligations", v)}
@@ -1280,6 +1324,19 @@ function Step4Metrics({
               <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
             )}
           </div>
+
+          {coActive && (
+            <div className="rounded-md bg-background border p-3 text-xs space-y-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Kombiniertes Einkommen (für Tragbarkeit):</span>
+                <span className="font-semibold tabular-nums">{formatCurrency(combined.incomeCombined)} / Jahr</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Verpflichtungen aus Selbstauskunft beider Personen werden automatisch summiert (sofern vorhanden) — manuell anpassbar.
+              </p>
+            </div>
+          )}
+
 
           <p className="text-[11px] text-muted-foreground">
             Hinweis: Bei reiner Refinanzierung sind Eigenmittel/PK nicht erforderlich. Die Belehnungsgrenze richtet sich nach der Nutzung
