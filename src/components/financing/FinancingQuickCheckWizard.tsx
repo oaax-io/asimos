@@ -410,7 +410,7 @@ export function FinancingQuickCheckWizard({
     if (step === 1) return form.modules.length > 0;
     if (step === 2) {
       if (form.property_source === "crm") return !!form.property_id;
-      if (form.property_source === "manual") return !!form.property_title.trim();
+      if (form.property_source === "manual") return !!form.property_address.trim() || !!form.property_purchase_price.trim();
       return true; // later
     }
     if (step === 3) {
@@ -683,7 +683,7 @@ function Step2Property({
         className="grid gap-2"
       >
         <SourceRow value="crm" label="Immobilie aus CRM wählen" description="Bestehendes Objekt auswählen, Daten werden übernommen." />
-        <SourceRow value="manual" label="Manuell erfassen" description="Adresse, Bezeichnung und Kaufpreis selbst eingeben." />
+        <SourceRow value="manual" label="Manuell erfassen" description="Adresse und Kaufpreis selbst eingeben." />
         <SourceRow value="later" label="Später erfassen" description="Schritt überspringen — Felder bleiben leer." />
       </RadioGroup>
 
@@ -780,9 +780,6 @@ function Step2Property({
 
       {form.property_source === "manual" && (
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <Field label="Objektbezeichnung *" value={form.property_title} onChange={(v) => update("property_title", v)} />
-          </div>
           <div className="sm:col-span-2">
             <Field label="Adresse" value={form.property_address} onChange={(v) => update("property_address", v)} />
           </div>
