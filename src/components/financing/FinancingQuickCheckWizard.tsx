@@ -587,7 +587,7 @@ export function FinancingQuickCheckWizard({
         </DialogHeader>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 bg-muted/40 text-sm">
+        <div className="flex-1 overflow-y-auto px-5 py-4 bg-card text-sm">
 
           {step === 1 && <Step1Modules form={form} toggleModule={toggleModule} />}
           {step === 2 && (
@@ -1008,7 +1008,7 @@ function CoApplicantSection({
   const pkCombined = mainPk + pkNum;
 
   return (
-    <div className="rounded-lg border bg-muted/20 p-4 space-y-4">
+    <div className="rounded-lg border bg-card p-4 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <UserPlus className="h-4 w-4 text-muted-foreground" />
@@ -1249,7 +1249,7 @@ function Step4Metrics({
           {/* Objekt-Block */}
           <div className="grid gap-3 sm:grid-cols-2">
             {objectValueFromCrm ? (
-              <div className="sm:col-span-2 rounded-md border bg-muted/30 p-3 text-sm flex items-center justify-between">
+              <div className="sm:col-span-2 rounded-md border bg-card p-3 text-sm flex items-center justify-between">
                 <div>
                   <span className="text-xs text-muted-foreground block">Aktueller Objektwert (aus CRM)</span>
                   <span className="font-semibold text-base">{formatCurrency(num(form.property_purchase_price))}</span>
@@ -1324,7 +1324,7 @@ function Step4Metrics({
                     </div>
                   </div>
                 )}
-                <div className="rounded-md border bg-muted/40 p-3 text-sm flex flex-col justify-center sm:col-span-2">
+                <div className="rounded-md border bg-card p-3 text-sm flex flex-col justify-center sm:col-span-2">
                   <span className="text-xs text-muted-foreground">Neue Gesamthypothek</span>
                   <span className="font-semibold text-base">{formatCurrency(effectiveMortgage)}</span>
                   <span className="text-xs text-muted-foreground mt-1">= Aktuelle Hypothek + Aufstockungsbetrag</span>
@@ -1422,7 +1422,7 @@ function Step4Metrics({
           )}
         </div>
       )}
-      <div className="rounded-lg bg-muted/50 p-3">
+      <div className="rounded-lg bg-card p-3">
         <KpiPreview kpis={kpis} hideEquity={isRefiOnly} />
         {isRefiOnly && kpis.obligationsYearly > 0 && (
           <p className="text-[11px] text-muted-foreground mt-1">
@@ -1489,7 +1489,7 @@ function Step5Advanced({
           </div>
         </CollapsibleContent>
       </Collapsible>
-      <div className="rounded-lg bg-muted/50 p-3 space-y-1">
+      <div className="rounded-lg bg-card p-3 space-y-1">
         <KpiPreview kpis={kpis} />
         <p className="text-xs text-muted-foreground">
           Jährliche Belastung: {formatCurrency(kpis.yearly)} (Zins + Nebenkosten + Amortisation)
@@ -1575,7 +1575,7 @@ function Step6Summary({
         <SumRow label="Amortisationsdauer" value={`${form.amortisation_years} Jahre`} />
       </SummaryGroup>
 
-      <div className="rounded-lg border p-4 bg-muted/30">
+      <div className="rounded-lg border p-4 bg-card">
         <div className="flex items-center justify-between mb-2">
           <p className="font-semibold">Live-Vorschau</p>
           <StatusBadge status={status} />
