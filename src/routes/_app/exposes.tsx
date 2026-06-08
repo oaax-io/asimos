@@ -54,6 +54,9 @@ function ExposesPage() {
   const [propertyId, setPropertyId] = useState<string>("");
   const [sections, setSections] = useState<Required<ExposeSections>>(DEFAULT_SECTIONS);
   const [previewTemplate, setPreviewTemplate] = useState<TemplateMeta | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const renderPdf = useServerFn(renderDocumentPdf);
+  const fetchBytes = useServerFn(fetchDocumentPdfBytes);
 
   const { data: properties = [] } = useQuery({
     queryKey: ["exposes-properties"],
