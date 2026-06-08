@@ -1520,21 +1520,28 @@ function SearchableSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
+        <Command
+          filter={(value, search) => {
+            const item = items.find((i) => i.value === value);
+            if (!item) return 0;
+            const hay = `${item.label} ${item.hint ?? ""}`.toLowerCase();
+            return hay.includes(search.toLowerCase()) ? 1 : 0;
+          }}
+        >
           <CommandInput placeholder="Suchen…" />
-          <CommandList>
+          <CommandList className="max-h-72 overflow-y-auto overscroll-contain">
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {items.map((i) => (
                 <CommandItem
                   key={i.value}
-                  value={`${i.label} ${i.hint ?? ""}`}
+                  value={i.value}
                   onSelect={() => { onChange(i.value); setOpen(false); }}
                 >
-                  <Check className={cn("mr-2 h-4 w-4", value === i.value ? "opacity-100" : "opacity-0")} />
-                  <div className="flex-1">
-                    <div className="text-sm">{i.label}</div>
-                    {i.hint && <div className="text-xs text-muted-foreground">{i.hint}</div>}
+                  <Check className={cn("mr-2 h-4 w-4 shrink-0", value === i.value ? "opacity-100" : "opacity-0")} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm truncate">{i.label}</div>
+                    {i.hint && <div className="text-xs text-muted-foreground truncate">{i.hint}</div>}
                   </div>
                 </CommandItem>
               ))}
