@@ -370,6 +370,10 @@ export function FinancingQuickCheckWizard({
     const rate = num(form.calc_rate) || 5;
     const ancPct = num(form.ancillary_pct) || 1;
     const years = num(form.amortisation_years) || 15;
+    // Refi: Verpflichtungen (CHF/Monat) → jährlich in Tragbarkeit
+    const obligationsYearly = isRefiOnly ? num(form.monthly_obligations) * 12 : 0;
+    // Max. Belehnung nach Nutzung (nur Refi; sonst Standard 80%)
+    const maxLtv = isRefiOnly && form.usage_type ? maxLtvForUsage(form.usage_type) : 80;
 
     const ltv = total > 0 ? (mortgage / total) * 100 : 0;
     const equityRatio = total > 0 ? (equity / total) * 100 : 0;
@@ -377,10 +381,13 @@ export function FinancingQuickCheckWizard({
     const firstMortgageMax = total * 0.6667;
     const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
     const amort = years > 0 ? secondMortgage / years : 0;
-    const yearly = mortgage * (rate / 100) + ancillary + amort;
+    const yearly = mortgage * (rate / 100) + ancillary + amort + obligationsYearly;
     const affordability = income > 0 ? (yearly / income) * 100 : 0;
-    return { ltv, equityRatio, affordability, total, ancillary, amort, yearly };
-  }, [form, combined, effectiveMortgage]);
+    // Aufstockungs-Plausibilität (Refi)
+    const maxMortgageAllowed = total * (maxLtv / 100);
+    const ltvExceeded = isRefiOnly && total > 0 && mortgage > maxMortgageAllowed;
+    return { ltv, equityRatio, affordability, total, ancillary, amort, yearly, obligationsYearly, maxLtv, maxMortgageAllowed, ltvExceeded };
+  }, [form, combined, effectiveMortgage, isRefiOnly]);
 
   // ---- Validierung ----
   const canNext = useMemo(() => {
