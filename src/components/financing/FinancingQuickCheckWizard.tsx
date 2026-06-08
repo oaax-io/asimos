@@ -552,7 +552,8 @@ export function FinancingQuickCheckWizard({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[92vw] max-h-[88vh] p-0 gap-0 flex flex-col overflow-hidden border shadow-2xl bg-background [&>button]:top-3 [&>button]:right-3 [&>button]:z-10 [&>button]:rounded-full [&>button]:bg-background [&>button]:border [&>button]:border-border [&>button]:p-1.5 [&>button]:opacity-100 [&>button>svg]:h-4 [&>button>svg]:w-4 [&>button]:shadow-sm [&>button]:hover:bg-muted">
+      <DialogContent className="max-w-6xl w-[96vw] max-h-[90vh] p-0 gap-0 flex flex-col overflow-hidden border shadow-2xl bg-background [&>button]:top-3 [&>button]:right-3 [&>button]:z-10 [&>button]:rounded-full [&>button]:bg-background [&>button]:border [&>button]:border-border [&>button]:p-1.5 [&>button]:opacity-100 [&>button>svg]:h-4 [&>button>svg]:w-4 [&>button]:shadow-sm [&>button]:hover:bg-muted">
+
         {/* Sticky Header */}
         <DialogHeader className="px-5 pt-4 pb-3 border-b bg-card shrink-0 pr-14">
           <DialogTitle className="text-base font-semibold text-foreground">
