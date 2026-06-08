@@ -35,6 +35,16 @@ export interface ExposeData {
   generated_on?: string;
 }
 
+export interface ExposeTheme {
+  primary: string;
+  accent: string;
+  pageBg: string;
+  titleFont: string;
+  bodyFont: string;
+  orientation?: "portrait" | "landscape";
+  templateLabel?: string;
+}
+
 const fmtCHF = (v: number) =>
   new Intl.NumberFormat("de-CH", { style: "currency", currency: "CHF", maximumFractionDigits: 0 }).format(v);
 
