@@ -964,7 +964,7 @@ function CoApplicantSection({
   const hasIncome = incomeNum > 0;
   const hasEquity = equityNum > 0;
   const hasPk = pkNum > 0;
-  const anyMissing = selected && (!hasIncome || !hasEquity || !hasPk);
+  const anyMissing = selected && (!hasIncome || (!isRefiOnly && (!hasEquity || !hasPk)));
 
   // Kombinierte Anzeige
   const mainIncome = num(form.gross_income_yearly);
