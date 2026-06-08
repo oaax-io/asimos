@@ -230,11 +230,61 @@ function ExposesPage() {
               if (!property) return;
               setGenerating(true);
               try {
-                const inner = renderToStaticMarkup(
-                  <TemplatePreview template={template} sections={sections} preview={previewData} scale="stack" />,
+                // Build real fact list from property fields
+                const p = property as any;
+                const facts: Array<{ label: string; value: string }> = [];
+                const push = (label: string, v: unknown) => {
+                  if (v == null || v === "" || v === "—") return;
+                  facts.push({ label, value: String(v) });
+                };
+                const ptLabel = propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels];
+                push("Objektart", ptLabel);
+                push("Vermarktung", p.listing_type === "rent" ? "Miete" : "Kauf");
+                if (p.living_area) push("Wohnfläche", `${Number(p.living_area)} m²`);
+                if (p.area) push("Fläche", `${Number(p.area)} m²`);
+                if (p.plot_area) push("Grundstück", `${Number(p.plot_area)} m²`);
+                if (p.rooms) push("Zimmer", String(p.rooms));
+                if (p.bathrooms) push("Bäder", String(p.bathrooms));
+                if (p.floor != null) push("Etage", String(p.floor));
+                if (p.year_built) push("Baujahr", String(p.year_built));
+                if (p.renovated_at) push("Renoviert", String(p.renovated_at));
+                if (p.energy_class) push("Energieklasse", p.energy_class);
+
+                const coverUrl = p.images?.[0] ?? null;
+                const gallery: string[] = Array.isArray(p.images) ? p.images.slice(0, 9) : [];
+
+                const html = renderExposeHTML(
+                  {
+                    title: p.title,
+                    description: sections.beschreibung ? p.description : null,
+                    address: p.address,
+                    postal_code: p.postal_code,
+                    city: p.city,
+                    property_type_label: ptLabel,
+                    listing_type_label: p.listing_type === "rent" ? "Miet" : "Verkaufs",
+                    price: p.price ? Number(p.price) : null,
+                    rent: p.rent ? Number(p.rent) : null,
+                    features: p.features ?? [],
+                    facts: sections.einheiten ? facts : [],
+                    cover_url: coverUrl,
+                    gallery_urls: sections.galerie ? gallery.filter((u) => u !== coverUrl) : [],
+                    agency_name: companyData?.name ?? "ASIMO",
+                    contact_name: sections.kontakt ? profileData?.full_name ?? null : null,
+                    contact_email: sections.kontakt ? profileData?.email ?? null : null,
+                    contact_phone: sections.kontakt ? profileData?.phone ?? null : null,
+                    generated_on: new Date().toLocaleDateString("de-CH"),
+                  },
+                  {
+                    primary: template.primary,
+                    accent: template.accent,
+                    pageBg: template.pageBg,
+                    titleFont: template.titleFont,
+                    bodyFont: template.bodyFont,
+                    orientation: template.orientation,
+                    templateLabel: template.label,
+                  },
                 );
-                const safeTitle = property.title || "Exposé";
-                const html = `<!doctype html><html lang="de"><head><meta charset="utf-8"/><title>${safeTitle}</title><script src="https://cdn.tailwindcss.com"></script><style>@page{size:${template.orientation === "landscape" ? "A4 landscape" : "A4"};margin:0}html,body{margin:0;padding:0;background:#fff}.expose-page{page-break-after:always}.expose-page:last-child{page-break-after:auto}</style></head><body>${inner}</body></html>`;
+                const safeTitle = p.title || "Expose";
                 const fileName = `Expose-${safeTitle.replace(/[^\w\s-]/g, "").trim() || "Objekt"}-${template.label}.pdf`;
                 const res = await renderPdf({
                   data: {
@@ -242,7 +292,8 @@ function ExposesPage() {
                     title: safeTitle,
                     fileName,
                     documentType: "expose",
-                    propertyTitle: property.title,
+                    propertyTitle: p.title,
+                    companyName: companyData?.name ?? null,
                   },
                 });
                 if (!res.ok || !res.fileUrl) {
