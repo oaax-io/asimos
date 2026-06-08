@@ -91,6 +91,7 @@ export type WizardForm = {
   renovation_own_work: string;
   existing_mortgage: string;
   requested_mortgage: string;
+  requested_increase: string;
   calc_rate: string;
   ancillary_pct: string;
   amortisation_years: string;
@@ -118,6 +119,7 @@ const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
   renovation_own_work: "",
   existing_mortgage: "",
   requested_mortgage: "",
+  requested_increase: "",
   calc_rate: "5",
   ancillary_pct: "1",
   amortisation_years: "15",
