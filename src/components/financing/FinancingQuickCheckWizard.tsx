@@ -1375,7 +1375,12 @@ function Step6Summary({
           <p className="font-semibold">Live-Vorschau</p>
           <StatusBadge status={status} />
         </div>
-        <KpiPreview kpis={kpis} />
+        <KpiPreview kpis={kpis} hideEquity={isRefiOnly} />
+        {isRefiOnly && kpis.ltvExceeded && (
+          <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
+            ⚠ Neue Gesamthypothek übersteigt max. Belehnung von {kpis.maxLtv}% ({formatCurrency(kpis.maxMortgageAllowed)}).
+          </p>
+        )}
       </div>
     </div>
   );
