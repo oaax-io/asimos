@@ -576,6 +576,7 @@ export function FinancingQuickCheckWizard({
             update={update}
             clients={clientsQuery.data ?? []}
             loading={clientsQuery.isLoading}
+            isRefiOnly={isRefiOnly}
           />
         )}
         {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} isRefiOnly={isRefiOnly} effectiveMortgage={effectiveMortgage} />}
@@ -800,12 +801,13 @@ function Step2Property({
 type ClientLite = { id: string; full_name: string; email: string | null; equity: number | null };
 
 function Step3Client({
-  form, update, clients, loading,
+  form, update, clients, loading, isRefiOnly,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   clients: ClientLite[];
   loading: boolean;
+  isRefiOnly: boolean;
 }) {
   // Verknüpfte Personen des Hauptkunden (Ehepartner, Mitantragsteller, …)
   const relatedQuery = useQuery({
@@ -861,7 +863,7 @@ function Step3Client({
         onValueChange={(v) => update("client_source", v as ClientSource)}
         className="grid gap-2"
       >
-        <SourceRow value="crm" label="Kunde aus CRM wählen" description="Selbstauskunft & Eigenkapital werden vorausgefüllt." />
+        <SourceRow value="crm" label="Kunde aus CRM wählen" description={isRefiOnly ? "Einkommen wird aus dem Kundenprofil vorausgefüllt." : "Selbstauskunft & Eigenkapital werden vorausgefüllt."} />
         <SourceRow value="manual" label="Ohne Kunde / manuell" description="Quick Check ohne Verknüpfung zu einem Kunden." />
       </RadioGroup>
 
@@ -884,10 +886,16 @@ function Step3Client({
           {form.client_id && (
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Brutto-Jahreseinkommen (CHF)" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
-              <Field label="Eigenmittel total (CHF)" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
-              <Field label="davon Pensionskasse (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+              {!isRefiOnly && (
+                <>
+                  <Field label="Eigenmittel total (CHF)" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
+                  <Field label="davon Pensionskasse (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+                </>
+              )}
               <p className="sm:col-span-2 text-xs text-muted-foreground">
-                Werte aus Kundenprofil und Selbstauskunft vorausgefüllt — editierbar.
+                {isRefiOnly
+                  ? "Bei Refinanzierung sind Eigenmittel/PK nicht erforderlich — nur Einkommen für die Tragbarkeit."
+                  : "Werte aus Kundenprofil und Selbstauskunft vorausgefüllt — editierbar."}
               </p>
             </div>
           )}
@@ -909,14 +917,16 @@ function Step3Client({
           loading={loading}
           toggle={toggleCoApplicant}
           relatedMap={relatedMap}
+          isRefiOnly={isRefiOnly}
         />
       )}
     </div>
   );
 }
 
+
 function CoApplicantSection({
-  form, update, clients, loading, toggle, relatedMap,
+  form, update, clients, loading, toggle, relatedMap, isRefiOnly,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
@@ -924,6 +934,7 @@ function CoApplicantSection({
   loading: boolean;
   toggle: (enabled: boolean) => void;
   relatedMap: Map<string, string>;
+  isRefiOnly: boolean;
 }) {
   const relLabel: Record<string, string> = {
     spouse: "Ehepartner", co_applicant: "Mitantragsteller",
@@ -953,7 +964,7 @@ function CoApplicantSection({
   const hasIncome = incomeNum > 0;
   const hasEquity = equityNum > 0;
   const hasPk = pkNum > 0;
-  const anyMissing = selected && (!hasIncome || !hasEquity || !hasPk);
+  const anyMissing = selected && (!hasIncome || (!isRefiOnly && (!hasEquity || !hasPk)));
 
   // Kombinierte Anzeige
   const mainIncome = num(form.gross_income_yearly);
@@ -1023,6 +1034,7 @@ function CoApplicantSection({
                 income={incomeNum}
                 equity={equityNum}
                 pk={pkNum}
+                hideEquity={isRefiOnly}
               />
 
               {anyMissing && (
@@ -1054,11 +1066,17 @@ function CoApplicantSection({
               )}
 
               {/* Manuelle Korrektur der übernommenen Werte */}
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Field label="Einkommen (CHF/J)" type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
-                <Field label="Eigenkapital (CHF)" type="number" value={form.co_applicant_eigenkapital} onChange={(v) => update("co_applicant_eigenkapital", v)} />
-                <Field label="PK-Anteil (CHF)" type="number" value={form.co_applicant_pk_anteil} onChange={(v) => update("co_applicant_pk_anteil", v)} />
-              </div>
+              {isRefiOnly ? (
+                <div className="grid gap-3 sm:grid-cols-1">
+                  <Field label="Einkommen (CHF/J)" type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Field label="Einkommen (CHF/J)" type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
+                  <Field label="Eigenkapital (CHF)" type="number" value={form.co_applicant_eigenkapital} onChange={(v) => update("co_applicant_eigenkapital", v)} />
+                  <Field label="PK-Anteil (CHF)" type="number" value={form.co_applicant_pk_anteil} onChange={(v) => update("co_applicant_pk_anteil", v)} />
+                </div>
+              )}
 
               <div className="rounded-md bg-background border p-3 space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
@@ -1066,8 +1084,12 @@ function CoApplicantSection({
                 </p>
                 <div className="text-xs text-muted-foreground space-y-0.5">
                   <div className="flex justify-between"><span>Kombiniertes Einkommen:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(incomeCombined)} / Jahr</span></div>
-                  <div className="flex justify-between"><span>Kombinierte Eigenmittel:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(equityCombined)}</span></div>
-                  <div className="flex justify-between"><span>Kombinierter PK-Anteil:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(pkCombined)}</span></div>
+                  {!isRefiOnly && (
+                    <>
+                      <div className="flex justify-between"><span>Kombinierte Eigenmittel:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(equityCombined)}</span></div>
+                      <div className="flex justify-between"><span>Kombinierter PK-Anteil:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(pkCombined)}</span></div>
+                    </>
+                  )}
                 </div>
               </div>
             </>
@@ -1079,10 +1101,11 @@ function CoApplicantSection({
 }
 
 function DataQualityChecklist({
-  hasIncome, hasEquity, income, equity, pk,
+  hasIncome, hasEquity, income, equity, pk, hideEquity,
 }: {
   hasIncome: boolean; hasEquity: boolean; hasPk: boolean;
   income: number; equity: number; pk: number;
+  hideEquity?: boolean;
 }) {
   const Row = ({ ok, label, value, fallback }: {
     ok: boolean; label: string; value: string; fallback: string;
@@ -1108,19 +1131,23 @@ function DataQualityChecklist({
         value={`${formatCurrency(income)} / Jahr (aus Selbstauskunft)`}
         fallback="nicht erfasst"
       />
-      <Row
-        ok={hasEquity}
-        label="Eigenkapital"
-        value={formatCurrency(equity)}
-        fallback="nicht erfasst"
-      />
-      {/* PK nicht aus dem CRM — optional, aber grün sobald manuell erfasst */}
-      <Row
-        ok={pk > 0}
-        label="PK / Freizügigkeit"
-        value={`${formatCurrency(pk)} (manuell)`}
-        fallback="optional — nicht im CRM (Standard: CHF 0)"
-      />
+      {!hideEquity && (
+        <>
+          <Row
+            ok={hasEquity}
+            label="Eigenkapital"
+            value={formatCurrency(equity)}
+            fallback="nicht erfasst"
+          />
+          {/* PK nicht aus dem CRM — optional, aber grün sobald manuell erfasst */}
+          <Row
+            ok={pk > 0}
+            label="PK / Freizügigkeit"
+            value={`${formatCurrency(pk)} (manuell)`}
+            fallback="optional — nicht im CRM (Standard: CHF 0)"
+          />
+        </>
+      )}
     </ul>
   );
 }
