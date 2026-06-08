@@ -132,6 +132,13 @@ const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
   calc_rate: "5",
   ancillary_pct: "1",
   amortisation_years: "15",
+  usage_type: "",
+  object_type: "",
+  current_bank: "",
+  interest_rate_current: "",
+  interest_rate_expiry: "",
+  refi_purpose: "",
+  monthly_obligations: "",
   ...defaults,
 });
 
