@@ -459,11 +459,14 @@ export function FinancingQuickCheckWizard({
       const payload: Record<string, unknown> = {
         client_id: form.client_source === "crm" && form.client_id ? form.client_id : null,
         property_id: form.property_source === "crm" && form.property_id ? form.property_id : null,
-        property_snapshot: form.property_source !== "crm" ? {
-          title: form.property_title || null,
-          address: form.property_address || null,
-          price: purchase,
-        } : {},
+        property_snapshot: {
+          ...(form.property_source !== "crm" ? {
+            title: form.property_title || null,
+            address: form.property_address || null,
+            price: purchase,
+          } : {}),
+          ...(isRefiOnly && form.object_type ? { object_type: form.object_type } : {}),
+        },
         data_source: form.property_source === "crm" ? "existing_property" : "quick_entry",
         financing_type: primaryType,
         financing_modules: form.modules,
