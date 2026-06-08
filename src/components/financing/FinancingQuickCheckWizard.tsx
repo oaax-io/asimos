@@ -696,11 +696,33 @@ function Step2Property({
               emptyText="Keine Immobilie gefunden."
               value={form.property_id}
               onChange={(v) => update("property_id", v)}
-              items={properties.map((p) => ({
-                value: p.id,
-                label: [p.city || "—", propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels] || "—"].filter(Boolean).join(" · "),
-                hint: p.price ? formatCurrency(Number(p.price)) : undefined,
-              }))}
+              items={properties.map((p) => {
+                const parent: any = p.parent_property_id
+                  ? properties.find((x: any) => x.id === p.parent_property_id)
+                  : null;
+                const typeLabel =
+                  propertyTypeLabels[p.property_type as keyof typeof propertyTypeLabels] || "—";
+                if (p.is_unit) {
+                  const unitBits = [
+                    p.unit_number ? `Nr. ${p.unit_number}` : null,
+                    p.unit_floor ? `${p.unit_floor}. OG` : null,
+                    p.unit_type || typeLabel,
+                  ].filter(Boolean);
+                  const parentBit = parent
+                    ? `${parent.city || "—"} · ${parent.address || parent.title || ""}`.trim()
+                    : p.city || "—";
+                  return {
+                    value: p.id,
+                    label: `Einheit · ${unitBits.join(" · ")}`,
+                    hint: `${parentBit}${p.price ? " · " + formatCurrency(Number(p.price)) : ""}`,
+                  };
+                }
+                return {
+                  value: p.id,
+                  label: [p.city || "—", typeLabel].filter(Boolean).join(" · "),
+                  hint: p.price ? formatCurrency(Number(p.price)) : undefined,
+                };
+              })}
             />
           </div>
           {form.property_id && (
