@@ -1034,6 +1034,7 @@ function CoApplicantSection({
                 income={incomeNum}
                 equity={equityNum}
                 pk={pkNum}
+                hideEquity={isRefiOnly}
               />
 
               {anyMissing && (
@@ -1065,11 +1066,17 @@ function CoApplicantSection({
               )}
 
               {/* Manuelle Korrektur der übernommenen Werte */}
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Field label="Einkommen (CHF/J)" type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
-                <Field label="Eigenkapital (CHF)" type="number" value={form.co_applicant_eigenkapital} onChange={(v) => update("co_applicant_eigenkapital", v)} />
-                <Field label="PK-Anteil (CHF)" type="number" value={form.co_applicant_pk_anteil} onChange={(v) => update("co_applicant_pk_anteil", v)} />
-              </div>
+              {isRefiOnly ? (
+                <div className="grid gap-3 sm:grid-cols-1">
+                  <Field label="Einkommen (CHF/J)" type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Field label="Einkommen (CHF/J)" type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
+                  <Field label="Eigenkapital (CHF)" type="number" value={form.co_applicant_eigenkapital} onChange={(v) => update("co_applicant_eigenkapital", v)} />
+                  <Field label="PK-Anteil (CHF)" type="number" value={form.co_applicant_pk_anteil} onChange={(v) => update("co_applicant_pk_anteil", v)} />
+                </div>
+              )}
 
               <div className="rounded-md bg-background border p-3 space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
@@ -1077,8 +1084,12 @@ function CoApplicantSection({
                 </p>
                 <div className="text-xs text-muted-foreground space-y-0.5">
                   <div className="flex justify-between"><span>Kombiniertes Einkommen:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(incomeCombined)} / Jahr</span></div>
-                  <div className="flex justify-between"><span>Kombinierte Eigenmittel:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(equityCombined)}</span></div>
-                  <div className="flex justify-between"><span>Kombinierter PK-Anteil:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(pkCombined)}</span></div>
+                  {!isRefiOnly && (
+                    <>
+                      <div className="flex justify-between"><span>Kombinierte Eigenmittel:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(equityCombined)}</span></div>
+                      <div className="flex justify-between"><span>Kombinierter PK-Anteil:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(pkCombined)}</span></div>
+                    </>
+                  )}
                 </div>
               </div>
             </>
