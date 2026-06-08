@@ -221,6 +221,7 @@ export function FinancingQuickCheckWizard({
       property_title: f.property_title || p.title || "",
       property_address: f.property_address || [p.address, p.postal_code, p.city].filter(Boolean).join(", "),
       property_purchase_price: f.property_purchase_price || (p.price != null ? String(p.price) : ""),
+      object_type: f.object_type || mapPropertyTypeToObject(p.property_type),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.property_id, form.property_source, propertiesQuery.data]);
