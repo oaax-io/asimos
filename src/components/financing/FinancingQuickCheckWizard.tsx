@@ -508,6 +508,8 @@ export function FinancingQuickCheckWizard({
             status={liveResult.status}
             clients={clientsQuery.data ?? []}
             properties={propertiesQuery.data ?? []}
+            isRefiOnly={isRefiOnly}
+            effectiveMortgage={effectiveMortgage}
           />
         )}
 
