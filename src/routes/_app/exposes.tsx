@@ -63,10 +63,31 @@ function ExposesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("properties")
-        .select("id,title,address,city,postal_code,property_type,listing_type,images,rooms,year_built,living_area,plot_area")
+        .select("id,title,description,address,city,postal_code,country,property_type,listing_type,images,rooms,bathrooms,year_built,renovated_at,living_area,plot_area,area,floor,energy_class,price,rent,features")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  const { data: companyData } = useQuery({
+    queryKey: ["exposes-company"],
+    queryFn: async () => {
+      const { data } = await supabase.from("company").select("name").maybeSingle();
+      return data;
+    },
+  });
+  const { data: profileData } = useQuery({
+    queryKey: ["exposes-profile"],
+    queryFn: async () => {
+      const { data: userRes } = await supabase.auth.getUser();
+      if (!userRes.user) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name,email,phone")
+        .eq("id", userRes.user.id)
+        .maybeSingle();
+      return data;
     },
   });
 
