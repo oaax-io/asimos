@@ -45,6 +45,27 @@ const numOrNull = (v: string) => {
   return Number.isFinite(n) ? n : null;
 };
 
+// Map property_type (CRM) → object_type (Wizard-Refi)
+function mapPropertyTypeToObject(t: string | null | undefined): "" | "house" | "apartment" | "commercial" | "mixed_use" | "other" {
+  switch (t) {
+    case "house": return "house";
+    case "apartment": return "apartment";
+    case "commercial": return "commercial";
+    case "mixed_use": return "mixed_use";
+    case "land":
+    case "parking":
+    case "other":
+      return "other";
+    default: return "";
+  }
+}
+
+// Max. Belehnung in % nach Nutzung
+function maxLtvForUsage(usage: string): number {
+  if (usage === "rental") return 75;
+  return 80; // owner_occupied oder unbekannt → konservativ Standard
+}
+
 // Nur die fünf neuen, gewünschten Module (kein new_build)
 type WizardModule = "purchase" | "renovation" | "increase" | "refinance" | "mortgage_increase";
 
