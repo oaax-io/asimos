@@ -379,7 +379,7 @@ export function FinancingQuickCheckWizard({
     mutationFn: async () => {
       const purchase = numOrNull(form.property_purchase_price);
       const reno = numOrNull(form.renovation_costs);
-      const mortgage = numOrNull(form.requested_mortgage);
+      const mortgage = isRefiOnly ? effectiveMortgage : (numOrNull(form.requested_mortgage) ?? 0);
       const rate = numOrNull(form.calc_rate) ?? 5;
       const ancillary = liveKpis.ancillary || null;
       const amort = liveKpis.amort || null;
