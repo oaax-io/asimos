@@ -1170,16 +1170,45 @@ function KpiPreview({ kpis, hideEquity }: { kpis: Kpis; hideEquity?: boolean }) 
 }
 
 function Step4Metrics({
-  form, update, kpis, isRefiOnly, effectiveMortgage,
+  form, update, kpis, isRefiOnly, effectiveMortgage, combined,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   kpis: Kpis;
   isRefiOnly: boolean;
   effectiveMortgage: number;
+  combined: {
+    coActive: boolean;
+    mainIncome: number;
+    coIncome: number;
+    incomeCombined: number;
+  };
 }) {
   const showRenovation = form.modules.includes("renovation");
   const objectValueFromCrm = isRefiOnly && form.property_source === "crm" && !!form.property_purchase_price;
+  const coActive = combined.coActive;
+
+  // Auto-Fill: monatliche Verpflichtungen aus Selbstauskunft (Leasing + Kredite + Alimente)
+  useEffect(() => {
+    if (!isRefiOnly) return;
+    if (form.monthly_obligations) return; // bereits gesetzt → nicht überschreiben
+    const ids = [form.client_id, coActive ? form.co_applicant_client_id : null].filter(Boolean) as string[];
+    if (ids.length === 0) return;
+    (async () => {
+      const { data } = await supabase
+        .from("client_self_disclosures")
+        .select("leasing_expense, credit_expense, alimony_expense")
+        .in("client_id", ids);
+      if (!data || data.length === 0) return;
+      const total = data.reduce((sum, r: any) =>
+        sum + Number(r.leasing_expense ?? 0) + Number(r.credit_expense ?? 0) + Number(r.alimony_expense ?? 0)
+      , 0);
+      if (total > 0) update("monthly_obligations", String(total));
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRefiOnly, form.client_id, form.co_applicant_client_id, coActive]);
+
+
   return (
     <div className="space-y-4">
       {isRefiOnly ? (
