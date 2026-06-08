@@ -185,9 +185,18 @@ function PropertiesPage() {
 
   // Build display rows: when grouping, hide units whose parent is also visible (they show inside parent)
   const displayed = useMemo(() => {
-    if (!groupUnits || fStructure === "units") return filtered;
-    const visibleIds = new Set(filtered.map(p => p.id));
-    return filtered.filter(p => !(p.is_unit && p.parent_property_id && visibleIds.has(p.parent_property_id)));
+    let rows: any[];
+    if (!groupUnits || fStructure === "units") rows = filtered;
+    else {
+      const visibleIds = new Set(filtered.map(p => p.id));
+      rows = filtered.filter(p => !(p.is_unit && p.parent_property_id && visibleIds.has(p.parent_property_id)));
+    }
+    // Sicherstellen: zuletzt hinzugefügt zuoberst
+    return [...rows].sort((a, b) => {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bTime - aTime;
+    });
   }, [filtered, groupUnits, fStructure]);
 
   const toggleExpanded = (id: string) => setExpanded(prev => {
