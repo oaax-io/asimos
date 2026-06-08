@@ -283,6 +283,7 @@ function ExposesPage() {
                     bodyFont: template.bodyFont,
                     orientation: template.orientation,
                     templateLabel: template.label,
+                    family: template.family,
                   },
                 );
                 const safeTitle = p.title || "Expose";
