@@ -369,8 +369,8 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
                   </div>
                   <div className="mt-1 flex flex-wrap gap-1">
                     <Badge variant="secondary">{propertyTypeLabels[property.property_type as keyof typeof propertyTypeLabels]}</Badge>
-                    {(property as any).latitude && (property as any).longitude && (
-                      <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" /> Koordinaten vorhanden</Badge>
+                    {property.address && (
+                      <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" /> Adresse für Karte vorhanden</Badge>
                     )}
                   </div>
                 </div>
