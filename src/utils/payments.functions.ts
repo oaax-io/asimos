@@ -128,13 +128,32 @@ export const listInvoices = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!sub?.stripe_customer_id) return [];
 
     const stripe = createStripeClient(data.environment);
+
+    // Resolve customer: prefer DB, fallback to Stripe search by metadata.userId, then email.
+    let customerId: string | null = (sub?.stripe_customer_id as string | null) ?? null;
+    if (!customerId && /^[a-zA-Z0-9_-]+$/.test(userId)) {
+      const found = await stripe.customers.search({
+        query: `metadata['userId']:'${userId}'`,
+        limit: 1,
+      });
+      if (found.data.length) customerId = found.data[0].id;
+    }
+    if (!customerId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        const byEmail = await stripe.customers.list({ email: user.email, limit: 1 });
+        if (byEmail.data.length) customerId = byEmail.data[0].id;
+      }
+    }
+    if (!customerId) return [];
+
     const list = await stripe.invoices.list({
-      customer: sub.stripe_customer_id as string,
+      customer: customerId,
       limit: 36,
     });
+
 
     const now = Date.now();
     const toIso = (s: number | null | undefined) =>
