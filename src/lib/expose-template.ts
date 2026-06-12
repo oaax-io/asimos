@@ -198,8 +198,9 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
   const addr = addressLine(d);
   const facts = d.facts.filter((f) => f.value && f.value !== "—");
   const orient = t.orientation ?? "portrait";
-  const galleryCols = orient === "landscape" ? 3 : 2;
-  const galleryUrls = d.gallery_urls.slice(0, orient === "landscape" ? 6 : 4);
+  const galleryCols = d.gallery_cols ?? (orient === "landscape" ? 3 : 2);
+  const galleryUrls = d.gallery_urls;
+
 
   const pages: string[] = [];
 
