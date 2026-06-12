@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { CompanyProfileForm } from "@/components/settings/CompanyProfileForm";
 import { BankAccountsManager } from "@/components/settings/BankAccountsManager";
 import { BrandkitForm } from "@/components/settings/BrandkitForm";
-import { DocumentTemplatesManager } from "@/components/settings/DocumentTemplatesManager";
+
 import { NotificationPreferencesForm } from "@/components/settings/NotificationPreferencesForm";
 import { SubscriptionManager } from "@/components/settings/SubscriptionManager";
 import { Tags, FileSignature } from "lucide-react";
