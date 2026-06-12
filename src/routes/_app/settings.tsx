@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { CompanyProfileForm } from "@/components/settings/CompanyProfileForm";
 import { BankAccountsManager } from "@/components/settings/BankAccountsManager";
 import { BrandkitForm } from "@/components/settings/BrandkitForm";
-import { DocumentTemplatesManager } from "@/components/settings/DocumentTemplatesManager";
+
 import { NotificationPreferencesForm } from "@/components/settings/NotificationPreferencesForm";
 import { SubscriptionManager } from "@/components/settings/SubscriptionManager";
 import { Tags, FileSignature } from "lucide-react";
@@ -62,7 +62,6 @@ function SettingsPage() {
           <TabsTrigger value="company">Firmenprofile</TabsTrigger>
           <TabsTrigger value="brandkit">Brandkit</TabsTrigger>
           <TabsTrigger value="banks">Bankkonten</TabsTrigger>
-          <TabsTrigger value="templates">Dokumentvorlagen</TabsTrigger>
           <TabsTrigger value="categories">Dokumentkategorien</TabsTrigger>
           <TabsTrigger value="esign">PDF / E-Sign</TabsTrigger>
           <TabsTrigger value="subscription">Abonnement</TabsTrigger>
@@ -102,9 +101,6 @@ function SettingsPage() {
           <div className="max-w-3xl"><BankAccountsManager /></div>
         </TabsContent>
 
-        <TabsContent value="templates">
-          <DocumentTemplatesManager />
-        </TabsContent>
 
         <TabsContent value="categories">
           <Card className="max-w-3xl">

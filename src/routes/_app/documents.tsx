@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Search, Trash2, Upload, ExternalLink, HardDrive } from "lucide-react";
+import { FileText, Download, Search, Trash2, Upload, ExternalLink, HardDrive, LayoutTemplate } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDate } from "@/lib/format";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
+import { DocumentTemplatesManager } from "@/components/settings/DocumentTemplatesManager";
 
 export const Route = createFileRoute("/_app/documents")({ component: DocumentsPage });
 
@@ -56,6 +57,7 @@ function DocumentsPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [relatedFilter, setRelatedFilter] = useState<string>("all");
@@ -207,20 +209,25 @@ function DocumentsPage() {
         title="Dokumentencenter"
         description="Hochgeladene und generierte Dokumente an einem Ort"
         action={
-          <Dialog
-            open={open}
-            onOpenChange={(o) => {
-              setOpen(o);
-              if (!o) reset();
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <Upload className="mr-1 h-4 w-4" />
-                Dokument hochladen
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
+              <LayoutTemplate className="mr-1 h-4 w-4" />
+              Dokumentvorlagen
+            </Button>
+            <Dialog
+              open={open}
+              onOpenChange={(o) => {
+                setOpen(o);
+                if (!o) reset();
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button>
+                  <Upload className="mr-1 h-4 w-4" />
+                  Dokument hochladen
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
               <DialogHeader>
                 <DialogTitle>Neues Dokument</DialogTitle>
               </DialogHeader>
@@ -311,6 +318,7 @@ function DocumentsPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         }
       />
 
@@ -460,6 +468,15 @@ function DocumentsPage() {
           <GeneratedDocumentsTable />
         </TabsContent>
       </Tabs>
+
+      <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Dokumentvorlagen</DialogTitle>
+          </DialogHeader>
+          <DocumentTemplatesManager />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
