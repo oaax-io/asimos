@@ -214,7 +214,7 @@ export function SubscriptionManager() {
         </CardContent>
       </Card>
 
-      {isOwner && sub?.stripe_customer_id && <InvoiceHistory />}
+      {isOwner && <InvoiceHistory />}
     </div>
   );
 }
