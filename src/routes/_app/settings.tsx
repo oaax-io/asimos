@@ -101,9 +101,6 @@ function SettingsPage() {
           <div className="max-w-3xl"><BankAccountsManager /></div>
         </TabsContent>
 
-        <TabsContent value="templates">
-          <DocumentTemplatesManager />
-        </TabsContent>
 
         <TabsContent value="categories">
           <Card className="max-w-3xl">
