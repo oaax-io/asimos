@@ -222,6 +222,8 @@ export function SubscriptionManager() {
 
 function InvoiceHistory() {
   const env = getStripeEnvironment();
+  const qc = useQueryClient();
+  const [payInvoiceId, setPayInvoiceId] = useState<string | null>(null);
   const invoicesQuery = useQuery({
     queryKey: ["invoices", env],
     queryFn: async () => await listInvoices({ data: { environment: env } }),
