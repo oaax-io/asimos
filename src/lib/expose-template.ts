@@ -245,25 +245,30 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
     ${footer(d, t, 2, 0)}
   </div>`);
 
-  // Page 3: gallery
+  // Page 3+: gallery (paginated by chosen layout)
   if (galleryUrls.length) {
-    pages.push(`
-    <div class="page">
-      <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Galerie</div></header>
-      <h2 class="section-title">Bilder</h2>
-      <div class="gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
-        ${galleryUrls.map((u) => `<div class="g-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
-      </div>
-      ${footer(d, t, 3, 0)}
-    </div>`);
+    const perPage = galleryCols * (galleryCols >= 3 ? 3 : 2);
+    for (let i = 0; i < galleryUrls.length; i += perPage) {
+      const slice = galleryUrls.slice(i, i + perPage);
+      pages.push(`
+      <div class="page">
+        <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Galerie</div></header>
+        <h2 class="section-title">Bilder</h2>
+        <div class="gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
+          ${slice.map((u) => `<div class="g-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
+        </div>
+        ${footer(d, t, pages.length + 1, 0)}
+      </div>`);
+    }
   }
 
-  // Page 4: location + contact
-  if (addr || d.contact_name || d.contact_email || d.contact_phone) {
+  // Location + contact
+  const locHtml = locationBlockHtml(d, t);
+  if (locHtml || d.contact_name || d.contact_email || d.contact_phone) {
     pages.push(`
     <div class="page">
       <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Lage & Kontakt</div></header>
-      ${addr ? `<h2 class="section-title">Lage</h2><p class="prose">${esc(addr)}</p>` : ""}
+      ${locHtml ? `<h2 class="section-title">Lage</h2>${locHtml}` : ""}
       ${(d.contact_name || d.contact_email || d.contact_phone)
         ? `<h2 class="section-title mt">Kontakt</h2>
            <div class="contact-card">
@@ -275,9 +280,18 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
              </div>
            </div>`
         : ""}
-      ${footer(d, t, 4, 0)}
+      ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
+
+  // Attachments
+  const attach = attachmentsPagesHtml(
+    d, t,
+    (label) => `<header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">${esc(label)}</div></header><h2 class="section-title">${esc(label)}</h2>`,
+    pages.length + 1,
+  );
+  if (attach.html) pages.push(attach.html);
+
 
   const total = pages.length;
   const filled = pages.map((p, i) => p.replace(`${i + 1} / 0`, `${i + 1} / ${total}`));
