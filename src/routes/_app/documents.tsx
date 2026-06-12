@@ -209,20 +209,25 @@ function DocumentsPage() {
         title="Dokumentencenter"
         description="Hochgeladene und generierte Dokumente an einem Ort"
         action={
-          <Dialog
-            open={open}
-            onOpenChange={(o) => {
-              setOpen(o);
-              if (!o) reset();
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <Upload className="mr-1 h-4 w-4" />
-                Dokument hochladen
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
+              <LayoutTemplate className="mr-1 h-4 w-4" />
+              Dokumentvorlagen
+            </Button>
+            <Dialog
+              open={open}
+              onOpenChange={(o) => {
+                setOpen(o);
+                if (!o) reset();
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button>
+                  <Upload className="mr-1 h-4 w-4" />
+                  Dokument hochladen
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
               <DialogHeader>
                 <DialogTitle>Neues Dokument</DialogTitle>
               </DialogHeader>
