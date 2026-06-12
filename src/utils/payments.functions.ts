@@ -205,11 +205,11 @@ export const createInvoicePaymentIntent = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const stripe = createStripeClient(data.environment);
 
-    // Authorize: invoice's customer must belong to this user.
     let invoice = await stripe.invoices.retrieve(data.invoiceId, { expand: ["payment_intent"] });
     const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
     if (!customerId) throw new Error("Rechnung hat keinen Kunden");
 
+    // Authorize: invoice's customer must belong to this user.
     const customer = await stripe.customers.retrieve(customerId);
     const meta = (customer as any).metadata ?? {};
     let owned = meta.userId === userId;
@@ -230,11 +230,58 @@ export const createInvoicePaymentIntent = createServerFn({ method: "POST" })
     if (typeof pi === "string") {
       pi = await stripe.paymentIntents.retrieve(pi);
     }
-    if (!pi) throw new Error("Keine Zahlungsanforderung für diese Rechnung gefunden");
+
+    // Invoices with collection_method='send_invoice' have no PaymentIntent.
+    // Create a standalone PI for the outstanding amount, link via metadata,
+    // and we'll mark the invoice paid_out_of_band after confirmation.
+    if (!pi) {
+      pi = await stripe.paymentIntents.create({
+        amount: invoice.amount_remaining ?? 0,
+        currency: invoice.currency ?? "chf",
+        customer: customerId,
+        description: `Rechnung ${invoice.number ?? invoice.id}`,
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          invoice_id: invoice.id ?? "",
+          userId,
+        },
+      });
+    }
 
     return {
       clientSecret: pi.client_secret as string,
       amount: (invoice.amount_remaining ?? 0) / 100,
       currency: invoice.currency ?? "chf",
     };
+  });
+
+export const markInvoicePaid = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { invoiceId: string; environment: StripeEnv }) => {
+    if (!/^[a-zA-Z0-9_]+$/.test(data.invoiceId)) throw new Error("Invalid invoiceId");
+    return data;
+  })
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { supabase, userId } = context;
+    const stripe = createStripeClient(data.environment);
+
+    const invoice = await stripe.invoices.retrieve(data.invoiceId);
+    const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+    if (!customerId) throw new Error("Rechnung hat keinen Kunden");
+
+    const customer = await stripe.customers.retrieve(customerId);
+    const meta = (customer as any).metadata ?? {};
+    let owned = meta.userId === userId;
+    if (!owned) {
+      const { data: { user } } = await supabase.auth.getUser();
+      const email = user?.email?.toLowerCase();
+      const custEmail = (customer as any).email?.toLowerCase();
+      owned = !!email && !!custEmail && email === custEmail;
+    }
+    if (!owned) throw new Error("Nicht autorisiert");
+
+    if (invoice.status !== "paid") {
+      await stripe.invoices.pay(invoice.id!, { paid_out_of_band: true });
+    }
+    return { ok: true };
   });
