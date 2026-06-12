@@ -62,7 +62,6 @@ function SettingsPage() {
           <TabsTrigger value="company">Firmenprofile</TabsTrigger>
           <TabsTrigger value="brandkit">Brandkit</TabsTrigger>
           <TabsTrigger value="banks">Bankkonten</TabsTrigger>
-          <TabsTrigger value="templates">Dokumentvorlagen</TabsTrigger>
           <TabsTrigger value="categories">Dokumentkategorien</TabsTrigger>
           <TabsTrigger value="esign">PDF / E-Sign</TabsTrigger>
           <TabsTrigger value="subscription">Abonnement</TabsTrigger>
