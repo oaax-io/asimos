@@ -320,6 +320,15 @@ export const createInvoicePaymentIntent = createServerFn({ method: "POST" })
     }
     if (!owned) throw new Error("Nicht autorisiert");
 
+    // Firmendaten am Stripe-Customer aktualisieren, damit künftige
+    // Rechnungen die korrekten Empfängerdaten tragen.
+    try {
+      const billing = await loadCompanyBilling(supabase, userId);
+      await syncCustomerBilling(stripe, customerId, billing);
+    } catch {
+      // non-fatal
+    }
+
     if (invoice.status === "draft") {
       invoice = await stripe.invoices.finalizeInvoice(invoice.id!, { expand: ["payment_intent"] });
     }
