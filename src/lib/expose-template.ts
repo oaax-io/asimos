@@ -284,11 +284,13 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
   }
 
   // Attachments
-  const attach = attachmentsPagesHtml(
+  const attachPages = attachmentsPages(
     d, t,
-    (label) => `<header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">${esc(label)}</div></header><h2 class="section-title">${esc(label)}</h2>`,
+    (label: string) => `<header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">${esc(label)}</div></header><h2 class="section-title">${esc(label)}</h2>`,
     pages.length + 1,
   );
+  pages.push(...attachPages);
+
   if (attach.html) pages.push(attach.html);
 
 
