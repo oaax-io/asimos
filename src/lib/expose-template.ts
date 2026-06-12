@@ -158,35 +158,34 @@ const LOCATION_CSS = (t: ExposeTheme) => `
   .attach-list li::before { content: "📎"; }
 `;
 
-function attachmentsPagesHtml(d: ExposeData, t: ExposeTheme, headerHtml: (label: string) => string, startPage: number): { html: string; pagesAdded: number } {
+function attachmentsPages(d: ExposeData, t: ExposeTheme, headerHtml: (label: string) => string, startPage: number): string[] {
   const imgs = d.attachment_image_urls ?? [];
   const docs = d.attachment_doc_names ?? [];
-  if (!imgs.length && !docs.length) return { html: "", pagesAdded: 0 };
-  const chunks: string[] = [];
-  // Image attachments — 4 per page (2x2)
+  const out: string[] = [];
   for (let i = 0; i < imgs.length; i += 4) {
     const slice = imgs.slice(i, i + 4);
-    chunks.push(`
+    out.push(`
     <div class="page">
       ${headerHtml("Anhänge · Fotos")}
       <div class="attach-grid">
         ${slice.map((u) => `<div class="attach-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
       </div>
-      ${footer(d, t, startPage + chunks.length, 0)}
+      ${footer(d, t, startPage + out.length, 0)}
     </div>`);
   }
   if (docs.length) {
-    chunks.push(`
+    out.push(`
     <div class="page">
       ${headerHtml("Anhänge · Dokumente")}
       <ul class="attach-list">
         ${docs.map((n) => `<li>${esc(n)}</li>`).join("")}
       </ul>
-      ${footer(d, t, startPage + chunks.length, 0)}
+      ${footer(d, t, startPage + out.length, 0)}
     </div>`);
   }
-  return { html: chunks.join("\n"), pagesAdded: chunks.length };
+  return out;
 }
+
 
 
 /* ============================================================
