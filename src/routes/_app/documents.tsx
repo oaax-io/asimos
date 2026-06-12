@@ -318,6 +318,7 @@ function DocumentsPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         }
       />
 
