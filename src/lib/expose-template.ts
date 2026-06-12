@@ -107,6 +107,88 @@ function footer(d: ExposeData, t: ExposeTheme, page: number, total: number): str
   </div>`;
 }
 
+const POI_ICONS: Record<string, string> = {
+  transit: "🚆", school: "🎓", shop: "🛒", restaurant: "🍽",
+  park: "🌳", health: "➕", other: "📍",
+};
+
+function locationBlockHtml(d: ExposeData, t: ExposeTheme): string {
+  const addr = addressLine(d);
+  const hasMap = !!d.static_map_url;
+  const pois = d.pois ?? [];
+  if (!hasMap && !pois.length && !addr) return "";
+  const mapImg = hasMap
+    ? `<div class="loc-map"><img src="${esc(d.static_map_url!)}" alt="Karte"/></div>`
+    : "";
+  const poiList = pois.length
+    ? `<ul class="loc-pois">${pois
+        .map(
+          (p) => `<li><span class="poi-ic">${POI_ICONS[p.category] ?? "📍"}</span>
+        <span class="poi-name">${esc(p.name)}</span>
+        <span class="poi-dist">${p.distance_m < 1000 ? `${p.distance_m} m` : `${(p.distance_m / 1000).toFixed(1)} km`}</span></li>`,
+        )
+        .join("")}</ul>`
+    : "";
+  return `
+    ${addr ? `<p class="loc-addr">${esc(addr)}</p>` : ""}
+    <div class="loc-grid">
+      ${mapImg}
+      <div class="loc-side">
+        ${pois.length ? `<h3 class="loc-h3">In der Nähe</h3>${poiList}` : ""}
+      </div>
+    </div>
+  `;
+}
+
+const LOCATION_CSS = (t: ExposeTheme) => `
+  .loc-addr { font-size: 12pt; margin: 0 0 6mm; opacity: 0.85; }
+  .loc-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 6mm; align-items: start; }
+  .loc-map { aspect-ratio: 5 / 3; overflow: hidden; border-radius: 3px; border: 1px solid ${t.primary}22; background: ${t.accent}10; }
+  .loc-map img { width: 100%; height: 100%; object-fit: cover; }
+  .loc-h3 { font-size: 10pt; letter-spacing: 0.22em; text-transform: uppercase; color: ${t.accent}; margin-bottom: 4mm; }
+  .loc-pois { list-style: none; padding: 0; margin: 0; font-size: 11pt; }
+  .loc-pois li { display: grid; grid-template-columns: 18px 1fr auto; gap: 6px; align-items: baseline;
+    padding: 4px 0; border-bottom: 1px dotted ${t.primary}30; }
+  .poi-dist { font-weight: 700; color: ${t.accent}; font-size: 10pt; }
+  .attach-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4mm; }
+  .attach-cell { aspect-ratio: 4 / 3; overflow: hidden; background: ${t.accent}10; border-radius: 2px; }
+  .attach-cell img { width: 100%; height: 100%; object-fit: cover; }
+  .attach-list { list-style: none; padding: 0; font-size: 11pt; }
+  .attach-list li { padding: 6px 0; border-bottom: 1px solid ${t.primary}22; display: flex; gap: 8px; align-items: center; }
+  .attach-list li::before { content: "📎"; }
+`;
+
+function attachmentsPagesHtml(d: ExposeData, t: ExposeTheme, headerHtml: (label: string) => string, startPage: number): { html: string; pagesAdded: number } {
+  const imgs = d.attachment_image_urls ?? [];
+  const docs = d.attachment_doc_names ?? [];
+  if (!imgs.length && !docs.length) return { html: "", pagesAdded: 0 };
+  const chunks: string[] = [];
+  // Image attachments — 4 per page (2x2)
+  for (let i = 0; i < imgs.length; i += 4) {
+    const slice = imgs.slice(i, i + 4);
+    chunks.push(`
+    <div class="page">
+      ${headerHtml("Anhänge · Fotos")}
+      <div class="attach-grid">
+        ${slice.map((u) => `<div class="attach-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
+      </div>
+      ${footer(d, t, startPage + chunks.length, 0)}
+    </div>`);
+  }
+  if (docs.length) {
+    chunks.push(`
+    <div class="page">
+      ${headerHtml("Anhänge · Dokumente")}
+      <ul class="attach-list">
+        ${docs.map((n) => `<li>${esc(n)}</li>`).join("")}
+      </ul>
+      ${footer(d, t, startPage + chunks.length, 0)}
+    </div>`);
+  }
+  return { html: chunks.join("\n"), pagesAdded: chunks.length };
+}
+
+
 /* ============================================================
    CLASSIC family
    Half-page hero, striped tables, blue accent rules.
