@@ -215,7 +215,7 @@ export function SubscriptionManager() {
         </CardContent>
       </Card>
 
-      {isOwner && <InvoiceHistory />}
+      {(isOwner || isSuperadmin) && <InvoiceHistory />}
     </div>
   );
 }
