@@ -213,6 +213,117 @@ export function SubscriptionManager() {
           )}
         </CardContent>
       </Card>
+
+      {isOwner && sub?.stripe_customer_id && <InvoiceHistory />}
     </div>
+  );
+}
+
+function InvoiceHistory() {
+  const env = getStripeEnvironment();
+  const invoicesQuery = useQuery({
+    queryKey: ["invoices", env],
+    queryFn: async () => await listInvoices({ data: { environment: env } }),
+    refetchInterval: 60_000,
+  });
+
+  const invoices = invoicesQuery.data ?? [];
+  const openInvoices = invoices.filter((i) => i.status === "open" || i.status === "uncollectible");
+  const totalDue = openInvoices.reduce((sum, i) => sum + i.amount_remaining, 0);
+
+  const fmt = (cents: number, currency: string) =>
+    new Intl.NumberFormat("de-CH", { style: "currency", currency: currency.toUpperCase() }).format(cents);
+
+  const statusLabel = (s: string | null, days: number) => {
+    if (s === "paid") return { text: "Bezahlt", variant: "default" as const };
+    if (s === "open" && days > 0) return { text: `Überfällig (${days} T.)`, variant: "destructive" as const };
+    if (s === "open") return { text: "Offen", variant: "outline" as const };
+    if (s === "uncollectible") return { text: "Uneinbringlich", variant: "destructive" as const };
+    if (s === "void") return { text: "Storniert", variant: "secondary" as const };
+    if (s === "draft") return { text: "Entwurf", variant: "secondary" as const };
+    return { text: s ?? "—", variant: "outline" as const };
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          Zahlungshistorie
+        </CardTitle>
+        <CardDescription>
+          Monatliche Abrechnungen, offene Posten und Zahlungen.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {invoicesQuery.isLoading ? (
+          <div className="flex items-center gap-2 text-muted-foreground py-6">
+            <Loader2 className="h-4 w-4 animate-spin" /> Lade Rechnungen …
+          </div>
+        ) : invoices.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4">Noch keine Rechnungen vorhanden.</p>
+        ) : (
+          <div className="space-y-3">
+            {openInvoices.length > 0 && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                <div className="flex-1 text-sm">
+                  <p className="font-medium text-destructive">
+                    {openInvoices.length} offene Rechnung{openInvoices.length > 1 ? "en" : ""} – insgesamt{" "}
+                    {fmt(totalDue, openInvoices[0].currency)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Du kannst jede Rechnung einzeln bezahlen. Das Abo läuft normal weiter.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="divide-y border rounded-lg overflow-hidden">
+              {invoices.map((inv) => {
+                const s = statusLabel(inv.status, inv.days_overdue);
+                const period = inv.period_start && inv.period_end
+                  ? `${new Date(inv.period_start).toLocaleDateString("de-CH", { month: "short", year: "numeric" })}`
+                  : inv.created
+                  ? new Date(inv.created).toLocaleDateString("de-CH", { month: "short", year: "numeric" })
+                  : "—";
+                const isOpen = inv.status === "open" || inv.status === "uncollectible";
+                return (
+                  <div key={inv.id} className="flex flex-wrap items-center gap-3 p-3 hover:bg-muted/30">
+                    <div className="flex-1 min-w-[140px]">
+                      <div className="font-medium capitalize">{period}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {inv.number ?? inv.id.slice(0, 12)}
+                        {inv.due_date && ` · fällig ${new Date(inv.due_date).toLocaleDateString("de-CH")}`}
+                      </div>
+                    </div>
+                    <div className="text-sm font-semibold tabular-nums">
+                      {fmt(isOpen ? inv.amount_remaining : inv.amount_paid, inv.currency)}
+                    </div>
+                    <Badge variant={s.variant}>{s.text}</Badge>
+                    <div className="flex gap-1">
+                      {isOpen && inv.hosted_invoice_url && (
+                        <Button asChild size="sm">
+                          <a href={inv.hosted_invoice_url} target="_blank" rel="noreferrer">
+                            Jetzt bezahlen
+                          </a>
+                        </Button>
+                      )}
+                      {inv.invoice_pdf && (
+                        <Button asChild size="sm" variant="ghost">
+                          <a href={inv.invoice_pdf} target="_blank" rel="noreferrer" title="PDF herunterladen">
+                            <Download className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
