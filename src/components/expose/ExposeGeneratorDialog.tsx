@@ -97,7 +97,7 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("properties")
-        .select("id,title,description,address,city,postal_code,country,property_type,listing_type,images,rooms,bathrooms,year_built,renovated_at,living_area,plot_area,area,floor,energy_class,price,rent,features,latitude,longitude")
+        .select("id,title,description,address,city,postal_code,country,property_type,listing_type,images,rooms,bathrooms,year_built,renovated_at,living_area,plot_area,area,floor,energy_class,price,rent,features")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
