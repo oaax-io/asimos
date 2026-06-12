@@ -129,3 +129,107 @@ export const searchAddress = createServerFn({ method: "GET" })
       };
     });
   });
+
+export type NearbyPoi = {
+  id: string;
+  name: string;
+  category: "transit" | "school" | "shop" | "restaurant" | "park" | "health" | "other";
+  distance_m: number;
+  longitude: number;
+  latitude: number;
+};
+
+const POI_QUERIES: Array<{ q: string; category: NearbyPoi["category"] }> = [
+  { q: "Bahnhof", category: "transit" },
+  { q: "Bushaltestelle", category: "transit" },
+  { q: "Schule", category: "school" },
+  { q: "Supermarkt", category: "shop" },
+  { q: "Restaurant", category: "restaurant" },
+  { q: "Park", category: "park" },
+  { q: "Apotheke", category: "health" },
+];
+
+function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000;
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(a)));
+}
+
+export const getNearbyPois = createServerFn({ method: "POST" })
+  .inputValidator((data) =>
+    z
+      .object({
+        longitude: z.number(),
+        latitude: z.number(),
+        country: z.string().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }): Promise<NearbyPoi[]> => {
+    const token = process.env.MAPBOX_PUBLIC_TOKEN;
+    if (!token) return [];
+
+    const results = await Promise.all(
+      POI_QUERIES.map(async ({ q, category }) => {
+        const params = new URLSearchParams({
+          access_token: token,
+          limit: "2",
+          language: "de",
+          proximity: `${data.longitude},${data.latitude}`,
+          types: "poi",
+        });
+        if (data.country) params.set("country", data.country);
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?${params.toString()}`;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) return [] as NearbyPoi[];
+          const json = (await res.json()) as any;
+          return (json.features ?? [])
+            .filter((f: any) => Array.isArray(f.center))
+            .map((f: any): NearbyPoi => {
+              const [lng, lat] = f.center;
+              return {
+                id: f.id,
+                name: f.text ?? f.place_name ?? q,
+                category,
+                distance_m: haversine(data.latitude, data.longitude, lat, lng),
+                longitude: lng,
+                latitude: lat,
+              };
+            });
+        } catch {
+          return [] as NearbyPoi[];
+        }
+      }),
+    );
+
+    return results
+      .flat()
+      .sort((a, b) => a.distance_m - b.distance_m)
+      .slice(0, 10);
+  });
+
+export function buildStaticMapUrl(opts: {
+  longitude: number;
+  latitude: number;
+  zoom?: number;
+  width?: number;
+  height?: number;
+  token: string;
+  pois?: Array<{ longitude: number; latitude: number }>;
+}): string {
+  const { longitude, latitude, zoom = 14, width = 1000, height = 600, token, pois = [] } = opts;
+  const mainPin = `pin-l+e63946(${longitude},${latitude})`;
+  const poiPins = pois
+    .slice(0, 8)
+    .map((p) => `pin-s+3b82f6(${p.longitude},${p.latitude})`)
+    .join(",");
+  const overlays = [mainPin, poiPins].filter(Boolean).join(",");
+  return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${overlays}/${longitude},${latitude},${zoom},0/${width}x${height}@2x?access_token=${token}`;
+}
+
