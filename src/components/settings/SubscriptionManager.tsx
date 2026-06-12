@@ -9,6 +9,7 @@ import { Loader2, CheckCircle2, XCircle, ExternalLink, FileText, AlertCircle, Do
 import { toast } from "sonner";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { PayInvoiceDialog } from "@/components/PayInvoiceDialog";
 import { createPortalSession, listInvoices } from "@/utils/payments.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 
