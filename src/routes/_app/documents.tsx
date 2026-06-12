@@ -468,6 +468,15 @@ function DocumentsPage() {
           <GeneratedDocumentsTable />
         </TabsContent>
       </Tabs>
+
+      <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Dokumentvorlagen</DialogTitle>
+          </DialogHeader>
+          <DocumentTemplatesManager />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
