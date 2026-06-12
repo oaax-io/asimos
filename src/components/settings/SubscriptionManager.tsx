@@ -305,11 +305,9 @@ function InvoiceHistory() {
                     </div>
                     <Badge variant={s.variant}>{s.text}</Badge>
                     <div className="flex gap-1">
-                      {isOpen && inv.hosted_invoice_url && (
-                        <Button asChild size="sm">
-                          <a href={inv.hosted_invoice_url} target="_blank" rel="noreferrer">
-                            Jetzt bezahlen
-                          </a>
+                      {isOpen && (
+                        <Button size="sm" onClick={() => setPayInvoiceId(inv.id)}>
+                          Jetzt bezahlen
                         </Button>
                       )}
                       {inv.invoice_pdf && (
