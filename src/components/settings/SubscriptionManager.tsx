@@ -103,29 +103,32 @@ export function SubscriptionManager() {
   // Systemowner (Lovable) sieht nur Status, zahlt nicht
   if (isSuperadmin && !isOwner) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Abonnement-Status (Systemowner-Ansicht)</CardTitle>
-          <CardDescription>Du als Systemowner siehst hier den Abo-Status, zahlst aber nicht selbst.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {sub ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Badge variant={STATUS_VARIANTS[sub.status] ?? "outline"}>{STATUS_LABELS[sub.status] ?? sub.status}</Badge>
-                {sub.cancel_at_period_end && <Badge variant="outline">Kündigung zum Periodenende</Badge>}
+      <div className="space-y-4 max-w-3xl">
+        <Card>
+          <CardHeader>
+            <CardTitle>Abonnement-Status (Systemowner-Ansicht)</CardTitle>
+            <CardDescription>Du als Systemowner siehst hier den Abo-Status, zahlst aber nicht selbst.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {sub ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Badge variant={STATUS_VARIANTS[sub.status] ?? "outline"}>{STATUS_LABELS[sub.status] ?? sub.status}</Badge>
+                  {sub.cancel_at_period_end && <Badge variant="outline">Kündigung zum Periodenende</Badge>}
+                </div>
+                {sub.current_period_end && (
+                  <p className="text-sm text-muted-foreground">
+                    Laufzeit bis: {new Date(sub.current_period_end).toLocaleDateString("de-CH")}
+                  </p>
+                )}
               </div>
-              {sub.current_period_end && (
-                <p className="text-sm text-muted-foreground">
-                  Laufzeit bis: {new Date(sub.current_period_end).toLocaleDateString("de-CH")}
-                </p>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Kein aktives Abonnement für diese Agentur.</p>
-          )}
-        </CardContent>
-      </Card>
+            ) : (
+              <p className="text-sm text-muted-foreground">Kein aktives Abonnement für diese Agentur.</p>
+            )}
+          </CardContent>
+        </Card>
+        <InvoiceHistory />
+      </div>
     );
   }
 
@@ -215,7 +218,7 @@ export function SubscriptionManager() {
         </CardContent>
       </Card>
 
-      {isOwner && <InvoiceHistory />}
+      {(isOwner || isSuperadmin) && <InvoiceHistory />}
     </div>
   );
 }
