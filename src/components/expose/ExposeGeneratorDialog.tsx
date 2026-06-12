@@ -505,7 +505,7 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
                 <li>• {Object.entries(sections).filter(([k, v]) => v && k !== "galerieLayout").length} Sektionen</li>
                 <li>• Galerie-Layout: {GALLERY_OPTIONS.find((o) => o.id === galleryLayout)?.label}</li>
                 <li>• {selectedImageIds.size} Fotos, {selectedDocIds.size} Dokumente</li>
-                <li>• Karte/POIs: {sections.mikrolage && (property as any).latitude ? "ja" : "nein"}</li>
+                <li>• Karte/POIs: {sections.mikrolage && property.address ? "ja" : "nein"}</li>
               </ul>
             </div>
           )}
