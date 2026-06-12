@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Search, Trash2, Upload, ExternalLink, HardDrive } from "lucide-react";
+import { FileText, Download, Search, Trash2, Upload, ExternalLink, HardDrive, LayoutTemplate } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
