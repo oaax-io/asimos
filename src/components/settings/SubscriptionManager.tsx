@@ -5,11 +5,11 @@ import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, ExternalLink, FileText, AlertCircle, Download } from "lucide-react";
 import { toast } from "sonner";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
-import { createPortalSession } from "@/utils/payments.functions";
+import { createPortalSession, listInvoices } from "@/utils/payments.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 
 const PRICE_ID = "asimos_monthly";
