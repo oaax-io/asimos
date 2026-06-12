@@ -19,6 +19,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { formatDate } from "@/lib/format";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { DocumentTemplatesManager } from "@/components/settings/DocumentTemplatesManager";
+import { DocumentFolderView } from "@/components/documents/DocumentFolderView";
 
 export const Route = createFileRoute("/_app/documents")({ component: DocumentsPage });
 
