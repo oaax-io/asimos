@@ -131,40 +131,48 @@ export const listInvoices = createServerFn({ method: "POST" })
 
     const stripe = createStripeClient(data.environment);
 
-    // Resolve customer: prefer DB, fallback to Stripe search by metadata.userId, then email.
-    let customerId: string | null = (sub?.stripe_customer_id as string | null) ?? null;
-    if (!customerId && /^[a-zA-Z0-9_-]+$/.test(userId)) {
+    // Resolve customers: prefer DB, plus Stripe search by metadata.userId, then email.
+    const customerIds = new Set<string>();
+    if (sub?.stripe_customer_id) customerIds.add(sub.stripe_customer_id as string);
+    if (/^[a-zA-Z0-9_-]+$/.test(userId)) {
       const found = await stripe.customers.search({
         query: `metadata['userId']:'${userId}'`,
-        limit: 1,
+        limit: 10,
       });
-      if (found.data.length) customerId = found.data[0].id;
+      for (const c of found.data) customerIds.add(c.id);
     }
-    if (!customerId) {
+    if (customerIds.size === 0) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.email) {
-        const byEmail = await stripe.customers.list({ email: user.email, limit: 1 });
-        if (byEmail.data.length) customerId = byEmail.data[0].id;
+        const byEmail = await stripe.customers.list({ email: user.email, limit: 10 });
+        for (const c of byEmail.data) customerIds.add(c.id);
       }
     }
-    if (!customerId) return [];
+    if (customerIds.size === 0) return [];
 
-    const list = await stripe.invoices.list({
-      customer: customerId,
-      limit: 36,
-    });
-
+    const allInvoices = (
+      await Promise.all(
+        [...customerIds].map((customer) =>
+          stripe.invoices.list({ customer, limit: 36 }).then((r) => r.data),
+        ),
+      )
+    ).flat();
 
     const now = Date.now();
     const toIso = (s: number | null | undefined) =>
       s ? new Date(s * 1000).toISOString() : null;
 
-    return list.data.map((inv) => {
+    const rows = allInvoices.map((inv) => {
       const dueTs = (inv.due_date ?? inv.created) * 1000;
       const overdue =
         inv.status === "open" || inv.status === "uncollectible"
           ? Math.max(0, Math.floor((now - dueTs) / 86_400_000))
           : 0;
+      // Prefer the billing period of the first line item (correct month),
+      // fall back to the invoice-level period.
+      const linePeriod = (inv.lines?.data?.[0] as any)?.period as
+        | { start?: number; end?: number }
+        | undefined;
       return {
         id: inv.id ?? "",
         number: inv.number ?? null,
@@ -175,11 +183,14 @@ export const listInvoices = createServerFn({ method: "POST" })
         currency: inv.currency ?? "chf",
         created: toIso(inv.created),
         due_date: toIso(inv.due_date ?? inv.created),
-        period_start: toIso(inv.period_start),
-        period_end: toIso(inv.period_end),
+        period_start: toIso(linePeriod?.start ?? inv.period_start),
+        period_end: toIso(linePeriod?.end ?? inv.period_end),
         hosted_invoice_url: inv.hosted_invoice_url ?? null,
         invoice_pdf: inv.invoice_pdf ?? null,
         days_overdue: overdue,
       };
     });
+
+    rows.sort((a, b) => (b.created ?? "").localeCompare(a.created ?? ""));
+    return rows;
   });
