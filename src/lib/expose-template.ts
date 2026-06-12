@@ -291,7 +291,7 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
   );
   pages.push(...attachPages);
 
-  if (attach.html) pages.push(attach.html);
+  
 
 
   const total = pages.length;
