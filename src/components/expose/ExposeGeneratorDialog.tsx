@@ -392,9 +392,9 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
                   </label>
                 ))}
               </div>
-              {sections.mikrolage && property && !(property as any).latitude && (
+              {sections.mikrolage && property && !property.address && (
                 <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
-                  Objekt hat keine Koordinaten — Karte & POIs werden übersprungen.
+                  Objekt hat keine Adresse — Karte & POIs werden übersprungen.
                 </div>
               )}
             </div>
