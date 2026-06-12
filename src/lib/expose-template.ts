@@ -29,6 +29,11 @@ export interface ExposeData {
   facts: Array<{ label: string; value: string }>;
   cover_url?: string | null;
   gallery_urls: string[];
+  gallery_cols?: number;
+  static_map_url?: string | null;
+  pois?: Array<{ name: string; category: string; distance_m: number }>;
+  attachment_image_urls?: string[];
+  attachment_doc_names?: string[];
   agency_name?: string | null;
   contact_name?: string | null;
   contact_email?: string | null;
@@ -46,6 +51,7 @@ export interface ExposeTheme {
   templateLabel?: string;
   family?: ExposeFamily;
 }
+
 
 const fmtCHF = (v: number) =>
   new Intl.NumberFormat("de-CH", { style: "currency", currency: "CHF", maximumFractionDigits: 0 }).format(v);
@@ -101,6 +107,87 @@ function footer(d: ExposeData, t: ExposeTheme, page: number, total: number): str
   </div>`;
 }
 
+const POI_ICONS: Record<string, string> = {
+  transit: "🚆", school: "🎓", shop: "🛒", restaurant: "🍽",
+  park: "🌳", health: "➕", other: "📍",
+};
+
+function locationBlockHtml(d: ExposeData, t: ExposeTheme): string {
+  const addr = addressLine(d);
+  const hasMap = !!d.static_map_url;
+  const pois = d.pois ?? [];
+  if (!hasMap && !pois.length && !addr) return "";
+  const mapImg = hasMap
+    ? `<div class="loc-map"><img src="${esc(d.static_map_url!)}" alt="Karte"/></div>`
+    : "";
+  const poiList = pois.length
+    ? `<ul class="loc-pois">${pois
+        .map(
+          (p) => `<li><span class="poi-ic">${POI_ICONS[p.category] ?? "📍"}</span>
+        <span class="poi-name">${esc(p.name)}</span>
+        <span class="poi-dist">${p.distance_m < 1000 ? `${p.distance_m} m` : `${(p.distance_m / 1000).toFixed(1)} km`}</span></li>`,
+        )
+        .join("")}</ul>`
+    : "";
+  return `
+    ${addr ? `<p class="loc-addr">${esc(addr)}</p>` : ""}
+    <div class="loc-grid">
+      ${mapImg}
+      <div class="loc-side">
+        ${pois.length ? `<h3 class="loc-h3">In der Nähe</h3>${poiList}` : ""}
+      </div>
+    </div>
+  `;
+}
+
+const LOCATION_CSS = (t: ExposeTheme) => `
+  .loc-addr { font-size: 12pt; margin: 0 0 6mm; opacity: 0.85; }
+  .loc-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 6mm; align-items: start; }
+  .loc-map { aspect-ratio: 5 / 3; overflow: hidden; border-radius: 3px; border: 1px solid ${t.primary}22; background: ${t.accent}10; }
+  .loc-map img { width: 100%; height: 100%; object-fit: cover; }
+  .loc-h3 { font-size: 10pt; letter-spacing: 0.22em; text-transform: uppercase; color: ${t.accent}; margin-bottom: 4mm; }
+  .loc-pois { list-style: none; padding: 0; margin: 0; font-size: 11pt; }
+  .loc-pois li { display: grid; grid-template-columns: 18px 1fr auto; gap: 6px; align-items: baseline;
+    padding: 4px 0; border-bottom: 1px dotted ${t.primary}30; }
+  .poi-dist { font-weight: 700; color: ${t.accent}; font-size: 10pt; }
+  .attach-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4mm; }
+  .attach-cell { aspect-ratio: 4 / 3; overflow: hidden; background: ${t.accent}10; border-radius: 2px; }
+  .attach-cell img { width: 100%; height: 100%; object-fit: cover; }
+  .attach-list { list-style: none; padding: 0; font-size: 11pt; }
+  .attach-list li { padding: 6px 0; border-bottom: 1px solid ${t.primary}22; display: flex; gap: 8px; align-items: center; }
+  .attach-list li::before { content: "📎"; }
+`;
+
+function attachmentsPages(d: ExposeData, t: ExposeTheme, headerHtml: (label: string) => string, startPage: number): string[] {
+  const imgs = d.attachment_image_urls ?? [];
+  const docs = d.attachment_doc_names ?? [];
+  const out: string[] = [];
+  for (let i = 0; i < imgs.length; i += 4) {
+    const slice = imgs.slice(i, i + 4);
+    out.push(`
+    <div class="page">
+      ${headerHtml("Anhänge · Fotos")}
+      <div class="attach-grid">
+        ${slice.map((u) => `<div class="attach-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
+      </div>
+      ${footer(d, t, startPage + out.length, 0)}
+    </div>`);
+  }
+  if (docs.length) {
+    out.push(`
+    <div class="page">
+      ${headerHtml("Anhänge · Dokumente")}
+      <ul class="attach-list">
+        ${docs.map((n) => `<li>${esc(n)}</li>`).join("")}
+      </ul>
+      ${footer(d, t, startPage + out.length, 0)}
+    </div>`);
+  }
+  return out;
+}
+
+
+
 /* ============================================================
    CLASSIC family
    Half-page hero, striped tables, blue accent rules.
@@ -110,8 +197,9 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
   const addr = addressLine(d);
   const facts = d.facts.filter((f) => f.value && f.value !== "—");
   const orient = t.orientation ?? "portrait";
-  const galleryCols = orient === "landscape" ? 3 : 2;
-  const galleryUrls = d.gallery_urls.slice(0, orient === "landscape" ? 6 : 4);
+  const galleryCols = d.gallery_cols ?? (orient === "landscape" ? 3 : 2);
+  const galleryUrls = d.gallery_urls;
+
 
   const pages: string[] = [];
 
@@ -156,25 +244,30 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
     ${footer(d, t, 2, 0)}
   </div>`);
 
-  // Page 3: gallery
+  // Page 3+: gallery (paginated by chosen layout)
   if (galleryUrls.length) {
-    pages.push(`
-    <div class="page">
-      <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Galerie</div></header>
-      <h2 class="section-title">Bilder</h2>
-      <div class="gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
-        ${galleryUrls.map((u) => `<div class="g-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
-      </div>
-      ${footer(d, t, 3, 0)}
-    </div>`);
+    const perPage = galleryCols * (galleryCols >= 3 ? 3 : 2);
+    for (let i = 0; i < galleryUrls.length; i += perPage) {
+      const slice = galleryUrls.slice(i, i + perPage);
+      pages.push(`
+      <div class="page">
+        <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Galerie</div></header>
+        <h2 class="section-title">Bilder</h2>
+        <div class="gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
+          ${slice.map((u) => `<div class="g-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
+        </div>
+        ${footer(d, t, pages.length + 1, 0)}
+      </div>`);
+    }
   }
 
-  // Page 4: location + contact
-  if (addr || d.contact_name || d.contact_email || d.contact_phone) {
+  // Location + contact
+  const locHtml = locationBlockHtml(d, t);
+  if (locHtml || d.contact_name || d.contact_email || d.contact_phone) {
     pages.push(`
     <div class="page">
       <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Lage & Kontakt</div></header>
-      ${addr ? `<h2 class="section-title">Lage</h2><p class="prose">${esc(addr)}</p>` : ""}
+      ${locHtml ? `<h2 class="section-title">Lage</h2>${locHtml}` : ""}
       ${(d.contact_name || d.contact_email || d.contact_phone)
         ? `<h2 class="section-title mt">Kontakt</h2>
            <div class="contact-card">
@@ -186,9 +279,20 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
              </div>
            </div>`
         : ""}
-      ${footer(d, t, 4, 0)}
+      ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
+
+  // Attachments
+  const attachPages = attachmentsPages(
+    d, t,
+    (label: string) => `<header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">${esc(label)}</div></header><h2 class="section-title">${esc(label)}</h2>`,
+    pages.length + 1,
+  );
+  pages.push(...attachPages);
+
+  
+
 
   const total = pages.length;
   const filled = pages.map((p, i) => p.replace(`${i + 1} / 0`, `${i + 1} / ${total}`));
@@ -235,7 +339,8 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
     .c-name { font-family: ${t.titleFont}; font-size: 18pt; margin-bottom: 4mm; }
     .c-meta { display: flex; gap: 20mm; font-size: 11pt; flex-wrap: wrap; }
   `;
-  return wrapHtml(d, css, filled.join("\n"));
+  const cssFull = css + LOCATION_CSS(t);
+  return wrapHtml(d, cssFull, filled.join("\n"));
 }
 
 /* ============================================================
@@ -248,8 +353,9 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
   const facts = d.facts.filter((f) => f.value && f.value !== "—");
   const orient = t.orientation ?? "portrait";
   const kpiCols = orient === "landscape" ? 6 : 3;
-  const galleryCols = orient === "landscape" ? 4 : 2;
-  const galleryUrls = d.gallery_urls.slice(0, orient === "landscape" ? 8 : 6);
+  const galleryCols = d.gallery_cols ?? (orient === "landscape" ? 4 : 2);
+  const galleryUrls = d.gallery_urls;
+
 
   const pages: string[] = [];
 
@@ -283,21 +389,26 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
   </div>`);
 
   if (galleryUrls.length) {
-    pages.push(`
-    <div class="page">
-      <header class="ph"><div>${esc(d.title)}</div><div class="muted">Galerie</div></header>
-      <div class="m-gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
-        ${galleryUrls.map((u) => `<div class="m-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
-      </div>
-      ${footer(d, t, 3, 0)}
-    </div>`);
+    const perPage = galleryCols * (galleryCols >= 3 ? 3 : 2);
+    for (let i = 0; i < galleryUrls.length; i += perPage) {
+      const slice = galleryUrls.slice(i, i + perPage);
+      pages.push(`
+      <div class="page">
+        <header class="ph"><div>${esc(d.title)}</div><div class="muted">Galerie</div></header>
+        <div class="m-gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
+          ${slice.map((u) => `<div class="m-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
+        </div>
+        ${footer(d, t, pages.length + 1, 0)}
+      </div>`);
+    }
   }
 
-  if (addr || d.contact_name || d.contact_email || d.contact_phone) {
+  const locHtml = locationBlockHtml(d, t);
+  if (locHtml || d.contact_name || d.contact_email || d.contact_phone) {
     pages.push(`
     <div class="page">
       <header class="ph"><div>${esc(d.title)}</div><div class="muted">Lage & Kontakt</div></header>
-      ${addr ? `<h2 class="sec">Lage</h2><p class="lead">${esc(addr)}</p>` : ""}
+      ${locHtml ? `<h2 class="sec">Lage</h2>${locHtml}` : ""}
       ${(d.contact_name || d.contact_email || d.contact_phone)
         ? `<h2 class="sec">Ihr Ansprechpartner</h2>
            <div class="m-contact">
@@ -311,9 +422,16 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
              </div>
            </div>`
         : ""}
-      ${footer(d, t, 4, 0)}
+      ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
+
+  pages.push(...attachmentsPages(
+    d, t,
+    (label: string) => `<header class="ph"><div>${esc(d.title)}</div><div class="muted">${esc(label)}</div></header><h2 class="sec">${esc(label)}</h2>`,
+    pages.length + 1,
+  ));
+
 
   const total = pages.length;
   const filled = pages.map((p, i) => p.replace(`${i + 1} / 0`, `${i + 1} / ${total}`));
@@ -354,7 +472,8 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
     .m-contact-ag { font-size: 10pt; letter-spacing: 0.2em; text-transform: uppercase; color: ${t.accent}; margin-top: 3mm; }
     .m-contact-r { font-size: 12pt; align-self: end; display: flex; flex-direction: column; gap: 3mm; }
   `;
-  return wrapHtml(d, css, filled.join("\n"));
+  const cssFull = css + LOCATION_CSS(t);
+  return wrapHtml(d, cssFull, filled.join("\n"));
 }
 
 /* ============================================================
@@ -367,8 +486,9 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
   const addr = addressLine(d);
   const facts = d.facts.filter((f) => f.value && f.value !== "—");
   const orient = t.orientation ?? "portrait";
-  const galleryCols = orient === "landscape" ? 3 : 2;
-  const galleryUrls = d.gallery_urls.slice(0, orient === "landscape" ? 6 : 4);
+  const galleryCols = d.gallery_cols ?? (orient === "landscape" ? 3 : 2);
+  const galleryUrls = d.gallery_urls;
+
 
   const pages: string[] = [];
 
@@ -418,24 +538,29 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
   </div>`);
 
   if (galleryUrls.length) {
-    pages.push(`
-    <div class="page">
-      <div class="lx-folio"><span>${esc(d.title)}</span><span>03</span></div>
-      <div class="lx-rule double"></div>
-      <h2 class="lx-h2">Impressionen</h2>
-      <div class="lx-gal" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
-        ${galleryUrls.map((u, i) => `<figure class="lx-gc ${i === 0 ? "feat" : ""}"><img src="${esc(u)}" alt=""/></figure>`).join("")}
-      </div>
-      ${footer(d, t, 3, 0)}
-    </div>`);
+    const perPage = galleryCols * (galleryCols >= 3 ? 3 : 2);
+    for (let i = 0; i < galleryUrls.length; i += perPage) {
+      const slice = galleryUrls.slice(i, i + perPage);
+      pages.push(`
+      <div class="page">
+        <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
+        <div class="lx-rule double"></div>
+        <h2 class="lx-h2">Impressionen</h2>
+        <div class="lx-gal" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
+          ${slice.map((u, idx) => `<figure class="lx-gc ${i === 0 && idx === 0 ? "feat" : ""}"><img src="${esc(u)}" alt=""/></figure>`).join("")}
+        </div>
+        ${footer(d, t, pages.length + 1, 0)}
+      </div>`);
+    }
   }
 
-  if (addr || d.contact_name || d.contact_email || d.contact_phone) {
+  const locHtml = locationBlockHtml(d, t);
+  if (locHtml || d.contact_name || d.contact_email || d.contact_phone) {
     pages.push(`
     <div class="page">
-      <div class="lx-folio"><span>${esc(d.title)}</span><span>04</span></div>
+      <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
       <div class="lx-rule double"></div>
-      ${addr ? `<h2 class="lx-h2">Lage</h2><p class="lx-prose">${esc(addr)}</p>` : ""}
+      ${locHtml ? `<h2 class="lx-h2">Lage</h2>${locHtml}` : ""}
       ${(d.contact_name || d.contact_email || d.contact_phone)
         ? `<h2 class="lx-h2 mt">Kontakt</h2>
            <div class="lx-contact">
@@ -446,9 +571,16 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
                ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
              </div>
            </div>` : ""}
-      ${footer(d, t, 4, 0)}
+      ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
+
+  pages.push(...attachmentsPages(
+    d, t,
+    (label: string) => `<div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div><div class="lx-rule double"></div><h2 class="lx-h2">${esc(label)}</h2>`,
+    pages.length + 1,
+  ));
+
 
   const total = pages.length;
   const filled = pages.map((p, i) => p.replace(`${i + 1} / 0`, `${i + 1} / ${total}`));
@@ -498,7 +630,8 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
     .lx-c-name { font-family: ${t.titleFont}; font-size: 22pt; font-style: italic; font-weight: 700; margin-bottom: 4mm; }
     .lx-c-meta { display: flex; gap: 12mm; font-size: 11pt; flex-wrap: wrap; }
   `;
-  return wrapHtml(d, css, filled.join("\n"));
+  const cssFull = css + LOCATION_CSS(t);
+  return wrapHtml(d, cssFull, filled.join("\n"));
 }
 
 function wrapHtml(d: ExposeData, css: string, body: string): string {
