@@ -19,6 +19,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { formatDate } from "@/lib/format";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { DocumentTemplatesManager } from "@/components/settings/DocumentTemplatesManager";
+import { DocumentFolderView } from "@/components/documents/DocumentFolderView";
 
 export const Route = createFileRoute("/_app/documents")({ component: DocumentsPage });
 
@@ -345,12 +346,18 @@ function DocumentsPage() {
         );
       })()}
 
-      <Tabs defaultValue="uploaded" className="space-y-4">
+      <Tabs defaultValue="folders" className="space-y-4">
 
         <TabsList>
+          <TabsTrigger value="folders">Ordner</TabsTrigger>
           <TabsTrigger value="uploaded">Hochgeladene Dokumente</TabsTrigger>
           <TabsTrigger value="generated">Generierte Dokumente</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="folders">
+          <DocumentFolderView />
+        </TabsContent>
+
 
         <TabsContent value="uploaded" className="space-y-4">
           <div className="flex flex-wrap gap-3">
