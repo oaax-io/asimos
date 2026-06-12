@@ -346,12 +346,18 @@ function DocumentsPage() {
         );
       })()}
 
-      <Tabs defaultValue="uploaded" className="space-y-4">
+      <Tabs defaultValue="folders" className="space-y-4">
 
         <TabsList>
+          <TabsTrigger value="folders">Ordner</TabsTrigger>
           <TabsTrigger value="uploaded">Hochgeladene Dokumente</TabsTrigger>
           <TabsTrigger value="generated">Generierte Dokumente</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="folders">
+          <DocumentFolderView />
+        </TabsContent>
+
 
         <TabsContent value="uploaded" className="space-y-4">
           <div className="flex flex-wrap gap-3">
