@@ -96,3 +96,71 @@ export const createPortalSession = createServerFn({ method: "POST" })
     });
     return portal.url;
   });
+
+export type InvoiceRow = {
+  id: string;
+  number: string | null;
+  status: string | null;
+  amount_due: number;
+  amount_paid: number;
+  amount_remaining: number;
+  currency: string;
+  created: string | null;
+  due_date: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  hosted_invoice_url: string | null;
+  invoice_pdf: string | null;
+  days_overdue: number;
+};
+
+export const listInvoices = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { environment: StripeEnv }) => data)
+  .handler(async ({ data, context }): Promise<InvoiceRow[]> => {
+    const { supabase, userId } = context;
+
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("stripe_customer_id")
+      .eq("user_id", userId)
+      .eq("environment", data.environment)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!sub?.stripe_customer_id) return [];
+
+    const stripe = createStripeClient(data.environment);
+    const list = await stripe.invoices.list({
+      customer: sub.stripe_customer_id as string,
+      limit: 36,
+    });
+
+    const now = Date.now();
+    const toIso = (s: number | null | undefined) =>
+      s ? new Date(s * 1000).toISOString() : null;
+
+    return list.data.map((inv) => {
+      const dueTs = (inv.due_date ?? inv.created) * 1000;
+      const overdue =
+        inv.status === "open" || inv.status === "uncollectible"
+          ? Math.max(0, Math.floor((now - dueTs) / 86_400_000))
+          : 0;
+      return {
+        id: inv.id ?? "",
+        number: inv.number ?? null,
+        status: inv.status ?? null,
+        amount_due: (inv.amount_due ?? 0) / 100,
+        amount_paid: (inv.amount_paid ?? 0) / 100,
+        amount_remaining: (inv.amount_remaining ?? 0) / 100,
+        currency: inv.currency ?? "chf",
+        created: toIso(inv.created),
+        due_date: toIso(inv.due_date ?? inv.created),
+        period_start: toIso(inv.period_start),
+        period_end: toIso(inv.period_end),
+        hosted_invoice_url: inv.hosted_invoice_url ?? null,
+        invoice_pdf: inv.invoice_pdf ?? null,
+        days_overdue: overdue,
+      };
+    });
+  });
