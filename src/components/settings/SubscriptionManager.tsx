@@ -325,6 +325,15 @@ function InvoiceHistory() {
           </div>
         )}
       </CardContent>
+      <PayInvoiceDialog
+        open={!!payInvoiceId}
+        onOpenChange={(o) => !o && setPayInvoiceId(null)}
+        invoiceId={payInvoiceId}
+        onPaid={() => {
+          qc.invalidateQueries({ queryKey: ["invoices"] });
+          qc.invalidateQueries({ queryKey: ["subscription"] });
+        }}
+      />
     </Card>
   );
 }
