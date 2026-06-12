@@ -2,37 +2,134 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient } from "@/lib/stripe.server";
 
+type CompanyBilling = {
+  name?: string;
+  email?: string;
+  phone?: string;
+  tax_id?: { type: "ch_uid" | "eu_vat"; value: string };
+  address?: {
+    line1?: string;
+    postal_code?: string;
+    city?: string;
+    country?: string;
+  };
+};
+
+async function loadCompanyBilling(
+  supabase: ReturnType<typeof createStripeClient> extends never ? never : any,
+  userId: string,
+): Promise<CompanyBilling> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("agency_id")
+    .eq("id", userId)
+    .maybeSingle();
+  if (!profile?.agency_id) return {};
+  const { data: c } = await supabase
+    .from("company")
+    .select("name, legal_name, address, postal_code, city, country, phone, email, uid_number")
+    .eq("agency_id", profile.agency_id)
+    .maybeSingle();
+  if (!c) return {};
+
+  const countryCode = (c.country ?? "").trim().slice(0, 2).toUpperCase() || undefined;
+  // UID like "CHE-123.456.789" → Stripe ch_uid; otherwise treat as EU VAT if non-CH.
+  const uid = (c.uid_number ?? "").trim();
+  let tax_id: CompanyBilling["tax_id"];
+  if (uid) {
+    tax_id = countryCode === "CH" || /^che[- ]?/i.test(uid)
+      ? { type: "ch_uid", value: uid }
+      : { type: "eu_vat", value: uid };
+  }
+
+  return {
+    name: c.legal_name || c.name || undefined,
+    email: c.email || undefined,
+    phone: c.phone || undefined,
+    tax_id,
+    address: {
+      line1: c.address || undefined,
+      postal_code: c.postal_code || undefined,
+      city: c.city || undefined,
+      country: countryCode,
+    },
+  };
+}
+
+async function syncCustomerBilling(
+  stripe: ReturnType<typeof createStripeClient>,
+  customerId: string,
+  billing: CompanyBilling,
+) {
+  const payload: any = {};
+  if (billing.name) payload.name = billing.name;
+  if (billing.phone) payload.phone = billing.phone;
+  if (billing.address && Object.values(billing.address).some(Boolean)) {
+    payload.address = billing.address;
+  }
+  if (Object.keys(payload).length) {
+    await stripe.customers.update(customerId, payload);
+  }
+  // Sync tax id (idempotent: only add if missing)
+  if (billing.tax_id) {
+    const existing = await stripe.customers.listTaxIds(customerId, { limit: 10 });
+    const match = existing.data.find(
+      (t) => t.type === billing.tax_id!.type && t.value === billing.tax_id!.value,
+    );
+    if (!match) {
+      try {
+        await stripe.customers.createTaxId(customerId, billing.tax_id);
+      } catch {
+        // invalid UID format etc. — skip silently
+      }
+    }
+  }
+}
+
 async function resolveOrCreateCustomer(
   stripe: ReturnType<typeof createStripeClient>,
-  options: { email?: string; userId?: string },
+  options: { email?: string; userId?: string; billing?: CompanyBilling },
 ): Promise<string> {
   if (options.userId && !/^[a-zA-Z0-9_-]+$/.test(options.userId)) {
     throw new Error("Invalid userId");
   }
+  let customerId: string | undefined;
   if (options.userId) {
     const found = await stripe.customers.search({
       query: `metadata['userId']:'${options.userId}'`,
       limit: 1,
     });
-    if (found.data.length) return found.data[0].id;
+    if (found.data.length) customerId = found.data[0].id;
   }
-  if (options.email) {
+  if (!customerId && options.email) {
     const existing = await stripe.customers.list({ email: options.email, limit: 1 });
     if (existing.data.length) {
-      const customer = existing.data[0];
-      if (options.userId && customer.metadata?.userId !== options.userId) {
-        await stripe.customers.update(customer.id, {
-          metadata: { ...customer.metadata, userId: options.userId },
+      const c = existing.data[0];
+      if (options.userId && c.metadata?.userId !== options.userId) {
+        await stripe.customers.update(c.id, {
+          metadata: { ...c.metadata, userId: options.userId },
         });
       }
-      return customer.id;
+      customerId = c.id;
     }
   }
-  const created = await stripe.customers.create({
-    ...(options.email && { email: options.email }),
-    ...(options.userId && { metadata: { userId: options.userId } }),
-  });
-  return created.id;
+  if (!customerId) {
+    const created = await stripe.customers.create({
+      ...(options.email && { email: options.email }),
+      ...(options.userId && { metadata: { userId: options.userId } }),
+      ...(options.billing?.name && { name: options.billing.name }),
+      ...(options.billing?.phone && { phone: options.billing.phone }),
+      ...(options.billing?.address &&
+        Object.values(options.billing.address).some(Boolean) && {
+          address: options.billing.address as any,
+        }),
+    });
+    customerId = created.id;
+  }
+  if (options.billing) {
+    await syncCustomerBilling(stripe, customerId, options.billing);
+  }
+  return customerId;
 }
 
 export const createCheckoutSession = createServerFn({ method: "POST" })
@@ -56,7 +153,8 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     if (!prices.data.length) throw new Error("Price not found");
     const stripePrice = prices.data[0];
 
-    const customerId = await resolveOrCreateCustomer(stripe, { email, userId });
+    const billing = await loadCompanyBilling(supabase, userId);
+    const customerId = await resolveOrCreateCustomer(stripe, { email, userId, billing });
 
     const session = await stripe.checkout.sessions.create({
       line_items: [{ price: stripePrice.id, quantity: 1 }],
@@ -64,6 +162,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       ui_mode: "embedded_page",
       return_url: data.returnUrl,
       customer: customerId,
+      customer_update: { name: "auto", address: "auto" },
       metadata: { userId, ...(data.agencyId && { agencyId: data.agencyId }) },
       subscription_data: {
         metadata: { userId, ...(data.agencyId && { agencyId: data.agencyId }) },
@@ -220,6 +319,15 @@ export const createInvoicePaymentIntent = createServerFn({ method: "POST" })
       owned = !!email && !!custEmail && email === custEmail;
     }
     if (!owned) throw new Error("Nicht autorisiert");
+
+    // Firmendaten am Stripe-Customer aktualisieren, damit künftige
+    // Rechnungen die korrekten Empfängerdaten tragen.
+    try {
+      const billing = await loadCompanyBilling(supabase, userId);
+      await syncCustomerBilling(stripe, customerId, billing);
+    } catch {
+      // non-fatal
+    }
 
     if (invoice.status === "draft") {
       invoice = await stripe.invoices.finalizeInvoice(invoice.id!, { expand: ["payment_intent"] });
