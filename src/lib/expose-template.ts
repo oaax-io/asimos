@@ -388,21 +388,26 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
   </div>`);
 
   if (galleryUrls.length) {
-    pages.push(`
-    <div class="page">
-      <header class="ph"><div>${esc(d.title)}</div><div class="muted">Galerie</div></header>
-      <div class="m-gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
-        ${galleryUrls.map((u) => `<div class="m-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
-      </div>
-      ${footer(d, t, 3, 0)}
-    </div>`);
+    const perPage = galleryCols * (galleryCols >= 3 ? 3 : 2);
+    for (let i = 0; i < galleryUrls.length; i += perPage) {
+      const slice = galleryUrls.slice(i, i + perPage);
+      pages.push(`
+      <div class="page">
+        <header class="ph"><div>${esc(d.title)}</div><div class="muted">Galerie</div></header>
+        <div class="m-gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
+          ${slice.map((u) => `<div class="m-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
+        </div>
+        ${footer(d, t, pages.length + 1, 0)}
+      </div>`);
+    }
   }
 
-  if (addr || d.contact_name || d.contact_email || d.contact_phone) {
+  const locHtml = locationBlockHtml(d, t);
+  if (locHtml || d.contact_name || d.contact_email || d.contact_phone) {
     pages.push(`
     <div class="page">
       <header class="ph"><div>${esc(d.title)}</div><div class="muted">Lage & Kontakt</div></header>
-      ${addr ? `<h2 class="sec">Lage</h2><p class="lead">${esc(addr)}</p>` : ""}
+      ${locHtml ? `<h2 class="sec">Lage</h2>${locHtml}` : ""}
       ${(d.contact_name || d.contact_email || d.contact_phone)
         ? `<h2 class="sec">Ihr Ansprechpartner</h2>
            <div class="m-contact">
@@ -416,9 +421,16 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
              </div>
            </div>`
         : ""}
-      ${footer(d, t, 4, 0)}
+      ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
+
+  pages.push(...attachmentsPages(
+    d, t,
+    (label: string) => `<header class="ph"><div>${esc(d.title)}</div><div class="muted">${esc(label)}</div></header><h2 class="sec">${esc(label)}</h2>`,
+    pages.length + 1,
+  ));
+
 
   const total = pages.length;
   const filled = pages.map((p, i) => p.replace(`${i + 1} / 0`, `${i + 1} / ${total}`));
