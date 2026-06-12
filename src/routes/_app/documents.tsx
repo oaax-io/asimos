@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDate } from "@/lib/format";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
+import { DocumentTemplatesManager } from "@/components/settings/DocumentTemplatesManager";
 
 export const Route = createFileRoute("/_app/documents")({ component: DocumentsPage });
 
