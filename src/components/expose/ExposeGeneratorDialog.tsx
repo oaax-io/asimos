@@ -80,6 +80,7 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
   const fetchBytes = useServerFn(fetchDocumentPdfBytes);
   const fetchPois = useServerFn(getNearbyPois);
   const fetchMapboxToken = useServerFn(getMapboxToken);
+  const geocode = useServerFn(geocodeAddresses);
 
   useEffect(() => {
     if (!open) {
