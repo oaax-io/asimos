@@ -57,6 +57,7 @@ function DocumentsPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [relatedFilter, setRelatedFilter] = useState<string>("all");
