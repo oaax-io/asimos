@@ -339,7 +339,8 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
     .c-name { font-family: ${t.titleFont}; font-size: 18pt; margin-bottom: 4mm; }
     .c-meta { display: flex; gap: 20mm; font-size: 11pt; flex-wrap: wrap; }
   `;
-  return wrapHtml(d, css, filled.join("\n"));
+  const cssFull = css + LOCATION_CSS(t);
+  return wrapHtml(d, cssFull, filled.join("\n"));
 }
 
 /* ============================================================
@@ -471,7 +472,8 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
     .m-contact-ag { font-size: 10pt; letter-spacing: 0.2em; text-transform: uppercase; color: ${t.accent}; margin-top: 3mm; }
     .m-contact-r { font-size: 12pt; align-self: end; display: flex; flex-direction: column; gap: 3mm; }
   `;
-  return wrapHtml(d, css, filled.join("\n"));
+  const cssFull = css + LOCATION_CSS(t);
+  return wrapHtml(d, cssFull, filled.join("\n"));
 }
 
 /* ============================================================
@@ -628,7 +630,8 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
     .lx-c-name { font-family: ${t.titleFont}; font-size: 22pt; font-style: italic; font-weight: 700; margin-bottom: 4mm; }
     .lx-c-meta { display: flex; gap: 12mm; font-size: 11pt; flex-wrap: wrap; }
   `;
-  return wrapHtml(d, css, filled.join("\n"));
+  const cssFull = css + LOCATION_CSS(t);
+  return wrapHtml(d, cssFull, filled.join("\n"));
 }
 
 function wrapHtml(d: ExposeData, css: string, body: string): string {
