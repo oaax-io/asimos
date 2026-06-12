@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import { createInvoicePaymentIntent } from "@/utils/payments.functions";
+import { createInvoicePaymentIntent, markInvoicePaid } from "@/utils/payments.functions";
 import { toast } from "sonner";
 
 interface Props {
@@ -57,10 +57,15 @@ export function PayInvoiceDialog({ open, onOpenChange, invoiceId, onPaid }: Prop
         )}
         {error && <p className="text-sm text-destructive">{error}</p>}
 
-        {clientSecret && (
+        {clientSecret && invoiceId && (
           <Elements stripe={getStripe()} options={{ clientSecret, appearance: { theme: "stripe" } }}>
             <PayForm
-              onSuccess={() => {
+              onSuccess={async () => {
+                try {
+                  await markInvoicePaid({ data: { invoiceId, environment: getStripeEnvironment() } });
+                } catch (e) {
+                  // ignore — webhook will reconcile
+                }
                 toast.success("Zahlung erfolgreich");
                 onPaid?.();
                 setTimeout(() => onOpenChange(false), 1200);
