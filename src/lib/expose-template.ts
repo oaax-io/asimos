@@ -536,24 +536,29 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
   </div>`);
 
   if (galleryUrls.length) {
-    pages.push(`
-    <div class="page">
-      <div class="lx-folio"><span>${esc(d.title)}</span><span>03</span></div>
-      <div class="lx-rule double"></div>
-      <h2 class="lx-h2">Impressionen</h2>
-      <div class="lx-gal" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
-        ${galleryUrls.map((u, i) => `<figure class="lx-gc ${i === 0 ? "feat" : ""}"><img src="${esc(u)}" alt=""/></figure>`).join("")}
-      </div>
-      ${footer(d, t, 3, 0)}
-    </div>`);
+    const perPage = galleryCols * (galleryCols >= 3 ? 3 : 2);
+    for (let i = 0; i < galleryUrls.length; i += perPage) {
+      const slice = galleryUrls.slice(i, i + perPage);
+      pages.push(`
+      <div class="page">
+        <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
+        <div class="lx-rule double"></div>
+        <h2 class="lx-h2">Impressionen</h2>
+        <div class="lx-gal" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
+          ${slice.map((u, idx) => `<figure class="lx-gc ${i === 0 && idx === 0 ? "feat" : ""}"><img src="${esc(u)}" alt=""/></figure>`).join("")}
+        </div>
+        ${footer(d, t, pages.length + 1, 0)}
+      </div>`);
+    }
   }
 
-  if (addr || d.contact_name || d.contact_email || d.contact_phone) {
+  const locHtml = locationBlockHtml(d, t);
+  if (locHtml || d.contact_name || d.contact_email || d.contact_phone) {
     pages.push(`
     <div class="page">
-      <div class="lx-folio"><span>${esc(d.title)}</span><span>04</span></div>
+      <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
       <div class="lx-rule double"></div>
-      ${addr ? `<h2 class="lx-h2">Lage</h2><p class="lx-prose">${esc(addr)}</p>` : ""}
+      ${locHtml ? `<h2 class="lx-h2">Lage</h2>${locHtml}` : ""}
       ${(d.contact_name || d.contact_email || d.contact_phone)
         ? `<h2 class="lx-h2 mt">Kontakt</h2>
            <div class="lx-contact">
@@ -564,9 +569,16 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
                ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
              </div>
            </div>` : ""}
-      ${footer(d, t, 4, 0)}
+      ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
+
+  pages.push(...attachmentsPages(
+    d, t,
+    (label: string) => `<div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div><div class="lx-rule double"></div><h2 class="lx-h2">${esc(label)}</h2>`,
+    pages.length + 1,
+  ));
+
 
   const total = pages.length;
   const filled = pages.map((p, i) => p.replace(`${i + 1} / 0`, `${i + 1} / ${total}`));
