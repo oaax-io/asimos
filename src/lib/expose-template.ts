@@ -29,6 +29,11 @@ export interface ExposeData {
   facts: Array<{ label: string; value: string }>;
   cover_url?: string | null;
   gallery_urls: string[];
+  gallery_cols?: number;
+  static_map_url?: string | null;
+  pois?: Array<{ name: string; category: string; distance_m: number }>;
+  attachment_image_urls?: string[];
+  attachment_doc_names?: string[];
   agency_name?: string | null;
   contact_name?: string | null;
   contact_email?: string | null;
@@ -46,6 +51,7 @@ export interface ExposeTheme {
   templateLabel?: string;
   family?: ExposeFamily;
 }
+
 
 const fmtCHF = (v: number) =>
   new Intl.NumberFormat("de-CH", { style: "currency", currency: "CHF", maximumFractionDigits: 0 }).format(v);
