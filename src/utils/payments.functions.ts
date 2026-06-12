@@ -194,3 +194,47 @@ export const listInvoices = createServerFn({ method: "POST" })
     rows.sort((a, b) => (b.created ?? "").localeCompare(a.created ?? ""));
     return rows;
   });
+
+export const createInvoicePaymentIntent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { invoiceId: string; environment: StripeEnv }) => {
+    if (!/^[a-zA-Z0-9_]+$/.test(data.invoiceId)) throw new Error("Invalid invoiceId");
+    return data;
+  })
+  .handler(async ({ data, context }): Promise<{ clientSecret: string; amount: number; currency: string }> => {
+    const { supabase, userId } = context;
+    const stripe = createStripeClient(data.environment);
+
+    // Authorize: invoice's customer must belong to this user.
+    let invoice = await stripe.invoices.retrieve(data.invoiceId, { expand: ["payment_intent"] });
+    const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+    if (!customerId) throw new Error("Rechnung hat keinen Kunden");
+
+    const customer = await stripe.customers.retrieve(customerId);
+    const meta = (customer as any).metadata ?? {};
+    let owned = meta.userId === userId;
+    if (!owned) {
+      const { data: { user } } = await supabase.auth.getUser();
+      const email = user?.email?.toLowerCase();
+      const custEmail = (customer as any).email?.toLowerCase();
+      owned = !!email && !!custEmail && email === custEmail;
+    }
+    if (!owned) throw new Error("Nicht autorisiert");
+
+    if (invoice.status === "draft") {
+      invoice = await stripe.invoices.finalizeInvoice(invoice.id!, { expand: ["payment_intent"] });
+    }
+    if (invoice.status === "paid") throw new Error("Rechnung ist bereits bezahlt");
+
+    let pi: any = (invoice as any).payment_intent;
+    if (typeof pi === "string") {
+      pi = await stripe.paymentIntents.retrieve(pi);
+    }
+    if (!pi) throw new Error("Keine Zahlungsanforderung für diese Rechnung gefunden");
+
+    return {
+      clientSecret: pi.client_secret as string,
+      amount: (invoice.amount_remaining ?? 0) / 100,
+      currency: invoice.currency ?? "chf",
+    };
+  });

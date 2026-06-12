@@ -9,6 +9,7 @@ import { Loader2, CheckCircle2, XCircle, ExternalLink, FileText, AlertCircle, Do
 import { toast } from "sonner";
 import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { PayInvoiceDialog } from "@/components/PayInvoiceDialog";
 import { createPortalSession, listInvoices } from "@/utils/payments.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 
@@ -221,6 +222,8 @@ export function SubscriptionManager() {
 
 function InvoiceHistory() {
   const env = getStripeEnvironment();
+  const qc = useQueryClient();
+  const [payInvoiceId, setPayInvoiceId] = useState<string | null>(null);
   const invoicesQuery = useQuery({
     queryKey: ["invoices", env],
     queryFn: async () => await listInvoices({ data: { environment: env } }),
@@ -302,11 +305,9 @@ function InvoiceHistory() {
                     </div>
                     <Badge variant={s.variant}>{s.text}</Badge>
                     <div className="flex gap-1">
-                      {isOpen && inv.hosted_invoice_url && (
-                        <Button asChild size="sm">
-                          <a href={inv.hosted_invoice_url} target="_blank" rel="noreferrer">
-                            Jetzt bezahlen
-                          </a>
+                      {isOpen && (
+                        <Button size="sm" onClick={() => setPayInvoiceId(inv.id)}>
+                          Jetzt bezahlen
                         </Button>
                       )}
                       {inv.invoice_pdf && (
@@ -324,6 +325,15 @@ function InvoiceHistory() {
           </div>
         )}
       </CardContent>
+      <PayInvoiceDialog
+        open={!!payInvoiceId}
+        onOpenChange={(o) => !o && setPayInvoiceId(null)}
+        invoiceId={payInvoiceId}
+        onPaid={() => {
+          qc.invalidateQueries({ queryKey: ["invoices"] });
+          qc.invalidateQueries({ queryKey: ["subscription"] });
+        }}
+      />
     </Card>
   );
 }
