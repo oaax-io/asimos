@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { propertyTypeLabels } from "@/lib/format";
 import { renderExposeHTML } from "@/lib/expose-template";
 import { renderDocumentPdf, fetchDocumentPdfBytes } from "@/lib/documents.functions";
-import { getNearbyPois, buildStaticMapUrl, getMapboxToken } from "@/lib/mapbox.functions";
+import { getNearbyPois, buildStaticMapUrl, getMapboxToken, geocodeAddresses } from "@/lib/mapbox.functions";
 import type { TemplateMeta, ExposeSections, GalerieLayout } from "@/components/expose/TemplatePreview";
 
 type Props = {
