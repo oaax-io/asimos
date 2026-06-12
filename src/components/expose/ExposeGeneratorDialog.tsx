@@ -201,27 +201,31 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
       const coverUrl = gallerySource[0] ?? null;
       const galleryUrls = sections.galerie ? gallerySource.slice(1) : [];
 
-      // Map + POIs
+      // Map + POIs — geocode from address
       let mapUrl: string | null = null;
       let pois: Array<{ name: string; category: string; distance_m: number }> = [];
-      if (sections.mikrolage && p.latitude && p.longitude) {
-        try {
-          const { token } = await fetchMapboxToken();
-          const poisRes = await fetchPois({ data: { latitude: Number(p.latitude), longitude: Number(p.longitude), country: p.country || undefined } });
-          pois = poisRes.map((x) => ({ name: x.name, category: x.category, distance_m: x.distance_m }));
-          if (token) {
-            mapUrl = buildStaticMapUrl({
-              token,
-              latitude: Number(p.latitude),
-              longitude: Number(p.longitude),
-              pois: poisRes.map((x) => ({ latitude: x.latitude, longitude: x.longitude })),
-              width: 900, height: 540, zoom: 14,
-            });
-          }
-        } catch {
-          /* ignore — map is optional */
+      if (sections.mikrolage) {
+        const addrQuery = [p.address, p.postal_code, p.city, p.country].filter(Boolean).join(", ");
+        if (addrQuery) {
+          try {
+            const { token } = await fetchMapboxToken();
+            const geo = await geocode({ data: { items: [{ id: "p", query: addrQuery, country: p.country || undefined }] } });
+            const pt = geo[0];
+            if (pt && token) {
+              const poisRes = await fetchPois({ data: { latitude: pt.latitude, longitude: pt.longitude, country: p.country || undefined } });
+              pois = poisRes.map((x) => ({ name: x.name, category: x.category, distance_m: x.distance_m }));
+              mapUrl = buildStaticMapUrl({
+                token,
+                latitude: pt.latitude,
+                longitude: pt.longitude,
+                pois: poisRes.map((x) => ({ latitude: x.latitude, longitude: x.longitude })),
+                width: 900, height: 540, zoom: 14,
+              });
+            }
+          } catch { /* ignore — map is optional */ }
         }
       }
+
 
       const galleryCols = GALLERY_OPTIONS.find((o) => o.id === galleryLayout)?.cols ?? 2;
 
