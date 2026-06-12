@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import { createInvoicePaymentIntent } from "@/utils/payments.functions";
+import { createInvoicePaymentIntent, markInvoicePaid } from "@/utils/payments.functions";
 import { toast } from "sonner";
 
 interface Props {
