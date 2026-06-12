@@ -153,7 +153,8 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     if (!prices.data.length) throw new Error("Price not found");
     const stripePrice = prices.data[0];
 
-    const customerId = await resolveOrCreateCustomer(stripe, { email, userId });
+    const billing = await loadCompanyBilling(supabase, userId);
+    const customerId = await resolveOrCreateCustomer(stripe, { email, userId, billing });
 
     const session = await stripe.checkout.sessions.create({
       line_items: [{ price: stripePrice.id, quantity: 1 }],
@@ -161,6 +162,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       ui_mode: "embedded_page",
       return_url: data.returnUrl,
       customer: customerId,
+      customer_update: { name: "auto", address: "auto" },
       metadata: { userId, ...(data.agencyId && { agencyId: data.agencyId }) },
       subscription_data: {
         metadata: { userId, ...(data.agencyId && { agencyId: data.agencyId }) },
