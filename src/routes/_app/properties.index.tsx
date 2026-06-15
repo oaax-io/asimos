@@ -36,6 +36,10 @@ function getMediaPublicUrl(path?: string | null) {
 type ViewMode = "grid" | "list" | "map";
 
 function PropertiesPage() {
+  const { t } = useTranslation();
+  const statusLabel = (s: string) => t(`properties.status.${s}`, { defaultValue: s });
+  const typeLabel = (s: string) => t(`properties.type.${s}`, { defaultValue: s });
+  const listingLabel = (s: string) => t(`properties.listing.${s}`, { defaultValue: s });
   const qc = useQueryClient();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
