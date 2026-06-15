@@ -39,6 +39,7 @@ const UNASSIGNED = "__unassigned__";
 const LEAD_SOURCES = ["Eigenlead", "Website", "Empfehlung", "Tiktok", "Instagram", "Facebook"] as const;
 
 function LeadsPage() {
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const qc = useQueryClient();
   const { user } = useAuth();
