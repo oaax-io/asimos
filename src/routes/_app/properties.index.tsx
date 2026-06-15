@@ -472,7 +472,7 @@ function PropertiesPage() {
                       type="button"
                       onClick={chip.clear}
                       className="rounded-sm p-0.5 hover:bg-background/60"
-                      aria-label={`${chip.label} entfernen`}
+                      aria-label={t("properties.chips.remove", { label: chip.label })}
                     >
                       <X className="h-3 w-3" />
                     </button>
