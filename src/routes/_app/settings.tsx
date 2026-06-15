@@ -59,14 +59,14 @@ function SettingsPage() {
       <PageHeader i18nKey="settings" />
       <Tabs value={currentTab} onValueChange={(v) => navigate({ to: "/settings", search: { tab: v } as any })} className="space-y-4">
         <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="profile">Mein Profil</TabsTrigger>
-          <TabsTrigger value="notifications">Benachrichtigungen</TabsTrigger>
-          <TabsTrigger value="company">Firmenprofile</TabsTrigger>
-          <TabsTrigger value="brandkit">Brandkit</TabsTrigger>
-          <TabsTrigger value="banks">Bankkonten</TabsTrigger>
-          <TabsTrigger value="categories">Dokumentkategorien</TabsTrigger>
-          <TabsTrigger value="esign">PDF / E-Sign</TabsTrigger>
-          <TabsTrigger value="subscription">Abonnement</TabsTrigger>
+          <TabsTrigger value="profile">{t("settings.tabs.profile")}</TabsTrigger>
+          <TabsTrigger value="notifications">{t("settings.tabs.notifications")}</TabsTrigger>
+          <TabsTrigger value="company">{t("settings.tabs.company")}</TabsTrigger>
+          <TabsTrigger value="brandkit">{t("settings.tabs.brand")}</TabsTrigger>
+          <TabsTrigger value="banks">{t("settings.tabs.banks")}</TabsTrigger>
+          <TabsTrigger value="categories">{t("settings.tabs.categories")}</TabsTrigger>
+          <TabsTrigger value="esign">{t("settings.tabs.esign")}</TabsTrigger>
+          <TabsTrigger value="subscription">{t("settings.tabs.subscription")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="subscription">
@@ -80,12 +80,12 @@ function SettingsPage() {
         <TabsContent value="profile">
           <Card className="max-w-2xl">
             <CardContent className="space-y-4 p-6">
-              <h2 className="text-lg font-semibold">Mein Profil</h2>
-              <div><Label>E-Mail</Label><Input value={user?.email ?? ""} disabled /></div>
-              <div><Label>Name</Label><Input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} /></div>
-              <div><Label>Telefon</Label><Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} /></div>
+              <h2 className="text-lg font-semibold">{t("settings.profile.title")}</h2>
+              <div><Label>{t("settings.profile.email")}</Label><Input value={user?.email ?? ""} disabled /></div>
+              <div><Label>{t("settings.profile.name")}</Label><Input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} /></div>
+              <div><Label>{t("settings.profile.phone")}</Label><Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} /></div>
               <div className="flex justify-end pt-2">
-                <Button onClick={() => save.mutate()} disabled={save.isPending}>Speichern</Button>
+                <Button onClick={() => save.mutate()} disabled={save.isPending}>{t("common.save")}</Button>
               </div>
             </CardContent>
           </Card>
