@@ -390,6 +390,96 @@
   },
   "properties": {
     "new": "Neue Immobilie",
+    "import": "Immobilien importieren",
+    "loading": "Lädt…",
+    "noImage": "Kein Bild",
+    "perMonth": "/Mt.",
+    "view": {
+      "grid": "Kacheln",
+      "list": "Liste",
+      "map": "Karten"
+    },
+    "search": "Suchen nach Titel, Adresse, Ort…",
+    "filters": {
+      "status": "Status",
+      "allStatuses": "Alle Status",
+      "listing": "Vermarktung",
+      "saleAndRent": "Kauf & Miete",
+      "active": "Aktiv",
+      "archived": "Archiviert",
+      "all": "Alle",
+      "grouped": "Gruppiert",
+      "flat": "Flach",
+      "groupedTitle": "Gruppiert nach Liegenschaft",
+      "flatTitle": "Flache Liste",
+      "more": "Mehr Filter",
+      "reset": "Zurücksetzen",
+      "type": "Typ",
+      "allTypes": "Alle Typen",
+      "allStructures": "Alle Strukturen",
+      "buildingsOnly": "Nur Liegenschaften",
+      "unitsOnly": "Nur Einheiten",
+      "standaloneOnly": "Nur Einzelobjekte",
+      "assigned": "Zuständig",
+      "allEmployees": "Alle Mitarbeiter",
+      "city": "Stadt",
+      "allCities": "Alle Städte"
+    },
+    "chips": {
+      "status": "Status: {{value}}",
+      "listing": "Vermarktung: {{value}}",
+      "type": "Typ: {{value}}",
+      "city": "Stadt: {{value}}",
+      "assigned": "Zuständig: {{value}}",
+      "structure": "Struktur: {{value}}",
+      "onlyArchived": "Nur archivierte",
+      "activeAndArchived": "Aktiv & archivierte",
+      "remove": "{{label}} entfernen"
+    },
+    "structure": {
+      "buildings": "Liegenschaften",
+      "units": "Einheiten",
+      "standalone": "Einzelobjekte"
+    },
+    "bulk": {
+      "selected_one": "{{count}} ausgewählt",
+      "selected_other": "{{count}} ausgewählt",
+      "assign": "Zuweisen",
+      "employees": "Mitarbeitende",
+      "removeAssignment": "Zuweisung entfernen",
+      "restore": "Wiederherstellen",
+      "archive": "Archivieren",
+      "delete": "Löschen",
+      "clear": "Auswahl aufheben"
+    },
+    "toasts": {
+      "created": "Immobilie erstellt",
+      "assignmentUpdated": "Zuweisung aktualisiert",
+      "archived": "Immobilien archiviert",
+      "restored": "Immobilien wiederhergestellt",
+      "deleted": "Immobilien gelöscht"
+    },
+    "empty": {
+      "noneTitle": "Noch keine Immobilien",
+      "noneDescription": "Erfasse dein erstes Objekt — Titel, Adresse, Preis und Bild reichen zum Start.",
+      "noMatchTitle": "Keine Treffer",
+      "noMatchDescription": "Passe die Filter an oder leere die Suche."
+    },
+    "card": {
+      "buildingUnits_one": "Liegenschaft · {{count}} Einheit",
+      "buildingUnits_other": "Liegenschaft · {{count}} Einheiten",
+      "unit": "Einheit",
+      "inParent": "↳ in {{title}}",
+      "select": "Auswählen"
+    },
+    "table": {
+      "selectAll": "Alle auswählen",
+      "expand": "Aufklappen",
+      "collapse": "Einklappen",
+      "open": "Öffnen",
+      "inParent": "in {{title}}",
+      "buildingShort": "Liegenschaft · {{count}}"
+    },
     "columns": {
       "title": "Titel",
       "type": "Typ",
@@ -397,6 +487,43 @@
       "price": "Preis",
       "city": "Ort",
       "assignedTo": "Zuständig"
+    },
+    "pagination": {
+      "showing": "Zeige {{from}}–{{to}} von {{total}}",
+      "perPage": "{{count}} / Seite",
+      "prev": "Zurück",
+      "next": "Weiter",
+      "page": "Seite {{current}} / {{total}}"
+    },
+    "deleteDialog": {
+      "title": "Immobilien löschen?",
+      "description_one": "{{count}} Objekt wird unwiderruflich gelöscht. Verknüpfte Daten können verloren gehen.",
+      "description_other": "{{count}} Objekte werden unwiderruflich gelöscht. Verknüpfte Daten können verloren gehen.",
+      "cancel": "Abbrechen",
+      "confirm": "Endgültig löschen"
+    },
+    "status": {
+      "draft": "Entwurf",
+      "preparation": "Vorbereitung",
+      "active": "Aktiv",
+      "available": "Verfügbar",
+      "reserved": "Reserviert",
+      "sold": "Verkauft",
+      "rented": "Vermietet",
+      "archived": "Archiviert"
+    },
+    "type": {
+      "apartment": "Wohnung",
+      "house": "Haus",
+      "commercial": "Gewerbe",
+      "land": "Grundstück",
+      "parking": "Parkplatz",
+      "mixed_use": "Mischnutzung",
+      "other": "Sonstiges"
+    },
+    "listing": {
+      "sale": "Kauf",
+      "rent": "Miete"
     }
   },
   "appointments": {
