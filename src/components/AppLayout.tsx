@@ -86,10 +86,10 @@ function AppSidebar() {
 
       <SidebarContent className="gap-0 overflow-y-auto">
         {NAV_GROUPS.map((group) => (
-          <SidebarGroup key={group.label} className="px-2 py-1.5">
+          <SidebarGroup key={group.labelKey} className="px-2 py-1.5">
             {!collapsed && (
               <SidebarGroupLabel className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
-                {group.label}
+                {t(group.labelKey)}
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
@@ -99,18 +99,19 @@ function AppSidebar() {
                     item.to === "/dashboard"
                       ? pathname === "/dashboard"
                       : pathname.startsWith(item.to);
+                  const label = t(item.labelKey);
                   return (
                     <SidebarMenuItem key={item.to}>
                       <SidebarMenuButton
                         asChild
                         isActive={active}
-                        tooltip={item.label}
+                        tooltip={label}
                         size="sm"
                         className="h-8 text-sm data-[active=true]:bg-sidebar-primary/15 data-[active=true]:text-sidebar-primary"
                       >
                         <Link to={item.to}>
                           <item.icon className="h-[18px] w-[18px]" />
-                          <span>{item.label}</span>
+                          <span>{label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
