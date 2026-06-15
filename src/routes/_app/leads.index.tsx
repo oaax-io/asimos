@@ -251,8 +251,7 @@ function LeadsPage() {
     <Tabs defaultValue="list" className="w-full">
 
       <PageHeader
-        title="Leads"
-        description="Pipeline deiner Interessenten"
+        i18nKey="leads"
         action={
           <>
             <TabsList>

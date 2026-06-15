@@ -112,8 +112,7 @@ function AppointmentsPage() {
   return (
     <>
       <PageHeader
-        title="Termine"
-        description="Besichtigungen, Calls und Meetings"
+        i18nKey="appointments"
         action={<Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neuer Termin</Button>}
       />
 

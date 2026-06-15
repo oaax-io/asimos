@@ -316,8 +316,7 @@ function ClientsPage() {
   return (
     <>
       <PageHeader
-        title="Kunden"
-        description="Alle Käufer, Verkäufer, Mieter und Vermieter"
+        i18nKey="clients"
         action={
           <div className="flex items-center gap-2">
             <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>

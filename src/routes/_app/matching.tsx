@@ -185,8 +185,7 @@ function MatchingPage() {
   return (
     <>
       <PageHeader
-        title="Matching"
-        description="Übersicht aller passenden Kunde–Immobilie Paare"
+        i18nKey="matching"
       />
 
       {clients.length === 0 ? (

@@ -154,8 +154,7 @@ function ReservationsPage() {
   return (
     <>
       <PageHeader
-        title="Reservationen"
-        description="Reservationsverträge zwischen Käufern, Mietern und Objekten"
+        i18nKey="reservations"
         action={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

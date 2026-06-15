@@ -294,8 +294,7 @@ function PropertiesPage() {
   return (
     <>
       <PageHeader
-        title="Immobilien"
-        description="Dein Immobilienportfolio im Überblick"
+        i18nKey="properties"
         action={
           <div className="flex items-center gap-2">
             <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>

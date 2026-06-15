@@ -118,8 +118,7 @@ function TeamPage() {
   return (
     <>
       <PageHeader
-        title="Team"
-        description="Mitarbeitende deiner Firma verwalten"
+        i18nKey="team"
         action={
           canManage ? (
             <div className="flex gap-2">

@@ -108,8 +108,7 @@ function MandatesPage() {
   return (
     <>
       <PageHeader
-        title="Mandate"
-        description="Maklerverträge mit Eigentümern und Käufern"
+        i18nKey="mandates"
         action={
           <Button onClick={() => setOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />

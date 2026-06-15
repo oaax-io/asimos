@@ -510,8 +510,7 @@ function MediaPage() {
   return (
     <>
       <PageHeader
-        title="Mediathek"
-        description="Bilder, Videos und Grundrisse für alle Objekte"
+        i18nKey="media"
         action={
           <div className="flex items-center gap-2">
             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "folder" | "grid")}>
