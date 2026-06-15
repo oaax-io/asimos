@@ -69,6 +69,7 @@ const NAV_GROUPS = [
 function AppSidebar() {
   const { pathname } = useLocation();
   const { state } = useSidebar();
+  const { t } = useTranslation();
   const collapsed = state === "collapsed";
 
   return (
