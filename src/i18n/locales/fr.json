@@ -111,7 +111,70 @@
       "day": "Bonjour",
       "evening": "Bonsoir"
     },
-    "quickActions": "Actions rapides"
+    "quickActions": "Actions rapides",
+    "quickActionsLabel": "Créer",
+    "quick": {
+      "newLead": "Saisir un prospect",
+      "newClient": "Saisir un client",
+      "newProperty": "Saisir un bien",
+      "newAppointment": "Créer un rendez-vous",
+      "newTask": "Créer une tâche",
+      "uploadDocument": "Téléverser un document"
+    },
+    "errorLoading": "Une erreur est survenue lors du chargement. Veuillez actualiser la page.",
+    "kpis": {
+      "activeClients": "Clients actifs",
+      "activeProperties": "Biens actifs",
+      "activeReservations": "Réservations actives"
+    },
+    "clientStatus": {
+      "title": "Clients par statut",
+      "entwurf": "Brouillon",
+      "pendent": "En attente",
+      "vollstaendig": "Complet",
+      "finanzierung": "En financement",
+      "abgeschlossen": "Conclu",
+      "abgelehnt": "Refusé",
+      "storniert": "Annulé"
+    },
+    "dossierStatus": {
+      "title": "Dossiers de financement par statut",
+      "draft": "Brouillon",
+      "quick_check": "Quick-Check",
+      "documents_missing": "Documents manquants",
+      "ready_for_bank": "Prêt pour la banque",
+      "submitted_to_bank": "Soumis à la banque",
+      "approved": "Approuvé",
+      "rejected": "Refusé",
+      "cancelled": "Annulé"
+    },
+    "qc": {
+      "realistic": "Réaliste",
+      "borderline": "Limite",
+      "notFinanceable": "Non finançable"
+    },
+    "pipeline": {
+      "leads": "Prospects par statut",
+      "properties": "Biens par statut",
+      "details": "Détails",
+      "noData": "Aucune donnée disponible."
+    },
+    "matching": {
+      "title": "Suggestions de mise en relation",
+      "all": "Tous",
+      "empty": "Aucune suggestion de mise en relation.",
+      "unknownClient": "Client inconnu",
+      "unknownProperty": "Bien inconnu"
+    },
+    "lists": {
+      "todayAppts": "Rendez-vous du jour",
+      "overdueTasks": "Tâches en retard",
+      "newLeads": "Nouveaux prospects",
+      "noAppts": "Aucun rendez-vous aujourd'hui.",
+      "noOverdue": "Aucune tâche en retard.",
+      "noLeads": "Aucun prospect pour le moment.",
+      "days7": "7j"
+    }
   },
   "settings": {
     "tabs": {
