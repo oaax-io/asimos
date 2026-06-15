@@ -631,6 +631,7 @@ function LeadsPage() {
 }
 
 function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -657,7 +658,7 @@ function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] 
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Gespeichert");
+      toast.success(t("leads.toast.saved"));
       qc.invalidateQueries({ queryKey: ["leads"] });
       qc.invalidateQueries({ queryKey: ["lead", lead.id] });
       setOpen(false);
@@ -667,24 +668,24 @@ function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setOpen(true)} title="Bearbeiten">
+      <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setOpen(true)} title={t("leads.table.edit")}>
         <Pencil className="h-3.5 w-3.5" />
       </Button>
       <DialogContent>
-        <DialogHeader><DialogTitle>Lead bearbeiten</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("leads.editTitle")}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div><Label>Name</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
+          <div><Label>{t("leads.form.name")}</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+            <div><Label>{t("leads.form.email")}</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+            <div><Label>{t("leads.form.phone")}</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Quelle</Label>
+              <Label>{t("leads.form.source")}</Label>
               <Select value={form.source || UNASSIGNED} onValueChange={(v) => setForm({ ...form, source: v === UNASSIGNED ? "" : v })}>
-                <SelectTrigger><SelectValue placeholder="Quelle wählen" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("leads.form.sourcePlaceholder")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={UNASSIGNED}>Keine Angabe</SelectItem>
+                  <SelectItem value={UNASSIGNED}>{t("leads.form.noSource")}</SelectItem>
                   {LEAD_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   {form.source && !LEAD_SOURCES.includes(form.source as typeof LEAD_SOURCES[number]) && (
                     <SelectItem value={form.source}>{form.source}</SelectItem>
@@ -693,7 +694,7 @@ function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] 
               </Select>
             </div>
             <div>
-              <Label>Status</Label>
+              <Label>{t("leads.form.status")}</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as LeadStatus })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -703,19 +704,19 @@ function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] 
             </div>
           </div>
           <div>
-            <Label>Zugewiesen an</Label>
+            <Label>{t("leads.form.assignedTo")}</Label>
             <Select value={form.assigned_to || UNASSIGNED} onValueChange={(v) => setForm({ ...form, assigned_to: v === UNASSIGNED ? "" : v })}>
-              <SelectTrigger><SelectValue placeholder="Niemand" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("leads.form.nobody")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={UNASSIGNED}>Niemand</SelectItem>
+                <SelectItem value={UNASSIGNED}>{t("leads.form.nobody")}</SelectItem>
                 {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email ?? e.id}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div><Label>Notizen</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+          <div><Label>{t("leads.form.notes")}</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
         </div>
         <DialogFooter>
-          <Button onClick={() => save.mutate()} disabled={!form.full_name || save.isPending}>Speichern</Button>
+          <Button onClick={() => save.mutate()} disabled={!form.full_name || save.isPending}>{t("common.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
