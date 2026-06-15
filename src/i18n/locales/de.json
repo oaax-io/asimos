@@ -204,13 +204,90 @@
   },
   "leads": {
     "new": "Neuer Lead",
+    "import": "Importieren",
+    "editTitle": "Lead bearbeiten",
     "columns": {
       "name": "Name",
       "contact": "Kontakt",
       "source": "Quelle",
       "status": "Status",
-      "assignedTo": "Zuständig",
+      "assignedTo": "Zugewiesen",
       "created": "Erstellt"
+    },
+    "form": {
+      "nameRequired": "Name *",
+      "emailRequired": "E-Mail *",
+      "phoneRequired": "Telefon *",
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "source": "Quelle",
+      "sourcePlaceholder": "Quelle wählen",
+      "noSource": "Keine Angabe",
+      "assignedTo": "Zugewiesen an",
+      "nobody": "Niemand",
+      "status": "Status",
+      "notes": "Notizen"
+    },
+    "filters": {
+      "searchPlaceholder": "Suchen (Name, E-Mail, Telefon)…",
+      "allStatus": "Alle Status",
+      "allSources": "Alle Quellen",
+      "allEmployees": "Alle Mitarbeitenden",
+      "unassigned": "Nicht zugewiesen",
+      "reset": "Zurücksetzen",
+      "ofTotal": "{{shown}} von {{total}}"
+    },
+    "bulk": {
+      "selected_one": "{{count}} Lead ausgewählt",
+      "selected_other": "{{count}} Leads ausgewählt",
+      "assign": "Zuweisen",
+      "chooseEmployee": "Mitarbeitenden wählen",
+      "resetAssignee": "Niemand (zurücksetzen)",
+      "noEmployees": "Keine Mitarbeitenden",
+      "setStatus": "Status setzen",
+      "delete": "Löschen",
+      "clear": "Auswahl aufheben",
+      "deleteTitle": "Leads löschen?",
+      "deleteDescription_one": "{{count}} Lead wird unwiderruflich entfernt.",
+      "deleteDescription_other": "{{count}} Leads werden unwiderruflich entfernt.",
+      "assignedToast_one": "{{count}} Lead zugewiesen",
+      "assignedToast_other": "{{count}} Leads zugewiesen",
+      "statusToast_one": "Status für {{count}} Lead geändert",
+      "statusToast_other": "Status für {{count}} Leads geändert",
+      "deletedToast_one": "{{count}} Lead gelöscht",
+      "deletedToast_other": "{{count}} Leads gelöscht"
+    },
+    "table": {
+      "selectAll": "Alle auswählen",
+      "actions": "Aktionen",
+      "toClient": "Zu Kunde",
+      "loading": "Leads werden geladen…",
+      "empty": "Keine Leads vorhanden",
+      "noLeads": "Keine Leads",
+      "convertTitle": "Zu Kunde konvertieren",
+      "edit": "Bearbeiten"
+    },
+    "pagination": {
+      "showing": "Zeige {{from}}–{{to}} von {{total}}",
+      "perPage": "{{n}} / Seite",
+      "prev": "Zurück",
+      "next": "Weiter",
+      "page": "Seite {{current}} / {{total}}"
+    },
+    "tabs": {
+      "list": "Liste",
+      "kanban": "Kanban"
+    },
+    "toast": {
+      "created": "Lead erstellt",
+      "saved": "Gespeichert"
+    },
+    "errors": {
+      "nameRequired": "Name ist erforderlich",
+      "emailRequired": "E-Mail ist erforderlich",
+      "phoneRequired": "Telefon ist erforderlich",
+      "notLoggedIn": "Nicht angemeldet"
     }
   },
   "clients": {
