@@ -574,7 +574,7 @@ function LeadsPage() {
                               compact
                             />
                             {l.status !== "converted" && (
-                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setConvertLead(l)} title="Zu Kunde konvertieren">
+                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setConvertLead(l)} title={t("leads.table.convertTitle")}>
                                 <ArrowRight className="h-3 w-3" />
                               </Button>
                             )}
@@ -582,7 +582,7 @@ function LeadsPage() {
                         </div>
                       );
                     })}
-                    {items.length === 0 && <p className="px-1 py-3 text-xs text-muted-foreground">Keine Leads</p>}
+                    {items.length === 0 && <p className="px-1 py-3 text-xs text-muted-foreground">{t("leads.table.noLeads")}</p>}
                   </div>
                 </div>
               );
