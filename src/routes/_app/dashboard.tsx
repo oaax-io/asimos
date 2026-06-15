@@ -22,6 +22,7 @@ import {
 } from "@/lib/format";
 import { isBackendUnavailableError } from "@/lib/backend-errors";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -76,17 +77,18 @@ function KpiCard({ icon: Icon, label, value, hint, accent, loading, to }: {
   return to ? <Link to={to}>{inner}</Link> : inner;
 }
 
-function getGreeting() {
+function getGreetingKey() {
   const h = new Date().getHours();
-  if (h < 5) return "Gute Nacht";
-  if (h < 12) return "Guten Morgen";
-  if (h < 18) return "Guten Tag";
-  return "Guten Abend";
+  if (h < 5) return "dashboard.greeting.night";
+  if (h < 12) return "dashboard.greeting.morning";
+  if (h < 18) return "dashboard.greeting.day";
+  return "dashboard.greeting.evening";
 }
 
 // ---------- main ----------
 function Dashboard() {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const profile = useQuery({
     queryKey: ["dashboard", "profile", user?.id],
     enabled: !!user?.id,
@@ -237,10 +239,10 @@ function Dashboard() {
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-bold tracking-tight">
-            {getGreeting()}{displayName ? `, ${displayName}` : ""} 👋
+            {t(getGreetingKey())}{displayName ? `, ${displayName}` : ""} 👋
           </h1>
           <p className="text-sm text-muted-foreground">
-            {new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long" })} · Übersicht über dein Tagesgeschäft
+            {new Date().toLocaleDateString(i18n.language || "de-CH", { weekday: "long", day: "numeric", month: "long" })} · {t("dashboard.subtitle")}
           </p>
         </div>
         <DropdownMenu>

@@ -147,8 +147,7 @@ function NdasPage() {
   return (
     <>
       <PageHeader
-        title="NDAs"
-        description="Vertraulichkeitsvereinbarungen mit Kunden und Partnern"
+        i18nKey="ndas"
         action={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>

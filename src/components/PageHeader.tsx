@@ -1,11 +1,27 @@
 import { type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
-export function PageHeader({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
+type Props = {
+  title?: string;
+  description?: string;
+  /** When provided, title/description are resolved from `pages.{i18nKey}.title/description`. */
+  i18nKey?: string;
+  action?: ReactNode;
+};
+
+export function PageHeader({ title, description, i18nKey, action }: Props) {
+  const { t } = useTranslation();
+  const resolvedTitle = i18nKey ? t(`pages.${i18nKey}.title`, { defaultValue: title ?? "" }) : title;
+  const resolvedDescription = i18nKey
+    ? t(`pages.${i18nKey}.description`, { defaultValue: description ?? "" })
+    : description;
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="font-display text-3xl font-bold tracking-tight">{title}</h1>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+        <h1 className="font-display text-3xl font-bold tracking-tight">{resolvedTitle}</h1>
+        {resolvedDescription && (
+          <p className="mt-1 text-sm text-muted-foreground">{resolvedDescription}</p>
+        )}
       </div>
       {action && <div className="flex items-center gap-2">{action}</div>}
     </div>

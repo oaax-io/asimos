@@ -151,8 +151,7 @@ function ChecklistsPage() {
   return (
     <>
       <PageHeader
-        title="Checklisten"
-        description="Standardisierte Abläufe für wiederkehrende Prozesse"
+        i18nKey="checklists"
         action={<Button onClick={() => { setTplKey(""); setForm({ title: "", related_type: "property", related_id: "" }); setCreateOpen(true); }}><Plus className="mr-1 h-4 w-4" />Neue Checkliste</Button>}
       />
 

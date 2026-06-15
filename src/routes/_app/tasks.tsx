@@ -174,8 +174,7 @@ function TasksPage() {
   return (
     <>
       <PageHeader
-        title="Aufgaben"
-        description="Persönliche und teamübergreifende To-dos"
+        i18nKey="tasks"
         action={<Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Aufgabe</Button>}
       />
 

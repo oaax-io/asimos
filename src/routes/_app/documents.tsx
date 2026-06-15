@@ -207,8 +207,7 @@ function DocumentsPage() {
   return (
     <>
       <PageHeader
-        title="Dokumentencenter"
-        description="Hochgeladene und generierte Dokumente an einem Ort"
+        i18nKey="documents"
         action={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setTemplatesOpen(true)}>

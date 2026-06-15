@@ -22,42 +22,45 @@ import {
 import logoAsimo from "@/assets/logo-asimo-real-estate.png";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { LanguageBootstrap } from "@/components/LanguageBootstrap";
+import { useTranslation } from "react-i18next";
 // touch
 
 const NAV_GROUPS = [
   {
-    label: "Hauptbereich",
+    labelKey: "nav.groups.main",
     items: [
-      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/leads", label: "Leads", icon: UserPlus },
-      { to: "/clients", label: "Kunden", icon: Users },
-      { to: "/properties", label: "Immobilien", icon: Building2 },
-      { to: "/matching", label: "Matching", icon: Target },
-      { to: "/financing", label: "Finanzierungen", icon: Banknote },
-      { to: "/appointments", label: "Termine", icon: Calendar },
-      { to: "/tasks", label: "Aufgaben", icon: CheckSquare },
-      { to: "/analytics", label: "Analytics", icon: BarChart3 },
+      { to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
+      { to: "/leads", labelKey: "nav.leads", icon: UserPlus },
+      { to: "/clients", labelKey: "nav.clients", icon: Users },
+      { to: "/properties", labelKey: "nav.properties", icon: Building2 },
+      { to: "/matching", labelKey: "nav.matching", icon: Target },
+      { to: "/financing", labelKey: "nav.financing", icon: Banknote },
+      { to: "/appointments", labelKey: "nav.appointments", icon: Calendar },
+      { to: "/tasks", labelKey: "nav.tasks", icon: CheckSquare },
+      { to: "/analytics", labelKey: "nav.analytics", icon: BarChart3 },
     ],
   },
   {
-    label: "Verwaltung",
+    labelKey: "nav.groups.admin",
     items: [
-      { to: "/documents", label: "Dokumente", icon: FileText },
-      { to: "/media", label: "Mediathek", icon: ImageIcon },
-      { to: "/checklists", label: "Checklisten", icon: ListChecks },
-      { to: "/mandates", label: "Mandate", icon: FileSignature },
-      { to: "/reservations", label: "Reservationen", icon: FileCheck2 },
-      { to: "/ndas", label: "NDAs", icon: FileLock2 },
-      { to: "/exposes", label: "Exposés", icon: FileBadge },
+      { to: "/documents", labelKey: "nav.documents", icon: FileText },
+      { to: "/media", labelKey: "nav.media", icon: ImageIcon },
+      { to: "/checklists", labelKey: "nav.checklists", icon: ListChecks },
+      { to: "/mandates", labelKey: "nav.mandates", icon: FileSignature },
+      { to: "/reservations", labelKey: "nav.reservations", icon: FileCheck2 },
+      { to: "/ndas", labelKey: "nav.ndas", icon: FileLock2 },
+      { to: "/exposes", labelKey: "nav.exposes", icon: FileBadge },
     ],
   },
   {
-    label: "Administration",
+    labelKey: "nav.groups.system",
     items: [
-      { to: "/team", label: "Mitarbeiter", icon: Users2 },
-      { to: "/feedback", label: "Feedback", icon: MessageSquarePlus },
-      { to: "/docs", label: "Dokumentation", icon: BookOpen },
-      { to: "/settings", label: "Einstellungen", icon: Settings },
+      { to: "/team", labelKey: "nav.team", icon: Users2 },
+      { to: "/feedback", labelKey: "nav.feedback", icon: MessageSquarePlus },
+      { to: "/docs", labelKey: "nav.docs", icon: BookOpen },
+      { to: "/settings", labelKey: "nav.settings", icon: Settings },
     ],
   },
 ] as const;
@@ -66,6 +69,7 @@ const NAV_GROUPS = [
 function AppSidebar() {
   const { pathname } = useLocation();
   const { state } = useSidebar();
+  const { t } = useTranslation();
   const collapsed = state === "collapsed";
 
   return (
@@ -82,10 +86,10 @@ function AppSidebar() {
 
       <SidebarContent className="gap-0 overflow-y-auto">
         {NAV_GROUPS.map((group) => (
-          <SidebarGroup key={group.label} className="px-2 py-1.5">
+          <SidebarGroup key={group.labelKey} className="px-2 py-1.5">
             {!collapsed && (
               <SidebarGroupLabel className="h-5 px-2 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
-                {group.label}
+                {t(group.labelKey)}
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
@@ -95,18 +99,19 @@ function AppSidebar() {
                     item.to === "/dashboard"
                       ? pathname === "/dashboard"
                       : pathname.startsWith(item.to);
+                  const label = t(item.labelKey);
                   return (
                     <SidebarMenuItem key={item.to}>
                       <SidebarMenuButton
                         asChild
                         isActive={active}
-                        tooltip={item.label}
+                        tooltip={label}
                         size="sm"
                         className="h-8 text-sm data-[active=true]:bg-sidebar-primary/15 data-[active=true]:text-sidebar-primary"
                       >
                         <Link to={item.to}>
                           <item.icon className="h-[18px] w-[18px]" />
-                          <span>{item.label}</span>
+                          <span>{label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -131,6 +136,7 @@ function AppSidebar() {
 
 export default function AppLayout({ children }: { children?: ReactNode }) {
   const { user, loading, signOut, isSuperadmin } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -162,6 +168,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen>
+      <LanguageBootstrap />
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <SidebarInset className="flex min-w-0 flex-1 flex-col">
@@ -174,7 +181,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
               className="relative hidden h-9 max-w-md flex-1 items-center gap-2 rounded-md border bg-background px-3 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-foreground md:flex"
             >
               <Search className="h-4 w-4" />
-              <span className="flex-1 text-left">Suchen…</span>
+              <span className="flex-1 text-left">{t("common.search")}</span>
               <kbd className="hidden rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium lg:inline">⌘K</kbd>
             </button>
             <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
@@ -183,8 +190,9 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
             <div className="ml-auto flex items-center gap-2">
               <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate({ to: "/feedback" })}>
                 <MessageSquarePlus className="h-4 w-4" />
-                <span className="hidden sm:inline">Feedback</span>
+                <span className="hidden sm:inline">{t("common.feedback")}</span>
               </Button>
+              <LanguageSwitcher />
               <NotificationCenter />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -200,7 +208,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Mein Konto</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t("common.myAccount")}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {user.email && (
                     <div className="px-2 pb-1 text-xs text-muted-foreground truncate">
@@ -211,7 +219,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                        Wechseln zu
+                        {t("common.switchTo")}
                       </DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => navigate({ to: "/oaax" })}>
                         <Shield className="mr-2 h-4 w-4 text-primary" />
@@ -224,10 +232,10 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                     </>
                   )}
                   <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
-                    <Settings className="mr-2 h-4 w-4" />Einstellungen
+                    <Settings className="mr-2 h-4 w-4" />{t("common.settings")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={async () => { await signOut(); navigate({ to: "/" }); }}>
-                    <LogOut className="mr-2 h-4 w-4" />Abmelden
+                    <LogOut className="mr-2 h-4 w-4" />{t("common.logout")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

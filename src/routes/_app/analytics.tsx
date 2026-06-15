@@ -307,8 +307,7 @@ function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Analytics"
-        description="Unternehmens- und Portfolioübersicht auf einen Blick."
+        i18nKey="analytics"
       />
 
       {/* Filter */}

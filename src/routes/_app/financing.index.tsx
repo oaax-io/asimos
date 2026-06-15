@@ -135,8 +135,7 @@ function FinancingPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Finanzierungen"
-        description="Übersicht aller Finanzierungs-Dossiers"
+        i18nKey="financing"
         action={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setHypoOpen(true)}>

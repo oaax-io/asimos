@@ -1,0 +1,116 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "add": "Ajouter",
+    "upload": "Téléverser",
+    "download": "Télécharger",
+    "open": "Ouvrir",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "search": "Rechercher…",
+    "loading": "Chargement…",
+    "saving": "Enregistrement…",
+    "noResults": "Aucun résultat",
+    "actions": "Actions",
+    "name": "Nom",
+    "type": "Type",
+    "date": "Date",
+    "status": "Statut",
+    "all": "Tous",
+    "yes": "Oui",
+    "no": "Non",
+    "filter": "Filtrer",
+    "details": "Détails",
+    "settings": "Paramètres",
+    "language": "Langue",
+    "logout": "Se déconnecter",
+    "myAccount": "Mon compte",
+    "feedback": "Commentaires",
+    "notifications": "Notifications",
+    "switchTo": "Basculer vers"
+  },
+  "languages": {
+    "de": "Allemand",
+    "fr": "Français",
+    "it": "Italien"
+  },
+  "nav": {
+    "groups": {
+      "main": "Principal",
+      "admin": "Gestion",
+      "system": "Administration"
+    },
+    "dashboard": "Tableau de bord",
+    "leads": "Prospects",
+    "clients": "Clients",
+    "properties": "Biens",
+    "matching": "Mise en relation",
+    "financing": "Financements",
+    "appointments": "Rendez-vous",
+    "tasks": "Tâches",
+    "analytics": "Analyses",
+    "documents": "Documents",
+    "media": "Médiathèque",
+    "checklists": "Listes de contrôle",
+    "mandates": "Mandats",
+    "reservations": "Réservations",
+    "ndas": "Accords de confidentialité",
+    "exposes": "Exposés",
+    "team": "Collaborateurs",
+    "feedback": "Commentaires",
+    "docs": "Documentation",
+    "settings": "Paramètres"
+  },
+  "dashboard": {
+    "subtitle": "Vue d'ensemble de votre journée",
+    "greeting": {
+      "night": "Bonne nuit",
+      "morning": "Bonjour",
+      "day": "Bonjour",
+      "evening": "Bonsoir"
+    }
+  },
+  "pages": {
+    "dashboard": { "title": "Tableau de bord", "description": "Vue d'ensemble des activités et indicateurs" },
+    "leads": { "title": "Prospects", "description": "Saisir et qualifier les intéressés" },
+    "clients": { "title": "Clients", "description": "Toutes les relations clients au même endroit" },
+    "properties": { "title": "Biens", "description": "Gérer et commercialiser les biens" },
+    "matching": { "title": "Mise en relation", "description": "Rapprocher les clients des biens adaptés" },
+    "financing": { "title": "Financements", "description": "Dossiers de financement et faisabilité" },
+    "appointments": { "title": "Rendez-vous", "description": "Planifier visites et entretiens" },
+    "tasks": { "title": "Tâches", "description": "Suivre les tâches et respecter les échéances" },
+    "analytics": { "title": "Analyses", "description": "Indicateurs, tendances et performance" },
+    "documents": { "title": "Centre de documents", "description": "Documents téléversés et générés au même endroit" },
+    "media": { "title": "Médiathèque", "description": "Gérer images et médias de manière centralisée" },
+    "checklists": { "title": "Listes de contrôle", "description": "Traiter les processus avec des modèles" },
+    "mandates": { "title": "Mandats", "description": "Gérer et superviser les mandats" },
+    "reservations": { "title": "Réservations", "description": "Réservations actives et passées" },
+    "ndas": { "title": "Accords de confidentialité", "description": "Gérer les accords de confidentialité" },
+    "exposes": { "title": "Exposés", "description": "Créer et partager des exposés" },
+    "team": { "title": "Collaborateurs", "description": "Gérer l'équipe et les autorisations" },
+    "feedbackPage": { "title": "Commentaires", "description": "Signaler suggestions et problèmes" },
+    "docs": { "title": "Documentation", "description": "Guides et aide sur le système" },
+    "settings": { "title": "Paramètres", "description": "Configurer le profil, l'entreprise et la plateforme" }
+  },
+  "settings": {
+    "tabs": {
+      "profile": "Profil",
+      "company": "Entreprise",
+      "subscription": "Abonnement",
+      "brand": "Image de marque",
+      "notifications": "Notifications",
+      "permissions": "Autorisations",
+      "language": "Langue"
+    },
+    "language": {
+      "title": "Langue de l'interface",
+      "description": "Choisissez la langue d'affichage du système.",
+      "updated": "Langue mise à jour"
+    }
+  }
+}

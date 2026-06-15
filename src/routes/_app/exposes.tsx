@@ -25,8 +25,7 @@ function ExposesPage() {
   return (
     <>
       <PageHeader
-        title="Exposés"
-        description="Wähle eine Vorlage – im nächsten Schritt wählst du Objekt, Inhalte, Galerie und Anhänge."
+        i18nKey="exposes"
       />
 
       <Card>
