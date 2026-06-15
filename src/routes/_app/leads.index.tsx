@@ -139,12 +139,12 @@ function LeadsPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.full_name.trim()) throw new Error("Name ist erforderlich");
-      if (!form.email.trim()) throw new Error("E-Mail ist erforderlich");
-      if (!form.phone.trim()) throw new Error("Telefon ist erforderlich");
+      if (!form.full_name.trim()) throw new Error(t("leads.errors.nameRequired"));
+      if (!form.email.trim()) throw new Error(t("leads.errors.emailRequired"));
+      if (!form.phone.trim()) throw new Error(t("leads.errors.phoneRequired"));
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
-      if (!accessToken) throw new Error("Nicht angemeldet");
+      if (!accessToken) throw new Error(t("leads.errors.notLoggedIn"));
       const result = await addLead({
         headers: { authorization: `Bearer ${accessToken}` },
         data: {
@@ -169,7 +169,7 @@ function LeadsPage() {
       return result.data;
     },
     onSuccess: () => {
-      toast.success("Lead erstellt");
+      toast.success(t("leads.toast.created"));
       qc.invalidateQueries({ queryKey: ["leads"] });
       setForm({ full_name: "", email: "", phone: "", source: "", notes: "", assigned_to: "" });
     },
@@ -195,7 +195,7 @@ function LeadsPage() {
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
-      toast.success(`${vars.ids.length} Lead(s) zugewiesen`);
+      toast.success(t("leads.bulk.assignedToast", { count: vars.ids.length }));
       qc.invalidateQueries({ queryKey: ["leads"] });
       clearSelection();
     },
@@ -208,7 +208,7 @@ function LeadsPage() {
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
-      toast.success(`Status für ${vars.ids.length} Lead(s) geändert`);
+      toast.success(t("leads.bulk.statusToast", { count: vars.ids.length }));
       qc.invalidateQueries({ queryKey: ["leads"] });
       clearSelection();
     },
@@ -221,7 +221,7 @@ function LeadsPage() {
       if (error) throw error;
     },
     onSuccess: (_d, ids) => {
-      toast.success(`${ids.length} Lead(s) gelöscht`);
+      toast.success(t("leads.bulk.deletedToast", { count: ids.length }));
       qc.invalidateQueries({ queryKey: ["leads"] });
       clearSelection();
     },
