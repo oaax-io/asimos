@@ -249,31 +249,31 @@ function Dashboard() {
           <DropdownMenuTrigger asChild>
             <Button size="sm">
               <Plus className="mr-1 h-4 w-4" />
-              Schnellaktionen
+              {t("dashboard.quickActions")}
               <ChevronDown className="ml-1 h-4 w-4 opacity-70" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Neu erfassen</DropdownMenuLabel>
+            <DropdownMenuLabel>{t("dashboard.quickActionsLabel")}</DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link to="/leads"><UserPlus className="mr-2 h-4 w-4" />Lead erfassen</Link>
+              <Link to="/leads"><UserPlus className="mr-2 h-4 w-4" />{t("dashboard.quick.newLead")}</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/clients"><Users className="mr-2 h-4 w-4" />Kunde erfassen</Link>
+              <Link to="/clients"><Users className="mr-2 h-4 w-4" />{t("dashboard.quick.newClient")}</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/properties"><Building2 className="mr-2 h-4 w-4" />Immobilie erfassen</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link to="/appointments"><CalendarDays className="mr-2 h-4 w-4" />Termin erstellen</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/tasks"><CheckSquare className="mr-2 h-4 w-4" />Aufgabe erstellen</Link>
+              <Link to="/properties"><Building2 className="mr-2 h-4 w-4" />{t("dashboard.quick.newProperty")}</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link to="/documents"><Upload className="mr-2 h-4 w-4" />Dokument hochladen</Link>
+              <Link to="/appointments"><CalendarDays className="mr-2 h-4 w-4" />{t("dashboard.quick.newAppointment")}</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/tasks"><CheckSquare className="mr-2 h-4 w-4" />{t("dashboard.quick.newTask")}</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/documents"><Upload className="mr-2 h-4 w-4" />{t("dashboard.quick.uploadDocument")}</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -282,55 +282,59 @@ function Dashboard() {
       {anyError && (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>Beim Laden ist ein Fehler aufgetreten. Bitte aktualisiere die Seite.</span>
+          <span>{t("dashboard.errorLoading")}</span>
         </div>
       )}
 
       {/* KPI cards */}
       <div className="grid gap-2 grid-cols-1 sm:grid-cols-3">
-        <KpiCard icon={Users} label="Aktive Kunden" value={kpis.data?.clients ?? "—"} loading={kpis.isLoading} to="/clients" />
-        <KpiCard icon={Building2} label="Aktive Immobilien" value={kpis.data?.activeProps ?? "—"} loading={kpis.isLoading} to="/properties" />
-        <KpiCard icon={FileSignature} label="Aktive Reservationen" value={kpis.data?.activeRes ?? "—"} loading={kpis.isLoading} to="/reservations" />
+        <KpiCard icon={Users} label={t("dashboard.kpis.activeClients")} value={kpis.data?.clients ?? "—"} loading={kpis.isLoading} to="/clients" />
+        <KpiCard icon={Building2} label={t("dashboard.kpis.activeProperties")} value={kpis.data?.activeProps ?? "—"} loading={kpis.isLoading} to="/properties" />
+        <KpiCard icon={FileSignature} label={t("dashboard.kpis.activeReservations")} value={kpis.data?.activeRes ?? "—"} loading={kpis.isLoading} to="/reservations" />
       </div>
       {/* Status-Visualisierungen */}
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <StatusStackCard
-          title="Kunden nach Status"
+          title={t("dashboard.clientStatus.title")}
           icon={Users}
           to="/clients"
           loading={stats.isLoading}
           counts={stats.data?.clientCounts ?? {}}
+          emptyText={t("dashboard.pipeline.noData")}
+          detailsLabel={t("dashboard.pipeline.details")}
           rows={[
-            { key: "entwurf", label: "Entwurf", color: "bg-slate-400" },
-            { key: "pendent", label: "Pendent", color: "bg-amber-500" },
-            { key: "vollstaendig", label: "Vollständig", color: "bg-sky-500" },
-            { key: "finanzierung", label: "In Finanzierung", color: "bg-violet-500" },
-            { key: "abgeschlossen", label: "Abgeschlossen", color: "bg-emerald-500" },
-            { key: "abgelehnt", label: "Abgelehnt", color: "bg-rose-500" },
-            { key: "storniert", label: "Storniert", color: "bg-zinc-500" },
+            { key: "entwurf", label: t("dashboard.clientStatus.entwurf"), color: "bg-slate-400" },
+            { key: "pendent", label: t("dashboard.clientStatus.pendent"), color: "bg-amber-500" },
+            { key: "vollstaendig", label: t("dashboard.clientStatus.vollstaendig"), color: "bg-sky-500" },
+            { key: "finanzierung", label: t("dashboard.clientStatus.finanzierung"), color: "bg-violet-500" },
+            { key: "abgeschlossen", label: t("dashboard.clientStatus.abgeschlossen"), color: "bg-emerald-500" },
+            { key: "abgelehnt", label: t("dashboard.clientStatus.abgelehnt"), color: "bg-rose-500" },
+            { key: "storniert", label: t("dashboard.clientStatus.storniert"), color: "bg-zinc-500" },
           ]}
         />
         <StatusStackCard
-          title="Finanzierungs-Dossiers nach Status"
+          title={t("dashboard.dossierStatus.title")}
           icon={Wallet}
           to="/financing"
           loading={stats.isLoading}
           counts={stats.data?.dossierCounts ?? {}}
+          emptyText={t("dashboard.pipeline.noData")}
+          detailsLabel={t("dashboard.pipeline.details")}
           rows={[
-            { key: "draft", label: "Entwurf", color: "bg-slate-400" },
-            { key: "quick_check", label: "Quick-Check", color: "bg-cyan-500" },
-            { key: "documents_missing", label: "Dokumente fehlen", color: "bg-amber-500" },
-            { key: "ready_for_bank", label: "Bereit für Bank", color: "bg-indigo-500" },
-            { key: "submitted_to_bank", label: "Bei Bank eingereicht", color: "bg-blue-500" },
-            { key: "approved", label: "Genehmigt", color: "bg-emerald-500" },
-            { key: "rejected", label: "Abgelehnt", color: "bg-rose-500" },
-            { key: "cancelled", label: "Storniert", color: "bg-zinc-500" },
+            { key: "draft", label: t("dashboard.dossierStatus.draft"), color: "bg-slate-400" },
+            { key: "quick_check", label: t("dashboard.dossierStatus.quick_check"), color: "bg-cyan-500" },
+            { key: "documents_missing", label: t("dashboard.dossierStatus.documents_missing"), color: "bg-amber-500" },
+            { key: "ready_for_bank", label: t("dashboard.dossierStatus.ready_for_bank"), color: "bg-indigo-500" },
+            { key: "submitted_to_bank", label: t("dashboard.dossierStatus.submitted_to_bank"), color: "bg-blue-500" },
+            { key: "approved", label: t("dashboard.dossierStatus.approved"), color: "bg-emerald-500" },
+            { key: "rejected", label: t("dashboard.dossierStatus.rejected"), color: "bg-rose-500" },
+            { key: "cancelled", label: t("dashboard.dossierStatus.cancelled"), color: "bg-zinc-500" },
           ]}
           footer={
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-              <QcChip label="Realistisch" value={stats.data?.qcCounts.pass ?? 0} icon={CheckCircle2} tone="emerald" />
-              <QcChip label="Grenzwertig" value={stats.data?.qcCounts.warn ?? 0} icon={AlertTriangle} tone="amber" />
-              <QcChip label="Nicht tragbar" value={stats.data?.qcCounts.fail ?? 0} icon={XCircle} tone="rose" />
+              <QcChip label={t("dashboard.qc.realistic")} value={stats.data?.qcCounts.pass ?? 0} icon={CheckCircle2} tone="emerald" />
+              <QcChip label={t("dashboard.qc.borderline")} value={stats.data?.qcCounts.warn ?? 0} icon={AlertTriangle} tone="amber" />
+              <QcChip label={t("dashboard.qc.notFinanceable")} value={stats.data?.qcCounts.fail ?? 0} icon={XCircle} tone="rose" />
             </div>
           }
         />
@@ -339,20 +343,24 @@ function Dashboard() {
       {/* Pipeline */}
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <PipelineCard
-          title="Leads nach Status"
+          title={t("dashboard.pipeline.leads")}
           to="/leads"
           loading={pipeline.isLoading}
           counts={pipeline.data?.leadCounts ?? {}}
           labels={leadStatusLabels as Record<string, string>}
           order={["new", "contacted", "qualified", "viewing_planned", "converted", "lost"]}
+          detailsLabel={t("dashboard.pipeline.details")}
+          emptyText={t("dashboard.pipeline.noData")}
         />
         <PipelineCard
-          title="Immobilien nach Status"
+          title={t("dashboard.pipeline.properties")}
           to="/properties"
           loading={pipeline.isLoading}
           counts={pipeline.data?.propCounts ?? {}}
           labels={propertyStatusLabels as Record<string, string>}
           order={["draft", "preparation", "active", "available", "reserved", "sold", "rented", "archived"]}
+          detailsLabel={t("dashboard.pipeline.details")}
+          emptyText={t("dashboard.pipeline.noData")}
         />
       </div>
 
@@ -361,26 +369,26 @@ function Dashboard() {
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Sparkles className="h-4 w-4 text-primary" />
-            Matching-Vorschläge
+            {t("dashboard.matching.title")}
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/matching" search={{ clientId: "" }}>Alle <ArrowRight className="ml-1 h-3 w-3" /></Link>
+            <Link to="/matching" search={{ clientId: "" }}>{t("dashboard.matching.all")} <ArrowRight className="ml-1 h-3 w-3" /></Link>
           </Button>
         </CardHeader>
         <CardContent>
           {matches.isLoading ? (
             <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
           ) : (matches.data ?? []).length === 0 ? (
-            <EmptyState icon={Sparkles} text="Noch keine Matching-Vorschläge vorhanden." />
+            <EmptyState icon={Sparkles} text={t("dashboard.matching.empty")} />
           ) : (
             <div className="divide-y">
               {(matches.data ?? []).map((m: any) => (
                 <div key={m.id} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">
-                      {m.client?.full_name ?? "Unbekannter Kunde"}{" "}
+                      {m.client?.full_name ?? t("dashboard.matching.unknownClient")}{" "}
                       <span className="text-muted-foreground">↔</span>{" "}
-                      {m.property?.title ?? "Unbekannte Immobilie"}
+                      {m.property?.title ?? t("dashboard.matching.unknownProperty")}
                     </p>
                     <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {[m.property?.city, m.property?.price ? formatCurrency(Number(m.property.price)) : null].filter(Boolean).join(" · ")}
@@ -404,11 +412,11 @@ function Dashboard() {
       {/* Tagesübersicht – kompakt unten */}
       <div className="mt-4 grid gap-3 lg:grid-cols-3">
         <CompactList
-          title="Termine heute"
+          title={t("dashboard.lists.todayAppts")}
           icon={CalendarDays}
           count={kpis.data?.todayAppts ?? undefined}
           loading={today.isLoading}
-          empty="Keine Termine heute."
+          empty={t("dashboard.lists.noAppts")}
           to="/appointments"
           items={(today.data?.appts ?? []).slice(0, 4)}
           render={(a: any) => (
@@ -419,27 +427,27 @@ function Dashboard() {
           )}
         />
         <CompactList
-          title="Überfällige Aufgaben"
+          title={t("dashboard.lists.overdueTasks")}
           icon={Clock}
           count={kpis.data?.openTasks ?? undefined}
           loading={today.isLoading}
-          empty="Keine überfälligen Aufgaben."
+          empty={t("dashboard.lists.noOverdue")}
           to="/tasks"
           items={(today.data?.overdue ?? []).slice(0, 4)}
-          render={(t: any) => (
-            <Link key={t.id} to="/tasks" className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-xs hover:bg-accent/40">
-              <span className="truncate">{t.title}</span>
-              {t.due_date && <span className="shrink-0 text-[10px] text-destructive">{formatDate(t.due_date)}</span>}
+          render={(t2: any) => (
+            <Link key={t2.id} to="/tasks" className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-xs hover:bg-accent/40">
+              <span className="truncate">{t2.title}</span>
+              {t2.due_date && <span className="shrink-0 text-[10px] text-destructive">{formatDate(t2.due_date)}</span>}
             </Link>
           )}
         />
         <CompactList
-          title="Neue Leads"
+          title={t("dashboard.lists.newLeads")}
           icon={UserPlus}
           count={kpis.data?.newLeads ?? undefined}
-          countHint="7T"
+          countHint={t("dashboard.lists.days7")}
           loading={today.isLoading}
-          empty="Noch keine Leads."
+          empty={t("dashboard.lists.noLeads")}
           to="/leads"
           items={(today.data?.leads ?? []).slice(0, 4)}
           render={(l: any) => (
