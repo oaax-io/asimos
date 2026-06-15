@@ -23,6 +23,7 @@ export const Route = createFileRoute("/_app/settings")({ component: SettingsPage
 
 function SettingsPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const search = useSearch({ strict: false });
