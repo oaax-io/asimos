@@ -361,36 +361,36 @@ function PropertiesPage() {
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative min-w-[220px] flex-1">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input className="pl-9" placeholder="Suchen nach Titel, Adresse, Ort…" value={search} onChange={(e) => setSearch(e.target.value)} />
+                <Input className="pl-9" placeholder={t("properties.search")} value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
               <Select value={fStatus} onValueChange={setFStatus}>
-                <SelectTrigger className="h-9 w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectTrigger className="h-9 w-[150px]"><SelectValue placeholder={t("properties.filters.status")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Alle Status</SelectItem>
+                  <SelectItem value="all">{t("properties.filters.allStatuses")}</SelectItem>
                   {STATUSES.map(s => (
                     <SelectItem key={s} value={s}>
                       <span className="flex items-center gap-2">
                         <span className={`inline-block h-2.5 w-2.5 rounded-full ${getPropertyStatusDotClass(s)}`} />
-                        {propertyStatusLabels[s]}
+                        {statusLabel(s)}
                       </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Select value={fListing} onValueChange={setFListing}>
-                <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder="Vermarktung" /></SelectTrigger>
+                <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder={t("properties.filters.listing")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Kauf & Miete</SelectItem>
-                  <SelectItem value="sale">Kauf</SelectItem>
-                  <SelectItem value="rent">Miete</SelectItem>
+                  <SelectItem value="all">{t("properties.filters.saleAndRent")}</SelectItem>
+                  <SelectItem value="sale">{t("properties.listing.sale")}</SelectItem>
+                  <SelectItem value="rent">{t("properties.listing.rent")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={archivedFilter} onValueChange={(v) => setArchivedFilter(v as typeof archivedFilter)}>
                 <SelectTrigger className="h-9 w-[130px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Aktiv</SelectItem>
-                  <SelectItem value="archived">Archiviert</SelectItem>
-                  <SelectItem value="all">Alle</SelectItem>
+                  <SelectItem value="active">{t("properties.filters.active")}</SelectItem>
+                  <SelectItem value="archived">{t("properties.filters.archived")}</SelectItem>
+                  <SelectItem value="all">{t("properties.filters.all")}</SelectItem>
                 </SelectContent>
               </Select>
               {view === "list" && fStructure !== "units" && (
@@ -398,10 +398,10 @@ function PropertiesPage() {
                   size="sm"
                   variant={groupUnits ? "default" : "outline"}
                   onClick={() => setGroupUnits(g => !g)}
-                  title={groupUnits ? "Gruppiert nach Liegenschaft" : "Flache Liste"}
+                  title={groupUnits ? t("properties.filters.groupedTitle") : t("properties.filters.flatTitle")}
                 >
                   <Layers3 className="mr-1 h-4 w-4" />
-                  {groupUnits ? "Gruppiert" : "Flach"}
+                  {groupUnits ? t("properties.filters.grouped") : t("properties.filters.flat")}
                 </Button>
               )}
               <Button
@@ -410,7 +410,7 @@ function PropertiesPage() {
                 onClick={() => setMoreOpen(o => !o)}
               >
                 <SlidersHorizontal className="mr-1 h-4 w-4" />
-                Mehr Filter
+                {t("properties.filters.more")}
                 {activeChips.filter(c => ["type","city","assigned","structure"].includes(c.key)).length > 0 && (
                   <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">
                     {activeChips.filter(c => ["type","city","assigned","structure"].includes(c.key)).length}
@@ -419,7 +419,7 @@ function PropertiesPage() {
               </Button>
               {hasActive && (
                 <Button size="sm" variant="ghost" onClick={resetAll}>
-                  <RotateCcw className="mr-1 h-4 w-4" />Zurücksetzen
+                  <RotateCcw className="mr-1 h-4 w-4" />{t("properties.filters.reset")}
                 </Button>
               )}
             </div>
