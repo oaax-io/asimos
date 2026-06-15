@@ -204,13 +204,90 @@
   },
   "leads": {
     "new": "Nouveau prospect",
+    "import": "Importer",
+    "editTitle": "Modifier le prospect",
     "columns": {
       "name": "Nom",
       "contact": "Contact",
       "source": "Source",
       "status": "Statut",
-      "assignedTo": "Responsable",
+      "assignedTo": "Attribué à",
       "created": "Créé"
+    },
+    "form": {
+      "nameRequired": "Nom *",
+      "emailRequired": "E-mail *",
+      "phoneRequired": "Téléphone *",
+      "name": "Nom",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "source": "Source",
+      "sourcePlaceholder": "Choisir une source",
+      "noSource": "Non précisé",
+      "assignedTo": "Attribué à",
+      "nobody": "Personne",
+      "status": "Statut",
+      "notes": "Notes"
+    },
+    "filters": {
+      "searchPlaceholder": "Rechercher (nom, e-mail, téléphone)…",
+      "allStatus": "Tous les statuts",
+      "allSources": "Toutes les sources",
+      "allEmployees": "Tous les collaborateurs",
+      "unassigned": "Non attribué",
+      "reset": "Réinitialiser",
+      "ofTotal": "{{shown}} sur {{total}}"
+    },
+    "bulk": {
+      "selected_one": "{{count}} prospect sélectionné",
+      "selected_other": "{{count}} prospects sélectionnés",
+      "assign": "Attribuer",
+      "chooseEmployee": "Choisir un collaborateur",
+      "resetAssignee": "Personne (réinitialiser)",
+      "noEmployees": "Aucun collaborateur",
+      "setStatus": "Définir le statut",
+      "delete": "Supprimer",
+      "clear": "Effacer la sélection",
+      "deleteTitle": "Supprimer les prospects ?",
+      "deleteDescription_one": "{{count}} prospect sera supprimé définitivement.",
+      "deleteDescription_other": "{{count}} prospects seront supprimés définitivement.",
+      "assignedToast_one": "{{count}} prospect attribué",
+      "assignedToast_other": "{{count}} prospects attribués",
+      "statusToast_one": "Statut modifié pour {{count}} prospect",
+      "statusToast_other": "Statut modifié pour {{count}} prospects",
+      "deletedToast_one": "{{count}} prospect supprimé",
+      "deletedToast_other": "{{count}} prospects supprimés"
+    },
+    "table": {
+      "selectAll": "Tout sélectionner",
+      "actions": "Actions",
+      "toClient": "Vers client",
+      "loading": "Chargement des prospects…",
+      "empty": "Aucun prospect",
+      "noLeads": "Aucun prospect",
+      "convertTitle": "Convertir en client",
+      "edit": "Modifier"
+    },
+    "pagination": {
+      "showing": "Affichage {{from}}–{{to}} sur {{total}}",
+      "perPage": "{{n}} / page",
+      "prev": "Précédent",
+      "next": "Suivant",
+      "page": "Page {{current}} / {{total}}"
+    },
+    "tabs": {
+      "list": "Liste",
+      "kanban": "Kanban"
+    },
+    "toast": {
+      "created": "Prospect créé",
+      "saved": "Enregistré"
+    },
+    "errors": {
+      "nameRequired": "Le nom est requis",
+      "emailRequired": "L'e-mail est requis",
+      "phoneRequired": "Le téléphone est requis",
+      "notLoggedIn": "Non connecté"
     }
   },
   "clients": {

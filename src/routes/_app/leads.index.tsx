@@ -27,6 +27,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { addLead, getLeads } from "@/lib/crm.functions";
 import { ConvertLeadDialog } from "@/components/leads/ConvertLeadDialog";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/leads/")({ component: LeadsPage });
 
@@ -38,6 +39,7 @@ const UNASSIGNED = "__unassigned__";
 const LEAD_SOURCES = ["Eigenlead", "Website", "Empfehlung", "Tiktok", "Instagram", "Facebook"] as const;
 
 function LeadsPage() {
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -137,12 +139,12 @@ function LeadsPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.full_name.trim()) throw new Error("Name ist erforderlich");
-      if (!form.email.trim()) throw new Error("E-Mail ist erforderlich");
-      if (!form.phone.trim()) throw new Error("Telefon ist erforderlich");
+      if (!form.full_name.trim()) throw new Error(t("leads.errors.nameRequired"));
+      if (!form.email.trim()) throw new Error(t("leads.errors.emailRequired"));
+      if (!form.phone.trim()) throw new Error(t("leads.errors.phoneRequired"));
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
-      if (!accessToken) throw new Error("Nicht angemeldet");
+      if (!accessToken) throw new Error(t("leads.errors.notLoggedIn"));
       const result = await addLead({
         headers: { authorization: `Bearer ${accessToken}` },
         data: {
@@ -167,7 +169,7 @@ function LeadsPage() {
       return result.data;
     },
     onSuccess: () => {
-      toast.success("Lead erstellt");
+      toast.success(t("leads.toast.created"));
       qc.invalidateQueries({ queryKey: ["leads"] });
       setForm({ full_name: "", email: "", phone: "", source: "", notes: "", assigned_to: "" });
     },
@@ -193,7 +195,7 @@ function LeadsPage() {
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
-      toast.success(`${vars.ids.length} Lead(s) zugewiesen`);
+      toast.success(t("leads.bulk.assignedToast", { count: vars.ids.length }));
       qc.invalidateQueries({ queryKey: ["leads"] });
       clearSelection();
     },
@@ -206,7 +208,7 @@ function LeadsPage() {
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
-      toast.success(`Status für ${vars.ids.length} Lead(s) geändert`);
+      toast.success(t("leads.bulk.statusToast", { count: vars.ids.length }));
       qc.invalidateQueries({ queryKey: ["leads"] });
       clearSelection();
     },
@@ -219,7 +221,7 @@ function LeadsPage() {
       if (error) throw error;
     },
     onSuccess: (_d, ids) => {
-      toast.success(`${ids.length} Lead(s) gelöscht`);
+      toast.success(t("leads.bulk.deletedToast", { count: ids.length }));
       qc.invalidateQueries({ queryKey: ["leads"] });
       clearSelection();
     },
@@ -255,49 +257,49 @@ function LeadsPage() {
         action={
           <>
             <TabsList>
-              <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
-              <TabsTrigger value="kanban"><LayoutGrid className="mr-1 h-4 w-4" />Kanban</TabsTrigger>
+              <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />{t("leads.tabs.list")}</TabsTrigger>
+              <TabsTrigger value="kanban"><LayoutGrid className="mr-1 h-4 w-4" />{t("leads.tabs.kanban")}</TabsTrigger>
             </TabsList>
           <Button variant="outline" onClick={() => setImportSourceOpen(true)}>
             <Upload className="mr-1 h-4 w-4" />
-            Importieren
+            {t("leads.import")}
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Neuer Lead</Button></DialogTrigger>
+            <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />{t("leads.new")}</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Neuer Lead</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{t("leads.new")}</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                <div><Label>Name *</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
+                <div><Label>{t("leads.form.nameRequired")}</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>E-Mail *</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-                  <div><Label>Telefon *</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+                  <div><Label>{t("leads.form.emailRequired")}</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+                  <div><Label>{t("leads.form.phoneRequired")}</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
                 </div>
                 <div>
-                  <Label>Quelle</Label>
+                  <Label>{t("leads.form.source")}</Label>
                   <Select value={form.source || UNASSIGNED} onValueChange={(v) => setForm({ ...form, source: v === UNASSIGNED ? "" : v })}>
-                    <SelectTrigger><SelectValue placeholder="Quelle wählen" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("leads.form.sourcePlaceholder")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={UNASSIGNED}>Keine Angabe</SelectItem>
+                      <SelectItem value={UNASSIGNED}>{t("leads.form.noSource")}</SelectItem>
                       {LEAD_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>Zugewiesen an</Label>
+                  <Label>{t("leads.form.assignedTo")}</Label>
                   <Select value={form.assigned_to || UNASSIGNED} onValueChange={(v) => setForm({ ...form, assigned_to: v === UNASSIGNED ? "" : v })}>
-                    <SelectTrigger><SelectValue placeholder="Niemand" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("leads.form.nobody")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={UNASSIGNED}>Niemand</SelectItem>
+                      <SelectItem value={UNASSIGNED}>{t("leads.form.nobody")}</SelectItem>
                       {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email ?? e.id}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Notizen</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                <div><Label>{t("leads.form.notes")}</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
               </div>
               <DialogFooter className="gap-2">
-                <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
                 <Button onClick={() => create.mutate()} disabled={!form.full_name.trim() || !form.email.trim() || !form.phone.trim() || create.isPending}>
-                  {create.isPending ? "Speichern…" : "Speichern"}
+                  {create.isPending ? t("common.saving") : t("common.save")}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -310,43 +312,43 @@ function LeadsPage() {
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1 max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Suchen (Name, E-Mail, Telefon)…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input className="pl-9" placeholder={t("leads.filters.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[170px]"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectTrigger className="w-[170px]"><SelectValue placeholder={t("common.status")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Alle Status</SelectItem>
+            <SelectItem value={ALL}>{t("leads.filters.allStatus")}</SelectItem>
             {leadStatuses.map((s) => <SelectItem key={s} value={s}>{leadStatusLabels[s]}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-[170px]"><SelectValue placeholder="Quelle" /></SelectTrigger>
+          <SelectTrigger className="w-[170px]"><SelectValue placeholder={t("leads.form.source")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Alle Quellen</SelectItem>
+            <SelectItem value={ALL}>{t("leads.filters.allSources")}</SelectItem>
             {sources.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={assignedFilter} onValueChange={setAssignedFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Zugewiesen" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("leads.columns.assignedTo")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Alle Mitarbeitenden</SelectItem>
-            <SelectItem value={UNASSIGNED}>Nicht zugewiesen</SelectItem>
+            <SelectItem value={ALL}>{t("leads.filters.allEmployees")}</SelectItem>
+            <SelectItem value={UNASSIGNED}>{t("leads.filters.unassigned")}</SelectItem>
             {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email ?? e.id}</SelectItem>)}
           </SelectContent>
         </Select>
         {(statusFilter !== ALL || sourceFilter !== ALL || assignedFilter !== ALL || search) && (
           <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setStatusFilter(ALL); setSourceFilter(ALL); setAssignedFilter(ALL); }}>
-            Zurücksetzen
+            {t("leads.filters.reset")}
           </Button>
         )}
-        <span className="ml-auto text-sm text-muted-foreground">{filtered.length} von {leads.length}</span>
+        <span className="ml-auto text-sm text-muted-foreground">{t("leads.filters.ofTotal", { shown: filtered.length, total: leads.length })}</span>
       </div>
 
       {/* Bulk-Aktionen Toolbar */}
       {selected.size > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
           <span className="text-sm font-medium">
-            {selected.size} Lead{selected.size === 1 ? "" : "s"} ausgewählt
+            {t("leads.bulk.selected", { count: selected.size })}
           </span>
 
           {/* Zuweisen */}
@@ -354,14 +356,14 @@ function LeadsPage() {
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline" className="ml-2">
                 <UserCog className="mr-1 h-3.5 w-3.5" />
-                Zuweisen
+                {t("leads.bulk.assign")}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
-              <DropdownMenuLabel>Mitarbeitenden wählen</DropdownMenuLabel>
+              <DropdownMenuLabel>{t("leads.bulk.chooseEmployee")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => bulkAssign.mutate({ ids: Array.from(selected), assignedTo: null })}>
-                Niemand (zurücksetzen)
+                {t("leads.bulk.resetAssignee")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {employees.map((e) => (
@@ -373,7 +375,7 @@ function LeadsPage() {
                 </DropdownMenuItem>
               ))}
               {employees.length === 0 && (
-                <DropdownMenuItem disabled>Keine Mitarbeitenden</DropdownMenuItem>
+                <DropdownMenuItem disabled>{t("leads.bulk.noEmployees")}</DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -383,7 +385,7 @@ function LeadsPage() {
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline">
                 <MoreHorizontal className="mr-1 h-3.5 w-3.5" />
-                Status setzen
+                {t("leads.bulk.setStatus")}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
@@ -405,18 +407,18 @@ function LeadsPage() {
             variant="outline"
             className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
             onClick={async () => {
-              if (await confirm({ title: "Leads löschen?", description: `${selected.size} Lead(s) werden unwiderruflich entfernt.`, confirmText: "Löschen" })) {
+              if (await confirm({ title: t("leads.bulk.deleteTitle"), description: t("leads.bulk.deleteDescription", { count: selected.size }), confirmText: t("common.delete") })) {
                 bulkDelete.mutate(Array.from(selected));
               }
             }}
           >
             <Trash2 className="mr-1 h-3.5 w-3.5" />
-            Löschen
+            {t("leads.bulk.delete")}
           </Button>
 
           <Button size="sm" variant="ghost" className="ml-auto" onClick={clearSelection}>
             <X className="mr-1 h-3.5 w-3.5" />
-            Auswahl aufheben
+            {t("leads.bulk.clear")}
           </Button>
         </div>
       )}
@@ -431,15 +433,15 @@ function LeadsPage() {
                     <Checkbox
                       checked={allSelected ? true : someSelected ? "indeterminate" : false}
                       onCheckedChange={toggleAll}
-                      aria-label="Alle auswählen"
+                      aria-label={t("leads.table.selectAll")}
                     />
                   </TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Kontakt</TableHead>
-                  <TableHead>Quelle</TableHead>
-                  <TableHead>Zugewiesen</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aktionen</TableHead>
+                  <TableHead>{t("leads.columns.name")}</TableHead>
+                  <TableHead>{t("leads.columns.contact")}</TableHead>
+                  <TableHead>{t("leads.columns.source")}</TableHead>
+                  <TableHead>{t("leads.columns.assignedTo")}</TableHead>
+                  <TableHead>{t("leads.columns.status")}</TableHead>
+                  <TableHead className="text-right">{t("leads.table.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -451,7 +453,7 @@ function LeadsPage() {
                         <Checkbox
                           checked={isSel}
                           onCheckedChange={() => toggleOne(l.id)}
-                          aria-label={`Lead ${l.full_name} auswählen`}
+                          aria-label={`Lead ${l.full_name}`}
                         />
                       </TableCell>
                       <TableCell className="font-medium">
@@ -475,7 +477,7 @@ function LeadsPage() {
                           <EditLeadButton lead={l} employees={employees} />
                           {l.status !== "converted" && (
                             <Button size="sm" variant="outline" className="h-8" onClick={() => setConvertLead(l)}>
-                              <ArrowRight className="mr-1 h-3 w-3" />Zu Kunde
+                              <ArrowRight className="mr-1 h-3 w-3" />{t("leads.table.toClient")}
                             </Button>
                           )}
                           <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0">
@@ -489,7 +491,7 @@ function LeadsPage() {
                 {filtered.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
-                      {leadsQuery.isLoading ? "Leads werden geladen…" : "Keine Leads vorhanden"}
+                      {leadsQuery.isLoading ? t("leads.table.loading") : t("leads.table.empty")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -500,24 +502,24 @@ function LeadsPage() {
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <span>
-                  Zeige {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)} von {filtered.length}
+                  {t("leads.pagination.showing", { from: (currentPage - 1) * pageSize + 1, to: Math.min(currentPage * pageSize, filtered.length), total: filtered.length })}
                 </span>
                 <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
                   <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="20">20 / Seite</SelectItem>
-                    <SelectItem value="50">50 / Seite</SelectItem>
-                    <SelectItem value="100">100 / Seite</SelectItem>
+                    <SelectItem value="20">{t("leads.pagination.perPage", { n: 20 })}</SelectItem>
+                    <SelectItem value="50">{t("leads.pagination.perPage", { n: 50 })}</SelectItem>
+                    <SelectItem value="100">{t("leads.pagination.perPage", { n: 100 })}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
-                  Zurück
+                  {t("leads.pagination.prev")}
                 </Button>
-                <span>Seite {currentPage} / {totalPages}</span>
+                <span>{t("leads.pagination.page", { current: currentPage, total: totalPages })}</span>
                 <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>
-                  Weiter
+                  {t("leads.pagination.next")}
                 </Button>
               </div>
             </div>
@@ -572,7 +574,7 @@ function LeadsPage() {
                               compact
                             />
                             {l.status !== "converted" && (
-                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setConvertLead(l)} title="Zu Kunde konvertieren">
+                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setConvertLead(l)} title={t("leads.table.convertTitle")}>
                                 <ArrowRight className="h-3 w-3" />
                               </Button>
                             )}
@@ -580,7 +582,7 @@ function LeadsPage() {
                         </div>
                       );
                     })}
-                    {items.length === 0 && <p className="px-1 py-3 text-xs text-muted-foreground">Keine Leads</p>}
+                    {items.length === 0 && <p className="px-1 py-3 text-xs text-muted-foreground">{t("leads.table.noLeads")}</p>}
                   </div>
                 </div>
               );
@@ -629,6 +631,7 @@ function LeadsPage() {
 }
 
 function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -655,7 +658,7 @@ function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] 
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Gespeichert");
+      toast.success(t("leads.toast.saved"));
       qc.invalidateQueries({ queryKey: ["leads"] });
       qc.invalidateQueries({ queryKey: ["lead", lead.id] });
       setOpen(false);
@@ -665,24 +668,24 @@ function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setOpen(true)} title="Bearbeiten">
+      <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setOpen(true)} title={t("leads.table.edit")}>
         <Pencil className="h-3.5 w-3.5" />
       </Button>
       <DialogContent>
-        <DialogHeader><DialogTitle>Lead bearbeiten</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("leads.editTitle")}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div><Label>Name</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
+          <div><Label>{t("leads.form.name")}</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+            <div><Label>{t("leads.form.email")}</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+            <div><Label>{t("leads.form.phone")}</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Quelle</Label>
+              <Label>{t("leads.form.source")}</Label>
               <Select value={form.source || UNASSIGNED} onValueChange={(v) => setForm({ ...form, source: v === UNASSIGNED ? "" : v })}>
-                <SelectTrigger><SelectValue placeholder="Quelle wählen" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("leads.form.sourcePlaceholder")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={UNASSIGNED}>Keine Angabe</SelectItem>
+                  <SelectItem value={UNASSIGNED}>{t("leads.form.noSource")}</SelectItem>
                   {LEAD_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   {form.source && !LEAD_SOURCES.includes(form.source as typeof LEAD_SOURCES[number]) && (
                     <SelectItem value={form.source}>{form.source}</SelectItem>
@@ -691,7 +694,7 @@ function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] 
               </Select>
             </div>
             <div>
-              <Label>Status</Label>
+              <Label>{t("leads.form.status")}</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as LeadStatus })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -701,19 +704,19 @@ function EditLeadButton({ lead, employees }: { lead: Lead; employees: Profile[] 
             </div>
           </div>
           <div>
-            <Label>Zugewiesen an</Label>
+            <Label>{t("leads.form.assignedTo")}</Label>
             <Select value={form.assigned_to || UNASSIGNED} onValueChange={(v) => setForm({ ...form, assigned_to: v === UNASSIGNED ? "" : v })}>
-              <SelectTrigger><SelectValue placeholder="Niemand" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("leads.form.nobody")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={UNASSIGNED}>Niemand</SelectItem>
+                <SelectItem value={UNASSIGNED}>{t("leads.form.nobody")}</SelectItem>
                 {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email ?? e.id}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div><Label>Notizen</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+          <div><Label>{t("leads.form.notes")}</Label><Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
         </div>
         <DialogFooter>
-          <Button onClick={() => save.mutate()} disabled={!form.full_name || save.isPending}>Speichern</Button>
+          <Button onClick={() => save.mutate()} disabled={!form.full_name || save.isPending}>{t("common.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
