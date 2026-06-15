@@ -48,7 +48,7 @@ function SettingsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Profil gespeichert");
+      toast.success(t("settings.profile.saved"));
       qc.invalidateQueries({ queryKey: ["me"] });
     },
     onError: (e: Error) => toast.error(e.message),
