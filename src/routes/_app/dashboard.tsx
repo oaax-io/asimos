@@ -550,14 +550,14 @@ function StatusStackCard({ title, icon: Icon, to, counts, rows, loading, footer,
           {title}
         </CardTitle>
         <Button variant="ghost" size="sm" asChild>
-          <Link to={to}>Details <ArrowRight className="ml-1 h-3 w-3" /></Link>
+          <Link to={to}>{detailsLabel ?? "Details"} <ArrowRight className="ml-1 h-3 w-3" /></Link>
         </Button>
       </CardHeader>
       <CardContent>
         {loading ? (
           <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-6 w-full" />)}</div>
         ) : total === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">Noch keine Daten vorhanden.</p>
+          <p className="py-6 text-center text-sm text-muted-foreground">{emptyText ?? "Noch keine Daten vorhanden."}</p>
         ) : (
           <>
             <div className="mb-3 flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
