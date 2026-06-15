@@ -168,6 +168,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen>
+      <LanguageBootstrap />
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <SidebarInset className="flex min-w-0 flex-1 flex-col">
@@ -180,7 +181,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
               className="relative hidden h-9 max-w-md flex-1 items-center gap-2 rounded-md border bg-background px-3 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-foreground md:flex"
             >
               <Search className="h-4 w-4" />
-              <span className="flex-1 text-left">Suchen…</span>
+              <span className="flex-1 text-left">{t("common.search")}</span>
               <kbd className="hidden rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium lg:inline">⌘K</kbd>
             </button>
             <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
@@ -189,8 +190,9 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
             <div className="ml-auto flex items-center gap-2">
               <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate({ to: "/feedback" })}>
                 <MessageSquarePlus className="h-4 w-4" />
-                <span className="hidden sm:inline">Feedback</span>
+                <span className="hidden sm:inline">{t("common.feedback")}</span>
               </Button>
+              <LanguageSwitcher />
               <NotificationCenter />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -206,7 +208,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Mein Konto</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t("common.myAccount")}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {user.email && (
                     <div className="px-2 pb-1 text-xs text-muted-foreground truncate">
@@ -217,7 +219,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                        Wechseln zu
+                        {t("common.switchTo")}
                       </DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => navigate({ to: "/oaax" })}>
                         <Shield className="mr-2 h-4 w-4 text-primary" />
@@ -230,10 +232,10 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                     </>
                   )}
                   <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
-                    <Settings className="mr-2 h-4 w-4" />Einstellungen
+                    <Settings className="mr-2 h-4 w-4" />{t("common.settings")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={async () => { await signOut(); navigate({ to: "/" }); }}>
-                    <LogOut className="mr-2 h-4 w-4" />Abmelden
+                    <LogOut className="mr-2 h-4 w-4" />{t("common.logout")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
