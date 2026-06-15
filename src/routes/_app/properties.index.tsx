@@ -486,16 +486,16 @@ function PropertiesPage() {
 
       {selectionCount > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-accent/40 p-3">
-          <span className="text-sm font-medium">{selectionCount} ausgewählt</span>
+          <span className="text-sm font-medium">{t("properties.bulk.selected", { count: selectionCount })}</span>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline"><UserCog className="mr-1 h-4 w-4" />Zuweisen</Button>
+                <Button size="sm" variant="outline"><UserCog className="mr-1 h-4 w-4" />{t("properties.bulk.assign")}</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
-                <DropdownMenuLabel>Mitarbeitende</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("properties.bulk.employees")}</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => assign.mutate(null)}>
-                  <X className="mr-2 h-4 w-4" />Zuweisung entfernen
+                  <X className="mr-2 h-4 w-4" />{t("properties.bulk.removeAssignment")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {employees.map((e: any) => (
@@ -507,33 +507,33 @@ function PropertiesPage() {
             </DropdownMenu>
             {archivedFilter === "archived" ? (
               <Button size="sm" variant="outline" onClick={() => archive.mutate(false)}>
-                <ArchiveRestore className="mr-1 h-4 w-4" />Wiederherstellen
+                <ArchiveRestore className="mr-1 h-4 w-4" />{t("properties.bulk.restore")}
               </Button>
             ) : (
               <Button size="sm" variant="outline" onClick={() => archive.mutate(true)}>
-                <Archive className="mr-1 h-4 w-4" />Archivieren
+                <Archive className="mr-1 h-4 w-4" />{t("properties.bulk.archive")}
               </Button>
             )}
             <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(true)}>
-              <Trash2 className="mr-1 h-4 w-4" />Löschen
+              <Trash2 className="mr-1 h-4 w-4" />{t("properties.bulk.delete")}
             </Button>
             <Button size="sm" variant="ghost" onClick={clearSelection}>
-              <X className="mr-1 h-4 w-4" />Auswahl aufheben
+              <X className="mr-1 h-4 w-4" />{t("properties.bulk.clear")}
             </Button>
           </div>
         </div>
       )}
 
       {isLoading ? (
-        <div className="text-sm text-muted-foreground">Lädt…</div>
+        <div className="text-sm text-muted-foreground">{t("properties.loading")}</div>
       ) : displayed.length === 0 ? (
         <EmptyState
-          title={properties.length === 0 ? "Noch keine Immobilien" : "Keine Treffer"}
+          title={properties.length === 0 ? t("properties.empty.noneTitle") : t("properties.empty.noMatchTitle")}
           description={properties.length === 0
-            ? "Erfasse dein erstes Objekt — Titel, Adresse, Preis und Bild reichen zum Start."
-            : "Passe die Filter an oder leere die Suche."}
+            ? t("properties.empty.noneDescription")
+            : t("properties.empty.noMatchDescription")}
           action={properties.length === 0 ? (
-            <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button>
+            <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />{t("properties.new")}</Button>
           ) : undefined}
         />
       ) : view === "map" ? (
