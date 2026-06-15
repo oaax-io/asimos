@@ -22,6 +22,9 @@ import {
 import logoAsimo from "@/assets/logo-asimo-real-estate.png";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { LanguageBootstrap } from "@/components/LanguageBootstrap";
+import { useTranslation } from "react-i18next";
 // touch
 
 const NAV_GROUPS = [
