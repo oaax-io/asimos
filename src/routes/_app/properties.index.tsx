@@ -625,7 +625,7 @@ function PropertiesPage() {
                   return (
                     <TableRow key={row.id} data-state={selected.has(row.id) ? "selected" : undefined} className={opts.indent ? "bg-muted/20" : undefined}>
                       <TableCell>
-                        <Checkbox checked={selected.has(row.id)} onCheckedChange={() => toggleOne(row.id)} aria-label="Auswählen" />
+                        <Checkbox checked={selected.has(row.id)} onCheckedChange={() => toggleOne(row.id)} aria-label={t("properties.card.select")} />
                       </TableCell>
                       <TableCell>
                         <div className={`flex items-center gap-2 ${opts.indent ? "pl-6" : ""}`}>
@@ -635,7 +635,7 @@ function PropertiesPage() {
                               size="sm"
                               className="h-6 w-6 p-0 -ml-1"
                               onClick={(e) => { e.preventDefault(); toggleExpanded(row.id); }}
-                              aria-label={isExpanded ? "Einklappen" : "Aufklappen"}
+                              aria-label={isExpanded ? t("properties.table.collapse") : t("properties.table.expand")}
                             >
                               {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                             </Button>
@@ -649,29 +649,29 @@ function PropertiesPage() {
                             <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                               {isParent && (
                                 <Badge className="bg-primary/10 text-primary hover:bg-primary/15 text-[10px] px-1.5 py-0">
-                                  <Building2 className="mr-1 h-3 w-3" />Liegenschaft · {childUnits.length}
+                                  <Building2 className="mr-1 h-3 w-3" />{t("properties.table.buildingShort", { count: childUnits.length })}
                                 </Badge>
                               )}
                               {row.is_unit && (
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  <Layers3 className="mr-1 h-3 w-3" />Einheit{row.unit_number ? ` ${row.unit_number}` : ""}
+                                  <Layers3 className="mr-1 h-3 w-3" />{t("properties.card.unit")}{row.unit_number ? ` ${row.unit_number}` : ""}
                                 </Badge>
                               )}
                               {row.is_unit && parentProp && !opts.indent && (
-                                <span className="text-[11px] text-muted-foreground">in {parentProp.title}</span>
+                                <span className="text-[11px] text-muted-foreground">{t("properties.table.inParent", { title: parentProp.title })}</span>
                               )}
                             </div>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm">{propertyTypeLabels[row.property_type as keyof typeof propertyTypeLabels]}</TableCell>
+                      <TableCell className="text-sm">{typeLabel(row.property_type)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={`text-xs ${getPropertyStatusBadgeClass(row.status)}`}>{propertyStatusLabels[row.status as keyof typeof propertyStatusLabels]}</Badge>
+                        <Badge variant="outline" className={`text-xs ${getPropertyStatusBadgeClass(row.status)}`}>{statusLabel(row.status)}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{[row.address, row.city].filter(Boolean).join(", ") || "—"}</TableCell>
                       <TableCell className="text-right text-sm">
                         {formatCurrency(row.listing_type === "rent" ? (row.rent ? Number(row.rent) : null) : (row.price ? Number(row.price) : null))}
-                        {row.listing_type === "rent" && row.rent ? <span className="text-xs text-muted-foreground"> /Mt.</span> : null}
+                        {row.listing_type === "rent" && row.rent ? <span className="text-xs text-muted-foreground"> {t("properties.perMonth")}</span> : null}
                       </TableCell>
                       <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
                       <TableCell>
@@ -681,23 +681,23 @@ function PropertiesPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link to="/properties/$id" params={{ id: row.id }}>Öffnen</Link>
+                              <Link to="/properties/$id" params={{ id: row.id }}>{t("properties.table.open")}</Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {isArchived ? (
                               <DropdownMenuItem onClick={() => { setSelected(new Set([row.id])); archive.mutate(false); }}>
-                                <ArchiveRestore className="mr-2 h-4 w-4" />Wiederherstellen
+                                <ArchiveRestore className="mr-2 h-4 w-4" />{t("properties.bulk.restore")}
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem onClick={() => { setSelected(new Set([row.id])); archive.mutate(true); }}>
-                                <Archive className="mr-2 h-4 w-4" />Archivieren
+                                <Archive className="mr-2 h-4 w-4" />{t("properties.bulk.archive")}
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onClick={() => { setSelected(new Set([row.id])); setConfirmDelete(true); }}
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />Löschen
+                              <Trash2 className="mr-2 h-4 w-4" />{t("properties.bulk.delete")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
