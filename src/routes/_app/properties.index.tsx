@@ -304,13 +304,13 @@ function PropertiesPage() {
           <div className="flex items-center gap-2">
             <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>
               <TabsList>
-                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />Kacheln</TabsTrigger>
-                <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
-                <TabsTrigger value="map"><MapIcon className="mr-1 h-4 w-4" />Karten</TabsTrigger>
+                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />{t("properties.view.grid")}</TabsTrigger>
+                <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />{t("properties.view.list")}</TabsTrigger>
+                <TabsTrigger value="map"><MapIcon className="mr-1 h-4 w-4" />{t("properties.view.map")}</TabsTrigger>
               </TabsList>
             </Tabs>
-            <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-1 h-4 w-4" />Immobilien importieren</Button>
-            <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button>
+            <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-1 h-4 w-4" />{t("properties.import")}</Button>
+            <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />{t("properties.new")}</Button>
           </div>
         }
       />
