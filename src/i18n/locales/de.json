@@ -66,6 +66,15 @@
     "docs": "Dokumentation",
     "settings": "Einstellungen"
   },
+  "dashboard": {
+    "subtitle": "Übersicht über dein Tagesgeschäft",
+    "greeting": {
+      "night": "Gute Nacht",
+      "morning": "Guten Morgen",
+      "day": "Guten Tag",
+      "evening": "Guten Abend"
+    }
+  },
   "pages": {
     "dashboard": { "title": "Dashboard", "description": "Überblick über Aktivitäten und Kennzahlen" },
     "leads": { "title": "Leads", "description": "Interessenten erfassen und qualifizieren" },
