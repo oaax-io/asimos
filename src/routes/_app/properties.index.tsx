@@ -721,21 +721,25 @@ function PropertiesPage() {
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <span>
-              Zeige {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, displayed.length)} von {displayed.length}
+              {t("properties.pagination.showing", {
+                from: (currentPage - 1) * pageSize + 1,
+                to: Math.min(currentPage * pageSize, displayed.length),
+                total: displayed.length,
+              })}
             </span>
             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
               <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="20">20 / Seite</SelectItem>
-                <SelectItem value="50">50 / Seite</SelectItem>
-                <SelectItem value="100">100 / Seite</SelectItem>
+                <SelectItem value="20">{t("properties.pagination.perPage", { count: 20 })}</SelectItem>
+                <SelectItem value="50">{t("properties.pagination.perPage", { count: 50 })}</SelectItem>
+                <SelectItem value="100">{t("properties.pagination.perPage", { count: 100 })}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Zurück</Button>
-            <span>Seite {currentPage} / {totalPages}</span>
-            <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Weiter</Button>
+            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>{t("properties.pagination.prev")}</Button>
+            <span>{t("properties.pagination.page", { current: currentPage, total: totalPages })}</span>
+            <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>{t("properties.pagination.next")}</Button>
           </div>
         </div>
       )}
@@ -743,15 +747,15 @@ function PropertiesPage() {
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Immobilien löschen?</AlertDialogTitle>
+            <AlertDialogTitle>{t("properties.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {selectionCount} Objekt{selectionCount === 1 ? "" : "e"} werden unwiderruflich gelöscht. Verknüpfte Daten können verloren gehen.
+              {t("properties.deleteDialog.description", { count: selectionCount })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t("properties.deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => remove.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Endgültig löschen
+              {t("properties.deleteDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
