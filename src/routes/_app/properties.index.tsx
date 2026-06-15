@@ -17,9 +17,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { formatCurrency, formatArea, propertyTypeLabels, propertyStatusLabels, listingTypeLabels, getPropertyStatusBadgeClass, getPropertyStatusDotClass } from "@/lib/format";
+import { formatCurrency, formatArea, getPropertyStatusBadgeClass, getPropertyStatusDotClass } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 import { PropertyWizard, type WizardSubmit } from "@/components/properties/PropertyWizard";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/properties/")({ component: PropertiesPage });
 
@@ -35,6 +36,10 @@ function getMediaPublicUrl(path?: string | null) {
 type ViewMode = "grid" | "list" | "map";
 
 function PropertiesPage() {
+  const { t } = useTranslation();
+  const statusLabel = (s: string) => t(`properties.status.${s}`, { defaultValue: s });
+  const typeLabel = (s: string) => t(`properties.type.${s}`, { defaultValue: s });
+  const listingLabel = (s: string) => t(`properties.listing.${s}`, { defaultValue: s });
   const qc = useQueryClient();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -147,7 +152,7 @@ function PropertiesPage() {
       return created;
     },
     onSuccess: () => {
-      toast.success("Immobilie erstellt");
+      toast.success(t("properties.toasts.created"));
       qc.invalidateQueries({ queryKey: ["properties"] });
       setOpen(false);
     },
@@ -248,7 +253,7 @@ function PropertiesPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Zuweisung aktualisiert");
+      toast.success(t("properties.toasts.assignmentUpdated"));
       qc.invalidateQueries({ queryKey: ["properties"] });
       clearSelection();
     },
@@ -266,7 +271,7 @@ function PropertiesPage() {
       if (error) throw error;
     },
     onSuccess: (_, toArchived) => {
-      toast.success(toArchived ? "Immobilien archiviert" : "Immobilien wiederhergestellt");
+      toast.success(toArchived ? t("properties.toasts.archived") : t("properties.toasts.restored"));
       qc.invalidateQueries({ queryKey: ["properties"] });
       clearSelection();
     },
@@ -281,7 +286,7 @@ function PropertiesPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Immobilien gelöscht");
+      toast.success(t("properties.toasts.deleted"));
       qc.invalidateQueries({ queryKey: ["properties"] });
       clearSelection();
       setConfirmDelete(false);
@@ -299,13 +304,13 @@ function PropertiesPage() {
           <div className="flex items-center gap-2">
             <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>
               <TabsList>
-                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />Kacheln</TabsTrigger>
-                <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
-                <TabsTrigger value="map"><MapIcon className="mr-1 h-4 w-4" />Karten</TabsTrigger>
+                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />{t("properties.view.grid")}</TabsTrigger>
+                <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />{t("properties.view.list")}</TabsTrigger>
+                <TabsTrigger value="map"><MapIcon className="mr-1 h-4 w-4" />{t("properties.view.map")}</TabsTrigger>
               </TabsList>
             </Tabs>
-            <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-1 h-4 w-4" />Immobilien importieren</Button>
-            <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button>
+            <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-1 h-4 w-4" />{t("properties.import")}</Button>
+            <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />{t("properties.new")}</Button>
           </div>
         }
       />
@@ -325,20 +330,24 @@ function PropertiesPage() {
 
       {(() => {
         const activeChips: Array<{ key: string; label: string; clear: () => void }> = [];
-        if (fStatus !== "all") activeChips.push({ key: "status", label: `Status: ${propertyStatusLabels[fStatus as keyof typeof propertyStatusLabels]}`, clear: () => setFStatus("all") });
-        if (fListing !== "all") activeChips.push({ key: "listing", label: `Vermarktung: ${fListing === "sale" ? "Kauf" : "Miete"}`, clear: () => setFListing("all") });
-        if (fType !== "all") activeChips.push({ key: "type", label: `Typ: ${propertyTypeLabels[fType as keyof typeof propertyTypeLabels]}`, clear: () => setFType("all") });
-        if (fCity !== "all") activeChips.push({ key: "city", label: `Stadt: ${fCity}`, clear: () => setFCity("all") });
+        if (fStatus !== "all") activeChips.push({ key: "status", label: t("properties.chips.status", { value: statusLabel(fStatus) }), clear: () => setFStatus("all") });
+        if (fListing !== "all") activeChips.push({ key: "listing", label: t("properties.chips.listing", { value: listingLabel(fListing) }), clear: () => setFListing("all") });
+        if (fType !== "all") activeChips.push({ key: "type", label: t("properties.chips.type", { value: typeLabel(fType) }), clear: () => setFType("all") });
+        if (fCity !== "all") activeChips.push({ key: "city", label: t("properties.chips.city", { value: fCity }), clear: () => setFCity("all") });
         if (fAssigned !== "all") {
           const emp = employees.find((e: any) => e.id === fAssigned) as any;
-          activeChips.push({ key: "assigned", label: `Zuständig: ${emp?.full_name || emp?.email || "—"}`, clear: () => setFAssigned("all") });
+          activeChips.push({ key: "assigned", label: t("properties.chips.assigned", { value: emp?.full_name || emp?.email || "—" }), clear: () => setFAssigned("all") });
         }
         if (fStructure !== "all") {
-          const labels: Record<string, string> = { buildings: "Liegenschaften", units: "Einheiten", standalone: "Einzelobjekte" };
-          activeChips.push({ key: "structure", label: `Struktur: ${labels[fStructure]}`, clear: () => setFStructure("all") });
+          const labels: Record<string, string> = {
+            buildings: t("properties.structure.buildings"),
+            units: t("properties.structure.units"),
+            standalone: t("properties.structure.standalone"),
+          };
+          activeChips.push({ key: "structure", label: t("properties.chips.structure", { value: labels[fStructure] }), clear: () => setFStructure("all") });
         }
         if (archivedFilter !== "active") {
-          activeChips.push({ key: "arch", label: archivedFilter === "archived" ? "Nur archivierte" : "Aktiv & archivierte", clear: () => setArchivedFilter("active") });
+          activeChips.push({ key: "arch", label: archivedFilter === "archived" ? t("properties.chips.onlyArchived") : t("properties.chips.activeAndArchived"), clear: () => setArchivedFilter("active") });
         }
         const resetAll = () => {
           setSearch(""); setFStatus("all"); setFType("all"); setFListing("all");
@@ -352,36 +361,36 @@ function PropertiesPage() {
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative min-w-[220px] flex-1">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input className="pl-9" placeholder="Suchen nach Titel, Adresse, Ort…" value={search} onChange={(e) => setSearch(e.target.value)} />
+                <Input className="pl-9" placeholder={t("properties.search")} value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
               <Select value={fStatus} onValueChange={setFStatus}>
-                <SelectTrigger className="h-9 w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectTrigger className="h-9 w-[150px]"><SelectValue placeholder={t("properties.filters.status")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Alle Status</SelectItem>
+                  <SelectItem value="all">{t("properties.filters.allStatuses")}</SelectItem>
                   {STATUSES.map(s => (
                     <SelectItem key={s} value={s}>
                       <span className="flex items-center gap-2">
                         <span className={`inline-block h-2.5 w-2.5 rounded-full ${getPropertyStatusDotClass(s)}`} />
-                        {propertyStatusLabels[s]}
+                        {statusLabel(s)}
                       </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <Select value={fListing} onValueChange={setFListing}>
-                <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder="Vermarktung" /></SelectTrigger>
+                <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder={t("properties.filters.listing")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Kauf & Miete</SelectItem>
-                  <SelectItem value="sale">Kauf</SelectItem>
-                  <SelectItem value="rent">Miete</SelectItem>
+                  <SelectItem value="all">{t("properties.filters.saleAndRent")}</SelectItem>
+                  <SelectItem value="sale">{t("properties.listing.sale")}</SelectItem>
+                  <SelectItem value="rent">{t("properties.listing.rent")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={archivedFilter} onValueChange={(v) => setArchivedFilter(v as typeof archivedFilter)}>
                 <SelectTrigger className="h-9 w-[130px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Aktiv</SelectItem>
-                  <SelectItem value="archived">Archiviert</SelectItem>
-                  <SelectItem value="all">Alle</SelectItem>
+                  <SelectItem value="active">{t("properties.filters.active")}</SelectItem>
+                  <SelectItem value="archived">{t("properties.filters.archived")}</SelectItem>
+                  <SelectItem value="all">{t("properties.filters.all")}</SelectItem>
                 </SelectContent>
               </Select>
               {view === "list" && fStructure !== "units" && (
@@ -389,10 +398,10 @@ function PropertiesPage() {
                   size="sm"
                   variant={groupUnits ? "default" : "outline"}
                   onClick={() => setGroupUnits(g => !g)}
-                  title={groupUnits ? "Gruppiert nach Liegenschaft" : "Flache Liste"}
+                  title={groupUnits ? t("properties.filters.groupedTitle") : t("properties.filters.flatTitle")}
                 >
                   <Layers3 className="mr-1 h-4 w-4" />
-                  {groupUnits ? "Gruppiert" : "Flach"}
+                  {groupUnits ? t("properties.filters.grouped") : t("properties.filters.flat")}
                 </Button>
               )}
               <Button
@@ -401,7 +410,7 @@ function PropertiesPage() {
                 onClick={() => setMoreOpen(o => !o)}
               >
                 <SlidersHorizontal className="mr-1 h-4 w-4" />
-                Mehr Filter
+                {t("properties.filters.more")}
                 {activeChips.filter(c => ["type","city","assigned","structure"].includes(c.key)).length > 0 && (
                   <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">
                     {activeChips.filter(c => ["type","city","assigned","structure"].includes(c.key)).length}
@@ -410,7 +419,7 @@ function PropertiesPage() {
               </Button>
               {hasActive && (
                 <Button size="sm" variant="ghost" onClick={resetAll}>
-                  <RotateCcw className="mr-1 h-4 w-4" />Zurücksetzen
+                  <RotateCcw className="mr-1 h-4 w-4" />{t("properties.filters.reset")}
                 </Button>
               )}
             </div>
@@ -419,33 +428,33 @@ function PropertiesPage() {
             {moreOpen && (
               <div className="grid gap-2 rounded-xl border bg-muted/20 p-3 sm:grid-cols-2 lg:grid-cols-4">
                 <Select value={fType} onValueChange={setFType}>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Typ" /></SelectTrigger>
+                  <SelectTrigger className="h-9"><SelectValue placeholder={t("properties.filters.type")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Alle Typen</SelectItem>
-                    {PROP_TYPES.map(t => <SelectItem key={t} value={t}>{propertyTypeLabels[t]}</SelectItem>)}
+                    <SelectItem value="all">{t("properties.filters.allTypes")}</SelectItem>
+                    {PROP_TYPES.map(tp => <SelectItem key={tp} value={tp}>{typeLabel(tp)}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={fStructure} onValueChange={(v) => setFStructure(v as typeof fStructure)}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Alle Strukturen</SelectItem>
-                    <SelectItem value="buildings">Nur Liegenschaften</SelectItem>
-                    <SelectItem value="units">Nur Einheiten</SelectItem>
-                    <SelectItem value="standalone">Nur Einzelobjekte</SelectItem>
+                    <SelectItem value="all">{t("properties.filters.allStructures")}</SelectItem>
+                    <SelectItem value="buildings">{t("properties.filters.buildingsOnly")}</SelectItem>
+                    <SelectItem value="units">{t("properties.filters.unitsOnly")}</SelectItem>
+                    <SelectItem value="standalone">{t("properties.filters.standaloneOnly")}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={fAssigned} onValueChange={setFAssigned}>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Zuständig" /></SelectTrigger>
+                  <SelectTrigger className="h-9"><SelectValue placeholder={t("properties.filters.assigned")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Alle Mitarbeiter</SelectItem>
+                    <SelectItem value="all">{t("properties.filters.allEmployees")}</SelectItem>
                     {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 {cities.length > 1 && (
                   <Select value={fCity} onValueChange={setFCity}>
-                    <SelectTrigger className="h-9"><SelectValue placeholder="Stadt" /></SelectTrigger>
+                    <SelectTrigger className="h-9"><SelectValue placeholder={t("properties.filters.city")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Alle Städte</SelectItem>
+                      <SelectItem value="all">{t("properties.filters.allCities")}</SelectItem>
                       {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -463,7 +472,7 @@ function PropertiesPage() {
                       type="button"
                       onClick={chip.clear}
                       className="rounded-sm p-0.5 hover:bg-background/60"
-                      aria-label={`${chip.label} entfernen`}
+                      aria-label={t("properties.chips.remove", { label: chip.label })}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -477,16 +486,16 @@ function PropertiesPage() {
 
       {selectionCount > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-accent/40 p-3">
-          <span className="text-sm font-medium">{selectionCount} ausgewählt</span>
+          <span className="text-sm font-medium">{t("properties.bulk.selected", { count: selectionCount })}</span>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline"><UserCog className="mr-1 h-4 w-4" />Zuweisen</Button>
+                <Button size="sm" variant="outline"><UserCog className="mr-1 h-4 w-4" />{t("properties.bulk.assign")}</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
-                <DropdownMenuLabel>Mitarbeitende</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("properties.bulk.employees")}</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => assign.mutate(null)}>
-                  <X className="mr-2 h-4 w-4" />Zuweisung entfernen
+                  <X className="mr-2 h-4 w-4" />{t("properties.bulk.removeAssignment")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {employees.map((e: any) => (
@@ -498,33 +507,33 @@ function PropertiesPage() {
             </DropdownMenu>
             {archivedFilter === "archived" ? (
               <Button size="sm" variant="outline" onClick={() => archive.mutate(false)}>
-                <ArchiveRestore className="mr-1 h-4 w-4" />Wiederherstellen
+                <ArchiveRestore className="mr-1 h-4 w-4" />{t("properties.bulk.restore")}
               </Button>
             ) : (
               <Button size="sm" variant="outline" onClick={() => archive.mutate(true)}>
-                <Archive className="mr-1 h-4 w-4" />Archivieren
+                <Archive className="mr-1 h-4 w-4" />{t("properties.bulk.archive")}
               </Button>
             )}
             <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(true)}>
-              <Trash2 className="mr-1 h-4 w-4" />Löschen
+              <Trash2 className="mr-1 h-4 w-4" />{t("properties.bulk.delete")}
             </Button>
             <Button size="sm" variant="ghost" onClick={clearSelection}>
-              <X className="mr-1 h-4 w-4" />Auswahl aufheben
+              <X className="mr-1 h-4 w-4" />{t("properties.bulk.clear")}
             </Button>
           </div>
         </div>
       )}
 
       {isLoading ? (
-        <div className="text-sm text-muted-foreground">Lädt…</div>
+        <div className="text-sm text-muted-foreground">{t("properties.loading")}</div>
       ) : displayed.length === 0 ? (
         <EmptyState
-          title={properties.length === 0 ? "Noch keine Immobilien" : "Keine Treffer"}
+          title={properties.length === 0 ? t("properties.empty.noneTitle") : t("properties.empty.noMatchTitle")}
           description={properties.length === 0
-            ? "Erfasse dein erstes Objekt — Titel, Adresse, Preis und Bild reichen zum Start."
-            : "Passe die Filter an oder leere die Suche."}
+            ? t("properties.empty.noneDescription")
+            : t("properties.empty.noMatchDescription")}
           action={properties.length === 0 ? (
-            <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Immobilie</Button>
+            <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />{t("properties.new")}</Button>
           ) : undefined}
         />
       ) : view === "map" ? (
@@ -538,34 +547,34 @@ function PropertiesPage() {
             return (
               <div key={p.id} className={`group relative overflow-hidden rounded-2xl border bg-card shadow-soft transition hover:shadow-glow ${isSel ? "ring-2 ring-primary" : ""}`}>
                 <div className="absolute left-3 top-3 z-10 rounded-md bg-background/90 p-1 backdrop-blur">
-                  <Checkbox checked={isSel} onCheckedChange={() => toggleOne(p.id)} aria-label="Auswählen" />
+                  <Checkbox checked={isSel} onCheckedChange={() => toggleOne(p.id)} aria-label={t("properties.card.select")} />
                 </div>
                 <Link to="/properties/$id" params={{ id: p.id }} className="block">
                   <div className="aspect-[4/3] overflow-hidden bg-muted">
                     {p.images?.[0] ? (
                       <img src={getMediaPublicUrl(p.images[0])} alt={p.title} className="h-full w-full object-cover transition group-hover:scale-105" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">Kein Bild</div>
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">{t("properties.noImage")}</div>
                     )}
                   </div>
                   <div className="p-4">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge variant="outline" className={`text-xs ${getPropertyStatusBadgeClass(p.status)}`}>{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
+                      <Badge variant="outline" className={`text-xs ${getPropertyStatusBadgeClass(p.status)}`}>{statusLabel(p.status)}</Badge>
                       {childUnits.length > 0 && (
                         <Badge className="bg-primary/10 text-primary hover:bg-primary/15 text-xs">
-                          <Building2 className="mr-1 h-3 w-3" />Liegenschaft · {childUnits.length} Einheit{childUnits.length === 1 ? "" : "en"}
+                          <Building2 className="mr-1 h-3 w-3" />{t("properties.card.buildingUnits", { count: childUnits.length })}
                         </Badge>
                       )}
                       {p.is_unit && (
                         <Badge variant="outline" className="text-xs">
-                          <Layers3 className="mr-1 h-3 w-3" />Einheit{p.unit_number ? ` ${p.unit_number}` : ""}
+                          <Layers3 className="mr-1 h-3 w-3" />{t("properties.card.unit")}{p.unit_number ? ` ${p.unit_number}` : ""}
                         </Badge>
                       )}
-                      <span className="ml-auto text-xs text-muted-foreground">{listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{listingLabel(p.listing_type)}</span>
                     </div>
                     <h3 className="mt-2 line-clamp-1 font-semibold">{p.title}</h3>
                     {parentProp && (
-                      <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">↳ in {parentProp.title}</p>
+                      <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{t("properties.card.inParent", { title: parentProp.title })}</p>
                     )}
                     <p className="mt-1 line-clamp-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPin className="h-3 w-3" />{[p.address, p.city].filter(Boolean).join(", ") || "—"}
@@ -573,7 +582,7 @@ function PropertiesPage() {
                     <div className="mt-3 flex items-center justify-between">
                       <span className="font-display text-lg font-bold">
                         {formatCurrency(p.listing_type === "rent" ? (p.rent ? Number(p.rent) : null) : (p.price ? Number(p.price) : null))}
-                        {p.listing_type === "rent" && p.rent ? <span className="text-xs font-normal text-muted-foreground"> /Mt.</span> : null}
+                        {p.listing_type === "rent" && p.rent ? <span className="text-xs font-normal text-muted-foreground"> {t("properties.perMonth")}</span> : null}
                       </span>
                       <div className="flex gap-3 text-xs text-muted-foreground">
                         {p.rooms && <span className="flex items-center gap-1"><Bed className="h-3 w-3" />{p.rooms}</span>}
@@ -592,14 +601,14 @@ function PropertiesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10">
-                  <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAll} aria-label="Alle auswählen" />
+                  <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAll} aria-label={t("properties.table.selectAll")} />
                 </TableHead>
-                <TableHead>Titel</TableHead>
-                <TableHead>Typ</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ort</TableHead>
-                <TableHead className="text-right">Preis</TableHead>
-                <TableHead>Zuständig</TableHead>
+                <TableHead>{t("properties.columns.title")}</TableHead>
+                <TableHead>{t("properties.columns.type")}</TableHead>
+                <TableHead>{t("properties.columns.status")}</TableHead>
+                <TableHead>{t("properties.columns.city")}</TableHead>
+                <TableHead className="text-right">{t("properties.columns.price")}</TableHead>
+                <TableHead>{t("properties.columns.assignedTo")}</TableHead>
                 <TableHead className="w-10"></TableHead>
               </TableRow>
             </TableHeader>
@@ -616,7 +625,7 @@ function PropertiesPage() {
                   return (
                     <TableRow key={row.id} data-state={selected.has(row.id) ? "selected" : undefined} className={opts.indent ? "bg-muted/20" : undefined}>
                       <TableCell>
-                        <Checkbox checked={selected.has(row.id)} onCheckedChange={() => toggleOne(row.id)} aria-label="Auswählen" />
+                        <Checkbox checked={selected.has(row.id)} onCheckedChange={() => toggleOne(row.id)} aria-label={t("properties.card.select")} />
                       </TableCell>
                       <TableCell>
                         <div className={`flex items-center gap-2 ${opts.indent ? "pl-6" : ""}`}>
@@ -626,7 +635,7 @@ function PropertiesPage() {
                               size="sm"
                               className="h-6 w-6 p-0 -ml-1"
                               onClick={(e) => { e.preventDefault(); toggleExpanded(row.id); }}
-                              aria-label={isExpanded ? "Einklappen" : "Aufklappen"}
+                              aria-label={isExpanded ? t("properties.table.collapse") : t("properties.table.expand")}
                             >
                               {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                             </Button>
@@ -640,29 +649,29 @@ function PropertiesPage() {
                             <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                               {isParent && (
                                 <Badge className="bg-primary/10 text-primary hover:bg-primary/15 text-[10px] px-1.5 py-0">
-                                  <Building2 className="mr-1 h-3 w-3" />Liegenschaft · {childUnits.length}
+                                  <Building2 className="mr-1 h-3 w-3" />{t("properties.table.buildingShort", { count: childUnits.length })}
                                 </Badge>
                               )}
                               {row.is_unit && (
                                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                                  <Layers3 className="mr-1 h-3 w-3" />Einheit{row.unit_number ? ` ${row.unit_number}` : ""}
+                                  <Layers3 className="mr-1 h-3 w-3" />{t("properties.card.unit")}{row.unit_number ? ` ${row.unit_number}` : ""}
                                 </Badge>
                               )}
                               {row.is_unit && parentProp && !opts.indent && (
-                                <span className="text-[11px] text-muted-foreground">in {parentProp.title}</span>
+                                <span className="text-[11px] text-muted-foreground">{t("properties.table.inParent", { title: parentProp.title })}</span>
                               )}
                             </div>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm">{propertyTypeLabels[row.property_type as keyof typeof propertyTypeLabels]}</TableCell>
+                      <TableCell className="text-sm">{typeLabel(row.property_type)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={`text-xs ${getPropertyStatusBadgeClass(row.status)}`}>{propertyStatusLabels[row.status as keyof typeof propertyStatusLabels]}</Badge>
+                        <Badge variant="outline" className={`text-xs ${getPropertyStatusBadgeClass(row.status)}`}>{statusLabel(row.status)}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{[row.address, row.city].filter(Boolean).join(", ") || "—"}</TableCell>
                       <TableCell className="text-right text-sm">
                         {formatCurrency(row.listing_type === "rent" ? (row.rent ? Number(row.rent) : null) : (row.price ? Number(row.price) : null))}
-                        {row.listing_type === "rent" && row.rent ? <span className="text-xs text-muted-foreground"> /Mt.</span> : null}
+                        {row.listing_type === "rent" && row.rent ? <span className="text-xs text-muted-foreground"> {t("properties.perMonth")}</span> : null}
                       </TableCell>
                       <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
                       <TableCell>
@@ -672,23 +681,23 @@ function PropertiesPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link to="/properties/$id" params={{ id: row.id }}>Öffnen</Link>
+                              <Link to="/properties/$id" params={{ id: row.id }}>{t("properties.table.open")}</Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {isArchived ? (
                               <DropdownMenuItem onClick={() => { setSelected(new Set([row.id])); archive.mutate(false); }}>
-                                <ArchiveRestore className="mr-2 h-4 w-4" />Wiederherstellen
+                                <ArchiveRestore className="mr-2 h-4 w-4" />{t("properties.bulk.restore")}
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem onClick={() => { setSelected(new Set([row.id])); archive.mutate(true); }}>
-                                <Archive className="mr-2 h-4 w-4" />Archivieren
+                                <Archive className="mr-2 h-4 w-4" />{t("properties.bulk.archive")}
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onClick={() => { setSelected(new Set([row.id])); setConfirmDelete(true); }}
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />Löschen
+                              <Trash2 className="mr-2 h-4 w-4" />{t("properties.bulk.delete")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -712,21 +721,25 @@ function PropertiesPage() {
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <span>
-              Zeige {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, displayed.length)} von {displayed.length}
+              {t("properties.pagination.showing", {
+                from: (currentPage - 1) * pageSize + 1,
+                to: Math.min(currentPage * pageSize, displayed.length),
+                total: displayed.length,
+              })}
             </span>
             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
               <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="20">20 / Seite</SelectItem>
-                <SelectItem value="50">50 / Seite</SelectItem>
-                <SelectItem value="100">100 / Seite</SelectItem>
+                <SelectItem value="20">{t("properties.pagination.perPage", { count: 20 })}</SelectItem>
+                <SelectItem value="50">{t("properties.pagination.perPage", { count: 50 })}</SelectItem>
+                <SelectItem value="100">{t("properties.pagination.perPage", { count: 100 })}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Zurück</Button>
-            <span>Seite {currentPage} / {totalPages}</span>
-            <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Weiter</Button>
+            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>{t("properties.pagination.prev")}</Button>
+            <span>{t("properties.pagination.page", { current: currentPage, total: totalPages })}</span>
+            <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>{t("properties.pagination.next")}</Button>
           </div>
         </div>
       )}
@@ -734,15 +747,15 @@ function PropertiesPage() {
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Immobilien löschen?</AlertDialogTitle>
+            <AlertDialogTitle>{t("properties.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {selectionCount} Objekt{selectionCount === 1 ? "" : "e"} werden unwiderruflich gelöscht. Verknüpfte Daten können verloren gehen.
+              {t("properties.deleteDialog.description", { count: selectionCount })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t("properties.deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => remove.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Endgültig löschen
+              {t("properties.deleteDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

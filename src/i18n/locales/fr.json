@@ -390,6 +390,96 @@
   },
   "properties": {
     "new": "Nouveau bien",
+    "import": "Importer des biens",
+    "loading": "Chargement…",
+    "noImage": "Aucune image",
+    "perMonth": "/mois",
+    "view": {
+      "grid": "Tuiles",
+      "list": "Liste",
+      "map": "Carte"
+    },
+    "search": "Rechercher par titre, adresse, ville…",
+    "filters": {
+      "status": "Statut",
+      "allStatuses": "Tous les statuts",
+      "listing": "Mise en marché",
+      "saleAndRent": "Vente & location",
+      "active": "Actifs",
+      "archived": "Archivés",
+      "all": "Tous",
+      "grouped": "Groupé",
+      "flat": "À plat",
+      "groupedTitle": "Groupé par immeuble",
+      "flatTitle": "Liste à plat",
+      "more": "Plus de filtres",
+      "reset": "Réinitialiser",
+      "type": "Type",
+      "allTypes": "Tous les types",
+      "allStructures": "Toutes les structures",
+      "buildingsOnly": "Immeubles uniquement",
+      "unitsOnly": "Unités uniquement",
+      "standaloneOnly": "Biens isolés uniquement",
+      "assigned": "Responsable",
+      "allEmployees": "Tous les collaborateurs",
+      "city": "Ville",
+      "allCities": "Toutes les villes"
+    },
+    "chips": {
+      "status": "Statut : {{value}}",
+      "listing": "Mise en marché : {{value}}",
+      "type": "Type : {{value}}",
+      "city": "Ville : {{value}}",
+      "assigned": "Responsable : {{value}}",
+      "structure": "Structure : {{value}}",
+      "onlyArchived": "Archivés uniquement",
+      "activeAndArchived": "Actifs & archivés",
+      "remove": "Supprimer {{label}}"
+    },
+    "structure": {
+      "buildings": "Immeubles",
+      "units": "Unités",
+      "standalone": "Biens isolés"
+    },
+    "bulk": {
+      "selected_one": "{{count}} sélectionné",
+      "selected_other": "{{count}} sélectionnés",
+      "assign": "Attribuer",
+      "employees": "Collaborateurs",
+      "removeAssignment": "Retirer l'attribution",
+      "restore": "Restaurer",
+      "archive": "Archiver",
+      "delete": "Supprimer",
+      "clear": "Désélectionner"
+    },
+    "toasts": {
+      "created": "Bien créé",
+      "assignmentUpdated": "Attribution mise à jour",
+      "archived": "Biens archivés",
+      "restored": "Biens restaurés",
+      "deleted": "Biens supprimés"
+    },
+    "empty": {
+      "noneTitle": "Aucun bien pour le moment",
+      "noneDescription": "Enregistrez votre premier bien — titre, adresse, prix et image suffisent.",
+      "noMatchTitle": "Aucun résultat",
+      "noMatchDescription": "Ajustez les filtres ou videz la recherche."
+    },
+    "card": {
+      "buildingUnits_one": "Immeuble · {{count}} unité",
+      "buildingUnits_other": "Immeuble · {{count}} unités",
+      "unit": "Unité",
+      "inParent": "↳ dans {{title}}",
+      "select": "Sélectionner"
+    },
+    "table": {
+      "selectAll": "Tout sélectionner",
+      "expand": "Déplier",
+      "collapse": "Replier",
+      "open": "Ouvrir",
+      "inParent": "dans {{title}}",
+      "buildingShort": "Immeuble · {{count}}"
+    },
     "columns": {
       "title": "Titre",
       "type": "Type",
@@ -397,6 +487,43 @@
       "price": "Prix",
       "city": "Localité",
       "assignedTo": "Responsable"
+    },
+    "pagination": {
+      "showing": "Affichage {{from}}–{{to}} sur {{total}}",
+      "perPage": "{{count}} / page",
+      "prev": "Précédent",
+      "next": "Suivant",
+      "page": "Page {{current}} / {{total}}"
+    },
+    "deleteDialog": {
+      "title": "Supprimer les biens ?",
+      "description_one": "{{count}} bien sera supprimé définitivement. Les données associées peuvent être perdues.",
+      "description_other": "{{count}} biens seront supprimés définitivement. Les données associées peuvent être perdues.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer définitivement"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "preparation": "Préparation",
+      "active": "Actif",
+      "available": "Disponible",
+      "reserved": "Réservé",
+      "sold": "Vendu",
+      "rented": "Loué",
+      "archived": "Archivé"
+    },
+    "type": {
+      "apartment": "Appartement",
+      "house": "Maison",
+      "commercial": "Commercial",
+      "land": "Terrain",
+      "parking": "Parking",
+      "mixed_use": "Usage mixte",
+      "other": "Autre"
+    },
+    "listing": {
+      "sale": "Vente",
+      "rent": "Location"
     }
   },
   "appointments": {
