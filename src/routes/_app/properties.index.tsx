@@ -271,7 +271,7 @@ function PropertiesPage() {
       if (error) throw error;
     },
     onSuccess: (_, toArchived) => {
-      toast.success(toArchived ? "Immobilien archiviert" : "Immobilien wiederhergestellt");
+      toast.success(toArchived ? t("properties.toasts.archived") : t("properties.toasts.restored"));
       qc.invalidateQueries({ queryKey: ["properties"] });
       clearSelection();
     },
