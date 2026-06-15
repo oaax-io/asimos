@@ -66,6 +66,15 @@
     "docs": "Documentation",
     "settings": "Paramètres"
   },
+  "dashboard": {
+    "subtitle": "Vue d'ensemble de votre journée",
+    "greeting": {
+      "night": "Bonne nuit",
+      "morning": "Bonjour",
+      "day": "Bonjour",
+      "evening": "Bonsoir"
+    }
+  },
   "pages": {
     "dashboard": { "title": "Tableau de bord", "description": "Vue d'ensemble des activités et indicateurs" },
     "leads": { "title": "Prospects", "description": "Saisir et qualifier les intéressés" },
