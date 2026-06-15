@@ -547,34 +547,34 @@ function PropertiesPage() {
             return (
               <div key={p.id} className={`group relative overflow-hidden rounded-2xl border bg-card shadow-soft transition hover:shadow-glow ${isSel ? "ring-2 ring-primary" : ""}`}>
                 <div className="absolute left-3 top-3 z-10 rounded-md bg-background/90 p-1 backdrop-blur">
-                  <Checkbox checked={isSel} onCheckedChange={() => toggleOne(p.id)} aria-label="Auswählen" />
+                  <Checkbox checked={isSel} onCheckedChange={() => toggleOne(p.id)} aria-label={t("properties.card.select")} />
                 </div>
                 <Link to="/properties/$id" params={{ id: p.id }} className="block">
                   <div className="aspect-[4/3] overflow-hidden bg-muted">
                     {p.images?.[0] ? (
                       <img src={getMediaPublicUrl(p.images[0])} alt={p.title} className="h-full w-full object-cover transition group-hover:scale-105" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">Kein Bild</div>
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">{t("properties.noImage")}</div>
                     )}
                   </div>
                   <div className="p-4">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge variant="outline" className={`text-xs ${getPropertyStatusBadgeClass(p.status)}`}>{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
+                      <Badge variant="outline" className={`text-xs ${getPropertyStatusBadgeClass(p.status)}`}>{statusLabel(p.status)}</Badge>
                       {childUnits.length > 0 && (
                         <Badge className="bg-primary/10 text-primary hover:bg-primary/15 text-xs">
-                          <Building2 className="mr-1 h-3 w-3" />Liegenschaft · {childUnits.length} Einheit{childUnits.length === 1 ? "" : "en"}
+                          <Building2 className="mr-1 h-3 w-3" />{t("properties.card.buildingUnits", { count: childUnits.length })}
                         </Badge>
                       )}
                       {p.is_unit && (
                         <Badge variant="outline" className="text-xs">
-                          <Layers3 className="mr-1 h-3 w-3" />Einheit{p.unit_number ? ` ${p.unit_number}` : ""}
+                          <Layers3 className="mr-1 h-3 w-3" />{t("properties.card.unit")}{p.unit_number ? ` ${p.unit_number}` : ""}
                         </Badge>
                       )}
-                      <span className="ml-auto text-xs text-muted-foreground">{listingTypeLabels[p.listing_type as keyof typeof listingTypeLabels]}</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{listingLabel(p.listing_type)}</span>
                     </div>
                     <h3 className="mt-2 line-clamp-1 font-semibold">{p.title}</h3>
                     {parentProp && (
-                      <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">↳ in {parentProp.title}</p>
+                      <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{t("properties.card.inParent", { title: parentProp.title })}</p>
                     )}
                     <p className="mt-1 line-clamp-1 flex items-center gap-1 text-xs text-muted-foreground">
                       <MapPin className="h-3 w-3" />{[p.address, p.city].filter(Boolean).join(", ") || "—"}
@@ -582,7 +582,7 @@ function PropertiesPage() {
                     <div className="mt-3 flex items-center justify-between">
                       <span className="font-display text-lg font-bold">
                         {formatCurrency(p.listing_type === "rent" ? (p.rent ? Number(p.rent) : null) : (p.price ? Number(p.price) : null))}
-                        {p.listing_type === "rent" && p.rent ? <span className="text-xs font-normal text-muted-foreground"> /Mt.</span> : null}
+                        {p.listing_type === "rent" && p.rent ? <span className="text-xs font-normal text-muted-foreground"> {t("properties.perMonth")}</span> : null}
                       </span>
                       <div className="flex gap-3 text-xs text-muted-foreground">
                         {p.rooms && <span className="flex items-center gap-1"><Bed className="h-3 w-3" />{p.rooms}</span>}
