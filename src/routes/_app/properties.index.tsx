@@ -286,7 +286,7 @@ function PropertiesPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Immobilien gelöscht");
+      toast.success(t("properties.toasts.deleted"));
       qc.invalidateQueries({ queryKey: ["properties"] });
       clearSelection();
       setConfirmDelete(false);
