@@ -253,7 +253,7 @@ function PropertiesPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Zuweisung aktualisiert");
+      toast.success(t("properties.toasts.assignmentUpdated"));
       qc.invalidateQueries({ queryKey: ["properties"] });
       clearSelection();
     },
