@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth";
 import { makeQueryClient } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/sonner";
 import { ConfirmProvider } from "@/components/confirm/ConfirmProvider";
+import "@/i18n";
 
 function NotFound() {
   return (
