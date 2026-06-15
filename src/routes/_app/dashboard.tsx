@@ -237,10 +237,10 @@ function Dashboard() {
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-bold tracking-tight">
-            {getGreeting()}{displayName ? `, ${displayName}` : ""} 👋
+            {t(getGreetingKey())}{displayName ? `, ${displayName}` : ""} 👋
           </h1>
           <p className="text-sm text-muted-foreground">
-            {new Date().toLocaleDateString("de-CH", { weekday: "long", day: "numeric", month: "long" })} · Übersicht über dein Tagesgeschäft
+            {new Date().toLocaleDateString(i18n.language || "de-CH", { weekday: "long", day: "numeric", month: "long" })} · {t("dashboard.subtitle")}
           </p>
         </div>
         <DropdownMenu>
