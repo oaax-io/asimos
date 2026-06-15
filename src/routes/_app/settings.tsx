@@ -17,6 +17,7 @@ import { BrandkitForm } from "@/components/settings/BrandkitForm";
 import { NotificationPreferencesForm } from "@/components/settings/NotificationPreferencesForm";
 import { SubscriptionManager } from "@/components/settings/SubscriptionManager";
 import { Tags, FileSignature } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/settings")({ component: SettingsPage });
 
