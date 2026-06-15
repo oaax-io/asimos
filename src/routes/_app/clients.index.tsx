@@ -84,7 +84,7 @@ function ClientsPage() {
     queryFn: async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
-      if (!accessToken) throw new Error("Nicht angemeldet");
+      if (!accessToken) throw new Error(t("clients.errors.notLoggedIn"));
       const result = await getClients({ headers: { authorization: `Bearer ${accessToken}` } });
       return unwrapServerResult(result);
     },
@@ -127,10 +127,10 @@ function ClientsPage() {
     },
   });
   const relationshipLabels: Record<string, string> = {
-    spouse: "Ehepartner",
-    co_applicant: "Antragsteller",
-    co_investor: "Co-Investor",
-    other: "Weitere",
+    spouse: t("clients.relationship.spouse"),
+    co_applicant: t("clients.relationship.co_applicant"),
+    co_investor: t("clients.relationship.co_investor"),
+    other: t("clients.relationship.other"),
   };
   const relationshipsByClient = useMemo(() => {
     const m = new Map<string, Array<{ id: string; type: string }>>();
