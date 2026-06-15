@@ -428,33 +428,33 @@ function PropertiesPage() {
             {moreOpen && (
               <div className="grid gap-2 rounded-xl border bg-muted/20 p-3 sm:grid-cols-2 lg:grid-cols-4">
                 <Select value={fType} onValueChange={setFType}>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Typ" /></SelectTrigger>
+                  <SelectTrigger className="h-9"><SelectValue placeholder={t("properties.filters.type")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Alle Typen</SelectItem>
-                    {PROP_TYPES.map(t => <SelectItem key={t} value={t}>{propertyTypeLabels[t]}</SelectItem>)}
+                    <SelectItem value="all">{t("properties.filters.allTypes")}</SelectItem>
+                    {PROP_TYPES.map(tp => <SelectItem key={tp} value={tp}>{typeLabel(tp)}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={fStructure} onValueChange={(v) => setFStructure(v as typeof fStructure)}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Alle Strukturen</SelectItem>
-                    <SelectItem value="buildings">Nur Liegenschaften</SelectItem>
-                    <SelectItem value="units">Nur Einheiten</SelectItem>
-                    <SelectItem value="standalone">Nur Einzelobjekte</SelectItem>
+                    <SelectItem value="all">{t("properties.filters.allStructures")}</SelectItem>
+                    <SelectItem value="buildings">{t("properties.filters.buildingsOnly")}</SelectItem>
+                    <SelectItem value="units">{t("properties.filters.unitsOnly")}</SelectItem>
+                    <SelectItem value="standalone">{t("properties.filters.standaloneOnly")}</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={fAssigned} onValueChange={setFAssigned}>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Zuständig" /></SelectTrigger>
+                  <SelectTrigger className="h-9"><SelectValue placeholder={t("properties.filters.assigned")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Alle Mitarbeiter</SelectItem>
+                    <SelectItem value="all">{t("properties.filters.allEmployees")}</SelectItem>
                     {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 {cities.length > 1 && (
                   <Select value={fCity} onValueChange={setFCity}>
-                    <SelectTrigger className="h-9"><SelectValue placeholder="Stadt" /></SelectTrigger>
+                    <SelectTrigger className="h-9"><SelectValue placeholder={t("properties.filters.city")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Alle Städte</SelectItem>
+                      <SelectItem value="all">{t("properties.filters.allCities")}</SelectItem>
                       {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
