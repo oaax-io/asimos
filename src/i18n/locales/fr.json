@@ -292,13 +292,100 @@
   },
   "clients": {
     "new": "Nouveau client",
+    "loading": "Chargement des clients…",
+    "emptyTitle": "Aucun client",
+    "emptyDescription": "Créez votre premier client ou modifiez les filtres.",
+    "archived": "Archivé",
+    "tabs": {
+      "grid": "Vignettes",
+      "list": "Liste"
+    },
     "columns": {
       "name": "Nom",
       "type": "Type",
       "status": "Statut",
-      "assignedTo": "Responsable",
+      "assignedTo": "Attribué à",
       "phone": "Téléphone",
-      "email": "E-mail"
+      "email": "E-mail",
+      "city": "NPA / Localité",
+      "relations": "Relations"
+    },
+    "filters": {
+      "searchPlaceholder": "Rechercher des clients…",
+      "type": "Type",
+      "allTypes": "Tous les types",
+      "assigned": "Attribué à",
+      "allEmployees": "Tous les collaborateurs",
+      "unassigned": "Non attribué",
+      "status": "Statut",
+      "allStatus": "Tous les statuts",
+      "active": "Actifs",
+      "archivedOnly": "Archivés",
+      "all": "Tous",
+      "reset": "Réinitialiser",
+      "ofTotal": "{{shown}} sur {{total}}"
+    },
+    "status": {
+      "entwurf": "Brouillon",
+      "pendent": "En attente",
+      "vollstaendig": "Complet",
+      "finanzierung": "Financement",
+      "abgeschlossen": "Conclu",
+      "abgelehnt": "Refusé",
+      "storniert": "Annulé"
+    },
+    "relationship": {
+      "spouse": "Conjoint",
+      "co_applicant": "Co-demandeur",
+      "co_investor": "Co-investisseur",
+      "other": "Autre",
+      "unknown": "Inconnu"
+    },
+    "bulk": {
+      "selected": "{{count}} sélectionné(s)",
+      "assign": "Attribuer",
+      "employees": "Collaborateurs",
+      "removeAssign": "Retirer l'attribution",
+      "restore": "Restaurer",
+      "archive": "Archiver",
+      "delete": "Supprimer",
+      "clear": "Effacer la sélection"
+    },
+    "row": {
+      "open": "Ouvrir",
+      "matching": "Mise en relation",
+      "restore": "Restaurer",
+      "archive": "Archiver",
+      "delete": "Supprimer",
+      "selectAll": "Tout sélectionner",
+      "select": "Sélectionner"
+    },
+    "card": {
+      "budgetUpTo": "Budget : jusqu'à {{amount}}",
+      "cities": "Villes : {{list}}",
+      "roomsFrom": "Pièces dès : {{n}}"
+    },
+    "toast": {
+      "assigned": "Attribution mise à jour",
+      "archived": "Clients archivés",
+      "restored": "Clients restaurés",
+      "deleted": "Clients supprimés"
+    },
+    "deleteDialog": {
+      "title": "Supprimer les clients ?",
+      "description_one": "{{count}} client sera supprimé définitivement. Les données liées peuvent être perdues.",
+      "description_other": "{{count}} clients seront supprimés définitivement. Les données liées peuvent être perdues.",
+      "confirm": "Supprimer définitivement"
+    },
+    "pagination": {
+      "showing": "Affichage {{from}}–{{to}} sur {{total}}",
+      "perPage": "{{n}} / page",
+      "prev": "Précédent",
+      "next": "Suivant",
+      "page": "Page {{current}} / {{total}}"
+    },
+    "errors": {
+      "notLoggedIn": "Non connecté"
     }
   },
   "properties": {

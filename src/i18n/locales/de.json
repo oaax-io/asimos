@@ -292,13 +292,100 @@
   },
   "clients": {
     "new": "Neuer Kunde",
+    "loading": "Kunden werden geladen…",
+    "emptyTitle": "Keine Kunden",
+    "emptyDescription": "Lege deinen ersten Kunden an oder ändere die Filter.",
+    "archived": "Archiviert",
+    "tabs": {
+      "grid": "Kacheln",
+      "list": "Liste"
+    },
     "columns": {
       "name": "Name",
       "type": "Typ",
       "status": "Status",
-      "assignedTo": "Zuständig",
+      "assignedTo": "Zugewiesen",
       "phone": "Telefon",
-      "email": "E-Mail"
+      "email": "E-Mail",
+      "city": "PLZ / Ort",
+      "relations": "Verknüpfungen"
+    },
+    "filters": {
+      "searchPlaceholder": "Kunden suchen…",
+      "type": "Typ",
+      "allTypes": "Alle Typen",
+      "assigned": "Zugewiesen",
+      "allEmployees": "Alle Mitarbeitenden",
+      "unassigned": "Nicht zugewiesen",
+      "status": "Status",
+      "allStatus": "Alle Status",
+      "active": "Aktiv",
+      "archivedOnly": "Archiviert",
+      "all": "Alle",
+      "reset": "Zurücksetzen",
+      "ofTotal": "{{shown}} von {{total}}"
+    },
+    "status": {
+      "entwurf": "Entwurf",
+      "pendent": "Pendent",
+      "vollstaendig": "Vollständig",
+      "finanzierung": "Finanzierung",
+      "abgeschlossen": "Abgeschlossen",
+      "abgelehnt": "Abgelehnt",
+      "storniert": "Storniert"
+    },
+    "relationship": {
+      "spouse": "Ehepartner",
+      "co_applicant": "Antragsteller",
+      "co_investor": "Co-Investor",
+      "other": "Weitere",
+      "unknown": "Unbekannt"
+    },
+    "bulk": {
+      "selected": "{{count}} ausgewählt",
+      "assign": "Zuweisen",
+      "employees": "Mitarbeitende",
+      "removeAssign": "Zuweisung entfernen",
+      "restore": "Wiederherstellen",
+      "archive": "Archivieren",
+      "delete": "Löschen",
+      "clear": "Auswahl aufheben"
+    },
+    "row": {
+      "open": "Öffnen",
+      "matching": "Matching",
+      "restore": "Wiederherstellen",
+      "archive": "Archivieren",
+      "delete": "Löschen",
+      "selectAll": "Alle auswählen",
+      "select": "Auswählen"
+    },
+    "card": {
+      "budgetUpTo": "Budget: bis {{amount}}",
+      "cities": "Städte: {{list}}",
+      "roomsFrom": "Zimmer ab: {{n}}"
+    },
+    "toast": {
+      "assigned": "Zuweisung aktualisiert",
+      "archived": "Kunden archiviert",
+      "restored": "Kunden wiederhergestellt",
+      "deleted": "Kunden gelöscht"
+    },
+    "deleteDialog": {
+      "title": "Kunden löschen?",
+      "description_one": "{{count}} Kunde wird unwiderruflich gelöscht. Verknüpfte Daten können verloren gehen.",
+      "description_other": "{{count}} Kunden werden unwiderruflich gelöscht. Verknüpfte Daten können verloren gehen.",
+      "confirm": "Endgültig löschen"
+    },
+    "pagination": {
+      "showing": "Zeige {{from}}–{{to}} von {{total}}",
+      "perPage": "{{n}} / Seite",
+      "prev": "Zurück",
+      "next": "Weiter",
+      "page": "Seite {{current}} / {{total}}"
+    },
+    "errors": {
+      "notLoggedIn": "Nicht angemeldet"
     }
   },
   "properties": {

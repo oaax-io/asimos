@@ -23,6 +23,7 @@ import { ClientWizard } from "@/components/clients/ClientWizard";
 
 import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
@@ -44,13 +45,13 @@ const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
 const FINANCING_OPTIONS = ["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"];
 
 const CLIENT_STATUSES = [
-  { value: "entwurf",       label: "Entwurf",       dot: "bg-slate-400",   badge: "bg-slate-500/15 text-slate-700 border-slate-500/30 dark:text-slate-300" },
-  { value: "pendent",       label: "Pendent",       dot: "bg-amber-500",   badge: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300" },
-  { value: "vollstaendig",  label: "Vollständig",   dot: "bg-blue-500",    badge: "bg-blue-500/15 text-blue-700 border-blue-500/30 dark:text-blue-300" },
-  { value: "finanzierung",  label: "Finanzierung",  dot: "bg-violet-500",  badge: "bg-violet-500/15 text-violet-700 border-violet-500/30 dark:text-violet-300" },
-  { value: "abgeschlossen", label: "Abgeschlossen", dot: "bg-emerald-500", badge: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-300" },
-  { value: "abgelehnt",     label: "Abgelehnt",     dot: "bg-red-500",     badge: "bg-red-500/15 text-red-700 border-red-500/30 dark:text-red-300" },
-  { value: "storniert",     label: "Storniert",     dot: "bg-zinc-500",    badge: "bg-zinc-500/15 text-zinc-700 border-zinc-500/30 dark:text-zinc-300" },
+  { value: "entwurf",       dot: "bg-slate-400",   badge: "bg-slate-500/15 text-slate-700 border-slate-500/30 dark:text-slate-300" },
+  { value: "pendent",       dot: "bg-amber-500",   badge: "bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300" },
+  { value: "vollstaendig",  dot: "bg-blue-500",    badge: "bg-blue-500/15 text-blue-700 border-blue-500/30 dark:text-blue-300" },
+  { value: "finanzierung",  dot: "bg-violet-500",  badge: "bg-violet-500/15 text-violet-700 border-violet-500/30 dark:text-violet-300" },
+  { value: "abgeschlossen", dot: "bg-emerald-500", badge: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-300" },
+  { value: "abgelehnt",     dot: "bg-red-500",     badge: "bg-red-500/15 text-red-700 border-red-500/30 dark:text-red-300" },
+  { value: "storniert",     dot: "bg-zinc-500",    badge: "bg-zinc-500/15 text-zinc-700 border-zinc-500/30 dark:text-zinc-300" },
 ] as const;
 const statusMap = new Map<string, (typeof CLIENT_STATUSES)[number]>(CLIENT_STATUSES.map((s) => [s.value, s]));
 
@@ -62,6 +63,8 @@ const NO_FIN = "__none__";
 type ViewMode = "grid" | "list";
 
 function ClientsPage() {
+  const { t } = useTranslation();
+  const statusLabel = (v: string) => t(`clients.status.${v}`, { defaultValue: v });
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>(ALL);
@@ -81,7 +84,7 @@ function ClientsPage() {
     queryFn: async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData.session?.access_token;
-      if (!accessToken) throw new Error("Nicht angemeldet");
+      if (!accessToken) throw new Error(t("clients.errors.notLoggedIn"));
       const result = await getClients({ headers: { authorization: `Bearer ${accessToken}` } });
       return unwrapServerResult(result);
     },
@@ -124,10 +127,10 @@ function ClientsPage() {
     },
   });
   const relationshipLabels: Record<string, string> = {
-    spouse: "Ehepartner",
-    co_applicant: "Antragsteller",
-    co_investor: "Co-Investor",
-    other: "Weitere",
+    spouse: t("clients.relationship.spouse"),
+    co_applicant: t("clients.relationship.co_applicant"),
+    co_investor: t("clients.relationship.co_investor"),
+    other: t("clients.relationship.other"),
   };
   const relationshipsByClient = useMemo(() => {
     const m = new Map<string, Array<{ id: string; type: string }>>();
@@ -270,7 +273,7 @@ function ClientsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Zuweisung aktualisiert");
+      toast.success(t("clients.toast.assigned"));
       qc.invalidateQueries({ queryKey: ["clients"] });
       clearSelection();
     },
@@ -288,7 +291,7 @@ function ClientsPage() {
       if (error) throw error;
     },
     onSuccess: (_, archived) => {
-      toast.success(archived ? "Kunden archiviert" : "Kunden wiederhergestellt");
+      toast.success(archived ? t("clients.toast.archived") : t("clients.toast.restored"));
       qc.invalidateQueries({ queryKey: ["clients"] });
       clearSelection();
     },
@@ -303,7 +306,7 @@ function ClientsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Kunden gelöscht");
+      toast.success(t("clients.toast.deleted"));
       qc.invalidateQueries({ queryKey: ["clients"] });
       clearSelection();
       setConfirmDelete(false);
@@ -321,13 +324,13 @@ function ClientsPage() {
           <div className="flex items-center gap-2">
             <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>
               <TabsList>
-                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />Kacheln</TabsTrigger>
-                <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />Liste</TabsTrigger>
+                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />{t("clients.tabs.grid")}</TabsTrigger>
+                <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />{t("clients.tabs.list")}</TabsTrigger>
               </TabsList>
             </Tabs>
             
             <Button onClick={() => setOpen(true)}>
-              <Plus className="mr-1 h-4 w-4" />Neuer Kunde
+              <Plus className="mr-1 h-4 w-4" />{t("clients.new")}
             </Button>
           </div>
         }
@@ -338,41 +341,41 @@ function ClientsPage() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] max-w-xs flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Kunden suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input className="pl-9" placeholder={t("clients.filters.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Typ" /></SelectTrigger>
+          <SelectTrigger className="w-[150px]"><SelectValue placeholder={t("clients.filters.type")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Alle Typen</SelectItem>
-            {TYPES.map((t) => <SelectItem key={t} value={t}>{clientTypeLabels[t]}</SelectItem>)}
+            <SelectItem value={ALL}>{t("clients.filters.allTypes")}</SelectItem>
+            {TYPES.map((tt) => <SelectItem key={tt} value={tt}>{clientTypeLabels[tt]}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={assignedFilter} onValueChange={setAssignedFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Zugewiesen" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("clients.filters.assigned")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Alle Mitarbeitenden</SelectItem>
-            <SelectItem value={UNASSIGNED}>Nicht zugewiesen</SelectItem>
+            <SelectItem value={ALL}>{t("clients.filters.allEmployees")}</SelectItem>
+            <SelectItem value={UNASSIGNED}>{t("clients.filters.unassigned")}</SelectItem>
             {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[170px]">
-            <SelectValue placeholder="Status">
+            <SelectValue placeholder={t("clients.filters.status")}>
               {statusFilter !== ALL && statusMap.get(statusFilter) ? (
                 <span className="flex items-center gap-2">
                   <span className={`h-2 w-2 rounded-full ${statusMap.get(statusFilter)!.dot}`} />
-                  {statusMap.get(statusFilter)!.label}
+                  {statusLabel(statusFilter)}
                 </span>
-              ) : "Alle Status"}
+              ) : t("clients.filters.allStatus")}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Alle Status</SelectItem>
+            <SelectItem value={ALL}>{t("clients.filters.allStatus")}</SelectItem>
             {CLIENT_STATUSES.map((s) => (
               <SelectItem key={s.value} value={s.value}>
                 <span className="flex items-center gap-2">
                   <span className={`h-2.5 w-2.5 rounded-full ${s.dot}`} />
-                  {s.label}
+                  {statusLabel(s.value)}
                 </span>
               </SelectItem>
             ))}
@@ -381,32 +384,32 @@ function ClientsPage() {
         <Select value={archivedFilter} onValueChange={(v) => setArchivedFilter(v as typeof archivedFilter)}>
           <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="active">Aktiv</SelectItem>
-            <SelectItem value="archived">Archiviert</SelectItem>
-            <SelectItem value="all">Alle</SelectItem>
+            <SelectItem value="active">{t("clients.filters.active")}</SelectItem>
+            <SelectItem value="archived">{t("clients.filters.archivedOnly")}</SelectItem>
+            <SelectItem value="all">{t("clients.filters.all")}</SelectItem>
           </SelectContent>
         </Select>
         {(typeFilter !== ALL || assignedFilter !== ALL || financingFilter !== ALL || statusFilter !== ALL || search) && (
           <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilter(ALL); setAssignedFilter(ALL); setFinancingFilter(ALL); setStatusFilter(ALL); }}>
-            Zurücksetzen
+            {t("clients.filters.reset")}
           </Button>
         )}
 
-        <span className="ml-auto text-sm text-muted-foreground">{filtered.length} von {clients.length}</span>
+        <span className="ml-auto text-sm text-muted-foreground">{t("clients.filters.ofTotal", { shown: filtered.length, total: clients.length })}</span>
       </div>
 
       {selectionCount > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-accent/40 p-3">
-          <span className="text-sm font-medium">{selectionCount} ausgewählt</span>
+          <span className="text-sm font-medium">{t("clients.bulk.selected", { count: selectionCount })}</span>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline"><UserCog className="mr-1 h-4 w-4" />Zuweisen</Button>
+                <Button size="sm" variant="outline"><UserCog className="mr-1 h-4 w-4" />{t("clients.bulk.assign")}</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
-                <DropdownMenuLabel>Mitarbeitende</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("clients.bulk.employees")}</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => assign.mutate(null)}>
-                  <X className="mr-2 h-4 w-4" />Zuweisung entfernen
+                  <X className="mr-2 h-4 w-4" />{t("clients.bulk.removeAssign")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {employees.map((e: any) => (
@@ -418,18 +421,18 @@ function ClientsPage() {
             </DropdownMenu>
             {archivedFilter === "archived" ? (
               <Button size="sm" variant="outline" onClick={() => archive.mutate(false)}>
-                <ArchiveRestore className="mr-1 h-4 w-4" />Wiederherstellen
+                <ArchiveRestore className="mr-1 h-4 w-4" />{t("clients.bulk.restore")}
               </Button>
             ) : (
               <Button size="sm" variant="outline" onClick={() => archive.mutate(true)}>
-                <Archive className="mr-1 h-4 w-4" />Archivieren
+                <Archive className="mr-1 h-4 w-4" />{t("clients.bulk.archive")}
               </Button>
             )}
             <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(true)}>
-              <Trash2 className="mr-1 h-4 w-4" />Löschen
+              <Trash2 className="mr-1 h-4 w-4" />{t("clients.bulk.delete")}
             </Button>
             <Button size="sm" variant="ghost" onClick={clearSelection}>
-              <X className="mr-1 h-4 w-4" />Auswahl aufheben
+              <X className="mr-1 h-4 w-4" />{t("clients.bulk.clear")}
             </Button>
           </div>
         </div>
@@ -442,11 +445,11 @@ function ClientsPage() {
       ) : null}
 
       {!clientsQuery.error && clientsQuery.isLoading ? (
-        <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">Kunden werden geladen…</div>
+        <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">{t("clients.loading")}</div>
       ) : null}
 
       {filtered.length === 0 && !clientsQuery.error && !clientsQuery.isLoading ? (
-        <EmptyState title="Keine Kunden" description="Lege deinen ersten Kunden an oder ändere die Filter." />
+        <EmptyState title={t("clients.emptyTitle")} description={t("clients.emptyDescription")} />
       ) : view === "grid" ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {paginated.map((c: any) => {
@@ -459,7 +462,7 @@ function ClientsPage() {
                       <Checkbox
                         checked={isSel}
                         onCheckedChange={() => toggleOne(c.id)}
-                        aria-label="Auswählen"
+                        aria-label={t("clients.row.select")}
                         className="mt-1"
                       />
                       <button type="button" onClick={() => setDetailId(c.id)} className="flex-1 min-w-0 text-left">
@@ -470,12 +473,12 @@ function ClientsPage() {
                             return (
                               <Badge variant="outline" className={s.badge}>
                                 <span className={`mr-1.5 h-2 w-2 rounded-full ${s.dot}`} />
-                                {s.label}
+                                {statusLabel(s.value)}
                               </Badge>
                             );
                           })()}
                           <Badge variant="outline" className={typeBadge(c.client_type)}>{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
-                          {c.is_archived && <Badge variant="outline">Archiviert</Badge>}
+                          {c.is_archived && <Badge variant="outline">{t("clients.archived")}</Badge>}
 
                           {(c.assigned_to ?? c.owner_id) && employeeMap.get(c.assigned_to ?? c.owner_id) && (
                             <Badge variant="outline" className="text-xs">
@@ -485,7 +488,7 @@ function ClientsPage() {
                         </div>
                       </button>
                     </div>
-                    <Link to="/matching" search={{ clientId: c.id }} className="rounded-lg border p-2 text-primary transition hover:bg-accent" title="Matching">
+                    <Link to="/matching" search={{ clientId: c.id }} className="rounded-lg border p-2 text-primary transition hover:bg-accent" title={t("clients.row.matching")}>
                       <Target className="h-4 w-4" />
                     </Link>
                   </div>
@@ -507,7 +510,7 @@ function ClientsPage() {
                                 </Badge>
                               </HoverCardTrigger>
                               <HoverCardContent className="w-64 text-sm" onClick={(e) => e.stopPropagation()}>
-                                <p className="font-medium">{partner?.full_name ?? "Unbekannt"}</p>
+                                <p className="font-medium">{partner?.full_name ?? t("clients.relationship.unknown")}</p>
                                 <p className="text-xs text-muted-foreground mb-2">{relationshipLabels[rel.type] ?? rel.type}</p>
                                 {partner?.email && <p className="flex items-center gap-2 text-xs"><Mail className="h-3 w-3" />{partner.email}</p>}
                                 {partner?.phone && <p className="flex items-center gap-2 text-xs"><Phone className="h-3 w-3" />{partner.phone}</p>}
@@ -519,9 +522,9 @@ function ClientsPage() {
                     )}
                     {(c.budget_max || c.preferred_cities?.length) && (
                       <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
-                        {c.budget_max && <p>Budget: bis {formatCurrency(Number(c.budget_max))}</p>}
-                        {c.preferred_cities?.length ? <p>Städte: {c.preferred_cities.join(", ")}</p> : null}
-                        {c.rooms_min ? <p>Zimmer ab: {c.rooms_min}</p> : null}
+                        {c.budget_max && <p>{t("clients.card.budgetUpTo", { amount: formatCurrency(Number(c.budget_max)) })}</p>}
+                        {c.preferred_cities?.length ? <p>{t("clients.card.cities", { list: c.preferred_cities.join(", ") })}</p> : null}
+                        {c.rooms_min ? <p>{t("clients.card.roomsFrom", { n: c.rooms_min })}</p> : null}
                       </div>
                     )}
                   </button>
@@ -537,17 +540,17 @@ function ClientsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10">
-                  <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAll} aria-label="Alle auswählen" />
+                  <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAll} aria-label={t("clients.row.selectAll")} />
                 </TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Typ</TableHead>
+                <TableHead>{t("clients.columns.name")}</TableHead>
+                <TableHead>{t("clients.columns.status")}</TableHead>
+                <TableHead>{t("clients.columns.type")}</TableHead>
 
-                <TableHead>Telefon</TableHead>
-                <TableHead>E-Mail</TableHead>
-                <TableHead>PLZ / Ort</TableHead>
-                <TableHead>Zugewiesen</TableHead>
-                <TableHead>Verknüpfungen</TableHead>
+                <TableHead>{t("clients.columns.phone")}</TableHead>
+                <TableHead>{t("clients.columns.email")}</TableHead>
+                <TableHead>{t("clients.columns.city")}</TableHead>
+                <TableHead>{t("clients.columns.assignedTo")}</TableHead>
+                <TableHead>{t("clients.columns.relations")}</TableHead>
                 
                 <TableHead className="w-10"></TableHead>
               </TableRow>
@@ -577,7 +580,7 @@ function ClientsPage() {
                     className={isPartner ? "bg-muted/30" : undefined}
                   >
                     <TableCell>
-                      <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} aria-label="Auswählen" />
+                      <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} aria-label={t("clients.row.select")} />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -587,7 +590,7 @@ function ClientsPage() {
                         <button type="button" onClick={() => setDetailId(c.id)} className="font-medium hover:text-primary text-left">
                           {c.full_name}
                         </button>
-                        {c.is_archived && <Badge variant="outline" className="ml-1">Archiviert</Badge>}
+                        {c.is_archived && <Badge variant="outline" className="ml-1">{t("clients.archived")}</Badge>}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -596,7 +599,7 @@ function ClientsPage() {
                         return (
                           <Badge variant="outline" className={s.badge}>
                             <span className={`mr-1.5 h-2 w-2 rounded-full ${s.dot}`} />
-                            {s.label}
+                            {statusLabel(s.value)}
                           </Badge>
                         );
                       })()}
@@ -633,7 +636,7 @@ function ClientsPage() {
                                   </Badge>
                                 </HoverCardTrigger>
                                 <HoverCardContent className="w-64 text-sm" onClick={(e) => e.stopPropagation()}>
-                                  <p className="font-medium">{partner?.full_name ?? "Unbekannt"}</p>
+                                  <p className="font-medium">{partner?.full_name ?? t("clients.relationship.unknown")}</p>
                                   <p className="text-xs text-muted-foreground mb-2">{relationshipLabels[rel.type] ?? rel.type}</p>
                                   {partner?.email && <p className="flex items-center gap-2 text-xs"><Mail className="h-3 w-3" />{partner.email}</p>}
                                   {partner?.phone && <p className="flex items-center gap-2 text-xs"><Phone className="h-3 w-3" />{partner.phone}</p>}
@@ -653,25 +656,25 @@ function ClientsPage() {
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setDetailId(c.id)}>Öffnen</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDetailId(c.id)}>{t("clients.row.open")}</DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link to="/matching" search={{ clientId: c.id }}>Matching</Link>
+                            <Link to="/matching" search={{ clientId: c.id }}>{t("clients.row.matching")}</Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {c.is_archived ? (
                             <DropdownMenuItem onClick={() => { setSelected(new Set([c.id])); archive.mutate(false); }}>
-                              <ArchiveRestore className="mr-2 h-4 w-4" />Wiederherstellen
+                              <ArchiveRestore className="mr-2 h-4 w-4" />{t("clients.row.restore")}
                             </DropdownMenuItem>
                           ) : (
                             <DropdownMenuItem onClick={() => { setSelected(new Set([c.id])); archive.mutate(true); }}>
-                              <Archive className="mr-2 h-4 w-4" />Archivieren
+                              <Archive className="mr-2 h-4 w-4" />{t("clients.row.archive")}
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
                             onClick={() => { setSelected(new Set([c.id])); setConfirmDelete(true); }}
                           >
-                            <Trash2 className="mr-2 h-4 w-4" />Löschen
+                            <Trash2 className="mr-2 h-4 w-4" />{t("clients.row.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -688,21 +691,21 @@ function ClientsPage() {
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <span>
-              Zeige {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)} von {filtered.length}
+              {t("clients.pagination.showing", { from: (currentPage - 1) * pageSize + 1, to: Math.min(currentPage * pageSize, filtered.length), total: filtered.length })}
             </span>
             <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
               <SelectTrigger className="h-8 w-[110px]"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="20">20 / Seite</SelectItem>
-                <SelectItem value="50">50 / Seite</SelectItem>
-                <SelectItem value="100">100 / Seite</SelectItem>
+                <SelectItem value="20">{t("clients.pagination.perPage", { n: 20 })}</SelectItem>
+                <SelectItem value="50">{t("clients.pagination.perPage", { n: 50 })}</SelectItem>
+                <SelectItem value="100">{t("clients.pagination.perPage", { n: 100 })}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Zurück</Button>
-            <span>Seite {currentPage} / {totalPages}</span>
-            <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>Weiter</Button>
+            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>{t("clients.pagination.prev")}</Button>
+            <span>{t("clients.pagination.page", { current: currentPage, total: totalPages })}</span>
+            <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>{t("clients.pagination.next")}</Button>
           </div>
         </div>
       )}
@@ -710,15 +713,15 @@ function ClientsPage() {
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Kunden löschen?</AlertDialogTitle>
+            <AlertDialogTitle>{t("clients.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {selectionCount} Kunde{selectionCount === 1 ? "" : "n"} werden unwiderruflich gelöscht. Verknüpfte Daten können verloren gehen.
+              {t("clients.deleteDialog.description", { count: selectionCount })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => remove.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Endgültig löschen
+              {t("clients.deleteDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
