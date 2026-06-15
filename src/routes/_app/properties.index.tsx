@@ -17,9 +17,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { formatCurrency, formatArea, propertyTypeLabels, propertyStatusLabels, listingTypeLabels, getPropertyStatusBadgeClass, getPropertyStatusDotClass } from "@/lib/format";
+import { formatCurrency, formatArea, getPropertyStatusBadgeClass, getPropertyStatusDotClass } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 import { PropertyWizard, type WizardSubmit } from "@/components/properties/PropertyWizard";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/properties/")({ component: PropertiesPage });
 
