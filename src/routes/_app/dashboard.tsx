@@ -496,9 +496,10 @@ function TodayList({ title, icon: Icon, items, render, loading, empty, count, co
   );
 }
 
-function PipelineCard({ title, to, counts, labels, order, loading }: {
+function PipelineCard({ title, to, counts, labels, order, loading, detailsLabel, emptyText }: {
   title: string; to: string; counts: Record<string, number>;
   labels: Record<string, string>; order: string[]; loading?: boolean;
+  detailsLabel?: string; emptyText?: string;
 }) {
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const rows = order.filter((k) => labels[k] !== undefined);
@@ -507,14 +508,14 @@ function PipelineCard({ title, to, counts, labels, order, loading }: {
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-base">{title}</CardTitle>
         <Button variant="ghost" size="sm" asChild>
-          <Link to={to}>Details <ArrowRight className="ml-1 h-3 w-3" /></Link>
+          <Link to={to}>{detailsLabel ?? "Details"} <ArrowRight className="ml-1 h-3 w-3" /></Link>
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-6 w-full" />)
         ) : total === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">Noch keine Daten vorhanden.</p>
+          <p className="py-6 text-center text-sm text-muted-foreground">{emptyText ?? "Noch keine Daten vorhanden."}</p>
         ) : (
           rows.map((key) => {
             const c = counts[key] ?? 0;
@@ -535,9 +536,10 @@ function PipelineCard({ title, to, counts, labels, order, loading }: {
   );
 }
 
-function StatusStackCard({ title, icon: Icon, to, counts, rows, loading, footer }: {
+function StatusStackCard({ title, icon: Icon, to, counts, rows, loading, footer, detailsLabel, emptyText }: {
   title: string; icon: any; to: string; counts: Record<string, number>;
   rows: { key: string; label: string; color: string }[]; loading?: boolean; footer?: React.ReactNode;
+  detailsLabel?: string; emptyText?: string;
 }) {
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   return (
