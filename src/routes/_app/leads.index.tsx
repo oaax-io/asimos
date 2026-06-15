@@ -27,6 +27,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { addLead, getLeads } from "@/lib/crm.functions";
 import { ConvertLeadDialog } from "@/components/leads/ConvertLeadDialog";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/leads/")({ component: LeadsPage });
 
