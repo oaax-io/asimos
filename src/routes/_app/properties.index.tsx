@@ -601,14 +601,14 @@ function PropertiesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10">
-                  <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAll} aria-label="Alle auswählen" />
+                  <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAll} aria-label={t("properties.table.selectAll")} />
                 </TableHead>
-                <TableHead>Titel</TableHead>
-                <TableHead>Typ</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ort</TableHead>
-                <TableHead className="text-right">Preis</TableHead>
-                <TableHead>Zuständig</TableHead>
+                <TableHead>{t("properties.columns.title")}</TableHead>
+                <TableHead>{t("properties.columns.type")}</TableHead>
+                <TableHead>{t("properties.columns.status")}</TableHead>
+                <TableHead>{t("properties.columns.city")}</TableHead>
+                <TableHead className="text-right">{t("properties.columns.price")}</TableHead>
+                <TableHead>{t("properties.columns.assignedTo")}</TableHead>
                 <TableHead className="w-10"></TableHead>
               </TableRow>
             </TableHeader>
