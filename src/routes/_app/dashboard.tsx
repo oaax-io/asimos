@@ -76,12 +76,12 @@ function KpiCard({ icon: Icon, label, value, hint, accent, loading, to }: {
   return to ? <Link to={to}>{inner}</Link> : inner;
 }
 
-function getGreeting() {
+function getGreetingKey() {
   const h = new Date().getHours();
-  if (h < 5) return "Gute Nacht";
-  if (h < 12) return "Guten Morgen";
-  if (h < 18) return "Guten Tag";
-  return "Guten Abend";
+  if (h < 5) return "dashboard.greeting.night";
+  if (h < 12) return "dashboard.greeting.morning";
+  if (h < 18) return "dashboard.greeting.day";
+  return "dashboard.greeting.evening";
 }
 
 // ---------- main ----------
