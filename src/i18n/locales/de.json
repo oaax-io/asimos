@@ -6,6 +6,7 @@
     "edit": "Bearbeiten",
     "create": "Erstellen",
     "add": "Hinzufügen",
+    "new": "Neu",
     "upload": "Hochladen",
     "download": "Herunterladen",
     "open": "Öffnen",
@@ -32,7 +33,21 @@
     "myAccount": "Mein Konto",
     "feedback": "Feedback",
     "notifications": "Benachrichtigungen",
-    "switchTo": "Wechseln zu"
+    "switchTo": "Wechseln zu",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "city": "Ort",
+    "country": "Land",
+    "notes": "Notiz",
+    "price": "Preis",
+    "title": "Titel",
+    "description": "Beschreibung",
+    "created": "Erstellt",
+    "updated": "Aktualisiert",
+    "assignedTo": "Zuständig",
+    "owner": "Inhaber",
+    "all_m": "Alle"
   },
   "languages": {
     "de": "Deutsch",
@@ -66,6 +81,28 @@
     "docs": "Dokumentation",
     "settings": "Einstellungen"
   },
+  "pages": {
+    "dashboard": { "title": "Dashboard", "description": "Überblick über Aktivitäten und Kennzahlen" },
+    "leads": { "title": "Leads", "description": "Pipeline deiner Interessenten" },
+    "clients": { "title": "Kunden", "description": "Alle Käufer, Verkäufer, Mieter und Vermieter" },
+    "properties": { "title": "Immobilien", "description": "Dein Immobilienportfolio im Überblick" },
+    "matching": { "title": "Matching", "description": "Übersicht aller passenden Kunde–Immobilie Paare" },
+    "financing": { "title": "Finanzierungen", "description": "Übersicht aller Finanzierungs-Dossiers" },
+    "appointments": { "title": "Termine", "description": "Besichtigungen, Calls und Meetings" },
+    "tasks": { "title": "Aufgaben", "description": "Persönliche und teamübergreifende To-dos" },
+    "analytics": { "title": "Analytics", "description": "Unternehmens- und Portfolioübersicht auf einen Blick." },
+    "documents": { "title": "Dokumentencenter", "description": "Hochgeladene und generierte Dokumente an einem Ort" },
+    "media": { "title": "Mediathek", "description": "Bilder, Videos und Grundrisse für alle Objekte" },
+    "checklists": { "title": "Checklisten", "description": "Standardisierte Abläufe für wiederkehrende Prozesse" },
+    "mandates": { "title": "Mandate", "description": "Maklerverträge mit Eigentümern und Käufern" },
+    "reservations": { "title": "Reservationen", "description": "Reservationsverträge zwischen Käufern, Mietern und Objekten" },
+    "ndas": { "title": "NDAs", "description": "Vertraulichkeitsvereinbarungen mit Kunden und Partnern" },
+    "exposes": { "title": "Exposés", "description": "Wähle eine Vorlage – im nächsten Schritt wählst du Objekt, Inhalte, Galerie und Anhänge." },
+    "team": { "title": "Team", "description": "Mitarbeitende deiner Firma verwalten" },
+    "feedbackPage": { "title": "Feedback", "description": "Vorschläge und Probleme melden" },
+    "docs": { "title": "Dokumentation", "description": "Anleitungen und Hilfe zum System" },
+    "settings": { "title": "Einstellungen", "description": "Profil, Firma, Bankkonten, Vorlagen" }
+  },
   "dashboard": {
     "subtitle": "Übersicht über dein Tagesgeschäft",
     "greeting": {
@@ -73,44 +110,84 @@
       "morning": "Guten Morgen",
       "day": "Guten Tag",
       "evening": "Guten Abend"
-    }
-  },
-  "pages": {
-    "dashboard": { "title": "Dashboard", "description": "Überblick über Aktivitäten und Kennzahlen" },
-    "leads": { "title": "Leads", "description": "Interessenten erfassen und qualifizieren" },
-    "clients": { "title": "Kunden", "description": "Alle Kundenbeziehungen an einem Ort" },
-    "properties": { "title": "Immobilien", "description": "Objekte verwalten und vermarkten" },
-    "matching": { "title": "Matching", "description": "Kunden mit passenden Immobilien zusammenführen" },
-    "financing": { "title": "Finanzierungen", "description": "Finanzierungsdossiers und Tragbarkeit" },
-    "appointments": { "title": "Termine", "description": "Besichtigungen und Beratungen planen" },
-    "tasks": { "title": "Aufgaben", "description": "Aufgaben verfolgen und Fristen einhalten" },
-    "analytics": { "title": "Analytics", "description": "Kennzahlen, Trends und Performance" },
-    "documents": { "title": "Dokumentencenter", "description": "Hochgeladene und generierte Dokumente an einem Ort" },
-    "media": { "title": "Mediathek", "description": "Bilder und Medien zentral verwalten" },
-    "checklists": { "title": "Checklisten", "description": "Vorgänge mit Vorlagen abarbeiten" },
-    "mandates": { "title": "Mandate", "description": "Mandate verwalten und überwachen" },
-    "reservations": { "title": "Reservationen", "description": "Aktive und vergangene Reservationen" },
-    "ndas": { "title": "NDAs", "description": "Vertraulichkeitsvereinbarungen verwalten" },
-    "exposes": { "title": "Exposés", "description": "Exposés erstellen und teilen" },
-    "team": { "title": "Mitarbeiter", "description": "Team und Berechtigungen verwalten" },
-    "feedbackPage": { "title": "Feedback", "description": "Vorschläge und Probleme melden" },
-    "docs": { "title": "Dokumentation", "description": "Anleitungen und Hilfe zum System" },
-    "settings": { "title": "Einstellungen", "description": "Profil, Firma und Plattform konfigurieren" }
+    },
+    "quickActions": "Schnellaktionen"
   },
   "settings": {
     "tabs": {
-      "profile": "Profil",
-      "company": "Firma",
-      "subscription": "Abonnement",
-      "brand": "Branding",
+      "profile": "Mein Profil",
       "notifications": "Benachrichtigungen",
+      "company": "Firmenprofil",
+      "brand": "Brandkit",
+      "banks": "Bankkonten",
+      "categories": "Dokumentkategorien",
+      "esign": "PDF / E-Sign",
+      "subscription": "Abonnement",
       "permissions": "Berechtigungen",
       "language": "Sprache"
+    },
+    "profile": {
+      "title": "Mein Profil",
+      "email": "E-Mail",
+      "name": "Name",
+      "phone": "Telefon",
+      "saved": "Profil gespeichert"
     },
     "language": {
       "title": "Sprache der Oberfläche",
       "description": "Wähle die Sprache, in der das System angezeigt wird.",
       "updated": "Sprache aktualisiert"
+    }
+  },
+  "leads": {
+    "new": "Neuer Lead",
+    "columns": {
+      "name": "Name",
+      "contact": "Kontakt",
+      "source": "Quelle",
+      "status": "Status",
+      "assignedTo": "Zuständig",
+      "created": "Erstellt"
+    }
+  },
+  "clients": {
+    "new": "Neuer Kunde",
+    "columns": {
+      "name": "Name",
+      "type": "Typ",
+      "status": "Status",
+      "assignedTo": "Zuständig",
+      "phone": "Telefon",
+      "email": "E-Mail"
+    }
+  },
+  "properties": {
+    "new": "Neue Immobilie",
+    "columns": {
+      "title": "Titel",
+      "type": "Typ",
+      "status": "Status",
+      "price": "Preis",
+      "city": "Ort",
+      "assignedTo": "Zuständig"
+    }
+  },
+  "appointments": {
+    "new": "Neuer Termin"
+  },
+  "tasks": {
+    "new": "Neue Aufgabe"
+  },
+  "checklists": {
+    "new": "Neue Checkliste"
+  },
+  "documents": {
+    "uploadButton": "Dokument hochladen",
+    "templates": "Dokumentvorlagen",
+    "tabs": {
+      "folders": "Ordner",
+      "uploaded": "Hochgeladene Dokumente",
+      "generated": "Generierte Dokumente"
     }
   }
 }

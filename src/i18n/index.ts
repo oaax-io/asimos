@@ -20,7 +20,10 @@ if (!i18n.isInitialized) {
       },
       fallbackLng: "de",
       supportedLngs: SUPPORTED_LANGUAGES,
+      load: "languageOnly",
+      nonExplicitSupportedLngs: true,
       interpolation: { escapeValue: false },
+      react: { useSuspense: false },
       detection: {
         order: ["localStorage", "navigator"],
         caches: ["localStorage"],

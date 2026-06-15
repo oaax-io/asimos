@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Globe, Check } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,12 +16,15 @@ import { toast } from "sonner";
 export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
   const { i18n, t } = useTranslation();
   const { user } = useAuth();
+  const qc = useQueryClient();
   const current = (i18n.language?.slice(0, 2) ?? "de") as SupportedLanguage;
 
   const change = async (lng: SupportedLanguage) => {
     await i18n.changeLanguage(lng);
     try { localStorage.setItem("asimo.lang", lng); } catch {}
+    // Update the cached profile language so LanguageBootstrap does not revert it
     if (user?.id) {
+      qc.setQueryData(["profile-language", user.id], { language: lng });
       const { error } = await supabase.from("profiles").update({ language: lng }).eq("id", user.id);
       if (error) {
         toast.error(error.message);
