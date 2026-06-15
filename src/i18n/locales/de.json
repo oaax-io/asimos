@@ -111,7 +111,70 @@
       "day": "Guten Tag",
       "evening": "Guten Abend"
     },
-    "quickActions": "Schnellaktionen"
+    "quickActions": "Schnellaktionen",
+    "quickActionsLabel": "Neu erfassen",
+    "quick": {
+      "newLead": "Lead erfassen",
+      "newClient": "Kunde erfassen",
+      "newProperty": "Immobilie erfassen",
+      "newAppointment": "Termin erstellen",
+      "newTask": "Aufgabe erstellen",
+      "uploadDocument": "Dokument hochladen"
+    },
+    "errorLoading": "Beim Laden ist ein Fehler aufgetreten. Bitte aktualisiere die Seite.",
+    "kpis": {
+      "activeClients": "Aktive Kunden",
+      "activeProperties": "Aktive Immobilien",
+      "activeReservations": "Aktive Reservationen"
+    },
+    "clientStatus": {
+      "title": "Kunden nach Status",
+      "entwurf": "Entwurf",
+      "pendent": "Pendent",
+      "vollstaendig": "Vollständig",
+      "finanzierung": "In Finanzierung",
+      "abgeschlossen": "Abgeschlossen",
+      "abgelehnt": "Abgelehnt",
+      "storniert": "Storniert"
+    },
+    "dossierStatus": {
+      "title": "Finanzierungs-Dossiers nach Status",
+      "draft": "Entwurf",
+      "quick_check": "Quick-Check",
+      "documents_missing": "Dokumente fehlen",
+      "ready_for_bank": "Bereit für Bank",
+      "submitted_to_bank": "Bei Bank eingereicht",
+      "approved": "Genehmigt",
+      "rejected": "Abgelehnt",
+      "cancelled": "Storniert"
+    },
+    "qc": {
+      "realistic": "Realistisch",
+      "borderline": "Grenzwertig",
+      "notFinanceable": "Nicht tragbar"
+    },
+    "pipeline": {
+      "leads": "Leads nach Status",
+      "properties": "Immobilien nach Status",
+      "details": "Details",
+      "noData": "Noch keine Daten vorhanden."
+    },
+    "matching": {
+      "title": "Matching-Vorschläge",
+      "all": "Alle",
+      "empty": "Noch keine Matching-Vorschläge vorhanden.",
+      "unknownClient": "Unbekannter Kunde",
+      "unknownProperty": "Unbekannte Immobilie"
+    },
+    "lists": {
+      "todayAppts": "Termine heute",
+      "overdueTasks": "Überfällige Aufgaben",
+      "newLeads": "Neue Leads",
+      "noAppts": "Keine Termine heute.",
+      "noOverdue": "Keine überfälligen Aufgaben.",
+      "noLeads": "Noch keine Leads.",
+      "days7": "7T"
+    }
   },
   "settings": {
     "tabs": {
