@@ -152,7 +152,7 @@ function PropertiesPage() {
       return created;
     },
     onSuccess: () => {
-      toast.success("Immobilie erstellt");
+      toast.success(t("properties.toasts.created"));
       qc.invalidateQueries({ queryKey: ["properties"] });
       setOpen(false);
     },
