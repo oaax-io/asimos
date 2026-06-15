@@ -136,6 +136,7 @@ function AppSidebar() {
 
 export default function AppLayout({ children }: { children?: ReactNode }) {
   const { user, loading, signOut, isSuperadmin } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
 
