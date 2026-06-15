@@ -88,6 +88,7 @@ function getGreetingKey() {
 // ---------- main ----------
 function Dashboard() {
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const profile = useQuery({
     queryKey: ["dashboard", "profile", user?.id],
     enabled: !!user?.id,
