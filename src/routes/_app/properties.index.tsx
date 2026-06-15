@@ -330,20 +330,24 @@ function PropertiesPage() {
 
       {(() => {
         const activeChips: Array<{ key: string; label: string; clear: () => void }> = [];
-        if (fStatus !== "all") activeChips.push({ key: "status", label: `Status: ${propertyStatusLabels[fStatus as keyof typeof propertyStatusLabels]}`, clear: () => setFStatus("all") });
-        if (fListing !== "all") activeChips.push({ key: "listing", label: `Vermarktung: ${fListing === "sale" ? "Kauf" : "Miete"}`, clear: () => setFListing("all") });
-        if (fType !== "all") activeChips.push({ key: "type", label: `Typ: ${propertyTypeLabels[fType as keyof typeof propertyTypeLabels]}`, clear: () => setFType("all") });
-        if (fCity !== "all") activeChips.push({ key: "city", label: `Stadt: ${fCity}`, clear: () => setFCity("all") });
+        if (fStatus !== "all") activeChips.push({ key: "status", label: t("properties.chips.status", { value: statusLabel(fStatus) }), clear: () => setFStatus("all") });
+        if (fListing !== "all") activeChips.push({ key: "listing", label: t("properties.chips.listing", { value: listingLabel(fListing) }), clear: () => setFListing("all") });
+        if (fType !== "all") activeChips.push({ key: "type", label: t("properties.chips.type", { value: typeLabel(fType) }), clear: () => setFType("all") });
+        if (fCity !== "all") activeChips.push({ key: "city", label: t("properties.chips.city", { value: fCity }), clear: () => setFCity("all") });
         if (fAssigned !== "all") {
           const emp = employees.find((e: any) => e.id === fAssigned) as any;
-          activeChips.push({ key: "assigned", label: `Zuständig: ${emp?.full_name || emp?.email || "—"}`, clear: () => setFAssigned("all") });
+          activeChips.push({ key: "assigned", label: t("properties.chips.assigned", { value: emp?.full_name || emp?.email || "—" }), clear: () => setFAssigned("all") });
         }
         if (fStructure !== "all") {
-          const labels: Record<string, string> = { buildings: "Liegenschaften", units: "Einheiten", standalone: "Einzelobjekte" };
-          activeChips.push({ key: "structure", label: `Struktur: ${labels[fStructure]}`, clear: () => setFStructure("all") });
+          const labels: Record<string, string> = {
+            buildings: t("properties.structure.buildings"),
+            units: t("properties.structure.units"),
+            standalone: t("properties.structure.standalone"),
+          };
+          activeChips.push({ key: "structure", label: t("properties.chips.structure", { value: labels[fStructure] }), clear: () => setFStructure("all") });
         }
         if (archivedFilter !== "active") {
-          activeChips.push({ key: "arch", label: archivedFilter === "archived" ? "Nur archivierte" : "Aktiv & archivierte", clear: () => setArchivedFilter("active") });
+          activeChips.push({ key: "arch", label: archivedFilter === "archived" ? t("properties.chips.onlyArchived") : t("properties.chips.activeAndArchived"), clear: () => setArchivedFilter("active") });
         }
         const resetAll = () => {
           setSearch(""); setFStatus("all"); setFType("all"); setFListing("all");
