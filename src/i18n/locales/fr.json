@@ -6,6 +6,7 @@
     "edit": "Modifier",
     "create": "Créer",
     "add": "Ajouter",
+    "new": "Nouveau",
     "upload": "Téléverser",
     "download": "Télécharger",
     "open": "Ouvrir",
@@ -32,7 +33,21 @@
     "myAccount": "Mon compte",
     "feedback": "Commentaires",
     "notifications": "Notifications",
-    "switchTo": "Basculer vers"
+    "switchTo": "Basculer vers",
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "city": "Localité",
+    "country": "Pays",
+    "notes": "Note",
+    "price": "Prix",
+    "title": "Titre",
+    "description": "Description",
+    "created": "Créé",
+    "updated": "Mis à jour",
+    "assignedTo": "Responsable",
+    "owner": "Propriétaire",
+    "all_m": "Toutes"
   },
   "languages": {
     "de": "Allemand",
@@ -66,51 +81,113 @@
     "docs": "Documentation",
     "settings": "Paramètres"
   },
+  "pages": {
+    "dashboard": { "title": "Tableau de bord", "description": "Vue d'ensemble des activités et indicateurs" },
+    "leads": { "title": "Prospects", "description": "Pipeline de vos intéressés" },
+    "clients": { "title": "Clients", "description": "Tous les acheteurs, vendeurs, locataires et bailleurs" },
+    "properties": { "title": "Biens", "description": "Votre portefeuille immobilier en un coup d'œil" },
+    "matching": { "title": "Mise en relation", "description": "Aperçu des correspondances client–bien" },
+    "financing": { "title": "Financements", "description": "Aperçu de tous les dossiers de financement" },
+    "appointments": { "title": "Rendez-vous", "description": "Visites, appels et réunions" },
+    "tasks": { "title": "Tâches", "description": "To-do personnelles et d'équipe" },
+    "analytics": { "title": "Analyses", "description": "Vue d'ensemble de l'entreprise et du portefeuille." },
+    "documents": { "title": "Centre de documents", "description": "Documents téléversés et générés au même endroit" },
+    "media": { "title": "Médiathèque", "description": "Images, vidéos et plans pour tous les biens" },
+    "checklists": { "title": "Listes de contrôle", "description": "Processus standardisés pour les tâches récurrentes" },
+    "mandates": { "title": "Mandats", "description": "Contrats de courtage avec propriétaires et acheteurs" },
+    "reservations": { "title": "Réservations", "description": "Contrats de réservation entre acheteurs, locataires et biens" },
+    "ndas": { "title": "Accords de confidentialité", "description": "Accords de confidentialité avec clients et partenaires" },
+    "exposes": { "title": "Exposés", "description": "Choisissez un modèle – à l'étape suivante, vous choisirez le bien, le contenu, la galerie et les pièces jointes." },
+    "team": { "title": "Équipe", "description": "Gérer les collaborateurs de votre entreprise" },
+    "feedbackPage": { "title": "Commentaires", "description": "Signaler suggestions et problèmes" },
+    "docs": { "title": "Documentation", "description": "Guides et aide sur le système" },
+    "settings": { "title": "Paramètres", "description": "Profil, entreprise, comptes bancaires, modèles" }
+  },
   "dashboard": {
-    "subtitle": "Vue d'ensemble de votre journée",
+    "subtitle": "Aperçu de votre journée",
     "greeting": {
       "night": "Bonne nuit",
       "morning": "Bonjour",
       "day": "Bonjour",
       "evening": "Bonsoir"
-    }
-  },
-  "pages": {
-    "dashboard": { "title": "Tableau de bord", "description": "Vue d'ensemble des activités et indicateurs" },
-    "leads": { "title": "Prospects", "description": "Saisir et qualifier les intéressés" },
-    "clients": { "title": "Clients", "description": "Toutes les relations clients au même endroit" },
-    "properties": { "title": "Biens", "description": "Gérer et commercialiser les biens" },
-    "matching": { "title": "Mise en relation", "description": "Rapprocher les clients des biens adaptés" },
-    "financing": { "title": "Financements", "description": "Dossiers de financement et faisabilité" },
-    "appointments": { "title": "Rendez-vous", "description": "Planifier visites et entretiens" },
-    "tasks": { "title": "Tâches", "description": "Suivre les tâches et respecter les échéances" },
-    "analytics": { "title": "Analyses", "description": "Indicateurs, tendances et performance" },
-    "documents": { "title": "Centre de documents", "description": "Documents téléversés et générés au même endroit" },
-    "media": { "title": "Médiathèque", "description": "Gérer images et médias de manière centralisée" },
-    "checklists": { "title": "Listes de contrôle", "description": "Traiter les processus avec des modèles" },
-    "mandates": { "title": "Mandats", "description": "Gérer et superviser les mandats" },
-    "reservations": { "title": "Réservations", "description": "Réservations actives et passées" },
-    "ndas": { "title": "Accords de confidentialité", "description": "Gérer les accords de confidentialité" },
-    "exposes": { "title": "Exposés", "description": "Créer et partager des exposés" },
-    "team": { "title": "Collaborateurs", "description": "Gérer l'équipe et les autorisations" },
-    "feedbackPage": { "title": "Commentaires", "description": "Signaler suggestions et problèmes" },
-    "docs": { "title": "Documentation", "description": "Guides et aide sur le système" },
-    "settings": { "title": "Paramètres", "description": "Configurer le profil, l'entreprise et la plateforme" }
+    },
+    "quickActions": "Actions rapides"
   },
   "settings": {
     "tabs": {
-      "profile": "Profil",
-      "company": "Entreprise",
-      "subscription": "Abonnement",
-      "brand": "Image de marque",
+      "profile": "Mon profil",
       "notifications": "Notifications",
+      "company": "Profil de l'entreprise",
+      "brand": "Identité visuelle",
+      "banks": "Comptes bancaires",
+      "categories": "Catégories de documents",
+      "esign": "PDF / signature électronique",
+      "subscription": "Abonnement",
       "permissions": "Autorisations",
       "language": "Langue"
+    },
+    "profile": {
+      "title": "Mon profil",
+      "email": "E-mail",
+      "name": "Nom",
+      "phone": "Téléphone",
+      "saved": "Profil enregistré"
     },
     "language": {
       "title": "Langue de l'interface",
       "description": "Choisissez la langue d'affichage du système.",
       "updated": "Langue mise à jour"
+    }
+  },
+  "leads": {
+    "new": "Nouveau prospect",
+    "columns": {
+      "name": "Nom",
+      "contact": "Contact",
+      "source": "Source",
+      "status": "Statut",
+      "assignedTo": "Responsable",
+      "created": "Créé"
+    }
+  },
+  "clients": {
+    "new": "Nouveau client",
+    "columns": {
+      "name": "Nom",
+      "type": "Type",
+      "status": "Statut",
+      "assignedTo": "Responsable",
+      "phone": "Téléphone",
+      "email": "E-mail"
+    }
+  },
+  "properties": {
+    "new": "Nouveau bien",
+    "columns": {
+      "title": "Titre",
+      "type": "Type",
+      "status": "Statut",
+      "price": "Prix",
+      "city": "Localité",
+      "assignedTo": "Responsable"
+    }
+  },
+  "appointments": {
+    "new": "Nouveau rendez-vous"
+  },
+  "tasks": {
+    "new": "Nouvelle tâche"
+  },
+  "checklists": {
+    "new": "Nouvelle liste"
+  },
+  "documents": {
+    "uploadButton": "Téléverser un document",
+    "templates": "Modèles de documents",
+    "tabs": {
+      "folders": "Dossiers",
+      "uploaded": "Documents téléversés",
+      "generated": "Documents générés"
     }
   }
 }
