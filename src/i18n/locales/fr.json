@@ -952,8 +952,8 @@
         "combinedPk": "Part CP combinée :",
         "perYear": "/ an",
         "checklist": {
-          "grossIncome": "Revenu annuel brut",
-          "grossIncomeValue": "{{amount}} / an (auto-déclaration)",
+          "grossIncome": "Revenu annuel net",
+          "grossIncomeValue": "{{amount}} / an (auto-déclaration, incl. revenus complémentaires)",
           "notRecorded": "non saisi",
           "equity": "Fonds propres",
           "pk": "Caisse de pension / libre passage",
