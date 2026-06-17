@@ -925,6 +925,15 @@
         "pensionPart": "dont caisse de pension (CHF)",
         "refiHint": "En cas de refinancement, seul le revenu est utilisé pour la charge supportable.",
         "crmHint": "Valeurs du profil client & auto-déclaration — éditables.",
+        "income": {
+          "breakdownTitle": "Cumulé depuis l'auto-déclaration",
+          "netSalary": "Salaire net annuel",
+          "jobTwo": "Deuxième revenu",
+          "rental": "Revenus locatifs",
+          "additional": "Autres revenus",
+          "totalYearly": "Total / an",
+          "monthlyHint": "{{amount}} / mois"
+        },
         "manualHint": "La Quick-Check est créée sans liaison client. Vous saisirez les données financières à l'étape 4."
       },
       "coApplicant": {
