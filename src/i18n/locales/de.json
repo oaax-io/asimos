@@ -1115,13 +1115,38 @@
     "edit": "Termin bearbeiten",
     "editDescription": "Aktualisiere Details, Status oder Zuweisung.",
     "dialogDescription": "Verknüpfe Termin mit Kunde und/oder Immobilie und weise einen Mitarbeiter zu.",
-    "tabs": { "list": "Liste", "week": "Wochenkalender" },
-    "sections": { "upcoming": "Anstehend", "past": "Vergangene" },
-    "empty": { "title": "Keine anstehenden Termine", "description": "Plane Besichtigungen, Beurkundungen oder Calls." },
-    "card": { "until": "bis", "client": "Kunde", "property": "Objekt", "assignee": "Zuständig" },
-    "week": { "today": "Heute" },
-    "status": { "scheduled": "Geplant", "completed": "Erledigt", "cancelled": "Abgesagt" },
-    "types": { "viewing": "Besichtigung", "meeting": "Meeting", "call": "Telefonat", "other": "Sonstiges" },
+    "tabs": {
+      "list": "Liste",
+      "week": "Wochenkalender"
+    },
+    "sections": {
+      "upcoming": "Anstehend",
+      "past": "Vergangene"
+    },
+    "empty": {
+      "title": "Keine anstehenden Termine",
+      "description": "Plane Besichtigungen, Beurkundungen oder Calls."
+    },
+    "card": {
+      "until": "bis",
+      "client": "Kunde",
+      "property": "Objekt",
+      "assignee": "Zuständig"
+    },
+    "week": {
+      "today": "Heute"
+    },
+    "status": {
+      "scheduled": "Geplant",
+      "completed": "Erledigt",
+      "cancelled": "Abgesagt"
+    },
+    "types": {
+      "viewing": "Besichtigung",
+      "meeting": "Meeting",
+      "call": "Telefonat",
+      "other": "Sonstiges"
+    },
     "form": {
       "title": "Titel",
       "titlePlaceholder": "Besichtigung Hauptstrasse 12",
@@ -1141,8 +1166,17 @@
       "assignToMe": "Mir zuweisen",
       "notes": "Notizen"
     },
-    "actions": { "cancel": "Abbrechen", "save": "Speichern", "close": "Schliessen", "delete": "Löschen" },
-    "confirmDelete": { "title": "Termin löschen?", "description": "Diese Aktion kann nicht rückgängig gemacht werden.", "confirm": "Löschen" },
+    "actions": {
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "close": "Schliessen",
+      "delete": "Löschen"
+    },
+    "confirmDelete": {
+      "title": "Termin löschen?",
+      "description": "Diese Aktion kann nicht rückgängig gemacht werden.",
+      "confirm": "Löschen"
+    },
     "toasts": {
       "created": "Termin erstellt",
       "updated": "Aktualisiert",
@@ -1222,7 +1256,10 @@
       "close": "Schliessen",
       "delete": "Löschen"
     },
-    "confirmDelete": { "title": "Aufgabe löschen?", "confirm": "Löschen" },
+    "confirmDelete": {
+      "title": "Aufgabe löschen?",
+      "confirm": "Löschen"
+    },
     "toasts": {
       "created": "Aufgabe erstellt",
       "updated": "Aufgabe aktualisiert",
@@ -1341,7 +1378,10 @@
   "media": {
     "uploadButton": "Medien hochladen",
     "newMedia": "Neue Medien",
-    "viewModes": { "tiles": "Kacheln", "folders": "Ordner" },
+    "viewModes": {
+      "tiles": "Kacheln",
+      "folders": "Ordner"
+    },
     "loading": "Wird geladen…",
     "storageUsage": "Speicherverbrauch",
     "search": "Medien suchen…",
@@ -1432,6 +1472,260 @@
       "deleted": "Gelöscht",
       "coverSet": "Titelbild gesetzt",
       "renamed": "Umbenannt"
+    }
+  },
+  "clientWizard": {
+    "title": "Neuen Kunden erfassen",
+    "stepProgress": "Schritt {{current}} von {{total}} · {{label}}",
+    "nav": {
+      "back": "Zurück",
+      "next": "Weiter",
+      "create": "Kunden anlegen",
+      "creating": "Wird gespeichert…",
+      "uploadHint": "Nach erfolgreichem Upload wird der Kunde automatisch angelegt."
+    },
+    "steps": {
+      "entity": "Art",
+      "method": "Erfassungsart",
+      "role": "Rolle",
+      "stamm": "Stammdaten",
+      "company_contact": "Kontaktperson",
+      "search": "Suchprofil",
+      "investment": "Investment-Profil",
+      "financing": "Finanzierung",
+      "property": "Immobilie",
+      "ownership": "Eigentum",
+      "tags": "Notizen & Tags",
+      "review": "Übersicht"
+    },
+    "entity": {
+      "question": "Was möchtest du erfassen?",
+      "hint": "Wähle die Art des Kunden.",
+      "person": {
+        "title": "Privatperson",
+        "desc": "Eine natürliche Person"
+      },
+      "company": {
+        "title": "Unternehmen / Firma",
+        "desc": "Eine juristische Person"
+      }
+    },
+    "method": {
+      "question": "Wie möchtest du den Kunden erfassen?",
+      "hint": "Mit einer Selbstauskunft (PDF) füllen wir Stammdaten, Finanzen und Mitantragsteller automatisch aus.",
+      "manual": {
+        "title": "Manuell erfassen",
+        "desc": "Schrittweise Eingabe mit Rolle und Stammdaten"
+      },
+      "upload": {
+        "title": "Selbstauskunft hochladen",
+        "desc": "PDF analysieren – Kunde wird automatisch angelegt"
+      },
+      "pdfTitle": "Selbstauskunft als PDF hochladen",
+      "pdfHint": "Erkennt automatisch Antragsteller 1 und – falls vorhanden – Antragsteller 2.",
+      "selectPdf": "PDF auswählen",
+      "analyzing": "Wird analysiert…"
+    },
+    "role": {
+      "question": "Welche Rolle hat dieser Kunde?",
+      "hint": "Bestimmt die nächsten Schritte.",
+      "options": {
+        "buyer": {
+          "label": "Käufer / Suchkunde",
+          "description": "Sucht eine Immobilie zum Kauf"
+        },
+        "seller_owner": {
+          "label": "Verkäufer / Eigentümer",
+          "description": "Bietet eine Immobilie an oder besitzt eine"
+        },
+        "tenant": {
+          "label": "Mieter",
+          "description": "Sucht eine Mietwohnung"
+        },
+        "landlord": {
+          "label": "Vermieter",
+          "description": "Vermietet eine Immobilie"
+        },
+        "financing_applicant": {
+          "label": "Finanzierungskunde",
+          "description": "Benötigt Finanzierungsberatung"
+        },
+        "investor": {
+          "label": "Investor",
+          "description": "Sucht Renditeobjekte"
+        },
+        "general_contact": {
+          "label": "Allgemeiner Kontakt",
+          "description": "Sonstiger Kontakt ohne klare Rolle"
+        }
+      }
+    },
+    "financingGoals": {
+      "purchase": "Immobilienkauf",
+      "renovation": "Renovation",
+      "increase": "Aufstockung",
+      "refinance": "Refinanzierung",
+      "new_build": "Neubau",
+      "mortgage_increase": "Hypothekenerhöhung"
+    },
+    "stamm": {
+      "companyName": "Firmenname *",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "salutation": "Anrede",
+      "selectPlaceholder": "Wählen...",
+      "salHerr": "Herr",
+      "salFrau": "Frau",
+      "salDivers": "Divers",
+      "firstName": "Vorname *",
+      "lastName": "Nachname *",
+      "street": "Strasse",
+      "postalCode": "PLZ",
+      "city": "Ort"
+    },
+    "companyContact": {
+      "title": "Kontaktperson",
+      "hint": "Wer ist der Ansprechpartner für diese Firma?",
+      "manual": {
+        "title": "Neue Kontaktperson",
+        "desc": "Direkt erfassen"
+      },
+      "existing": {
+        "title": "Bestehenden Kunden wählen",
+        "desc": "Aus der Kundenliste verknüpfen"
+      },
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "existingClient": "Bestehender Kunde",
+      "selectPerson": "Person wählen..."
+    },
+    "search": {
+      "listingType": "Vermarktungsart",
+      "listingSale": "Kauf",
+      "listingRent": "Miete",
+      "preferredCities": "Wunschorte (Komma-getrennt)",
+      "citiesPlaceholder": "Zürich, Zug, Luzern",
+      "propertyTypes": "Objektarten",
+      "budgetMin": "Budget min",
+      "budgetMax": "Budget max",
+      "roomsMin": "Zimmer min",
+      "areaMin": "Fläche min (m²)"
+    },
+    "investment": {
+      "preferredCities": "Wunschorte (Komma-getrennt)",
+      "yieldTarget": "Zielrendite (% optional)",
+      "propertyTypes": "Objektarten",
+      "usages": "Nutzungen",
+      "usage": {
+        "residential": "Wohnen",
+        "commercial": "Gewerbe",
+        "yield": "Renditeobjekt"
+      },
+      "budgetMin": "Budget min",
+      "budgetMax": "Budget max"
+    },
+    "financing": {
+      "goal": "Finanzierungsziel *",
+      "objectValues": "Objekt- & Finanzierungswerte",
+      "purchasePrice": "Kaufpreis (CHF)",
+      "requestedMortgage": "Gewünschte Hypothek (CHF)",
+      "renovationCosts": "Renovationskosten (CHF)",
+      "targetFinancingAmount": "Gewünschter Finanzierungsbetrag (CHF)",
+      "additionalNeed": "Zusatzbedarf (CHF)",
+      "existingMortgageOptional": "Bestehende Hypothek (CHF, optional)",
+      "existingMortgage": "Bestehende Hypothek (CHF)",
+      "newRequestedMortgage": "Gewünschte neue Hypothek (CHF)",
+      "projectCosts": "Projektkosten (CHF)",
+      "increaseAmount": "Erhöhungsbetrag (CHF)",
+      "ownFunds": "Eigenmittel",
+      "ownFundsTotal": "Eigenmittel total (CHF)",
+      "cash": "davon Bar / Konto",
+      "pillar3a": "Säule 3a",
+      "pensionFund": "Pensionskasse",
+      "vestedBenefits": "Freizügigkeit",
+      "securities": "Wertschriften",
+      "gift": "Schenkung",
+      "privateLoan": "Privatdarlehen",
+      "inheritance": "Erbvorbezug",
+      "other": "Sonstige",
+      "splitSum": "Aufgeteilte Eigenmittel:",
+      "mismatchHint": "Hinweis: Aufteilung weicht vom Total ab.",
+      "income": "Einkommen (grob)",
+      "grossIncome": "Bruttoeinkommen jährlich (CHF)",
+      "partnerIncome": "Einkommen Partner jährlich (CHF, optional)",
+      "incomeHint": "Detailangaben werden später in der Selbstauskunft ergänzt.",
+      "financingStatus": "Finanzierungsstatus",
+      "statusPlaceholder": "Wählen...",
+      "status": {
+        "unklar": "Unklar",
+        "inPruefung": "In Prüfung",
+        "vorab": "Vorabbestätigung",
+        "bestaetigt": "Bestätigt",
+        "abgelehnt": "Abgelehnt"
+      }
+    },
+    "property": {
+      "title": "Immobilie",
+      "hintFinancing": "Optional: Welche Immobilie soll finanziert werden?",
+      "hintOther": "Welche Immobilie soll verknüpft werden?",
+      "modeExisting": "Bestehende wählen",
+      "modeNew": "Neue erfassen",
+      "modeNone": "Keine / später",
+      "selectLabel": "Immobilie",
+      "selectPlaceholder": "Wählen...",
+      "newTitle": "Titel *",
+      "address": "Adresse",
+      "postalCode": "PLZ",
+      "city": "Ort",
+      "propType": "Objektart",
+      "estimatedPrice": "Geschätzter Preis (CHF)"
+    },
+    "ownership": {
+      "title": "Eigentümerbeziehung",
+      "hint": "Eigentumsdaten zur Immobilie.",
+      "since": "Eigentümer seit",
+      "share": "Anteil (%)",
+      "notes": "Notizen",
+      "mandateHint": "Maklermandat kann später aus der Immobiliendetailseite erstellt werden."
+    },
+    "tags": {
+      "notes": "Notizen",
+      "tagsField": "Tags (Komma-getrennt)",
+      "tagsPlaceholder": "VIP, Empfehlung"
+    },
+    "review": {
+      "privatePerson": "Privatperson",
+      "companyType": "Firma",
+      "searchProfile": "Suchprofil",
+      "ownership": "Eigentum",
+      "financing": "Finanzierung",
+      "ownershipExistingFallback": "Bestehende Immobilie",
+      "ownershipNewFallback": "Neue Immobilie",
+      "ownershipNoneText": "Keine Immobilie verknüpft",
+      "contactPerson": "Kontaktperson:",
+      "goalLabel": "Ziel:",
+      "equitySuffix": " · Eigenmittel {{amount}} CHF",
+      "yieldSuffix": " · Ziel {{value}}%",
+      "budgetRange": "{{cities}} · Budget {{min}}–{{max}} CHF"
+    },
+    "toasts": {
+      "pdfRequired": "Bitte eine PDF-Datei hochladen",
+      "noNameDetected": "Kein Name in der Selbstauskunft erkannt – bitte manuell erfassen.",
+      "parseError": "Selbstauskunft konnte nicht verarbeitet werden",
+      "uploadedSingle": "Kunde «{{name}}» wurde aus der Selbstauskunft angelegt.",
+      "uploadedWithCo": "Kunde «{{name}}» und Mitantragsteller wurden angelegt.",
+      "coApplicantFallback": "Mitantragsteller",
+      "roleRequired": "Bitte Rolle wählen",
+      "companyRequired": "Firmenname ist erforderlich",
+      "personRequired": "Vor- und Nachname sind erforderlich",
+      "createSuccess": "Kunde erfolgreich erstellt",
+      "createError": "Fehler beim Speichern",
+      "contactPersonNote": "Kontaktperson",
+      "contactPersonFor": "Kontaktperson für {{name}}",
+      "financingTitle": "Finanzierung – {{name}}"
+    },
+    "common": {
+      "dash": "—"
     }
   }
 }

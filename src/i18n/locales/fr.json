@@ -1115,13 +1115,38 @@
     "edit": "Modifier le rendez-vous",
     "editDescription": "Mettez à jour les détails, le statut ou l'attribution.",
     "dialogDescription": "Liez le rendez-vous à un client et/ou à un bien et assignez un collaborateur.",
-    "tabs": { "list": "Liste", "week": "Calendrier hebdomadaire" },
-    "sections": { "upcoming": "À venir", "past": "Passés" },
-    "empty": { "title": "Aucun rendez-vous à venir", "description": "Planifiez des visites, signatures ou appels." },
-    "card": { "until": "jusqu'à", "client": "Client", "property": "Bien", "assignee": "Responsable" },
-    "week": { "today": "Aujourd'hui" },
-    "status": { "scheduled": "Planifié", "completed": "Terminé", "cancelled": "Annulé" },
-    "types": { "viewing": "Visite", "meeting": "Réunion", "call": "Appel", "other": "Autre" },
+    "tabs": {
+      "list": "Liste",
+      "week": "Calendrier hebdomadaire"
+    },
+    "sections": {
+      "upcoming": "À venir",
+      "past": "Passés"
+    },
+    "empty": {
+      "title": "Aucun rendez-vous à venir",
+      "description": "Planifiez des visites, signatures ou appels."
+    },
+    "card": {
+      "until": "jusqu'à",
+      "client": "Client",
+      "property": "Bien",
+      "assignee": "Responsable"
+    },
+    "week": {
+      "today": "Aujourd'hui"
+    },
+    "status": {
+      "scheduled": "Planifié",
+      "completed": "Terminé",
+      "cancelled": "Annulé"
+    },
+    "types": {
+      "viewing": "Visite",
+      "meeting": "Réunion",
+      "call": "Appel",
+      "other": "Autre"
+    },
     "form": {
       "title": "Titre",
       "titlePlaceholder": "Visite Rue Principale 12",
@@ -1141,8 +1166,17 @@
       "assignToMe": "M'assigner",
       "notes": "Notes"
     },
-    "actions": { "cancel": "Annuler", "save": "Enregistrer", "close": "Fermer", "delete": "Supprimer" },
-    "confirmDelete": { "title": "Supprimer le rendez-vous ?", "description": "Cette action est irréversible.", "confirm": "Supprimer" },
+    "actions": {
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "close": "Fermer",
+      "delete": "Supprimer"
+    },
+    "confirmDelete": {
+      "title": "Supprimer le rendez-vous ?",
+      "description": "Cette action est irréversible.",
+      "confirm": "Supprimer"
+    },
     "toasts": {
       "created": "Rendez-vous créé",
       "updated": "Mis à jour",
@@ -1222,7 +1256,10 @@
       "close": "Fermer",
       "delete": "Supprimer"
     },
-    "confirmDelete": { "title": "Supprimer la tâche ?", "confirm": "Supprimer" },
+    "confirmDelete": {
+      "title": "Supprimer la tâche ?",
+      "confirm": "Supprimer"
+    },
     "toasts": {
       "created": "Tâche créée",
       "updated": "Tâche mise à jour",
@@ -1341,7 +1378,10 @@
   "media": {
     "uploadButton": "Téléverser des médias",
     "newMedia": "Nouveaux médias",
-    "viewModes": { "tiles": "Vignettes", "folders": "Dossiers" },
+    "viewModes": {
+      "tiles": "Vignettes",
+      "folders": "Dossiers"
+    },
     "loading": "Chargement…",
     "storageUsage": "Utilisation du stockage",
     "search": "Rechercher des médias…",
@@ -1432,6 +1472,260 @@
       "deleted": "Supprimé",
       "coverSet": "Image principale définie",
       "renamed": "Renommé"
+    }
+  },
+  "clientWizard": {
+    "title": "Nouveau client",
+    "stepProgress": "Étape {{current}} sur {{total}} · {{label}}",
+    "nav": {
+      "back": "Retour",
+      "next": "Suivant",
+      "create": "Créer le client",
+      "creating": "Enregistrement…",
+      "uploadHint": "Après le téléversement, le client sera créé automatiquement."
+    },
+    "steps": {
+      "entity": "Type",
+      "method": "Méthode",
+      "role": "Rôle",
+      "stamm": "Données de base",
+      "company_contact": "Personne de contact",
+      "search": "Profil de recherche",
+      "investment": "Profil investisseur",
+      "financing": "Financement",
+      "property": "Bien",
+      "ownership": "Propriété",
+      "tags": "Notes & étiquettes",
+      "review": "Résumé"
+    },
+    "entity": {
+      "question": "Que souhaitez-vous saisir ?",
+      "hint": "Choisissez le type de client.",
+      "person": {
+        "title": "Particulier",
+        "desc": "Une personne physique"
+      },
+      "company": {
+        "title": "Entreprise / Société",
+        "desc": "Une personne morale"
+      }
+    },
+    "method": {
+      "question": "Comment souhaitez-vous saisir le client ?",
+      "hint": "Avec une auto-déclaration (PDF), nous remplissons automatiquement les données de base, financières et le co-demandeur.",
+      "manual": {
+        "title": "Saisie manuelle",
+        "desc": "Saisie étape par étape avec rôle et données de base"
+      },
+      "upload": {
+        "title": "Téléverser une auto-déclaration",
+        "desc": "Analyser le PDF – le client est créé automatiquement"
+      },
+      "pdfTitle": "Téléverser l'auto-déclaration au format PDF",
+      "pdfHint": "Détecte automatiquement le demandeur 1 et – si présent – le demandeur 2.",
+      "selectPdf": "Sélectionner le PDF",
+      "analyzing": "Analyse en cours…"
+    },
+    "role": {
+      "question": "Quel rôle a ce client ?",
+      "hint": "Détermine les étapes suivantes.",
+      "options": {
+        "buyer": {
+          "label": "Acheteur / Chercheur",
+          "description": "Cherche un bien à acheter"
+        },
+        "seller_owner": {
+          "label": "Vendeur / Propriétaire",
+          "description": "Propose ou possède un bien"
+        },
+        "tenant": {
+          "label": "Locataire",
+          "description": "Cherche un logement à louer"
+        },
+        "landlord": {
+          "label": "Bailleur",
+          "description": "Loue un bien"
+        },
+        "financing_applicant": {
+          "label": "Client financement",
+          "description": "A besoin de conseil en financement"
+        },
+        "investor": {
+          "label": "Investisseur",
+          "description": "Cherche des biens de rendement"
+        },
+        "general_contact": {
+          "label": "Contact général",
+          "description": "Autre contact sans rôle précis"
+        }
+      }
+    },
+    "financingGoals": {
+      "purchase": "Achat immobilier",
+      "renovation": "Rénovation",
+      "increase": "Augmentation",
+      "refinance": "Refinancement",
+      "new_build": "Construction neuve",
+      "mortgage_increase": "Augmentation hypothécaire"
+    },
+    "stamm": {
+      "companyName": "Nom de la société *",
+      "email": "E-mail",
+      "phone": "Téléphone",
+      "salutation": "Civilité",
+      "selectPlaceholder": "Choisir...",
+      "salHerr": "Monsieur",
+      "salFrau": "Madame",
+      "salDivers": "Divers",
+      "firstName": "Prénom *",
+      "lastName": "Nom *",
+      "street": "Rue",
+      "postalCode": "NPA",
+      "city": "Localité"
+    },
+    "companyContact": {
+      "title": "Personne de contact",
+      "hint": "Qui est l'interlocuteur de cette société ?",
+      "manual": {
+        "title": "Nouvelle personne",
+        "desc": "Saisir directement"
+      },
+      "existing": {
+        "title": "Choisir un client existant",
+        "desc": "Lier depuis la liste des clients"
+      },
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "existingClient": "Client existant",
+      "selectPerson": "Choisir une personne..."
+    },
+    "search": {
+      "listingType": "Type de transaction",
+      "listingSale": "Achat",
+      "listingRent": "Location",
+      "preferredCities": "Lieux souhaités (séparés par des virgules)",
+      "citiesPlaceholder": "Zurich, Zoug, Lucerne",
+      "propertyTypes": "Types de bien",
+      "budgetMin": "Budget min",
+      "budgetMax": "Budget max",
+      "roomsMin": "Pièces min",
+      "areaMin": "Surface min (m²)"
+    },
+    "investment": {
+      "preferredCities": "Lieux souhaités (séparés par des virgules)",
+      "yieldTarget": "Rendement cible (% optionnel)",
+      "propertyTypes": "Types de bien",
+      "usages": "Usages",
+      "usage": {
+        "residential": "Habitation",
+        "commercial": "Commercial",
+        "yield": "Bien de rendement"
+      },
+      "budgetMin": "Budget min",
+      "budgetMax": "Budget max"
+    },
+    "financing": {
+      "goal": "Objectif du financement *",
+      "objectValues": "Valeurs du bien et du financement",
+      "purchasePrice": "Prix d'achat (CHF)",
+      "requestedMortgage": "Hypothèque souhaitée (CHF)",
+      "renovationCosts": "Coûts de rénovation (CHF)",
+      "targetFinancingAmount": "Montant de financement souhaité (CHF)",
+      "additionalNeed": "Besoin supplémentaire (CHF)",
+      "existingMortgageOptional": "Hypothèque existante (CHF, optionnel)",
+      "existingMortgage": "Hypothèque existante (CHF)",
+      "newRequestedMortgage": "Nouvelle hypothèque souhaitée (CHF)",
+      "projectCosts": "Coûts du projet (CHF)",
+      "increaseAmount": "Montant de l'augmentation (CHF)",
+      "ownFunds": "Fonds propres",
+      "ownFundsTotal": "Fonds propres totaux (CHF)",
+      "cash": "dont liquidités / compte",
+      "pillar3a": "Pilier 3a",
+      "pensionFund": "Caisse de pension",
+      "vestedBenefits": "Libre passage",
+      "securities": "Titres",
+      "gift": "Donation",
+      "privateLoan": "Prêt privé",
+      "inheritance": "Avance d'hoirie",
+      "other": "Autres",
+      "splitSum": "Fonds propres répartis :",
+      "mismatchHint": "Remarque : la répartition diffère du total.",
+      "income": "Revenus (approx.)",
+      "grossIncome": "Revenu brut annuel (CHF)",
+      "partnerIncome": "Revenu du partenaire annuel (CHF, optionnel)",
+      "incomeHint": "Les détails seront complétés plus tard dans l'auto-déclaration.",
+      "financingStatus": "Statut du financement",
+      "statusPlaceholder": "Choisir...",
+      "status": {
+        "unklar": "Non clair",
+        "inPruefung": "En cours d'examen",
+        "vorab": "Pré-confirmation",
+        "bestaetigt": "Confirmé",
+        "abgelehnt": "Refusé"
+      }
+    },
+    "property": {
+      "title": "Bien",
+      "hintFinancing": "Optionnel : quel bien doit être financé ?",
+      "hintOther": "Quel bien doit être lié ?",
+      "modeExisting": "Choisir un existant",
+      "modeNew": "Saisir un nouveau",
+      "modeNone": "Aucun / plus tard",
+      "selectLabel": "Bien",
+      "selectPlaceholder": "Choisir...",
+      "newTitle": "Titre *",
+      "address": "Adresse",
+      "postalCode": "NPA",
+      "city": "Localité",
+      "propType": "Type de bien",
+      "estimatedPrice": "Prix estimé (CHF)"
+    },
+    "ownership": {
+      "title": "Relation de propriété",
+      "hint": "Données de propriété du bien.",
+      "since": "Propriétaire depuis",
+      "share": "Part (%)",
+      "notes": "Notes",
+      "mandateHint": "Le mandat de courtage peut être créé plus tard depuis la page du bien."
+    },
+    "tags": {
+      "notes": "Notes",
+      "tagsField": "Étiquettes (séparées par des virgules)",
+      "tagsPlaceholder": "VIP, Recommandation"
+    },
+    "review": {
+      "privatePerson": "Particulier",
+      "companyType": "Société",
+      "searchProfile": "Profil de recherche",
+      "ownership": "Propriété",
+      "financing": "Financement",
+      "ownershipExistingFallback": "Bien existant",
+      "ownershipNewFallback": "Nouveau bien",
+      "ownershipNoneText": "Aucun bien lié",
+      "contactPerson": "Personne de contact :",
+      "goalLabel": "Objectif :",
+      "equitySuffix": " · Fonds propres {{amount}} CHF",
+      "yieldSuffix": " · Cible {{value}} %",
+      "budgetRange": "{{cities}} · Budget {{min}}–{{max}} CHF"
+    },
+    "toasts": {
+      "pdfRequired": "Veuillez téléverser un fichier PDF",
+      "noNameDetected": "Aucun nom détecté dans l'auto-déclaration – veuillez saisir manuellement.",
+      "parseError": "L'auto-déclaration n'a pas pu être traitée",
+      "uploadedSingle": "Le client « {{name}} » a été créé depuis l'auto-déclaration.",
+      "uploadedWithCo": "Le client « {{name}} » et le co-demandeur ont été créés.",
+      "coApplicantFallback": "Co-demandeur",
+      "roleRequired": "Veuillez choisir un rôle",
+      "companyRequired": "Le nom de la société est requis",
+      "personRequired": "Prénom et nom sont requis",
+      "createSuccess": "Client créé avec succès",
+      "createError": "Erreur lors de l'enregistrement",
+      "contactPersonNote": "Personne de contact",
+      "contactPersonFor": "Personne de contact pour {{name}}",
+      "financingTitle": "Financement – {{name}}"
+    },
+    "common": {
+      "dash": "—"
     }
   }
 }
