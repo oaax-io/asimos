@@ -1011,7 +1011,7 @@
         },
         "incomeObligations": "Revenu & engagements",
         "incomeMain": "Revenu client principal (CHF/an) *",
-        "grossIncome": "Revenu annuel brut (CHF) *",
+        "grossIncome": "Revenu annuel net (CHF) *",
         "incomePartner": "Revenu partenaire (CHF/an) *",
         "obligationsCombined": "Engagements combinés (CHF/mois)",
         "obligationsMonthly": "Engagements mensuels (CHF)",
