@@ -36,6 +36,23 @@ const emptyForm = {
   client_id: "", property_id: "", assigned_to: "",
 };
 
+function useApptLabels() {
+  const { t } = useTranslation();
+  return {
+    types: {
+      viewing: t("appointments.types.viewing"),
+      meeting: t("appointments.types.meeting"),
+      call: t("appointments.types.call"),
+      other: t("appointments.types.other"),
+    } as Record<string, string>,
+    statuses: {
+      scheduled: t("appointments.status.scheduled"),
+      completed: t("appointments.status.completed"),
+      cancelled: t("appointments.status.cancelled"),
+    } as Record<string, string>,
+  };
+}
+
 function AppointmentsPage() {
   const confirm = useConfirm();
   const qc = useQueryClient();
