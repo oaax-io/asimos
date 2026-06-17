@@ -813,7 +813,7 @@ function MediaPage() {
                   {isPdf ? (
                     <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted/60 text-muted-foreground transition group-hover:bg-muted">
                       <FileText className="h-10 w-10" />
-                      <span className="text-xs font-medium">PDF öffnen</span>
+                      <span className="text-xs font-medium">{t("media.badges.openPdf")}</span>
                     </div>
                   ) : isVideo ? (
                     <video src={url} className="h-full w-full object-cover" muted />
