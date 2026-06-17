@@ -961,6 +961,14 @@
           "pkOptional": "optionnel — non dans le CRM (défaut : CHF 0)"
         }
       },
+      "additionalCoApplicants": {
+        "title": "Autres co-emprunteurs",
+        "desc": "Ajouter jusqu'à {{max}} co-emprunteurs au total pour le calcul.",
+        "entry": "Co-emprunteur {{n}}",
+        "remove": "Supprimer",
+        "add": "Ajouter un autre co-emprunteur",
+        "max": "Maximum de {{max}} atteint"
+      },
       "metrics": {
         "objectTitle": "Objet",
         "objectValueFromCrm": "Valeur de l'objet (depuis CRM)",
