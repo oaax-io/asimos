@@ -1659,10 +1659,11 @@ function SumRow({ label, value }: { label: string; value: string }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  if (status === "realistic") return <Badge className="bg-emerald-600 hover:bg-emerald-600">Realistisch</Badge>;
-  if (status === "critical") return <Badge className="bg-amber-500 hover:bg-amber-500">Kritisch</Badge>;
-  if (status === "not_financeable") return <Badge className="bg-red-600 hover:bg-red-600">Nicht finanzierbar</Badge>;
-  return <Badge variant="secondary">Unvollständig</Badge>;
+  const { t } = useTranslation();
+  if (status === "realistic") return <Badge className="bg-emerald-600 hover:bg-emerald-600">{t("financing.wizard.status.realistic")}</Badge>;
+  if (status === "critical") return <Badge className="bg-amber-500 hover:bg-amber-500">{t("financing.wizard.status.critical")}</Badge>;
+  if (status === "not_financeable") return <Badge className="bg-red-600 hover:bg-red-600">{t("financing.wizard.status.not_financeable")}</Badge>;
+  return <Badge variant="secondary">{t("financing.wizard.status.incomplete")}</Badge>;
 }
 
 /* ==================== Helpers ==================== */
