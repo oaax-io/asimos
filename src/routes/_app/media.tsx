@@ -530,19 +530,19 @@ function MediaPage() {
               <DialogTrigger asChild>
                 <Button>
                   <Upload className="mr-1 h-4 w-4" />
-                  Medien hochladen
+                  {t("media.uploadButton")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Neue Medien</DialogTitle>
+                  <DialogTitle>{t("media.newMedia")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3">
                   <div>
-                    <Label>Immobilie</Label>
+                    <Label>{t("media.fields.property")}</Label>
                     <Select value={form.property_id} onValueChange={(v) => setForm({ ...form, property_id: v })}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Auswählen" />
+                        <SelectValue placeholder={t("media.fields.selectProperty")} />
                       </SelectTrigger>
                       <SelectContent>
                         {rootProperties.map((p) => (
