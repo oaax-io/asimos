@@ -99,6 +99,23 @@ type ClientSource = "crm" | "manual";
 
 type CoApplicantRole = "ehepartner" | "mitantragsteller";
 
+export type AdditionalCoApplicant = {
+  client_id: string;
+  role: CoApplicantRole | "";
+  einkommen: string;
+  eigenkapital: string;
+  pk_anteil: string;
+};
+
+const MAX_CO_APPLICANTS = 10; // total Mitantragsteller incl. primary
+const emptyAdditional = (): AdditionalCoApplicant => ({
+  client_id: "",
+  role: "mitantragsteller",
+  einkommen: "",
+  eigenkapital: "",
+  pk_anteil: "",
+});
+
 export type WizardForm = {
   modules: WizardModule[];
 
@@ -123,6 +140,9 @@ export type WizardForm = {
   co_applicant_einkommen: string;
   co_applicant_eigenkapital: string;
   co_applicant_pk_anteil: string;
+
+  // Weitere Mitantragsteller (bis insgesamt 10 inkl. primärem Mitantragsteller)
+  additional_co_applicants: AdditionalCoApplicant[];
 
   // Reserved für spätere Schritte (4–6)
   renovation_costs: string;
@@ -162,6 +182,7 @@ const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
   co_applicant_einkommen: "",
   co_applicant_eigenkapital: "",
   co_applicant_pk_anteil: "",
+  additional_co_applicants: [],
   renovation_costs: "",
   renovation_own_work: "",
   existing_mortgage: "",
@@ -334,15 +355,22 @@ export function FinancingQuickCheckWizard({
     const coIncome = coActive ? num(form.co_applicant_einkommen) : 0;
     const coEquity = coActive ? num(form.co_applicant_eigenkapital) : 0;
     const coPk = coActive ? num(form.co_applicant_pk_anteil) : 0;
-    // Einkommen nur kombinieren, wenn Co-Einkommen > 0
-    const incomeCombined = coIncome > 0 ? mainIncome + coIncome : mainIncome;
-    const equityCombined = mainEquity + coEquity;
-    const pkCombined = mainPk + coPk;
+    // Zusätzliche Mitantragsteller (nur valide: mit Client-Bezug)
+    const extras = (form.additional_co_applicants ?? []).filter((a) => !!a.client_id);
+    const extrasIncome = extras.reduce((s, a) => s + num(a.einkommen), 0);
+    const extrasEquity = extras.reduce((s, a) => s + num(a.eigenkapital), 0);
+    const extrasPk = extras.reduce((s, a) => s + num(a.pk_anteil), 0);
+    // Einkommen nur kombinieren, wenn jeweils > 0
+    const incomeCombined = mainIncome + (coIncome > 0 ? coIncome : 0) + extrasIncome;
+    const equityCombined = mainEquity + coEquity + extrasEquity;
+    const pkCombined = mainPk + coPk + extrasPk;
     return {
       coActive,
       coIncomeMissing: coActive && coIncome <= 0,
       mainIncome, mainEquity, mainPk,
       coIncome, coEquity, coPk,
+      extrasCount: extras.length,
+      extrasIncome, extrasEquity, extrasPk,
       incomeCombined, equityCombined, pkCombined,
     };
   }, [form]);
@@ -514,6 +542,16 @@ export function FinancingQuickCheckWizard({
         co_applicant_einkommen: coActive ? combined.coIncome : null,
         co_applicant_eigenkapital: coActive ? combined.coEquity : null,
         co_applicant_pk_anteil: coActive ? combined.coPk : null,
+        // Weitere Mitantragsteller (bis zu 9 zusätzliche → insgesamt max. 10 inkl. primärem)
+        additional_co_applicants: (form.additional_co_applicants ?? [])
+          .filter((a) => !!a.client_id)
+          .map((a) => ({
+            client_id: a.client_id,
+            role: a.role || null,
+            einkommen: numOrNull(a.einkommen),
+            eigenkapital: numOrNull(a.eigenkapital),
+            pk_anteil: numOrNull(a.pk_anteil),
+          })),
         // Kombiniert
         einkommen_kombiniert: incomeCombined || null,
         eigenkapital_kombiniert: equityCombined || null,
@@ -978,6 +1016,16 @@ function Step3Client({
             relatedMap={relatedMap}
             isRefiOnly={isRefiOnly}
           />
+
+          <div className="lg:col-span-2">
+            <AdditionalCoApplicantsSection
+              form={form}
+              update={update}
+              clients={clients}
+              loading={loading}
+              isRefiOnly={isRefiOnly}
+            />
+          </div>
         </div>
       )}
 
@@ -1162,6 +1210,147 @@ function CoApplicantSection({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ==== Weitere Mitantragsteller (insgesamt max. 10 inkl. primärem) ==== */
+function AdditionalCoApplicantsSection({
+  form, update, clients, loading, isRefiOnly,
+}: {
+  form: WizardForm;
+  update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
+  clients: ClientLite[];
+  loading: boolean;
+  isRefiOnly: boolean;
+}) {
+  const { t } = useTranslation();
+  const list = form.additional_co_applicants ?? [];
+  // primärer Co-Applicant zählt mit, falls aktiv
+  const primaryActive = form.co_applicant_enabled && !!form.co_applicant_client_id;
+  const totalCo = (primaryActive ? 1 : 0) + list.length;
+  const maxAdditional = MAX_CO_APPLICANTS - (primaryActive ? 1 : 0);
+  const canAdd = list.length < maxAdditional;
+
+  const usedIds = new Set<string>([
+    form.client_id,
+    form.co_applicant_client_id,
+    ...list.map((a) => a.client_id),
+  ].filter(Boolean) as string[]);
+
+  const setItem = (idx: number, patch: Partial<AdditionalCoApplicant>) => {
+    const next = list.map((it, i) => (i === idx ? { ...it, ...patch } : it));
+    update("additional_co_applicants", next);
+  };
+  const addItem = () => {
+    if (!canAdd) return;
+    update("additional_co_applicants", [...list, emptyAdditional()]);
+  };
+  const removeItem = (idx: number) => {
+    update("additional_co_applicants", list.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div className="rounded-lg border bg-card p-4 space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <Label className="text-sm font-medium">
+              {t("financing.wizard.additionalCoApplicants.title", { defaultValue: "Weitere Mitantragsteller" })}
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              {t("financing.wizard.additionalCoApplicants.desc", {
+                defaultValue: "Bis zu insgesamt {{max}} Mitantragsteller zur Berechnung hinzufügen.",
+                max: MAX_CO_APPLICANTS,
+              })}
+            </p>
+          </div>
+        </div>
+        <div className="text-xs text-muted-foreground tabular-nums shrink-0">
+          {totalCo} / {MAX_CO_APPLICANTS}
+        </div>
+      </div>
+
+      {list.length > 0 && (
+        <div className="space-y-3">
+          {list.map((item, idx) => {
+            const available = clients
+              .filter((c) => c.id === item.client_id || !usedIds.has(c.id))
+              .map((c) => ({ value: c.id, label: c.full_name, hint: c.email ?? undefined }));
+            return (
+              <div key={idx} className="rounded-md border bg-background p-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("financing.wizard.additionalCoApplicants.entry", { defaultValue: "Mitantragsteller {{n}}", n: idx + 2 })}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeItem(idx)}
+                    className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
+                  >
+                    {t("financing.wizard.additionalCoApplicants.remove", { defaultValue: "Entfernen" })}
+                  </Button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("financing.wizard.coApplicant.role")}</Label>
+                    <Select
+                      value={item.role || ""}
+                      onValueChange={(v) => setItem(idx, { role: v as CoApplicantRole })}
+                    >
+                      <SelectTrigger><SelectValue placeholder={t("financing.wizard.coApplicant.roleSelect")} /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ehepartner">{t("financing.wizard.coApplicant.roleSpouse")}</SelectItem>
+                        <SelectItem value="mitantragsteller">{t("financing.wizard.coApplicant.roleCo")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("financing.wizard.coApplicant.crmClient")}</Label>
+                    <SearchableSelect
+                      placeholder={loading ? t("financing.wizard.property.loading") : t("financing.wizard.client.searchClient")}
+                      emptyText={t("financing.wizard.client.noClient")}
+                      value={item.client_id}
+                      onChange={(v) => setItem(idx, { client_id: v })}
+                      items={available}
+                    />
+                  </div>
+                </div>
+                {item.client_id && (
+                  isRefiOnly ? (
+                    <div className="grid gap-3 sm:grid-cols-1">
+                      <Field label={t("financing.wizard.coApplicant.income")} type="number" value={item.einkommen} onChange={(v) => setItem(idx, { einkommen: v })} />
+                    </div>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <Field label={t("financing.wizard.coApplicant.income")} type="number" value={item.einkommen} onChange={(v) => setItem(idx, { einkommen: v })} />
+                      <Field label={t("financing.wizard.coApplicant.equity")} type="number" value={item.eigenkapital} onChange={(v) => setItem(idx, { eigenkapital: v })} />
+                      <Field label={t("financing.wizard.coApplicant.pkPart")} type="number" value={item.pk_anteil} onChange={(v) => setItem(idx, { pk_anteil: v })} />
+                    </div>
+                  )
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={addItem}
+        disabled={!canAdd}
+        className="w-full"
+      >
+        <UserPlus className="mr-1.5 h-4 w-4" />
+        {canAdd
+          ? t("financing.wizard.additionalCoApplicants.add", { defaultValue: "Weiteren Mitantragsteller hinzufügen" })
+          : t("financing.wizard.additionalCoApplicants.max", { defaultValue: "Maximum von {{max}} erreicht", max: MAX_CO_APPLICANTS })}
+      </Button>
     </div>
   );
 }
@@ -1593,6 +1782,12 @@ function Step6Summary({
         {!isRefiOnly && form.own_funds_total && <SumRow label={t("financing.wizard.summary.ownFundsTotal")} value={formatCurrency(num(form.own_funds_total))} />}
         {!isRefiOnly && form.own_funds_pension_fund && <SumRow label={t("financing.wizard.summary.pkPart")} value={formatCurrency(num(form.own_funds_pension_fund))} />}
         {isRefiOnly && form.monthly_obligations && <SumRow label={t("financing.wizard.summary.monthlyObligations")} value={formatCurrency(num(form.monthly_obligations))} />}
+        {(form.additional_co_applicants?.filter((a) => !!a.client_id).length ?? 0) > 0 && (
+          <SumRow
+            label={t("financing.wizard.summary.additionalCoApplicants", { defaultValue: "Weitere Mitantragsteller" })}
+            value={String(form.additional_co_applicants.filter((a) => !!a.client_id).length)}
+          />
+        )}
       </SummaryGroup>
 
       {isRefiOnly && (form.current_bank || form.interest_rate_current || form.interest_rate_expiry || form.refi_purpose) && (

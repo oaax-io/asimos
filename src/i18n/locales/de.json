@@ -961,6 +961,14 @@
           "pkOptional": "optional — nicht im CRM (Standard: CHF 0)"
         }
       },
+      "additionalCoApplicants": {
+        "title": "Weitere Mitantragsteller",
+        "desc": "Bis zu insgesamt {{max}} Mitantragsteller zur Berechnung hinzufügen.",
+        "entry": "Mitantragsteller {{n}}",
+        "remove": "Entfernen",
+        "add": "Weiteren Mitantragsteller hinzufügen",
+        "max": "Maximum von {{max}} erreicht"
+      },
       "metrics": {
         "objectTitle": "Objekt",
         "objectValueFromCrm": "Objektwert (aus CRM)",
@@ -1054,6 +1062,7 @@
         "ownFundsTotal": "Eigenmittel total",
         "pkPart": "davon PK / Freizügigkeit",
         "monthlyObligations": "Monatl. Verpflichtungen",
+        "additionalCoApplicants": "Weitere Mitantragsteller",
         "existingFinancing": "Bestehende Finanzierung",
         "currentBank": "Aktuelle Bank",
         "currentRate": "Aktueller Zinssatz",
