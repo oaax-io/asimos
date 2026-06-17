@@ -724,6 +724,8 @@ export function FinancingQuickCheckWizard({
               clients={clientsQuery.data ?? []}
               loading={clientsQuery.isLoading}
               isRefiOnly={isRefiOnly}
+              mainIncomeBreakdown={mainIncomeBreakdown}
+              coIncomeBreakdown={coIncomeBreakdown}
             />
           )}
           {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} isRefiOnly={isRefiOnly} effectiveMortgage={effectiveMortgage} combined={combined} />}
