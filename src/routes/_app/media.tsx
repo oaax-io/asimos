@@ -961,7 +961,7 @@ function MediaPage() {
                       size="icon"
                       variant="ghost"
                       className="h-7 w-7 shrink-0"
-                      title="Umbenennen"
+                      title={t("media.actions.rename")}
                       onClick={() => setEditingTitle(current.title ?? current.file_name ?? "")}
                     >
                       <Pencil className="h-3.5 w-3.5" />
