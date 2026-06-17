@@ -108,6 +108,14 @@ export type AdditionalCoApplicant = {
 };
 
 const MAX_CO_APPLICANTS = 10; // total Mitantragsteller incl. primary
+
+type IncomeBreakdown = {
+  annual_net_salary: number;
+  salary_net_monthly: number;
+  additional_income: number;
+  income_job_two: number;
+  income_rental: number;
+};
 const emptyAdditional = (): AdditionalCoApplicant => ({
   client_id: "",
   role: "mitantragsteller",
