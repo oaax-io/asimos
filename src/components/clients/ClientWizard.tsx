@@ -647,7 +647,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       };
     },
     onSuccess: ({ clientId, role, propertyId }) => {
-      toast.success("Kunde erfolgreich erstellt");
+      toast.success(t("clientWizard.toasts.createSuccess"));
       qc.invalidateQueries({ queryKey: ["clients"] });
       qc.invalidateQueries({ queryKey: ["properties"] });
       onCreated?.(clientId);
@@ -658,7 +658,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       reset();
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error(e?.message ?? "Fehler beim Speichern"),
+    onError: (e: any) => toast.error(e?.message ?? t("clientWizard.toasts.createError")),
   });
 
   // ---- Navigation ----
