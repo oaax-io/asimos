@@ -1100,6 +1100,7 @@ function SliderRow({
 function LiveMetric({
   label, value, delta, betterWhenLower,
 }: { label: string; value: string; delta: number; betterWhenLower: boolean }) {
+  const { t } = useTranslation();
   const abs = Math.abs(delta);
   const showDelta = abs >= 0.05;
   const isBetter = betterWhenLower ? delta < 0 : delta > 0;
@@ -1112,7 +1113,7 @@ function LiveMetric({
       {showDelta && (
         <p className={cn("text-xs flex items-center gap-1 tabular-nums", colorCls)}>
           <Icon className="h-3 w-3" />
-          {abs.toFixed(1)}% vs. Original
+          {t("financing.detail.quickcheck.scenarios.vsOriginal", { value: abs.toFixed(1) })}
         </p>
       )}
     </div>
@@ -1120,6 +1121,7 @@ function LiveMetric({
 }
 
 function DeleteScenarioButton({ onConfirm, pending }: { onConfirm: () => void; pending: boolean }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -1129,13 +1131,13 @@ function DeleteScenarioButton({ onConfirm, pending }: { onConfirm: () => void; p
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Szenario löschen?</AlertDialogTitle>
-            <AlertDialogDescription>Diese Aktion kann nicht rückgängig gemacht werden.</AlertDialogDescription>
+            <AlertDialogTitle>{t("financing.detail.quickcheck.scenarios.deleteDialog.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("financing.detail.quickcheck.scenarios.deleteDialog.description")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t("financing.detail.quickcheck.scenarios.deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => { onConfirm(); setOpen(false); }} disabled={pending}>
-              Löschen
+              {t("financing.detail.quickcheck.scenarios.deleteDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
