@@ -925,6 +925,15 @@
         "pensionPart": "davon Pensionskasse (CHF)",
         "refiHint": "Bei Refinanzierung nur Einkommen für die Tragbarkeit.",
         "crmHint": "Werte aus Kundenprofil & Selbstauskunft — editierbar.",
+        "income": {
+          "breakdownTitle": "Aus Selbstauskunft zusammengezählt",
+          "netSalary": "Netto-Jahreslohn",
+          "jobTwo": "Zweiteinkommen",
+          "rental": "Mieteinnahmen",
+          "additional": "Weitere Einkünfte",
+          "totalYearly": "Total / Jahr",
+          "monthlyHint": "{{amount}} / Monat"
+        },
         "manualHint": "Quick-Check wird ohne Kundenverknüpfung erstellt. Die Finanzdaten erfassen Sie in Schritt 4."
       },
       "coApplicant": {
