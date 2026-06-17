@@ -1152,7 +1152,83 @@
     }
   },
   "tasks": {
-    "new": "Nouvelle tâche"
+    "new": "Nouvelle tâche",
+    "create": "Créer",
+    "createButton": "Créer une tâche",
+    "dialogDescription": "Saisissez des tâches et liez-les à des clients, biens ou mandats.",
+    "edit": "Modifier la tâche",
+    "editDescription": "Mettez à jour les détails, changez le statut ou réassignez.",
+    "searchPlaceholder": "Rechercher des tâches…",
+    "loading": "Chargement des tâches…",
+    "openRelated": "Ouvrir l'élément lié",
+    "due": "Échéance",
+    "overdue": "En retard",
+    "empty": {
+      "none": "Aucune tâche",
+      "noResults": "Aucun résultat",
+      "noneDescription": "Créez votre première tâche pour garder une vue d'ensemble des choses à faire.",
+      "noResultsDescription": "Ajustez les filtres ou videz la recherche."
+    },
+    "filters": {
+      "active": "Actives",
+      "allStatus": "Tous les statuts",
+      "priority": "Priorité",
+      "allPriorities": "Toutes les priorités",
+      "assignee": "Responsable",
+      "allEmployees": "Tous les collaborateurs",
+      "assignedToMe": "Qui me sont assignées",
+      "due": "Échéance",
+      "allDue": "Toutes les échéances",
+      "overdue": "En retard",
+      "today": "Aujourd'hui",
+      "week": "Cette semaine",
+      "none": "Sans échéance"
+    },
+    "status": {
+      "open": "Ouverte",
+      "in_progress": "En cours",
+      "waiting": "En attente",
+      "done": "Terminée",
+      "cancelled": "Annulée"
+    },
+    "priority": {
+      "low": "Basse",
+      "normal": "Normale",
+      "high": "Haute",
+      "urgent": "Urgente"
+    },
+    "related": {
+      "client": "Client",
+      "property": "Bien",
+      "mandate": "Mandat",
+      "reservation": "Réservation",
+      "lead": "Lead"
+    },
+    "form": {
+      "title": "Titre",
+      "description": "Description",
+      "status": "Statut",
+      "priority": "Priorité",
+      "dueDate": "Échéance",
+      "assignee": "Responsable",
+      "noAssignee": "Personne",
+      "relation": "Lien",
+      "noRelation": "Aucun lien",
+      "linkTo": "Élément lié"
+    },
+    "actions": {
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "close": "Fermer",
+      "delete": "Supprimer"
+    },
+    "confirmDelete": { "title": "Supprimer la tâche ?", "confirm": "Supprimer" },
+    "toasts": {
+      "created": "Tâche créée",
+      "updated": "Tâche mise à jour",
+      "deleted": "Tâche supprimée",
+      "titleRequired": "Le titre est requis"
+    }
   },
   "checklists": {
     "new": "Nouvelle liste"

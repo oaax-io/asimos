@@ -18,24 +18,16 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/tasks")({ component: TasksPage });
 
 const STATUSES = ["open","in_progress","waiting","done","cancelled"] as const;
 const PRIORITIES = ["low","normal","high","urgent"] as const;
+const RELATED_TYPES = ["client","property","mandate","reservation","lead"] as const;
 
-const STATUS_LABELS: Record<typeof STATUSES[number], string> = {
-  open: "Offen", in_progress: "In Arbeit", waiting: "Wartet", done: "Erledigt", cancelled: "Abgebrochen",
-};
-const PRIORITY_LABELS: Record<typeof PRIORITIES[number], string> = {
-  low: "Niedrig", normal: "Normal", high: "Hoch", urgent: "Dringend",
-};
 const PRIORITY_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   low: "outline", normal: "secondary", high: "default", urgent: "destructive",
-};
-const RELATED_TYPES = ["client","property","mandate","reservation","lead"] as const;
-const RELATED_LABELS: Record<typeof RELATED_TYPES[number], string> = {
-  client: "Kunde", property: "Immobilie", mandate: "Mandat", reservation: "Reservation", lead: "Lead",
 };
 
 const emptyForm = {
@@ -43,7 +35,18 @@ const emptyForm = {
   due_date: "", assigned_to: "", related_type: "none", related_id: "",
 };
 
+function useTaskLabels() {
+  const { t } = useTranslation();
+  return {
+    status: Object.fromEntries(STATUSES.map(s => [s, t(`tasks.status.${s}`)])) as Record<string, string>,
+    priority: Object.fromEntries(PRIORITIES.map(p => [p, t(`tasks.priority.${p}`)])) as Record<string, string>,
+    related: Object.fromEntries(RELATED_TYPES.map(r => [r, t(`tasks.related.${r}`)])) as Record<string, string>,
+  };
+}
+
 function TasksPage() {
+  const { t } = useTranslation();
+  const labels = useTaskLabels();
   const qc = useQueryClient();
   const confirm = useConfirm();
   const { user } = useAuth();
@@ -94,15 +97,15 @@ function TasksPage() {
       case "client": return clients.map((c: any) => ({ id: c.id, label: c.full_name }));
       case "property": return properties.map((p: any) => ({ id: p.id, label: p.title }));
       case "lead": return leads.map((l: any) => ({ id: l.id, label: l.full_name }));
-      case "mandate": return mandates.map((m: any) => ({ id: m.id, label: `${m.properties?.title ?? "Mandat"} · ${m.status}` }));
-      case "reservation": return reservations.map((r: any) => ({ id: r.id, label: `${r.properties?.title ?? "Reservation"} · ${r.status}` }));
+      case "mandate": return mandates.map((m: any) => ({ id: m.id, label: `${m.properties?.title ?? labels.related.mandate} · ${m.status}` }));
+      case "reservation": return reservations.map((r: any) => ({ id: r.id, label: `${r.properties?.title ?? labels.related.reservation} · ${r.status}` }));
       default: return [];
     }
   };
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.title.trim()) throw new Error("Titel ist erforderlich");
+      if (!form.title.trim()) throw new Error(t("tasks.toasts.titleRequired"));
       const payload: any = {
         title: form.title.trim(),
         description: form.description.trim() || null,
@@ -118,7 +121,7 @@ function TasksPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Aufgabe erstellt");
+      toast.success(t("tasks.toasts.created"));
       qc.invalidateQueries({ queryKey: ["tasks"] });
       setForm({ ...emptyForm });
       setOpen(false);
@@ -141,27 +144,27 @@ function TasksPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Aufgabe gelöscht");
+      toast.success(t("tasks.toasts.deleted"));
       qc.invalidateQueries({ queryKey: ["tasks"] });
       setEditId(null);
     },
   });
 
   const now = Date.now();
-  const filtered = useMemo(() => tasks.filter((t: any) => {
-    if (search && !`${t.title} ${t.description ?? ""}`.toLowerCase().includes(search.toLowerCase())) return false;
-    if (fStatus === "active" && (t.status === "done" || t.status === "cancelled")) return false;
-    if (fStatus !== "all" && fStatus !== "active" && t.status !== fStatus) return false;
-    if (fPriority !== "all" && t.priority !== fPriority) return false;
-    if (fAssignee === "me" && t.assigned_to !== user?.id) return false;
-    if (fAssignee !== "all" && fAssignee !== "me" && t.assigned_to !== fAssignee) return false;
+  const filtered = useMemo(() => tasks.filter((tk: any) => {
+    if (search && !`${tk.title} ${tk.description ?? ""}`.toLowerCase().includes(search.toLowerCase())) return false;
+    if (fStatus === "active" && (tk.status === "done" || tk.status === "cancelled")) return false;
+    if (fStatus !== "all" && fStatus !== "active" && tk.status !== fStatus) return false;
+    if (fPriority !== "all" && tk.priority !== fPriority) return false;
+    if (fAssignee === "me" && tk.assigned_to !== user?.id) return false;
+    if (fAssignee !== "all" && fAssignee !== "me" && tk.assigned_to !== fAssignee) return false;
     if (fDue !== "all") {
-      if (!t.due_date) return fDue === "none";
-      const due = new Date(t.due_date).getTime();
+      if (!tk.due_date) return fDue === "none";
+      const due = new Date(tk.due_date).getTime();
       const startToday = new Date(); startToday.setHours(0,0,0,0);
       const endToday = startToday.getTime() + 86400000;
       const endWeek = startToday.getTime() + 7 * 86400000;
-      if (fDue === "overdue" && (due >= now || t.status === "done" || t.status === "cancelled")) return false;
+      if (fDue === "overdue" && (due >= now || tk.status === "done" || tk.status === "cancelled")) return false;
       if (fDue === "today" && (due < startToday.getTime() || due >= endToday)) return false;
       if (fDue === "week" && (due < startToday.getTime() || due >= endWeek)) return false;
       if (fDue === "none") return false;
@@ -169,25 +172,25 @@ function TasksPage() {
     return true;
   }), [tasks, search, fStatus, fPriority, fAssignee, fDue, now, user?.id]);
 
-  const editing = tasks.find((t: any) => t.id === editId);
+  const editing = tasks.find((tk: any) => tk.id === editId);
 
   return (
     <>
       <PageHeader
         i18nKey="tasks"
-        action={<Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neue Aufgabe</Button>}
+        action={<Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />{t("tasks.new")}</Button>}
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Neue Aufgabe</DialogTitle>
-            <DialogDescription>Erfasse To-dos und ordne sie Kunden, Immobilien oder Mandaten zu.</DialogDescription>
+            <DialogTitle>{t("tasks.new")}</DialogTitle>
+            <DialogDescription>{t("tasks.dialogDescription")}</DialogDescription>
           </DialogHeader>
           <TaskForm form={form} setForm={setForm} employees={employees} optionsFor={optionsFor} />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
-            <Button onClick={() => create.mutate()} disabled={create.isPending}>Erstellen</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("tasks.actions.cancel")}</Button>
+            <Button onClick={() => create.mutate()} disabled={create.isPending}>{t("tasks.create")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -195,97 +198,97 @@ function TasksPage() {
       <div className="mb-4 grid gap-3 md:grid-cols-2 lg:grid-cols-6">
         <div className="relative lg:col-span-2">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Aufgaben suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input className="pl-9" placeholder={t("tasks.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={fStatus} onValueChange={setFStatus}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="active">Aktiv</SelectItem>
-            <SelectItem value="all">Alle Status</SelectItem>
-            {STATUSES.map(s => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
+            <SelectItem value="active">{t("tasks.filters.active")}</SelectItem>
+            <SelectItem value="all">{t("tasks.filters.allStatus")}</SelectItem>
+            {STATUSES.map(s => <SelectItem key={s} value={s}>{labels.status[s]}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={fPriority} onValueChange={setFPriority}>
-          <SelectTrigger><SelectValue placeholder="Priorität" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder={t("tasks.filters.priority")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle Prioritäten</SelectItem>
-            {PRIORITIES.map(p => <SelectItem key={p} value={p}>{PRIORITY_LABELS[p]}</SelectItem>)}
+            <SelectItem value="all">{t("tasks.filters.allPriorities")}</SelectItem>
+            {PRIORITIES.map(p => <SelectItem key={p} value={p}>{labels.priority[p]}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={fAssignee} onValueChange={setFAssignee}>
-          <SelectTrigger><SelectValue placeholder="Zuständig" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder={t("tasks.filters.assignee")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle Mitarbeiter</SelectItem>
-            <SelectItem value="me">Mir zugewiesen</SelectItem>
+            <SelectItem value="all">{t("tasks.filters.allEmployees")}</SelectItem>
+            <SelectItem value="me">{t("tasks.filters.assignedToMe")}</SelectItem>
             {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={fDue} onValueChange={setFDue}>
-          <SelectTrigger><SelectValue placeholder="Fälligkeit" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder={t("tasks.filters.due")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle Fristen</SelectItem>
-            <SelectItem value="overdue">Überfällig</SelectItem>
-            <SelectItem value="today">Heute</SelectItem>
-            <SelectItem value="week">Diese Woche</SelectItem>
-            <SelectItem value="none">Ohne Frist</SelectItem>
+            <SelectItem value="all">{t("tasks.filters.allDue")}</SelectItem>
+            <SelectItem value="overdue">{t("tasks.filters.overdue")}</SelectItem>
+            <SelectItem value="today">{t("tasks.filters.today")}</SelectItem>
+            <SelectItem value="week">{t("tasks.filters.week")}</SelectItem>
+            <SelectItem value="none">{t("tasks.filters.none")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {isLoading ? (
-        <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">Aufgaben werden geladen…</div>
+        <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">{t("tasks.loading")}</div>
       ) : filtered.length === 0 ? (
         <EmptyState
-          title={tasks.length === 0 ? "Keine Aufgaben" : "Keine Treffer"}
+          title={tasks.length === 0 ? t("tasks.empty.none") : t("tasks.empty.noResults")}
           description={tasks.length === 0
-            ? "Erstelle deine erste Aufgabe, um den Überblick über offene To-dos zu behalten."
-            : "Passe die Filter an oder leere die Suche."}
-          action={tasks.length === 0 ? <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Aufgabe erstellen</Button> : undefined}
+            ? t("tasks.empty.noneDescription")
+            : t("tasks.empty.noResultsDescription")}
+          action={tasks.length === 0 ? <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />{t("tasks.createButton")}</Button> : undefined}
         />
       ) : (
         <div className="grid gap-2">
-          {filtered.map((t: any) => {
-            const overdue = t.due_date && new Date(t.due_date).getTime() < now && t.status !== "done" && t.status !== "cancelled";
-            const Icon = t.status === "done" ? CheckCircle2 : t.status === "in_progress" ? Clock : t.priority === "urgent" ? AlertCircle : Circle;
-            const assignee = employees.find((e: any) => e.id === t.assigned_to);
+          {filtered.map((tk: any) => {
+            const overdue = tk.due_date && new Date(tk.due_date).getTime() < now && tk.status !== "done" && tk.status !== "cancelled";
+            const Icon = tk.status === "done" ? CheckCircle2 : tk.status === "in_progress" ? Clock : tk.priority === "urgent" ? AlertCircle : Circle;
+            const assignee = employees.find((e: any) => e.id === tk.assigned_to);
             return (
               <Card
-                key={t.id}
+                key={tk.id}
                 className={`cursor-pointer transition hover:shadow-soft ${overdue ? "border-destructive/40 bg-destructive/5" : ""}`}
-                onClick={() => setEditId(t.id)}
+                onClick={() => setEditId(tk.id)}
               >
                 <CardContent className="flex items-start gap-3 p-4">
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); update.mutate({ id: t.id, patch: { status: t.status === "done" ? "open" : "done" } }); }}
+                    onClick={(e) => { e.stopPropagation(); update.mutate({ id: tk.id, patch: { status: tk.status === "done" ? "open" : "done" } }); }}
                     className="mt-0.5"
                   >
-                    <Icon className={`h-5 w-5 ${t.status === "done" ? "text-success" : overdue ? "text-destructive" : "text-muted-foreground"}`} />
+                    <Icon className={`h-5 w-5 ${tk.status === "done" ? "text-success" : overdue ? "text-destructive" : "text-muted-foreground"}`} />
                   </button>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className={`font-medium ${t.status === "done" ? "text-muted-foreground line-through" : ""}`}>{t.title}</h3>
-                      {t.priority !== "normal" && (
-                        <Badge variant={PRIORITY_VARIANTS[t.priority]}>{PRIORITY_LABELS[t.priority as keyof typeof PRIORITY_LABELS]}</Badge>
+                      <h3 className={`font-medium ${tk.status === "done" ? "text-muted-foreground line-through" : ""}`}>{tk.title}</h3>
+                      {tk.priority !== "normal" && (
+                        <Badge variant={PRIORITY_VARIANTS[tk.priority]}>{labels.priority[tk.priority] ?? tk.priority}</Badge>
                       )}
-                      {t.related_type && (
-                        <Badge variant="outline" className="text-xs">{RELATED_LABELS[t.related_type as keyof typeof RELATED_LABELS] ?? t.related_type}</Badge>
+                      {tk.related_type && (
+                        <Badge variant="outline" className="text-xs">{labels.related[tk.related_type] ?? tk.related_type}</Badge>
                       )}
-                      {overdue && <Badge variant="destructive" className="text-xs">Überfällig</Badge>}
+                      {overdue && <Badge variant="destructive" className="text-xs">{t("tasks.overdue")}</Badge>}
                     </div>
-                    {t.description && <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{t.description}</p>}
+                    {tk.description && <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{tk.description}</p>}
                     <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      {t.due_date && <span className={overdue ? "text-destructive font-medium" : ""}>Fällig: {formatDateTime(t.due_date)}</span>}
+                      {tk.due_date && <span className={overdue ? "text-destructive font-medium" : ""}>{t("tasks.due")}: {formatDateTime(tk.due_date)}</span>}
                       {assignee && <span>· {(assignee as any).full_name || (assignee as any).email}</span>}
                     </div>
                   </div>
                   <Select
-                    value={t.status}
-                    onValueChange={(v) => update.mutate({ id: t.id, patch: { status: v } })}
+                    value={tk.status}
+                    onValueChange={(v) => update.mutate({ id: tk.id, patch: { status: v } })}
                   >
                     <SelectTrigger className="h-8 w-32 text-xs" onClick={(e) => e.stopPropagation()}><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {STATUSES.map(s => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
+                      {STATUSES.map(s => <SelectItem key={s} value={s}>{labels.status[s]}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </CardContent>
@@ -301,8 +304,8 @@ function TasksPage() {
         onClose={() => setEditId(null)}
         employees={employees}
         optionsFor={optionsFor}
-        onSave={(patch) => update.mutate({ id: editing!.id, patch }, { onSuccess: () => { toast.success("Aufgabe aktualisiert"); setEditId(null); } })}
-        onDelete={async () => { if (await confirm({ title: "Aufgabe löschen?", confirmText: "Löschen" })) remove.mutate(editing!.id); }}
+        onSave={(patch) => update.mutate({ id: editing!.id, patch }, { onSuccess: () => { toast.success(t("tasks.toasts.updated")); setEditId(null); } })}
+        onDelete={async () => { if (await confirm({ title: t("tasks.confirmDelete.title"), confirmText: t("tasks.confirmDelete.confirm") })) remove.mutate(editing!.id); }}
       />
     </>
   );
@@ -311,53 +314,55 @@ function TasksPage() {
 function TaskForm({
   form, setForm, employees, optionsFor,
 }: { form: any; setForm: (f: any) => void; employees: any[]; optionsFor: (t: string) => { id: string; label: string }[] }) {
+  const { t } = useTranslation();
+  const labels = useTaskLabels();
   return (
     <div className="space-y-3">
-      <div><Label>Titel *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-      <div><Label>Beschreibung</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+      <div><Label>{t("tasks.form.title")} *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+      <div><Label>{t("tasks.form.description")}</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <Label>Status</Label>
+          <Label>{t("tasks.form.status")}</Label>
           <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}</SelectContent>
+            <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{labels.status[s]}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Priorität</Label>
+          <Label>{t("tasks.form.priority")}</Label>
           <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{PRIORITIES.map(p => <SelectItem key={p} value={p}>{PRIORITY_LABELS[p]}</SelectItem>)}</SelectContent>
+            <SelectContent>{PRIORITIES.map(p => <SelectItem key={p} value={p}>{labels.priority[p]}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Fällig am</Label>
+          <Label>{t("tasks.form.dueDate")}</Label>
           <Input type="datetime-local" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
         </div>
       </div>
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <Label>Zuständig</Label>
+          <Label>{t("tasks.form.assignee")}</Label>
           <Select value={form.assigned_to || "none"} onValueChange={(v) => setForm({ ...form, assigned_to: v === "none" ? "" : v })}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Niemand</SelectItem>
+              <SelectItem value="none">{t("tasks.form.noAssignee")}</SelectItem>
               {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Bezug</Label>
+          <Label>{t("tasks.form.relation")}</Label>
           <Select value={form.related_type} onValueChange={(v) => setForm({ ...form, related_type: v, related_id: "" })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Kein Bezug</SelectItem>
-              {RELATED_TYPES.map(r => <SelectItem key={r} value={r}>{RELATED_LABELS[r]}</SelectItem>)}
+              <SelectItem value="none">{t("tasks.form.noRelation")}</SelectItem>
+              {RELATED_TYPES.map(r => <SelectItem key={r} value={r}>{labels.related[r]}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Verknüpfung</Label>
+          <Label>{t("tasks.form.linkTo")}</Label>
           <Select value={form.related_id || "none"} onValueChange={(v) => setForm({ ...form, related_id: v === "none" ? "" : v })} disabled={form.related_type === "none"}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>
@@ -378,6 +383,7 @@ function TaskEditDrawer({
   employees: any[]; optionsFor: (t: string) => { id: string; label: string }[];
   onSave: (patch: any) => void; onDelete: () => void;
 }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState<any>({ ...emptyForm });
 
   useEffect(() => {
@@ -407,21 +413,21 @@ function TaskEditDrawer({
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>Aufgabe bearbeiten</SheetTitle>
-          <SheetDescription>Aktualisiere Details, ändere Status oder weise neu zu.</SheetDescription>
+          <SheetTitle>{t("tasks.edit")}</SheetTitle>
+          <SheetDescription>{t("tasks.editDescription")}</SheetDescription>
         </SheetHeader>
         <div className="my-4">
           <TaskForm form={form} setForm={setForm} employees={employees} optionsFor={optionsFor} />
         </div>
         {relatedHref && (
           <Button variant="outline" asChild className="mb-4 w-full">
-            <Link to={relatedHref as any}><ExternalLink className="mr-1 h-4 w-4" />Verknüpften Eintrag öffnen</Link>
+            <Link to={relatedHref as any}><ExternalLink className="mr-1 h-4 w-4" />{t("tasks.openRelated")}</Link>
           </Button>
         )}
         <SheetFooter className="flex-row justify-between gap-2">
-          <Button variant="outline" onClick={onDelete}><Trash2 className="mr-1 h-4 w-4" />Löschen</Button>
+          <Button variant="outline" onClick={onDelete}><Trash2 className="mr-1 h-4 w-4" />{t("tasks.actions.delete")}</Button>
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={onClose}>Schliessen</Button>
+            <Button variant="ghost" onClick={onClose}>{t("tasks.actions.close")}</Button>
             <Button onClick={() => onSave({
               title: form.title.trim(),
               description: form.description.trim() || null,
@@ -431,7 +437,7 @@ function TaskEditDrawer({
               assigned_to: form.assigned_to || null,
               related_type: form.related_type !== "none" ? form.related_type : null,
               related_id: form.related_type !== "none" && form.related_id ? form.related_id : null,
-            })} disabled={!form.title.trim()}>Speichern</Button>
+            })} disabled={!form.title.trim()}>{t("tasks.actions.save")}</Button>
           </div>
         </SheetFooter>
       </SheetContent>
