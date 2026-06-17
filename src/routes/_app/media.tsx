@@ -202,25 +202,23 @@ function MediaPage() {
 
   const upload = useMutation({
     mutationFn: async () => {
-      if (!form.property_id) throw new Error("Bitte Immobilie wählen");
-      if (files.length === 0) throw new Error("Bitte mindestens eine Datei auswählen");
+      if (!form.property_id) throw new Error(t("media.toasts.propertyRequired"));
+      if (files.length === 0) throw new Error(t("media.toasts.fileRequired"));
       const rejected = files.filter((f) => !isAcceptedMediaFile(f));
       if (rejected.length > 0) {
-        throw new Error(
-          `In der Mediathek sind nur Bilder und Videos erlaubt. Bitte lade Dokumente (PDF, DOCX, …) unter „Dokumente" hoch. Abgelehnt: ${rejected.map((f) => f.name).join(", ")}`,
-        );
+        throw new Error(t("media.toasts.onlyMedia", { names: rejected.map((f) => f.name).join(", ") }));
       }
       setUploading(true);
       const processed = await convertUnsupportedImages(files);
       const maxSort = Math.max(0, ...media.filter((m) => m.property_id === form.property_id).map((m) => m.sort_order));
       setUploadProgress({ done: 0, total: processed.length, currentName: processed[0]?.name ?? "" });
-      const toastId = toast.loading(`Lädt hoch… 0 / ${processed.length}`);
+      const toastId = toast.loading(t("media.uploadingProgress", { done: 0, total: processed.length }));
 
       try {
         for (let i = 0; i < processed.length; i++) {
           const file = processed[i];
           setUploadProgress({ done: i, total: processed.length, currentName: file.name });
-          toast.loading(`Lädt hoch… ${i} / ${processed.length} · ${file.name}`, { id: toastId });
+          toast.loading(t("media.uploadingProgressNamed", { done: i, total: processed.length, name: file.name }), { id: toastId });
 
           const ext = file.name.split(".").pop() ?? "bin";
           const path = `${form.property_id}/${crypto.randomUUID()}.${ext}`;
