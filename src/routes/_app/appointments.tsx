@@ -54,6 +54,7 @@ function useApptLabels() {
 }
 
 function AppointmentsPage() {
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -83,8 +84,8 @@ function AppointmentsPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.title.trim()) throw new Error("Titel ist erforderlich");
-      if (!form.starts_at) throw new Error("Startzeit ist erforderlich");
+      if (!form.title.trim()) throw new Error(t("appointments.toasts.titleRequired"));
+      if (!form.starts_at) throw new Error(t("appointments.toasts.startRequired"));
       const startIso = new Date(form.starts_at).toISOString();
       const endIso = form.ends_at ? new Date(form.ends_at).toISOString() : new Date(new Date(form.starts_at).getTime() + 60 * 60 * 1000).toISOString();
       const { error } = await supabase.from("appointments").insert({
@@ -102,7 +103,7 @@ function AppointmentsPage() {
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Termin erstellt"); qc.invalidateQueries({ queryKey: ["appointments"] }); setForm({ ...emptyForm }); setOpen(false); },
+    onSuccess: () => { toast.success(t("appointments.toasts.created")); qc.invalidateQueries({ queryKey: ["appointments"] }); setForm({ ...emptyForm }); setOpen(false); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -119,7 +120,7 @@ function AppointmentsPage() {
       const { error } = await supabase.from("appointments").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Termin gelöscht"); qc.invalidateQueries({ queryKey: ["appointments"] }); setEditId(null); },
+    onSuccess: () => { toast.success(t("appointments.toasts.deleted")); qc.invalidateQueries({ queryKey: ["appointments"] }); setEditId(null); },
   });
 
   const editing = appts.find((a: any) => a.id === editId);
@@ -128,13 +129,13 @@ function AppointmentsPage() {
     <>
       <PageHeader
         i18nKey="appointments"
-        action={<Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neuer Termin</Button>}
+        action={<Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />{t("appointments.new")}</Button>}
       />
 
       <AppointmentDialog
         open={open}
         onOpenChange={setOpen}
-        title="Neuer Termin"
+        title={t("appointments.new")}
         form={form}
         setForm={setForm}
         clients={clients}
@@ -146,8 +147,8 @@ function AppointmentsPage() {
 
       <Tabs value={view} onValueChange={(v) => setView(v as any)} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="list">Liste</TabsTrigger>
-          <TabsTrigger value="week">Wochenkalender</TabsTrigger>
+          <TabsTrigger value="list">{t("appointments.tabs.list")}</TabsTrigger>
+          <TabsTrigger value="week">{t("appointments.tabs.week")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="list">
@@ -171,8 +172,8 @@ function AppointmentsPage() {
         clients={clients}
         properties={properties}
         employees={employees}
-        onSave={(patch: any) => editing && update.mutate({ id: editing.id, patch }, { onSuccess: () => { toast.success("Aktualisiert"); setEditId(null); } })}
-        onDelete={async () => { if (editing && await confirm({ title: "Termin löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Löschen" })) remove.mutate(editing.id); }}
+        onSave={(patch: any) => editing && update.mutate({ id: editing.id, patch }, { onSuccess: () => { toast.success(t("appointments.toasts.updated")); setEditId(null); } })}
+        onDelete={async () => { if (editing && await confirm({ title: t("appointments.confirmDelete.title"), description: t("appointments.confirmDelete.description"), confirmText: t("appointments.confirmDelete.confirm") })) remove.mutate(editing.id); }}
       />
     </>
   );
@@ -183,15 +184,16 @@ function AppointmentsPage() {
 function ListView({
   appts, employees, onOpen, onStatus,
 }: { appts: any[]; employees: any[]; onOpen: (id: string) => void; onStatus: (id: string, s: string) => void }) {
+  const { t } = useTranslation();
   const now = Date.now();
   const upcoming = appts.filter((a) => new Date(a.starts_at).getTime() >= now);
   const past = appts.filter((a) => new Date(a.starts_at).getTime() < now).reverse();
 
   return (
     <>
-      <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Anstehend</h2>
+      <h2 className="mb-3 text-sm font-semibold text-muted-foreground">{t("appointments.sections.upcoming")}</h2>
       {upcoming.length === 0 ? (
-        <EmptyState title="Keine anstehenden Termine" description="Plane Besichtigungen, Beurkundungen oder Calls." />
+        <EmptyState title={t("appointments.empty.title")} description={t("appointments.empty.description")} />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {upcoming.map((a) => <ApptCard key={a.id} a={a} employees={employees} onOpen={onOpen} onStatus={onStatus} />)}
@@ -200,7 +202,7 @@ function ListView({
 
       {past.length > 0 && (
         <>
-          <h2 className="mb-3 mt-8 text-sm font-semibold text-muted-foreground">Vergangene</h2>
+          <h2 className="mb-3 mt-8 text-sm font-semibold text-muted-foreground">{t("appointments.sections.past")}</h2>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {past.slice(0, 12).map((a) => <ApptCard key={a.id} a={a} employees={employees} dim onOpen={onOpen} onStatus={onStatus} />)}
           </div>
