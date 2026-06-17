@@ -947,16 +947,16 @@ function MediaPage() {
                       onKeyDown={(e) => { if (e.key === "Escape") setEditingTitle(null); }}
                       className="h-8 max-w-md"
                     />
-                    <Button type="submit" size="icon" variant="secondary" className="h-8 w-8" title="Speichern">
+                    <Button type="submit" size="icon" variant="secondary" className="h-8 w-8" title={t("media.actions.save")}>
                       <Check className="h-4 w-4" />
                     </Button>
-                    <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title="Abbrechen" onClick={() => setEditingTitle(null)}>
+                    <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title={t("media.cancel")} onClick={() => setEditingTitle(null)}>
                       <X className="h-4 w-4" />
                     </Button>
                   </form>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-medium">{current.title ?? current.file_name ?? "Ohne Titel"}</p>
+                    <p className="truncate text-sm font-medium">{current.title ?? current.file_name ?? t("media.untitled")}</p>
                     <Button
                       size="icon"
                       variant="ghost"
