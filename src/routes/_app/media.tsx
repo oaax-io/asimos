@@ -1010,7 +1010,7 @@ function MediaPage() {
                 size="icon"
                 className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full shadow-lg"
                 onClick={goPrev}
-                title="Vorheriges"
+                title={t("media.actions.prev")}
               >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
