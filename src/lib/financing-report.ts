@@ -287,7 +287,7 @@ export function buildReportHtml(input: ReportInput, recs: Recommendation[]): str
       <tr><td class="l">Kunde</td><td>${escapeHtml(input.client_name ?? "—")}</td></tr>
       <tr><td class="l">Finanzierungsart</td><td>${escapeHtml(FINANCING_TYPE_LABELS[input.financing_type])}</td></tr>
       <tr><td class="l">Objekt</td><td>${escapeHtml(input.property_label ?? "—")}</td></tr>
-      <tr><td class="l">Datenbasis</td><td>${escapeHtml(input.data_source === "quick_entry" ? "Schnellprüfung (manuelle Eingaben)" : "Bestehende Immobilie aus CRM")}</td></tr>
+      <tr><td class="l">Datenbasis</td><td>${escapeHtml(input.data_source === "quick_entry" ? "Quick-Check (manuelle Eingaben)" : "Bestehende Immobilie aus CRM")}</td></tr>
       <tr><td class="l">Berichtsdatum</td><td>${today}</td></tr>
     </table>
   </div>
