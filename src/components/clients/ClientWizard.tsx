@@ -823,41 +823,41 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                 {form.entity_type === "company" ? (
                   <>
                     <div>
-                      <Label>Firmenname *</Label>
+                      <Label>{t("clientWizard.stamm.companyName")}</Label>
                       <Input value={form.company_name} onChange={(e) => set("company_name", e.target.value)} placeholder="ACME AG" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
-                      <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.stamm.email")}</Label><Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.stamm.phone")}</Label><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></div>
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
-                        <Label>Anrede</Label>
+                        <Label>{t("clientWizard.stamm.salutation")}</Label>
                         <Select value={form.salutation} onValueChange={(v) => set("salutation", v)}>
-                          <SelectTrigger><SelectValue placeholder="Wählen..." /></SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder={t("clientWizard.stamm.selectPlaceholder")} /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Herr">Herr</SelectItem>
-                            <SelectItem value="Frau">Frau</SelectItem>
-                            <SelectItem value="Divers">Divers</SelectItem>
+                            <SelectItem value="Herr">{t("clientWizard.stamm.salHerr")}</SelectItem>
+                            <SelectItem value="Frau">{t("clientWizard.stamm.salFrau")}</SelectItem>
+                            <SelectItem value="Divers">{t("clientWizard.stamm.salDivers")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-                      <div><Label>Vorname *</Label><Input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} /></div>
-                      <div><Label>Nachname *</Label><Input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.stamm.firstName")}</Label><Input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.stamm.lastName")}</Label><Input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} /></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
-                      <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.stamm.email")}</Label><Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.stamm.phone")}</Label><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></div>
                     </div>
                   </>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <div className="md:col-span-2"><Label>Strasse</Label><AddressAutocomplete value={form.street} onChange={(v) => set("street", v)} onSelect={(s) => { set("street", s.street || s.label); if (s.postal_code) set("postal_code", s.postal_code); if (s.city) set("city", s.city); if (s.country_code) set("country", s.country_code); }} /></div>
-                  <div><Label>PLZ</Label><Input value={form.postal_code} onChange={(e) => set("postal_code", e.target.value)} /></div>
-                  <div><Label>Ort</Label><Input value={form.city} onChange={(e) => set("city", e.target.value)} /></div>
+                  <div className="md:col-span-2"><Label>{t("clientWizard.stamm.street")}</Label><AddressAutocomplete value={form.street} onChange={(v) => set("street", v)} onSelect={(s) => { set("street", s.street || s.label); if (s.postal_code) set("postal_code", s.postal_code); if (s.city) set("city", s.city); if (s.country_code) set("country", s.country_code); }} /></div>
+                  <div><Label>{t("clientWizard.stamm.postalCode")}</Label><Input value={form.postal_code} onChange={(e) => set("postal_code", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.stamm.city")}</Label><Input value={form.city} onChange={(e) => set("city", e.target.value)} /></div>
                 </div>
               </div>
             )}
