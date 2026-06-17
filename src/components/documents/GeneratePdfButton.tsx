@@ -158,7 +158,7 @@ export function GeneratePdfButton({
         const blob = res.path ? await loadAsBlob(res.path) : null;
         const finalUrl = blob ?? res.fileUrl;
         setBlobUrl(finalUrl);
-        toast.success("PDF wurde erstellt");
+        toast.success(t("documents.pdf.toast.created"));
         triggerDownload(finalUrl);
       } else {
         requestPrintFallback("message" in res ? res.message : undefined);
