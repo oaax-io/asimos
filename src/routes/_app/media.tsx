@@ -658,7 +658,7 @@ function MediaPage() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="font-medium text-foreground">Speicherverbrauch</span>
+                <span className="font-medium text-foreground">{t("media.storageUsage")}</span>
                 <span className="text-muted-foreground">
                   {formatBytes(used)} / {formatBytes(MAX_STORAGE)} ({pct}%)
                 </span>
