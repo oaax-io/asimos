@@ -929,19 +929,19 @@ function Step3Client({
         onValueChange={(v) => update("client_source", v as ClientSource)}
         className="grid gap-2 sm:grid-cols-2"
       >
-        <SourceRow value="crm" label="Kunde aus CRM wählen" description={isRefiOnly ? "Einkommen wird aus dem Kundenprofil vorausgefüllt." : "Selbstauskunft & Eigenkapital werden vorausgefüllt."} />
-        <SourceRow value="manual" label="Ohne Kunde / manuell" description="Quick Check ohne Verknüpfung zu einem Kunden." />
+        <SourceRow value="crm" label={t("financing.wizard.client.sourceCrm")} description={isRefiOnly ? t("financing.wizard.client.sourceCrmDescRefi") : t("financing.wizard.client.sourceCrmDesc")} />
+        <SourceRow value="manual" label={t("financing.wizard.client.sourceManual")} description={t("financing.wizard.client.sourceManualDesc")} />
       </RadioGroup>
 
       {form.client_source === "crm" && (
         <div className="grid gap-4 lg:grid-cols-2">
           <section className="rounded-lg border bg-card p-4 space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hauptkunde</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.client.main")}</h3>
             <div className="space-y-1">
-              <Label className="text-xs">Kunde</Label>
+              <Label className="text-xs">{t("financing.wizard.client.client")}</Label>
               <SearchableSelect
-                placeholder={loading ? "Lade…" : "Kunde suchen…"}
-                emptyText="Keinen Kunden gefunden."
+                placeholder={loading ? t("financing.wizard.property.loading") : t("financing.wizard.client.searchClient")}
+                emptyText={t("financing.wizard.client.noClient")}
                 value={form.client_id}
                 onChange={(v) => update("client_id", v)}
                 items={clients.map((c) => ({
@@ -953,17 +953,17 @@ function Step3Client({
             </div>
             {form.client_id && (
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Brutto-Jahreseinkommen (CHF)" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
+                <Field label={t("financing.wizard.client.grossIncome")} type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
                 {!isRefiOnly && (
                   <>
-                    <Field label="Eigenmittel total (CHF)" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
-                    <Field label="davon Pensionskasse (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+                    <Field label={t("financing.wizard.client.ownFundsTotal")} type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
+                    <Field label={t("financing.wizard.client.pensionPart")} type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
                   </>
                 )}
                 <p className="sm:col-span-2 text-[11px] text-muted-foreground">
                   {isRefiOnly
-                    ? "Bei Refinanzierung nur Einkommen für die Tragbarkeit."
-                    : "Werte aus Kundenprofil & Selbstauskunft — editierbar."}
+                    ? t("financing.wizard.client.refiHint")
+                    : t("financing.wizard.client.crmHint")}
                 </p>
               </div>
             )}
@@ -983,7 +983,7 @@ function Step3Client({
 
       {form.client_source === "manual" && (
         <p className="text-xs text-muted-foreground">
-          Quick Check wird ohne Kundenverknüpfung erstellt. Die Finanzdaten erfassen Sie in Schritt 4.
+          {t("financing.wizard.client.manualHint")}
         </p>
       )}
     </div>
