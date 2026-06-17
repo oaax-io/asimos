@@ -976,13 +976,15 @@ function Step2Property({
 type ClientLite = { id: string; full_name: string; email: string | null; equity: number | null };
 
 function Step3Client({
-  form, update, clients, loading, isRefiOnly,
+  form, update, clients, loading, isRefiOnly, mainIncomeBreakdown, coIncomeBreakdown,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   clients: ClientLite[];
   loading: boolean;
   isRefiOnly: boolean;
+  mainIncomeBreakdown: IncomeBreakdown | null;
+  coIncomeBreakdown: IncomeBreakdown | null;
 }) {
   const { t } = useTranslation();
   // Verknüpfte Personen des Hauptkunden (Ehepartner, Mitantragsteller, …)
