@@ -678,19 +678,19 @@ function MediaPage() {
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700/40 dark:bg-amber-950/40 dark:text-amber-200">
           <FileText className="h-4 w-4 shrink-0" />
           <span className="flex-1">
-            {documentLikeCount} Datei(en) (z.B. PDF) gehören nicht in die Mediathek. Verschiebe sie nach „Dokumente".
+            {t("media.migration.warn", { count: documentLikeCount })}
           </span>
           <Button
             size="sm"
             variant="outline"
             disabled={migrateDocuments.isPending}
             onClick={async () => {
-              if (await confirm({ title: "Dateien verschieben?", description: `${documentLikeCount} Datei(en) werden nach „Dokumente" verschoben.`, confirmText: "Verschieben" })) {
+              if (await confirm({ title: t("media.migration.confirmTitle"), description: t("media.migration.confirmDescription", { count: documentLikeCount }), confirmText: t("media.migration.confirm") })) {
                 migrateDocuments.mutate();
               }
             }}
           >
-            {migrateDocuments.isPending ? "Verschiebe…" : "Nach Dokumente verschieben"}
+            {migrateDocuments.isPending ? t("media.migration.moving") : t("media.migration.move")}
           </Button>
         </div>
       )}
