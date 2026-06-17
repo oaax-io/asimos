@@ -1253,6 +1253,7 @@ function Step4Metrics({
     incomeCombined: number;
   };
 }) {
+  const { t } = useTranslation();
   const showRenovation = form.modules.includes("renovation");
   const objectValueFromCrm = isRefiOnly && form.property_source === "crm" && !!form.property_purchase_price;
   const coActive = combined.coActive;
