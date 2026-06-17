@@ -201,7 +201,7 @@ export function GeneratePdfButton({
                 triggerPrint();
               }}
             >
-              Browser-Druck öffnen
+              {t("documents.pdf.openPrint")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
