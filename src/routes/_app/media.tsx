@@ -996,10 +996,10 @@ function MediaPage() {
               <div className="flex items-center gap-2">
                 <Button asChild variant="outline" size="sm">
                   <a href={url} download={current.file_name ?? undefined} target="_blank" rel="noreferrer">
-                    <Download className="mr-1 h-4 w-4" /> Herunterladen
+                    <Download className="mr-1 h-4 w-4" /> {t("media.actions.download")}
                   </a>
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => setViewerIndex(null)} title="Schließen">
+                <Button variant="ghost" size="icon" onClick={() => setViewerIndex(null)} title={t("media.actions.close")}>
                   <X className="h-5 w-5" />
                 </Button>
               </div>
