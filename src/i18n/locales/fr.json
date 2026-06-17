@@ -1236,6 +1236,86 @@
   "documents": {
     "uploadButton": "Téléverser un document",
     "templates": "Modèles de documents",
+    "newDocument": "Nouveau document",
+    "uploading": "Téléversement…",
+    "upload": "Téléverser",
+    "cancel": "Annuler",
+    "loading": "Chargement des documents…",
+    "search": "Rechercher des documents…",
+    "searchInFolders": "Rechercher dans les dossiers…",
+    "storageUsage": "Utilisation du stockage",
+    "open": "Ouvrir",
+    "delete": "Supprimer",
+    "fields": {
+      "file": "Fichier",
+      "type": "Type",
+      "linkedWith": "Lié à",
+      "entry": "Élément",
+      "selectPlaceholder": "Sélectionner…",
+      "uuidPlaceholder": "UUID de l'élément",
+      "note": "Note",
+      "name": "Nom",
+      "link": "Lien",
+      "size": "Taille",
+      "uploadedBy": "Téléversé par",
+      "date": "Date",
+      "actions": "Actions",
+      "unnamed": "Sans nom"
+    },
+    "filters": {
+      "type": "Type",
+      "allTypes": "Tous les types",
+      "link": "Lien",
+      "allLinks": "Tous les liens"
+    },
+    "empty": {
+      "title": "Aucun document",
+      "description": "Téléversez votre premier document pour le voir ici.",
+      "noFolders": "Aucun dossier",
+      "noFoldersDescription": "Dès que des documents sont liés, ils apparaîtront ici dans des dossiers.",
+      "unassigned": "Non attribué"
+    },
+    "folders": {
+      "summary": "{{folders}} dossiers · {{docs}} fichiers",
+      "noFile": "Aucun fichier disponible",
+      "openFailed": "Impossible d'ouvrir le fichier",
+      "generatedFallback": "Document généré"
+    },
+    "categories": {
+      "client": "Clients",
+      "property": "Biens",
+      "lead": "Leads",
+      "mandate": "Mandats",
+      "reservation": "Réservations",
+      "financing": "Financements",
+      "other": "Autres"
+    },
+    "types": {
+      "contract": "Contrat",
+      "expose": "Brochure",
+      "id": "Pièce d'identité",
+      "invoice": "Facture",
+      "energy_certificate": "Certificat énergétique",
+      "floor_plan": "Plan",
+      "bank_statement": "Relevé bancaire",
+      "tax_document": "Document fiscal",
+      "other": "Autre"
+    },
+    "related": {
+      "client": "Client",
+      "property": "Bien",
+      "lead": "Lead",
+      "mandate": "Mandat",
+      "reservation": "Réservation",
+      "financing_profile": "Financement"
+    },
+    "toasts": {
+      "fileRequired": "Veuillez sélectionner un fichier",
+      "linkRequired": "Veuillez choisir un lien",
+      "uploaded": "Document téléversé",
+      "deleted": "Document supprimé",
+      "openFailed": "Impossible d'ouvrir le fichier"
+    },
     "tabs": {
       "folders": "Dossiers",
       "uploaded": "Documents téléversés",
@@ -1256,6 +1336,102 @@
         "created": "PDF créé",
         "failed": "Le PDF n'a pas pu être généré. Utiliser l'impression du navigateur ?"
       }
+    }
+  },
+  "media": {
+    "uploadButton": "Téléverser des médias",
+    "newMedia": "Nouveaux médias",
+    "viewModes": { "tiles": "Vignettes", "folders": "Dossiers" },
+    "loading": "Chargement…",
+    "storageUsage": "Utilisation du stockage",
+    "search": "Rechercher des médias…",
+    "untitled": "Sans titre",
+    "newTitlePrompt": "Nouveau titre",
+    "fields": {
+      "property": "Bien",
+      "files": "Fichiers",
+      "title": "Titre (facultatif)",
+      "description": "Description (facultatif)",
+      "selectProperty": "Sélectionner",
+      "name": "Nom",
+      "fileCount": "Fichiers",
+      "location": "Localité",
+      "units": "Unités"
+    },
+    "dropzone": {
+      "release": "Relâchez maintenant",
+      "idle": "Glissez vos fichiers ici ou cliquez",
+      "hint": "Images & vidéos · plusieurs possibles",
+      "selected": "{{count}} fichier(s) sélectionné(s)"
+    },
+    "upload": "Téléverser",
+    "uploading": "Téléversement…",
+    "uploadingProgress": "Téléversement… {{done}} / {{total}}",
+    "uploadingProgressNamed": "Téléversement… {{done}} / {{total}} · {{name}}",
+    "uploadedCount": "{{done}} / {{total}} téléversés",
+    "cancel": "Annuler",
+    "filters": {
+      "property": "Bien",
+      "allProperties": "Tous les biens",
+      "type": "Type",
+      "allTypes": "Tous les types",
+      "images": "Images",
+      "videos": "Vidéos",
+      "floorPlans": "Plans"
+    },
+    "folders": {
+      "allFolders": "Tous les dossiers",
+      "empty": "Aucun dossier"
+    },
+    "empty": {
+      "title": "Médiathèque vide",
+      "description": "Téléversez des images, vidéos ou plans pour vos biens."
+    },
+    "actions": {
+      "setCover": "Définir comme image principale",
+      "moveUp": "Vers le haut",
+      "moveDown": "Vers le bas",
+      "rename": "Renommer",
+      "delete": "Supprimer",
+      "download": "Télécharger",
+      "close": "Fermer",
+      "prev": "Précédent",
+      "next": "Suivant",
+      "save": "Enregistrer"
+    },
+    "badges": {
+      "cover": "Couverture",
+      "floorPlan": "Plan",
+      "openPdf": "Ouvrir le PDF"
+    },
+    "duplicates": {
+      "detected": "{{count}} doublon(s) potentiel(s) détecté(s)",
+      "remove": "Supprimer les doublons",
+      "confirmTitle": "Supprimer les doublons ?",
+      "confirmDescription": "{{count}} fichier(s) en double seront supprimés. Le plus ancien / la couverture est conservé(e).",
+      "confirm": "Supprimer",
+      "none": "Aucun doublon trouvé",
+      "removed": "{{count}} doublon(s) supprimé(s)"
+    },
+    "migration": {
+      "warn": "{{count}} fichier(s) (p. ex. PDF) n'appartiennent pas à la médiathèque. Déplacez-les vers « Documents ».",
+      "move": "Déplacer vers Documents",
+      "moving": "Déplacement…",
+      "confirmTitle": "Déplacer les fichiers ?",
+      "confirmDescription": "{{count}} fichier(s) seront déplacés vers « Documents ».",
+      "confirm": "Déplacer",
+      "none": "Aucun document trouvé dans la médiathèque",
+      "moved": "{{count}} fichier(s) déplacé(s) vers « Documents »"
+    },
+    "toasts": {
+      "propertyRequired": "Veuillez choisir un bien",
+      "fileRequired": "Veuillez sélectionner au moins un fichier",
+      "onlyMedia": "Seuls les images et vidéos sont autorisés dans la médiathèque. Téléversez les documents (PDF, DOCX, …) dans « Documents ». Refusés : {{names}}",
+      "uploaded": "Image téléversée",
+      "uploadedAll": "Tous les {{count}} fichiers téléversés",
+      "deleted": "Supprimé",
+      "coverSet": "Image principale définie",
+      "renamed": "Renommé"
     }
   }
 }
