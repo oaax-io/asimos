@@ -492,6 +492,7 @@ function MetricCard({
 }
 
 function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
+  const { t } = useTranslation();
   const i = deriveInputs(dossier);
   const ltvTone = toneFor(i.ltv, 80, 90, "max");
   const affTone = toneFor(i.affordability, 33, 38, "max");
@@ -504,7 +505,7 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
     const delta = Math.max(0, incomeNeeded - i.income);
     tips.push({
       tone: "warn",
-      text: `Einkommen müsste um ${chf(delta)} erhöht werden um Tragbarkeit auf 33% zu bringen (benötigt: ${chf(incomeNeeded)})`,
+      text: t("financing.detail.quickcheck.tips.incomeNeeded", { delta: chf(delta), needed: chf(incomeNeeded) }),
     });
   }
   if (i.equityRatio < 20 && i.total > 0) {
@@ -512,34 +513,34 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
     const missing = Math.max(0, needed - i.equity);
     tips.push({
       tone: "warn",
-      text: `Fehlende Eigenmittel: ${chf(missing)} (mindestens ${chf(needed)} des Kaufpreises erforderlich)`,
+      text: t("financing.detail.quickcheck.tips.equityMissing", { missing: chf(missing), needed: chf(needed) }),
     });
   }
   if (i.hardRatio < 10 && i.total > 0) {
     const neededHard = i.total * 0.10;
     tips.push({
       tone: "warn",
-      text: `PK-Anteil zu hoch — mindestens ${chf(neededHard)} aus Barvermögen erforderlich (aktuell ${chf(i.hardEquity)} harte Eigenmittel)`,
+      text: t("financing.detail.quickcheck.tips.hardEquityLow", { needed: chf(neededHard), current: chf(i.hardEquity) }),
     });
   }
   if (tips.length === 0) {
-    tips.push({ tone: "ok", text: "Alle Kennzahlen erfüllt — Finanzierung grundsätzlich bankfähig." });
+    tips.push({ tone: "ok", text: t("financing.detail.quickcheck.tips.allOk") });
   }
 
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2">
-        <MetricCard label="Belehnung (LTV)" value={pct(i.ltv)} limitLabel="Limit: 80%" tone={ltvTone} fillPct={i.ltv} limitPct={80} />
-        <MetricCard label="Tragbarkeit" value={pct(i.affordability)} limitLabel="Limit: 33%" tone={affTone} fillPct={i.affordability * (100 / 50)} limitPct={33 * (100 / 50)} />
-        <MetricCard label="Eigenmittelquote" value={pct(i.equityRatio)} limitLabel="Limit: 20%" tone={eqTone} fillPct={i.equityRatio * (100 / 50)} limitPct={20 * (100 / 50)} />
-        <MetricCard label="Harte Eigenmittel" value={pct(i.hardRatio)} limitLabel="Limit: 10%" tone={hardTone} fillPct={i.hardRatio * (100 / 30)} limitPct={10 * (100 / 30)} />
+        <MetricCard label={t("financing.detail.quickcheck.metrics.ltv")} value={pct(i.ltv)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 80 })} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
+        <MetricCard label={t("financing.detail.quickcheck.metrics.affordability")} value={pct(i.affordability)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 33 })} tone={affTone} fillPct={i.affordability * (100 / 50)} limitPct={33 * (100 / 50)} />
+        <MetricCard label={t("financing.detail.quickcheck.metrics.equityRatio")} value={pct(i.equityRatio)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 20 })} tone={eqTone} fillPct={i.equityRatio * (100 / 50)} limitPct={20 * (100 / 50)} />
+        <MetricCard label={t("financing.detail.quickcheck.metrics.hardEquity")} value={pct(i.hardRatio)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 10 })} tone={hardTone} fillPct={i.hardRatio * (100 / 30)} limitPct={10 * (100 / 30)} />
       </div>
       <Card>
         <CardContent className="p-4 space-y-2">
-          <h3 className="font-semibold">Optimierungsvorschläge</h3>
+          <h3 className="font-semibold">{t("financing.detail.quickcheck.tips.title")}</h3>
           <ul className="space-y-1 text-sm">
-            {tips.map((t, idx) => (
-              <li key={idx} className={toneText(t.tone)}>• {t.text}</li>
+            {tips.map((tp, idx) => (
+              <li key={idx} className={toneText(tp.tone)}>• {tp.text}</li>
             ))}
           </ul>
           {(() => {
@@ -547,23 +548,22 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
             const coName = dossier.co_applicant?.full_name;
             const coId = dossier.co_applicant_client_id;
             const mainIncome = n(dossier.gross_income_yearly);
-            const mainName = dossier.clients?.full_name ?? "Hauptantragsteller";
+            const mainName = dossier.clients?.full_name ?? t("financing.detail.quickcheck.detail.mainIncome");
             if (coId && coName && coIncome > 0) {
               return (
                 <div className="mt-3 rounded-md border border-blue-300/60 bg-blue-50 dark:bg-blue-950/30 p-3 text-xs text-blue-900 dark:text-blue-100">
-                  Berechnung mit kombiniertem Einkommen:{" "}
+                  {t("financing.detail.quickcheck.tips.combinedIncome")}{" "}
                   <span className="font-medium">{mainName}</span> {chf(mainIncome)} +{" "}
                   <span className="font-medium">{coName}</span> {chf(coIncome)} ={" "}
-                  <span className="font-semibold">{chf(i.income)}</span> / Jahr
+                  <span className="font-semibold">{chf(i.income)}</span> {t("financing.detail.quickcheck.tips.perYear")}
                 </div>
               );
             }
             if (coId && coName && coIncome <= 0) {
               return (
                 <div className="mt-3 rounded-md border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs text-amber-900 dark:text-amber-100">
-                  Einkommen von <span className="font-medium">{coName}</span> nicht erfasst —
-                  Berechnung basiert nur auf Einkommen des Hauptantragstellers.{" "}
-                  <a href={`/clients/${coId}`} className="underline font-medium">→ Zum Kundenprofil</a>
+                  {t("financing.detail.quickcheck.tips.coIncomeMissing", { name: coName })}{" "}
+                  <a href={`/clients/${coId}`} className="underline font-medium">{t("financing.detail.quickcheck.tips.toClient")}</a>
                 </div>
               );
             }
