@@ -141,6 +141,9 @@ export type WizardForm = {
   co_applicant_eigenkapital: string;
   co_applicant_pk_anteil: string;
 
+  // Weitere Mitantragsteller (bis insgesamt 10 inkl. primärem Mitantragsteller)
+  additional_co_applicants: AdditionalCoApplicant[];
+
   // Reserved für spätere Schritte (4–6)
   renovation_costs: string;
   renovation_own_work: string;
