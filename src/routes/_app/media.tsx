@@ -877,7 +877,7 @@ function MediaPage() {
                     variant="secondary"
                     size="icon"
                     className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-                    title="Nach unten"
+                    title={t("media.actions.moveDown")}
                     onClick={() => moveSort.mutate({ item: m, dir: 1 })}
                   >
                     <ArrowDown className="h-3.5 w-3.5" />
