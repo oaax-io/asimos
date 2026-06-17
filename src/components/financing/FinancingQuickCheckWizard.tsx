@@ -874,6 +874,7 @@ function Step3Client({
   loading: boolean;
   isRefiOnly: boolean;
 }) {
+  const { t } = useTranslation();
   // Verknüpfte Personen des Hauptkunden (Ehepartner, Mitantragsteller, …)
   const relatedQuery = useQuery({
     queryKey: ["wizard_client_relationships", form.client_id],
