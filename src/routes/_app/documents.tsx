@@ -20,29 +20,16 @@ import { formatDate } from "@/lib/format";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { DocumentTemplatesManager } from "@/components/settings/DocumentTemplatesManager";
 import { DocumentFolderView } from "@/components/documents/DocumentFolderView";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/documents")({ component: DocumentsPage });
 
-const TYPE_LABELS = {
-  contract: "Vertrag",
-  expose: "Exposé",
-  id: "Ausweis",
-  invoice: "Rechnung",
-  energy_certificate: "Energieausweis",
-  floor_plan: "Grundriss",
-  bank_statement: "Kontoauszug",
-  tax_document: "Steuerunterlage",
-  other: "Sonstiges",
-} as const;
+const TYPE_KEYS = [
+  "contract","expose","id","invoice","energy_certificate",
+  "floor_plan","bank_statement","tax_document","other",
+] as const;
 
-const RELATED_LABELS: Record<string, string> = {
-  client: "Kunde",
-  property: "Immobilie",
-  lead: "Lead",
-  mandate: "Mandat",
-  reservation: "Reservation",
-  financing_profile: "Finanzierung",
-};
+const RELATED_KEYS = ["client","property","lead","mandate","reservation","financing_profile"] as const;
 
 function formatBytes(bytes: number | null | undefined) {
   if (!bytes) return "—";
