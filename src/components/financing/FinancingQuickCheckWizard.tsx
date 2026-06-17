@@ -1050,12 +1050,12 @@ function CoApplicantSection({
           <UserPlus className="h-4 w-4 text-muted-foreground" />
           <div>
             <Label htmlFor="co-applicant-toggle" className="text-sm font-medium cursor-pointer">
-              Mitantragsteller / Ehepartner hinzufügen
+              {t("financing.wizard.coApplicant.title")}
             </Label>
             <p className="text-xs text-muted-foreground">
               {hasRelated
-                ? "Verknüpfte Personen aus dem Kundenprofil werden zuerst angezeigt."
-                : "Optional — kombiniert Einkommen und Eigenmittel für die Berechnung."}
+                ? t("financing.wizard.coApplicant.descRelated")
+                : t("financing.wizard.coApplicant.desc")}
             </p>
           </div>
         </div>
@@ -1070,23 +1070,23 @@ function CoApplicantSection({
         <div className="space-y-4 border-t pt-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label className="text-xs">Rolle *</Label>
+              <Label className="text-xs">{t("financing.wizard.coApplicant.role")}</Label>
               <Select
                 value={form.co_applicant_role || ""}
                 onValueChange={(v) => update("co_applicant_role", v as CoApplicantRole)}
               >
-                <SelectTrigger><SelectValue placeholder="Rolle wählen…" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("financing.wizard.coApplicant.roleSelect")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ehepartner">Ehepartner/in</SelectItem>
-                  <SelectItem value="mitantragsteller">Mitantragsteller/in</SelectItem>
+                  <SelectItem value="ehepartner">{t("financing.wizard.coApplicant.roleSpouse")}</SelectItem>
+                  <SelectItem value="mitantragsteller">{t("financing.wizard.coApplicant.roleCo")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Kunde aus CRM</Label>
+              <Label className="text-xs">{t("financing.wizard.coApplicant.crmClient")}</Label>
               <SearchableSelect
-                placeholder={loading ? "Lade…" : "Kunde suchen…"}
-                emptyText="Keinen Kunden gefunden."
+                placeholder={loading ? t("financing.wizard.property.loading") : t("financing.wizard.client.searchClient")}
+                emptyText={t("financing.wizard.client.noClient")}
                 value={form.co_applicant_client_id}
                 onChange={(v) => update("co_applicant_client_id", v)}
                 items={items}
@@ -1109,9 +1109,7 @@ function CoApplicantSection({
               {anyMissing && (
                 <div className="rounded-md border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs space-y-2">
                   <p className="text-amber-800 dark:text-amber-200">
-                    Einige Daten von <span className="font-medium">{selected.full_name}</span> sind
-                    noch nicht erfasst. Ergänze die fehlenden Angaben im Kundenprofil für eine
-                    vollständige Berechnung.
+                    {t("financing.wizard.coApplicant.missingDataWarn", { name: selected.full_name })}
                   </p>
                   <a
                     href={`/clients/${selected.id}`}
@@ -1119,7 +1117,7 @@ function CoApplicantSection({
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 font-medium text-amber-900 dark:text-amber-100 hover:underline"
                   >
-                    Zum Kundenprofil <ExternalLink className="h-3 w-3" />
+                    {t("financing.wizard.coApplicant.toProfile")} <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
               )}
@@ -1128,8 +1126,7 @@ function CoApplicantSection({
                 <div className="rounded-md border border-red-300/60 bg-red-50 dark:bg-red-950/30 p-3 text-xs flex gap-2 items-start">
                   <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
                   <p className="text-red-800 dark:text-red-200">
-                    Das Einkommen ist für die Tragbarkeitsberechnung zwingend erforderlich.
-                    Ohne diesen Wert wird der Mitantragsteller in der Berechnung nicht berücksichtigt.
+                    {t("financing.wizard.coApplicant.incomeRequired")}
                   </p>
                 </div>
               )}
@@ -1137,26 +1134,26 @@ function CoApplicantSection({
               {/* Manuelle Korrektur der übernommenen Werte */}
               {isRefiOnly ? (
                 <div className="grid gap-3 sm:grid-cols-1">
-                  <Field label="Einkommen (CHF/J)" type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
+                  <Field label={t("financing.wizard.coApplicant.income")} type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <Field label="Einkommen (CHF/J)" type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
-                  <Field label="Eigenkapital (CHF)" type="number" value={form.co_applicant_eigenkapital} onChange={(v) => update("co_applicant_eigenkapital", v)} />
-                  <Field label="PK-Anteil (CHF)" type="number" value={form.co_applicant_pk_anteil} onChange={(v) => update("co_applicant_pk_anteil", v)} />
+                  <Field label={t("financing.wizard.coApplicant.income")} type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
+                  <Field label={t("financing.wizard.coApplicant.equity")} type="number" value={form.co_applicant_eigenkapital} onChange={(v) => update("co_applicant_eigenkapital", v)} />
+                  <Field label={t("financing.wizard.coApplicant.pkPart")} type="number" value={form.co_applicant_pk_anteil} onChange={(v) => update("co_applicant_pk_anteil", v)} />
                 </div>
               )}
 
               <div className="rounded-md bg-background border p-3 space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <Users className="h-3 w-3" /> Kombinierte Werte
+                  <Users className="h-3 w-3" /> {t("financing.wizard.coApplicant.combinedTitle")}
                 </p>
                 <div className="text-xs text-muted-foreground space-y-0.5">
-                  <div className="flex justify-between"><span>Kombiniertes Einkommen:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(incomeCombined)} / Jahr</span></div>
+                  <div className="flex justify-between"><span>{t("financing.wizard.coApplicant.combinedIncome")}</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(incomeCombined)} {t("financing.wizard.coApplicant.perYear")}</span></div>
                   {!isRefiOnly && (
                     <>
-                      <div className="flex justify-between"><span>Kombinierte Eigenmittel:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(equityCombined)}</span></div>
-                      <div className="flex justify-between"><span>Kombinierter PK-Anteil:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(pkCombined)}</span></div>
+                      <div className="flex justify-between"><span>{t("financing.wizard.coApplicant.combinedEquity")}</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(equityCombined)}</span></div>
+                      <div className="flex justify-between"><span>{t("financing.wizard.coApplicant.combinedPk")}</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(pkCombined)}</span></div>
                     </>
                   )}
                 </div>
