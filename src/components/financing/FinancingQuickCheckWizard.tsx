@@ -1733,6 +1733,7 @@ function SearchableSelect({
   placeholder: string;
   emptyText: string;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const selected = items.find((i) => i.value === value);
   return (
