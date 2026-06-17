@@ -831,7 +831,7 @@ function MediaPage() {
                   {m.is_cover && (
                     <Badge className="absolute left-2 top-2 bg-primary text-primary-foreground">
                       <Star className="mr-1 h-3 w-3" />
-                      Cover
+                      {t("media.badges.cover")}
                     </Badge>
                   )}
                   {m.file_type && m.file_type !== "image" && (
