@@ -1116,7 +1116,7 @@ function Step3Client({
 
 
 function CoApplicantSection({
-  form, update, clients, loading, toggle, relatedMap, isRefiOnly,
+  form, update, clients, loading, toggle, relatedMap, isRefiOnly, coIncomeBreakdown,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
@@ -1125,6 +1125,7 @@ function CoApplicantSection({
   toggle: (enabled: boolean) => void;
   relatedMap: Map<string, string>;
   isRefiOnly: boolean;
+  coIncomeBreakdown: IncomeBreakdown | null;
 }) {
   const { t } = useTranslation();
   const relLabel: Record<string, string> = {
