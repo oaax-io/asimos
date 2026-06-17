@@ -355,15 +355,22 @@ export function FinancingQuickCheckWizard({
     const coIncome = coActive ? num(form.co_applicant_einkommen) : 0;
     const coEquity = coActive ? num(form.co_applicant_eigenkapital) : 0;
     const coPk = coActive ? num(form.co_applicant_pk_anteil) : 0;
-    // Einkommen nur kombinieren, wenn Co-Einkommen > 0
-    const incomeCombined = coIncome > 0 ? mainIncome + coIncome : mainIncome;
-    const equityCombined = mainEquity + coEquity;
-    const pkCombined = mainPk + coPk;
+    // Zusätzliche Mitantragsteller (nur valide: mit Client-Bezug)
+    const extras = (form.additional_co_applicants ?? []).filter((a) => !!a.client_id);
+    const extrasIncome = extras.reduce((s, a) => s + num(a.einkommen), 0);
+    const extrasEquity = extras.reduce((s, a) => s + num(a.eigenkapital), 0);
+    const extrasPk = extras.reduce((s, a) => s + num(a.pk_anteil), 0);
+    // Einkommen nur kombinieren, wenn jeweils > 0
+    const incomeCombined = mainIncome + (coIncome > 0 ? coIncome : 0) + extrasIncome;
+    const equityCombined = mainEquity + coEquity + extrasEquity;
+    const pkCombined = mainPk + coPk + extrasPk;
     return {
       coActive,
       coIncomeMissing: coActive && coIncome <= 0,
       mainIncome, mainEquity, mainPk,
       coIncome, coEquity, coPk,
+      extrasCount: extras.length,
+      extrasIncome, extrasEquity, extrasPk,
       incomeCombined, equityCombined, pkCombined,
     };
   }, [form]);
