@@ -479,7 +479,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             client_id: clientId,
             related_client_id: form.linked_contact_client_id,
             relationship_type: "other" as any,
-            notes: "Kontaktperson",
+            notes: t("clientWizard.toasts.contactPersonNote"),
           });
           if (relErr) console.warn("Relationship:", relErr);
           // Zusätzlich client_roles contact_person für die verknüpfte Person
@@ -490,7 +490,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             start_date: new Date().toISOString().slice(0, 10),
             related_id: clientId,
             related_type: "client",
-            notes: `Kontaktperson für ${fullName}`,
+            notes: t("clientWizard.toasts.contactPersonFor", { name: fullName }),
           });
         }
       }
