@@ -920,7 +920,7 @@
         "client": "Kunde",
         "searchClient": "Kunde suchen…",
         "noClient": "Keinen Kunden gefunden.",
-        "grossIncome": "Brutto-Jahreseinkommen (CHF)",
+        "grossIncome": "Netto-Jahreseinkommen (CHF)",
         "ownFundsTotal": "Eigenmittel total (CHF)",
         "pensionPart": "davon Pensionskasse (CHF)",
         "refiHint": "Bei Refinanzierung nur Einkommen für die Tragbarkeit.",
