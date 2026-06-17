@@ -299,16 +299,21 @@ export function FinancingQuickCheckWizard({
     (async () => {
       const { data } = await supabase
         .from("client_self_disclosures")
-        .select("annual_net_salary, salary_net_monthly")
+        .select("annual_net_salary, salary_net_monthly, additional_income, income_job_two, income_rental")
         .eq("client_id", form.client_id)
         .maybeSingle();
       if (!data) return;
-      const yearly = data.annual_net_salary
+      const extrasMonthly =
+        Number(data.additional_income ?? 0) +
+        Number(data.income_job_two ?? 0) +
+        Number(data.income_rental ?? 0);
+      const baseYearly = data.annual_net_salary
         ?? (data.salary_net_monthly ? Number(data.salary_net_monthly) * 12 : null);
-      if (yearly) {
+      const yearly = (baseYearly ?? 0) + extrasMonthly * 12;
+      if (yearly > 0) {
         setForm((f) => ({
           ...f,
-          gross_income_yearly: f.gross_income_yearly || String(yearly),
+          gross_income_yearly: f.gross_income_yearly || String(Math.round(yearly)),
         }));
       }
     })();
