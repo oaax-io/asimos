@@ -791,11 +791,11 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             {currentStep === "role" && (
               <div className="space-y-4">
                 <div>
-                  <p className="text-base font-semibold">Welche Rolle hat dieser Kunde?</p>
-                  <p className="text-sm text-muted-foreground">Bestimmt die nächsten Schritte.</p>
+                  <p className="text-base font-semibold">{t("clientWizard.role.question")}</p>
+                  <p className="text-sm text-muted-foreground">{t("clientWizard.role.hint")}</p>
                 </div>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {ROLE_OPTIONS.map(({ value, label, description, icon: Icon }) => {
+                  {ROLE_OPTIONS.map(({ value, icon: Icon }) => {
                     const active = form.role_choice === value;
                     return (
                       <button type="button" key={value}
@@ -807,8 +807,8 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                           <Icon className="h-5 w-5" />
                         </span>
                         <span className="flex-1">
-                          <span className="block font-semibold">{label}</span>
-                          <span className="block text-sm text-muted-foreground">{description}</span>
+                          <span className="block font-semibold">{t(`clientWizard.role.options.${value}.label`)}</span>
+                          <span className="block text-sm text-muted-foreground">{t(`clientWizard.role.options.${value}.description`)}</span>
                         </span>
                         {active && <Check className="h-5 w-5 text-primary" />}
                       </button>
