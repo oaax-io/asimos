@@ -1287,18 +1287,18 @@ function Step4Metrics({
             {/* === Linke Spalte: Objekt + Hypothek === */}
             <div className="space-y-4">
               <section className="rounded-lg border bg-card p-4 space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Objekt</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.metrics.objectTitle")}</h3>
                 {objectValueFromCrm ? (
                   <div className="rounded-md border bg-background p-3 text-sm flex items-center justify-between">
                     <div>
-                      <span className="text-xs text-muted-foreground block">Objektwert (aus CRM)</span>
+                      <span className="text-xs text-muted-foreground block">{t("financing.wizard.metrics.objectValueFromCrm")}</span>
                       <span className="font-semibold text-base">{formatCurrency(num(form.property_purchase_price))}</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">Schritt 2</span>
+                    <span className="text-xs text-muted-foreground">{t("financing.wizard.metrics.step2")}</span>
                   </div>
                 ) : (
                   <Field
-                    label="Objektwert / Verkehrswert (CHF) *"
+                    label={t("financing.wizard.metrics.objectValueRequired")}
                     type="number"
                     value={form.property_purchase_price}
                     onChange={(v) => update("property_purchase_price", v)}
@@ -1306,25 +1306,25 @@ function Step4Metrics({
                 )}
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <Label className="text-xs">Nutzung *</Label>
+                    <Label className="text-xs">{t("financing.wizard.metrics.usage")}</Label>
                     <Select value={form.usage_type} onValueChange={(v) => update("usage_type", v as WizardForm["usage_type"])}>
-                      <SelectTrigger><SelectValue placeholder="Bitte wählen…" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t("financing.wizard.metrics.pleaseSelect")} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="owner_occupied">Eigennutzung</SelectItem>
-                        <SelectItem value="rental">Renditeobjekt</SelectItem>
+                        <SelectItem value="owner_occupied">{t("financing.wizard.metrics.usageOwner")}</SelectItem>
+                        <SelectItem value="rental">{t("financing.wizard.metrics.usageRental")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Objektart *</Label>
+                    <Label className="text-xs">{t("financing.wizard.metrics.objectType")}</Label>
                     <Select value={form.object_type} onValueChange={(v) => update("object_type", v as WizardForm["object_type"])}>
-                      <SelectTrigger><SelectValue placeholder="Bitte wählen…" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t("financing.wizard.metrics.pleaseSelect")} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="house">Einfamilienhaus</SelectItem>
-                        <SelectItem value="apartment">Eigentumswohnung</SelectItem>
-                        <SelectItem value="mixed_use">Mehrfamilien-/Geschäftshaus</SelectItem>
-                        <SelectItem value="commercial">Gewerbe</SelectItem>
-                        <SelectItem value="other">Andere</SelectItem>
+                        <SelectItem value="house">{t("financing.wizard.metrics.objectTypes.house")}</SelectItem>
+                        <SelectItem value="apartment">{t("financing.wizard.metrics.objectTypes.apartment")}</SelectItem>
+                        <SelectItem value="mixed_use">{t("financing.wizard.metrics.objectTypes.mixed_use")}</SelectItem>
+                        <SelectItem value="commercial">{t("financing.wizard.metrics.objectTypes.commercial")}</SelectItem>
+                        <SelectItem value="other">{t("financing.wizard.metrics.objectTypes.other")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1338,10 +1338,10 @@ function Step4Metrics({
                 const hasBase = kpis.maxMortgageAllowed > 0;
                 return (
                   <section className="rounded-lg border bg-card p-4 space-y-3">
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hypothek</h3>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.metrics.mortgageTitle")}</h3>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <Field label="Aktuelle Hypothek (CHF) *" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
-                      <Field label="Aufstockung (CHF)" type="number" value={form.requested_increase} onChange={(v) => update("requested_increase", v)} />
+                      <Field label={t("financing.wizard.metrics.currentMortgage")} type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
+                      <Field label={t("financing.wizard.metrics.increaseAmount")} type="number" value={form.requested_increase} onChange={(v) => update("requested_increase", v)} />
                     </div>
                     {hasBase && (
                       <div
@@ -1352,23 +1352,23 @@ function Step4Metrics({
                         }`}
                       >
                         <div className="flex flex-col">
-                          <span className="text-xs opacity-80">Max. Aufstockung ({kpis.maxLtv}%)</span>
+                          <span className="text-xs opacity-80">{t("financing.wizard.metrics.maxIncrease", { ltv: kpis.maxLtv })}</span>
                           <span className="font-semibold text-base">{formatCurrency(maxIncrease)}</span>
                         </div>
                         <div className="text-right">
-                          <span className="text-xs opacity-80">{fits ? "✓ möglich" : "✗ nicht möglich"}</span>
+                          <span className="text-xs opacity-80">{fits ? t("financing.wizard.metrics.possible") : t("financing.wizard.metrics.notPossible")}</span>
                           <div className="text-xs">
                             {fits
-                              ? `+${formatCurrency(Math.max(0, maxIncrease - requested))} Spielraum`
-                              : `−${formatCurrency(requested - maxIncrease)} über Limit`}
+                              ? t("financing.wizard.metrics.headroom", { amount: formatCurrency(Math.max(0, maxIncrease - requested)) })
+                              : t("financing.wizard.metrics.overLimit", { amount: formatCurrency(requested - maxIncrease) })}
                           </div>
                         </div>
                       </div>
                     )}
                     <div className="rounded-md border bg-background p-3 text-sm">
-                      <span className="text-xs text-muted-foreground">Neue Gesamthypothek</span>
+                      <span className="text-xs text-muted-foreground">{t("financing.wizard.metrics.newTotalMortgage")}</span>
                       <div className="font-semibold text-base">{formatCurrency(effectiveMortgage)}</div>
-                      <span className="text-[11px] text-muted-foreground">= Aktuelle Hypothek + Aufstockung</span>
+                      <span className="text-[11px] text-muted-foreground">{t("financing.wizard.metrics.newTotalFormula")}</span>
                     </div>
                   </section>
                 );
@@ -1378,59 +1378,59 @@ function Step4Metrics({
             {/* === Rechte Spalte: Bestehende Finanzierung + Einkommen === */}
             <div className="space-y-4">
               <section className="rounded-lg border bg-card p-4 space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bestehende Finanzierung</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.metrics.existingFinancing")}</h3>
                 <SwissBankSelect value={form.current_bank} onChange={(v) => update("current_bank", v)} />
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="Aktueller Zinssatz (%)" type="number" value={form.interest_rate_current} onChange={(v) => update("interest_rate_current", v)} />
-                  <Field label="Ablauf Zinsbindung" type="date" value={form.interest_rate_expiry} onChange={(v) => update("interest_rate_expiry", v)} />
+                  <Field label={t("financing.wizard.metrics.currentRate")} type="number" value={form.interest_rate_current} onChange={(v) => update("interest_rate_current", v)} />
+                  <Field label={t("financing.wizard.metrics.rateExpiry")} type="date" value={form.interest_rate_expiry} onChange={(v) => update("interest_rate_expiry", v)} />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Refinanzierungs-Zweck</Label>
+                  <Label className="text-xs">{t("financing.wizard.metrics.refiPurpose")}</Label>
                   <Select value={form.refi_purpose} onValueChange={(v) => update("refi_purpose", v as WizardForm["refi_purpose"])}>
-                    <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("financing.wizard.metrics.optional")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="rate_optimisation">Zinsoptimierung</SelectItem>
-                      <SelectItem value="bank_change">Bankwechsel</SelectItem>
-                      <SelectItem value="consolidation">Konsolidierung</SelectItem>
-                      <SelectItem value="cash_out">Kapital-Auszahlung</SelectItem>
-                      <SelectItem value="other">Andere</SelectItem>
+                      <SelectItem value="rate_optimisation">{t("financing.wizard.metrics.refiPurposes.rate_optimisation")}</SelectItem>
+                      <SelectItem value="bank_change">{t("financing.wizard.metrics.refiPurposes.bank_change")}</SelectItem>
+                      <SelectItem value="consolidation">{t("financing.wizard.metrics.refiPurposes.consolidation")}</SelectItem>
+                      <SelectItem value="cash_out">{t("financing.wizard.metrics.refiPurposes.cash_out")}</SelectItem>
+                      <SelectItem value="other">{t("financing.wizard.metrics.refiPurposes.other")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </section>
 
               <section className="rounded-lg border bg-card p-4 space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Einkommen & Verpflichtungen</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.metrics.incomeObligations")}</h3>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field
-                    label={coActive ? "Einkommen Hauptkunde (CHF/J) *" : "Brutto-Jahreseinkommen (CHF) *"}
+                    label={coActive ? t("financing.wizard.metrics.incomeMain") : t("financing.wizard.metrics.grossIncome")}
                     type="number"
                     value={form.gross_income_yearly}
                     onChange={(v) => update("gross_income_yearly", v)}
                   />
                   {coActive && (
                     <Field
-                      label="Einkommen Partner (CHF/J) *"
+                      label={t("financing.wizard.metrics.incomePartner")}
                       type="number"
                       value={form.co_applicant_einkommen}
                       onChange={(v) => update("co_applicant_einkommen", v)}
                     />
                   )}
                   <Field
-                    label={coActive ? "Verpflichtungen kombiniert (CHF/M)" : "Monatl. Verpflichtungen (CHF)"}
+                    label={coActive ? t("financing.wizard.metrics.obligationsCombined") : t("financing.wizard.metrics.obligationsMonthly")}
                     type="number"
                     value={form.monthly_obligations}
                     onChange={(v) => update("monthly_obligations", v)}
                   />
                   {showRenovation && (
-                    <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+                    <Field label={t("financing.wizard.metrics.renovationCosts")} type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
                   )}
                 </div>
-                <p className="text-[11px] text-muted-foreground">Leasing, Kredite, Alimente — automatisch aus Selbstauskunft summiert (anpassbar).</p>
+                <p className="text-[11px] text-muted-foreground">{t("financing.wizard.metrics.obligationsHint")}</p>
                 {coActive && (
                   <div className="rounded-md bg-background border p-2.5 text-xs flex justify-between">
-                    <span className="text-muted-foreground">Kombiniertes Einkommen:</span>
-                    <span className="font-semibold tabular-nums">{formatCurrency(combined.incomeCombined)} / J</span>
+                    <span className="text-muted-foreground">{t("financing.wizard.metrics.combinedIncomeShort")}</span>
+                    <span className="font-semibold tabular-nums">{formatCurrency(combined.incomeCombined)} {t("financing.wizard.metrics.perYearShort")}</span>
                   </div>
                 )}
               </section>
@@ -1439,25 +1439,27 @@ function Step4Metrics({
 
           {kpis.ltvExceeded && (
             <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
-              ⚠ Neue Gesamthypothek übersteigt max. Belehnung ({kpis.maxLtv}% = {formatCurrency(kpis.maxMortgageAllowed)}). Aufstockung reduzieren oder Eigenmittel einbringen.
+              {t("financing.wizard.metrics.ltvExceededWarn", { ltv: kpis.maxLtv, amount: formatCurrency(kpis.maxMortgageAllowed) })}
             </div>
           )}
 
           <p className="text-[11px] text-muted-foreground">
-            Hinweis: Belehnungsgrenze {form.usage_type === "rental" ? "Renditeobjekt → max. 75 %" : "Eigennutzung → max. 80 %"}.
+            {form.usage_type === "rental"
+              ? t("financing.wizard.metrics.ltvLimitHintRental")
+              : t("financing.wizard.metrics.ltvLimitHintOwner")}
           </p>
         </>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Kaufpreis (CHF) *" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
-          <Field label="Gewünschte Hypothek (CHF) *" type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
-          <Field label="Eigenmittel total (CHF) *" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
-          <Field label="davon PK / Freizügigkeit (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
-          <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
+          <Field label={t("financing.wizard.metrics.purchasePrice")} type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
+          <Field label={t("financing.wizard.metrics.requestedMortgage")} type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
+          <Field label={t("financing.wizard.metrics.ownFundsTotalReq")} type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
+          <Field label={t("financing.wizard.metrics.pkPart")} type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+          <Field label={t("financing.wizard.metrics.grossIncomeReq")} type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
           {showRenovation && (
             <>
-              <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
-              <Field label="davon Eigenleistung (CHF)" type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
+              <Field label={t("financing.wizard.metrics.renovationCosts")} type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+              <Field label={t("financing.wizard.metrics.ownWork")} type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
             </>
           )}
         </div>
@@ -1466,7 +1468,7 @@ function Step4Metrics({
         <KpiPreview kpis={kpis} hideEquity={isRefiOnly} />
         {isRefiOnly && kpis.obligationsYearly > 0 && (
           <p className="text-[11px] text-muted-foreground mt-1">
-            Inkl. Verpflichtungen {formatCurrency(kpis.obligationsYearly)}/Jahr in der Tragbarkeit.
+            {t("financing.wizard.metrics.obligationsInAffordability", { amount: formatCurrency(kpis.obligationsYearly) })}
           </p>
         )}
       </div>
