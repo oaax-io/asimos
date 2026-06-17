@@ -85,17 +85,17 @@ function FinancingDetailPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Quick Check zurückgesetzt");
+      toast.success(t("financing.detail.toast.reset"));
       setResetOpen(false);
       queryClient.invalidateQueries({ queryKey: ["financing_dossier", id] });
       queryClient.invalidateQueries({ queryKey: ["financing_dossiers"] });
       queryClient.invalidateQueries({ queryKey: ["activity_logs", "financing_dossier", id] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Zurücksetzen fehlgeschlagen"),
+    onError: (e: any) => toast.error(e.message ?? t("financing.detail.toast.resetFailed")),
   });
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Laden…</p>;
-  if (!dossier) return <p className="text-sm text-muted-foreground">Dossier nicht gefunden.</p>;
+  if (isLoading) return <p className="text-sm text-muted-foreground">{t("financing.loading")}</p>;
+  if (!dossier) return <p className="text-sm text-muted-foreground">{t("financing.detail.notFound")}</p>;
 
   const reasons = (dossier.quick_check_reasons as any[]) ?? [];
   const qcStatus = (dossier.quick_check_status ?? "incomplete") as QuickCheckStatus;
