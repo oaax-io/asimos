@@ -859,15 +859,14 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       <Card>
         <CardContent className="p-4 space-y-4">
           <div>
-            <h3 className="font-semibold">Interaktive Szenario-Regler</h3>
+            <h3 className="font-semibold">{t("financing.detail.quickcheck.scenarios.title")}</h3>
             <p className="text-sm text-muted-foreground">
-              Passe die Werte an um verschiedene Szenarien zu prüfen. Die Matrix aktualisiert sich live.
-              Du kannst ein Szenario als neue Berechnung im Dossier speichern.
+              {t("financing.detail.quickcheck.scenarios.description")}
             </p>
           </div>
 
           <SliderRow
-            label="Kaufpreis"
+            label={t("financing.detail.quickcheck.scenarios.purchase")}
             display={chf(purchase)}
             value={purchase}
             min={purchaseMin}
@@ -876,7 +875,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             onChange={setPurchase}
           />
           <SliderRow
-            label="Eigenmittel"
+            label={t("financing.detail.quickcheck.scenarios.equity")}
             display={`${chf(equity)} (${pct(equityPctNow)})`}
             value={equity}
             min={0}
@@ -885,7 +884,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             onChange={setEquity}
           />
           <SliderRow
-            label="Renovationskosten"
+            label={t("financing.detail.quickcheck.scenarios.renovation")}
             display={chf(reno)}
             value={reno}
             min={0}
@@ -894,7 +893,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             onChange={(v) => setReno(Math.round(v))}
           />
           <SliderRow
-            label="davon Eigenleistung"
+            label={t("financing.detail.quickcheck.scenarios.ownWork")}
             display={chf(ownWork)}
             value={ownWork}
             min={0}
@@ -903,8 +902,8 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             onChange={(v) => setOwnWork(Math.round(v))}
           />
           <SliderRow
-            label="Bruttoeinkommen"
-            display={`${chf(income)} / Jahr`}
+            label={t("financing.detail.quickcheck.scenarios.income")}
+            display={t("financing.detail.quickcheck.scenarios.incomePerYear", { amount: chf(income) })}
             value={income}
             min={incomeMin}
             max={incomeMax}
@@ -912,8 +911,8 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             onChange={setIncome}
           />
           <SliderRow
-            label="Gewünschte Hypothek"
-            display={`${chf(mortgage)} (${pct(ltvNow)} Belehnung)`}
+            label={t("financing.detail.quickcheck.scenarios.mortgage")}
+            display={t("financing.detail.quickcheck.scenarios.mortgageWithLtv", { amount: chf(mortgage), ltv: pct(ltvNow) })}
             value={mortgage}
             min={mortgageMin}
             max={mortgageMax}
@@ -921,7 +920,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             onChange={setMortgage}
           />
           <SliderRow
-            label="Kalk. Zinssatz"
+            label={t("financing.detail.quickcheck.scenarios.rate")}
             display={`${rate.toFixed(1)}%`}
             value={rate}
             min={1.0}
@@ -933,18 +932,18 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
 
           {/* Live result */}
           <div className="grid gap-2 sm:grid-cols-4 pt-2 border-t">
-            <LiveMetric label="Belehnung" value={pct(liveLtv)} delta={liveLtv - original.ltv} betterWhenLower />
-            <LiveMetric label="Tragbarkeit" value={pct(liveAff)} delta={liveAff - original.affordability} betterWhenLower />
-            <LiveMetric label="Eigenmittelquote" value={pct(liveEqRatio)} delta={liveEqRatio - original.equityRatio} betterWhenLower={false} />
+            <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveLtv")} value={pct(liveLtv)} delta={liveLtv - original.ltv} betterWhenLower />
+            <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveAffordability")} value={pct(liveAff)} delta={liveAff - original.affordability} betterWhenLower />
+            <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveEquityRatio")} value={pct(liveEqRatio)} delta={liveEqRatio - original.equityRatio} betterWhenLower={false} />
             <div className="rounded-lg border p-3 flex flex-col justify-center">
-              <p className="text-xs text-muted-foreground">Status</p>
+              <p className="text-xs text-muted-foreground">{t("financing.detail.quickcheck.scenarios.status")}</p>
               <Badge className={cn("mt-1 w-fit", qcBadgeTone(liveStatus))}>{QUICK_CHECK_LABELS[liveStatus]}</Badge>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => setSaveOpen(true)}>Als Szenario speichern</Button>
-            <Button variant="outline" onClick={reset}>Zurücksetzen</Button>
+            <Button onClick={() => setSaveOpen(true)}>{t("financing.detail.quickcheck.scenarios.saveScenario")}</Button>
+            <Button variant="outline" onClick={reset}>{t("financing.detail.quickcheck.scenarios.reset")}</Button>
           </div>
         </CardContent>
       </Card>
@@ -952,12 +951,12 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       {/* BEREICH B — Matrix */}
       <Card>
         <CardContent className="p-4 space-y-3">
-          <h3 className="font-semibold">Sensitivitätsanalyse — Einkommen vs. Kaufpreis</h3>
+          <h3 className="font-semibold">{t("financing.detail.quickcheck.scenarios.matrixTitle")}</h3>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] border-separate border-spacing-1 text-sm">
               <thead>
                 <tr>
-                  <th className="p-2 text-left text-xs text-muted-foreground">Einkommen \ Kaufpreis</th>
+                  <th className="p-2 text-left text-xs text-muted-foreground">{t("financing.detail.quickcheck.scenarios.matrixCorner")}</th>
                   {priceSteps.map((dp) => {
                     const v = Math.max(0, live.p + dp);
                     return (
@@ -974,7 +973,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
                   return (
                     <tr key={di}>
                       <th className="p-2 text-left text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-                        {chfCompact(incomeV)}/J
+                        {t("financing.detail.quickcheck.scenarios.matrixPerYearShort", { amount: chfCompact(incomeV) })}
                       </th>
                       {matrix[rowIdx].map((cell, colIdx) => (
                         <td key={colIdx} className="p-0">
@@ -996,13 +995,13 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             </table>
           </div>
           <div className="flex flex-wrap gap-3 text-xs">
-            <LegendDot tone="ok" label="Realistisch" />
-            <LegendDot tone="warn" label="Kritisch" />
-            <LegendDot tone="bad" label="Nicht finanzierbar" />
-            <LegendDot tone="gray" label="EK ungenügend" />
+            <LegendDot tone="ok" label={t("financing.detail.quickcheck.scenarios.legend.realistic")} />
+            <LegendDot tone="warn" label={t("financing.detail.quickcheck.scenarios.legend.critical")} />
+            <LegendDot tone="bad" label={t("financing.detail.quickcheck.scenarios.legend.notFinanceable")} />
+            <LegendDot tone="gray" label={t("financing.detail.quickcheck.scenarios.legend.eqInsufficient")} />
           </div>
           <p className="text-xs text-muted-foreground">
-            Eigenmittel {chf(live.eq)} · Zinssatz {live.r.toFixed(1)}% · Nebenkosten {original.ancillaryPct.toFixed(1)}% · Hypothek {chf(live.mort)}
+            {t("financing.detail.quickcheck.scenarios.assumptions", { equity: chf(live.eq), rate: live.r.toFixed(1), anc: original.ancillaryPct.toFixed(1), mortgage: chf(live.mort) })}
           </p>
         </CardContent>
       </Card>
@@ -1010,9 +1009,9 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       {/* Saved scenarios */}
       <Card>
         <CardContent className="p-4 space-y-3">
-          <h3 className="font-semibold">Gespeicherte Szenarien</h3>
+          <h3 className="font-semibold">{t("financing.detail.quickcheck.scenarios.savedTitle")}</h3>
           {!scenarios || scenarios.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Noch keine Szenarien gespeichert.</p>
+            <p className="text-sm text-muted-foreground">{t("financing.detail.quickcheck.scenarios.noneSaved")}</p>
           ) : (
             <div className="grid gap-2 md:grid-cols-2">
               {scenarios.map((s) => {
@@ -1027,11 +1026,11 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
                       <Badge className={qcBadgeTone(st)}>{QUICK_CHECK_LABELS[st]}</Badge>
                     </div>
                     <div className="flex gap-3 text-xs text-muted-foreground tabular-nums">
-                      <span>Tragbarkeit: <span className="font-medium text-foreground">{s.tragbarkeit != null ? pct(Number(s.tragbarkeit)) : "—"}</span></span>
-                      <span>Belehnung: <span className="font-medium text-foreground">{s.belehnung != null ? pct(Number(s.belehnung)) : "—"}</span></span>
+                      <span>{t("financing.detail.quickcheck.scenarios.affordabilityShort")}: <span className="font-medium text-foreground">{s.tragbarkeit != null ? pct(Number(s.tragbarkeit)) : "—"}</span></span>
+                      <span>{t("financing.detail.quickcheck.scenarios.ltvShort")}: <span className="font-medium text-foreground">{s.belehnung != null ? pct(Number(s.belehnung)) : "—"}</span></span>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => loadScenario(s)}>Laden</Button>
+                      <Button size="sm" variant="outline" onClick={() => loadScenario(s)}>{t("financing.detail.quickcheck.scenarios.load")}</Button>
                       <DeleteScenarioButton onConfirm={() => deleteMutation.mutate(s.id)} pending={deleteMutation.isPending} />
                     </div>
                   </div>
@@ -1046,26 +1045,26 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Szenario speichern</DialogTitle>
-            <DialogDescription>Vergib eine Bezeichnung für dieses Szenario.</DialogDescription>
+            <DialogTitle>{t("financing.detail.quickcheck.scenarios.saveDialog.title")}</DialogTitle>
+            <DialogDescription>{t("financing.detail.quickcheck.scenarios.saveDialog.description")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="scenario-name">Bezeichnung</Label>
+            <Label htmlFor="scenario-name">{t("financing.detail.quickcheck.scenarios.saveDialog.label")}</Label>
             <Input
               id="scenario-name"
               value={scenarioName}
               onChange={(e) => setScenarioName(e.target.value)}
-              placeholder="z.B. Mehr Eigenkapital"
+              placeholder={t("financing.detail.quickcheck.scenarios.saveDialog.placeholder")}
               autoFocus
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSaveOpen(false)}>Abbrechen</Button>
+            <Button variant="outline" onClick={() => setSaveOpen(false)}>{t("financing.detail.quickcheck.scenarios.saveDialog.cancel")}</Button>
             <Button
               onClick={() => saveMutation.mutate(scenarioName.trim())}
               disabled={!scenarioName.trim() || saveMutation.isPending}
             >
-              {saveMutation.isPending ? "Speichern…" : "Speichern"}
+              {saveMutation.isPending ? t("financing.detail.quickcheck.scenarios.saveDialog.saving") : t("financing.detail.quickcheck.scenarios.saveDialog.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
