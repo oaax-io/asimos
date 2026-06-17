@@ -97,6 +97,8 @@ function formatBytes(bytes: number): string {
 const MAX_STORAGE = 20 * 1024 * 1024 * 1024; // 20 GB
 
 function MediaPage() {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
   const confirm = useConfirm();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
