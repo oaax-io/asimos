@@ -53,6 +53,7 @@ export function GeneratePdfButton({
   variant = "outline",
   disabled = false,
 }: Props) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [fallbackReason, setFallbackReason] = useState<string | null>(null);
