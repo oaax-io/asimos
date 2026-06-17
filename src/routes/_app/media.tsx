@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { convertUnsupportedImages } from "@/lib/image-convert";
 import { extractPropertyImagePaths } from "@/lib/property-media";
 import { useConfirm } from "@/components/confirm/ConfirmProvider";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/media")({ component: MediaPage });
 
@@ -96,6 +97,8 @@ function formatBytes(bytes: number): string {
 const MAX_STORAGE = 20 * 1024 * 1024 * 1024; // 20 GB
 
 function MediaPage() {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
   const confirm = useConfirm();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -199,25 +202,23 @@ function MediaPage() {
 
   const upload = useMutation({
     mutationFn: async () => {
-      if (!form.property_id) throw new Error("Bitte Immobilie wählen");
-      if (files.length === 0) throw new Error("Bitte mindestens eine Datei auswählen");
+      if (!form.property_id) throw new Error(t("media.toasts.propertyRequired"));
+      if (files.length === 0) throw new Error(t("media.toasts.fileRequired"));
       const rejected = files.filter((f) => !isAcceptedMediaFile(f));
       if (rejected.length > 0) {
-        throw new Error(
-          `In der Mediathek sind nur Bilder und Videos erlaubt. Bitte lade Dokumente (PDF, DOCX, …) unter „Dokumente" hoch. Abgelehnt: ${rejected.map((f) => f.name).join(", ")}`,
-        );
+        throw new Error(t("media.toasts.onlyMedia", { names: rejected.map((f) => f.name).join(", ") }));
       }
       setUploading(true);
       const processed = await convertUnsupportedImages(files);
       const maxSort = Math.max(0, ...media.filter((m) => m.property_id === form.property_id).map((m) => m.sort_order));
       setUploadProgress({ done: 0, total: processed.length, currentName: processed[0]?.name ?? "" });
-      const toastId = toast.loading(`Lädt hoch… 0 / ${processed.length}`);
+      const toastId = toast.loading(t("media.uploadingProgress", { done: 0, total: processed.length }));
 
       try {
         for (let i = 0; i < processed.length; i++) {
           const file = processed[i];
           setUploadProgress({ done: i, total: processed.length, currentName: file.name });
-          toast.loading(`Lädt hoch… ${i} / ${processed.length} · ${file.name}`, { id: toastId });
+          toast.loading(t("media.uploadingProgressNamed", { done: i, total: processed.length, name: file.name }), { id: toastId });
 
           const ext = file.name.split(".").pop() ?? "bin";
           const path = `${form.property_id}/${crypto.randomUUID()}.${ext}`;
@@ -245,8 +246,8 @@ function MediaPage() {
         await syncPropertyImages(form.property_id);
         toast.success(
           processed.length === 1
-            ? "Bild hochgeladen"
-            : `Alle ${processed.length} Dateien hochgeladen`,
+            ? t("media.toasts.uploaded")
+            : t("media.toasts.uploadedAll", { count: processed.length }),
           { id: toastId },
         );
       } catch (err) {
@@ -278,7 +279,7 @@ function MediaPage() {
       await syncPropertyImages(item.property_id);
     },
     onSuccess: () => {
-      toast.success("Gelöscht");
+      toast.success(t("media.toasts.deleted"));
       qc.invalidateQueries({ queryKey: ["property-media"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -292,7 +293,7 @@ function MediaPage() {
       await syncPropertyImages(item.property_id);
     },
     onSuccess: () => {
-      toast.success("Titelbild gesetzt");
+      toast.success(t("media.toasts.coverSet"));
       qc.invalidateQueries({ queryKey: ["property-media"] });
     },
   });
@@ -320,7 +321,7 @@ function MediaPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Umbenannt");
+      toast.success(t("media.toasts.renamed"));
       qc.invalidateQueries({ queryKey: ["property-media"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -366,8 +367,8 @@ function MediaPage() {
       return toRemove.length;
     },
     onSuccess: (count) => {
-      if (count === 0) toast.info("Keine Duplikate gefunden");
-      else toast.success(`${count} Duplikat(e) entfernt`);
+      if (count === 0) toast.info(t("media.duplicates.none"));
+      else toast.success(t("media.duplicates.removed", { count }));
       qc.invalidateQueries({ queryKey: ["property-media"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -431,8 +432,8 @@ function MediaPage() {
       return moved;
     },
     onSuccess: (count) => {
-      if (count === 0) toast.info("Keine Dokumente in der Mediathek gefunden");
-      else toast.success(`${count} Datei(en) nach „Dokumente" verschoben`);
+      if (count === 0) toast.info(t("media.migration.none"));
+      else toast.success(t("media.migration.moved", { count }));
       qc.invalidateQueries({ queryKey: ["property-media"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -470,7 +471,7 @@ function MediaPage() {
       const rootProp = propertyIndex.byId.get(rootId);
       const f = map.get(rootId) ?? {
         propertyId: rootId,
-        title: rootProp?.title ?? m.properties?.title ?? "Ohne Titel",
+        title: rootProp?.title ?? m.properties?.title ?? t("media.untitled"),
         city: rootProp?.city ?? m.properties?.city ?? null,
         items: [],
         cover: null,
@@ -515,8 +516,8 @@ function MediaPage() {
           <div className="flex items-center gap-2">
             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "folder" | "grid")}>
               <TabsList>
-                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />Kacheln</TabsTrigger>
-                <TabsTrigger value="folder"><ListIcon className="mr-1 h-4 w-4" />Ordner</TabsTrigger>
+                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />{t("media.viewModes.tiles")}</TabsTrigger>
+                <TabsTrigger value="folder"><ListIcon className="mr-1 h-4 w-4" />{t("media.viewModes.folders")}</TabsTrigger>
               </TabsList>
             </Tabs>
             <Dialog
@@ -529,19 +530,19 @@ function MediaPage() {
               <DialogTrigger asChild>
                 <Button>
                   <Upload className="mr-1 h-4 w-4" />
-                  Medien hochladen
+                  {t("media.uploadButton")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Neue Medien</DialogTitle>
+                  <DialogTitle>{t("media.newMedia")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3">
                   <div>
-                    <Label>Immobilie</Label>
+                    <Label>{t("media.fields.property")}</Label>
                     <Select value={form.property_id} onValueChange={(v) => setForm({ ...form, property_id: v })}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Auswählen" />
+                        <SelectValue placeholder={t("media.fields.selectProperty")} />
                       </SelectTrigger>
                       <SelectContent>
                         {rootProperties.map((p) => (
@@ -553,7 +554,7 @@ function MediaPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Dateien</Label>
+                    <Label>{t("media.fields.files")}</Label>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -587,23 +588,23 @@ function MediaPage() {
                         <Upload className={`h-5 w-5 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />
                       </div>
                       <p className="text-sm font-medium">
-                        {dragActive ? "Jetzt loslassen" : "Dateien hierher ziehen oder klicken"}
+                        {dragActive ? t("media.dropzone.release") : t("media.dropzone.idle")}
                       </p>
-                      <p className="text-xs text-muted-foreground">Bilder & Videos · mehrere möglich</p>
+                      <p className="text-xs text-muted-foreground">{t("media.dropzone.hint")}</p>
                     </div>
                     {files.length > 0 && (
-                      <p className="mt-2 text-xs text-muted-foreground">{files.length} Datei(en) ausgewählt</p>
+                      <p className="mt-2 text-xs text-muted-foreground">{t("media.dropzone.selected", { count: files.length })}</p>
                     )}
                   </div>
 
                   {files.length === 1 && (
                     <>
                       <div>
-                        <Label>Titel (optional)</Label>
+                        <Label>{t("media.fields.title")}</Label>
                         <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                       </div>
                       <div>
-                        <Label>Beschreibung (optional)</Label>
+                        <Label>{t("media.fields.description")}</Label>
                         <Textarea
                           rows={2}
                           value={form.description}
@@ -619,7 +620,7 @@ function MediaPage() {
                     <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-medium">
-                          {uploadProgress.done} / {uploadProgress.total} hochgeladen
+                          {t("media.uploadedCount", { done: uploadProgress.done, total: uploadProgress.total })}
                         </span>
                         <span className="text-muted-foreground">{pct}%</span>
                       </div>
@@ -634,10 +635,10 @@ function MediaPage() {
                 })()}
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setOpen(false)} disabled={uploading}>
-                    Abbrechen
+                    {t("media.cancel")}
                   </Button>
                   <Button onClick={() => upload.mutate()} disabled={uploading || files.length === 0}>
-                    {uploading ? "Wird hochgeladen…" : "Hochladen"}
+                    {uploading ? t("media.uploading") : t("media.upload")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -657,7 +658,7 @@ function MediaPage() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="font-medium text-foreground">Speicherverbrauch</span>
+                <span className="font-medium text-foreground">{t("media.storageUsage")}</span>
                 <span className="text-muted-foreground">
                   {formatBytes(used)} / {formatBytes(MAX_STORAGE)} ({pct}%)
                 </span>
@@ -677,19 +678,19 @@ function MediaPage() {
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700/40 dark:bg-amber-950/40 dark:text-amber-200">
           <FileText className="h-4 w-4 shrink-0" />
           <span className="flex-1">
-            {documentLikeCount} Datei(en) (z.B. PDF) gehören nicht in die Mediathek. Verschiebe sie nach „Dokumente".
+            {t("media.migration.warn", { count: documentLikeCount })}
           </span>
           <Button
             size="sm"
             variant="outline"
             disabled={migrateDocuments.isPending}
             onClick={async () => {
-              if (await confirm({ title: "Dateien verschieben?", description: `${documentLikeCount} Datei(en) werden nach „Dokumente" verschoben.`, confirmText: "Verschieben" })) {
+              if (await confirm({ title: t("media.migration.confirmTitle"), description: t("media.migration.confirmDescription", { count: documentLikeCount }), confirmText: t("media.migration.confirm") })) {
                 migrateDocuments.mutate();
               }
             }}
           >
-            {migrateDocuments.isPending ? "Verschiebe…" : "Nach Dokumente verschieben"}
+            {migrateDocuments.isPending ? t("media.migration.moving") : t("media.migration.move")}
           </Button>
         </div>
       )}
@@ -701,17 +702,17 @@ function MediaPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Medien suchen…"
+            placeholder={t("media.search")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <Select value={propertyFilter} onValueChange={setPropertyFilter}>
           <SelectTrigger className="w-56">
-            <SelectValue placeholder="Immobilie" />
+            <SelectValue placeholder={t("media.filters.property")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle Immobilien</SelectItem>
+            <SelectItem value="all">{t("media.filters.allProperties")}</SelectItem>
             {rootProperties.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.title}
@@ -721,13 +722,13 @@ function MediaPage() {
         </Select>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Typ" />
+            <SelectValue placeholder={t("media.filters.type")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle Typen</SelectItem>
-            <SelectItem value="image">Bilder</SelectItem>
-            <SelectItem value="video">Videos</SelectItem>
-            <SelectItem value="floor_plan">Grundrisse</SelectItem>
+            <SelectItem value="all">{t("media.filters.allTypes")}</SelectItem>
+            <SelectItem value="image">{t("media.filters.images")}</SelectItem>
+            <SelectItem value="video">{t("media.filters.videos")}</SelectItem>
+            <SelectItem value="floor_plan">{t("media.filters.floorPlans")}</SelectItem>
             
           </SelectContent>
         </Select>
@@ -737,23 +738,23 @@ function MediaPage() {
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => setPropertyFilter("all")}>
             <ArrowLeft className="mr-1 h-4 w-4" />
-            Alle Ordner
+            {t("media.folders.allFolders")}
           </Button>
           {duplicateCount > 0 && (
             <div className="ml-auto flex items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-1.5 text-xs text-amber-900 dark:border-amber-700/40 dark:bg-amber-950/40 dark:text-amber-200">
               <Copy className="h-3.5 w-3.5" />
-              <span>{duplicateCount} mögliche Duplikat(e) erkannt</span>
+              <span>{t("media.duplicates.detected", { count: duplicateCount })}</span>
               <Button
                 size="sm"
                 variant="outline"
                 className="h-7"
                 onClick={async () => {
-                  if (await confirm({ title: "Duplikate löschen?", description: `${duplicateCount} doppelte Datei(en) werden entfernt. Das älteste/Cover-Bild bleibt erhalten.`, confirmText: "Löschen" })) {
+                  if (await confirm({ title: t("media.duplicates.confirmTitle"), description: t("media.duplicates.confirmDescription", { count: duplicateCount }), confirmText: t("media.duplicates.confirm") })) {
                     removeDuplicates.mutate(propertyFilter);
                   }
                 }}
               >
-                Duplikate entfernen
+                {t("media.duplicates.remove")}
               </Button>
             </div>
           )}
@@ -761,22 +762,22 @@ function MediaPage() {
       )}
 
       {isLoading ? (
-        <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">Wird geladen…</div>
+        <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">{t("media.loading")}</div>
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Mediathek leer"
-          description="Lade Bilder, Videos oder Grundrisse zu deinen Objekten hoch."
+          title={t("media.empty.title")}
+          description={t("media.empty.description")}
         />
       ) : showFolders ? (
         <div className="overflow-hidden rounded-xl border bg-card shadow-soft">
           <div className="grid grid-cols-[1fr_120px_140px_80px] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            <div>Name</div>
-            <div className="text-right">Dateien</div>
-            <div>Ort</div>
-            <div className="text-right">Einheiten</div>
+            <div>{t("media.fields.name")}</div>
+            <div className="text-right">{t("media.fields.fileCount")}</div>
+            <div>{t("media.fields.location")}</div>
+            <div className="text-right">{t("media.fields.units")}</div>
           </div>
           {folders.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-muted-foreground">Keine Ordner vorhanden</div>
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">{t("media.folders.empty")}</div>
           ) : (
             folders.map((f) => (
               <button
@@ -812,7 +813,7 @@ function MediaPage() {
                   {isPdf ? (
                     <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-muted/60 text-muted-foreground transition group-hover:bg-muted">
                       <FileText className="h-10 w-10" />
-                      <span className="text-xs font-medium">PDF öffnen</span>
+                      <span className="text-xs font-medium">{t("media.badges.openPdf")}</span>
                     </div>
                   ) : isVideo ? (
                     <video src={url} className="h-full w-full object-cover" muted />
@@ -830,17 +831,17 @@ function MediaPage() {
                   {m.is_cover && (
                     <Badge className="absolute left-2 top-2 bg-primary text-primary-foreground">
                       <Star className="mr-1 h-3 w-3" />
-                      Cover
+                      {t("media.badges.cover")}
                     </Badge>
                   )}
                   {m.file_type && m.file_type !== "image" && (
                     <Badge variant="secondary" className="absolute right-2 top-2 capitalize">
-                      {m.file_type === "floor_plan" ? "Grundriss" : m.file_type}
+                      {m.file_type === "floor_plan" ? t("media.badges.floorPlan") : m.file_type}
                     </Badge>
                   )}
                 </button>
                 <div className="p-3">
-                  <p className="truncate text-sm font-medium">{m.title ?? m.file_name ?? "Ohne Titel"}</p>
+                  <p className="truncate text-sm font-medium">{m.title ?? m.file_name ?? t("media.untitled")}</p>
                   {m.properties && (
                     <Link
                       to="/properties/$id"
@@ -857,7 +858,7 @@ function MediaPage() {
                       variant="secondary"
                       size="icon"
                       className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-                      title="Als Titelbild setzen"
+                      title={t("media.actions.setCover")}
                       onClick={() => setCover.mutate(m)}
                     >
                       <Star className="h-3.5 w-3.5" />
@@ -867,7 +868,7 @@ function MediaPage() {
                     variant="secondary"
                     size="icon"
                     className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-                    title="Nach oben"
+                    title={t("media.actions.moveUp")}
                     onClick={() => moveSort.mutate({ item: m, dir: -1 })}
                   >
                     <ArrowUp className="h-3.5 w-3.5" />
@@ -876,7 +877,7 @@ function MediaPage() {
                     variant="secondary"
                     size="icon"
                     className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-                    title="Nach unten"
+                    title={t("media.actions.moveDown")}
                     onClick={() => moveSort.mutate({ item: m, dir: 1 })}
                   >
                     <ArrowDown className="h-3.5 w-3.5" />
@@ -885,9 +886,9 @@ function MediaPage() {
                     variant="secondary"
                     size="icon"
                     className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-                    title="Umbenennen"
+                    title={t("media.actions.rename")}
                     onClick={() => {
-                      const next = window.prompt("Neuer Titel", m.title ?? m.file_name ?? "");
+                      const next = window.prompt(t("media.newTitlePrompt"), m.title ?? m.file_name ?? "");
                       if (next !== null) rename.mutate({ id: m.id, title: next });
                     }}
                   >
@@ -897,7 +898,7 @@ function MediaPage() {
                     variant="secondary"
                     size="icon"
                     className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                    title="Löschen"
+                    title={t("media.actions.delete")}
                     onClick={() => remove.mutate(m)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -946,21 +947,21 @@ function MediaPage() {
                       onKeyDown={(e) => { if (e.key === "Escape") setEditingTitle(null); }}
                       className="h-8 max-w-md"
                     />
-                    <Button type="submit" size="icon" variant="secondary" className="h-8 w-8" title="Speichern">
+                    <Button type="submit" size="icon" variant="secondary" className="h-8 w-8" title={t("media.actions.save")}>
                       <Check className="h-4 w-4" />
                     </Button>
-                    <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title="Abbrechen" onClick={() => setEditingTitle(null)}>
+                    <Button type="button" size="icon" variant="ghost" className="h-8 w-8" title={t("media.cancel")} onClick={() => setEditingTitle(null)}>
                       <X className="h-4 w-4" />
                     </Button>
                   </form>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-medium">{current.title ?? current.file_name ?? "Ohne Titel"}</p>
+                    <p className="truncate text-sm font-medium">{current.title ?? current.file_name ?? t("media.untitled")}</p>
                     <Button
                       size="icon"
                       variant="ghost"
                       className="h-7 w-7 shrink-0"
-                      title="Umbenennen"
+                      title={t("media.actions.rename")}
                       onClick={() => setEditingTitle(current.title ?? current.file_name ?? "")}
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -981,7 +982,7 @@ function MediaPage() {
                   )}
                   <span className="inline-flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {new Date(current.created_at).toLocaleString("de-CH", { dateStyle: "medium", timeStyle: "short" })}
+                    {new Date(current.created_at).toLocaleString(dateLocale, { dateStyle: "medium", timeStyle: "short" })}
                   </span>
                   {(current.uploader?.full_name || current.uploader?.email) && (
                     <span className="inline-flex items-center gap-1">
@@ -995,10 +996,10 @@ function MediaPage() {
               <div className="flex items-center gap-2">
                 <Button asChild variant="outline" size="sm">
                   <a href={url} download={current.file_name ?? undefined} target="_blank" rel="noreferrer">
-                    <Download className="mr-1 h-4 w-4" /> Herunterladen
+                    <Download className="mr-1 h-4 w-4" /> {t("media.actions.download")}
                   </a>
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => setViewerIndex(null)} title="Schließen">
+                <Button variant="ghost" size="icon" onClick={() => setViewerIndex(null)} title={t("media.actions.close")}>
                   <X className="h-5 w-5" />
                 </Button>
               </div>
@@ -1009,7 +1010,7 @@ function MediaPage() {
                 size="icon"
                 className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full shadow-lg"
                 onClick={goPrev}
-                title="Vorheriges"
+                title={t("media.actions.prev")}
               >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
@@ -1027,7 +1028,7 @@ function MediaPage() {
                 size="icon"
                 className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full shadow-lg"
                 onClick={goNext}
-                title="Nächstes"
+                title={t("media.actions.next")}
               >
                 <ChevronRight className="h-5 w-5" />
               </Button>
