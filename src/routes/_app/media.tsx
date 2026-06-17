@@ -367,8 +367,8 @@ function MediaPage() {
       return toRemove.length;
     },
     onSuccess: (count) => {
-      if (count === 0) toast.info("Keine Duplikate gefunden");
-      else toast.success(`${count} Duplikat(e) entfernt`);
+      if (count === 0) toast.info(t("media.duplicates.none"));
+      else toast.success(t("media.duplicates.removed", { count }));
       qc.invalidateQueries({ queryKey: ["property-media"] });
     },
     onError: (e: Error) => toast.error(e.message),
