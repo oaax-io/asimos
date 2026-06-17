@@ -16,17 +16,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { apptTypeLabels, formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 import { useConfirm } from "@/components/confirm/ConfirmProvider";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/appointments")({ component: AppointmentsPage });
 
 const TYPES = ["viewing","meeting","call","other"] as const;
 const STATUSES = ["scheduled","completed","cancelled"] as const;
-const STATUS_LABELS: Record<typeof STATUSES[number], string> = {
-  scheduled: "Geplant", completed: "Erledigt", cancelled: "Abgesagt",
-};
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   scheduled: "default", completed: "secondary", cancelled: "outline",
 };
