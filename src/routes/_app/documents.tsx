@@ -42,6 +42,9 @@ function formatBytes(bytes: number | null | undefined) {
 const MAX_STORAGE = 20 * 1024 * 1024 * 1024; // 20 GB
 
 function DocumentsPage() {
+  const { t } = useTranslation();
+  const typeLabel = (k: string) => t(`documents.types.${k}`);
+  const relatedLabel = (k: string) => t(`documents.related.${k}`);
   const qc = useQueryClient();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
