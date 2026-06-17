@@ -588,12 +588,12 @@ function MediaPage() {
                         <Upload className={`h-5 w-5 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />
                       </div>
                       <p className="text-sm font-medium">
-                        {dragActive ? "Jetzt loslassen" : "Dateien hierher ziehen oder klicken"}
+                        {dragActive ? t("media.dropzone.release") : t("media.dropzone.idle")}
                       </p>
-                      <p className="text-xs text-muted-foreground">Bilder & Videos · mehrere möglich</p>
+                      <p className="text-xs text-muted-foreground">{t("media.dropzone.hint")}</p>
                     </div>
                     {files.length > 0 && (
-                      <p className="mt-2 text-xs text-muted-foreground">{files.length} Datei(en) ausgewählt</p>
+                      <p className="mt-2 text-xs text-muted-foreground">{t("media.dropzone.selected", { count: files.length })}</p>
                     )}
                   </div>
 
