@@ -952,8 +952,8 @@
         "combinedPk": "Kombinierter PK-Anteil:",
         "perYear": "/ Jahr",
         "checklist": {
-          "grossIncome": "Brutto-Jahreseinkommen",
-          "grossIncomeValue": "{{amount}} / Jahr (aus Selbstauskunft)",
+          "grossIncome": "Netto-Jahreseinkommen",
+          "grossIncomeValue": "{{amount}} / Jahr (aus Selbstauskunft, inkl. Zusatzeinkünfte)",
           "notRecorded": "nicht erfasst",
           "equity": "Eigenkapital",
           "pk": "PK / Freizügigkeit",
