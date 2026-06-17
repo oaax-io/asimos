@@ -432,8 +432,8 @@ function MediaPage() {
       return moved;
     },
     onSuccess: (count) => {
-      if (count === 0) toast.info("Keine Dokumente in der Mediathek gefunden");
-      else toast.success(`${count} Datei(en) nach „Dokumente" verschoben`);
+      if (count === 0) toast.info(t("media.migration.none"));
+      else toast.success(t("media.migration.moved", { count }));
       qc.invalidateQueries({ queryKey: ["property-media"] });
     },
     onError: (e: Error) => toast.error(e.message),
