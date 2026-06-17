@@ -105,11 +105,11 @@ function FinancingDetailPage() {
   return (
     <div className="space-y-6">
       <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/financing" })}>
-        <ArrowLeft className="mr-1 h-4 w-4" />Zurück
+        <ArrowLeft className="mr-1 h-4 w-4" />{t("financing.detail.back")}
       </Button>
 
       <PageHeader
-        title={dossier.title || FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType] || "Finanzierung"}
+        title={dossier.title || FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType] || t("financing.detail.fallback")}
         description={
           [
             FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType],
@@ -119,7 +119,7 @@ function FinancingDetailPage() {
         }
         action={
           <div className="flex gap-2">
-            <Badge>{DOSSIER_STATUS_LABELS[dossier.dossier_status as DossierStatus] ?? "Entwurf"}</Badge>
+            <Badge>{DOSSIER_STATUS_LABELS[dossier.dossier_status as DossierStatus] ?? t("financing.dossierStatus.draft")}</Badge>
             {dossier.quick_check_status && (
               <Badge variant="outline">{QUICK_CHECK_LABELS[dossier.quick_check_status as QuickCheckStatus]}</Badge>
             )}
@@ -128,22 +128,23 @@ function FinancingDetailPage() {
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={Banknote} label="Gesamtinvestition" value={fmt(dossier.total_investment)} />
-        <Stat icon={Banknote} label="Hypothek" value={fmt(dossier.requested_mortgage)} />
-        <Stat icon={Banknote} label="Eigenmittel" value={fmt(dossier.own_funds_total)} />
-        <Stat icon={Banknote} label="Tragbarkeit" value={dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"} />
+        <Stat icon={Banknote} label={t("financing.detail.stats.totalInvestment")} value={fmt(dossier.total_investment)} />
+        <Stat icon={Banknote} label={t("financing.detail.stats.mortgage")} value={fmt(dossier.requested_mortgage)} />
+        <Stat icon={Banknote} label={t("financing.detail.stats.ownFunds")} value={fmt(dossier.own_funds_total)} />
+        <Stat icon={Banknote} label={t("financing.detail.stats.affordability")} value={dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"} />
       </div>
 
       <Tabs defaultValue="overview">
         <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="quickcheck">Quick Check</TabsTrigger>
-          <TabsTrigger value="disclosure">Selbstauskunft</TabsTrigger>
-          <TabsTrigger value="ubs">Bank Checkliste</TabsTrigger>
-          <TabsTrigger value="documents">Dokumente</TabsTrigger>
-          <TabsTrigger value="bank">Bank Einreichung</TabsTrigger>
-          <TabsTrigger value="activity">Aktivität</TabsTrigger>
+          <TabsTrigger value="overview">{t("financing.detail.tabs.overview")}</TabsTrigger>
+          <TabsTrigger value="quickcheck">{t("financing.detail.tabs.quickcheck")}</TabsTrigger>
+          <TabsTrigger value="disclosure">{t("financing.detail.tabs.disclosure")}</TabsTrigger>
+          <TabsTrigger value="ubs">{t("financing.detail.tabs.ubs")}</TabsTrigger>
+          <TabsTrigger value="documents">{t("financing.detail.tabs.documents")}</TabsTrigger>
+          <TabsTrigger value="bank">{t("financing.detail.tabs.bank")}</TabsTrigger>
+          <TabsTrigger value="activity">{t("financing.detail.tabs.activity")}</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
