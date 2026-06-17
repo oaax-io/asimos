@@ -217,6 +217,15 @@ export function FinancingQuickCheckWizard({
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [step, setStep] = useState(1);
+  type IncomeBreakdown = {
+    annual_net_salary: number;
+    salary_net_monthly: number;
+    additional_income: number;
+    income_job_two: number;
+    income_rental: number;
+  };
+  const [mainIncomeBreakdown, setMainIncomeBreakdown] = useState<IncomeBreakdown | null>(null);
+  const [coIncomeBreakdown, setCoIncomeBreakdown] = useState<IncomeBreakdown | null>(null);
   const [form, setForm] = useState<WizardForm>(() => emptyForm({
     client_id: defaultClientId ?? "",
     property_id: defaultPropertyId ?? "",
