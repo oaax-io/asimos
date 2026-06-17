@@ -679,9 +679,9 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       <DialogContent className="max-h-[92vh] w-full max-w-4xl overflow-hidden p-0">
         <div className="flex flex-col max-h-[92vh]">
           <DialogHeader className="border-b px-6 pt-6 pb-4">
-            <DialogTitle className="text-xl">Neuen Kunden erfassen</DialogTitle>
+            <DialogTitle className="text-xl">{t("clientWizard.title")}</DialogTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Schritt {stepIdx + 1} von {steps.length} · {STEP_LABELS[currentStep]}
+              {t("clientWizard.stepProgress", { current: stepIdx + 1, total: steps.length, label: t(`clientWizard.steps.${currentStep}`) })}
             </p>
             <div className="mt-3"><Progress value={progress} className="h-1.5" /></div>
           </DialogHeader>
