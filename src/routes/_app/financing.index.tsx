@@ -145,10 +145,10 @@ function FinancingPage() {
         action={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setHypoOpen(true)}>
-              <Calculator className="mr-2 h-4 w-4" /> Hyporechner Kosovo
+              <Calculator className="mr-2 h-4 w-4" /> {t("financing.hypoButton")}
             </Button>
             <Button onClick={() => setWizardOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Quick Check starten
+              <Plus className="mr-2 h-4 w-4" /> {t("financing.startQuickCheck")}
             </Button>
           </div>
         }
@@ -157,50 +157,50 @@ function FinancingPage() {
       <div className="flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input className="pl-9" placeholder={t("financing.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Art" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.type")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Alle Arten</SelectItem>
-            {Object.entries(FINANCING_TYPE_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
+            <SelectItem value={ALL}>{t("financing.filters.allTypes")}</SelectItem>
+            {Object.keys(FINANCING_TYPE_LABELS).map((k) => (
+              <SelectItem key={k} value={k}>{typeLabel(k)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={qcFilter} onValueChange={setQcFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Quick Check" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.quickCheck")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Quick Check (alle)</SelectItem>
-            {Object.entries(QUICK_CHECK_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
+            <SelectItem value={ALL}>{t("financing.filters.allQuickCheck")}</SelectItem>
+            {Object.keys(QUICK_CHECK_LABELS).map((k) => (
+              <SelectItem key={k} value={k}>{qcLabel(k)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Dossier-Status" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.dossierStatus")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Status (alle)</SelectItem>
-            {Object.entries(DOSSIER_STATUS_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
+            <SelectItem value={ALL}>{t("financing.filters.allStatus")}</SelectItem>
+            {Object.keys(DOSSIER_STATUS_LABELS).map((k) => (
+              <SelectItem key={k} value={k}>{dossierLabel(k)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={bankFilter} onValueChange={setBankFilter}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Banktyp" /></SelectTrigger>
+          <SelectTrigger className="w-[150px]"><SelectValue placeholder={t("financing.filters.bankType")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Banktyp (alle)</SelectItem>
+            <SelectItem value={ALL}>{t("financing.filters.allBankTypes")}</SelectItem>
             <SelectItem value="ubs">UBS</SelectItem>
-            <SelectItem value="other">Andere Bank</SelectItem>
-            <SelectItem value="none">Keine Bank</SelectItem>
+            <SelectItem value="other">{t("financing.filters.otherBank")}</SelectItem>
+            <SelectItem value="none">{t("financing.filters.noBank")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Datenbasis" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.dataSource")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Datenbasis (alle)</SelectItem>
-            <SelectItem value="existing_property">Bestehende Immobilie</SelectItem>
-            <SelectItem value="quick_entry">Quick-Erfassung</SelectItem>
+            <SelectItem value={ALL}>{t("financing.filters.allDataSources")}</SelectItem>
+            <SelectItem value="existing_property">{t("financing.filters.existingProperty")}</SelectItem>
+            <SelectItem value="quick_entry">{t("financing.filters.quickEntry")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -211,10 +211,10 @@ function FinancingPage() {
             <Checkbox
               checked={allVisibleSelected}
               onCheckedChange={toggleAllVisible}
-              aria-label="Alle auswählen"
+              aria-label={t("financing.bulk.selectAll")}
             />
             <span className="text-muted-foreground">
-              {selectionCount > 0 ? `${selectionCount} ausgewählt` : "Alle auswählen"}
+              {selectionCount > 0 ? t("financing.bulk.selected", { count: selectionCount }) : t("financing.bulk.selectAll")}
             </span>
           </label>
           {selectionCount > 0 && (
@@ -222,16 +222,16 @@ function FinancingPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.info("Zuweisen kommt bald")}
+                onClick={() => toast.info(t("financing.bulk.assignSoon"))}
               >
-                <UserPlus className="mr-2 h-4 w-4" />Zuweisen
+                <UserPlus className="mr-2 h-4 w-4" />{t("financing.bulk.assign")}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.info("Dokumentgenerierung kommt bald")}
+                onClick={() => toast.info(t("financing.bulk.docSoon"))}
               >
-                <FileText className="mr-2 h-4 w-4" />Dokument generieren
+                <FileText className="mr-2 h-4 w-4" />{t("financing.bulk.generateDocument")}
               </Button>
               {canDelete && (
                 <Button
@@ -240,14 +240,14 @@ function FinancingPage() {
                   onClick={() => setConfirmDeleteOpen(true)}
                   disabled={deleteMutation.isPending}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />Löschen
+                  <Trash2 className="mr-2 h-4 w-4" />{t("financing.bulk.delete")}
                 </Button>
               )}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelected(new Set())}
-                aria-label="Auswahl aufheben"
+                aria-label={t("financing.bulk.clear")}
               >
                 <X className="h-4 w-4" />
               </Button>
