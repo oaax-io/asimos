@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { propertyTypeLabels } from "@/lib/format";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { useTranslation } from "react-i18next";
 
 // ----- Typen -----
 type EntityType = "person" | "company";
@@ -47,15 +48,15 @@ interface Props {
 
 // ----- Konstanten -----
 const ROLE_OPTIONS: {
-  value: RoleChoice; label: string; description: string; icon: typeof Tag;
+  value: RoleChoice; icon: typeof Tag;
 }[] = [
-  { value: "buyer",               label: "Käufer / Suchkunde",     description: "Sucht eine Immobilie zum Kauf",          icon: Target },
-  { value: "seller_owner",        label: "Verkäufer / Eigentümer", description: "Bietet eine Immobilie an oder besitzt eine", icon: Home },
-  { value: "tenant",              label: "Mieter",                 description: "Sucht eine Mietwohnung",                 icon: User },
-  { value: "landlord",            label: "Vermieter",              description: "Vermietet eine Immobilie",               icon: Building2 },
-  { value: "financing_applicant", label: "Finanzierungskunde",     description: "Benötigt Finanzierungsberatung",         icon: Wallet },
-  { value: "investor",            label: "Investor",               description: "Sucht Renditeobjekte",                   icon: Briefcase },
-  { value: "general_contact",     label: "Allgemeiner Kontakt",    description: "Sonstiger Kontakt ohne klare Rolle",     icon: Mail },
+  { value: "buyer",               icon: Target },
+  { value: "seller_owner",        icon: Home },
+  { value: "tenant",              icon: User },
+  { value: "landlord",            icon: Building2 },
+  { value: "financing_applicant", icon: Wallet },
+  { value: "investor",            icon: Briefcase },
+  { value: "general_contact",     icon: Mail },
 ];
 
 const ROLE_TO_DB_ROLE: Record<RoleChoice, string> = {
@@ -79,14 +80,7 @@ const ROLE_TO_CLIENT_TYPE: Record<RoleChoice, string> = {
 };
 
 const PROP_TYPES = ["apartment", "house", "commercial", "land", "mixed_use", "other"] as const;
-const FINANCING_GOALS: { value: string; label: string }[] = [
-  { value: "purchase",           label: "Immobilienkauf" },
-  { value: "renovation",         label: "Renovation" },
-  { value: "increase",           label: "Aufstockung" },
-  { value: "refinance",          label: "Refinanzierung" },
-  { value: "new_build",          label: "Neubau" },
-  { value: "mortgage_increase",  label: "Hypothekenerhöhung" },
-];
+const FINANCING_GOALS = ["purchase", "renovation", "increase", "refinance", "new_build", "mortgage_increase"] as const;
 
 // ----- Form State -----
 type FormState = {
@@ -241,23 +235,12 @@ function buildSteps(entity: EntityType, role: RoleChoice | "", method: "manual" 
   return s;
 }
 
-const STEP_LABELS: Record<StepKey, string> = {
-  entity: "Art",
-  method: "Erfassungsart",
-  role: "Rolle",
-  stamm: "Stammdaten",
-  company_contact: "Kontaktperson",
-  search: "Suchprofil",
-  investment: "Investment-Profil",
-  financing: "Finanzierung",
-  property: "Immobilie",
-  ownership: "Eigentum",
-  tags: "Notizen & Tags",
-  review: "Übersicht",
-};
+// Step labels are resolved via t(`clientWizard.steps.${key}`)
 
 // ===========================================================
 export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
+  const { t, i18n } = useTranslation();
+  const numLocale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [stepIdx, setStepIdx] = useState(0);
@@ -303,7 +286,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
   // ---- Upload-Flow: Selbstauskunft hochladen, Kunde(n) automatisch anlegen ----
   const handleSelfDisclosureUpload = async (file: File) => {
     if (file.type !== "application/pdf") {
-      toast.error("Bitte eine PDF-Datei hochladen");
+      toast.error(t("clientWizard.toasts.pdfRequired"));
       return;
     }
     setUploading(true);
@@ -330,7 +313,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       const first = (fields.first_name as string | undefined)?.trim() ?? "";
       const last = (fields.last_name as string | undefined)?.trim() ?? "";
       const fullName = [first, last].filter(Boolean).join(" ");
-      if (!fullName) throw new Error("Kein Name in der Selbstauskunft erkannt – bitte manuell erfassen.");
+      if (!fullName) throw new Error(t("clientWizard.toasts.noNameDetected"));
 
       const { data: userData } = await supabase.auth.getUser();
       const owner_id = userData.user?.id ?? null;
@@ -378,7 +361,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       if (hasCo && coFields) {
         const coFirst = (coFields.first_name as string | undefined)?.trim() ?? "";
         const coLast = (coFields.last_name as string | undefined)?.trim() ?? "";
-        const coName = [coFirst, coLast].filter(Boolean).join(" ") || "Mitantragsteller";
+        const coName = [coFirst, coLast].filter(Boolean).join(" ") || t("clientWizard.toasts.coApplicantFallback");
 
         const { data: coClient, error: coErr } = await supabase
           .from("clients")
@@ -422,15 +405,15 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       }
 
       toast.success(hasCo
-        ? `Kunde «${fullName}» und Mitantragsteller wurden angelegt.`
-        : `Kunde «${fullName}» wurde aus der Selbstauskunft angelegt.`);
+        ? t("clientWizard.toasts.uploadedWithCo", { name: fullName })
+        : t("clientWizard.toasts.uploadedSingle", { name: fullName }));
       qc.invalidateQueries({ queryKey: ["clients"] });
       onCreated?.(clientId);
       navigate({ to: "/clients/$id", params: { id: clientId } }).catch(() => {});
       reset();
       onOpenChange(false);
     } catch (e: any) {
-      toast.error(e?.message ?? "Selbstauskunft konnte nicht verarbeitet werden");
+      toast.error(e?.message ?? t("clientWizard.toasts.parseError"));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -440,10 +423,10 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
   // ---- Save ----
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.role_choice) throw new Error("Bitte Rolle wählen");
+      if (!form.role_choice) throw new Error(t("clientWizard.toasts.roleRequired"));
       if (!fullName) throw new Error(form.entity_type === "company"
-        ? "Firmenname ist erforderlich"
-        : "Vor- und Nachname sind erforderlich");
+        ? t("clientWizard.toasts.companyRequired")
+        : t("clientWizard.toasts.personRequired"));
 
       const role = form.role_choice as RoleChoice;
       const { data: userData } = await supabase.auth.getUser();
@@ -496,7 +479,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             client_id: clientId,
             related_client_id: form.linked_contact_client_id,
             relationship_type: "other" as any,
-            notes: "Kontaktperson",
+            notes: t("clientWizard.toasts.contactPersonNote"),
           });
           if (relErr) console.warn("Relationship:", relErr);
           // Zusätzlich client_roles contact_person für die verknüpfte Person
@@ -507,7 +490,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             start_date: new Date().toISOString().slice(0, 10),
             related_id: clientId,
             related_type: "client",
-            notes: `Kontaktperson für ${fullName}`,
+            notes: t("clientWizard.toasts.contactPersonFor", { name: fullName }),
           });
         }
       }
@@ -627,7 +610,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
           dossier_status: "draft",
           quick_check_status: "incomplete",
           data_source: linkedPropertyId ? "existing_property" : "manual",
-          title: `Finanzierung – ${fullName}`,
+          title: t("clientWizard.toasts.financingTitle", { name: fullName }),
           purchase_price: num(form.fin_purchase_price),
           renovation_costs: num(form.fin_renovation_costs),
           existing_mortgage: num(form.fin_existing_mortgage),
@@ -664,7 +647,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       };
     },
     onSuccess: ({ clientId, role, propertyId }) => {
-      toast.success("Kunde erfolgreich erstellt");
+      toast.success(t("clientWizard.toasts.createSuccess"));
       qc.invalidateQueries({ queryKey: ["clients"] });
       qc.invalidateQueries({ queryKey: ["properties"] });
       onCreated?.(clientId);
@@ -675,7 +658,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       reset();
       onOpenChange(false);
     },
-    onError: (e: any) => toast.error(e?.message ?? "Fehler beim Speichern"),
+    onError: (e: any) => toast.error(e?.message ?? t("clientWizard.toasts.createError")),
   });
 
   // ---- Navigation ----
@@ -696,9 +679,9 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       <DialogContent className="max-h-[92vh] w-full max-w-4xl overflow-hidden p-0">
         <div className="flex flex-col max-h-[92vh]">
           <DialogHeader className="border-b px-6 pt-6 pb-4">
-            <DialogTitle className="text-xl">Neuen Kunden erfassen</DialogTitle>
+            <DialogTitle className="text-xl">{t("clientWizard.title")}</DialogTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Schritt {stepIdx + 1} von {steps.length} · {STEP_LABELS[currentStep]}
+              {t("clientWizard.stepProgress", { current: stepIdx + 1, total: steps.length, label: t(`clientWizard.steps.${currentStep}`) })}
             </p>
             <div className="mt-3"><Progress value={progress} className="h-1.5" /></div>
           </DialogHeader>
@@ -708,14 +691,14 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             {currentStep === "entity" && (
               <div className="space-y-4">
                 <div>
-                  <p className="text-base font-semibold">Was möchtest du erfassen?</p>
-                  <p className="text-sm text-muted-foreground">Wähle die Art des Kunden.</p>
+                  <p className="text-base font-semibold">{t("clientWizard.entity.question")}</p>
+                  <p className="text-sm text-muted-foreground">{t("clientWizard.entity.hint")}</p>
                 </div>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {([
-                    { v: "person",  title: "Privatperson",        desc: "Eine natürliche Person",   Icon: User },
-                    { v: "company", title: "Unternehmen / Firma", desc: "Eine juristische Person", Icon: Building2 },
-                  ] as const).map(({ v, title, desc, Icon }) => {
+                    { v: "person",  k: "person",  Icon: User },
+                    { v: "company", k: "company", Icon: Building2 },
+                  ] as const).map(({ v, k, Icon }) => {
                     const active = form.entity_type === v;
                     return (
                       <button type="button" key={v}
@@ -727,8 +710,8 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                           <Icon className="h-5 w-5" />
                         </span>
                         <span className="flex-1">
-                          <span className="block font-semibold">{title}</span>
-                          <span className="block text-sm text-muted-foreground">{desc}</span>
+                          <span className="block font-semibold">{t(`clientWizard.entity.${k}.title`)}</span>
+                          <span className="block text-sm text-muted-foreground">{t(`clientWizard.entity.${k}.desc`)}</span>
                         </span>
                         {active && <Check className="h-5 w-5 text-primary" />}
                       </button>
@@ -742,17 +725,16 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             {currentStep === "method" && (
               <div className="space-y-4">
                 <div>
-                  <p className="text-base font-semibold">Wie möchtest du den Kunden erfassen?</p>
+                  <p className="text-base font-semibold">{t("clientWizard.method.question")}</p>
                   <p className="text-sm text-muted-foreground">
-                    Mit einer Selbstauskunft (PDF) füllen wir Stammdaten, Finanzen und
-                    Mitantragsteller automatisch aus.
+                    {t("clientWizard.method.hint")}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {([
-                    { v: "manual", title: "Manuell erfassen", desc: "Schrittweise Eingabe mit Rolle und Stammdaten", Icon: ClipboardCheck },
-                    { v: "upload", title: "Selbstauskunft hochladen", desc: "PDF analysieren – Kunde wird automatisch angelegt", Icon: Sparkles },
-                  ] as const).map(({ v, title, desc, Icon }) => {
+                    { v: "manual", k: "manual", Icon: ClipboardCheck },
+                    { v: "upload", k: "upload", Icon: Sparkles },
+                  ] as const).map(({ v, k, Icon }) => {
                     const active = form.creation_method === v;
                     return (
                       <button type="button" key={v}
@@ -764,8 +746,8 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                           <Icon className="h-5 w-5" />
                         </span>
                         <span className="flex-1">
-                          <span className="block font-semibold">{title}</span>
-                          <span className="block text-sm text-muted-foreground">{desc}</span>
+                          <span className="block font-semibold">{t(`clientWizard.method.${k}.title`)}</span>
+                          <span className="block text-sm text-muted-foreground">{t(`clientWizard.method.${k}.desc`)}</span>
                         </span>
                         {active && <Check className="h-5 w-5 text-primary" />}
                       </button>
@@ -777,9 +759,9 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                   <div className="rounded-xl border border-dashed p-6 text-center space-y-3">
                     <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
                     <div>
-                      <p className="font-medium">Selbstauskunft als PDF hochladen</p>
+                      <p className="font-medium">{t("clientWizard.method.pdfTitle")}</p>
                       <p className="text-sm text-muted-foreground">
-                        Erkennt automatisch Antragsteller 1 und – falls vorhanden – Antragsteller 2.
+                        {t("clientWizard.method.pdfHint")}
                       </p>
                     </div>
                     <input
@@ -795,7 +777,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                     <Button type="button" disabled={uploading}
                       onClick={() => fileInputRef.current?.click()}>
                       {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                      {uploading ? "Wird analysiert…" : "PDF auswählen"}
+                      {uploading ? t("clientWizard.method.analyzing") : t("clientWizard.method.selectPdf")}
                     </Button>
                   </div>
                 )}
@@ -808,11 +790,11 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             {currentStep === "role" && (
               <div className="space-y-4">
                 <div>
-                  <p className="text-base font-semibold">Welche Rolle hat dieser Kunde?</p>
-                  <p className="text-sm text-muted-foreground">Bestimmt die nächsten Schritte.</p>
+                  <p className="text-base font-semibold">{t("clientWizard.role.question")}</p>
+                  <p className="text-sm text-muted-foreground">{t("clientWizard.role.hint")}</p>
                 </div>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {ROLE_OPTIONS.map(({ value, label, description, icon: Icon }) => {
+                  {ROLE_OPTIONS.map(({ value, icon: Icon }) => {
                     const active = form.role_choice === value;
                     return (
                       <button type="button" key={value}
@@ -824,8 +806,8 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                           <Icon className="h-5 w-5" />
                         </span>
                         <span className="flex-1">
-                          <span className="block font-semibold">{label}</span>
-                          <span className="block text-sm text-muted-foreground">{description}</span>
+                          <span className="block font-semibold">{t(`clientWizard.role.options.${value}.label`)}</span>
+                          <span className="block text-sm text-muted-foreground">{t(`clientWizard.role.options.${value}.description`)}</span>
                         </span>
                         {active && <Check className="h-5 w-5 text-primary" />}
                       </button>
@@ -841,41 +823,41 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                 {form.entity_type === "company" ? (
                   <>
                     <div>
-                      <Label>Firmenname *</Label>
+                      <Label>{t("clientWizard.stamm.companyName")}</Label>
                       <Input value={form.company_name} onChange={(e) => set("company_name", e.target.value)} placeholder="ACME AG" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
-                      <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.stamm.email")}</Label><Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.stamm.phone")}</Label><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></div>
                     </div>
                   </>
                 ) : (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
-                        <Label>Anrede</Label>
+                        <Label>{t("clientWizard.stamm.salutation")}</Label>
                         <Select value={form.salutation} onValueChange={(v) => set("salutation", v)}>
-                          <SelectTrigger><SelectValue placeholder="Wählen..." /></SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder={t("clientWizard.stamm.selectPlaceholder")} /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Herr">Herr</SelectItem>
-                            <SelectItem value="Frau">Frau</SelectItem>
-                            <SelectItem value="Divers">Divers</SelectItem>
+                            <SelectItem value="Herr">{t("clientWizard.stamm.salHerr")}</SelectItem>
+                            <SelectItem value="Frau">{t("clientWizard.stamm.salFrau")}</SelectItem>
+                            <SelectItem value="Divers">{t("clientWizard.stamm.salDivers")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-                      <div><Label>Vorname *</Label><Input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} /></div>
-                      <div><Label>Nachname *</Label><Input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.stamm.firstName")}</Label><Input value={form.first_name} onChange={(e) => set("first_name", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.stamm.lastName")}</Label><Input value={form.last_name} onChange={(e) => set("last_name", e.target.value)} /></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
-                      <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.stamm.email")}</Label><Input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.stamm.phone")}</Label><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></div>
                     </div>
                   </>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <div className="md:col-span-2"><Label>Strasse</Label><AddressAutocomplete value={form.street} onChange={(v) => set("street", v)} onSelect={(s) => { set("street", s.street || s.label); if (s.postal_code) set("postal_code", s.postal_code); if (s.city) set("city", s.city); if (s.country_code) set("country", s.country_code); }} /></div>
-                  <div><Label>PLZ</Label><Input value={form.postal_code} onChange={(e) => set("postal_code", e.target.value)} /></div>
-                  <div><Label>Ort</Label><Input value={form.city} onChange={(e) => set("city", e.target.value)} /></div>
+                  <div className="md:col-span-2"><Label>{t("clientWizard.stamm.street")}</Label><AddressAutocomplete value={form.street} onChange={(v) => set("street", v)} onSelect={(s) => { set("street", s.street || s.label); if (s.postal_code) set("postal_code", s.postal_code); if (s.city) set("city", s.city); if (s.country_code) set("country", s.country_code); }} /></div>
+                  <div><Label>{t("clientWizard.stamm.postalCode")}</Label><Input value={form.postal_code} onChange={(e) => set("postal_code", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.stamm.city")}</Label><Input value={form.city} onChange={(e) => set("city", e.target.value)} /></div>
                 </div>
               </div>
             )}
@@ -884,14 +866,14 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             {currentStep === "company_contact" && (
               <div className="space-y-4">
                 <div>
-                  <p className="text-base font-semibold">Kontaktperson</p>
-                  <p className="text-sm text-muted-foreground">Wer ist der Ansprechpartner für diese Firma?</p>
+                  <p className="text-base font-semibold">{t("clientWizard.companyContact.title")}</p>
+                  <p className="text-sm text-muted-foreground">{t("clientWizard.companyContact.hint")}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {([
-                    { v: "manual",   title: "Neue Kontaktperson",         desc: "Direkt erfassen",                 Icon: User },
-                    { v: "existing", title: "Bestehenden Kunden wählen",  desc: "Aus der Kundenliste verknüpfen", Icon: Users },
-                  ] as const).map(({ v, title, desc, Icon }) => {
+                    { v: "manual",   k: "manual",   Icon: User },
+                    { v: "existing", k: "existing", Icon: Users },
+                  ] as const).map(({ v, k, Icon }) => {
                     const active = form.contact_mode === v;
                     return (
                       <button type="button" key={v}
@@ -903,8 +885,8 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                           <Icon className="h-4 w-4" />
                         </span>
                         <span className="flex-1">
-                          <span className="block text-sm font-semibold">{title}</span>
-                          <span className="block text-xs text-muted-foreground">{desc}</span>
+                          <span className="block text-sm font-semibold">{t(`clientWizard.companyContact.${k}.title`)}</span>
+                          <span className="block text-xs text-muted-foreground">{t(`clientWizard.companyContact.${k}.desc`)}</span>
                         </span>
                       </button>
                     );
@@ -913,16 +895,16 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
 
                 {form.contact_mode === "manual" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div><Label>Vorname</Label><Input value={form.contact_first_name} onChange={(e) => set("contact_first_name", e.target.value)} /></div>
-                    <div><Label>Nachname</Label><Input value={form.contact_last_name} onChange={(e) => set("contact_last_name", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.companyContact.firstName")}</Label><Input value={form.contact_first_name} onChange={(e) => set("contact_first_name", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.companyContact.lastName")}</Label><Input value={form.contact_last_name} onChange={(e) => set("contact_last_name", e.target.value)} /></div>
                   </div>
                 )}
 
                 {form.contact_mode === "existing" && (
                   <div>
-                    <Label>Bestehender Kunde</Label>
+                    <Label>{t("clientWizard.companyContact.existingClient")}</Label>
                     <Select value={form.linked_contact_client_id} onValueChange={(v) => set("linked_contact_client_id", v)}>
-                      <SelectTrigger><SelectValue placeholder="Person wählen..." /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t("clientWizard.companyContact.selectPerson")} /></SelectTrigger>
                       <SelectContent>
                         {(personClientsQuery.data ?? []).map((c) => (
                           <SelectItem key={c.id} value={c.id}>
@@ -941,40 +923,40 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <Label>Vermarktungsart</Label>
+                    <Label>{t("clientWizard.search.listingType")}</Label>
                     <Select value={form.preferred_listing || (form.role_choice === "tenant" ? "rent" : "sale")} onValueChange={(v) => set("preferred_listing", v as any)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="sale">Kauf</SelectItem>
-                        <SelectItem value="rent">Miete</SelectItem>
+                        <SelectItem value="sale">{t("clientWizard.search.listingSale")}</SelectItem>
+                        <SelectItem value="rent">{t("clientWizard.search.listingRent")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label>Wunschorte (Komma-getrennt)</Label>
-                    <Input value={form.preferred_cities} onChange={(e) => set("preferred_cities", e.target.value)} placeholder="Zürich, Zug, Luzern" />
+                    <Label>{t("clientWizard.search.preferredCities")}</Label>
+                    <Input value={form.preferred_cities} onChange={(e) => set("preferred_cities", e.target.value)} placeholder={t("clientWizard.search.citiesPlaceholder")} />
                   </div>
                 </div>
                 <div>
-                  <Label>Objektarten</Label>
+                  <Label>{t("clientWizard.search.propertyTypes")}</Label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {PROP_TYPES.map((t) => {
-                      const active = form.preferred_types.includes(t);
+                    {PROP_TYPES.map((pt) => {
+                      const active = form.preferred_types.includes(pt);
                       return (
-                        <button type="button" key={t}
-                          onClick={() => set("preferred_types", active ? form.preferred_types.filter((x) => x !== t) : [...form.preferred_types, t])}
+                        <button type="button" key={pt}
+                          onClick={() => set("preferred_types", active ? form.preferred_types.filter((x) => x !== pt) : [...form.preferred_types, pt])}
                           className={`rounded-full border px-3 py-1 text-xs transition ${active ? "border-primary bg-primary/10 text-primary" : "border-input hover:bg-muted"}`}>
-                          {propertyTypeLabels[t as keyof typeof propertyTypeLabels] ?? t}
+                          {propertyTypeLabels[pt as keyof typeof propertyTypeLabels] ?? pt}
                         </button>
                       );
                     })}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div><Label>Budget min</Label><Input type="number" value={form.budget_min} onChange={(e) => set("budget_min", e.target.value)} /></div>
-                  <div><Label>Budget max</Label><Input type="number" value={form.budget_max} onChange={(e) => set("budget_max", e.target.value)} /></div>
-                  <div><Label>Zimmer min</Label><Input type="number" value={form.rooms_min} onChange={(e) => set("rooms_min", e.target.value)} /></div>
-                  <div><Label>Fläche min (m²)</Label><Input type="number" value={form.area_min} onChange={(e) => set("area_min", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.search.budgetMin")}</Label><Input type="number" value={form.budget_min} onChange={(e) => set("budget_min", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.search.budgetMax")}</Label><Input type="number" value={form.budget_max} onChange={(e) => set("budget_max", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.search.roomsMin")}</Label><Input type="number" value={form.rooms_min} onChange={(e) => set("rooms_min", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.search.areaMin")}</Label><Input type="number" value={form.area_min} onChange={(e) => set("area_min", e.target.value)} /></div>
                 </div>
               </div>
             )}
@@ -1055,11 +1037,11 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               <div className="space-y-5">
                 {form.role_choice === "financing_applicant" && (
                   <div>
-                    <Label>Finanzierungsziel *</Label>
+                    <Label>{t("clientWizard.financing.goal")}</Label>
                     <Select value={form.financing_goal} onValueChange={(v) => set("financing_goal", v)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {FINANCING_GOALS.map((g) => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
+                        {FINANCING_GOALS.map((g) => <SelectItem key={g} value={g}>{t(`clientWizard.financingGoals.${g}`)}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1244,10 +1226,10 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               <div className="space-y-4">
                 <div className="rounded-xl border p-4 space-y-2">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{form.entity_type === "company" ? "Firma" : "Privatperson"}</Badge>
-                    <Badge>{ROLE_OPTIONS.find((r) => r.value === form.role_choice)?.label}</Badge>
+                    <Badge variant="outline">{form.entity_type === "company" ? t("clientWizard.review.companyType") : t("clientWizard.review.privatePerson")}</Badge>
+                    <Badge>{form.role_choice ? t(`clientWizard.role.options.${form.role_choice}.label`) : ""}</Badge>
                   </div>
-                  <p className="text-lg font-semibold">{fullName || "—"}</p>
+                  <p className="text-lg font-semibold">{fullName || t("clientWizard.common.dash")}</p>
                   {(form.email || form.phone) && (
                     <p className="text-sm text-muted-foreground">
                       {[form.email, form.phone].filter(Boolean).join(" · ")}
@@ -1260,43 +1242,43 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                   )}
                   {form.entity_type === "company" && form.contact_mode === "existing" && form.linked_contact_client_id && (
                     <p className="text-sm">
-                      Kontaktperson: {(personClientsQuery.data ?? []).find((c) => c.id === form.linked_contact_client_id)?.full_name}
+                      {t("clientWizard.review.contactPerson")} {(personClientsQuery.data ?? []).find((c) => c.id === form.linked_contact_client_id)?.full_name}
                     </p>
                   )}
                   {form.entity_type === "company" && form.contact_mode === "manual" && (form.contact_first_name || form.contact_last_name) && (
-                    <p className="text-sm">Kontaktperson: {`${form.contact_first_name} ${form.contact_last_name}`.trim()}</p>
+                    <p className="text-sm">{t("clientWizard.review.contactPerson")} {`${form.contact_first_name} ${form.contact_last_name}`.trim()}</p>
                   )}
                 </div>
 
                 {(form.role_choice === "buyer" || form.role_choice === "tenant" || form.role_choice === "investor") && (
                   <div className="rounded-xl border p-4">
-                    <p className="text-sm font-semibold mb-1">Suchprofil</p>
+                    <p className="text-sm font-semibold mb-1">{t("clientWizard.review.searchProfile")}</p>
                     <p className="text-sm text-muted-foreground">
-                      {form.preferred_cities || "—"} · Budget {form.budget_min || "—"}–{form.budget_max || "—"} CHF
-                      {form.role_choice === "investor" && form.yield_target ? ` · Ziel ${form.yield_target}%` : ""}
+                      {t("clientWizard.review.budgetRange", { cities: form.preferred_cities || t("clientWizard.common.dash"), min: form.budget_min || t("clientWizard.common.dash"), max: form.budget_max || t("clientWizard.common.dash") })}
+                      {form.role_choice === "investor" && form.yield_target ? t("clientWizard.review.yieldSuffix", { value: form.yield_target }) : ""}
                     </p>
                   </div>
                 )}
 
                 {(form.role_choice === "seller_owner" || form.role_choice === "landlord") && (
                   <div className="rounded-xl border p-4">
-                    <p className="text-sm font-semibold mb-1">Eigentum</p>
+                    <p className="text-sm font-semibold mb-1">{t("clientWizard.review.ownership")}</p>
                     <p className="text-sm text-muted-foreground">
                       {form.property_mode === "existing"
-                        ? (propertiesQuery.data ?? []).find((p) => p.id === form.selected_property_id)?.title || "Bestehende Immobilie"
+                        ? (propertiesQuery.data ?? []).find((p) => p.id === form.selected_property_id)?.title || t("clientWizard.review.ownershipExistingFallback")
                         : form.property_mode === "new"
-                          ? form.new_property_title || "Neue Immobilie"
-                          : "Keine Immobilie verknüpft"}
+                          ? form.new_property_title || t("clientWizard.review.ownershipNewFallback")
+                          : t("clientWizard.review.ownershipNoneText")}
                     </p>
                   </div>
                 )}
 
                 {form.role_choice === "financing_applicant" && (
                   <div className="rounded-xl border p-4">
-                    <p className="text-sm font-semibold mb-1">Finanzierung</p>
+                    <p className="text-sm font-semibold mb-1">{t("clientWizard.review.financing")}</p>
                     <p className="text-sm text-muted-foreground">
-                      Ziel: {FINANCING_GOALS.find((g) => g.value === form.financing_goal)?.label}
-                      {form.equity ? ` · Eigenmittel ${form.equity} CHF` : ""}
+                      {t("clientWizard.review.goalLabel")} {form.financing_goal ? t(`clientWizard.financingGoals.${form.financing_goal}`) : ""}
+                      {form.equity ? t("clientWizard.review.equitySuffix", { amount: form.equity }) : ""}
                     </p>
                   </div>
                 )}
