@@ -202,7 +202,7 @@ function DocumentsPage() {
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setTemplatesOpen(true)}>
               <LayoutTemplate className="mr-1 h-4 w-4" />
-              Dokumentvorlagen
+              {t("documents.templates")}
             </Button>
             <Dialog
               open={open}
@@ -214,16 +214,16 @@ function DocumentsPage() {
               <DialogTrigger asChild>
                 <Button>
                   <Upload className="mr-1 h-4 w-4" />
-                  Dokument hochladen
+                  {t("documents.uploadButton")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
               <DialogHeader>
-                <DialogTitle>Neues Dokument</DialogTitle>
+                <DialogTitle>{t("documents.newDocument")}</DialogTitle>
               </DialogHeader>
               <div className="space-y-3">
                 <div>
-                  <Label>Datei</Label>
+                  <Label>{t("documents.fields.file")}</Label>
                   <Input
                     ref={fileInputRef}
                     type="file"
@@ -237,22 +237,22 @@ function DocumentsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Typ</Label>
+                    <Label>{t("documents.fields.type")}</Label>
                     <Select value={form.document_type} onValueChange={(v) => setForm({ ...form, document_type: v })}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(TYPE_LABELS).map(([k, v]) => (
+                        {TYPE_KEYS.map((k) => (
                           <SelectItem key={k} value={k}>
-                            {v}
+                            {typeLabel(k)}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label>Verknüpft mit</Label>
+                    <Label>{t("documents.fields.linkedWith")}</Label>
                     <Select
                       value={form.related_type}
                       onValueChange={(v) => setForm({ ...form, related_type: v, related_id: "" })}
@@ -261,9 +261,9 @@ function DocumentsPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(RELATED_LABELS).map(([k, v]) => (
+                        {RELATED_KEYS.map((k) => (
                           <SelectItem key={k} value={k}>
-                            {v}
+                            {relatedLabel(k)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -271,11 +271,11 @@ function DocumentsPage() {
                   </div>
                 </div>
                 <div>
-                  <Label>Eintrag</Label>
+                  <Label>{t("documents.fields.entry")}</Label>
                   {relatedOptions.length > 0 ? (
                     <Select value={form.related_id} onValueChange={(v) => setForm({ ...form, related_id: v })}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Auswählen…" />
+                        <SelectValue placeholder={t("documents.fields.selectPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         {relatedOptions.map((o) => (
@@ -289,21 +289,21 @@ function DocumentsPage() {
                     <Input
                       value={form.related_id}
                       onChange={(e) => setForm({ ...form, related_id: e.target.value })}
-                      placeholder="UUID des Eintrags"
+                      placeholder={t("documents.fields.uuidPlaceholder")}
                     />
                   )}
                 </div>
                 <div>
-                  <Label>Notiz</Label>
+                  <Label>{t("documents.fields.note")}</Label>
                   <Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
                 </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>
-                  Abbrechen
+                  {t("documents.cancel")}
                 </Button>
                 <Button onClick={() => upload.mutate()} disabled={uploading || !file}>
-                  {uploading ? "Wird hochgeladen…" : "Hochladen"}
+                  {uploading ? t("documents.uploading") : t("documents.upload")}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -322,7 +322,7 @@ function DocumentsPage() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="font-medium text-foreground">Speicherverbrauch</span>
+                <span className="font-medium text-foreground">{t("documents.storageUsage")}</span>
                 <span className="text-muted-foreground">
                   {formatBytes(used)} / {formatBytes(MAX_STORAGE)} ({pct}%)
                 </span>
@@ -338,9 +338,9 @@ function DocumentsPage() {
       <Tabs defaultValue="folders" className="space-y-4">
 
         <TabsList>
-          <TabsTrigger value="folders">Ordner</TabsTrigger>
-          <TabsTrigger value="uploaded">Hochgeladene Dokumente</TabsTrigger>
-          <TabsTrigger value="generated">Generierte Dokumente</TabsTrigger>
+          <TabsTrigger value="folders">{t("documents.tabs.folders")}</TabsTrigger>
+          <TabsTrigger value="uploaded">{t("documents.tabs.uploaded")}</TabsTrigger>
+          <TabsTrigger value="generated">{t("documents.tabs.generated")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="folders">
@@ -354,33 +354,33 @@ function DocumentsPage() {
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 className="pl-9"
-                placeholder="Dokumente suchen…"
+                placeholder={t("documents.search")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Typ" />
+                <SelectValue placeholder={t("documents.filters.type")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Typen</SelectItem>
-                {Object.entries(TYPE_LABELS).map(([k, v]) => (
+                <SelectItem value="all">{t("documents.filters.allTypes")}</SelectItem>
+                {TYPE_KEYS.map((k) => (
                   <SelectItem key={k} value={k}>
-                    {v}
+                    {typeLabel(k)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={relatedFilter} onValueChange={setRelatedFilter}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Verknüpfung" />
+                <SelectValue placeholder={t("documents.filters.link")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Verknüpfungen</SelectItem>
-                {Object.entries(RELATED_LABELS).map(([k, v]) => (
+                <SelectItem value="all">{t("documents.filters.allLinks")}</SelectItem>
+                {RELATED_KEYS.map((k) => (
                   <SelectItem key={k} value={k}>
-                    {v}
+                    {relatedLabel(k)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -389,25 +389,25 @@ function DocumentsPage() {
 
           {isLoading ? (
             <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
-              Dokumente werden geladen…
+              {t("documents.loading")}
             </div>
           ) : filtered.length === 0 ? (
             <EmptyState
-              title="Keine Dokumente"
-              description="Lade dein erstes Dokument hoch, um es hier zu sehen."
+              title={t("documents.empty.title")}
+              description={t("documents.empty.description")}
             />
           ) : (
             <div className="rounded-xl border bg-card">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Typ</TableHead>
-                    <TableHead>Verknüpfung</TableHead>
-                    <TableHead>Grösse</TableHead>
-                    <TableHead>Hochgeladen von</TableHead>
-                    <TableHead>Datum</TableHead>
-                    <TableHead className="text-right">Aktionen</TableHead>
+                    <TableHead>{t("documents.fields.name")}</TableHead>
+                    <TableHead>{t("documents.fields.type")}</TableHead>
+                    <TableHead>{t("documents.fields.link")}</TableHead>
+                    <TableHead>{t("documents.fields.size")}</TableHead>
+                    <TableHead>{t("documents.fields.uploadedBy")}</TableHead>
+                    <TableHead>{t("documents.fields.date")}</TableHead>
+                    <TableHead className="text-right">{t("documents.fields.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -418,22 +418,22 @@ function DocumentsPage() {
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             <FileText className="h-4 w-4 text-muted-foreground" />
-                            <span className="truncate">{d.file_name ?? "Unbenannt"}</span>
+                            <span className="truncate">{d.file_name ?? t("documents.fields.unnamed")}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary">
-                            {TYPE_LABELS[d.document_type as keyof typeof TYPE_LABELS]}
+                            {typeLabel(d.document_type as string)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {RELATED_LABELS[d.related_type ?? ""] ?? d.related_type}
+                          {d.related_type ? relatedLabel(d.related_type) : "—"}
                         </TableCell>
                         <TableCell className="text-muted-foreground">{formatBytes(d.size_bytes)}</TableCell>
                         <TableCell className="text-muted-foreground">{uploader?.full_name ?? "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{formatDate(d.created_at)}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" onClick={() => openDocument(d)} title="Öffnen">
+                          <Button variant="ghost" size="icon" onClick={() => openDocument(d)} title={t("documents.open")}>
                             {d.file_url?.startsWith("http") ? (
                               <ExternalLink className="h-4 w-4" />
                             ) : (
@@ -445,7 +445,7 @@ function DocumentsPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => remove.mutate({ id: d.id, file_url: d.file_url })}
-                              title="Löschen"
+                              title={t("documents.delete")}
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
@@ -468,7 +468,7 @@ function DocumentsPage() {
       <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
         <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Dokumentvorlagen</DialogTitle>
+            <DialogTitle>{t("documents.templates")}</DialogTitle>
           </DialogHeader>
           <DocumentTemplatesManager />
         </DialogContent>
