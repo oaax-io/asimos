@@ -1484,6 +1484,7 @@ function Step5Advanced({
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   kpis: Kpis;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const rate = num(form.calc_rate) || 5;
   const anc = num(form.ancillary_pct) || 1;
@@ -1492,14 +1493,14 @@ function Step5Advanced({
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger asChild>
           <Button variant="outline" className="w-full justify-between">
-            <span className="flex items-center gap-2"><Settings2 className="h-4 w-4" />Erweiterte Einstellungen anpassen</span>
+            <span className="flex items-center gap-2"><Settings2 className="h-4 w-4" />{t("financing.wizard.advanced.toggle")}</span>
             <ChevronDown className={cn("h-4 w-4 transition", open && "rotate-180")} />
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-5 pt-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <Label>Kalkulatorischer Zinssatz</Label>
+              <Label>{t("financing.wizard.advanced.calcRate")}</Label>
               <span className="font-medium">{rate.toFixed(1)} %</span>
             </div>
             <Slider
@@ -1509,7 +1510,7 @@ function Step5Advanced({
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <Label>Nebenkosten (% der Gesamtinvestition)</Label>
+              <Label>{t("financing.wizard.advanced.ancillaryPct")}</Label>
               <span className="font-medium">{anc.toFixed(1)} %</span>
             </div>
             <Slider
@@ -1518,14 +1519,14 @@ function Step5Advanced({
             />
           </div>
           <div className="space-y-2">
-            <Label>Amortisationsdauer</Label>
+            <Label>{t("financing.wizard.advanced.amortYears")}</Label>
             <Select value={form.amortisation_years} onValueChange={(v) => update("amortisation_years", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="10">10 Jahre</SelectItem>
-                <SelectItem value="12">12 Jahre</SelectItem>
-                <SelectItem value="15">15 Jahre</SelectItem>
-                <SelectItem value="20">20 Jahre</SelectItem>
+                <SelectItem value="10">{t("financing.wizard.advanced.years", { count: 10 })}</SelectItem>
+                <SelectItem value="12">{t("financing.wizard.advanced.years", { count: 12 })}</SelectItem>
+                <SelectItem value="15">{t("financing.wizard.advanced.years", { count: 15 })}</SelectItem>
+                <SelectItem value="20">{t("financing.wizard.advanced.years", { count: 20 })}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1534,7 +1535,7 @@ function Step5Advanced({
       <div className="rounded-lg bg-card p-3 space-y-1">
         <KpiPreview kpis={kpis} />
         <p className="text-xs text-muted-foreground">
-          Jährliche Belastung: {formatCurrency(kpis.yearly)} (Zins + Nebenkosten + Amortisation)
+          {t("financing.wizard.advanced.yearlyBurden", { amount: formatCurrency(kpis.yearly) })}
         </p>
       </div>
     </div>
