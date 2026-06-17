@@ -774,6 +774,52 @@ export function FinancingQuickCheckWizard({
   );
 }
 
+/* ==================== Income Breakdown Panel ==================== */
+function IncomeBreakdownPanel({ breakdown }: { breakdown: IncomeBreakdown | null }) {
+  const { t } = useTranslation();
+  if (!breakdown) return null;
+  const baseYearly = breakdown.annual_net_salary || breakdown.salary_net_monthly * 12;
+  const extrasMonthly = breakdown.additional_income + breakdown.income_job_two + breakdown.income_rental;
+  const totalYearly = baseYearly + extrasMonthly * 12;
+  if (totalYearly <= 0) return null;
+  const rows: { label: string; yearly: number; hint?: string }[] = [];
+  if (baseYearly > 0) {
+    rows.push({
+      label: t("financing.wizard.client.income.netSalary"),
+      yearly: baseYearly,
+      hint: breakdown.salary_net_monthly > 0 && !breakdown.annual_net_salary
+        ? t("financing.wizard.client.income.monthlyHint", { amount: formatCurrency(breakdown.salary_net_monthly) })
+        : undefined,
+    });
+  }
+  if (breakdown.income_job_two > 0) rows.push({ label: t("financing.wizard.client.income.jobTwo"), yearly: breakdown.income_job_two * 12, hint: t("financing.wizard.client.income.monthlyHint", { amount: formatCurrency(breakdown.income_job_two) }) });
+  if (breakdown.income_rental > 0) rows.push({ label: t("financing.wizard.client.income.rental"), yearly: breakdown.income_rental * 12, hint: t("financing.wizard.client.income.monthlyHint", { amount: formatCurrency(breakdown.income_rental) }) });
+  if (breakdown.additional_income > 0) rows.push({ label: t("financing.wizard.client.income.additional"), yearly: breakdown.additional_income * 12, hint: t("financing.wizard.client.income.monthlyHint", { amount: formatCurrency(breakdown.additional_income) }) });
+
+  return (
+    <div className="sm:col-span-2 rounded-md border bg-muted/40 p-3 space-y-1.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {t("financing.wizard.client.income.breakdownTitle")}
+      </p>
+      <div className="space-y-1 text-xs">
+        {rows.map((r, i) => (
+          <div key={i} className="flex justify-between gap-2">
+            <span className="text-muted-foreground">
+              {r.label}
+              {r.hint && <span className="ml-1 text-[10px] opacity-70">({r.hint})</span>}
+            </span>
+            <span className="tabular-nums font-medium text-foreground">{formatCurrency(r.yearly)}</span>
+          </div>
+        ))}
+        <div className="flex justify-between gap-2 border-t pt-1 mt-1">
+          <span className="font-medium">{t("financing.wizard.client.income.totalYearly")}</span>
+          <span className="tabular-nums font-semibold text-foreground">{formatCurrency(totalYearly)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ==================== Schritt 1 ==================== */
 function Step1Modules({
   form, toggleModule,
