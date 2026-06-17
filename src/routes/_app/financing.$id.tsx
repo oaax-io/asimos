@@ -831,7 +831,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       const aff = result.affordability_ratio;
       let tone: Cell["tone"];
       let label: string;
-      if (eqRatio < 10) { tone = "gray"; label = "EK!"; }
+      if (eqRatio < 10) { tone = "gray"; label = t("financing.detail.quickcheck.scenarios.matrixEqInsufficient"); }
       else if (aff > 38 || eqRatio < 15) { tone = "bad"; label = pct(aff); }
       else if (aff > 33 || eqRatio < 20) { tone = "warn"; label = pct(aff); }
       else { tone = "ok"; label = pct(aff); }
