@@ -1236,6 +1236,86 @@
   "documents": {
     "uploadButton": "Dokument hochladen",
     "templates": "Dokumentvorlagen",
+    "newDocument": "Neues Dokument",
+    "uploading": "Wird hochgeladen…",
+    "upload": "Hochladen",
+    "cancel": "Abbrechen",
+    "loading": "Dokumente werden geladen…",
+    "search": "Dokumente suchen…",
+    "searchInFolders": "Dokumente in Ordnern suchen…",
+    "storageUsage": "Speicherverbrauch",
+    "open": "Öffnen",
+    "delete": "Löschen",
+    "fields": {
+      "file": "Datei",
+      "type": "Typ",
+      "linkedWith": "Verknüpft mit",
+      "entry": "Eintrag",
+      "selectPlaceholder": "Auswählen…",
+      "uuidPlaceholder": "UUID des Eintrags",
+      "note": "Notiz",
+      "name": "Name",
+      "link": "Verknüpfung",
+      "size": "Grösse",
+      "uploadedBy": "Hochgeladen von",
+      "date": "Datum",
+      "actions": "Aktionen",
+      "unnamed": "Unbenannt"
+    },
+    "filters": {
+      "type": "Typ",
+      "allTypes": "Alle Typen",
+      "link": "Verknüpfung",
+      "allLinks": "Alle Verknüpfungen"
+    },
+    "empty": {
+      "title": "Keine Dokumente",
+      "description": "Lade dein erstes Dokument hoch, um es hier zu sehen.",
+      "noFolders": "Keine Ordner",
+      "noFoldersDescription": "Sobald Dokumente verknüpft werden, erscheinen sie hier in Ordnern.",
+      "unassigned": "Nicht zugeordnet"
+    },
+    "folders": {
+      "summary": "{{folders}} Ordner · {{docs}} Dateien",
+      "noFile": "Keine Datei vorhanden",
+      "openFailed": "Konnte Datei nicht öffnen",
+      "generatedFallback": "Generiertes Dokument"
+    },
+    "categories": {
+      "client": "Kunden",
+      "property": "Immobilien",
+      "lead": "Leads",
+      "mandate": "Mandate",
+      "reservation": "Reservationen",
+      "financing": "Finanzierungen",
+      "other": "Sonstige"
+    },
+    "types": {
+      "contract": "Vertrag",
+      "expose": "Exposé",
+      "id": "Ausweis",
+      "invoice": "Rechnung",
+      "energy_certificate": "Energieausweis",
+      "floor_plan": "Grundriss",
+      "bank_statement": "Kontoauszug",
+      "tax_document": "Steuerunterlage",
+      "other": "Sonstiges"
+    },
+    "related": {
+      "client": "Kunde",
+      "property": "Immobilie",
+      "lead": "Lead",
+      "mandate": "Mandat",
+      "reservation": "Reservation",
+      "financing_profile": "Finanzierung"
+    },
+    "toasts": {
+      "fileRequired": "Bitte Datei auswählen",
+      "linkRequired": "Bitte Verknüpfung wählen",
+      "uploaded": "Dokument hochgeladen",
+      "deleted": "Dokument gelöscht",
+      "openFailed": "Konnte Datei nicht öffnen"
+    },
     "tabs": {
       "folders": "Ordner",
       "uploaded": "Hochgeladene Dokumente",
@@ -1256,6 +1336,102 @@
         "created": "PDF wurde erstellt",
         "failed": "PDF konnte nicht generiert werden. Browser-Druck als Fallback verwenden?"
       }
+    }
+  },
+  "media": {
+    "uploadButton": "Medien hochladen",
+    "newMedia": "Neue Medien",
+    "viewModes": { "tiles": "Kacheln", "folders": "Ordner" },
+    "loading": "Wird geladen…",
+    "storageUsage": "Speicherverbrauch",
+    "search": "Medien suchen…",
+    "untitled": "Ohne Titel",
+    "newTitlePrompt": "Neuer Titel",
+    "fields": {
+      "property": "Immobilie",
+      "files": "Dateien",
+      "title": "Titel (optional)",
+      "description": "Beschreibung (optional)",
+      "selectProperty": "Auswählen",
+      "name": "Name",
+      "fileCount": "Dateien",
+      "location": "Ort",
+      "units": "Einheiten"
+    },
+    "dropzone": {
+      "release": "Jetzt loslassen",
+      "idle": "Dateien hierher ziehen oder klicken",
+      "hint": "Bilder & Videos · mehrere möglich",
+      "selected": "{{count}} Datei(en) ausgewählt"
+    },
+    "upload": "Hochladen",
+    "uploading": "Wird hochgeladen…",
+    "uploadingProgress": "Lädt hoch… {{done}} / {{total}}",
+    "uploadingProgressNamed": "Lädt hoch… {{done}} / {{total}} · {{name}}",
+    "uploadedCount": "{{done}} / {{total}} hochgeladen",
+    "cancel": "Abbrechen",
+    "filters": {
+      "property": "Immobilie",
+      "allProperties": "Alle Immobilien",
+      "type": "Typ",
+      "allTypes": "Alle Typen",
+      "images": "Bilder",
+      "videos": "Videos",
+      "floorPlans": "Grundrisse"
+    },
+    "folders": {
+      "allFolders": "Alle Ordner",
+      "empty": "Keine Ordner vorhanden"
+    },
+    "empty": {
+      "title": "Mediathek leer",
+      "description": "Lade Bilder, Videos oder Grundrisse zu deinen Objekten hoch."
+    },
+    "actions": {
+      "setCover": "Als Titelbild setzen",
+      "moveUp": "Nach oben",
+      "moveDown": "Nach unten",
+      "rename": "Umbenennen",
+      "delete": "Löschen",
+      "download": "Herunterladen",
+      "close": "Schließen",
+      "prev": "Vorheriges",
+      "next": "Nächstes",
+      "save": "Speichern"
+    },
+    "badges": {
+      "cover": "Cover",
+      "floorPlan": "Grundriss",
+      "openPdf": "PDF öffnen"
+    },
+    "duplicates": {
+      "detected": "{{count}} mögliche Duplikat(e) erkannt",
+      "remove": "Duplikate entfernen",
+      "confirmTitle": "Duplikate löschen?",
+      "confirmDescription": "{{count}} doppelte Datei(en) werden entfernt. Das älteste/Cover-Bild bleibt erhalten.",
+      "confirm": "Löschen",
+      "none": "Keine Duplikate gefunden",
+      "removed": "{{count}} Duplikat(e) entfernt"
+    },
+    "migration": {
+      "warn": "{{count}} Datei(en) (z.B. PDF) gehören nicht in die Mediathek. Verschiebe sie nach „Dokumente\".",
+      "move": "Nach Dokumente verschieben",
+      "moving": "Verschiebe…",
+      "confirmTitle": "Dateien verschieben?",
+      "confirmDescription": "{{count}} Datei(en) werden nach „Dokumente\" verschoben.",
+      "confirm": "Verschieben",
+      "none": "Keine Dokumente in der Mediathek gefunden",
+      "moved": "{{count}} Datei(en) nach „Dokumente\" verschoben"
+    },
+    "toasts": {
+      "propertyRequired": "Bitte Immobilie wählen",
+      "fileRequired": "Bitte mindestens eine Datei auswählen",
+      "onlyMedia": "In der Mediathek sind nur Bilder und Videos erlaubt. Bitte lade Dokumente (PDF, DOCX, …) unter „Dokumente\" hoch. Abgelehnt: {{names}}",
+      "uploaded": "Bild hochgeladen",
+      "uploadedAll": "Alle {{count}} Dateien hochgeladen",
+      "deleted": "Gelöscht",
+      "coverSet": "Titelbild gesetzt",
+      "renamed": "Umbenannt"
     }
   }
 }
