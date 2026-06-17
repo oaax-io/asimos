@@ -1152,7 +1152,83 @@
     }
   },
   "tasks": {
-    "new": "Neue Aufgabe"
+    "new": "Neue Aufgabe",
+    "create": "Erstellen",
+    "createButton": "Aufgabe erstellen",
+    "dialogDescription": "Erfasse To-dos und ordne sie Kunden, Immobilien oder Mandaten zu.",
+    "edit": "Aufgabe bearbeiten",
+    "editDescription": "Aktualisiere Details, ändere Status oder weise neu zu.",
+    "searchPlaceholder": "Aufgaben suchen…",
+    "loading": "Aufgaben werden geladen…",
+    "openRelated": "Verknüpften Eintrag öffnen",
+    "due": "Fällig",
+    "overdue": "Überfällig",
+    "empty": {
+      "none": "Keine Aufgaben",
+      "noResults": "Keine Treffer",
+      "noneDescription": "Erstelle deine erste Aufgabe, um den Überblick über offene To-dos zu behalten.",
+      "noResultsDescription": "Passe die Filter an oder leere die Suche."
+    },
+    "filters": {
+      "active": "Aktiv",
+      "allStatus": "Alle Status",
+      "priority": "Priorität",
+      "allPriorities": "Alle Prioritäten",
+      "assignee": "Zuständig",
+      "allEmployees": "Alle Mitarbeiter",
+      "assignedToMe": "Mir zugewiesen",
+      "due": "Fälligkeit",
+      "allDue": "Alle Fristen",
+      "overdue": "Überfällig",
+      "today": "Heute",
+      "week": "Diese Woche",
+      "none": "Ohne Frist"
+    },
+    "status": {
+      "open": "Offen",
+      "in_progress": "In Arbeit",
+      "waiting": "Wartet",
+      "done": "Erledigt",
+      "cancelled": "Abgebrochen"
+    },
+    "priority": {
+      "low": "Niedrig",
+      "normal": "Normal",
+      "high": "Hoch",
+      "urgent": "Dringend"
+    },
+    "related": {
+      "client": "Kunde",
+      "property": "Immobilie",
+      "mandate": "Mandat",
+      "reservation": "Reservation",
+      "lead": "Lead"
+    },
+    "form": {
+      "title": "Titel",
+      "description": "Beschreibung",
+      "status": "Status",
+      "priority": "Priorität",
+      "dueDate": "Fällig am",
+      "assignee": "Zuständig",
+      "noAssignee": "Niemand",
+      "relation": "Bezug",
+      "noRelation": "Kein Bezug",
+      "linkTo": "Verknüpfung"
+    },
+    "actions": {
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "close": "Schliessen",
+      "delete": "Löschen"
+    },
+    "confirmDelete": { "title": "Aufgabe löschen?", "confirm": "Löschen" },
+    "toasts": {
+      "created": "Aufgabe erstellt",
+      "updated": "Aufgabe aktualisiert",
+      "deleted": "Aufgabe gelöscht",
+      "titleRequired": "Titel ist erforderlich"
+    }
   },
   "checklists": {
     "new": "Neue Checkliste"
