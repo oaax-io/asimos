@@ -666,6 +666,7 @@ type ScenarioRow = {
 };
 
 function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
+  const { t } = useTranslation();
   const original = useMemo(() => deriveInputs(dossier), [dossier]);
   const dossierId = String((dossier as { id?: string }).id ?? "");
   const queryClient = useQueryClient();
