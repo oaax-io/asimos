@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { propertyTypeLabels } from "@/lib/format";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { useTranslation } from "react-i18next";
 
 // ----- Typen -----
 type EntityType = "person" | "company";
