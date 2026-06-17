@@ -235,20 +235,7 @@ function buildSteps(entity: EntityType, role: RoleChoice | "", method: "manual" 
   return s;
 }
 
-const STEP_LABELS: Record<StepKey, string> = {
-  entity: "Art",
-  method: "Erfassungsart",
-  role: "Rolle",
-  stamm: "Stammdaten",
-  company_contact: "Kontaktperson",
-  search: "Suchprofil",
-  investment: "Investment-Profil",
-  financing: "Finanzierung",
-  property: "Immobilie",
-  ownership: "Eigentum",
-  tags: "Notizen & Tags",
-  review: "Übersicht",
-};
+// Step labels are resolved via t(`clientWizard.steps.${key}`)
 
 // ===========================================================
 export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
