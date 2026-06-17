@@ -140,7 +140,7 @@
     "dossierStatus": {
       "title": "Finanzierungs-Dossiers nach Status",
       "draft": "Entwurf",
-      "quick_check": "Quick-Check",
+      "quick_check": "Schnellprüfung",
       "documents_missing": "Dokumente fehlen",
       "ready_for_bank": "Bereit für Bank",
       "submitted_to_bank": "Bei Bank eingereicht",
@@ -528,13 +528,13 @@
   },
   "financing": {
     "hypoButton": "Hyporechner Kosovo",
-    "startQuickCheck": "Quick Check starten",
+    "startQuickCheck": "Schnellprüfung starten",
     "searchPlaceholder": "Suchen…",
     "filters": {
       "type": "Art",
       "allTypes": "Alle Arten",
-      "quickCheck": "Quick Check",
-      "allQuickCheck": "Quick Check (alle)",
+      "quickCheck": "Schnellprüfung",
+      "allQuickCheck": "Schnellprüfung (alle)",
       "dossierStatus": "Dossier-Status",
       "allStatus": "Status (alle)",
       "bankType": "Banktyp",
@@ -559,7 +559,7 @@
     "loading": "Laden…",
     "empty": {
       "title": "Noch keine Finanzierung",
-      "description": "Starte mit einem Quick Check für einen Kunden."
+      "description": "Starte mit einer Schnellprüfung für einen Kunden."
     },
     "savedHypo": "Gespeicherte Hyporechner Kosovo",
     "hypo": {
@@ -589,7 +589,7 @@
       "bankType": "Banktyp: {{type}}",
       "updatedAt": "Aktualisiert {{date}}",
       "select": "Auswählen",
-      "quickCheckPrefix": "Quick Check:",
+      "quickCheckPrefix": "Schnellprüfung:",
       "notYetDone": "Noch nicht durchgeführt",
       "existingProperty": "Bestehende Immobilie",
       "quickEntry": "Quick-Erfassung",
@@ -620,7 +620,7 @@
     },
     "dossierStatus": {
       "draft": "Entwurf",
-      "quick_check": "Quick Check",
+      "quick_check": "Schnellprüfung",
       "documents_missing": "Unterlagen fehlen",
       "ready_for_bank": "Bereit für Bank",
       "submitted_to_bank": "Bei Bank eingereicht",
