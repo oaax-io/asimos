@@ -542,6 +542,16 @@ export function FinancingQuickCheckWizard({
         co_applicant_einkommen: coActive ? combined.coIncome : null,
         co_applicant_eigenkapital: coActive ? combined.coEquity : null,
         co_applicant_pk_anteil: coActive ? combined.coPk : null,
+        // Weitere Mitantragsteller (bis zu 9 zusätzliche → insgesamt max. 10 inkl. primärem)
+        additional_co_applicants: (form.additional_co_applicants ?? [])
+          .filter((a) => !!a.client_id)
+          .map((a) => ({
+            client_id: a.client_id,
+            role: a.role || null,
+            einkommen: numOrNull(a.einkommen),
+            eigenkapital: numOrNull(a.eigenkapital),
+            pk_anteil: numOrNull(a.pk_anteil),
+          })),
         // Kombiniert
         einkommen_kombiniert: incomeCombined || null,
         eigenkapital_kombiniert: equityCombined || null,
