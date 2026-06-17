@@ -588,7 +588,7 @@
   },
   "financing": {
     "hypoButton": "Hyporechner Kosovo",
-    "startQuickCheck": "Schnellprüfung starten",
+    "startQuickCheck": "Quick-Check starten",
     "searchPlaceholder": "Suchen…",
     "filters": {
       "type": "Art",
