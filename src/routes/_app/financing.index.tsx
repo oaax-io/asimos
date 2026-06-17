@@ -32,6 +32,7 @@ export const Route = createFileRoute("/_app/financing/")({ component: FinancingP
 const ALL = "__all__";
 
 function FinancingPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
@@ -47,18 +48,22 @@ function FinancingPage() {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const canDelete = useIsOwnerOrAdmin();
 
+  const typeLabel = (k: string) => t(`financing.type.${k}`, { defaultValue: FINANCING_TYPE_LABELS[k as FinancingType] ?? k });
+  const qcLabel = (k: string) => t(`financing.quickCheckStatus.${k}`, { defaultValue: QUICK_CHECK_LABELS[k as QuickCheckStatus] ?? k });
+  const dossierLabel = (k: string) => t(`financing.dossierStatus.${k}`, { defaultValue: DOSSIER_STATUS_LABELS[k as DossierStatus] ?? k });
+
   const deleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
       const { error } = await supabase.from("financing_dossiers").delete().in("id", ids);
       if (error) throw error;
     },
     onSuccess: (_data, ids) => {
-      toast.success(ids.length === 1 ? "Finanzierung gelöscht" : `${ids.length} Finanzierungen gelöscht`);
+      toast.success(t("financing.toast.deleted", { count: ids.length }));
       setSelected(new Set());
       setConfirmDeleteOpen(false);
       qc.invalidateQueries({ queryKey: ["financing_dossiers"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Löschen fehlgeschlagen"),
+    onError: (e: any) => toast.error(e.message ?? t("financing.toast.deleteFailed")),
   });
 
   const { data: dossiers = [], isLoading } = useQuery({
