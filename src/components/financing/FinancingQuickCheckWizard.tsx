@@ -668,15 +668,18 @@ export function FinancingQuickCheckWizard({
 function Step1Modules({
   form, toggleModule,
 }: { form: WizardForm; toggleModule: (m: WizardModule) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Mehrere Bausteine kombinierbar. Mindestens eine Auswahl ist erforderlich.
+        {t("financing.wizard.modules.intro")}
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         {MODULE_OPTIONS.map((opt) => {
           const Icon = opt.icon;
           const active = form.modules.includes(opt.key);
+          const label = t(`financing.wizard.modules.${opt.key}.label`, { defaultValue: opt.label });
+          const description = t(`financing.wizard.modules.${opt.key}.description`, { defaultValue: opt.description });
           return (
             <Card
               key={opt.key}
@@ -691,8 +694,8 @@ function Step1Modules({
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium">{opt.label}</p>
-                  <p className="text-xs text-muted-foreground">{opt.description}</p>
+                  <p className="font-medium">{label}</p>
+                  <p className="text-xs text-muted-foreground">{description}</p>
                 </div>
                 {active && <CheckCircle2 className="h-4 w-4 text-primary mt-1" />}
               </div>
@@ -704,7 +707,8 @@ function Step1Modules({
         <div className="flex flex-wrap gap-2 pt-1">
           {form.modules.map((m) => {
             const opt = MODULE_OPTIONS.find((o) => o.key === m);
-            return <Badge key={m} variant="secondary">{opt?.label ?? FINANCING_TYPE_LABELS[m as FinancingType]}</Badge>;
+            const label = opt ? t(`financing.wizard.modules.${opt.key}.label`, { defaultValue: opt.label }) : FINANCING_TYPE_LABELS[m as FinancingType];
+            return <Badge key={m} variant="secondary">{label}</Badge>;
           })}
         </div>
       )}
@@ -721,6 +725,7 @@ function Step2Property({
   properties: any[];
   loading: boolean;
 }) {
+  const { t } = useTranslation();
   const selected: any = properties.find((p: any) => p.id === form.property_id);
   const objectId: string | null = selected
     ? (selected.is_unit ? (selected.parent_property_id ?? null) : selected.id)
@@ -735,24 +740,24 @@ function Step2Property({
     <div className="grid gap-4 md:grid-cols-2">
       {/* === Linke Spalte: Quelle / Auswahl === */}
       <section className="rounded-lg border bg-card p-4 space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quelle</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.property.source")}</h3>
         <RadioGroup
           value={form.property_source}
           onValueChange={(v) => update("property_source", v as PropertySource)}
           className="grid gap-2"
         >
-          <SourceRow value="crm" label="Immobilie aus CRM wählen" description="Bestehendes Objekt auswählen, Daten werden übernommen." />
-          <SourceRow value="manual" label="Manuell erfassen" description="Adresse und Kaufpreis selbst eingeben." />
-          <SourceRow value="later" label="Später erfassen" description="Schritt überspringen — Felder bleiben leer." />
+          <SourceRow value="crm" label={t("financing.wizard.property.sourceCrm")} description={t("financing.wizard.property.sourceCrmDesc")} />
+          <SourceRow value="manual" label={t("financing.wizard.property.sourceManual")} description={t("financing.wizard.property.sourceManualDesc")} />
+          <SourceRow value="later" label={t("financing.wizard.property.sourceLater")} description={t("financing.wizard.property.sourceLaterDesc")} />
         </RadioGroup>
 
         {form.property_source === "crm" && (
           <div className="space-y-3 pt-1">
             <div className="space-y-1">
-              <Label className="text-xs">Objekt</Label>
+              <Label className="text-xs">{t("financing.wizard.property.object")}</Label>
               <SearchableSelect
-                placeholder={loading ? "Lade…" : "Objekt suchen…"}
-                emptyText="Kein Objekt gefunden."
+                placeholder={loading ? t("financing.wizard.property.loading") : t("financing.wizard.property.searchObject")}
+                emptyText={t("financing.wizard.property.noObject")}
                 value={objectId ?? ""}
                 onChange={(v) => update("property_id", v)}
                 items={topLevel.map((p: any) => {
@@ -766,8 +771,10 @@ function Step2Property({
                     label: [p.city || "—", typeLabel].filter(Boolean).join(" · "),
                     hint: [
                       unitCount > 0
-                        ? `${unitCount} Einheit${unitCount === 1 ? "" : "en"}`
-                        : "Keine Einheiten",
+                        ? (unitCount === 1
+                            ? t("financing.wizard.property.unitOne")
+                            : t("financing.wizard.property.unitOther", { count: unitCount }))
+                        : t("financing.wizard.property.noUnits"),
                       p.address || p.title || null,
                       p.price ? formatCurrency(Number(p.price)) : null,
                     ].filter(Boolean).join(" · ") || undefined,
@@ -778,29 +785,29 @@ function Step2Property({
 
             {objectId && units.length > 0 && (
               <div className="space-y-1">
-                <Label className="text-xs">Gesamtobjekt oder Einheit</Label>
+                <Label className="text-xs">{t("financing.wizard.property.unitOrWhole")}</Label>
                 <SearchableSelect
-                  placeholder="Gesamtes Objekt oder Einheit wählen…"
-                  emptyText="Keine Einheit gefunden."
+                  placeholder={t("financing.wizard.property.chooseWholeOrUnit")}
+                  emptyText={t("financing.wizard.property.noUnit")}
                   value={unitSelectValue}
                   onChange={(v) => update("property_id", v === "__whole__" ? objectId : v)}
                   items={[
                     {
                       value: "__whole__",
-                      label: "Gesamtes Objekt",
-                      hint: `Alle ${units.length} Einheit${units.length === 1 ? "" : "en"} inkl.`,
+                      label: t("financing.wizard.property.whole"),
+                      hint: t("financing.wizard.property.allUnitsIncl", { count: units.length }),
                     },
                     ...units.map((u: any) => {
                       const typeLabel =
                         propertyTypeLabels[u.property_type as keyof typeof propertyTypeLabels] || "—";
                       const bits = [
-                        u.unit_number ? `Nr. ${u.unit_number}` : null,
-                        u.unit_floor ? `${u.unit_floor}. OG` : null,
+                        u.unit_number ? t("financing.wizard.property.unitNr", { number: u.unit_number }) : null,
+                        u.unit_floor ? t("financing.wizard.property.floorOg", { floor: u.unit_floor }) : null,
                         u.unit_type || typeLabel,
                       ].filter(Boolean);
                       return {
                         value: u.id,
-                        label: `Einheit · ${bits.join(" · ")}`,
+                        label: `${t("financing.wizard.property.unitPrefix")} · ${bits.join(" · ")}`,
                         hint: u.price ? formatCurrency(Number(u.price)) : undefined,
                       };
                     }),
@@ -813,39 +820,39 @@ function Step2Property({
 
         {form.property_source === "later" && (
           <p className="text-xs text-muted-foreground pt-1">
-            Sie können die Immobiliendaten später im Dossier ergänzen.
+            {t("financing.wizard.property.laterHint")}
           </p>
         )}
       </section>
 
       {/* === Rechte Spalte: Objektdaten === */}
       <section className="rounded-lg border bg-card p-4 space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Objektdaten</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.property.dataTitle")}</h3>
 
         {form.property_source === "later" ? (
           <p className="text-xs text-muted-foreground">
-            Keine Objektdaten erforderlich — werden später ergänzt.
+            {t("financing.wizard.property.laterNone")}
           </p>
         ) : form.property_source === "crm" && !form.property_id ? (
           <p className="text-xs text-muted-foreground">
-            Wählen Sie links ein Objekt aus dem CRM aus.
+            {t("financing.wizard.property.crmEmpty")}
           </p>
         ) : (
           <div className="space-y-3">
             <Field
-              label="Adresse"
+              label={t("financing.wizard.property.address")}
               value={form.property_address}
               onChange={(v) => update("property_address", v)}
             />
             <Field
-              label="Kaufpreis (CHF)"
+              label={t("financing.wizard.property.purchasePrice")}
               type="number"
               value={form.property_purchase_price}
               onChange={(v) => update("property_purchase_price", v)}
             />
             {form.property_source === "crm" && form.property_id && (
               <p className="text-[11px] text-muted-foreground">
-                Werte aus CRM vorausgefüllt. Anpassungen gelten nur für diesen Quick Check.
+                {t("financing.wizard.property.crmFilled")}
               </p>
             )}
           </div>
@@ -867,6 +874,7 @@ function Step3Client({
   loading: boolean;
   isRefiOnly: boolean;
 }) {
+  const { t } = useTranslation();
   // Verknüpfte Personen des Hauptkunden (Ehepartner, Mitantragsteller, …)
   const relatedQuery = useQuery({
     queryKey: ["wizard_client_relationships", form.client_id],
@@ -921,19 +929,19 @@ function Step3Client({
         onValueChange={(v) => update("client_source", v as ClientSource)}
         className="grid gap-2 sm:grid-cols-2"
       >
-        <SourceRow value="crm" label="Kunde aus CRM wählen" description={isRefiOnly ? "Einkommen wird aus dem Kundenprofil vorausgefüllt." : "Selbstauskunft & Eigenkapital werden vorausgefüllt."} />
-        <SourceRow value="manual" label="Ohne Kunde / manuell" description="Quick Check ohne Verknüpfung zu einem Kunden." />
+        <SourceRow value="crm" label={t("financing.wizard.client.sourceCrm")} description={isRefiOnly ? t("financing.wizard.client.sourceCrmDescRefi") : t("financing.wizard.client.sourceCrmDesc")} />
+        <SourceRow value="manual" label={t("financing.wizard.client.sourceManual")} description={t("financing.wizard.client.sourceManualDesc")} />
       </RadioGroup>
 
       {form.client_source === "crm" && (
         <div className="grid gap-4 lg:grid-cols-2">
           <section className="rounded-lg border bg-card p-4 space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hauptkunde</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.client.main")}</h3>
             <div className="space-y-1">
-              <Label className="text-xs">Kunde</Label>
+              <Label className="text-xs">{t("financing.wizard.client.client")}</Label>
               <SearchableSelect
-                placeholder={loading ? "Lade…" : "Kunde suchen…"}
-                emptyText="Keinen Kunden gefunden."
+                placeholder={loading ? t("financing.wizard.property.loading") : t("financing.wizard.client.searchClient")}
+                emptyText={t("financing.wizard.client.noClient")}
                 value={form.client_id}
                 onChange={(v) => update("client_id", v)}
                 items={clients.map((c) => ({
@@ -945,17 +953,17 @@ function Step3Client({
             </div>
             {form.client_id && (
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Brutto-Jahreseinkommen (CHF)" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
+                <Field label={t("financing.wizard.client.grossIncome")} type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
                 {!isRefiOnly && (
                   <>
-                    <Field label="Eigenmittel total (CHF)" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
-                    <Field label="davon Pensionskasse (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+                    <Field label={t("financing.wizard.client.ownFundsTotal")} type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
+                    <Field label={t("financing.wizard.client.pensionPart")} type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
                   </>
                 )}
                 <p className="sm:col-span-2 text-[11px] text-muted-foreground">
                   {isRefiOnly
-                    ? "Bei Refinanzierung nur Einkommen für die Tragbarkeit."
-                    : "Werte aus Kundenprofil & Selbstauskunft — editierbar."}
+                    ? t("financing.wizard.client.refiHint")
+                    : t("financing.wizard.client.crmHint")}
                 </p>
               </div>
             )}
@@ -975,7 +983,7 @@ function Step3Client({
 
       {form.client_source === "manual" && (
         <p className="text-xs text-muted-foreground">
-          Quick Check wird ohne Kundenverknüpfung erstellt. Die Finanzdaten erfassen Sie in Schritt 4.
+          {t("financing.wizard.client.manualHint")}
         </p>
       )}
     </div>
@@ -994,9 +1002,12 @@ function CoApplicantSection({
   relatedMap: Map<string, string>;
   isRefiOnly: boolean;
 }) {
+  const { t } = useTranslation();
   const relLabel: Record<string, string> = {
-    spouse: "Ehepartner", co_applicant: "Mitantragsteller",
-    co_investor: "Mitinvestor", other: "Verbunden",
+    spouse: t("financing.wizard.coApplicant.relSpouse"),
+    co_applicant: t("financing.wizard.coApplicant.relCo"),
+    co_investor: t("financing.wizard.coApplicant.relInvestor"),
+    other: t("financing.wizard.coApplicant.relOther"),
   };
   const selected = clients.find((c) => c.id === form.co_applicant_client_id);
   const filtered = clients.filter((c) => c.id !== form.client_id);
@@ -1010,7 +1021,7 @@ function CoApplicantSection({
   const items = sorted.map((c) => {
     const rel = relatedMap.get(c.id);
     const hint = rel
-      ? `${relLabel[rel] ?? "Verbunden"}${c.email ? ` · ${c.email}` : ""}`
+      ? `${relLabel[rel] ?? t("financing.wizard.coApplicant.relOther")}${c.email ? ` · ${c.email}` : ""}`
       : (c.email ?? undefined);
     return { value: c.id, label: c.full_name, hint };
   });
@@ -1039,12 +1050,12 @@ function CoApplicantSection({
           <UserPlus className="h-4 w-4 text-muted-foreground" />
           <div>
             <Label htmlFor="co-applicant-toggle" className="text-sm font-medium cursor-pointer">
-              Mitantragsteller / Ehepartner hinzufügen
+              {t("financing.wizard.coApplicant.title")}
             </Label>
             <p className="text-xs text-muted-foreground">
               {hasRelated
-                ? "Verknüpfte Personen aus dem Kundenprofil werden zuerst angezeigt."
-                : "Optional — kombiniert Einkommen und Eigenmittel für die Berechnung."}
+                ? t("financing.wizard.coApplicant.descRelated")
+                : t("financing.wizard.coApplicant.desc")}
             </p>
           </div>
         </div>
@@ -1059,23 +1070,23 @@ function CoApplicantSection({
         <div className="space-y-4 border-t pt-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label className="text-xs">Rolle *</Label>
+              <Label className="text-xs">{t("financing.wizard.coApplicant.role")}</Label>
               <Select
                 value={form.co_applicant_role || ""}
                 onValueChange={(v) => update("co_applicant_role", v as CoApplicantRole)}
               >
-                <SelectTrigger><SelectValue placeholder="Rolle wählen…" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("financing.wizard.coApplicant.roleSelect")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ehepartner">Ehepartner/in</SelectItem>
-                  <SelectItem value="mitantragsteller">Mitantragsteller/in</SelectItem>
+                  <SelectItem value="ehepartner">{t("financing.wizard.coApplicant.roleSpouse")}</SelectItem>
+                  <SelectItem value="mitantragsteller">{t("financing.wizard.coApplicant.roleCo")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Kunde aus CRM</Label>
+              <Label className="text-xs">{t("financing.wizard.coApplicant.crmClient")}</Label>
               <SearchableSelect
-                placeholder={loading ? "Lade…" : "Kunde suchen…"}
-                emptyText="Keinen Kunden gefunden."
+                placeholder={loading ? t("financing.wizard.property.loading") : t("financing.wizard.client.searchClient")}
+                emptyText={t("financing.wizard.client.noClient")}
                 value={form.co_applicant_client_id}
                 onChange={(v) => update("co_applicant_client_id", v)}
                 items={items}
@@ -1098,9 +1109,7 @@ function CoApplicantSection({
               {anyMissing && (
                 <div className="rounded-md border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs space-y-2">
                   <p className="text-amber-800 dark:text-amber-200">
-                    Einige Daten von <span className="font-medium">{selected.full_name}</span> sind
-                    noch nicht erfasst. Ergänze die fehlenden Angaben im Kundenprofil für eine
-                    vollständige Berechnung.
+                    {t("financing.wizard.coApplicant.missingDataWarn", { name: selected.full_name })}
                   </p>
                   <a
                     href={`/clients/${selected.id}`}
@@ -1108,7 +1117,7 @@ function CoApplicantSection({
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 font-medium text-amber-900 dark:text-amber-100 hover:underline"
                   >
-                    Zum Kundenprofil <ExternalLink className="h-3 w-3" />
+                    {t("financing.wizard.coApplicant.toProfile")} <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
               )}
@@ -1117,8 +1126,7 @@ function CoApplicantSection({
                 <div className="rounded-md border border-red-300/60 bg-red-50 dark:bg-red-950/30 p-3 text-xs flex gap-2 items-start">
                   <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
                   <p className="text-red-800 dark:text-red-200">
-                    Das Einkommen ist für die Tragbarkeitsberechnung zwingend erforderlich.
-                    Ohne diesen Wert wird der Mitantragsteller in der Berechnung nicht berücksichtigt.
+                    {t("financing.wizard.coApplicant.incomeRequired")}
                   </p>
                 </div>
               )}
@@ -1126,26 +1134,26 @@ function CoApplicantSection({
               {/* Manuelle Korrektur der übernommenen Werte */}
               {isRefiOnly ? (
                 <div className="grid gap-3 sm:grid-cols-1">
-                  <Field label="Einkommen (CHF/J)" type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
+                  <Field label={t("financing.wizard.coApplicant.income")} type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <Field label="Einkommen (CHF/J)" type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
-                  <Field label="Eigenkapital (CHF)" type="number" value={form.co_applicant_eigenkapital} onChange={(v) => update("co_applicant_eigenkapital", v)} />
-                  <Field label="PK-Anteil (CHF)" type="number" value={form.co_applicant_pk_anteil} onChange={(v) => update("co_applicant_pk_anteil", v)} />
+                  <Field label={t("financing.wizard.coApplicant.income")} type="number" value={form.co_applicant_einkommen} onChange={(v) => update("co_applicant_einkommen", v)} />
+                  <Field label={t("financing.wizard.coApplicant.equity")} type="number" value={form.co_applicant_eigenkapital} onChange={(v) => update("co_applicant_eigenkapital", v)} />
+                  <Field label={t("financing.wizard.coApplicant.pkPart")} type="number" value={form.co_applicant_pk_anteil} onChange={(v) => update("co_applicant_pk_anteil", v)} />
                 </div>
               )}
 
               <div className="rounded-md bg-background border p-3 space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <Users className="h-3 w-3" /> Kombinierte Werte
+                  <Users className="h-3 w-3" /> {t("financing.wizard.coApplicant.combinedTitle")}
                 </p>
                 <div className="text-xs text-muted-foreground space-y-0.5">
-                  <div className="flex justify-between"><span>Kombiniertes Einkommen:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(incomeCombined)} / Jahr</span></div>
+                  <div className="flex justify-between"><span>{t("financing.wizard.coApplicant.combinedIncome")}</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(incomeCombined)} {t("financing.wizard.coApplicant.perYear")}</span></div>
                   {!isRefiOnly && (
                     <>
-                      <div className="flex justify-between"><span>Kombinierte Eigenmittel:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(equityCombined)}</span></div>
-                      <div className="flex justify-between"><span>Kombinierter PK-Anteil:</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(pkCombined)}</span></div>
+                      <div className="flex justify-between"><span>{t("financing.wizard.coApplicant.combinedEquity")}</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(equityCombined)}</span></div>
+                      <div className="flex justify-between"><span>{t("financing.wizard.coApplicant.combinedPk")}</span><span className="tabular-nums font-medium text-foreground">{formatCurrency(pkCombined)}</span></div>
                     </>
                   )}
                 </div>
@@ -1165,6 +1173,7 @@ function DataQualityChecklist({
   income: number; equity: number; pk: number;
   hideEquity?: boolean;
 }) {
+  const { t } = useTranslation();
   const Row = ({ ok, label, value, fallback }: {
     ok: boolean; label: string; value: string; fallback: string;
   }) => (
@@ -1181,28 +1190,29 @@ function DataQualityChecklist({
       <span className="text-right tabular-nums">{ok ? value : fallback}</span>
     </li>
   );
+  const notRecorded = t("financing.wizard.coApplicant.checklist.notRecorded");
   return (
     <ul className="rounded-md border bg-background p-3 divide-y divide-border/50">
       <Row
         ok={hasIncome}
-        label="Brutto-Jahreseinkommen"
-        value={`${formatCurrency(income)} / Jahr (aus Selbstauskunft)`}
-        fallback="nicht erfasst"
+        label={t("financing.wizard.coApplicant.checklist.grossIncome")}
+        value={t("financing.wizard.coApplicant.checklist.grossIncomeValue", { amount: formatCurrency(income) })}
+        fallback={notRecorded}
       />
       {!hideEquity && (
         <>
           <Row
             ok={hasEquity}
-            label="Eigenkapital"
+            label={t("financing.wizard.coApplicant.checklist.equity")}
             value={formatCurrency(equity)}
-            fallback="nicht erfasst"
+            fallback={notRecorded}
           />
           {/* PK nicht aus dem CRM — optional, aber grün sobald manuell erfasst */}
           <Row
             ok={pk > 0}
-            label="PK / Freizügigkeit"
-            value={`${formatCurrency(pk)} (manuell)`}
-            fallback="optional — nicht im CRM (Standard: CHF 0)"
+            label={t("financing.wizard.coApplicant.checklist.pk")}
+            value={t("financing.wizard.coApplicant.checklist.pkValue", { amount: formatCurrency(pk) })}
+            fallback={t("financing.wizard.coApplicant.checklist.pkOptional")}
           />
         </>
       )}
@@ -1218,11 +1228,12 @@ type Kpis = {
 };
 
 function KpiPreview({ kpis, hideEquity }: { kpis: Kpis; hideEquity?: boolean }) {
+  const { t } = useTranslation();
   return (
     <p className="text-xs text-muted-foreground">
-      Belehnung: <span className="font-medium text-foreground">{kpis.ltv.toFixed(1)}%</span>
-      {" · "}Tragbarkeit: <span className="font-medium text-foreground">{kpis.affordability.toFixed(1)}%</span>
-      {!hideEquity && <>{" · "}Eigenmittelquote: <span className="font-medium text-foreground">{kpis.equityRatio.toFixed(1)}%</span></>}
+      {t("financing.wizard.metrics.kpi.ltv")}: <span className="font-medium text-foreground">{kpis.ltv.toFixed(1)}%</span>
+      {" · "}{t("financing.wizard.metrics.kpi.affordability")}: <span className="font-medium text-foreground">{kpis.affordability.toFixed(1)}%</span>
+      {!hideEquity && <>{" · "}{t("financing.wizard.metrics.kpi.equityRatio")}: <span className="font-medium text-foreground">{kpis.equityRatio.toFixed(1)}%</span></>}
     </p>
   );
 }
@@ -1242,6 +1253,7 @@ function Step4Metrics({
     incomeCombined: number;
   };
 }) {
+  const { t } = useTranslation();
   const showRenovation = form.modules.includes("renovation");
   const objectValueFromCrm = isRefiOnly && form.property_source === "crm" && !!form.property_purchase_price;
   const coActive = combined.coActive;
@@ -1275,18 +1287,18 @@ function Step4Metrics({
             {/* === Linke Spalte: Objekt + Hypothek === */}
             <div className="space-y-4">
               <section className="rounded-lg border bg-card p-4 space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Objekt</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.metrics.objectTitle")}</h3>
                 {objectValueFromCrm ? (
                   <div className="rounded-md border bg-background p-3 text-sm flex items-center justify-between">
                     <div>
-                      <span className="text-xs text-muted-foreground block">Objektwert (aus CRM)</span>
+                      <span className="text-xs text-muted-foreground block">{t("financing.wizard.metrics.objectValueFromCrm")}</span>
                       <span className="font-semibold text-base">{formatCurrency(num(form.property_purchase_price))}</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">Schritt 2</span>
+                    <span className="text-xs text-muted-foreground">{t("financing.wizard.metrics.step2")}</span>
                   </div>
                 ) : (
                   <Field
-                    label="Objektwert / Verkehrswert (CHF) *"
+                    label={t("financing.wizard.metrics.objectValueRequired")}
                     type="number"
                     value={form.property_purchase_price}
                     onChange={(v) => update("property_purchase_price", v)}
@@ -1294,25 +1306,25 @@ function Step4Metrics({
                 )}
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <Label className="text-xs">Nutzung *</Label>
+                    <Label className="text-xs">{t("financing.wizard.metrics.usage")}</Label>
                     <Select value={form.usage_type} onValueChange={(v) => update("usage_type", v as WizardForm["usage_type"])}>
-                      <SelectTrigger><SelectValue placeholder="Bitte wählen…" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t("financing.wizard.metrics.pleaseSelect")} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="owner_occupied">Eigennutzung</SelectItem>
-                        <SelectItem value="rental">Renditeobjekt</SelectItem>
+                        <SelectItem value="owner_occupied">{t("financing.wizard.metrics.usageOwner")}</SelectItem>
+                        <SelectItem value="rental">{t("financing.wizard.metrics.usageRental")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Objektart *</Label>
+                    <Label className="text-xs">{t("financing.wizard.metrics.objectType")}</Label>
                     <Select value={form.object_type} onValueChange={(v) => update("object_type", v as WizardForm["object_type"])}>
-                      <SelectTrigger><SelectValue placeholder="Bitte wählen…" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t("financing.wizard.metrics.pleaseSelect")} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="house">Einfamilienhaus</SelectItem>
-                        <SelectItem value="apartment">Eigentumswohnung</SelectItem>
-                        <SelectItem value="mixed_use">Mehrfamilien-/Geschäftshaus</SelectItem>
-                        <SelectItem value="commercial">Gewerbe</SelectItem>
-                        <SelectItem value="other">Andere</SelectItem>
+                        <SelectItem value="house">{t("financing.wizard.metrics.objectTypes.house")}</SelectItem>
+                        <SelectItem value="apartment">{t("financing.wizard.metrics.objectTypes.apartment")}</SelectItem>
+                        <SelectItem value="mixed_use">{t("financing.wizard.metrics.objectTypes.mixed_use")}</SelectItem>
+                        <SelectItem value="commercial">{t("financing.wizard.metrics.objectTypes.commercial")}</SelectItem>
+                        <SelectItem value="other">{t("financing.wizard.metrics.objectTypes.other")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1326,10 +1338,10 @@ function Step4Metrics({
                 const hasBase = kpis.maxMortgageAllowed > 0;
                 return (
                   <section className="rounded-lg border bg-card p-4 space-y-3">
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hypothek</h3>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.metrics.mortgageTitle")}</h3>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <Field label="Aktuelle Hypothek (CHF) *" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
-                      <Field label="Aufstockung (CHF)" type="number" value={form.requested_increase} onChange={(v) => update("requested_increase", v)} />
+                      <Field label={t("financing.wizard.metrics.currentMortgage")} type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
+                      <Field label={t("financing.wizard.metrics.increaseAmount")} type="number" value={form.requested_increase} onChange={(v) => update("requested_increase", v)} />
                     </div>
                     {hasBase && (
                       <div
@@ -1340,23 +1352,23 @@ function Step4Metrics({
                         }`}
                       >
                         <div className="flex flex-col">
-                          <span className="text-xs opacity-80">Max. Aufstockung ({kpis.maxLtv}%)</span>
+                          <span className="text-xs opacity-80">{t("financing.wizard.metrics.maxIncrease", { ltv: kpis.maxLtv })}</span>
                           <span className="font-semibold text-base">{formatCurrency(maxIncrease)}</span>
                         </div>
                         <div className="text-right">
-                          <span className="text-xs opacity-80">{fits ? "✓ möglich" : "✗ nicht möglich"}</span>
+                          <span className="text-xs opacity-80">{fits ? t("financing.wizard.metrics.possible") : t("financing.wizard.metrics.notPossible")}</span>
                           <div className="text-xs">
                             {fits
-                              ? `+${formatCurrency(Math.max(0, maxIncrease - requested))} Spielraum`
-                              : `−${formatCurrency(requested - maxIncrease)} über Limit`}
+                              ? t("financing.wizard.metrics.headroom", { amount: formatCurrency(Math.max(0, maxIncrease - requested)) })
+                              : t("financing.wizard.metrics.overLimit", { amount: formatCurrency(requested - maxIncrease) })}
                           </div>
                         </div>
                       </div>
                     )}
                     <div className="rounded-md border bg-background p-3 text-sm">
-                      <span className="text-xs text-muted-foreground">Neue Gesamthypothek</span>
+                      <span className="text-xs text-muted-foreground">{t("financing.wizard.metrics.newTotalMortgage")}</span>
                       <div className="font-semibold text-base">{formatCurrency(effectiveMortgage)}</div>
-                      <span className="text-[11px] text-muted-foreground">= Aktuelle Hypothek + Aufstockung</span>
+                      <span className="text-[11px] text-muted-foreground">{t("financing.wizard.metrics.newTotalFormula")}</span>
                     </div>
                   </section>
                 );
@@ -1366,59 +1378,59 @@ function Step4Metrics({
             {/* === Rechte Spalte: Bestehende Finanzierung + Einkommen === */}
             <div className="space-y-4">
               <section className="rounded-lg border bg-card p-4 space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bestehende Finanzierung</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.metrics.existingFinancing")}</h3>
                 <SwissBankSelect value={form.current_bank} onChange={(v) => update("current_bank", v)} />
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="Aktueller Zinssatz (%)" type="number" value={form.interest_rate_current} onChange={(v) => update("interest_rate_current", v)} />
-                  <Field label="Ablauf Zinsbindung" type="date" value={form.interest_rate_expiry} onChange={(v) => update("interest_rate_expiry", v)} />
+                  <Field label={t("financing.wizard.metrics.currentRate")} type="number" value={form.interest_rate_current} onChange={(v) => update("interest_rate_current", v)} />
+                  <Field label={t("financing.wizard.metrics.rateExpiry")} type="date" value={form.interest_rate_expiry} onChange={(v) => update("interest_rate_expiry", v)} />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Refinanzierungs-Zweck</Label>
+                  <Label className="text-xs">{t("financing.wizard.metrics.refiPurpose")}</Label>
                   <Select value={form.refi_purpose} onValueChange={(v) => update("refi_purpose", v as WizardForm["refi_purpose"])}>
-                    <SelectTrigger><SelectValue placeholder="Optional" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("financing.wizard.metrics.optional")} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="rate_optimisation">Zinsoptimierung</SelectItem>
-                      <SelectItem value="bank_change">Bankwechsel</SelectItem>
-                      <SelectItem value="consolidation">Konsolidierung</SelectItem>
-                      <SelectItem value="cash_out">Kapital-Auszahlung</SelectItem>
-                      <SelectItem value="other">Andere</SelectItem>
+                      <SelectItem value="rate_optimisation">{t("financing.wizard.metrics.refiPurposes.rate_optimisation")}</SelectItem>
+                      <SelectItem value="bank_change">{t("financing.wizard.metrics.refiPurposes.bank_change")}</SelectItem>
+                      <SelectItem value="consolidation">{t("financing.wizard.metrics.refiPurposes.consolidation")}</SelectItem>
+                      <SelectItem value="cash_out">{t("financing.wizard.metrics.refiPurposes.cash_out")}</SelectItem>
+                      <SelectItem value="other">{t("financing.wizard.metrics.refiPurposes.other")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </section>
 
               <section className="rounded-lg border bg-card p-4 space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Einkommen & Verpflichtungen</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.metrics.incomeObligations")}</h3>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field
-                    label={coActive ? "Einkommen Hauptkunde (CHF/J) *" : "Brutto-Jahreseinkommen (CHF) *"}
+                    label={coActive ? t("financing.wizard.metrics.incomeMain") : t("financing.wizard.metrics.grossIncome")}
                     type="number"
                     value={form.gross_income_yearly}
                     onChange={(v) => update("gross_income_yearly", v)}
                   />
                   {coActive && (
                     <Field
-                      label="Einkommen Partner (CHF/J) *"
+                      label={t("financing.wizard.metrics.incomePartner")}
                       type="number"
                       value={form.co_applicant_einkommen}
                       onChange={(v) => update("co_applicant_einkommen", v)}
                     />
                   )}
                   <Field
-                    label={coActive ? "Verpflichtungen kombiniert (CHF/M)" : "Monatl. Verpflichtungen (CHF)"}
+                    label={coActive ? t("financing.wizard.metrics.obligationsCombined") : t("financing.wizard.metrics.obligationsMonthly")}
                     type="number"
                     value={form.monthly_obligations}
                     onChange={(v) => update("monthly_obligations", v)}
                   />
                   {showRenovation && (
-                    <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+                    <Field label={t("financing.wizard.metrics.renovationCosts")} type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
                   )}
                 </div>
-                <p className="text-[11px] text-muted-foreground">Leasing, Kredite, Alimente — automatisch aus Selbstauskunft summiert (anpassbar).</p>
+                <p className="text-[11px] text-muted-foreground">{t("financing.wizard.metrics.obligationsHint")}</p>
                 {coActive && (
                   <div className="rounded-md bg-background border p-2.5 text-xs flex justify-between">
-                    <span className="text-muted-foreground">Kombiniertes Einkommen:</span>
-                    <span className="font-semibold tabular-nums">{formatCurrency(combined.incomeCombined)} / J</span>
+                    <span className="text-muted-foreground">{t("financing.wizard.metrics.combinedIncomeShort")}</span>
+                    <span className="font-semibold tabular-nums">{formatCurrency(combined.incomeCombined)} {t("financing.wizard.metrics.perYearShort")}</span>
                   </div>
                 )}
               </section>
@@ -1427,25 +1439,27 @@ function Step4Metrics({
 
           {kpis.ltvExceeded && (
             <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
-              ⚠ Neue Gesamthypothek übersteigt max. Belehnung ({kpis.maxLtv}% = {formatCurrency(kpis.maxMortgageAllowed)}). Aufstockung reduzieren oder Eigenmittel einbringen.
+              {t("financing.wizard.metrics.ltvExceededWarn", { ltv: kpis.maxLtv, amount: formatCurrency(kpis.maxMortgageAllowed) })}
             </div>
           )}
 
           <p className="text-[11px] text-muted-foreground">
-            Hinweis: Belehnungsgrenze {form.usage_type === "rental" ? "Renditeobjekt → max. 75 %" : "Eigennutzung → max. 80 %"}.
+            {form.usage_type === "rental"
+              ? t("financing.wizard.metrics.ltvLimitHintRental")
+              : t("financing.wizard.metrics.ltvLimitHintOwner")}
           </p>
         </>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Kaufpreis (CHF) *" type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
-          <Field label="Gewünschte Hypothek (CHF) *" type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
-          <Field label="Eigenmittel total (CHF) *" type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
-          <Field label="davon PK / Freizügigkeit (CHF)" type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
-          <Field label="Brutto-Jahreseinkommen (CHF) *" type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
+          <Field label={t("financing.wizard.metrics.purchasePrice")} type="number" value={form.property_purchase_price} onChange={(v) => update("property_purchase_price", v)} />
+          <Field label={t("financing.wizard.metrics.requestedMortgage")} type="number" value={form.requested_mortgage} onChange={(v) => update("requested_mortgage", v)} />
+          <Field label={t("financing.wizard.metrics.ownFundsTotalReq")} type="number" value={form.own_funds_total} onChange={(v) => update("own_funds_total", v)} />
+          <Field label={t("financing.wizard.metrics.pkPart")} type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
+          <Field label={t("financing.wizard.metrics.grossIncomeReq")} type="number" value={form.gross_income_yearly} onChange={(v) => update("gross_income_yearly", v)} />
           {showRenovation && (
             <>
-              <Field label="Renovationskosten (CHF)" type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
-              <Field label="davon Eigenleistung (CHF)" type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
+              <Field label={t("financing.wizard.metrics.renovationCosts")} type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+              <Field label={t("financing.wizard.metrics.ownWork")} type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
             </>
           )}
         </div>
@@ -1454,7 +1468,7 @@ function Step4Metrics({
         <KpiPreview kpis={kpis} hideEquity={isRefiOnly} />
         {isRefiOnly && kpis.obligationsYearly > 0 && (
           <p className="text-[11px] text-muted-foreground mt-1">
-            Inkl. Verpflichtungen {formatCurrency(kpis.obligationsYearly)}/Jahr in der Tragbarkeit.
+            {t("financing.wizard.metrics.obligationsInAffordability", { amount: formatCurrency(kpis.obligationsYearly) })}
           </p>
         )}
       </div>
@@ -1470,6 +1484,7 @@ function Step5Advanced({
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   kpis: Kpis;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const rate = num(form.calc_rate) || 5;
   const anc = num(form.ancillary_pct) || 1;
@@ -1478,14 +1493,14 @@ function Step5Advanced({
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger asChild>
           <Button variant="outline" className="w-full justify-between">
-            <span className="flex items-center gap-2"><Settings2 className="h-4 w-4" />Erweiterte Einstellungen anpassen</span>
+            <span className="flex items-center gap-2"><Settings2 className="h-4 w-4" />{t("financing.wizard.advanced.toggle")}</span>
             <ChevronDown className={cn("h-4 w-4 transition", open && "rotate-180")} />
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-5 pt-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <Label>Kalkulatorischer Zinssatz</Label>
+              <Label>{t("financing.wizard.advanced.calcRate")}</Label>
               <span className="font-medium">{rate.toFixed(1)} %</span>
             </div>
             <Slider
@@ -1495,7 +1510,7 @@ function Step5Advanced({
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <Label>Nebenkosten (% der Gesamtinvestition)</Label>
+              <Label>{t("financing.wizard.advanced.ancillaryPct")}</Label>
               <span className="font-medium">{anc.toFixed(1)} %</span>
             </div>
             <Slider
@@ -1504,14 +1519,14 @@ function Step5Advanced({
             />
           </div>
           <div className="space-y-2">
-            <Label>Amortisationsdauer</Label>
+            <Label>{t("financing.wizard.advanced.amortYears")}</Label>
             <Select value={form.amortisation_years} onValueChange={(v) => update("amortisation_years", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="10">10 Jahre</SelectItem>
-                <SelectItem value="12">12 Jahre</SelectItem>
-                <SelectItem value="15">15 Jahre</SelectItem>
-                <SelectItem value="20">20 Jahre</SelectItem>
+                <SelectItem value="10">{t("financing.wizard.advanced.years", { count: 10 })}</SelectItem>
+                <SelectItem value="12">{t("financing.wizard.advanced.years", { count: 12 })}</SelectItem>
+                <SelectItem value="15">{t("financing.wizard.advanced.years", { count: 15 })}</SelectItem>
+                <SelectItem value="20">{t("financing.wizard.advanced.years", { count: 20 })}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1520,7 +1535,7 @@ function Step5Advanced({
       <div className="rounded-lg bg-card p-3 space-y-1">
         <KpiPreview kpis={kpis} />
         <p className="text-xs text-muted-foreground">
-          Jährliche Belastung: {formatCurrency(kpis.yearly)} (Zins + Nebenkosten + Amortisation)
+          {t("financing.wizard.advanced.yearlyBurden", { amount: formatCurrency(kpis.yearly) })}
         </p>
       </div>
     </div>
@@ -1539,79 +1554,85 @@ function Step6Summary({
   isRefiOnly: boolean;
   effectiveMortgage: number;
 }) {
+  const { t } = useTranslation();
   const client = clients.find((c) => c.id === form.client_id);
   const property = properties.find((p) => p.id === form.property_id);
-  const moduleLabels = form.modules.map((m) => MODULE_OPTIONS.find((o) => o.key === m)?.label).filter(Boolean).join(" + ");
+  const moduleLabels = form.modules
+    .map((m) => t(`financing.wizard.modules.${m}.label`, { defaultValue: MODULE_OPTIONS.find((o) => o.key === m)?.label ?? m }))
+    .filter(Boolean)
+    .join(" + ");
   const propertyLabel = form.property_source === "crm"
     ? (property?.title ?? "—")
     : form.property_source === "manual"
       ? (form.property_title || "—")
-      : "Später erfassen";
+      : t("financing.wizard.summary.laterToCapture");
   const clientLabel = form.client_source === "crm"
     ? (client?.full_name ?? "—")
-    : "Ohne Kunde";
-  const propertyValueLabel = isRefiOnly ? "Objektwert / Verkehrswert" : "Kaufpreis";
+    : t("financing.wizard.summary.noClient");
+  const propertyValueLabel = isRefiOnly
+    ? t("financing.wizard.summary.propertyValue")
+    : t("financing.wizard.summary.purchasePrice");
 
   return (
     <div className="space-y-4">
-      <SummaryGroup title="Finanzierungsart">
-        <SumRow label="Module" value={moduleLabels || "—"} />
+      <SummaryGroup title={t("financing.wizard.summary.financingType")}>
+        <SumRow label={t("financing.wizard.summary.modules")} value={moduleLabels || "—"} />
       </SummaryGroup>
 
-      <SummaryGroup title="Immobilie">
-        <SumRow label="Bezeichnung" value={propertyLabel} />
-        {form.property_address && <SumRow label="Adresse" value={form.property_address} />}
+      <SummaryGroup title={t("financing.wizard.summary.property")}>
+        <SumRow label={t("financing.wizard.summary.designation")} value={propertyLabel} />
+        {form.property_address && <SumRow label={t("financing.wizard.summary.address")} value={form.property_address} />}
         {form.property_purchase_price && <SumRow label={propertyValueLabel} value={formatCurrency(num(form.property_purchase_price))} />}
-        {isRefiOnly && form.object_type && <SumRow label="Objektart" value={OBJECT_TYPE_LABELS[form.object_type]} />}
-        {isRefiOnly && form.usage_type && <SumRow label="Nutzung" value={form.usage_type === "rental" ? "Renditeobjekt" : "Eigennutzung"} />}
+        {isRefiOnly && form.object_type && <SumRow label={t("financing.wizard.summary.objectType")} value={t(`financing.wizard.metrics.objectTypes.${form.object_type}`, { defaultValue: OBJECT_TYPE_LABELS[form.object_type] })} />}
+        {isRefiOnly && form.usage_type && <SumRow label={t("financing.wizard.summary.usage")} value={form.usage_type === "rental" ? t("financing.wizard.summary.usageRental") : t("financing.wizard.summary.usageOwner")} />}
       </SummaryGroup>
 
-      <SummaryGroup title="Kunde">
-        <SumRow label="Kunde" value={clientLabel} />
-        {form.gross_income_yearly && <SumRow label="Brutto-Jahreseinkommen" value={formatCurrency(num(form.gross_income_yearly))} />}
-        {!isRefiOnly && form.own_funds_total && <SumRow label="Eigenmittel total" value={formatCurrency(num(form.own_funds_total))} />}
-        {!isRefiOnly && form.own_funds_pension_fund && <SumRow label="davon PK / Freizügigkeit" value={formatCurrency(num(form.own_funds_pension_fund))} />}
-        {isRefiOnly && form.monthly_obligations && <SumRow label="Monatl. Verpflichtungen" value={formatCurrency(num(form.monthly_obligations))} />}
+      <SummaryGroup title={t("financing.wizard.summary.client")}>
+        <SumRow label={t("financing.wizard.summary.client")} value={clientLabel} />
+        {form.gross_income_yearly && <SumRow label={t("financing.wizard.summary.grossIncome")} value={formatCurrency(num(form.gross_income_yearly))} />}
+        {!isRefiOnly && form.own_funds_total && <SumRow label={t("financing.wizard.summary.ownFundsTotal")} value={formatCurrency(num(form.own_funds_total))} />}
+        {!isRefiOnly && form.own_funds_pension_fund && <SumRow label={t("financing.wizard.summary.pkPart")} value={formatCurrency(num(form.own_funds_pension_fund))} />}
+        {isRefiOnly && form.monthly_obligations && <SumRow label={t("financing.wizard.summary.monthlyObligations")} value={formatCurrency(num(form.monthly_obligations))} />}
       </SummaryGroup>
 
       {isRefiOnly && (form.current_bank || form.interest_rate_current || form.interest_rate_expiry || form.refi_purpose) && (
-        <SummaryGroup title="Bestehende Finanzierung">
-          {form.current_bank && <SumRow label="Aktuelle Bank" value={form.current_bank} />}
-          {form.interest_rate_current && <SumRow label="Aktueller Zinssatz" value={`${num(form.interest_rate_current).toFixed(2)} %`} />}
-          {form.interest_rate_expiry && <SumRow label="Ablauf Zinsbindung" value={form.interest_rate_expiry} />}
-          {form.refi_purpose && <SumRow label="Zweck" value={REFI_PURPOSE_LABELS[form.refi_purpose]} />}
+        <SummaryGroup title={t("financing.wizard.summary.existingFinancing")}>
+          {form.current_bank && <SumRow label={t("financing.wizard.summary.currentBank")} value={form.current_bank} />}
+          {form.interest_rate_current && <SumRow label={t("financing.wizard.summary.currentRate")} value={`${num(form.interest_rate_current).toFixed(2)} %`} />}
+          {form.interest_rate_expiry && <SumRow label={t("financing.wizard.summary.rateExpiry")} value={form.interest_rate_expiry} />}
+          {form.refi_purpose && <SumRow label={t("financing.wizard.summary.purpose")} value={t(`financing.wizard.metrics.refiPurposes.${form.refi_purpose}`, { defaultValue: REFI_PURPOSE_LABELS[form.refi_purpose] })} />}
         </SummaryGroup>
       )}
 
-      <SummaryGroup title="Kennzahlen">
+      <SummaryGroup title={t("financing.wizard.summary.metrics")}>
         {isRefiOnly ? (
           <>
-            <SumRow label="Aktuelle Hypothek" value={formatCurrency(num(form.existing_mortgage))} />
-            <SumRow label="Aufstockungsbetrag" value={formatCurrency(num(form.requested_increase))} />
-            <SumRow label="Neue Gesamthypothek" value={formatCurrency(effectiveMortgage)} />
+            <SumRow label={t("financing.wizard.summary.currentMortgage")} value={formatCurrency(num(form.existing_mortgage))} />
+            <SumRow label={t("financing.wizard.summary.increaseAmount")} value={formatCurrency(num(form.requested_increase))} />
+            <SumRow label={t("financing.wizard.summary.newTotalMortgage")} value={formatCurrency(effectiveMortgage)} />
           </>
         ) : (
           <>
-            <SumRow label="Gewünschte Hypothek" value={formatCurrency(num(form.requested_mortgage))} />
-            {form.existing_mortgage && <SumRow label="Bestehende Hypothek" value={formatCurrency(num(form.existing_mortgage))} />}
+            <SumRow label={t("financing.wizard.summary.requestedMortgage")} value={formatCurrency(num(form.requested_mortgage))} />
+            {form.existing_mortgage && <SumRow label={t("financing.wizard.summary.existingMortgage")} value={formatCurrency(num(form.existing_mortgage))} />}
           </>
         )}
-        {form.renovation_costs && <SumRow label="Renovationskosten" value={formatCurrency(num(form.renovation_costs))} />}
-        {form.renovation_own_work && <SumRow label="davon Eigenleistung" value={formatCurrency(num(form.renovation_own_work))} />}
-        <SumRow label="Kalk. Zinssatz" value={`${num(form.calc_rate).toFixed(1)} %`} />
-        <SumRow label="Nebenkosten" value={`${num(form.ancillary_pct).toFixed(1)} %`} />
-        <SumRow label="Amortisationsdauer" value={`${form.amortisation_years} Jahre`} />
+        {form.renovation_costs && <SumRow label={t("financing.wizard.summary.renovationCosts")} value={formatCurrency(num(form.renovation_costs))} />}
+        {form.renovation_own_work && <SumRow label={t("financing.wizard.summary.ownWork")} value={formatCurrency(num(form.renovation_own_work))} />}
+        <SumRow label={t("financing.wizard.summary.calcRate")} value={`${num(form.calc_rate).toFixed(1)} %`} />
+        <SumRow label={t("financing.wizard.summary.ancillaryCosts")} value={`${num(form.ancillary_pct).toFixed(1)} %`} />
+        <SumRow label={t("financing.wizard.summary.amortDuration")} value={t("financing.wizard.summary.years", { count: Number(form.amortisation_years) })} />
       </SummaryGroup>
 
       <div className="rounded-lg border p-4 bg-card">
         <div className="flex items-center justify-between mb-2">
-          <p className="font-semibold">Live-Vorschau</p>
+          <p className="font-semibold">{t("financing.wizard.summary.livePreview")}</p>
           <StatusBadge status={status} />
         </div>
         <KpiPreview kpis={kpis} hideEquity={isRefiOnly} />
         {isRefiOnly && kpis.ltvExceeded && (
           <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
-            ⚠ Neue Gesamthypothek übersteigt max. Belehnung von {kpis.maxLtv}% ({formatCurrency(kpis.maxMortgageAllowed)}).
+            {t("financing.wizard.summary.ltvExceeded", { ltv: kpis.maxLtv, amount: formatCurrency(kpis.maxMortgageAllowed) })}
           </p>
         )}
       </div>
@@ -1638,10 +1659,11 @@ function SumRow({ label, value }: { label: string; value: string }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  if (status === "realistic") return <Badge className="bg-emerald-600 hover:bg-emerald-600">Realistisch</Badge>;
-  if (status === "critical") return <Badge className="bg-amber-500 hover:bg-amber-500">Kritisch</Badge>;
-  if (status === "not_financeable") return <Badge className="bg-red-600 hover:bg-red-600">Nicht finanzierbar</Badge>;
-  return <Badge variant="secondary">Unvollständig</Badge>;
+  const { t } = useTranslation();
+  if (status === "realistic") return <Badge className="bg-emerald-600 hover:bg-emerald-600">{t("financing.wizard.status.realistic")}</Badge>;
+  if (status === "critical") return <Badge className="bg-amber-500 hover:bg-amber-500">{t("financing.wizard.status.critical")}</Badge>;
+  if (status === "not_financeable") return <Badge className="bg-red-600 hover:bg-red-600">{t("financing.wizard.status.not_financeable")}</Badge>;
+  return <Badge variant="secondary">{t("financing.wizard.status.incomplete")}</Badge>;
 }
 
 /* ==================== Helpers ==================== */
@@ -1711,6 +1733,7 @@ function SearchableSelect({
   placeholder: string;
   emptyText: string;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const selected = items.find((i) => i.value === value);
   return (
@@ -1747,7 +1770,7 @@ function SearchableSelect({
             return hay.includes(search.toLowerCase()) ? 1 : 0;
           }}
         >
-          <CommandInput placeholder="Suchen…" />
+          <CommandInput placeholder={t("financing.wizard.search")} />
           <CommandList
             className="max-h-none flex-1 overflow-y-auto overscroll-contain"
             onWheelCapture={(e) => e.stopPropagation()}
@@ -1830,6 +1853,7 @@ const SWISS_BANKS: string[] = [
 ];
 
 function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const isKnown = SWISS_BANKS.some((b) => b.toLowerCase() === value.toLowerCase());
@@ -1837,7 +1861,7 @@ function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: str
 
   return (
     <div className="space-y-1">
-      <Label className="text-xs">Aktuelle Bank</Label>
+      <Label className="text-xs">{t("financing.wizard.bank.label")}</Label>
       <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSearch(""); }}>
         <PopoverTrigger asChild>
           <Button
@@ -1850,10 +1874,10 @@ function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: str
               {value ? (
                 <>
                   {value}
-                  {isCustom && <span className="ml-2 text-[10px] text-muted-foreground">(Sonstige)</span>}
+                  {isCustom && <span className="ml-2 text-[10px] text-muted-foreground">{t("financing.wizard.bank.other")}</span>}
                 </>
               ) : (
-                <span className="text-muted-foreground">Bank suchen oder eingeben…</span>
+                <span className="text-muted-foreground">{t("financing.wizard.bank.placeholder")}</span>
               )}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1865,7 +1889,7 @@ function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: str
             className="flex max-h-[min(22rem,var(--radix-popover-content-available-height))] flex-col"
           >
             <CommandInput
-              placeholder="Bank suchen…"
+              placeholder={t("financing.wizard.bank.search")}
               value={search}
               onValueChange={setSearch}
             />
@@ -1876,7 +1900,7 @@ function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: str
                   className="w-full rounded-sm px-2 py-2 text-left text-sm hover:bg-accent"
                   onClick={() => { onChange(search.trim()); setOpen(false); }}
                 >
-                  „{search}" als Sonstige übernehmen
+                  {t("financing.wizard.bank.addCustom", { value: search })}
                 </button>
               </CommandEmpty>
               <CommandGroup>
@@ -1892,13 +1916,13 @@ function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: str
                 ))}
               </CommandGroup>
               {search.trim() && !SWISS_BANKS.some((b) => b.toLowerCase() === search.trim().toLowerCase()) && (
-                <CommandGroup heading="Sonstige">
+                <CommandGroup heading={t("financing.wizard.bank.otherGroup")}>
                   <CommandItem
                     value={`__custom__${search}`}
                     onSelect={() => { onChange(search.trim()); setOpen(false); }}
                   >
                     <Check className="mr-2 h-4 w-4 shrink-0 opacity-0" />
-                    <span className="truncate text-sm">„{search.trim()}" verwenden</span>
+                    <span className="truncate text-sm">{t("financing.wizard.bank.useCustom", { value: search.trim() })}</span>
                   </CommandItem>
                 </CommandGroup>
               )}
