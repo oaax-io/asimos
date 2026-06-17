@@ -100,8 +100,8 @@ export function GeneratePdfButton({
   };
 
   const requestPrintFallback = (message?: string) => {
-    const reason = message?.trim() || "Der PDF-Service hat keine Datei zurückgegeben.";
-    toast.error("PDF konnte nicht generiert werden. Browser-Druck als Fallback verwenden?", {
+    const reason = message?.trim() || t("documents.pdf.fallbackReasonDefault");
+    toast.error(t("documents.pdf.toast.failed"), {
       description: reason,
     });
     setFallbackReason(reason);
