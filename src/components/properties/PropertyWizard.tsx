@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,28 +27,28 @@ type Structure = "single" | "building" | "unit_in_building";
 type Marketing = "sale" | "rent" | "off_market";
 
 const PROP_TYPES = [
-  { v: "house",       label: "Einfamilienhaus",     desc: "Freistehendes Haus für eine Familie",       icon: Home },
-  { v: "mixed_use",   label: "Mehrfamilienhaus",    desc: "Liegenschaft mit mehreren Wohneinheiten",   icon: Building2 },
-  { v: "apartment",   label: "Wohnung",             desc: "Eigentumswohnung oder Mietwohnung",         icon: Building },
-  { v: "commercial",  label: "Gewerbe",             desc: "Büro-, Verkaufs- oder Lagerflächen",        icon: Briefcase },
-  { v: "land",        label: "Grundstück",          desc: "Bauland, Landwirtschafts- oder Restland",   icon: TreePine },
-  { v: "parking",     label: "Parkplatz / Garage",  desc: "Einzelner Stellplatz oder Garagenbox",      icon: Car },
-  { v: "other",       label: "Sonstige",            desc: "Sonstige Objektart",                        icon: Layers },
+  { v: "house",       icon: Home },
+  { v: "mixed_use",   icon: Building2 },
+  { v: "apartment",   icon: Building },
+  { v: "commercial",  icon: Briefcase },
+  { v: "land",        icon: TreePine },
+  { v: "parking",     icon: Car },
+  { v: "other",       icon: Layers },
 ] as const;
 
-const STRUCTURES: { v: Structure; label: string; desc: string; icon: any }[] = [
-  { v: "single",            label: "Einzelobjekt",                         desc: "Ein eigenständiges Objekt ohne Untereinheiten.",                  icon: Box },
-  { v: "building",          label: "Liegenschaft mit mehreren Einheiten",  desc: "Mehrfamilienhaus oder Gebäude mit mehreren Einheiten.",           icon: Boxes },
-  { v: "unit_in_building",  label: "Einheit innerhalb einer Liegenschaft", desc: "Diese Einheit gehört zu einem bereits erfassten Gebäude.",        icon: Layers3 },
+const STRUCTURES: { v: Structure; icon: any }[] = [
+  { v: "single",            icon: Box },
+  { v: "building",          icon: Boxes },
+  { v: "unit_in_building",  icon: Layers3 },
 ];
 
 export type WizardMedia = {
-  file_url: string;            // Storage-Pfad (z. B. _wizard/abc.jpg) oder bestehender Pfad aus Mediathek
+  file_url: string;
   file_name: string | null;
-  file_type: string | null;    // image | video | floor_plan | other
+  file_type: string | null;
   title: string | null;
   is_cover: boolean;
-  source: "upload" | "library"; // library = Verknüpfung zu bestehendem Asset
+  source: "upload" | "library";
   library_media_id?: string | null;
 };
 
@@ -55,7 +56,7 @@ const STATUSES = ["draft","preparation","active","available","reserved","sold","
 
 export type Unit = {
   unit_number: string;
-  unit_type: string;        // apartment | commercial | parking
+  unit_type: string;
   unit_floor: string;
   rooms: string;
   living_area: string;
@@ -66,25 +67,21 @@ export type Unit = {
 };
 
 export type WizardData = {
-  // Schritt 1+2
   property_type: string;
   structure: Structure;
   parent_property_id: string | null;
-  // Schritt 3
   title: string;
   marketing_type: Marketing;
   listing_type: "sale" | "rent";
   status: string;
   owner_client_id: string | null;
   assigned_to: string | null;
-  // Schritt 4
   address: string;
   postal_code: string;
   city: string;
   country: string;
   floor: string;
   location_description: string;
-  // Schritt 5
   living_area: string;
   usable_area: string;
   plot_area: string;
@@ -93,7 +90,6 @@ export type WizardData = {
   total_floors: string;
   year_built: string;
   renovated_at: string;
-  // Schritt 6
   price: string;
   rent: string;
   ancillary_costs: string;
@@ -101,7 +97,6 @@ export type WizardData = {
   internal_minimum_price: string;
   commission_model: string;
   commission_value: string;
-  // Schritt 7
   has_balcony: boolean;
   has_terrace: boolean;
   has_garden: boolean;
@@ -113,12 +108,10 @@ export type WizardData = {
   energy_source: string;
   energy_class: string;
   features_extra: string;
-  // Schritt 8
   image_url: string;
   description: string;
   internal_notes: string;
   media: WizardMedia[];
-  // Schritt 9
   units: Unit[];
 };
 
@@ -170,8 +163,6 @@ const empty: WizardData = {
   media: [],
   units: [],
 };
-
-/* -------------------- Submit-Payload -------------------- */
 
 export type WizardSubmit = {
   property: Record<string, any>;
@@ -269,7 +260,6 @@ export function buildSubmitPayload(d: WizardData): WizardSubmit {
         area: num(u.living_area),
         price: num(u.price),
         rent: num(u.rent),
-        // Adresse erbt vom Hauptobjekt:
         address: d.address || null,
         postal_code: d.postal_code || null,
         city: d.city || null,
@@ -282,18 +272,10 @@ export function buildSubmitPayload(d: WizardData): WizardSubmit {
 
 /* -------------------- Wizard-Komponente -------------------- */
 
-const STEPS = [
-  "Objektart",
-  "Struktur",
-  "Grunddaten",
-  "Adresse",
-  "Flächen",
-  "Preis",
-  "Ausstattung",
-  "Medien",
-  "Einheiten",
-  "Zusammenfassung",
-];
+const STEP_KEYS = [
+  "type", "structure", "basics", "address", "areas",
+  "price", "equipment", "media", "units", "summary",
+] as const;
 
 function hydrateFromProperty(p: any): WizardData {
   if (!p) return { ...empty };
@@ -376,6 +358,7 @@ export function PropertyWizard({
   initial?: any;
   mode?: "create" | "edit";
 }) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [d, setD] = useState<WizardData>(() => initial ? hydrateFromProperty(initial) : { ...empty });
 
@@ -386,9 +369,8 @@ export function PropertyWizard({
   const isMfh = d.property_type === "mixed_use" || d.structure === "building";
   const showUnitsStep = isMfh;
 
-  // Schritt 9 überspringen, wenn nicht MFH
   const visibleSteps = useMemo(() => {
-    return STEPS.map((label, idx) => ({ idx, label }))
+    return STEP_KEYS.map((key, idx) => ({ idx, key }))
       .filter(s => showUnitsStep || s.idx !== 8);
   }, [showUnitsStep]);
 
@@ -466,7 +448,6 @@ export function PropertyWizard({
   })();
 
   const goNext = () => {
-    // Skip Schritt 8 (Einheiten Index 8) wenn nicht MFH
     let next = step + 1;
     if (next === 8 && !showUnitsStep) next = 9;
     if (next > 9) return;
@@ -485,15 +466,20 @@ export function PropertyWizard({
 
   const update = (patch: Partial<WizardData>) => setD((p) => ({ ...p, ...patch }));
 
+  const currentStepKey = STEP_KEYS[step];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[95vh] w-[95vw] max-w-5xl overflow-hidden p-0">
         <DialogHeader className="border-b p-6 pb-4">
-          <DialogTitle className="font-display text-xl">{mode === "edit" ? "Immobilie bearbeiten" : "Neue Immobilie"}</DialogTitle>
+          <DialogTitle className="font-display text-xl">{mode === "edit" ? t("propertyWizard.titleEdit") : t("propertyWizard.titleNew")}</DialogTitle>
           <DialogDescription>
-            Schritt {visibleSteps.findIndex(s => s.idx === step) + 1} von {visibleSteps.length} · {STEPS[step]}
+            {t("propertyWizard.stepProgress", {
+              current: visibleSteps.findIndex(s => s.idx === step) + 1,
+              total: visibleSteps.length,
+              label: t(`propertyWizard.steps.${currentStepKey}`),
+            })}
           </DialogDescription>
-          {/* Progress */}
           <div className="mt-3 flex gap-1">
             {visibleSteps.map((s) => (
               <div
@@ -522,18 +508,18 @@ export function PropertyWizard({
 
         <div className="flex items-center justify-between border-t p-4">
           <Button variant="ghost" onClick={goBack} disabled={step === 0 || submitting}>
-            <ArrowLeft className="mr-1 h-4 w-4" /> Zurück
+            <ArrowLeft className="mr-1 h-4 w-4" /> {t("propertyWizard.nav.back")}
           </Button>
           <div className="text-xs text-muted-foreground">
-            Pflicht: Titel, Objektart, Vermarktung, Status, Adresse oder Ort
+            {t("propertyWizard.mandatoryHint")}
           </div>
           {step < 9 ? (
             <Button onClick={goNext} disabled={!canProceed || submitting}>
-              Weiter <ArrowRight className="ml-1 h-4 w-4" />
+              {t("propertyWizard.nav.next")} <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           ) : (
             <Button onClick={finish} disabled={!canProceed || submitting}>
-              <Check className="mr-1 h-4 w-4" /> {mode === "edit" ? "Änderungen speichern" : "Immobilie speichern"}
+              <Check className="mr-1 h-4 w-4" /> {mode === "edit" ? t("propertyWizard.nav.saveEdit") : t("propertyWizard.nav.save")}
             </Button>
           )}
         </div>
@@ -545,14 +531,15 @@ export function PropertyWizard({
 /* -------------------- Schritte -------------------- */
 
 function Step1Type({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-5">
       <div>
-        <h3 className="text-lg font-semibold">Welche Objektart erfasst du?</h3>
-        <p className="text-sm text-muted-foreground">Wähle die passende Kategorie. Du kannst sie später anpassen.</p>
+        <h3 className="text-lg font-semibold">{t("propertyWizard.step1.title")}</h3>
+        <p className="text-sm text-muted-foreground">{t("propertyWizard.step1.hint")}</p>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {PROP_TYPES.map(({ v, label, desc, icon: Icon }) => {
+        {PROP_TYPES.map(({ v, icon: Icon }) => {
           const selected = d.property_type === v;
           return (
             <button
@@ -572,8 +559,8 @@ function Step1Type({ d, update }: { d: WizardData; update: (p: Partial<WizardDat
                 <Icon className="h-6 w-6" />
               </div>
               <div>
-                <div className="font-semibold leading-tight">{label}</div>
-                <p className="mt-1 text-xs leading-snug text-muted-foreground">{desc}</p>
+                <div className="font-semibold leading-tight">{t(`propertyWizard.types.${v}.label`)}</div>
+                <p className="mt-1 text-xs leading-snug text-muted-foreground">{t(`propertyWizard.types.${v}.desc`)}</p>
               </div>
               {selected && (
                 <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -589,14 +576,15 @@ function Step1Type({ d, update }: { d: WizardData; update: (p: Partial<WizardDat
 }
 
 function Step2Structure({ d, update, buildings }: { d: WizardData; update: (p: Partial<WizardData>) => void; buildings: any[] }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-5">
       <div>
-        <h3 className="text-lg font-semibold">Wie ist das Objekt strukturiert?</h3>
-        <p className="text-sm text-muted-foreground">Wir blenden danach nur die relevanten Felder ein.</p>
+        <h3 className="text-lg font-semibold">{t("propertyWizard.step2.title")}</h3>
+        <p className="text-sm text-muted-foreground">{t("propertyWizard.step2.hint")}</p>
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        {STRUCTURES.map(({ v, label, desc, icon: Icon }) => {
+        {STRUCTURES.map(({ v, icon: Icon }) => {
           const selected = d.structure === v;
           return (
             <button
@@ -616,8 +604,8 @@ function Step2Structure({ d, update, buildings }: { d: WizardData; update: (p: P
                 <Icon className="h-6 w-6" />
               </div>
               <div>
-                <div className="font-semibold leading-tight">{label}</div>
-                <p className="mt-1 text-xs leading-snug text-muted-foreground">{desc}</p>
+                <div className="font-semibold leading-tight">{t(`propertyWizard.structures.${v}.label`)}</div>
+                <p className="mt-1 text-xs leading-snug text-muted-foreground">{t(`propertyWizard.structures.${v}.desc`)}</p>
               </div>
               {selected && (
                 <div className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -630,11 +618,11 @@ function Step2Structure({ d, update, buildings }: { d: WizardData; update: (p: P
       </div>
       {d.structure === "unit_in_building" && (
         <div className="rounded-xl border bg-muted/30 p-4">
-          <Label>Übergeordnete Liegenschaft</Label>
+          <Label>{t("propertyWizard.step2.parentLabel")}</Label>
           <Select value={d.parent_property_id ?? ""} onValueChange={(v) => update({ parent_property_id: v || null })}>
-            <SelectTrigger className="mt-1"><SelectValue placeholder="Liegenschaft wählen" /></SelectTrigger>
+            <SelectTrigger className="mt-1"><SelectValue placeholder={t("propertyWizard.step2.parentPlaceholder")} /></SelectTrigger>
             <SelectContent>
-              {buildings.length === 0 && <div className="px-3 py-2 text-xs text-muted-foreground">Keine Mehrfamilienhäuser gefunden</div>}
+              {buildings.length === 0 && <div className="px-3 py-2 text-xs text-muted-foreground">{t("propertyWizard.step2.noBuildings")}</div>}
               {buildings.map((b: any) => (
                 <SelectItem key={b.id} value={b.id}>{b.title} {b.city ? `· ${b.city}` : ""}</SelectItem>
               ))}
@@ -647,26 +635,27 @@ function Step2Structure({ d, update, buildings }: { d: WizardData; update: (p: P
 }
 
 function Step3Basics({ d, update, owners, employees }: { d: WizardData; update: (p: Partial<WizardData>) => void; owners: any[]; employees: any[] }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div>
-        <Label>Titel *</Label>
-        <Input value={d.title} onChange={(e) => update({ title: e.target.value })} placeholder="z. B. Helle 4.5-Zimmer-Wohnung mit Seesicht" />
+        <Label>{t("propertyWizard.step3.titleField")}</Label>
+        <Input value={d.title} onChange={(e) => update({ title: e.target.value })} placeholder={t("propertyWizard.step3.titlePlaceholder")} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label>Vermarktung</Label>
+          <Label>{t("propertyWizard.step3.marketing")}</Label>
           <Select value={d.marketing_type} onValueChange={(v: Marketing) => update({ marketing_type: v, listing_type: v === "rent" ? "rent" : "sale" })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="sale">Verkauf</SelectItem>
-              <SelectItem value="rent">Vermietung</SelectItem>
-              <SelectItem value="off_market">Off-Market</SelectItem>
+              <SelectItem value="sale">{t("propertyWizard.step3.marketingSale")}</SelectItem>
+              <SelectItem value="rent">{t("propertyWizard.step3.marketingRent")}</SelectItem>
+              <SelectItem value="off_market">{t("propertyWizard.step3.marketingOff")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Status</Label>
+          <Label>{t("propertyWizard.step3.status")}</Label>
           <Select value={d.status} onValueChange={(v) => update({ status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -677,21 +666,21 @@ function Step3Basics({ d, update, owners, employees }: { d: WizardData; update: 
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label>Eigentümer</Label>
+          <Label>{t("propertyWizard.step3.owner")}</Label>
           <Select value={d.owner_client_id ?? "none"} onValueChange={(v) => update({ owner_client_id: v === "none" ? null : v })}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Keiner</SelectItem>
+              <SelectItem value="none">{t("propertyWizard.step3.ownerNone")}</SelectItem>
               {owners.map((c) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Zuständiger Mitarbeiter</Label>
+          <Label>{t("propertyWizard.step3.assignee")}</Label>
           <Select value={d.assigned_to ?? "none"} onValueChange={(v) => update({ assigned_to: v === "none" ? null : v })}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Niemand</SelectItem>
+              <SelectItem value="none">{t("propertyWizard.step3.assigneeNone")}</SelectItem>
               {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -702,91 +691,95 @@ function Step3Basics({ d, update, owners, employees }: { d: WizardData; update: 
 }
 
 function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
-        <div className="col-span-2"><Label>Strasse / Nr.</Label><Input value={d.address} onChange={(e) => update({ address: e.target.value })} /></div>
-        <div><Label>Etage</Label><Input value={d.floor} onChange={(e) => update({ floor: e.target.value })} placeholder="z. B. 3" /></div>
+        <div className="col-span-2"><Label>{t("propertyWizard.step4.street")}</Label><Input value={d.address} onChange={(e) => update({ address: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step4.floor")}</Label><Input value={d.floor} onChange={(e) => update({ floor: e.target.value })} placeholder={t("propertyWizard.step4.floorPlaceholder")} /></div>
       </div>
       <div className="grid grid-cols-3 gap-3">
-        <div><Label>PLZ</Label><Input value={d.postal_code} onChange={(e) => update({ postal_code: e.target.value })} /></div>
-        <div className="col-span-2"><Label>Ort</Label><Input value={d.city} onChange={(e) => update({ city: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step4.postalCode")}</Label><Input value={d.postal_code} onChange={(e) => update({ postal_code: e.target.value })} /></div>
+        <div className="col-span-2"><Label>{t("propertyWizard.step4.city")}</Label><Input value={d.city} onChange={(e) => update({ city: e.target.value })} /></div>
       </div>
-      <div><Label>Land</Label><Input value={d.country} onChange={(e) => update({ country: e.target.value })} /></div>
+      <div><Label>{t("propertyWizard.step4.country")}</Label><Input value={d.country} onChange={(e) => update({ country: e.target.value })} /></div>
       <div>
-        <Label>Lagebeschreibung</Label>
-        <Textarea rows={3} value={d.location_description} onChange={(e) => update({ location_description: e.target.value })} placeholder="Quartier, Verkehrsanbindung, Aussicht, …" />
+        <Label>{t("propertyWizard.step4.locationDesc")}</Label>
+        <Textarea rows={3} value={d.location_description} onChange={(e) => update({ location_description: e.target.value })} placeholder={t("propertyWizard.step4.locationPlaceholder")} />
       </div>
     </div>
   );
 }
 
 function Step5Areas({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
-        <div><Label>Wohnfläche (m²)</Label><Input type="number" value={d.living_area} onChange={(e) => update({ living_area: e.target.value })} /></div>
-        <div><Label>Nutzfläche (m²)</Label><Input type="number" value={d.usable_area} onChange={(e) => update({ usable_area: e.target.value })} /></div>
-        <div><Label>Grundstück (m²)</Label><Input type="number" value={d.plot_area} onChange={(e) => update({ plot_area: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step5.living")}</Label><Input type="number" value={d.living_area} onChange={(e) => update({ living_area: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step5.usable")}</Label><Input type="number" value={d.usable_area} onChange={(e) => update({ usable_area: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step5.plot")}</Label><Input type="number" value={d.plot_area} onChange={(e) => update({ plot_area: e.target.value })} /></div>
       </div>
       <div className="grid grid-cols-4 gap-3">
-        <div><Label>Zimmer</Label><Input type="number" step="0.5" value={d.rooms} onChange={(e) => update({ rooms: e.target.value })} /></div>
-        <div><Label>Bäder</Label><Input type="number" step="0.5" value={d.bathrooms} onChange={(e) => update({ bathrooms: e.target.value })} /></div>
-        <div><Label>Etage</Label><Input value={d.floor} onChange={(e) => update({ floor: e.target.value })} /></div>
-        <div><Label>Anz. Etagen</Label><Input type="number" value={d.total_floors} onChange={(e) => update({ total_floors: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step5.rooms")}</Label><Input type="number" step="0.5" value={d.rooms} onChange={(e) => update({ rooms: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step5.bathrooms")}</Label><Input type="number" step="0.5" value={d.bathrooms} onChange={(e) => update({ bathrooms: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step5.floor")}</Label><Input value={d.floor} onChange={(e) => update({ floor: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step5.totalFloors")}</Label><Input type="number" value={d.total_floors} onChange={(e) => update({ total_floors: e.target.value })} /></div>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div><Label>Baujahr</Label><Input type="number" value={d.year_built} onChange={(e) => update({ year_built: e.target.value })} /></div>
-        <div><Label>Renoviert</Label><Input type="number" value={d.renovated_at} onChange={(e) => update({ renovated_at: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step5.yearBuilt")}</Label><Input type="number" value={d.year_built} onChange={(e) => update({ year_built: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step5.renovated")}</Label><Input type="number" value={d.renovated_at} onChange={(e) => update({ renovated_at: e.target.value })} /></div>
       </div>
     </div>
   );
 }
 
 function Step6Price({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-        <div><Label>Verkaufspreis (CHF)</Label><Input type="number" value={d.price} onChange={(e) => update({ price: e.target.value })} /></div>
-        <div><Label>Miete / Mt. (CHF)</Label><Input type="number" value={d.rent} onChange={(e) => update({ rent: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step6.price")}</Label><Input type="number" value={d.price} onChange={(e) => update({ price: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step6.rent")}</Label><Input type="number" value={d.rent} onChange={(e) => update({ rent: e.target.value })} /></div>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div><Label>Nebenkosten (CHF)</Label><Input type="number" value={d.ancillary_costs} onChange={(e) => update({ ancillary_costs: e.target.value })} /></div>
-        <div><Label>Reservationsbetrag (CHF)</Label><Input type="number" value={d.reservation_amount_default} onChange={(e) => update({ reservation_amount_default: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step6.ancillary")}</Label><Input type="number" value={d.ancillary_costs} onChange={(e) => update({ ancillary_costs: e.target.value })} /></div>
+        <div><Label>{t("propertyWizard.step6.reservation")}</Label><Input type="number" value={d.reservation_amount_default} onChange={(e) => update({ reservation_amount_default: e.target.value })} /></div>
       </div>
       <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
-        <Label className="text-amber-700 dark:text-amber-400">Mindestpreis intern (vertraulich)</Label>
+        <Label className="text-amber-700 dark:text-amber-400">{t("propertyWizard.step6.minPrice")}</Label>
         <Input type="number" value={d.internal_minimum_price} onChange={(e) => update({ internal_minimum_price: e.target.value })} />
-        <p className="mt-1 text-xs text-muted-foreground">Nur intern sichtbar, erscheint nicht im Exposé.</p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("propertyWizard.step6.minPriceHint")}</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label>Provision / Mandatsmodell</Label>
+          <Label>{t("propertyWizard.step6.commissionModel")}</Label>
           <Select value={d.commission_model || "none"} onValueChange={(v) => update({ commission_model: v === "none" ? "" : v })}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="none">—</SelectItem>
-              <SelectItem value="percent">Prozent vom Verkaufspreis</SelectItem>
-              <SelectItem value="fixed">Pauschale</SelectItem>
-              <SelectItem value="months_rent">Monatsmieten</SelectItem>
+              <SelectItem value="percent">{t("propertyWizard.step6.commissionPercent")}</SelectItem>
+              <SelectItem value="fixed">{t("propertyWizard.step6.commissionFixed")}</SelectItem>
+              <SelectItem value="months_rent">{t("propertyWizard.step6.commissionMonths")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div><Label>Wert</Label><Input type="number" value={d.commission_value} onChange={(e) => update({ commission_value: e.target.value })} placeholder="z. B. 3" /></div>
+        <div><Label>{t("propertyWizard.step6.commissionValue")}</Label><Input type="number" value={d.commission_value} onChange={(e) => update({ commission_value: e.target.value })} placeholder={t("propertyWizard.step6.commissionValuePlaceholder")} /></div>
       </div>
     </div>
   );
 }
 
 function Step7Equipment({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
-  const checks: { k: keyof WizardData; label: string }[] = [
-    { k: "has_balcony", label: "Balkon" },
-    { k: "has_terrace", label: "Terrasse" },
-    { k: "has_garden", label: "Garten" },
-    { k: "has_lift", label: "Lift" },
-    { k: "has_garage", label: "Garage" },
-    { k: "has_parking", label: "Parkplatz" },
-    { k: "cellar_available", label: "Keller" },
+  const { t } = useTranslation();
+  const checks: { k: keyof WizardData; tk: string }[] = [
+    { k: "has_balcony", tk: "balcony" },
+    { k: "has_terrace", tk: "terrace" },
+    { k: "has_garden", tk: "garden" },
+    { k: "has_lift", tk: "lift" },
+    { k: "has_garage", tk: "garage" },
+    { k: "has_parking", tk: "parking" },
+    { k: "cellar_available", tk: "cellar" },
   ];
   return (
     <div className="space-y-4">
@@ -797,35 +790,35 @@ function Step7Equipment({ d, update }: { d: WizardData; update: (p: Partial<Wiza
               checked={d[c.k] as boolean}
               onCheckedChange={(v) => update({ [c.k]: !!v } as any)}
             />
-            <span className="text-sm font-medium">{c.label}</span>
+            <span className="text-sm font-medium">{t(`propertyWizard.step7.features.${c.tk}`)}</span>
           </label>
         ))}
       </div>
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <Label>Heizung</Label>
+          <Label>{t("propertyWizard.step7.heating")}</Label>
           <Select value={d.heating_type || "none"} onValueChange={(v) => update({ heating_type: v === "none" ? "" : v })}>
             <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="none">—</SelectItem>
-              <SelectItem value="gas">Gas</SelectItem>
-              <SelectItem value="oil">Öl</SelectItem>
-              <SelectItem value="heat_pump">Wärmepumpe</SelectItem>
-              <SelectItem value="district">Fernwärme</SelectItem>
-              <SelectItem value="wood">Holz/Pellets</SelectItem>
-              <SelectItem value="electric">Elektro</SelectItem>
+              <SelectItem value="gas">{t("propertyWizard.step7.heatings.gas")}</SelectItem>
+              <SelectItem value="oil">{t("propertyWizard.step7.heatings.oil")}</SelectItem>
+              <SelectItem value="heat_pump">{t("propertyWizard.step7.heatings.heat_pump")}</SelectItem>
+              <SelectItem value="district">{t("propertyWizard.step7.heatings.district")}</SelectItem>
+              <SelectItem value="wood">{t("propertyWizard.step7.heatings.wood")}</SelectItem>
+              <SelectItem value="electric">{t("propertyWizard.step7.heatings.electric")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Energiequelle</Label>
-          <Input value={d.energy_source} onChange={(e) => update({ energy_source: e.target.value })} placeholder="z. B. Solar" />
+          <Label>{t("propertyWizard.step7.energySource")}</Label>
+          <Input value={d.energy_source} onChange={(e) => update({ energy_source: e.target.value })} placeholder={t("propertyWizard.step7.energySourcePlaceholder")} />
         </div>
-        <div><Label>Energieklasse</Label><Input value={d.energy_class} onChange={(e) => update({ energy_class: e.target.value })} placeholder="A, B, C…" /></div>
+        <div><Label>{t("propertyWizard.step7.energyClass")}</Label><Input value={d.energy_class} onChange={(e) => update({ energy_class: e.target.value })} placeholder={t("propertyWizard.step7.energyClassPlaceholder")} /></div>
       </div>
       <div>
-        <Label>Weitere Features (Komma-getrennt)</Label>
-        <Input value={d.features_extra} onChange={(e) => update({ features_extra: e.target.value })} placeholder="Cheminée, Whirlpool, Smart Home" />
+        <Label>{t("propertyWizard.step7.extra")}</Label>
+        <Input value={d.features_extra} onChange={(e) => update({ features_extra: e.target.value })} placeholder={t("propertyWizard.step7.extraPlaceholder")} />
       </div>
     </div>
   );
@@ -835,7 +828,7 @@ function detectKindFromFile(file: File): string {
   if (file.type.startsWith("image/")) return "image";
   if (file.type.startsWith("video/")) return "video";
   const n = file.name.toLowerCase();
-  if (n.includes("grundriss") || n.includes("floor")) return "floor_plan";
+  if (n.includes("grundriss") || n.includes("floor") || n.includes("plan")) return "floor_plan";
   return "other";
 }
 
@@ -846,6 +839,7 @@ function getMediaPublicUrl(path: string) {
 }
 
 function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<"upload" | "library">("upload");
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -888,9 +882,9 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
         });
       }
       update({ media: ensureWizardCover([...d.media, ...uploaded]) });
-      toast.success(`${uploaded.length} Datei(en) hochgeladen`);
+      toast.success(t("propertyWizard.step8.uploaded", { count: uploaded.length }));
     } catch (e: any) {
-      toast.error(e.message ?? "Upload fehlgeschlagen");
+      toast.error(e.message ?? t("propertyWizard.step8.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -943,7 +937,7 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
             tab === "upload" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground",
           )}
         >
-          <Upload className="h-4 w-4" /> Neue Bilder hochladen
+          <Upload className="h-4 w-4" /> {t("propertyWizard.step8.tabUpload")}
         </button>
         <button
           type="button"
@@ -953,7 +947,7 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
             tab === "library" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground",
           )}
         >
-          <Library className="h-4 w-4" /> Aus Mediathek wählen
+          <Library className="h-4 w-4" /> {t("propertyWizard.step8.tabLibrary")}
         </button>
       </div>
 
@@ -970,8 +964,8 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Upload className="h-6 w-6" />
           </div>
-          <p className="font-medium">Dateien hierhin ziehen oder auswählen</p>
-          <p className="text-xs text-muted-foreground">Bilder, Videos oder Grundrisse · mehrere Dateien möglich</p>
+          <p className="font-medium">{t("propertyWizard.step8.dropTitle")}</p>
+          <p className="text-xs text-muted-foreground">{t("propertyWizard.step8.dropHint")}</p>
           <input
             ref={fileRef}
             type="file"
@@ -981,7 +975,7 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
             onChange={(e) => { void handleFiles(Array.from(e.target.files ?? [])); if (fileRef.current) fileRef.current.value = ""; }}
           />
           <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading} className="mt-2">
-            {uploading ? "Wird hochgeladen…" : "Dateien auswählen"}
+            {uploading ? t("propertyWizard.step8.uploading") : t("propertyWizard.step8.selectFiles")}
           </Button>
         </div>
       )}
@@ -989,9 +983,9 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
       {tab === "library" && (
         <div className="rounded-2xl border bg-muted/20 p-3">
           {library.isLoading ? (
-            <p className="p-4 text-sm text-muted-foreground">Wird geladen…</p>
+            <p className="p-4 text-sm text-muted-foreground">{t("propertyWizard.step8.loading")}</p>
           ) : (library.data ?? []).length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">Mediathek ist leer.</p>
+            <p className="p-4 text-sm text-muted-foreground">{t("propertyWizard.step8.libraryEmpty")}</p>
           ) : (
             <div className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3 md:grid-cols-4">
               {(library.data ?? []).map((item: any) => {
@@ -1030,8 +1024,8 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
       {d.media.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label>Ausgewählte Medien ({d.media.length})</Label>
-            <p className="text-xs text-muted-foreground">Klicke auf den Stern, um das Coverbild zu setzen.</p>
+            <Label>{t("propertyWizard.step8.selected", { count: d.media.length })}</Label>
+            <p className="text-xs text-muted-foreground">{t("propertyWizard.step8.coverHint")}</p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
             {d.media.map((m, idx) => {
@@ -1050,19 +1044,19 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
                   )}
                   {m.is_cover && (
                     <Badge className="absolute left-1 top-1 bg-primary text-primary-foreground">
-                      <Star className="mr-1 h-3 w-3" /> Cover
+                      <Star className="mr-1 h-3 w-3" /> {t("propertyWizard.step8.cover")}
                     </Badge>
                   )}
                   {m.source === "library" && (
-                    <Badge variant="secondary" className="absolute bottom-1 left-1 text-[10px]">Mediathek</Badge>
+                    <Badge variant="secondary" className="absolute bottom-1 left-1 text-[10px]">{t("propertyWizard.step8.library")}</Badge>
                   )}
                   <div className="absolute right-1 top-1 flex flex-col gap-1 opacity-0 transition group-hover:opacity-100">
                     {!m.is_cover && (
-                      <Button type="button" size="icon" variant="secondary" className="h-7 w-7 bg-background/90" onClick={() => setCover(idx)} title="Als Cover setzen">
+                      <Button type="button" size="icon" variant="secondary" className="h-7 w-7 bg-background/90" onClick={() => setCover(idx)} title={t("propertyWizard.step8.setCover")}>
                         <Star className="h-3.5 w-3.5" />
                       </Button>
                     )}
-                    <Button type="button" size="icon" variant="secondary" className="h-7 w-7 bg-background/90" onClick={() => removeAt(idx)} title="Entfernen">
+                    <Button type="button" size="icon" variant="secondary" className="h-7 w-7 bg-background/90" onClick={() => removeAt(idx)} title={t("propertyWizard.step8.remove")}>
                       <X className="h-3.5 w-3.5 text-destructive" />
                     </Button>
                   </div>
@@ -1075,12 +1069,12 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
 
       <div className="grid gap-3 pt-2">
         <div>
-          <Label>Beschreibung</Label>
-          <Textarea rows={3} value={d.description} onChange={(e) => update({ description: e.target.value })} placeholder="Kurze Objektbeschreibung für Exposé und Inserate" />
+          <Label>{t("propertyWizard.step8.description")}</Label>
+          <Textarea rows={3} value={d.description} onChange={(e) => update({ description: e.target.value })} placeholder={t("propertyWizard.step8.descriptionPlaceholder")} />
         </div>
         <div>
-          <Label>Interne Notizen</Label>
-          <Textarea rows={2} value={d.internal_notes} onChange={(e) => update({ internal_notes: e.target.value })} placeholder="Nur intern sichtbar" />
+          <Label>{t("propertyWizard.step8.internalNotes")}</Label>
+          <Textarea rows={2} value={d.internal_notes} onChange={(e) => update({ internal_notes: e.target.value })} placeholder={t("propertyWizard.step8.internalNotesPlaceholder")} />
         </div>
       </div>
     </div>
@@ -1088,6 +1082,7 @@ function Step8Media({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
 }
 
 function Step9Units({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
+  const { t } = useTranslation();
   const addUnit = () => {
     update({
       units: [
@@ -1114,13 +1109,13 @@ function Step9Units({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Erfasse die einzelnen Wohnungen / Einheiten dieser Liegenschaft. Du kannst weitere später hinzufügen.
+          {t("propertyWizard.step9.intro")}
         </p>
-        <Button size="sm" onClick={addUnit}><Plus className="mr-1 h-4 w-4" />Einheit hinzufügen</Button>
+        <Button size="sm" onClick={addUnit}><Plus className="mr-1 h-4 w-4" />{t("propertyWizard.step9.addUnit")}</Button>
       </div>
       {d.units.length === 0 && (
         <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-          Noch keine Einheiten erfasst.
+          {t("propertyWizard.step9.empty")}
         </div>
       )}
       <div className="space-y-3">
@@ -1128,33 +1123,33 @@ function Step9Units({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
           <Card key={i}>
             <CardContent className="space-y-3 p-4">
               <div className="flex items-center justify-between">
-                <Badge variant="secondary">Einheit {i + 1}</Badge>
+                <Badge variant="secondary">{t("propertyWizard.step9.unit")} {i + 1}</Badge>
                 <Button size="sm" variant="ghost" onClick={() => removeUnit(i)}><Trash2 className="h-4 w-4" /></Button>
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <div><Label>Bezeichnung / Nr.</Label><Input value={u.unit_number} onChange={(e) => patchUnit(i, { unit_number: e.target.value })} placeholder="z. B. 1A" /></div>
+                <div><Label>{t("propertyWizard.step9.designation")}</Label><Input value={u.unit_number} onChange={(e) => patchUnit(i, { unit_number: e.target.value })} placeholder={t("propertyWizard.step9.designationPlaceholder")} /></div>
                 <div>
-                  <Label>Typ</Label>
+                  <Label>{t("propertyWizard.step9.type")}</Label>
                   <Select value={u.unit_type} onValueChange={(v) => patchUnit(i, { unit_type: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="apartment">Wohnung</SelectItem>
-                      <SelectItem value="commercial">Gewerbe</SelectItem>
-                      <SelectItem value="parking">Parkplatz</SelectItem>
+                      <SelectItem value="apartment">{t("propertyWizard.step9.unitTypes.apartment")}</SelectItem>
+                      <SelectItem value="commercial">{t("propertyWizard.step9.unitTypes.commercial")}</SelectItem>
+                      <SelectItem value="parking">{t("propertyWizard.step9.unitTypes.parking")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>Etage</Label><Input value={u.unit_floor} onChange={(e) => patchUnit(i, { unit_floor: e.target.value })} placeholder="EG, 1, 2…" /></div>
+                <div><Label>{t("propertyWizard.step9.floor")}</Label><Input value={u.unit_floor} onChange={(e) => patchUnit(i, { unit_floor: e.target.value })} placeholder={t("propertyWizard.step9.floorPlaceholder")} /></div>
               </div>
               <div className="grid grid-cols-4 gap-3">
-                <div><Label>Zimmer</Label><Input type="number" step="0.5" value={u.rooms} onChange={(e) => patchUnit(i, { rooms: e.target.value })} /></div>
-                <div><Label>Wohnfläche m²</Label><Input type="number" value={u.living_area} onChange={(e) => patchUnit(i, { living_area: e.target.value })} /></div>
-                <div><Label>Preis CHF</Label><Input type="number" value={u.price} onChange={(e) => patchUnit(i, { price: e.target.value })} /></div>
-                <div><Label>Miete CHF</Label><Input type="number" value={u.rent} onChange={(e) => patchUnit(i, { rent: e.target.value })} /></div>
+                <div><Label>{t("propertyWizard.step9.rooms")}</Label><Input type="number" step="0.5" value={u.rooms} onChange={(e) => patchUnit(i, { rooms: e.target.value })} /></div>
+                <div><Label>{t("propertyWizard.step9.living")}</Label><Input type="number" value={u.living_area} onChange={(e) => patchUnit(i, { living_area: e.target.value })} /></div>
+                <div><Label>{t("propertyWizard.step9.price")}</Label><Input type="number" value={u.price} onChange={(e) => patchUnit(i, { price: e.target.value })} /></div>
+                <div><Label>{t("propertyWizard.step9.rent")}</Label><Input type="number" value={u.rent} onChange={(e) => patchUnit(i, { rent: e.target.value })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Status</Label>
+                  <Label>{t("propertyWizard.step9.status")}</Label>
                   <Select value={u.unit_status} onValueChange={(v) => patchUnit(i, { unit_status: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -1164,7 +1159,7 @@ function Step9Units({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
                 </div>
                 <label className="mt-6 flex items-center gap-2 text-sm">
                   <Checkbox checked={u.separately_marketable} onCheckedChange={(v) => patchUnit(i, { separately_marketable: !!v })} />
-                  Separat vermarktbar
+                  {t("propertyWizard.step9.separate")}
                 </label>
               </div>
             </CardContent>
@@ -1176,27 +1171,43 @@ function Step9Units({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
 }
 
 function Step10Summary({ d, owners, employees }: { d: WizardData; owners: any[]; employees: any[] }) {
+  const { t } = useTranslation();
   const owner = owners.find(o => o.id === d.owner_client_id);
   const emp = employees.find(e => e.id === d.assigned_to);
+  const structureLabel = d.structure === "single"
+    ? t("propertyWizard.step10.structureSingle")
+    : d.structure === "building"
+      ? t("propertyWizard.step10.structureBuilding")
+      : t("propertyWizard.step10.structureUnit");
+  const marketingLabel = d.marketing_type === "sale"
+    ? t("propertyWizard.step3.marketingSale")
+    : d.marketing_type === "rent"
+      ? t("propertyWizard.step3.marketingRent")
+      : t("propertyWizard.step3.marketingOff");
   const rows: [string, string][] = [
-    ["Objektart", PROP_TYPES.find(p => p.v === d.property_type)?.label ?? d.property_type],
-    ["Struktur", d.structure === "single" ? "Einzelobjekt" : d.structure === "building" ? "Liegenschaft mit Einheiten" : "Einheit in Liegenschaft"],
-    ["Titel", d.title || "—"],
-    ["Vermarktung", d.marketing_type === "sale" ? "Verkauf" : d.marketing_type === "rent" ? "Vermietung" : "Off-Market"],
-    ["Status", propertyStatusLabels[d.status as keyof typeof propertyStatusLabels] ?? d.status],
-    ["Adresse", [d.address, d.postal_code, d.city].filter(Boolean).join(", ") || "—"],
-    ["Wohnfläche", d.living_area ? `${d.living_area} m²` : "—"],
-    ["Zimmer", d.rooms || "—"],
-    ["Verkaufspreis", d.price ? `CHF ${d.price}` : "—"],
-    ["Miete", d.rent ? `CHF ${d.rent}` : "—"],
-    ["Eigentümer", owner?.full_name ?? "—"],
-    ["Zuständig", emp?.full_name || emp?.email || "—"],
-    ["Einheiten", d.units.length ? String(d.units.length) : "—"],
-    ["Medien", d.media.length ? `${d.media.length} Datei(en)${d.media.find(m => m.is_cover) ? " · Cover gesetzt" : ""}` : "—"],
+    [t("propertyWizard.step10.rows.type"), t(`propertyWizard.types.${d.property_type}.label`, { defaultValue: d.property_type })],
+    [t("propertyWizard.step10.rows.structure"), structureLabel],
+    [t("propertyWizard.step10.rows.title"), d.title || "—"],
+    [t("propertyWizard.step10.rows.marketing"), marketingLabel],
+    [t("propertyWizard.step10.rows.status"), propertyStatusLabels[d.status as keyof typeof propertyStatusLabels] ?? d.status],
+    [t("propertyWizard.step10.rows.address"), [d.address, d.postal_code, d.city].filter(Boolean).join(", ") || "—"],
+    [t("propertyWizard.step10.rows.living"), d.living_area ? `${d.living_area} m²` : "—"],
+    [t("propertyWizard.step10.rows.rooms"), d.rooms || "—"],
+    [t("propertyWizard.step10.rows.price"), d.price ? `CHF ${d.price}` : "—"],
+    [t("propertyWizard.step10.rows.rent"), d.rent ? `CHF ${d.rent}` : "—"],
+    [t("propertyWizard.step10.rows.owner"), owner?.full_name ?? "—"],
+    [t("propertyWizard.step10.rows.assignee"), emp?.full_name || emp?.email || "—"],
+    [t("propertyWizard.step10.rows.units"), d.units.length ? String(d.units.length) : "—"],
+    [t("propertyWizard.step10.rows.media"), d.media.length
+      ? t("propertyWizard.step10.mediaSummary", {
+          count: d.media.length,
+          cover: d.media.find(m => m.is_cover) ? t("propertyWizard.step10.coverSuffix") : "",
+        })
+      : "—"],
   ];
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">Bitte prüfe die Angaben und speichere die Immobilie.</p>
+      <p className="text-sm text-muted-foreground">{t("propertyWizard.step10.intro")}</p>
       <Card><CardContent className="p-0">
         <dl className="divide-y">
           {rows.map(([k, v]) => (
@@ -1209,12 +1220,12 @@ function Step10Summary({ d, owners, employees }: { d: WizardData; owners: any[];
       </CardContent></Card>
       {d.units.length > 0 && (
         <Card><CardContent className="p-4">
-          <h4 className="mb-2 text-sm font-semibold">Einheiten ({d.units.length})</h4>
+          <h4 className="mb-2 text-sm font-semibold">{t("propertyWizard.step10.unitsHeader", { count: d.units.length })}</h4>
           <ul className="space-y-1 text-sm">
             {d.units.map((u, i) => (
               <li key={i} className="flex justify-between border-b py-1 last:border-0">
-                <span>{u.unit_number || `Einheit ${i + 1}`} · {u.unit_type}</span>
-                <span className="text-muted-foreground">{u.rooms ? `${u.rooms} Zi · ` : ""}{u.living_area ? `${u.living_area} m²` : ""}</span>
+                <span>{u.unit_number || `${t("propertyWizard.step9.unit")} ${i + 1}`} · {t(`propertyWizard.step9.unitTypes.${u.unit_type}`, { defaultValue: u.unit_type })}</span>
+                <span className="text-muted-foreground">{u.rooms ? `${u.rooms} ${t("propertyWizard.step5.rooms")} · ` : ""}{u.living_area ? `${u.living_area} m²` : ""}</span>
               </li>
             ))}
           </ul>
