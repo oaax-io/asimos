@@ -423,10 +423,10 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
   // ---- Save ----
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.role_choice) throw new Error("Bitte Rolle wählen");
+      if (!form.role_choice) throw new Error(t("clientWizard.toasts.roleRequired"));
       if (!fullName) throw new Error(form.entity_type === "company"
-        ? "Firmenname ist erforderlich"
-        : "Vor- und Nachname sind erforderlich");
+        ? t("clientWizard.toasts.companyRequired")
+        : t("clientWizard.toasts.personRequired"));
 
       const role = form.role_choice as RoleChoice;
       const { data: userData } = await supabase.auth.getUser();
