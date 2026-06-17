@@ -1090,6 +1090,24 @@
         "otherGroup": "Sonstige",
         "useCustom": "„{{value}}\" verwenden"
       }
+    },
+    "actions": {
+      "generateReport": "Bericht generieren",
+      "regenerateReport": "Bericht neu generieren",
+      "viewReport": "Bericht ansehen",
+      "sendToClient": "An Kunde senden",
+      "continueDossier": "Dossier weiterbearbeiten",
+      "discard": "Nicht weiterverfolgen",
+      "reportTitle": "Finanzierungs Quick-Check – {{name}}",
+      "activity": "Quick-Check-Bericht generiert (Status: {{status}})",
+      "toast": {
+        "generated": "Bericht generiert",
+        "generateError": "Fehler beim Generieren",
+        "noReport": "Kein Bericht vorhanden – bitte zuerst generieren.",
+        "openError": "Bericht konnte nicht geöffnet werden.",
+        "popupBlocked": "Popup blockiert – bitte Popups erlauben."
+      },
+      "role": "Kunde"
     }
   },
   "appointments": {
@@ -1108,6 +1126,22 @@
       "folders": "Ordner",
       "uploaded": "Hochgeladene Dokumente",
       "generated": "Generierte Dokumente"
+    },
+    "pdf": {
+      "generate": "PDF generieren",
+      "creating": "Wird erstellt…",
+      "download": "PDF herunterladen",
+      "fallbackTitle": "Browser-Druck als Fallback verwenden?",
+      "fallbackDescriptionDefault": "PDF konnte nicht generiert werden.",
+      "fallbackReasonDefault": "Der PDF-Service hat keine Datei zurückgegeben.",
+      "cancel": "Abbrechen",
+      "openPrint": "Browser-Druck öffnen",
+      "toast": {
+        "noContent": "Kein Inhalt zum Generieren",
+        "opened": "PDF geöffnet",
+        "created": "PDF wurde erstellt",
+        "failed": "PDF konnte nicht generiert werden. Browser-Druck als Fallback verwenden?"
+      }
     }
   }
 }
