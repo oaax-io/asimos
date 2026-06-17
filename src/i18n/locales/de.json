@@ -1026,7 +1026,7 @@
         "requestedMortgage": "Gewünschte Hypothek (CHF) *",
         "ownFundsTotalReq": "Eigenmittel total (CHF) *",
         "pkPart": "davon PK / Freizügigkeit (CHF)",
-        "grossIncomeReq": "Brutto-Jahreseinkommen (CHF) *",
+        "grossIncomeReq": "Netto-Jahreseinkommen (CHF) *",
         "ownWork": "davon Eigenleistung (CHF)",
         "kpi": {
           "ltv": "Belehnung",
