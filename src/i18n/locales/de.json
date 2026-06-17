@@ -620,7 +620,7 @@
     },
     "dossierStatus": {
       "draft": "Entwurf",
-      "quick_check": "Quick Check",
+      "quick_check": "Schnellprüfung",
       "documents_missing": "Unterlagen fehlen",
       "ready_for_bank": "Bereit für Bank",
       "submitted_to_bank": "Bei Bank eingereicht",
