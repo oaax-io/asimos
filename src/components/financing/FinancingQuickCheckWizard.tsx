@@ -1002,9 +1002,12 @@ function CoApplicantSection({
   relatedMap: Map<string, string>;
   isRefiOnly: boolean;
 }) {
+  const { t } = useTranslation();
   const relLabel: Record<string, string> = {
-    spouse: "Ehepartner", co_applicant: "Mitantragsteller",
-    co_investor: "Mitinvestor", other: "Verbunden",
+    spouse: t("financing.wizard.coApplicant.relSpouse"),
+    co_applicant: t("financing.wizard.coApplicant.relCo"),
+    co_investor: t("financing.wizard.coApplicant.relInvestor"),
+    other: t("financing.wizard.coApplicant.relOther"),
   };
   const selected = clients.find((c) => c.id === form.co_applicant_client_id);
   const filtered = clients.filter((c) => c.id !== form.client_id);
@@ -1018,7 +1021,7 @@ function CoApplicantSection({
   const items = sorted.map((c) => {
     const rel = relatedMap.get(c.id);
     const hint = rel
-      ? `${relLabel[rel] ?? "Verbunden"}${c.email ? ` · ${c.email}` : ""}`
+      ? `${relLabel[rel] ?? t("financing.wizard.coApplicant.relOther")}${c.email ? ` · ${c.email}` : ""}`
       : (c.email ?? undefined);
     return { value: c.id, label: c.full_name, hint };
   });
