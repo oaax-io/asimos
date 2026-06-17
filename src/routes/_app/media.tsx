@@ -709,10 +709,10 @@ function MediaPage() {
         </div>
         <Select value={propertyFilter} onValueChange={setPropertyFilter}>
           <SelectTrigger className="w-56">
-            <SelectValue placeholder="Immobilie" />
+            <SelectValue placeholder={t("media.filters.property")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle Immobilien</SelectItem>
+            <SelectItem value="all">{t("media.filters.allProperties")}</SelectItem>
             {rootProperties.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.title}
@@ -722,13 +722,13 @@ function MediaPage() {
         </Select>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Typ" />
+            <SelectValue placeholder={t("media.filters.type")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle Typen</SelectItem>
-            <SelectItem value="image">Bilder</SelectItem>
-            <SelectItem value="video">Videos</SelectItem>
-            <SelectItem value="floor_plan">Grundrisse</SelectItem>
+            <SelectItem value="all">{t("media.filters.allTypes")}</SelectItem>
+            <SelectItem value="image">{t("media.filters.images")}</SelectItem>
+            <SelectItem value="video">{t("media.filters.videos")}</SelectItem>
+            <SelectItem value="floor_plan">{t("media.filters.floorPlans")}</SelectItem>
             
           </SelectContent>
         </Select>
