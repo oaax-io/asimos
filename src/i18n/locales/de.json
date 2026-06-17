@@ -1727,5 +1727,197 @@
     "common": {
       "dash": "—"
     }
+  },
+  "propertyWizard": {
+    "titleNew": "Neue Immobilie",
+    "titleEdit": "Immobilie bearbeiten",
+    "stepProgress": "Schritt {{current}} von {{total}} · {{label}}",
+    "mandatoryHint": "Pflicht: Titel, Objektart, Vermarktung, Status, Adresse oder Ort",
+    "nav": {
+      "back": "Zurück",
+      "next": "Weiter",
+      "save": "Immobilie speichern",
+      "saveEdit": "Änderungen speichern"
+    },
+    "steps": {
+      "type": "Objektart",
+      "structure": "Struktur",
+      "basics": "Grunddaten",
+      "address": "Adresse",
+      "areas": "Flächen",
+      "price": "Preis",
+      "equipment": "Ausstattung",
+      "media": "Medien",
+      "units": "Einheiten",
+      "summary": "Zusammenfassung"
+    },
+    "types": {
+      "house": { "label": "Einfamilienhaus", "desc": "Freistehendes Haus für eine Familie" },
+      "mixed_use": { "label": "Mehrfamilienhaus", "desc": "Liegenschaft mit mehreren Wohneinheiten" },
+      "apartment": { "label": "Wohnung", "desc": "Eigentumswohnung oder Mietwohnung" },
+      "commercial": { "label": "Gewerbe", "desc": "Büro-, Verkaufs- oder Lagerflächen" },
+      "land": { "label": "Grundstück", "desc": "Bauland, Landwirtschafts- oder Restland" },
+      "parking": { "label": "Parkplatz / Garage", "desc": "Einzelner Stellplatz oder Garagenbox" },
+      "other": { "label": "Sonstige", "desc": "Sonstige Objektart" }
+    },
+    "structures": {
+      "single": { "label": "Einzelobjekt", "desc": "Ein eigenständiges Objekt ohne Untereinheiten." },
+      "building": { "label": "Liegenschaft mit mehreren Einheiten", "desc": "Mehrfamilienhaus oder Gebäude mit mehreren Einheiten." },
+      "unit_in_building": { "label": "Einheit innerhalb einer Liegenschaft", "desc": "Diese Einheit gehört zu einem bereits erfassten Gebäude." }
+    },
+    "step1": {
+      "title": "Welche Objektart erfasst du?",
+      "hint": "Wähle die passende Kategorie. Du kannst sie später anpassen."
+    },
+    "step2": {
+      "title": "Wie ist das Objekt strukturiert?",
+      "hint": "Wir blenden danach nur die relevanten Felder ein.",
+      "parentLabel": "Übergeordnete Liegenschaft",
+      "parentPlaceholder": "Liegenschaft wählen",
+      "noBuildings": "Keine Mehrfamilienhäuser gefunden"
+    },
+    "step3": {
+      "titleField": "Titel *",
+      "titlePlaceholder": "z. B. Helle 4.5-Zimmer-Wohnung mit Seesicht",
+      "marketing": "Vermarktung",
+      "status": "Status",
+      "owner": "Eigentümer",
+      "ownerNone": "Keiner",
+      "assignee": "Zuständiger Mitarbeiter",
+      "assigneeNone": "Niemand",
+      "marketingSale": "Verkauf",
+      "marketingRent": "Vermietung",
+      "marketingOff": "Off-Market"
+    },
+    "step4": {
+      "street": "Strasse / Nr.",
+      "floor": "Etage",
+      "floorPlaceholder": "z. B. 3",
+      "postalCode": "PLZ",
+      "city": "Ort",
+      "country": "Land",
+      "locationDesc": "Lagebeschreibung",
+      "locationPlaceholder": "Quartier, Verkehrsanbindung, Aussicht, …"
+    },
+    "step5": {
+      "living": "Wohnfläche (m²)",
+      "usable": "Nutzfläche (m²)",
+      "plot": "Grundstück (m²)",
+      "rooms": "Zimmer",
+      "bathrooms": "Bäder",
+      "floor": "Etage",
+      "totalFloors": "Anz. Etagen",
+      "yearBuilt": "Baujahr",
+      "renovated": "Renoviert"
+    },
+    "step6": {
+      "price": "Verkaufspreis (CHF)",
+      "rent": "Miete / Mt. (CHF)",
+      "ancillary": "Nebenkosten (CHF)",
+      "reservation": "Reservationsbetrag (CHF)",
+      "minPrice": "Mindestpreis intern (vertraulich)",
+      "minPriceHint": "Nur intern sichtbar, erscheint nicht im Exposé.",
+      "commissionModel": "Provision / Mandatsmodell",
+      "commissionValue": "Wert",
+      "commissionValuePlaceholder": "z. B. 3",
+      "commissionPercent": "Prozent vom Verkaufspreis",
+      "commissionFixed": "Pauschale",
+      "commissionMonths": "Monatsmieten"
+    },
+    "step7": {
+      "features": {
+        "balcony": "Balkon",
+        "terrace": "Terrasse",
+        "garden": "Garten",
+        "lift": "Lift",
+        "garage": "Garage",
+        "parking": "Parkplatz",
+        "cellar": "Keller"
+      },
+      "heating": "Heizung",
+      "heatings": {
+        "gas": "Gas",
+        "oil": "Öl",
+        "heat_pump": "Wärmepumpe",
+        "district": "Fernwärme",
+        "wood": "Holz/Pellets",
+        "electric": "Elektro"
+      },
+      "energySource": "Energiequelle",
+      "energySourcePlaceholder": "z. B. Solar",
+      "energyClass": "Energieklasse",
+      "energyClassPlaceholder": "A, B, C…",
+      "extra": "Weitere Features (Komma-getrennt)",
+      "extraPlaceholder": "Cheminée, Whirlpool, Smart Home"
+    },
+    "step8": {
+      "tabUpload": "Neue Bilder hochladen",
+      "tabLibrary": "Aus Mediathek wählen",
+      "dropTitle": "Dateien hierhin ziehen oder auswählen",
+      "dropHint": "Bilder, Videos oder Grundrisse · mehrere Dateien möglich",
+      "uploading": "Wird hochgeladen…",
+      "selectFiles": "Dateien auswählen",
+      "loading": "Wird geladen…",
+      "libraryEmpty": "Mediathek ist leer.",
+      "selected": "Ausgewählte Medien ({{count}})",
+      "coverHint": "Klicke auf den Stern, um das Coverbild zu setzen.",
+      "cover": "Cover",
+      "library": "Mediathek",
+      "setCover": "Als Cover setzen",
+      "remove": "Entfernen",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Kurze Objektbeschreibung für Exposé und Inserate",
+      "internalNotes": "Interne Notizen",
+      "internalNotesPlaceholder": "Nur intern sichtbar",
+      "uploaded": "{{count}} Datei(en) hochgeladen",
+      "uploadFailed": "Upload fehlgeschlagen"
+    },
+    "step9": {
+      "intro": "Erfasse die einzelnen Wohnungen / Einheiten dieser Liegenschaft. Du kannst weitere später hinzufügen.",
+      "addUnit": "Einheit hinzufügen",
+      "empty": "Noch keine Einheiten erfasst.",
+      "unit": "Einheit",
+      "designation": "Bezeichnung / Nr.",
+      "designationPlaceholder": "z. B. 1A",
+      "type": "Typ",
+      "floor": "Etage",
+      "floorPlaceholder": "EG, 1, 2…",
+      "rooms": "Zimmer",
+      "living": "Wohnfläche m²",
+      "price": "Preis CHF",
+      "rent": "Miete CHF",
+      "status": "Status",
+      "separate": "Separat vermarktbar",
+      "unitTypes": {
+        "apartment": "Wohnung",
+        "commercial": "Gewerbe",
+        "parking": "Parkplatz"
+      }
+    },
+    "step10": {
+      "intro": "Bitte prüfe die Angaben und speichere die Immobilie.",
+      "rows": {
+        "type": "Objektart",
+        "structure": "Struktur",
+        "title": "Titel",
+        "marketing": "Vermarktung",
+        "status": "Status",
+        "address": "Adresse",
+        "living": "Wohnfläche",
+        "rooms": "Zimmer",
+        "price": "Verkaufspreis",
+        "rent": "Miete",
+        "owner": "Eigentümer",
+        "assignee": "Zuständig",
+        "units": "Einheiten",
+        "media": "Medien"
+      },
+      "structureSingle": "Einzelobjekt",
+      "structureBuilding": "Liegenschaft mit Einheiten",
+      "structureUnit": "Einheit in Liegenschaft",
+      "mediaSummary": "{{count}} Datei(en){{cover}}",
+      "coverSuffix": " · Cover gesetzt",
+      "unitsHeader": "Einheiten ({{count}})"
+    }
   }
 }
