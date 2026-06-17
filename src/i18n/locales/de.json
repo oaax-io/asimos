@@ -1111,7 +1111,45 @@
     }
   },
   "appointments": {
-    "new": "Neuer Termin"
+    "new": "Neuer Termin",
+    "edit": "Termin bearbeiten",
+    "editDescription": "Aktualisiere Details, Status oder Zuweisung.",
+    "dialogDescription": "Verknüpfe Termin mit Kunde und/oder Immobilie und weise einen Mitarbeiter zu.",
+    "tabs": { "list": "Liste", "week": "Wochenkalender" },
+    "sections": { "upcoming": "Anstehend", "past": "Vergangene" },
+    "empty": { "title": "Keine anstehenden Termine", "description": "Plane Besichtigungen, Beurkundungen oder Calls." },
+    "card": { "until": "bis", "client": "Kunde", "property": "Objekt", "assignee": "Zuständig" },
+    "week": { "today": "Heute" },
+    "status": { "scheduled": "Geplant", "completed": "Erledigt", "cancelled": "Abgesagt" },
+    "types": { "viewing": "Besichtigung", "meeting": "Meeting", "call": "Telefonat", "other": "Sonstiges" },
+    "form": {
+      "title": "Titel",
+      "titlePlaceholder": "Besichtigung Hauptstrasse 12",
+      "type": "Typ",
+      "status": "Status",
+      "start": "Start",
+      "end": "Ende",
+      "location": "Ort",
+      "locationPlaceholder": "Adresse, Treffpunkt oder Link",
+      "client": "Kunde",
+      "clientNone": "Kein Kunde",
+      "clientPlaceholder": "Keiner",
+      "property": "Immobilie",
+      "propertyNone": "Keine Immobilie",
+      "propertyPlaceholder": "Keine",
+      "assignee": "Zuständig",
+      "assignToMe": "Mir zuweisen",
+      "notes": "Notizen"
+    },
+    "actions": { "cancel": "Abbrechen", "save": "Speichern", "close": "Schliessen", "delete": "Löschen" },
+    "confirmDelete": { "title": "Termin löschen?", "description": "Diese Aktion kann nicht rückgängig gemacht werden.", "confirm": "Löschen" },
+    "toasts": {
+      "created": "Termin erstellt",
+      "updated": "Aktualisiert",
+      "deleted": "Termin gelöscht",
+      "titleRequired": "Titel ist erforderlich",
+      "startRequired": "Startzeit ist erforderlich"
+    }
   },
   "tasks": {
     "new": "Neue Aufgabe"
