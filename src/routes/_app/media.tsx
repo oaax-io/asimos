@@ -635,10 +635,10 @@ function MediaPage() {
                 })()}
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setOpen(false)} disabled={uploading}>
-                    Abbrechen
+                    {t("media.cancel")}
                   </Button>
                   <Button onClick={() => upload.mutate()} disabled={uploading || files.length === 0}>
-                    {uploading ? "Wird hochgeladen…" : "Hochladen"}
+                    {uploading ? t("media.uploading") : t("media.upload")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
