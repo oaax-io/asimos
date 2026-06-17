@@ -866,14 +866,14 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             {currentStep === "company_contact" && (
               <div className="space-y-4">
                 <div>
-                  <p className="text-base font-semibold">Kontaktperson</p>
-                  <p className="text-sm text-muted-foreground">Wer ist der Ansprechpartner für diese Firma?</p>
+                  <p className="text-base font-semibold">{t("clientWizard.companyContact.title")}</p>
+                  <p className="text-sm text-muted-foreground">{t("clientWizard.companyContact.hint")}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {([
-                    { v: "manual",   title: "Neue Kontaktperson",         desc: "Direkt erfassen",                 Icon: User },
-                    { v: "existing", title: "Bestehenden Kunden wählen",  desc: "Aus der Kundenliste verknüpfen", Icon: Users },
-                  ] as const).map(({ v, title, desc, Icon }) => {
+                    { v: "manual",   k: "manual",   Icon: User },
+                    { v: "existing", k: "existing", Icon: Users },
+                  ] as const).map(({ v, k, Icon }) => {
                     const active = form.contact_mode === v;
                     return (
                       <button type="button" key={v}
@@ -885,8 +885,8 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                           <Icon className="h-4 w-4" />
                         </span>
                         <span className="flex-1">
-                          <span className="block text-sm font-semibold">{title}</span>
-                          <span className="block text-xs text-muted-foreground">{desc}</span>
+                          <span className="block text-sm font-semibold">{t(`clientWizard.companyContact.${k}.title`)}</span>
+                          <span className="block text-xs text-muted-foreground">{t(`clientWizard.companyContact.${k}.desc`)}</span>
                         </span>
                       </button>
                     );
@@ -895,16 +895,16 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
 
                 {form.contact_mode === "manual" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div><Label>Vorname</Label><Input value={form.contact_first_name} onChange={(e) => set("contact_first_name", e.target.value)} /></div>
-                    <div><Label>Nachname</Label><Input value={form.contact_last_name} onChange={(e) => set("contact_last_name", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.companyContact.firstName")}</Label><Input value={form.contact_first_name} onChange={(e) => set("contact_first_name", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.companyContact.lastName")}</Label><Input value={form.contact_last_name} onChange={(e) => set("contact_last_name", e.target.value)} /></div>
                   </div>
                 )}
 
                 {form.contact_mode === "existing" && (
                   <div>
-                    <Label>Bestehender Kunde</Label>
+                    <Label>{t("clientWizard.companyContact.existingClient")}</Label>
                     <Select value={form.linked_contact_client_id} onValueChange={(v) => set("linked_contact_client_id", v)}>
-                      <SelectTrigger><SelectValue placeholder="Person wählen..." /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t("clientWizard.companyContact.selectPerson")} /></SelectTrigger>
                       <SelectContent>
                         {(personClientsQuery.data ?? []).map((c) => (
                           <SelectItem key={c.id} value={c.id}>
