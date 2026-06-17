@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -192,6 +193,7 @@ const TOTAL_STEPS = 6;
 export function FinancingQuickCheckWizard({
   open, onOpenChange, onCreated, defaultClientId, defaultPropertyId,
 }: Props) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<WizardForm>(() => emptyForm({
@@ -538,17 +540,24 @@ export function FinancingQuickCheckWizard({
     },
     onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["financing_dossiers"] });
-      toast.success("Quick Check erstellt");
+      toast.success(t("financing.wizard.toast.created"));
       onOpenChange(false);
       onCreated?.(id);
       navigate({ to: "/financing/$id", params: { id } });
     },
-    onError: (e: any) => toast.error(e.message ?? "Fehler beim Speichern"),
+    onError: (e: any) => toast.error(e.message ?? t("financing.wizard.toast.saveError")),
   });
 
-  const headerTitle = `Quick Check Finanzierung – Schritt ${step} / ${TOTAL_STEPS}`;
+  const headerTitle = t("financing.wizard.headerTitle", { step, total: TOTAL_STEPS });
 
-  const stepLabels = ["Module", "Objekt", "Kunde", "Kennzahlen", "Erweitert", "Zusammenfassung"];
+  const stepLabels = [
+    t("financing.wizard.stepLabels.modules"),
+    t("financing.wizard.stepLabels.property"),
+    t("financing.wizard.stepLabels.client"),
+    t("financing.wizard.stepLabels.metrics"),
+    t("financing.wizard.stepLabels.advanced"),
+    t("financing.wizard.stepLabels.summary"),
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -630,22 +639,22 @@ export function FinancingQuickCheckWizard({
           <div>
             {step > 1 && (
               <Button variant="outline" onClick={() => setStep(step - 1)} disabled={createMutation.isPending}>
-                <ArrowLeft className="mr-1 h-4 w-4" />Zurück
+                <ArrowLeft className="mr-1 h-4 w-4" />{t("financing.wizard.back")}
               </Button>
             )}
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground hidden sm:inline">
-              Schritt {step} von {TOTAL_STEPS}
+              {t("financing.wizard.stepCounter", { step, total: TOTAL_STEPS })}
             </span>
             {step < TOTAL_STEPS && (
               <Button onClick={() => setStep(step + 1)} disabled={!canNext}>
-                Weiter <ArrowRight className="ml-1 h-4 w-4" />
+                {t("financing.wizard.next")} <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             )}
             {step === TOTAL_STEPS && (
               <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Speichern…" : "Quick Check starten"}
+                {createMutation.isPending ? t("financing.wizard.submitting") : t("financing.wizard.submit")}
               </Button>
             )}
           </div>

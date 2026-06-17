@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ function FinancingDetailPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [resetOpen, setResetOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
 
@@ -83,17 +85,17 @@ function FinancingDetailPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Quick Check zurückgesetzt");
+      toast.success(t("financing.detail.toast.reset"));
       setResetOpen(false);
       queryClient.invalidateQueries({ queryKey: ["financing_dossier", id] });
       queryClient.invalidateQueries({ queryKey: ["financing_dossiers"] });
       queryClient.invalidateQueries({ queryKey: ["activity_logs", "financing_dossier", id] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Zurücksetzen fehlgeschlagen"),
+    onError: (e: any) => toast.error(e.message ?? t("financing.detail.toast.resetFailed")),
   });
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Laden…</p>;
-  if (!dossier) return <p className="text-sm text-muted-foreground">Dossier nicht gefunden.</p>;
+  if (isLoading) return <p className="text-sm text-muted-foreground">{t("financing.loading")}</p>;
+  if (!dossier) return <p className="text-sm text-muted-foreground">{t("financing.detail.notFound")}</p>;
 
   const reasons = (dossier.quick_check_reasons as any[]) ?? [];
   const qcStatus = (dossier.quick_check_status ?? "incomplete") as QuickCheckStatus;
@@ -103,11 +105,11 @@ function FinancingDetailPage() {
   return (
     <div className="space-y-6">
       <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/financing" })}>
-        <ArrowLeft className="mr-1 h-4 w-4" />Zurück
+        <ArrowLeft className="mr-1 h-4 w-4" />{t("financing.detail.back")}
       </Button>
 
       <PageHeader
-        title={dossier.title || FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType] || "Finanzierung"}
+        title={dossier.title || FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType] || t("financing.detail.fallback")}
         description={
           [
             FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType],
@@ -117,7 +119,7 @@ function FinancingDetailPage() {
         }
         action={
           <div className="flex gap-2">
-            <Badge>{DOSSIER_STATUS_LABELS[dossier.dossier_status as DossierStatus] ?? "Entwurf"}</Badge>
+            <Badge>{DOSSIER_STATUS_LABELS[dossier.dossier_status as DossierStatus] ?? t("financing.dossierStatus.draft")}</Badge>
             {dossier.quick_check_status && (
               <Badge variant="outline">{QUICK_CHECK_LABELS[dossier.quick_check_status as QuickCheckStatus]}</Badge>
             )}
@@ -126,28 +128,29 @@ function FinancingDetailPage() {
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={Banknote} label="Gesamtinvestition" value={fmt(dossier.total_investment)} />
-        <Stat icon={Banknote} label="Hypothek" value={fmt(dossier.requested_mortgage)} />
-        <Stat icon={Banknote} label="Eigenmittel" value={fmt(dossier.own_funds_total)} />
-        <Stat icon={Banknote} label="Tragbarkeit" value={dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"} />
+        <Stat icon={Banknote} label={t("financing.detail.stats.totalInvestment")} value={fmt(dossier.total_investment)} />
+        <Stat icon={Banknote} label={t("financing.detail.stats.mortgage")} value={fmt(dossier.requested_mortgage)} />
+        <Stat icon={Banknote} label={t("financing.detail.stats.ownFunds")} value={fmt(dossier.own_funds_total)} />
+        <Stat icon={Banknote} label={t("financing.detail.stats.affordability")} value={dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"} />
       </div>
 
       <Tabs defaultValue="overview">
         <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="quickcheck">Quick Check</TabsTrigger>
-          <TabsTrigger value="disclosure">Selbstauskunft</TabsTrigger>
-          <TabsTrigger value="ubs">Bank Checkliste</TabsTrigger>
-          <TabsTrigger value="documents">Dokumente</TabsTrigger>
-          <TabsTrigger value="bank">Bank Einreichung</TabsTrigger>
-          <TabsTrigger value="activity">Aktivität</TabsTrigger>
+          <TabsTrigger value="overview">{t("financing.detail.tabs.overview")}</TabsTrigger>
+          <TabsTrigger value="quickcheck">{t("financing.detail.tabs.quickcheck")}</TabsTrigger>
+          <TabsTrigger value="disclosure">{t("financing.detail.tabs.disclosure")}</TabsTrigger>
+          <TabsTrigger value="ubs">{t("financing.detail.tabs.ubs")}</TabsTrigger>
+          <TabsTrigger value="documents">{t("financing.detail.tabs.documents")}</TabsTrigger>
+          <TabsTrigger value="bank">{t("financing.detail.tabs.bank")}</TabsTrigger>
+          <TabsTrigger value="activity">{t("financing.detail.tabs.activity")}</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
             <Card>
               <CardContent className="p-4 space-y-2">
-                <h3 className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />Kunde</h3>
+                <h3 className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{t("financing.detail.overview.client")}</h3>
                 {dossier.clients ? (
                   <Link to="/clients/$id" params={{ id: dossier.clients.id }} className="text-sm text-primary hover:underline">
                     {dossier.clients.full_name}
@@ -159,12 +162,12 @@ function FinancingDetailPage() {
             </Card>
             <Card>
               <CardContent className="p-4 space-y-2">
-                <h3 className="font-semibold flex items-center gap-2"><Building2 className="h-4 w-4" />Immobilie</h3>
+                <h3 className="font-semibold flex items-center gap-2"><Building2 className="h-4 w-4" />{t("financing.detail.overview.property")}</h3>
                 {dossier.properties ? (
                   <Link to="/properties/$id" params={{ id: dossier.properties.id }} className="text-sm text-primary hover:underline">
                     {dossier.properties.title}
                   </Link>
-                ) : <p className="text-sm text-muted-foreground">Keine Immobilie verknüpft</p>}
+                ) : <p className="text-sm text-muted-foreground">{t("financing.detail.overview.noProperty")}</p>}
                 {dossier.properties?.city && <p className="text-xs text-muted-foreground">{dossier.properties.city}</p>}
               </CardContent>
             </Card>
@@ -177,12 +180,12 @@ function FinancingDetailPage() {
             <Card>
               <CardContent className="p-6 space-y-4">
                 <div>
-                  <h3 className="font-semibold">Quick Check starten</h3>
+                  <h3 className="font-semibold">{t("financing.detail.quickcheck.start")}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Erfasse die Eckdaten der Finanzierung im Wizard. Nach Abschluss erscheint hier das Ergebnis.
+                    {t("financing.detail.quickcheck.startDescription")}
                   </p>
                 </div>
-                <Button onClick={() => setWizardOpen(true)}>Quick Check starten</Button>
+                <Button onClick={() => setWizardOpen(true)}>{t("financing.detail.quickcheck.start")}</Button>
               </CardContent>
             </Card>
           ) : (
@@ -192,12 +195,12 @@ function FinancingDetailPage() {
                   <Badge className={qcBadgeTone(qcStatus)}>{QUICK_CHECK_LABELS[qcStatus]}</Badge>
                   {lastCheckAt && (
                     <span className="text-sm text-muted-foreground">
-                      Letzter Quick Check: {lastCheckAt}
+                      {t("financing.detail.quickcheck.lastCheck", { date: lastCheckAt })}
                     </span>
                   )}
                   <div className="ml-auto flex flex-wrap items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
-                      <RotateCcw className="mr-1 h-4 w-4" />Neu berechnen
+                      <RotateCcw className="mr-1 h-4 w-4" />{t("financing.detail.quickcheck.recalculate")}
                     </Button>
                     <FinancingQuickCheckActions
                       dossierId={dossier.id}
@@ -210,9 +213,9 @@ function FinancingDetailPage() {
 
               <Tabs defaultValue="vorpruefung">
                 <TabsList>
-                  <TabsTrigger value="vorpruefung">Vorprüfung</TabsTrigger>
-                  <TabsTrigger value="detail">Detailrechnung</TabsTrigger>
-                  <TabsTrigger value="szenarien">Szenarien</TabsTrigger>
+                  <TabsTrigger value="vorpruefung">{t("financing.detail.quickcheck.subtabs.precheck")}</TabsTrigger>
+                  <TabsTrigger value="detail">{t("financing.detail.quickcheck.subtabs.detail")}</TabsTrigger>
+                  <TabsTrigger value="szenarien">{t("financing.detail.quickcheck.subtabs.scenarios")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="vorpruefung" className="space-y-4">
@@ -230,6 +233,7 @@ function FinancingDetailPage() {
             </>
           )}
         </TabsContent>
+
 
         <TabsContent value="disclosure">
           <FinancingSelfDisclosureTab
@@ -271,18 +275,18 @@ function FinancingDetailPage() {
       <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Quick Check zurücksetzen und neu starten?</AlertDialogTitle>
+            <AlertDialogTitle>{t("financing.detail.resetDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Die gespeicherten Werte bleiben erhalten.
+              {t("financing.detail.resetDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t("financing.detail.resetDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => resetMutation.mutate()}
               disabled={resetMutation.isPending}
             >
-              Zurücksetzen
+              {t("financing.detail.resetDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -488,6 +492,7 @@ function MetricCard({
 }
 
 function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
+  const { t } = useTranslation();
   const i = deriveInputs(dossier);
   const ltvTone = toneFor(i.ltv, 80, 90, "max");
   const affTone = toneFor(i.affordability, 33, 38, "max");
@@ -500,7 +505,7 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
     const delta = Math.max(0, incomeNeeded - i.income);
     tips.push({
       tone: "warn",
-      text: `Einkommen müsste um ${chf(delta)} erhöht werden um Tragbarkeit auf 33% zu bringen (benötigt: ${chf(incomeNeeded)})`,
+      text: t("financing.detail.quickcheck.tips.incomeNeeded", { delta: chf(delta), needed: chf(incomeNeeded) }),
     });
   }
   if (i.equityRatio < 20 && i.total > 0) {
@@ -508,34 +513,34 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
     const missing = Math.max(0, needed - i.equity);
     tips.push({
       tone: "warn",
-      text: `Fehlende Eigenmittel: ${chf(missing)} (mindestens ${chf(needed)} des Kaufpreises erforderlich)`,
+      text: t("financing.detail.quickcheck.tips.equityMissing", { missing: chf(missing), needed: chf(needed) }),
     });
   }
   if (i.hardRatio < 10 && i.total > 0) {
     const neededHard = i.total * 0.10;
     tips.push({
       tone: "warn",
-      text: `PK-Anteil zu hoch — mindestens ${chf(neededHard)} aus Barvermögen erforderlich (aktuell ${chf(i.hardEquity)} harte Eigenmittel)`,
+      text: t("financing.detail.quickcheck.tips.hardEquityLow", { needed: chf(neededHard), current: chf(i.hardEquity) }),
     });
   }
   if (tips.length === 0) {
-    tips.push({ tone: "ok", text: "Alle Kennzahlen erfüllt — Finanzierung grundsätzlich bankfähig." });
+    tips.push({ tone: "ok", text: t("financing.detail.quickcheck.tips.allOk") });
   }
 
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2">
-        <MetricCard label="Belehnung (LTV)" value={pct(i.ltv)} limitLabel="Limit: 80%" tone={ltvTone} fillPct={i.ltv} limitPct={80} />
-        <MetricCard label="Tragbarkeit" value={pct(i.affordability)} limitLabel="Limit: 33%" tone={affTone} fillPct={i.affordability * (100 / 50)} limitPct={33 * (100 / 50)} />
-        <MetricCard label="Eigenmittelquote" value={pct(i.equityRatio)} limitLabel="Limit: 20%" tone={eqTone} fillPct={i.equityRatio * (100 / 50)} limitPct={20 * (100 / 50)} />
-        <MetricCard label="Harte Eigenmittel" value={pct(i.hardRatio)} limitLabel="Limit: 10%" tone={hardTone} fillPct={i.hardRatio * (100 / 30)} limitPct={10 * (100 / 30)} />
+        <MetricCard label={t("financing.detail.quickcheck.metrics.ltv")} value={pct(i.ltv)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 80 })} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
+        <MetricCard label={t("financing.detail.quickcheck.metrics.affordability")} value={pct(i.affordability)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 33 })} tone={affTone} fillPct={i.affordability * (100 / 50)} limitPct={33 * (100 / 50)} />
+        <MetricCard label={t("financing.detail.quickcheck.metrics.equityRatio")} value={pct(i.equityRatio)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 20 })} tone={eqTone} fillPct={i.equityRatio * (100 / 50)} limitPct={20 * (100 / 50)} />
+        <MetricCard label={t("financing.detail.quickcheck.metrics.hardEquity")} value={pct(i.hardRatio)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 10 })} tone={hardTone} fillPct={i.hardRatio * (100 / 30)} limitPct={10 * (100 / 30)} />
       </div>
       <Card>
         <CardContent className="p-4 space-y-2">
-          <h3 className="font-semibold">Optimierungsvorschläge</h3>
+          <h3 className="font-semibold">{t("financing.detail.quickcheck.tips.title")}</h3>
           <ul className="space-y-1 text-sm">
-            {tips.map((t, idx) => (
-              <li key={idx} className={toneText(t.tone)}>• {t.text}</li>
+            {tips.map((tp, idx) => (
+              <li key={idx} className={toneText(tp.tone)}>• {tp.text}</li>
             ))}
           </ul>
           {(() => {
@@ -543,23 +548,22 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
             const coName = dossier.co_applicant?.full_name;
             const coId = dossier.co_applicant_client_id;
             const mainIncome = n(dossier.gross_income_yearly);
-            const mainName = dossier.clients?.full_name ?? "Hauptantragsteller";
+            const mainName = dossier.clients?.full_name ?? t("financing.detail.quickcheck.detail.mainIncome");
             if (coId && coName && coIncome > 0) {
               return (
                 <div className="mt-3 rounded-md border border-blue-300/60 bg-blue-50 dark:bg-blue-950/30 p-3 text-xs text-blue-900 dark:text-blue-100">
-                  Berechnung mit kombiniertem Einkommen:{" "}
+                  {t("financing.detail.quickcheck.tips.combinedIncome")}{" "}
                   <span className="font-medium">{mainName}</span> {chf(mainIncome)} +{" "}
                   <span className="font-medium">{coName}</span> {chf(coIncome)} ={" "}
-                  <span className="font-semibold">{chf(i.income)}</span> / Jahr
+                  <span className="font-semibold">{chf(i.income)}</span> {t("financing.detail.quickcheck.tips.perYear")}
                 </div>
               );
             }
             if (coId && coName && coIncome <= 0) {
               return (
                 <div className="mt-3 rounded-md border border-amber-300/60 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs text-amber-900 dark:text-amber-100">
-                  Einkommen von <span className="font-medium">{coName}</span> nicht erfasst —
-                  Berechnung basiert nur auf Einkommen des Hauptantragstellers.{" "}
-                  <a href={`/clients/${coId}`} className="underline font-medium">→ Zum Kundenprofil</a>
+                  {t("financing.detail.quickcheck.tips.coIncomeMissing", { name: coName })}{" "}
+                  <a href={`/clients/${coId}`} className="underline font-medium">{t("financing.detail.quickcheck.tips.toClient")}</a>
                 </div>
               );
             }
@@ -586,6 +590,7 @@ function DetailRow({ label, value, bold, indent, divider }: {
 }
 
 function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
+  const { t } = useTranslation();
   const i = deriveInputs(dossier);
   const affTone = toneFor(i.affordability, 33, 38, "max");
 
@@ -593,48 +598,50 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
     <div className="grid gap-3 md:grid-cols-2">
       <Card>
         <CardContent className="p-4 space-y-1">
-          <h3 className="font-semibold mb-2">Finanzierungsstruktur</h3>
-          <DetailRow label="Kaufpreis" value={chf(i.purchase)} />
-          {i.reno > 0 && <DetailRow label="+ Renovationskosten" value={chf(i.reno)} />}
-          <DetailRow label="= Gesamtinvestition" value={chf(i.total)} bold divider />
-          <DetailRow label={`Eigenmittel total (${pct(i.equityRatio)})`} value={chf(i.equity)} divider />
-          <DetailRow label="davon Barvermögen" value={chf(i.hardEquity)} indent />
-          <DetailRow label="davon PK / Freizügigkeit" value={chf(i.pension + i.vested)} indent />
-          <DetailRow label={`Hypothek gesamt (${pct(i.ltv)})`} value={chf(i.mortgage)} divider />
-          <DetailRow label="1. Hypothek (≤ 65%)" value={chf(i.firstMortgage)} indent />
-          <DetailRow label="2. Hypothek (65–80%)" value={chf(i.secondMortgage)} indent />
-          <DetailRow label={`Amortisation 2. Hypo (über ${i.amortYears} J.)`} value={`${chf(i.amort)}/J`} divider />
+          <h3 className="font-semibold mb-2">{t("financing.detail.quickcheck.detail.structure")}</h3>
+          <DetailRow label={t("financing.detail.quickcheck.detail.purchasePrice")} value={chf(i.purchase)} />
+          {i.reno > 0 && <DetailRow label={t("financing.detail.quickcheck.detail.plusRenovation")} value={chf(i.reno)} />}
+          <DetailRow label={t("financing.detail.quickcheck.detail.totalInvestment")} value={chf(i.total)} bold divider />
+          <DetailRow label={t("financing.detail.quickcheck.detail.ownFundsTotal", { ratio: pct(i.equityRatio) })} value={chf(i.equity)} divider />
+          <DetailRow label={t("financing.detail.quickcheck.detail.cashEquity")} value={chf(i.hardEquity)} indent />
+          <DetailRow label={t("financing.detail.quickcheck.detail.pensionEquity")} value={chf(i.pension + i.vested)} indent />
+          <DetailRow label={t("financing.detail.quickcheck.detail.mortgageTotal", { ratio: pct(i.ltv) })} value={chf(i.mortgage)} divider />
+          <DetailRow label={t("financing.detail.quickcheck.detail.firstMortgage")} value={chf(i.firstMortgage)} indent />
+          <DetailRow label={t("financing.detail.quickcheck.detail.secondMortgage")} value={chf(i.secondMortgage)} indent />
+          <DetailRow label={t("financing.detail.quickcheck.detail.amortization", { years: i.amortYears })} value={t("financing.detail.quickcheck.detail.perYearShort", { amount: chf(i.amort) })} divider />
         </CardContent>
       </Card>
       <Card>
         <CardContent className="p-4 space-y-1">
-          <h3 className="font-semibold mb-2">Jahreskosten (Tragbarkeit)</h3>
-          <DetailRow label={`Kalk. Zinssatz (${i.rate.toFixed(1)}%)`} value={chf(i.interest)} />
-          <DetailRow label={`Nebenkosten (${i.ancillaryPct.toFixed(1)}%)`} value={chf(i.ancillary)} />
-          <DetailRow label="Amortisation" value={chf(i.amort)} />
-          <DetailRow label="Total Wohnkosten p.a." value={chf(i.yearly)} bold divider />
+          <h3 className="font-semibold mb-2">{t("financing.detail.quickcheck.detail.yearlyCosts")}</h3>
+          <DetailRow label={t("financing.detail.quickcheck.detail.calcInterest", { rate: i.rate.toFixed(1) })} value={chf(i.interest)} />
+          <DetailRow label={t("financing.detail.quickcheck.detail.ancillary", { pct: i.ancillaryPct.toFixed(1) })} value={chf(i.ancillary)} />
+          <DetailRow label={t("financing.detail.quickcheck.detail.amortLabel")} value={chf(i.amort)} />
+          <DetailRow label={t("financing.detail.quickcheck.detail.totalYearlyCost")} value={chf(i.yearly)} bold divider />
           {(() => {
             const coIncome = n(dossier.co_applicant_einkommen);
             const mainIncome = n(dossier.gross_income_yearly);
             const coName = dossier.co_applicant?.full_name;
-            const role = dossier.co_applicant_role === "ehepartner" ? "Ehepartner/in" : "Mitantragsteller/in";
+            const role = dossier.co_applicant_role === "ehepartner"
+              ? t("financing.detail.quickcheck.detail.roleSpouse")
+              : t("financing.detail.quickcheck.detail.roleCo");
             if (coIncome > 0 && coName) {
               return (
                 <>
-                  <DetailRow label="Einkommen Hauptantragsteller" value={chf(mainIncome)} />
-                  <DetailRow label={`Einkommen ${role} ${coName}`} value={chf(coIncome)} />
-                  <DetailRow label="Kombiniertes Einkommen p.a." value={chf(i.income)} bold />
+                  <DetailRow label={t("financing.detail.quickcheck.detail.mainIncome")} value={chf(mainIncome)} />
+                  <DetailRow label={t("financing.detail.quickcheck.detail.coApplicantIncome", { role, name: coName })} value={chf(coIncome)} />
+                  <DetailRow label={t("financing.detail.quickcheck.detail.combinedIncome")} value={chf(i.income)} bold />
                 </>
               );
             }
-            return <DetailRow label="Bruttoeinkommen p.a." value={chf(i.income)} />;
+            return <DetailRow label={t("financing.detail.quickcheck.detail.grossIncome")} value={chf(i.income)} />;
           })()}
           <div className="my-2 border-t" />
           <div className="flex justify-between gap-4 text-sm">
-            <span>Tragbarkeitsquote</span>
+            <span>{t("financing.detail.quickcheck.detail.affordabilityRatio")}</span>
             <span className={cn("font-semibold tabular-nums", toneText(affTone))}>{pct(i.affordability)}</span>
           </div>
-          <DetailRow label="Mindesteinkommen (33%)" value={chf(i.minIncome)} />
+          <DetailRow label={t("financing.detail.quickcheck.detail.minIncome")} value={chf(i.minIncome)} />
         </CardContent>
       </Card>
     </div>
@@ -659,6 +666,7 @@ type ScenarioRow = {
 };
 
 function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
+  const { t } = useTranslation();
   const original = useMemo(() => deriveInputs(dossier), [dossier]);
   const dossierId = String((dossier as { id?: string }).id ?? "");
   const queryClient = useQueryClient();
@@ -744,12 +752,12 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Szenario gespeichert");
+      toast.success(t("financing.detail.quickcheck.scenarios.toast.saved"));
       setSaveOpen(false);
       setScenarioName("");
       queryClient.invalidateQueries({ queryKey: ["financing_scenarios", dossierId] });
     },
-    onError: (e: Error) => toast.error(e.message ?? "Speichern fehlgeschlagen"),
+    onError: (e: Error) => toast.error(e.message ?? t("financing.detail.quickcheck.scenarios.toast.saveFailed")),
   });
 
   const { data: scenarios } = useQuery({
@@ -774,10 +782,10 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Szenario gelöscht");
+      toast.success(t("financing.detail.quickcheck.scenarios.toast.deleted"));
       queryClient.invalidateQueries({ queryKey: ["financing_scenarios", dossierId] });
     },
-    onError: (e: Error) => toast.error(e.message ?? "Löschen fehlgeschlagen"),
+    onError: (e: Error) => toast.error(e.message ?? t("financing.detail.quickcheck.scenarios.toast.deleteFailed")),
   });
 
   const loadScenario = (s: ScenarioRow) => {
@@ -786,7 +794,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     if (s.bruttoeinkommen != null) setIncome(Math.round(Number(s.bruttoeinkommen)));
     if (s.hypothek != null) setMortgage(Math.round(Number(s.hypothek)));
     if (s.kalk_zinssatz != null) setRate(Math.round(Number(s.kalk_zinssatz) * 10) / 10);
-    toast.success(`Szenario "${s.bezeichnung}" geladen`);
+    toast.success(t("financing.detail.quickcheck.scenarios.toast.loaded", { name: s.bezeichnung }));
   };
 
   const liveLtv = live.result.loan_to_value_ratio;
@@ -823,7 +831,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       const aff = result.affordability_ratio;
       let tone: Cell["tone"];
       let label: string;
-      if (eqRatio < 10) { tone = "gray"; label = "EK!"; }
+      if (eqRatio < 10) { tone = "gray"; label = t("financing.detail.quickcheck.scenarios.matrixEqInsufficient"); }
       else if (aff > 38 || eqRatio < 15) { tone = "bad"; label = pct(aff); }
       else if (aff > 33 || eqRatio < 20) { tone = "warn"; label = pct(aff); }
       else { tone = "ok"; label = pct(aff); }
@@ -851,15 +859,14 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       <Card>
         <CardContent className="p-4 space-y-4">
           <div>
-            <h3 className="font-semibold">Interaktive Szenario-Regler</h3>
+            <h3 className="font-semibold">{t("financing.detail.quickcheck.scenarios.title")}</h3>
             <p className="text-sm text-muted-foreground">
-              Passe die Werte an um verschiedene Szenarien zu prüfen. Die Matrix aktualisiert sich live.
-              Du kannst ein Szenario als neue Berechnung im Dossier speichern.
+              {t("financing.detail.quickcheck.scenarios.description")}
             </p>
           </div>
 
           <SliderRow
-            label="Kaufpreis"
+            label={t("financing.detail.quickcheck.scenarios.purchase")}
             display={chf(purchase)}
             value={purchase}
             min={purchaseMin}
@@ -868,7 +875,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             onChange={setPurchase}
           />
           <SliderRow
-            label="Eigenmittel"
+            label={t("financing.detail.quickcheck.scenarios.equity")}
             display={`${chf(equity)} (${pct(equityPctNow)})`}
             value={equity}
             min={0}
@@ -877,7 +884,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             onChange={setEquity}
           />
           <SliderRow
-            label="Renovationskosten"
+            label={t("financing.detail.quickcheck.scenarios.renovation")}
             display={chf(reno)}
             value={reno}
             min={0}
@@ -886,7 +893,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             onChange={(v) => setReno(Math.round(v))}
           />
           <SliderRow
-            label="davon Eigenleistung"
+            label={t("financing.detail.quickcheck.scenarios.ownWork")}
             display={chf(ownWork)}
             value={ownWork}
             min={0}
@@ -895,8 +902,8 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             onChange={(v) => setOwnWork(Math.round(v))}
           />
           <SliderRow
-            label="Bruttoeinkommen"
-            display={`${chf(income)} / Jahr`}
+            label={t("financing.detail.quickcheck.scenarios.income")}
+            display={t("financing.detail.quickcheck.scenarios.incomePerYear", { amount: chf(income) })}
             value={income}
             min={incomeMin}
             max={incomeMax}
@@ -904,8 +911,8 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             onChange={setIncome}
           />
           <SliderRow
-            label="Gewünschte Hypothek"
-            display={`${chf(mortgage)} (${pct(ltvNow)} Belehnung)`}
+            label={t("financing.detail.quickcheck.scenarios.mortgage")}
+            display={t("financing.detail.quickcheck.scenarios.mortgageWithLtv", { amount: chf(mortgage), ltv: pct(ltvNow) })}
             value={mortgage}
             min={mortgageMin}
             max={mortgageMax}
@@ -913,7 +920,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             onChange={setMortgage}
           />
           <SliderRow
-            label="Kalk. Zinssatz"
+            label={t("financing.detail.quickcheck.scenarios.rate")}
             display={`${rate.toFixed(1)}%`}
             value={rate}
             min={1.0}
@@ -925,18 +932,18 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
 
           {/* Live result */}
           <div className="grid gap-2 sm:grid-cols-4 pt-2 border-t">
-            <LiveMetric label="Belehnung" value={pct(liveLtv)} delta={liveLtv - original.ltv} betterWhenLower />
-            <LiveMetric label="Tragbarkeit" value={pct(liveAff)} delta={liveAff - original.affordability} betterWhenLower />
-            <LiveMetric label="Eigenmittelquote" value={pct(liveEqRatio)} delta={liveEqRatio - original.equityRatio} betterWhenLower={false} />
+            <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveLtv")} value={pct(liveLtv)} delta={liveLtv - original.ltv} betterWhenLower />
+            <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveAffordability")} value={pct(liveAff)} delta={liveAff - original.affordability} betterWhenLower />
+            <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveEquityRatio")} value={pct(liveEqRatio)} delta={liveEqRatio - original.equityRatio} betterWhenLower={false} />
             <div className="rounded-lg border p-3 flex flex-col justify-center">
-              <p className="text-xs text-muted-foreground">Status</p>
+              <p className="text-xs text-muted-foreground">{t("financing.detail.quickcheck.scenarios.status")}</p>
               <Badge className={cn("mt-1 w-fit", qcBadgeTone(liveStatus))}>{QUICK_CHECK_LABELS[liveStatus]}</Badge>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => setSaveOpen(true)}>Als Szenario speichern</Button>
-            <Button variant="outline" onClick={reset}>Zurücksetzen</Button>
+            <Button onClick={() => setSaveOpen(true)}>{t("financing.detail.quickcheck.scenarios.saveScenario")}</Button>
+            <Button variant="outline" onClick={reset}>{t("financing.detail.quickcheck.scenarios.reset")}</Button>
           </div>
         </CardContent>
       </Card>
@@ -944,12 +951,12 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       {/* BEREICH B — Matrix */}
       <Card>
         <CardContent className="p-4 space-y-3">
-          <h3 className="font-semibold">Sensitivitätsanalyse — Einkommen vs. Kaufpreis</h3>
+          <h3 className="font-semibold">{t("financing.detail.quickcheck.scenarios.matrixTitle")}</h3>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] border-separate border-spacing-1 text-sm">
               <thead>
                 <tr>
-                  <th className="p-2 text-left text-xs text-muted-foreground">Einkommen \ Kaufpreis</th>
+                  <th className="p-2 text-left text-xs text-muted-foreground">{t("financing.detail.quickcheck.scenarios.matrixCorner")}</th>
                   {priceSteps.map((dp) => {
                     const v = Math.max(0, live.p + dp);
                     return (
@@ -966,7 +973,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
                   return (
                     <tr key={di}>
                       <th className="p-2 text-left text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-                        {chfCompact(incomeV)}/J
+                        {t("financing.detail.quickcheck.scenarios.matrixPerYearShort", { amount: chfCompact(incomeV) })}
                       </th>
                       {matrix[rowIdx].map((cell, colIdx) => (
                         <td key={colIdx} className="p-0">
@@ -988,13 +995,13 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             </table>
           </div>
           <div className="flex flex-wrap gap-3 text-xs">
-            <LegendDot tone="ok" label="Realistisch" />
-            <LegendDot tone="warn" label="Kritisch" />
-            <LegendDot tone="bad" label="Nicht finanzierbar" />
-            <LegendDot tone="gray" label="EK ungenügend" />
+            <LegendDot tone="ok" label={t("financing.detail.quickcheck.scenarios.legend.realistic")} />
+            <LegendDot tone="warn" label={t("financing.detail.quickcheck.scenarios.legend.critical")} />
+            <LegendDot tone="bad" label={t("financing.detail.quickcheck.scenarios.legend.notFinanceable")} />
+            <LegendDot tone="gray" label={t("financing.detail.quickcheck.scenarios.legend.eqInsufficient")} />
           </div>
           <p className="text-xs text-muted-foreground">
-            Eigenmittel {chf(live.eq)} · Zinssatz {live.r.toFixed(1)}% · Nebenkosten {original.ancillaryPct.toFixed(1)}% · Hypothek {chf(live.mort)}
+            {t("financing.detail.quickcheck.scenarios.assumptions", { equity: chf(live.eq), rate: live.r.toFixed(1), anc: original.ancillaryPct.toFixed(1), mortgage: chf(live.mort) })}
           </p>
         </CardContent>
       </Card>
@@ -1002,9 +1009,9 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       {/* Saved scenarios */}
       <Card>
         <CardContent className="p-4 space-y-3">
-          <h3 className="font-semibold">Gespeicherte Szenarien</h3>
+          <h3 className="font-semibold">{t("financing.detail.quickcheck.scenarios.savedTitle")}</h3>
           {!scenarios || scenarios.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Noch keine Szenarien gespeichert.</p>
+            <p className="text-sm text-muted-foreground">{t("financing.detail.quickcheck.scenarios.noneSaved")}</p>
           ) : (
             <div className="grid gap-2 md:grid-cols-2">
               {scenarios.map((s) => {
@@ -1019,11 +1026,11 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
                       <Badge className={qcBadgeTone(st)}>{QUICK_CHECK_LABELS[st]}</Badge>
                     </div>
                     <div className="flex gap-3 text-xs text-muted-foreground tabular-nums">
-                      <span>Tragbarkeit: <span className="font-medium text-foreground">{s.tragbarkeit != null ? pct(Number(s.tragbarkeit)) : "—"}</span></span>
-                      <span>Belehnung: <span className="font-medium text-foreground">{s.belehnung != null ? pct(Number(s.belehnung)) : "—"}</span></span>
+                      <span>{t("financing.detail.quickcheck.scenarios.affordabilityShort")}: <span className="font-medium text-foreground">{s.tragbarkeit != null ? pct(Number(s.tragbarkeit)) : "—"}</span></span>
+                      <span>{t("financing.detail.quickcheck.scenarios.ltvShort")}: <span className="font-medium text-foreground">{s.belehnung != null ? pct(Number(s.belehnung)) : "—"}</span></span>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => loadScenario(s)}>Laden</Button>
+                      <Button size="sm" variant="outline" onClick={() => loadScenario(s)}>{t("financing.detail.quickcheck.scenarios.load")}</Button>
                       <DeleteScenarioButton onConfirm={() => deleteMutation.mutate(s.id)} pending={deleteMutation.isPending} />
                     </div>
                   </div>
@@ -1038,26 +1045,26 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Szenario speichern</DialogTitle>
-            <DialogDescription>Vergib eine Bezeichnung für dieses Szenario.</DialogDescription>
+            <DialogTitle>{t("financing.detail.quickcheck.scenarios.saveDialog.title")}</DialogTitle>
+            <DialogDescription>{t("financing.detail.quickcheck.scenarios.saveDialog.description")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="scenario-name">Bezeichnung</Label>
+            <Label htmlFor="scenario-name">{t("financing.detail.quickcheck.scenarios.saveDialog.label")}</Label>
             <Input
               id="scenario-name"
               value={scenarioName}
               onChange={(e) => setScenarioName(e.target.value)}
-              placeholder="z.B. Mehr Eigenkapital"
+              placeholder={t("financing.detail.quickcheck.scenarios.saveDialog.placeholder")}
               autoFocus
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSaveOpen(false)}>Abbrechen</Button>
+            <Button variant="outline" onClick={() => setSaveOpen(false)}>{t("financing.detail.quickcheck.scenarios.saveDialog.cancel")}</Button>
             <Button
               onClick={() => saveMutation.mutate(scenarioName.trim())}
               disabled={!scenarioName.trim() || saveMutation.isPending}
             >
-              {saveMutation.isPending ? "Speichern…" : "Speichern"}
+              {saveMutation.isPending ? t("financing.detail.quickcheck.scenarios.saveDialog.saving") : t("financing.detail.quickcheck.scenarios.saveDialog.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1093,6 +1100,7 @@ function SliderRow({
 function LiveMetric({
   label, value, delta, betterWhenLower,
 }: { label: string; value: string; delta: number; betterWhenLower: boolean }) {
+  const { t } = useTranslation();
   const abs = Math.abs(delta);
   const showDelta = abs >= 0.05;
   const isBetter = betterWhenLower ? delta < 0 : delta > 0;
@@ -1105,7 +1113,7 @@ function LiveMetric({
       {showDelta && (
         <p className={cn("text-xs flex items-center gap-1 tabular-nums", colorCls)}>
           <Icon className="h-3 w-3" />
-          {abs.toFixed(1)}% vs. Original
+          {t("financing.detail.quickcheck.scenarios.vsOriginal", { value: abs.toFixed(1) })}
         </p>
       )}
     </div>
@@ -1113,6 +1121,7 @@ function LiveMetric({
 }
 
 function DeleteScenarioButton({ onConfirm, pending }: { onConfirm: () => void; pending: boolean }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -1122,13 +1131,13 @@ function DeleteScenarioButton({ onConfirm, pending }: { onConfirm: () => void; p
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Szenario löschen?</AlertDialogTitle>
-            <AlertDialogDescription>Diese Aktion kann nicht rückgängig gemacht werden.</AlertDialogDescription>
+            <AlertDialogTitle>{t("financing.detail.quickcheck.scenarios.deleteDialog.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("financing.detail.quickcheck.scenarios.deleteDialog.description")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t("financing.detail.quickcheck.scenarios.deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => { onConfirm(); setOpen(false); }} disabled={pending}>
-              Löschen
+              {t("financing.detail.quickcheck.scenarios.deleteDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
