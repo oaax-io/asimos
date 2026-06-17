@@ -143,7 +143,7 @@ function DocumentsPage() {
       return fileUrl;
     },
     onSuccess: () => {
-      toast.success("Dokument hochgeladen");
+      toast.success(t("documents.toasts.uploaded"));
       qc.invalidateQueries({ queryKey: ["documents"] });
       reset();
       setOpen(false);
@@ -164,7 +164,7 @@ function DocumentsPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Dokument gelöscht");
+      toast.success(t("documents.toasts.deleted"));
       qc.invalidateQueries({ queryKey: ["documents"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -177,7 +177,7 @@ function DocumentsPage() {
     }
     const { data, error } = await supabase.storage.from("documents").createSignedUrl(doc.file_url, 300);
     if (error || !data) {
-      toast.error("Konnte Datei nicht öffnen");
+      toast.error(t("documents.toasts.openFailed"));
       return;
     }
     window.open(data.signedUrl, "_blank", "noopener");
