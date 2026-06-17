@@ -471,7 +471,7 @@ function MediaPage() {
       const rootProp = propertyIndex.byId.get(rootId);
       const f = map.get(rootId) ?? {
         propertyId: rootId,
-        title: rootProp?.title ?? m.properties?.title ?? "Ohne Titel",
+        title: rootProp?.title ?? m.properties?.title ?? t("media.untitled"),
         city: rootProp?.city ?? m.properties?.city ?? null,
         items: [],
         cover: null,
