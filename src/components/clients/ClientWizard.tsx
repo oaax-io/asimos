@@ -313,7 +313,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       const first = (fields.first_name as string | undefined)?.trim() ?? "";
       const last = (fields.last_name as string | undefined)?.trim() ?? "";
       const fullName = [first, last].filter(Boolean).join(" ");
-      if (!fullName) throw new Error("Kein Name in der Selbstauskunft erkannt – bitte manuell erfassen.");
+      if (!fullName) throw new Error(t("clientWizard.toasts.noNameDetected"));
 
       const { data: userData } = await supabase.auth.getUser();
       const owner_id = userData.user?.id ?? null;
