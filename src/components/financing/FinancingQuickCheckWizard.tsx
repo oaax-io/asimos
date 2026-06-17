@@ -182,6 +182,7 @@ const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
   co_applicant_einkommen: "",
   co_applicant_eigenkapital: "",
   co_applicant_pk_anteil: "",
+  additional_co_applicants: [],
   renovation_costs: "",
   renovation_own_work: "",
   existing_mortgage: "",
