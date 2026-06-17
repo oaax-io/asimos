@@ -1770,7 +1770,7 @@ function SearchableSelect({
             return hay.includes(search.toLowerCase()) ? 1 : 0;
           }}
         >
-          <CommandInput placeholder={useTranslation().t("financing.wizard.search")} />
+          <CommandInput placeholder={t("financing.wizard.search")} />
           <CommandList
             className="max-h-none flex-1 overflow-y-auto overscroll-contain"
             onWheelCapture={(e) => e.stopPropagation()}
