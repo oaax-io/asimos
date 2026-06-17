@@ -80,14 +80,7 @@ const ROLE_TO_CLIENT_TYPE: Record<RoleChoice, string> = {
 };
 
 const PROP_TYPES = ["apartment", "house", "commercial", "land", "mixed_use", "other"] as const;
-const FINANCING_GOALS: { value: string; label: string }[] = [
-  { value: "purchase",           label: "Immobilienkauf" },
-  { value: "renovation",         label: "Renovation" },
-  { value: "increase",           label: "Aufstockung" },
-  { value: "refinance",          label: "Refinanzierung" },
-  { value: "new_build",          label: "Neubau" },
-  { value: "mortgage_increase",  label: "Hypothekenerhöhung" },
-];
+const FINANCING_GOALS = ["purchase", "renovation", "increase", "refinance", "new_build", "mortgage_increase"] as const;
 
 // ----- Form State -----
 type FormState = {
