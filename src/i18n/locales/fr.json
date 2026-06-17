@@ -140,7 +140,7 @@
     "dossierStatus": {
       "title": "Dossiers de financement par statut",
       "draft": "Brouillon",
-      "quick_check": "Quick-Check",
+      "quick_check": "Vérification rapide",
       "documents_missing": "Documents manquants",
       "ready_for_bank": "Prêt pour la banque",
       "submitted_to_bank": "Soumis à la banque",
@@ -528,13 +528,13 @@
   },
   "financing": {
     "hypoButton": "Calculateur hypothécaire Kosovo",
-    "startQuickCheck": "Démarrer le Quick Check",
+    "startQuickCheck": "Démarrer la vérification rapide",
     "searchPlaceholder": "Rechercher…",
     "filters": {
       "type": "Type",
       "allTypes": "Tous les types",
-      "quickCheck": "Quick Check",
-      "allQuickCheck": "Quick Check (tous)",
+      "quickCheck": "Vérification rapide",
+      "allQuickCheck": "Vérification rapide (toutes)",
       "dossierStatus": "Statut du dossier",
       "allStatus": "Statut (tous)",
       "bankType": "Type de banque",
@@ -559,7 +559,7 @@
     "loading": "Chargement…",
     "empty": {
       "title": "Aucun financement",
-      "description": "Commencez par un Quick Check pour un client."
+      "description": "Commencez par une vérification rapide pour un client."
     },
     "savedHypo": "Calculateurs hypothécaires Kosovo enregistrés",
     "hypo": {
@@ -589,7 +589,7 @@
       "bankType": "Type de banque : {{type}}",
       "updatedAt": "Mis à jour le {{date}}",
       "select": "Sélectionner",
-      "quickCheckPrefix": "Quick Check :",
+      "quickCheckPrefix": "Vérification rapide :",
       "notYetDone": "Pas encore effectué",
       "existingProperty": "Bien existant",
       "quickEntry": "Saisie rapide",
@@ -620,7 +620,7 @@
     },
     "dossierStatus": {
       "draft": "Brouillon",
-      "quick_check": "Quick Check",
+      "quick_check": "Vérification rapide",
       "documents_missing": "Documents manquants",
       "ready_for_bank": "Prêt pour la banque",
       "submitted_to_bank": "Soumis à la banque",
