@@ -516,8 +516,8 @@ function MediaPage() {
           <div className="flex items-center gap-2">
             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "folder" | "grid")}>
               <TabsList>
-                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />Kacheln</TabsTrigger>
-                <TabsTrigger value="folder"><ListIcon className="mr-1 h-4 w-4" />Ordner</TabsTrigger>
+                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />{t("media.viewModes.tiles")}</TabsTrigger>
+                <TabsTrigger value="folder"><ListIcon className="mr-1 h-4 w-4" />{t("media.viewModes.folders")}</TabsTrigger>
               </TabsList>
             </Tabs>
             <Dialog
