@@ -1111,7 +1111,45 @@
     }
   },
   "appointments": {
-    "new": "Nouveau rendez-vous"
+    "new": "Nouveau rendez-vous",
+    "edit": "Modifier le rendez-vous",
+    "editDescription": "Mettez à jour les détails, le statut ou l'attribution.",
+    "dialogDescription": "Liez le rendez-vous à un client et/ou à un bien et assignez un collaborateur.",
+    "tabs": { "list": "Liste", "week": "Calendrier hebdomadaire" },
+    "sections": { "upcoming": "À venir", "past": "Passés" },
+    "empty": { "title": "Aucun rendez-vous à venir", "description": "Planifiez des visites, signatures ou appels." },
+    "card": { "until": "jusqu'à", "client": "Client", "property": "Bien", "assignee": "Responsable" },
+    "week": { "today": "Aujourd'hui" },
+    "status": { "scheduled": "Planifié", "completed": "Terminé", "cancelled": "Annulé" },
+    "types": { "viewing": "Visite", "meeting": "Réunion", "call": "Appel", "other": "Autre" },
+    "form": {
+      "title": "Titre",
+      "titlePlaceholder": "Visite Rue Principale 12",
+      "type": "Type",
+      "status": "Statut",
+      "start": "Début",
+      "end": "Fin",
+      "location": "Lieu",
+      "locationPlaceholder": "Adresse, point de rendez-vous ou lien",
+      "client": "Client",
+      "clientNone": "Aucun client",
+      "clientPlaceholder": "Aucun",
+      "property": "Bien",
+      "propertyNone": "Aucun bien",
+      "propertyPlaceholder": "Aucun",
+      "assignee": "Responsable",
+      "assignToMe": "M'assigner",
+      "notes": "Notes"
+    },
+    "actions": { "cancel": "Annuler", "save": "Enregistrer", "close": "Fermer", "delete": "Supprimer" },
+    "confirmDelete": { "title": "Supprimer le rendez-vous ?", "description": "Cette action est irréversible.", "confirm": "Supprimer" },
+    "toasts": {
+      "created": "Rendez-vous créé",
+      "updated": "Mis à jour",
+      "deleted": "Rendez-vous supprimé",
+      "titleRequired": "Le titre est requis",
+      "startRequired": "L'heure de début est requise"
+    }
   },
   "tasks": {
     "new": "Nouvelle tâche"

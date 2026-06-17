@@ -16,17 +16,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { apptTypeLabels, formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 import { useConfirm } from "@/components/confirm/ConfirmProvider";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/appointments")({ component: AppointmentsPage });
 
 const TYPES = ["viewing","meeting","call","other"] as const;
 const STATUSES = ["scheduled","completed","cancelled"] as const;
-const STATUS_LABELS: Record<typeof STATUSES[number], string> = {
-  scheduled: "Geplant", completed: "Erledigt", cancelled: "Abgesagt",
-};
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   scheduled: "default", completed: "secondary", cancelled: "outline",
 };
@@ -38,7 +36,25 @@ const emptyForm = {
   client_id: "", property_id: "", assigned_to: "",
 };
 
+function useApptLabels() {
+  const { t } = useTranslation();
+  return {
+    types: {
+      viewing: t("appointments.types.viewing"),
+      meeting: t("appointments.types.meeting"),
+      call: t("appointments.types.call"),
+      other: t("appointments.types.other"),
+    } as Record<string, string>,
+    statuses: {
+      scheduled: t("appointments.status.scheduled"),
+      completed: t("appointments.status.completed"),
+      cancelled: t("appointments.status.cancelled"),
+    } as Record<string, string>,
+  };
+}
+
 function AppointmentsPage() {
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -68,8 +84,8 @@ function AppointmentsPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.title.trim()) throw new Error("Titel ist erforderlich");
-      if (!form.starts_at) throw new Error("Startzeit ist erforderlich");
+      if (!form.title.trim()) throw new Error(t("appointments.toasts.titleRequired"));
+      if (!form.starts_at) throw new Error(t("appointments.toasts.startRequired"));
       const startIso = new Date(form.starts_at).toISOString();
       const endIso = form.ends_at ? new Date(form.ends_at).toISOString() : new Date(new Date(form.starts_at).getTime() + 60 * 60 * 1000).toISOString();
       const { error } = await supabase.from("appointments").insert({
@@ -87,7 +103,7 @@ function AppointmentsPage() {
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Termin erstellt"); qc.invalidateQueries({ queryKey: ["appointments"] }); setForm({ ...emptyForm }); setOpen(false); },
+    onSuccess: () => { toast.success(t("appointments.toasts.created")); qc.invalidateQueries({ queryKey: ["appointments"] }); setForm({ ...emptyForm }); setOpen(false); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -104,7 +120,7 @@ function AppointmentsPage() {
       const { error } = await supabase.from("appointments").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Termin gelöscht"); qc.invalidateQueries({ queryKey: ["appointments"] }); setEditId(null); },
+    onSuccess: () => { toast.success(t("appointments.toasts.deleted")); qc.invalidateQueries({ queryKey: ["appointments"] }); setEditId(null); },
   });
 
   const editing = appts.find((a: any) => a.id === editId);
@@ -113,13 +129,13 @@ function AppointmentsPage() {
     <>
       <PageHeader
         i18nKey="appointments"
-        action={<Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />Neuer Termin</Button>}
+        action={<Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />{t("appointments.new")}</Button>}
       />
 
       <AppointmentDialog
         open={open}
         onOpenChange={setOpen}
-        title="Neuer Termin"
+        title={t("appointments.new")}
         form={form}
         setForm={setForm}
         clients={clients}
@@ -131,8 +147,8 @@ function AppointmentsPage() {
 
       <Tabs value={view} onValueChange={(v) => setView(v as any)} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="list">Liste</TabsTrigger>
-          <TabsTrigger value="week">Wochenkalender</TabsTrigger>
+          <TabsTrigger value="list">{t("appointments.tabs.list")}</TabsTrigger>
+          <TabsTrigger value="week">{t("appointments.tabs.week")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="list">
@@ -156,8 +172,8 @@ function AppointmentsPage() {
         clients={clients}
         properties={properties}
         employees={employees}
-        onSave={(patch: any) => editing && update.mutate({ id: editing.id, patch }, { onSuccess: () => { toast.success("Aktualisiert"); setEditId(null); } })}
-        onDelete={async () => { if (editing && await confirm({ title: "Termin löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Löschen" })) remove.mutate(editing.id); }}
+        onSave={(patch: any) => editing && update.mutate({ id: editing.id, patch }, { onSuccess: () => { toast.success(t("appointments.toasts.updated")); setEditId(null); } })}
+        onDelete={async () => { if (editing && await confirm({ title: t("appointments.confirmDelete.title"), description: t("appointments.confirmDelete.description"), confirmText: t("appointments.confirmDelete.confirm") })) remove.mutate(editing.id); }}
       />
     </>
   );
@@ -168,15 +184,16 @@ function AppointmentsPage() {
 function ListView({
   appts, employees, onOpen, onStatus,
 }: { appts: any[]; employees: any[]; onOpen: (id: string) => void; onStatus: (id: string, s: string) => void }) {
+  const { t } = useTranslation();
   const now = Date.now();
   const upcoming = appts.filter((a) => new Date(a.starts_at).getTime() >= now);
   const past = appts.filter((a) => new Date(a.starts_at).getTime() < now).reverse();
 
   return (
     <>
-      <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Anstehend</h2>
+      <h2 className="mb-3 text-sm font-semibold text-muted-foreground">{t("appointments.sections.upcoming")}</h2>
       {upcoming.length === 0 ? (
-        <EmptyState title="Keine anstehenden Termine" description="Plane Besichtigungen, Beurkundungen oder Calls." />
+        <EmptyState title={t("appointments.empty.title")} description={t("appointments.empty.description")} />
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {upcoming.map((a) => <ApptCard key={a.id} a={a} employees={employees} onOpen={onOpen} onStatus={onStatus} />)}
@@ -185,7 +202,7 @@ function ListView({
 
       {past.length > 0 && (
         <>
-          <h2 className="mb-3 mt-8 text-sm font-semibold text-muted-foreground">Vergangene</h2>
+          <h2 className="mb-3 mt-8 text-sm font-semibold text-muted-foreground">{t("appointments.sections.past")}</h2>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {past.slice(0, 12).map((a) => <ApptCard key={a.id} a={a} employees={employees} dim onOpen={onOpen} onStatus={onStatus} />)}
           </div>
@@ -198,28 +215,30 @@ function ListView({
 function ApptCard({
   a, employees, dim, onOpen, onStatus,
 }: { a: any; employees: any[]; dim?: boolean; onOpen: (id: string) => void; onStatus: (id: string, s: string) => void }) {
+  const { t } = useTranslation();
+  const labels = useApptLabels();
   const assignee = employees.find((e) => e.id === a.assigned_to);
   return (
     <Card className={`cursor-pointer transition hover:shadow-soft ${dim ? "opacity-70" : ""}`} onClick={() => onOpen(a.id)}>
       <CardContent className="p-5">
         <div className="flex items-center justify-between gap-2">
-          <Badge variant="secondary">{apptTypeLabels[a.appointment_type as keyof typeof apptTypeLabels]}</Badge>
-          <Badge variant={STATUS_VARIANTS[a.status]}>{STATUS_LABELS[a.status as keyof typeof STATUS_LABELS]}</Badge>
+          <Badge variant="secondary">{labels.types[a.appointment_type]}</Badge>
+          <Badge variant={STATUS_VARIANTS[a.status]}>{labels.statuses[a.status]}</Badge>
         </div>
         <h3 className="mt-2 line-clamp-1 font-semibold">{a.title}</h3>
         <div className="mt-2 space-y-1 text-xs text-muted-foreground">
           <p className="flex items-center gap-1"><CalIcon className="h-3 w-3" />{formatDateTime(a.starts_at)}</p>
-          {a.ends_at && <p className="flex items-center gap-1"><Clock className="h-3 w-3" />bis {formatDateTime(a.ends_at)}</p>}
+          {a.ends_at && <p className="flex items-center gap-1"><Clock className="h-3 w-3" />{t("appointments.card.until")} {formatDateTime(a.ends_at)}</p>}
           {a.location && <p className="flex items-center gap-1"><MapPin className="h-3 w-3" />{a.location}</p>}
-          {a.clients?.full_name && <p>Kunde: {a.clients.full_name}</p>}
-          {a.properties?.title && <p>Objekt: {a.properties.title}</p>}
-          {assignee && <p>Zuständig: {assignee.full_name || assignee.email}</p>}
+          {a.clients?.full_name && <p>{t("appointments.card.client")}: {a.clients.full_name}</p>}
+          {a.properties?.title && <p>{t("appointments.card.property")}: {a.properties.title}</p>}
+          {assignee && <p>{t("appointments.card.assignee")}: {assignee.full_name || assignee.email}</p>}
         </div>
         <div className="mt-3" onClick={(e) => e.stopPropagation()}>
           <Select value={a.status} onValueChange={(v) => onStatus(a.id, v)}>
             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {STATUSES.map(s => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
+              {STATUSES.map(s => <SelectItem key={s} value={s}>{labels.statuses[s]}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -227,8 +246,11 @@ function ApptCard({
     </Card>
   );
 }
+void 0; // keep separator
 
 function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => void }) {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-DE";
   const [anchor, setAnchor] = useState(() => startOfWeek(new Date()));
   const days = Array.from({ length: 7 }, (_, i) => new Date(anchor.getTime() + i * 86400000));
   const byDay = useMemo(() => {
@@ -247,11 +269,11 @@ function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => voi
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => setAnchor(new Date(anchor.getTime() - 7 * 86400000))}><ChevronLeft className="h-4 w-4" /></Button>
-          <Button variant="outline" size="sm" onClick={() => setAnchor(startOfWeek(new Date()))}>Heute</Button>
+          <Button variant="outline" size="sm" onClick={() => setAnchor(startOfWeek(new Date()))}>{t("appointments.week.today")}</Button>
           <Button variant="outline" size="icon" onClick={() => setAnchor(new Date(anchor.getTime() + 7 * 86400000))}><ChevronRight className="h-4 w-4" /></Button>
         </div>
         <p className="text-sm text-muted-foreground">
-          {new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "short" }).format(days[0])} – {new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "short", year: "numeric" }).format(days[6])}
+          {new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short" }).format(days[0])} – {new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short", year: "numeric" }).format(days[6])}
         </p>
       </div>
       <div className="grid gap-2 md:grid-cols-7">
@@ -262,7 +284,7 @@ function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => voi
             <div key={d.toISOString()} className={`rounded-xl border bg-card p-3 ${isToday ? "ring-2 ring-primary/30" : ""}`}>
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(d)}
+                  {new Intl.DateTimeFormat(locale, { weekday: "short" }).format(d)}
                 </p>
                 <p className={`text-lg font-bold ${isToday ? "text-primary" : ""}`}>{d.getDate()}</p>
               </div>
@@ -275,7 +297,7 @@ function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => voi
                     className="block w-full rounded-md border bg-accent/30 p-2 text-left text-xs transition hover:bg-accent"
                   >
                     <p className="font-medium text-primary">
-                      {new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}
+                      {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}
                     </p>
                     <p className="line-clamp-2 font-medium">{a.title}</p>
                     {a.location && <p className="line-clamp-1 text-muted-foreground">{a.location}</p>}
@@ -303,59 +325,61 @@ function startOfWeek(d: Date) {
 function AppointmentForm({
   form, setForm, clients, properties, employees,
 }: { form: any; setForm: (f: any) => void; clients: any[]; properties: any[]; employees: any[] }) {
+  const { t } = useTranslation();
+  const labels = useApptLabels();
   return (
     <div className="space-y-3">
-      <div><Label>Titel *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Besichtigung Hauptstrasse 12" /></div>
+      <div><Label>{t("appointments.form.title")} *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={t("appointments.form.titlePlaceholder")} /></div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label>Typ</Label>
+          <Label>{t("appointments.form.type")}</Label>
           <Select value={form.appointment_type} onValueChange={(v) => setForm({ ...form, appointment_type: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{TYPES.map(t => <SelectItem key={t} value={t}>{apptTypeLabels[t]}</SelectItem>)}</SelectContent>
+            <SelectContent>{TYPES.map(ty => <SelectItem key={ty} value={ty}>{labels.types[ty]}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Status</Label>
+          <Label>{t("appointments.form.status")}</Label>
           <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}</SelectContent>
+            <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{labels.statuses[s]}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div><Label>Start *</Label><Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} /></div>
-        <div><Label>Ende</Label><Input type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} /></div>
-        <div className="col-span-2"><Label>Ort</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Adresse, Treffpunkt oder Link" /></div>
+        <div><Label>{t("appointments.form.start")} *</Label><Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} /></div>
+        <div><Label>{t("appointments.form.end")}</Label><Input type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} /></div>
+        <div className="col-span-2"><Label>{t("appointments.form.location")}</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder={t("appointments.form.locationPlaceholder")} /></div>
         <div>
-          <Label>Kunde</Label>
+          <Label>{t("appointments.form.client")}</Label>
           <Select value={form.client_id || "none"} onValueChange={(v) => setForm({ ...form, client_id: v === "none" ? "" : v })}>
-            <SelectTrigger><SelectValue placeholder="Keiner" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("appointments.form.clientPlaceholder")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Kein Kunde</SelectItem>
+              <SelectItem value="none">{t("appointments.form.clientNone")}</SelectItem>
               {clients.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Immobilie</Label>
+          <Label>{t("appointments.form.property")}</Label>
           <Select value={form.property_id || "none"} onValueChange={(v) => setForm({ ...form, property_id: v === "none" ? "" : v })}>
-            <SelectTrigger><SelectValue placeholder="Keine" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("appointments.form.propertyPlaceholder")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Keine Immobilie</SelectItem>
+              <SelectItem value="none">{t("appointments.form.propertyNone")}</SelectItem>
               {properties.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div className="col-span-2">
-          <Label>Zuständig</Label>
+          <Label>{t("appointments.form.assignee")}</Label>
           <Select value={form.assigned_to || "none"} onValueChange={(v) => setForm({ ...form, assigned_to: v === "none" ? "" : v })}>
-            <SelectTrigger><SelectValue placeholder="Mir zuweisen" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("appointments.form.assignToMe")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Mir zuweisen</SelectItem>
+              <SelectItem value="none">{t("appointments.form.assignToMe")}</SelectItem>
               {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
       </div>
-      <div><Label>Notizen</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+      <div><Label>{t("appointments.form.notes")}</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
     </div>
   );
 }
@@ -363,17 +387,18 @@ function AppointmentForm({
 function AppointmentDialog({
   open, onOpenChange, title, form, setForm, clients, properties, employees, onSubmit, submitting,
 }: any) {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>Verknüpfe Termin mit Kunde und/oder Immobilie und weise einen Mitarbeiter zu.</DialogDescription>
+          <DialogDescription>{t("appointments.dialogDescription")}</DialogDescription>
         </DialogHeader>
         <AppointmentForm form={form} setForm={setForm} clients={clients} properties={properties} employees={employees} />
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Abbrechen</Button>
-          <Button onClick={onSubmit} disabled={submitting}>Speichern</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("appointments.actions.cancel")}</Button>
+          <Button onClick={onSubmit} disabled={submitting}>{t("appointments.actions.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -383,6 +408,7 @@ function AppointmentDialog({
 function AppointmentEditDrawer({
   appt, open, onClose, clients, properties, employees, onSave, onDelete,
 }: any) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ ...emptyForm });
 
   useEffect(() => {
@@ -406,16 +432,16 @@ function AppointmentEditDrawer({
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>Termin bearbeiten</SheetTitle>
-          <SheetDescription>Aktualisiere Details, Status oder Zuweisung.</SheetDescription>
+          <SheetTitle>{t("appointments.edit")}</SheetTitle>
+          <SheetDescription>{t("appointments.editDescription")}</SheetDescription>
         </SheetHeader>
         <div className="my-4">
           <AppointmentForm form={form} setForm={setForm} clients={clients} properties={properties} employees={employees} />
         </div>
         <SheetFooter className="flex-row justify-between gap-2">
-          <Button variant="outline" onClick={onDelete}><Trash2 className="mr-1 h-4 w-4" />Löschen</Button>
+          <Button variant="outline" onClick={onDelete}><Trash2 className="mr-1 h-4 w-4" />{t("appointments.actions.delete")}</Button>
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={onClose}>Schliessen</Button>
+            <Button variant="ghost" onClick={onClose}>{t("appointments.actions.close")}</Button>
             <Button onClick={() => onSave({
               title: form.title.trim(),
               appointment_type: form.appointment_type,
@@ -427,7 +453,7 @@ function AppointmentEditDrawer({
               client_id: form.client_id || null,
               property_id: form.property_id || null,
               assigned_to: form.assigned_to || null,
-            })} disabled={!form.title.trim() || !form.starts_at}>Speichern</Button>
+            })} disabled={!form.title.trim() || !form.starts_at}>{t("appointments.actions.save")}</Button>
           </div>
         </SheetFooter>
       </SheetContent>
