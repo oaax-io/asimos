@@ -405,15 +405,15 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       }
 
       toast.success(hasCo
-        ? `Kunde «${fullName}» und Mitantragsteller wurden angelegt.`
-        : `Kunde «${fullName}» wurde aus der Selbstauskunft angelegt.`);
+        ? t("clientWizard.toasts.uploadedWithCo", { name: fullName })
+        : t("clientWizard.toasts.uploadedSingle", { name: fullName }));
       qc.invalidateQueries({ queryKey: ["clients"] });
       onCreated?.(clientId);
       navigate({ to: "/clients/$id", params: { id: clientId } }).catch(() => {});
       reset();
       onOpenChange(false);
     } catch (e: any) {
-      toast.error(e?.message ?? "Selbstauskunft konnte nicht verarbeitet werden");
+      toast.error(e?.message ?? t("clientWizard.toasts.parseError"));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
