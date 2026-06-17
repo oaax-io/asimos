@@ -898,7 +898,7 @@ function MediaPage() {
                     variant="secondary"
                     size="icon"
                     className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                    title="Löschen"
+                    title={t("media.actions.delete")}
                     onClick={() => remove.mutate(m)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
