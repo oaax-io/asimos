@@ -215,9 +215,8 @@ function ListView({
 function ApptCard({
   a, employees, dim, onOpen, onStatus,
 }: { a: any; employees: any[]; dim?: boolean; onOpen: (id: string) => void; onStatus: (id: string, s: string) => void }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const labels = useApptLabels();
-  const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-DE";
   const assignee = employees.find((e) => e.id === a.assigned_to);
   return (
     <Card className={`cursor-pointer transition hover:shadow-soft ${dim ? "opacity-70" : ""}`} onClick={() => onOpen(a.id)}>
