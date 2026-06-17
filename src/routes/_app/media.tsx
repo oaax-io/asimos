@@ -1028,7 +1028,7 @@ function MediaPage() {
                 size="icon"
                 className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full shadow-lg"
                 onClick={goNext}
-                title="Nächstes"
+                title={t("media.actions.next")}
               >
                 <ChevronRight className="h-5 w-5" />
               </Button>
