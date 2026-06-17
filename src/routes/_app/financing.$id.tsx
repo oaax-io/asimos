@@ -752,12 +752,12 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Szenario gespeichert");
+      toast.success(t("financing.detail.quickcheck.scenarios.toast.saved"));
       setSaveOpen(false);
       setScenarioName("");
       queryClient.invalidateQueries({ queryKey: ["financing_scenarios", dossierId] });
     },
-    onError: (e: Error) => toast.error(e.message ?? "Speichern fehlgeschlagen"),
+    onError: (e: Error) => toast.error(e.message ?? t("financing.detail.quickcheck.scenarios.toast.saveFailed")),
   });
 
   const { data: scenarios } = useQuery({
