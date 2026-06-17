@@ -639,22 +639,22 @@ export function FinancingQuickCheckWizard({
           <div>
             {step > 1 && (
               <Button variant="outline" onClick={() => setStep(step - 1)} disabled={createMutation.isPending}>
-                <ArrowLeft className="mr-1 h-4 w-4" />Zurück
+                <ArrowLeft className="mr-1 h-4 w-4" />{t("financing.wizard.back")}
               </Button>
             )}
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground hidden sm:inline">
-              Schritt {step} von {TOTAL_STEPS}
+              {t("financing.wizard.stepCounter", { step, total: TOTAL_STEPS })}
             </span>
             {step < TOTAL_STEPS && (
               <Button onClick={() => setStep(step + 1)} disabled={!canNext}>
-                Weiter <ArrowRight className="ml-1 h-4 w-4" />
+                {t("financing.wizard.next")} <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             )}
             {step === TOTAL_STEPS && (
               <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Speichern…" : "Quick Check starten"}
+                {createMutation.isPending ? t("financing.wizard.submitting") : t("financing.wizard.submit")}
               </Button>
             )}
           </div>
