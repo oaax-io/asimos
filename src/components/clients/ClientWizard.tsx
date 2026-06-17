@@ -48,15 +48,15 @@ interface Props {
 
 // ----- Konstanten -----
 const ROLE_OPTIONS: {
-  value: RoleChoice; label: string; description: string; icon: typeof Tag;
+  value: RoleChoice; icon: typeof Tag;
 }[] = [
-  { value: "buyer",               label: "Käufer / Suchkunde",     description: "Sucht eine Immobilie zum Kauf",          icon: Target },
-  { value: "seller_owner",        label: "Verkäufer / Eigentümer", description: "Bietet eine Immobilie an oder besitzt eine", icon: Home },
-  { value: "tenant",              label: "Mieter",                 description: "Sucht eine Mietwohnung",                 icon: User },
-  { value: "landlord",            label: "Vermieter",              description: "Vermietet eine Immobilie",               icon: Building2 },
-  { value: "financing_applicant", label: "Finanzierungskunde",     description: "Benötigt Finanzierungsberatung",         icon: Wallet },
-  { value: "investor",            label: "Investor",               description: "Sucht Renditeobjekte",                   icon: Briefcase },
-  { value: "general_contact",     label: "Allgemeiner Kontakt",    description: "Sonstiger Kontakt ohne klare Rolle",     icon: Mail },
+  { value: "buyer",               icon: Target },
+  { value: "seller_owner",        icon: Home },
+  { value: "tenant",              icon: User },
+  { value: "landlord",            icon: Building2 },
+  { value: "financing_applicant", icon: Wallet },
+  { value: "investor",            icon: Briefcase },
+  { value: "general_contact",     icon: Mail },
 ];
 
 const ROLE_TO_DB_ROLE: Record<RoleChoice, string> = {
