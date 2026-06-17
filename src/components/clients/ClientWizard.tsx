@@ -286,7 +286,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
   // ---- Upload-Flow: Selbstauskunft hochladen, Kunde(n) automatisch anlegen ----
   const handleSelfDisclosureUpload = async (file: File) => {
     if (file.type !== "application/pdf") {
-      toast.error("Bitte eine PDF-Datei hochladen");
+      toast.error(t("clientWizard.toasts.pdfRequired"));
       return;
     }
     setUploading(true);
