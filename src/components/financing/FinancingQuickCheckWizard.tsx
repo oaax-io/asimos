@@ -108,6 +108,14 @@ export type AdditionalCoApplicant = {
 };
 
 const MAX_CO_APPLICANTS = 10; // total Mitantragsteller incl. primary
+
+type IncomeBreakdown = {
+  annual_net_salary: number;
+  salary_net_monthly: number;
+  additional_income: number;
+  income_job_two: number;
+  income_rental: number;
+};
 const emptyAdditional = (): AdditionalCoApplicant => ({
   client_id: "",
   role: "mitantragsteller",
@@ -217,6 +225,8 @@ export function FinancingQuickCheckWizard({
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [step, setStep] = useState(1);
+  const [mainIncomeBreakdown, setMainIncomeBreakdown] = useState<IncomeBreakdown | null>(null);
+  const [coIncomeBreakdown, setCoIncomeBreakdown] = useState<IncomeBreakdown | null>(null);
   const [form, setForm] = useState<WizardForm>(() => emptyForm({
     client_id: defaultClientId ?? "",
     property_id: defaultPropertyId ?? "",
@@ -302,14 +312,21 @@ export function FinancingQuickCheckWizard({
         .select("annual_net_salary, salary_net_monthly, additional_income, income_job_two, income_rental")
         .eq("client_id", form.client_id)
         .maybeSingle();
-      if (!data) return;
-      const extrasMonthly =
-        Number(data.additional_income ?? 0) +
-        Number(data.income_job_two ?? 0) +
-        Number(data.income_rental ?? 0);
-      const baseYearly = data.annual_net_salary
-        ?? (data.salary_net_monthly ? Number(data.salary_net_monthly) * 12 : null);
-      const yearly = (baseYearly ?? 0) + extrasMonthly * 12;
+      if (!data) {
+        setMainIncomeBreakdown(null);
+        return;
+      }
+      const bd: IncomeBreakdown = {
+        annual_net_salary: Number(data.annual_net_salary ?? 0),
+        salary_net_monthly: Number(data.salary_net_monthly ?? 0),
+        additional_income: Number(data.additional_income ?? 0),
+        income_job_two: Number(data.income_job_two ?? 0),
+        income_rental: Number(data.income_rental ?? 0),
+      };
+      setMainIncomeBreakdown(bd);
+      const extrasMonthly = bd.additional_income + bd.income_job_two + bd.income_rental;
+      const baseYearly = bd.annual_net_salary || bd.salary_net_monthly * 12;
+      const yearly = baseYearly + extrasMonthly * 12;
       if (yearly > 0) {
         setForm((f) => ({
           ...f,
@@ -338,14 +355,21 @@ export function FinancingQuickCheckWizard({
         .select("annual_net_salary, salary_net_monthly, additional_income, income_job_two, income_rental")
         .eq("client_id", form.co_applicant_client_id)
         .maybeSingle();
-      if (!data) return;
-      const extrasMonthly =
-        Number(data.additional_income ?? 0) +
-        Number(data.income_job_two ?? 0) +
-        Number(data.income_rental ?? 0);
-      const baseYearly = data.annual_net_salary
-        ?? (data.salary_net_monthly ? Number(data.salary_net_monthly) * 12 : null);
-      const yearly = (baseYearly ?? 0) + extrasMonthly * 12;
+      if (!data) {
+        setCoIncomeBreakdown(null);
+        return;
+      }
+      const bd: IncomeBreakdown = {
+        annual_net_salary: Number(data.annual_net_salary ?? 0),
+        salary_net_monthly: Number(data.salary_net_monthly ?? 0),
+        additional_income: Number(data.additional_income ?? 0),
+        income_job_two: Number(data.income_job_two ?? 0),
+        income_rental: Number(data.income_rental ?? 0),
+      };
+      setCoIncomeBreakdown(bd);
+      const extrasMonthly = bd.additional_income + bd.income_job_two + bd.income_rental;
+      const baseYearly = bd.annual_net_salary || bd.salary_net_monthly * 12;
+      const yearly = baseYearly + extrasMonthly * 12;
       if (yearly > 0) {
         setForm((f) => ({
           ...f,
@@ -701,6 +725,8 @@ export function FinancingQuickCheckWizard({
               clients={clientsQuery.data ?? []}
               loading={clientsQuery.isLoading}
               isRefiOnly={isRefiOnly}
+              mainIncomeBreakdown={mainIncomeBreakdown}
+              coIncomeBreakdown={coIncomeBreakdown}
             />
           )}
           {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} isRefiOnly={isRefiOnly} effectiveMortgage={effectiveMortgage} combined={combined} />}
@@ -745,6 +771,52 @@ export function FinancingQuickCheckWizard({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ==================== Income Breakdown Panel ==================== */
+function IncomeBreakdownPanel({ breakdown }: { breakdown: IncomeBreakdown | null }) {
+  const { t } = useTranslation();
+  if (!breakdown) return null;
+  const baseYearly = breakdown.annual_net_salary || breakdown.salary_net_monthly * 12;
+  const extrasMonthly = breakdown.additional_income + breakdown.income_job_two + breakdown.income_rental;
+  const totalYearly = baseYearly + extrasMonthly * 12;
+  if (totalYearly <= 0) return null;
+  const rows: { label: string; yearly: number; hint?: string }[] = [];
+  if (baseYearly > 0) {
+    rows.push({
+      label: t("financing.wizard.client.income.netSalary"),
+      yearly: baseYearly,
+      hint: breakdown.salary_net_monthly > 0 && !breakdown.annual_net_salary
+        ? t("financing.wizard.client.income.monthlyHint", { amount: formatCurrency(breakdown.salary_net_monthly) })
+        : undefined,
+    });
+  }
+  if (breakdown.income_job_two > 0) rows.push({ label: t("financing.wizard.client.income.jobTwo"), yearly: breakdown.income_job_two * 12, hint: t("financing.wizard.client.income.monthlyHint", { amount: formatCurrency(breakdown.income_job_two) }) });
+  if (breakdown.income_rental > 0) rows.push({ label: t("financing.wizard.client.income.rental"), yearly: breakdown.income_rental * 12, hint: t("financing.wizard.client.income.monthlyHint", { amount: formatCurrency(breakdown.income_rental) }) });
+  if (breakdown.additional_income > 0) rows.push({ label: t("financing.wizard.client.income.additional"), yearly: breakdown.additional_income * 12, hint: t("financing.wizard.client.income.monthlyHint", { amount: formatCurrency(breakdown.additional_income) }) });
+
+  return (
+    <div className="sm:col-span-2 rounded-md border bg-muted/40 p-3 space-y-1.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {t("financing.wizard.client.income.breakdownTitle")}
+      </p>
+      <div className="space-y-1 text-xs">
+        {rows.map((r, i) => (
+          <div key={i} className="flex justify-between gap-2">
+            <span className="text-muted-foreground">
+              {r.label}
+              {r.hint && <span className="ml-1 text-[10px] opacity-70">({r.hint})</span>}
+            </span>
+            <span className="tabular-nums font-medium text-foreground">{formatCurrency(r.yearly)}</span>
+          </div>
+        ))}
+        <div className="flex justify-between gap-2 border-t pt-1 mt-1">
+          <span className="font-medium">{t("financing.wizard.client.income.totalYearly")}</span>
+          <span className="tabular-nums font-semibold text-foreground">{formatCurrency(totalYearly)}</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -950,13 +1022,15 @@ function Step2Property({
 type ClientLite = { id: string; full_name: string; email: string | null; equity: number | null };
 
 function Step3Client({
-  form, update, clients, loading, isRefiOnly,
+  form, update, clients, loading, isRefiOnly, mainIncomeBreakdown, coIncomeBreakdown,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   clients: ClientLite[];
   loading: boolean;
   isRefiOnly: boolean;
+  mainIncomeBreakdown: IncomeBreakdown | null;
+  coIncomeBreakdown: IncomeBreakdown | null;
 }) {
   const { t } = useTranslation();
   // Verknüpfte Personen des Hauptkunden (Ehepartner, Mitantragsteller, …)
@@ -1044,6 +1118,7 @@ function Step3Client({
                     <Field label={t("financing.wizard.client.pensionPart")} type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
                   </>
                 )}
+                <IncomeBreakdownPanel breakdown={mainIncomeBreakdown} />
                 <p className="sm:col-span-2 text-[11px] text-muted-foreground">
                   {isRefiOnly
                     ? t("financing.wizard.client.refiHint")
@@ -1061,6 +1136,7 @@ function Step3Client({
             toggle={toggleCoApplicant}
             relatedMap={relatedMap}
             isRefiOnly={isRefiOnly}
+            coIncomeBreakdown={coIncomeBreakdown}
           />
 
           <div className="lg:col-span-2">
@@ -1086,7 +1162,7 @@ function Step3Client({
 
 
 function CoApplicantSection({
-  form, update, clients, loading, toggle, relatedMap, isRefiOnly,
+  form, update, clients, loading, toggle, relatedMap, isRefiOnly, coIncomeBreakdown,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
@@ -1095,6 +1171,7 @@ function CoApplicantSection({
   toggle: (enabled: boolean) => void;
   relatedMap: Map<string, string>;
   isRefiOnly: boolean;
+  coIncomeBreakdown: IncomeBreakdown | null;
 }) {
   const { t } = useTranslation();
   const relLabel: Record<string, string> = {
@@ -1237,6 +1314,10 @@ function CoApplicantSection({
                   <Field label={t("financing.wizard.coApplicant.pkPart")} type="number" value={form.co_applicant_pk_anteil} onChange={(v) => update("co_applicant_pk_anteil", v)} />
                 </div>
               )}
+
+              <IncomeBreakdownPanel breakdown={coIncomeBreakdown} />
+
+
 
               <div className="rounded-md bg-background border p-3 space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
