@@ -1853,6 +1853,7 @@ const SWISS_BANKS: string[] = [
 ];
 
 function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const isKnown = SWISS_BANKS.some((b) => b.toLowerCase() === value.toLowerCase());
@@ -1860,7 +1861,7 @@ function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: str
 
   return (
     <div className="space-y-1">
-      <Label className="text-xs">Aktuelle Bank</Label>
+      <Label className="text-xs">{t("financing.wizard.bank.label")}</Label>
       <Popover open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSearch(""); }}>
         <PopoverTrigger asChild>
           <Button
@@ -1873,10 +1874,10 @@ function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: str
               {value ? (
                 <>
                   {value}
-                  {isCustom && <span className="ml-2 text-[10px] text-muted-foreground">(Sonstige)</span>}
+                  {isCustom && <span className="ml-2 text-[10px] text-muted-foreground">{t("financing.wizard.bank.other")}</span>}
                 </>
               ) : (
-                <span className="text-muted-foreground">Bank suchen oder eingeben…</span>
+                <span className="text-muted-foreground">{t("financing.wizard.bank.placeholder")}</span>
               )}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1888,7 +1889,7 @@ function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: str
             className="flex max-h-[min(22rem,var(--radix-popover-content-available-height))] flex-col"
           >
             <CommandInput
-              placeholder="Bank suchen…"
+              placeholder={t("financing.wizard.bank.search")}
               value={search}
               onValueChange={setSearch}
             />
@@ -1899,7 +1900,7 @@ function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: str
                   className="w-full rounded-sm px-2 py-2 text-left text-sm hover:bg-accent"
                   onClick={() => { onChange(search.trim()); setOpen(false); }}
                 >
-                  „{search}" als Sonstige übernehmen
+                  {t("financing.wizard.bank.addCustom", { value: search })}
                 </button>
               </CommandEmpty>
               <CommandGroup>
@@ -1915,13 +1916,13 @@ function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: str
                 ))}
               </CommandGroup>
               {search.trim() && !SWISS_BANKS.some((b) => b.toLowerCase() === search.trim().toLowerCase()) && (
-                <CommandGroup heading="Sonstige">
+                <CommandGroup heading={t("financing.wizard.bank.otherGroup")}>
                   <CommandItem
                     value={`__custom__${search}`}
                     onSelect={() => { onChange(search.trim()); setOpen(false); }}
                   >
                     <Check className="mr-2 h-4 w-4 shrink-0 opacity-0" />
-                    <span className="truncate text-sm">„{search.trim()}" verwenden</span>
+                    <span className="truncate text-sm">{t("financing.wizard.bank.useCustom", { value: search.trim() })}</span>
                   </CommandItem>
                 </CommandGroup>
               )}
