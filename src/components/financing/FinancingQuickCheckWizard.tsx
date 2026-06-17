@@ -725,6 +725,7 @@ function Step2Property({
   properties: any[];
   loading: boolean;
 }) {
+  const { t } = useTranslation();
   const selected: any = properties.find((p: any) => p.id === form.property_id);
   const objectId: string | null = selected
     ? (selected.is_unit ? (selected.parent_property_id ?? null) : selected.id)
