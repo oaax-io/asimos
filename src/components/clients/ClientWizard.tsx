@@ -923,40 +923,40 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <Label>Vermarktungsart</Label>
+                    <Label>{t("clientWizard.search.listingType")}</Label>
                     <Select value={form.preferred_listing || (form.role_choice === "tenant" ? "rent" : "sale")} onValueChange={(v) => set("preferred_listing", v as any)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="sale">Kauf</SelectItem>
-                        <SelectItem value="rent">Miete</SelectItem>
+                        <SelectItem value="sale">{t("clientWizard.search.listingSale")}</SelectItem>
+                        <SelectItem value="rent">{t("clientWizard.search.listingRent")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label>Wunschorte (Komma-getrennt)</Label>
-                    <Input value={form.preferred_cities} onChange={(e) => set("preferred_cities", e.target.value)} placeholder="Zürich, Zug, Luzern" />
+                    <Label>{t("clientWizard.search.preferredCities")}</Label>
+                    <Input value={form.preferred_cities} onChange={(e) => set("preferred_cities", e.target.value)} placeholder={t("clientWizard.search.citiesPlaceholder")} />
                   </div>
                 </div>
                 <div>
-                  <Label>Objektarten</Label>
+                  <Label>{t("clientWizard.search.propertyTypes")}</Label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {PROP_TYPES.map((t) => {
-                      const active = form.preferred_types.includes(t);
+                    {PROP_TYPES.map((pt) => {
+                      const active = form.preferred_types.includes(pt);
                       return (
-                        <button type="button" key={t}
-                          onClick={() => set("preferred_types", active ? form.preferred_types.filter((x) => x !== t) : [...form.preferred_types, t])}
+                        <button type="button" key={pt}
+                          onClick={() => set("preferred_types", active ? form.preferred_types.filter((x) => x !== pt) : [...form.preferred_types, pt])}
                           className={`rounded-full border px-3 py-1 text-xs transition ${active ? "border-primary bg-primary/10 text-primary" : "border-input hover:bg-muted"}`}>
-                          {propertyTypeLabels[t as keyof typeof propertyTypeLabels] ?? t}
+                          {propertyTypeLabels[pt as keyof typeof propertyTypeLabels] ?? pt}
                         </button>
                       );
                     })}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div><Label>Budget min</Label><Input type="number" value={form.budget_min} onChange={(e) => set("budget_min", e.target.value)} /></div>
-                  <div><Label>Budget max</Label><Input type="number" value={form.budget_max} onChange={(e) => set("budget_max", e.target.value)} /></div>
-                  <div><Label>Zimmer min</Label><Input type="number" value={form.rooms_min} onChange={(e) => set("rooms_min", e.target.value)} /></div>
-                  <div><Label>Fläche min (m²)</Label><Input type="number" value={form.area_min} onChange={(e) => set("area_min", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.search.budgetMin")}</Label><Input type="number" value={form.budget_min} onChange={(e) => set("budget_min", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.search.budgetMax")}</Label><Input type="number" value={form.budget_max} onChange={(e) => set("budget_max", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.search.roomsMin")}</Label><Input type="number" value={form.rooms_min} onChange={(e) => set("rooms_min", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.search.areaMin")}</Label><Input type="number" value={form.area_min} onChange={(e) => set("area_min", e.target.value)} /></div>
                 </div>
               </div>
             )}
