@@ -600,11 +600,11 @@ function MediaPage() {
                   {files.length === 1 && (
                     <>
                       <div>
-                        <Label>Titel (optional)</Label>
+                        <Label>{t("media.fields.title")}</Label>
                         <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
                       </div>
                       <div>
-                        <Label>Beschreibung (optional)</Label>
+                        <Label>{t("media.fields.description")}</Label>
                         <Textarea
                           rows={2}
                           value={form.description}
