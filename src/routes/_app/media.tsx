@@ -24,7 +24,6 @@ import { Badge } from "@/components/ui/badge";
 import { convertUnsupportedImages } from "@/lib/image-convert";
 import { extractPropertyImagePaths } from "@/lib/property-media";
 import { useConfirm } from "@/components/confirm/ConfirmProvider";
-import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/media")({ component: MediaPage });
 
