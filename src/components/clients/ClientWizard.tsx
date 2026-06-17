@@ -1227,10 +1227,10 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               <div className="space-y-4">
                 <div className="rounded-xl border p-4 space-y-2">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{form.entity_type === "company" ? "Firma" : "Privatperson"}</Badge>
-                    <Badge>{ROLE_OPTIONS.find((r) => r.value === form.role_choice)?.label}</Badge>
+                    <Badge variant="outline">{form.entity_type === "company" ? t("clientWizard.review.companyType") : t("clientWizard.review.privatePerson")}</Badge>
+                    <Badge>{form.role_choice ? t(`clientWizard.role.options.${form.role_choice}.label`) : ""}</Badge>
                   </div>
-                  <p className="text-lg font-semibold">{fullName || "—"}</p>
+                  <p className="text-lg font-semibold">{fullName || t("clientWizard.common.dash")}</p>
                   {(form.email || form.phone) && (
                     <p className="text-sm text-muted-foreground">
                       {[form.email, form.phone].filter(Boolean).join(" · ")}
@@ -1243,43 +1243,43 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                   )}
                   {form.entity_type === "company" && form.contact_mode === "existing" && form.linked_contact_client_id && (
                     <p className="text-sm">
-                      Kontaktperson: {(personClientsQuery.data ?? []).find((c) => c.id === form.linked_contact_client_id)?.full_name}
+                      {t("clientWizard.review.contactPerson")} {(personClientsQuery.data ?? []).find((c) => c.id === form.linked_contact_client_id)?.full_name}
                     </p>
                   )}
                   {form.entity_type === "company" && form.contact_mode === "manual" && (form.contact_first_name || form.contact_last_name) && (
-                    <p className="text-sm">Kontaktperson: {`${form.contact_first_name} ${form.contact_last_name}`.trim()}</p>
+                    <p className="text-sm">{t("clientWizard.review.contactPerson")} {`${form.contact_first_name} ${form.contact_last_name}`.trim()}</p>
                   )}
                 </div>
 
                 {(form.role_choice === "buyer" || form.role_choice === "tenant" || form.role_choice === "investor") && (
                   <div className="rounded-xl border p-4">
-                    <p className="text-sm font-semibold mb-1">Suchprofil</p>
+                    <p className="text-sm font-semibold mb-1">{t("clientWizard.review.searchProfile")}</p>
                     <p className="text-sm text-muted-foreground">
-                      {form.preferred_cities || "—"} · Budget {form.budget_min || "—"}–{form.budget_max || "—"} CHF
-                      {form.role_choice === "investor" && form.yield_target ? ` · Ziel ${form.yield_target}%` : ""}
+                      {t("clientWizard.review.budgetRange", { cities: form.preferred_cities || t("clientWizard.common.dash"), min: form.budget_min || t("clientWizard.common.dash"), max: form.budget_max || t("clientWizard.common.dash") })}
+                      {form.role_choice === "investor" && form.yield_target ? t("clientWizard.review.yieldSuffix", { value: form.yield_target }) : ""}
                     </p>
                   </div>
                 )}
 
                 {(form.role_choice === "seller_owner" || form.role_choice === "landlord") && (
                   <div className="rounded-xl border p-4">
-                    <p className="text-sm font-semibold mb-1">Eigentum</p>
+                    <p className="text-sm font-semibold mb-1">{t("clientWizard.review.ownership")}</p>
                     <p className="text-sm text-muted-foreground">
                       {form.property_mode === "existing"
-                        ? (propertiesQuery.data ?? []).find((p) => p.id === form.selected_property_id)?.title || "Bestehende Immobilie"
+                        ? (propertiesQuery.data ?? []).find((p) => p.id === form.selected_property_id)?.title || t("clientWizard.review.ownershipExistingFallback")
                         : form.property_mode === "new"
-                          ? form.new_property_title || "Neue Immobilie"
-                          : "Keine Immobilie verknüpft"}
+                          ? form.new_property_title || t("clientWizard.review.ownershipNewFallback")
+                          : t("clientWizard.review.ownershipNoneText")}
                     </p>
                   </div>
                 )}
 
                 {form.role_choice === "financing_applicant" && (
                   <div className="rounded-xl border p-4">
-                    <p className="text-sm font-semibold mb-1">Finanzierung</p>
+                    <p className="text-sm font-semibold mb-1">{t("clientWizard.review.financing")}</p>
                     <p className="text-sm text-muted-foreground">
-                      Ziel: {FINANCING_GOALS.find((g) => g.value === form.financing_goal)?.label}
-                      {form.equity ? ` · Eigenmittel ${form.equity} CHF` : ""}
+                      {t("clientWizard.review.goalLabel")} {form.financing_goal ? t(`clientWizard.financingGoals.${form.financing_goal}`) : ""}
+                      {form.equity ? t("clientWizard.review.equitySuffix", { amount: form.equity }) : ""}
                     </p>
                   </div>
                 )}
