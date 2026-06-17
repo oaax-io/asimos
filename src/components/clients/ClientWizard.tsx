@@ -966,51 +966,47 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <Label>Wunschorte (Komma-getrennt)</Label>
+                    <Label>{t("clientWizard.investment.preferredCities")}</Label>
                     <Input value={form.preferred_cities} onChange={(e) => set("preferred_cities", e.target.value)} />
                   </div>
                   <div>
-                    <Label>Zielrendite (% optional)</Label>
+                    <Label>{t("clientWizard.investment.yieldTarget")}</Label>
                     <Input type="number" step="0.1" value={form.yield_target} onChange={(e) => set("yield_target", e.target.value)} />
                   </div>
                 </div>
                 <div>
-                  <Label>Objektarten</Label>
+                  <Label>{t("clientWizard.investment.propertyTypes")}</Label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {PROP_TYPES.map((t) => {
-                      const active = form.preferred_types.includes(t);
+                    {PROP_TYPES.map((pt) => {
+                      const active = form.preferred_types.includes(pt);
                       return (
-                        <button type="button" key={t}
-                          onClick={() => set("preferred_types", active ? form.preferred_types.filter((x) => x !== t) : [...form.preferred_types, t])}
+                        <button type="button" key={pt}
+                          onClick={() => set("preferred_types", active ? form.preferred_types.filter((x) => x !== pt) : [...form.preferred_types, pt])}
                           className={`rounded-full border px-3 py-1 text-xs transition ${active ? "border-primary bg-primary/10 text-primary" : "border-input hover:bg-muted"}`}>
-                          {propertyTypeLabels[t as keyof typeof propertyTypeLabels] ?? t}
+                          {propertyTypeLabels[pt as keyof typeof propertyTypeLabels] ?? pt}
                         </button>
                       );
                     })}
                   </div>
                 </div>
                 <div>
-                  <Label>Nutzungen</Label>
+                  <Label>{t("clientWizard.investment.usages")}</Label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {[
-                      { v: "residential", l: "Wohnen" },
-                      { v: "commercial",  l: "Gewerbe" },
-                      { v: "yield",       l: "Renditeobjekt" },
-                    ].map(({ v, l }) => {
+                    {(["residential", "commercial", "yield"] as const).map((v) => {
                       const active = form.usage_types.includes(v);
                       return (
                         <button type="button" key={v}
                           onClick={() => set("usage_types", active ? form.usage_types.filter((x) => x !== v) : [...form.usage_types, v])}
                           className={`rounded-full border px-3 py-1 text-xs transition ${active ? "border-primary bg-primary/10 text-primary" : "border-input hover:bg-muted"}`}>
-                          {l}
+                          {t(`clientWizard.investment.usage.${v}`)}
                         </button>
                       );
                     })}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Budget min</Label><Input type="number" value={form.budget_min} onChange={(e) => set("budget_min", e.target.value)} /></div>
-                  <div><Label>Budget max</Label><Input type="number" value={form.budget_max} onChange={(e) => set("budget_max", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.investment.budgetMin")}</Label><Input type="number" value={form.budget_min} onChange={(e) => set("budget_min", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.investment.budgetMax")}</Label><Input type="number" value={form.budget_max} onChange={(e) => set("budget_max", e.target.value)} /></div>
                 </div>
               </div>
             )}
@@ -1049,55 +1045,55 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
 
                 {/* Objekt-/Finanzierungswerte je nach Ziel */}
                 <div className="space-y-3">
-                  <p className="text-sm font-semibold">Objekt- & Finanzierungswerte</p>
+                  <p className="text-sm font-semibold">{t("clientWizard.financing.objectValues")}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {(goal === "purchase") && (<>
-                      <div><Label>Kaufpreis (CHF)</Label><Input type="number" value={form.fin_purchase_price} onChange={(e) => set("fin_purchase_price", e.target.value)} /></div>
-                      <div><Label>Gewünschte Hypothek (CHF)</Label><Input type="number" value={form.fin_requested_mortgage} onChange={(e) => set("fin_requested_mortgage", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.financing.purchasePrice")}</Label><Input type="number" value={form.fin_purchase_price} onChange={(e) => set("fin_purchase_price", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.financing.requestedMortgage")}</Label><Input type="number" value={form.fin_requested_mortgage} onChange={(e) => set("fin_requested_mortgage", e.target.value)} /></div>
                     </>)}
                     {(goal === "renovation") && (<>
-                      <div><Label>Renovationskosten (CHF)</Label><Input type="number" value={form.fin_renovation_costs} onChange={(e) => set("fin_renovation_costs", e.target.value)} /></div>
-                      <div><Label>Gewünschter Finanzierungsbetrag (CHF)</Label><Input type="number" value={form.fin_target_financing_amount} onChange={(e) => set("fin_target_financing_amount", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.financing.renovationCosts")}</Label><Input type="number" value={form.fin_renovation_costs} onChange={(e) => set("fin_renovation_costs", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.financing.targetFinancingAmount")}</Label><Input type="number" value={form.fin_target_financing_amount} onChange={(e) => set("fin_target_financing_amount", e.target.value)} /></div>
                     </>)}
                     {(goal === "increase") && (<>
-                      <div><Label>Zusatzbedarf (CHF)</Label><Input type="number" value={form.fin_requested_increase} onChange={(e) => set("fin_requested_increase", e.target.value)} /></div>
-                      <div><Label>Bestehende Hypothek (CHF, optional)</Label><Input type="number" value={form.fin_existing_mortgage} onChange={(e) => set("fin_existing_mortgage", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.financing.additionalNeed")}</Label><Input type="number" value={form.fin_requested_increase} onChange={(e) => set("fin_requested_increase", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.financing.existingMortgageOptional")}</Label><Input type="number" value={form.fin_existing_mortgage} onChange={(e) => set("fin_existing_mortgage", e.target.value)} /></div>
                     </>)}
                     {(goal === "refinance") && (<>
-                      <div><Label>Bestehende Hypothek (CHF)</Label><Input type="number" value={form.fin_existing_mortgage} onChange={(e) => set("fin_existing_mortgage", e.target.value)} /></div>
-                      <div><Label>Gewünschte neue Hypothek (CHF)</Label><Input type="number" value={form.fin_requested_mortgage} onChange={(e) => set("fin_requested_mortgage", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.financing.existingMortgage")}</Label><Input type="number" value={form.fin_existing_mortgage} onChange={(e) => set("fin_existing_mortgage", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.financing.newRequestedMortgage")}</Label><Input type="number" value={form.fin_requested_mortgage} onChange={(e) => set("fin_requested_mortgage", e.target.value)} /></div>
                     </>)}
                     {(goal === "new_build") && (<>
-                      <div><Label>Projektkosten (CHF)</Label><Input type="number" value={form.fin_project_costs} onChange={(e) => set("fin_project_costs", e.target.value)} /></div>
-                      <div><Label>Gewünschte Hypothek (CHF)</Label><Input type="number" value={form.fin_requested_mortgage} onChange={(e) => set("fin_requested_mortgage", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.financing.projectCosts")}</Label><Input type="number" value={form.fin_project_costs} onChange={(e) => set("fin_project_costs", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.financing.requestedMortgage")}</Label><Input type="number" value={form.fin_requested_mortgage} onChange={(e) => set("fin_requested_mortgage", e.target.value)} /></div>
                     </>)}
                     {(goal === "mortgage_increase") && (<>
-                      <div><Label>Bestehende Hypothek (CHF)</Label><Input type="number" value={form.fin_existing_mortgage} onChange={(e) => set("fin_existing_mortgage", e.target.value)} /></div>
-                      <div><Label>Erhöhungsbetrag (CHF)</Label><Input type="number" value={form.fin_requested_increase} onChange={(e) => set("fin_requested_increase", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.financing.existingMortgage")}</Label><Input type="number" value={form.fin_existing_mortgage} onChange={(e) => set("fin_existing_mortgage", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.financing.increaseAmount")}</Label><Input type="number" value={form.fin_requested_increase} onChange={(e) => set("fin_requested_increase", e.target.value)} /></div>
                     </>)}
                   </div>
                 </div>
 
                 {/* Eigenmittel */}
                 <div className="space-y-3">
-                  <p className="text-sm font-semibold">Eigenmittel</p>
-                  <div><Label>Eigenmittel total (CHF)</Label><Input type="number" value={form.own_funds_total} onChange={(e) => set("own_funds_total", e.target.value)} /></div>
+                  <p className="text-sm font-semibold">{t("clientWizard.financing.ownFunds")}</p>
+                  <div><Label>{t("clientWizard.financing.ownFundsTotal")}</Label><Input type="number" value={form.own_funds_total} onChange={(e) => set("own_funds_total", e.target.value)} /></div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div><Label>davon Bar / Konto</Label><Input type="number" value={form.own_funds_cash} onChange={(e) => set("own_funds_cash", e.target.value)} /></div>
-                    <div><Label>Säule 3a</Label><Input type="number" value={form.own_funds_pillar_3a} onChange={(e) => set("own_funds_pillar_3a", e.target.value)} /></div>
-                    <div><Label>Pensionskasse</Label><Input type="number" value={form.own_funds_pension_fund} onChange={(e) => set("own_funds_pension_fund", e.target.value)} /></div>
-                    <div><Label>Freizügigkeit</Label><Input type="number" value={form.own_funds_vested_benefits} onChange={(e) => set("own_funds_vested_benefits", e.target.value)} /></div>
-                    <div><Label>Wertschriften</Label><Input type="number" value={form.own_funds_securities} onChange={(e) => set("own_funds_securities", e.target.value)} /></div>
-                    <div><Label>Schenkung</Label><Input type="number" value={form.own_funds_gift} onChange={(e) => set("own_funds_gift", e.target.value)} /></div>
-                    <div><Label>Privatdarlehen</Label><Input type="number" value={form.own_funds_private_loan} onChange={(e) => set("own_funds_private_loan", e.target.value)} /></div>
-                    <div><Label>Erbvorbezug</Label><Input type="number" value={form.own_funds_inheritance} onChange={(e) => set("own_funds_inheritance", e.target.value)} /></div>
-                    <div><Label>Sonstige</Label><Input type="number" value={form.own_funds_other} onChange={(e) => set("own_funds_other", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.financing.cash")}</Label><Input type="number" value={form.own_funds_cash} onChange={(e) => set("own_funds_cash", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.financing.pillar3a")}</Label><Input type="number" value={form.own_funds_pillar_3a} onChange={(e) => set("own_funds_pillar_3a", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.financing.pensionFund")}</Label><Input type="number" value={form.own_funds_pension_fund} onChange={(e) => set("own_funds_pension_fund", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.financing.vestedBenefits")}</Label><Input type="number" value={form.own_funds_vested_benefits} onChange={(e) => set("own_funds_vested_benefits", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.financing.securities")}</Label><Input type="number" value={form.own_funds_securities} onChange={(e) => set("own_funds_securities", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.financing.gift")}</Label><Input type="number" value={form.own_funds_gift} onChange={(e) => set("own_funds_gift", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.financing.privateLoan")}</Label><Input type="number" value={form.own_funds_private_loan} onChange={(e) => set("own_funds_private_loan", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.financing.inheritance")}</Label><Input type="number" value={form.own_funds_inheritance} onChange={(e) => set("own_funds_inheritance", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.financing.other")}</Label><Input type="number" value={form.own_funds_other} onChange={(e) => set("own_funds_other", e.target.value)} /></div>
                   </div>
                   <div className="rounded-md bg-muted/50 px-3 py-2 text-xs">
-                    Aufgeteilte Eigenmittel: <strong>CHF {splitSum.toLocaleString("de-CH")}</strong>
+                    {t("clientWizard.financing.splitSum")} <strong>CHF {splitSum.toLocaleString(numLocale)}</strong>
                     {mismatch && (
                       <span className="ml-2 text-amber-600">
-                        Hinweis: Aufteilung weicht vom Total ab.
+                        {t("clientWizard.financing.mismatchHint")}
                       </span>
                     )}
                   </div>
@@ -1105,23 +1101,29 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
 
                 {/* Einkommen */}
                 <div className="space-y-3">
-                  <p className="text-sm font-semibold">Einkommen (grob)</p>
+                  <p className="text-sm font-semibold">{t("clientWizard.financing.income")}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div><Label>Bruttoeinkommen jährlich (CHF)</Label><Input type="number" value={form.gross_income_yearly} onChange={(e) => set("gross_income_yearly", e.target.value)} /></div>
-                    <div><Label>Einkommen Partner jährlich (CHF, optional)</Label><Input type="number" value={form.partner_income_yearly} onChange={(e) => set("partner_income_yearly", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.financing.grossIncome")}</Label><Input type="number" value={form.gross_income_yearly} onChange={(e) => set("gross_income_yearly", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.financing.partnerIncome")}</Label><Input type="number" value={form.partner_income_yearly} onChange={(e) => set("partner_income_yearly", e.target.value)} /></div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Detailangaben werden später in der Selbstauskunft ergänzt.
+                    {t("clientWizard.financing.incomeHint")}
                   </p>
                 </div>
 
                 <div>
-                  <Label>Finanzierungsstatus</Label>
+                  <Label>{t("clientWizard.financing.financingStatus")}</Label>
                   <Select value={form.financing_status} onValueChange={(v) => set("financing_status", v)}>
-                    <SelectTrigger><SelectValue placeholder="Wählen..." /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("clientWizard.financing.statusPlaceholder")} /></SelectTrigger>
                     <SelectContent>
-                      {["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"].map((f) =>
-                        <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                      {[
+                        { v: "unklar", k: "unklar" },
+                        { v: "in Prüfung", k: "inPruefung" },
+                        { v: "Vorabbestätigung", k: "vorab" },
+                        { v: "bestätigt", k: "bestaetigt" },
+                        { v: "abgelehnt", k: "abgelehnt" },
+                      ].map((f) =>
+                        <SelectItem key={f.v} value={f.v}>{t(`clientWizard.financing.status.${f.k}`)}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1133,32 +1135,32 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             {currentStep === "property" && (
               <div className="space-y-4">
                 <div>
-                  <p className="text-base font-semibold">Immobilie</p>
+                  <p className="text-base font-semibold">{t("clientWizard.property.title")}</p>
                   <p className="text-sm text-muted-foreground">
                     {form.role_choice === "financing_applicant"
-                      ? "Optional: Welche Immobilie soll finanziert werden?"
-                      : "Welche Immobilie soll verknüpft werden?"}
+                      ? t("clientWizard.property.hintFinancing")
+                      : t("clientWizard.property.hintOther")}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {([
-                    { v: "existing", l: "Bestehende wählen" },
-                    { v: "new",      l: "Neue erfassen" },
-                    { v: "none",     l: "Keine / später" },
-                  ] as const).map(({ v, l }) => (
+                    { v: "existing", k: "modeExisting" },
+                    { v: "new",      k: "modeNew" },
+                    { v: "none",     k: "modeNone" },
+                  ] as const).map(({ v, k }) => (
                     <button type="button" key={v}
                       onClick={() => set("property_mode", v)}
                       className={`rounded-xl border p-3 text-sm transition ${form.property_mode === v ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "hover:bg-muted"}`}>
-                      {l}
+                      {t(`clientWizard.property.${k}`)}
                     </button>
                   ))}
                 </div>
 
                 {form.property_mode === "existing" && (
                   <div>
-                    <Label>Immobilie</Label>
+                    <Label>{t("clientWizard.property.selectLabel")}</Label>
                     <Select value={form.selected_property_id} onValueChange={(v) => set("selected_property_id", v)}>
-                      <SelectTrigger><SelectValue placeholder="Wählen..." /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t("clientWizard.property.selectPlaceholder")} /></SelectTrigger>
                       <SelectContent>
                         {(propertiesQuery.data ?? []).map((p) => (
                           <SelectItem key={p.id} value={p.id}>
@@ -1172,23 +1174,23 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
 
                 {form.property_mode === "new" && (
                   <div className="space-y-3">
-                    <div><Label>Titel *</Label><Input value={form.new_property_title} onChange={(e) => set("new_property_title", e.target.value)} /></div>
+                    <div><Label>{t("clientWizard.property.newTitle")}</Label><Input value={form.new_property_title} onChange={(e) => set("new_property_title", e.target.value)} /></div>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                      <div className="md:col-span-2"><Label>Adresse</Label><AddressAutocomplete value={form.new_property_address} onChange={(v) => set("new_property_address", v)} onSelect={(s) => { set("new_property_address", s.street || s.label); if (s.postal_code) set("new_property_postal_code", s.postal_code); }} /></div>
-                      <div><Label>PLZ</Label><Input value={form.new_property_postal_code} onChange={(e) => set("new_property_postal_code", e.target.value)} /></div>
-                      <div><Label>Ort</Label><Input value={form.new_property_city} onChange={(e) => set("new_property_city", e.target.value)} /></div>
+                      <div className="md:col-span-2"><Label>{t("clientWizard.property.address")}</Label><AddressAutocomplete value={form.new_property_address} onChange={(v) => set("new_property_address", v)} onSelect={(s) => { set("new_property_address", s.street || s.label); if (s.postal_code) set("new_property_postal_code", s.postal_code); }} /></div>
+                      <div><Label>{t("clientWizard.property.postalCode")}</Label><Input value={form.new_property_postal_code} onChange={(e) => set("new_property_postal_code", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.property.city")}</Label><Input value={form.new_property_city} onChange={(e) => set("new_property_city", e.target.value)} /></div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <Label>Objektart</Label>
+                        <Label>{t("clientWizard.property.propType")}</Label>
                         <Select value={form.new_property_type} onValueChange={(v) => set("new_property_type", v)}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {PROP_TYPES.map((t) => <SelectItem key={t} value={t}>{propertyTypeLabels[t as keyof typeof propertyTypeLabels] ?? t}</SelectItem>)}
+                            {PROP_TYPES.map((pt) => <SelectItem key={pt} value={pt}>{propertyTypeLabels[pt as keyof typeof propertyTypeLabels] ?? pt}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
-                      <div><Label>Geschätzter Preis (CHF)</Label><Input type="number" value={form.new_property_price} onChange={(e) => set("new_property_price", e.target.value)} /></div>
+                      <div><Label>{t("clientWizard.property.estimatedPrice")}</Label><Input type="number" value={form.new_property_price} onChange={(e) => set("new_property_price", e.target.value)} /></div>
                     </div>
                   </div>
                 )}
@@ -1199,16 +1201,16 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             {currentStep === "ownership" && (
               <div className="space-y-4">
                 <div>
-                  <p className="text-base font-semibold">Eigentümerbeziehung</p>
-                  <p className="text-sm text-muted-foreground">Eigentumsdaten zur Immobilie.</p>
+                  <p className="text-base font-semibold">{t("clientWizard.ownership.title")}</p>
+                  <p className="text-sm text-muted-foreground">{t("clientWizard.ownership.hint")}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div><Label>Eigentümer seit</Label><Input type="date" value={form.ownership_start_date} onChange={(e) => set("ownership_start_date", e.target.value)} /></div>
-                  <div><Label>Anteil (%)</Label><Input type="number" step="0.01" value={form.ownership_share} onChange={(e) => set("ownership_share", e.target.value)} placeholder="100" /></div>
+                  <div><Label>{t("clientWizard.ownership.since")}</Label><Input type="date" value={form.ownership_start_date} onChange={(e) => set("ownership_start_date", e.target.value)} /></div>
+                  <div><Label>{t("clientWizard.ownership.share")}</Label><Input type="number" step="0.01" value={form.ownership_share} onChange={(e) => set("ownership_share", e.target.value)} placeholder="100" /></div>
                 </div>
-                <div><Label>Notizen</Label><Textarea value={form.ownership_notes} onChange={(e) => set("ownership_notes", e.target.value)} /></div>
+                <div><Label>{t("clientWizard.ownership.notes")}</Label><Textarea value={form.ownership_notes} onChange={(e) => set("ownership_notes", e.target.value)} /></div>
                 <p className="text-xs text-muted-foreground">
-                  Maklermandat kann später aus der Immobiliendetailseite erstellt werden.
+                  {t("clientWizard.ownership.mandateHint")}
                 </p>
               </div>
             )}
@@ -1216,8 +1218,8 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             {/* TAGS */}
             {currentStep === "tags" && (
               <div className="space-y-4">
-                <div><Label>Notizen</Label><Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} /></div>
-                <div><Label>Tags (Komma-getrennt)</Label><Input value={form.tags} onChange={(e) => set("tags", e.target.value)} placeholder="VIP, Empfehlung" /></div>
+                <div><Label>{t("clientWizard.tags.notes")}</Label><Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} /></div>
+                <div><Label>{t("clientWizard.tags.tagsField")}</Label><Input value={form.tags} onChange={(e) => set("tags", e.target.value)} placeholder={t("clientWizard.tags.tagsPlaceholder")} /></div>
               </div>
             )}
 
@@ -1290,22 +1292,22 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
           <div className="flex items-center justify-between border-t bg-background px-6 py-4">
             <Button type="button" variant="outline" disabled={stepIdx === 0 || create.isPending}
               onClick={() => setStepIdx((i) => Math.max(0, i - 1))}>
-              <ChevronLeft className="mr-1 h-4 w-4" /> Zurück
+              <ChevronLeft className="mr-1 h-4 w-4" /> {t("clientWizard.nav.back")}
             </Button>
             {currentStep === "method" && form.creation_method === "upload" ? (
               <p className="text-xs text-muted-foreground">
-                Nach erfolgreichem Upload wird der Kunde automatisch angelegt.
+                {t("clientWizard.nav.uploadHint")}
               </p>
             ) : !isLast ? (
               <Button type="button" disabled={!canProceed}
                 onClick={() => setStepIdx((i) => Math.min(steps.length - 1, i + 1))}>
-                Weiter <ChevronRight className="ml-1 h-4 w-4" />
+                {t("clientWizard.nav.next")} <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             ) : (
               <Button type="button" disabled={!canSave || create.isPending}
                 onClick={() => create.mutate()}>
                 {create.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <ClipboardCheck className="mr-1 h-4 w-4" />}
-                Kunden anlegen
+                {create.isPending ? t("clientWizard.nav.creating") : t("clientWizard.nav.create")}
               </Button>
             )}
           </div>
