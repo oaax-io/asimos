@@ -740,24 +740,24 @@ function Step2Property({
     <div className="grid gap-4 md:grid-cols-2">
       {/* === Linke Spalte: Quelle / Auswahl === */}
       <section className="rounded-lg border bg-card p-4 space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quelle</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.property.source")}</h3>
         <RadioGroup
           value={form.property_source}
           onValueChange={(v) => update("property_source", v as PropertySource)}
           className="grid gap-2"
         >
-          <SourceRow value="crm" label="Immobilie aus CRM wählen" description="Bestehendes Objekt auswählen, Daten werden übernommen." />
-          <SourceRow value="manual" label="Manuell erfassen" description="Adresse und Kaufpreis selbst eingeben." />
-          <SourceRow value="later" label="Später erfassen" description="Schritt überspringen — Felder bleiben leer." />
+          <SourceRow value="crm" label={t("financing.wizard.property.sourceCrm")} description={t("financing.wizard.property.sourceCrmDesc")} />
+          <SourceRow value="manual" label={t("financing.wizard.property.sourceManual")} description={t("financing.wizard.property.sourceManualDesc")} />
+          <SourceRow value="later" label={t("financing.wizard.property.sourceLater")} description={t("financing.wizard.property.sourceLaterDesc")} />
         </RadioGroup>
 
         {form.property_source === "crm" && (
           <div className="space-y-3 pt-1">
             <div className="space-y-1">
-              <Label className="text-xs">Objekt</Label>
+              <Label className="text-xs">{t("financing.wizard.property.object")}</Label>
               <SearchableSelect
-                placeholder={loading ? "Lade…" : "Objekt suchen…"}
-                emptyText="Kein Objekt gefunden."
+                placeholder={loading ? t("financing.wizard.property.loading") : t("financing.wizard.property.searchObject")}
+                emptyText={t("financing.wizard.property.noObject")}
                 value={objectId ?? ""}
                 onChange={(v) => update("property_id", v)}
                 items={topLevel.map((p: any) => {
@@ -771,8 +771,10 @@ function Step2Property({
                     label: [p.city || "—", typeLabel].filter(Boolean).join(" · "),
                     hint: [
                       unitCount > 0
-                        ? `${unitCount} Einheit${unitCount === 1 ? "" : "en"}`
-                        : "Keine Einheiten",
+                        ? (unitCount === 1
+                            ? t("financing.wizard.property.unitOne")
+                            : t("financing.wizard.property.unitOther", { count: unitCount }))
+                        : t("financing.wizard.property.noUnits"),
                       p.address || p.title || null,
                       p.price ? formatCurrency(Number(p.price)) : null,
                     ].filter(Boolean).join(" · ") || undefined,
@@ -783,29 +785,29 @@ function Step2Property({
 
             {objectId && units.length > 0 && (
               <div className="space-y-1">
-                <Label className="text-xs">Gesamtobjekt oder Einheit</Label>
+                <Label className="text-xs">{t("financing.wizard.property.unitOrWhole")}</Label>
                 <SearchableSelect
-                  placeholder="Gesamtes Objekt oder Einheit wählen…"
-                  emptyText="Keine Einheit gefunden."
+                  placeholder={t("financing.wizard.property.chooseWholeOrUnit")}
+                  emptyText={t("financing.wizard.property.noUnit")}
                   value={unitSelectValue}
                   onChange={(v) => update("property_id", v === "__whole__" ? objectId : v)}
                   items={[
                     {
                       value: "__whole__",
-                      label: "Gesamtes Objekt",
-                      hint: `Alle ${units.length} Einheit${units.length === 1 ? "" : "en"} inkl.`,
+                      label: t("financing.wizard.property.whole"),
+                      hint: t("financing.wizard.property.allUnitsIncl", { count: units.length }),
                     },
                     ...units.map((u: any) => {
                       const typeLabel =
                         propertyTypeLabels[u.property_type as keyof typeof propertyTypeLabels] || "—";
                       const bits = [
-                        u.unit_number ? `Nr. ${u.unit_number}` : null,
-                        u.unit_floor ? `${u.unit_floor}. OG` : null,
+                        u.unit_number ? t("financing.wizard.property.unitNr", { number: u.unit_number }) : null,
+                        u.unit_floor ? t("financing.wizard.property.floorOg", { floor: u.unit_floor }) : null,
                         u.unit_type || typeLabel,
                       ].filter(Boolean);
                       return {
                         value: u.id,
-                        label: `Einheit · ${bits.join(" · ")}`,
+                        label: `${t("financing.wizard.property.unitPrefix")} · ${bits.join(" · ")}`,
                         hint: u.price ? formatCurrency(Number(u.price)) : undefined,
                       };
                     }),
@@ -818,39 +820,39 @@ function Step2Property({
 
         {form.property_source === "later" && (
           <p className="text-xs text-muted-foreground pt-1">
-            Sie können die Immobiliendaten später im Dossier ergänzen.
+            {t("financing.wizard.property.laterHint")}
           </p>
         )}
       </section>
 
       {/* === Rechte Spalte: Objektdaten === */}
       <section className="rounded-lg border bg-card p-4 space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Objektdaten</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.property.dataTitle")}</h3>
 
         {form.property_source === "later" ? (
           <p className="text-xs text-muted-foreground">
-            Keine Objektdaten erforderlich — werden später ergänzt.
+            {t("financing.wizard.property.laterNone")}
           </p>
         ) : form.property_source === "crm" && !form.property_id ? (
           <p className="text-xs text-muted-foreground">
-            Wählen Sie links ein Objekt aus dem CRM aus.
+            {t("financing.wizard.property.crmEmpty")}
           </p>
         ) : (
           <div className="space-y-3">
             <Field
-              label="Adresse"
+              label={t("financing.wizard.property.address")}
               value={form.property_address}
               onChange={(v) => update("property_address", v)}
             />
             <Field
-              label="Kaufpreis (CHF)"
+              label={t("financing.wizard.property.purchasePrice")}
               type="number"
               value={form.property_purchase_price}
               onChange={(v) => update("property_purchase_price", v)}
             />
             {form.property_source === "crm" && form.property_id && (
               <p className="text-[11px] text-muted-foreground">
-                Werte aus CRM vorausgefüllt. Anpassungen gelten nur für diesen Quick Check.
+                {t("financing.wizard.property.crmFilled")}
               </p>
             )}
           </div>
