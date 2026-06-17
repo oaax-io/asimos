@@ -762,22 +762,22 @@ function MediaPage() {
       )}
 
       {isLoading ? (
-        <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">Wird geladen…</div>
+        <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">{t("media.loading")}</div>
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Mediathek leer"
-          description="Lade Bilder, Videos oder Grundrisse zu deinen Objekten hoch."
+          title={t("media.empty.title")}
+          description={t("media.empty.description")}
         />
       ) : showFolders ? (
         <div className="overflow-hidden rounded-xl border bg-card shadow-soft">
           <div className="grid grid-cols-[1fr_120px_140px_80px] gap-4 border-b bg-muted/40 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            <div>Name</div>
-            <div className="text-right">Dateien</div>
-            <div>Ort</div>
-            <div className="text-right">Einheiten</div>
+            <div>{t("media.fields.name")}</div>
+            <div className="text-right">{t("media.fields.fileCount")}</div>
+            <div>{t("media.fields.location")}</div>
+            <div className="text-right">{t("media.fields.units")}</div>
           </div>
           {folders.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-muted-foreground">Keine Ordner vorhanden</div>
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">{t("media.folders.empty")}</div>
           ) : (
             folders.map((f) => (
               <button
