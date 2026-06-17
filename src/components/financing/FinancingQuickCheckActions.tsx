@@ -24,6 +24,7 @@ type Props = {
 export function FinancingQuickCheckActions({
   dossierId, dossier, onContinue, onDiscard, showWorkflowButtons = true,
 }: Props) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [sendOpen, setSendOpen] = useState(false);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
