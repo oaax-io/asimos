@@ -554,7 +554,7 @@ function MediaPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Dateien</Label>
+                    <Label>{t("media.fields.files")}</Label>
                     <input
                       ref={fileInputRef}
                       type="file"
