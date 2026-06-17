@@ -1026,7 +1026,7 @@
         "requestedMortgage": "Hypothèque souhaitée (CHF) *",
         "ownFundsTotalReq": "Fonds propres totaux (CHF) *",
         "pkPart": "dont caisse de pension / libre passage (CHF)",
-        "grossIncomeReq": "Revenu annuel brut (CHF) *",
+        "grossIncomeReq": "Revenu annuel net (CHF) *",
         "ownWork": "dont travaux personnels (CHF)",
         "kpi": {
           "ltv": "Nantissement",
