@@ -526,6 +526,109 @@
       "rent": "Location"
     }
   },
+  "financing": {
+    "hypoButton": "Calculateur hypothécaire Kosovo",
+    "startQuickCheck": "Démarrer le Quick Check",
+    "searchPlaceholder": "Rechercher…",
+    "filters": {
+      "type": "Type",
+      "allTypes": "Tous les types",
+      "quickCheck": "Quick Check",
+      "allQuickCheck": "Quick Check (tous)",
+      "dossierStatus": "Statut du dossier",
+      "allStatus": "Statut (tous)",
+      "bankType": "Type de banque",
+      "allBankTypes": "Type de banque (tous)",
+      "otherBank": "Autre banque",
+      "noBank": "Aucune banque",
+      "dataSource": "Source de données",
+      "allDataSources": "Source de données (toutes)",
+      "existingProperty": "Bien existant",
+      "quickEntry": "Saisie rapide"
+    },
+    "bulk": {
+      "selectAll": "Tout sélectionner",
+      "selected": "{{count}} sélectionné(s)",
+      "assign": "Attribuer",
+      "generateDocument": "Générer un document",
+      "delete": "Supprimer",
+      "clear": "Annuler la sélection",
+      "assignSoon": "Attribution bientôt disponible",
+      "docSoon": "Génération de documents bientôt disponible"
+    },
+    "loading": "Chargement…",
+    "empty": {
+      "title": "Aucun financement",
+      "description": "Commencez par un Quick Check pour un client."
+    },
+    "savedHypo": "Calculateurs hypothécaires Kosovo enregistrés",
+    "hypo": {
+      "fallbackLabel": "Calculateur {{years}}A",
+      "years": "{{count}} ans",
+      "interest": "{{value}}% intérêt",
+      "purchase": "Prix d'achat : {{amount}}",
+      "rate": "Mensualité : {{amount}}/mois",
+      "createdAt": "Créé le {{date}}"
+    },
+    "deleteDialog": {
+      "title_one": "Supprimer le financement ?",
+      "title_other": "Supprimer {{count}} financements ?",
+      "description": "Cette action est irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer"
+    },
+    "toast": {
+      "deleted_one": "Financement supprimé",
+      "deleted_other": "{{count}} financements supprimés",
+      "deleteFailed": "Échec de la suppression"
+    },
+    "card": {
+      "fallback": "Financement",
+      "bank": "Banque : {{name}}",
+      "bankWithType": "Banque : {{name}} ({{type}})",
+      "bankType": "Type de banque : {{type}}",
+      "updatedAt": "Mis à jour le {{date}}",
+      "select": "Sélectionner",
+      "quickCheckPrefix": "Quick Check :",
+      "notYetDone": "Pas encore effectué",
+      "existingProperty": "Bien existant",
+      "quickEntry": "Saisie rapide",
+      "kpi": {
+        "affordability": "Tenue de charge",
+        "ltv": "Quotité de financement",
+        "mortgage": "Hypothèque",
+        "ownFunds": "Fonds propres"
+      }
+    },
+    "bankShort": {
+      "ubs": "UBS",
+      "other": "autre"
+    },
+    "type": {
+      "purchase": "Achat immobilier",
+      "renovation": "Rénovation",
+      "increase": "Augmentation",
+      "refinance": "Refinancement",
+      "new_build": "Construction neuve",
+      "mortgage_increase": "Augmentation hypothécaire"
+    },
+    "quickCheckStatus": {
+      "realistic": "Réaliste",
+      "critical": "Critique",
+      "not_financeable": "Non finançable",
+      "incomplete": "Incomplet"
+    },
+    "dossierStatus": {
+      "draft": "Brouillon",
+      "quick_check": "Quick Check",
+      "documents_missing": "Documents manquants",
+      "ready_for_bank": "Prêt pour la banque",
+      "submitted_to_bank": "Soumis à la banque",
+      "approved": "Approuvé",
+      "rejected": "Refusé",
+      "cancelled": "Annulé"
+    }
+  },
   "appointments": {
     "new": "Nouveau rendez-vous"
   },
