@@ -836,7 +836,7 @@ function MediaPage() {
                   )}
                   {m.file_type && m.file_type !== "image" && (
                     <Badge variant="secondary" className="absolute right-2 top-2 capitalize">
-                      {m.file_type === "floor_plan" ? "Grundriss" : m.file_type}
+                      {m.file_type === "floor_plan" ? t("media.badges.floorPlan") : m.file_type}
                     </Badge>
                   )}
                 </button>
