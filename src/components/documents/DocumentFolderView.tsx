@@ -164,17 +164,17 @@ export function DocumentFolderView() {
       const folderId = d.related_id ?? "unassigned";
       const names = (nameMap as Record<string, Record<string, string>>)[type] ?? {};
       const folderName = folderId === "unassigned"
-        ? "Nicht zugeordnet"
+        ? t("documents.empty.unassigned")
         : names[folderId] ?? folderId.slice(0, 8);
       (out[type] ??= {});
       (out[type][folderId] ??= { name: folderName, docs: [] }).docs.push(d);
     }
     return out;
-  }, [all, nameMap, search]);
+  }, [all, nameMap, search, t]);
 
   const openDoc = async (d: AnyDoc) => {
     if (!d.file_url) {
-      toast.error("Keine Datei vorhanden");
+      toast.error(t("documents.folders.noFile"));
       return;
     }
     if (d.file_url.startsWith("http")) {
@@ -184,15 +184,14 @@ export function DocumentFolderView() {
     const bucket = d.source === "generated" ? "generated-documents" : "documents";
     const { data, error } = await supabase.storage.from(bucket).createSignedUrl(d.file_url, 300);
     if (error || !data) {
-      toast.error("Konnte Datei nicht öffnen");
+      toast.error(t("documents.folders.openFailed"));
       return;
     }
     window.open(data.signedUrl, "_blank", "noopener");
   };
 
   const categories = Object.keys(grouped).sort((a, b) => {
-    const order = ["client", "property", "lead", "mandate", "reservation", "financing", "other"];
-    return order.indexOf(a) - order.indexOf(b);
+    return CATEGORY_KEYS.indexOf(a) - CATEGORY_KEYS.indexOf(b);
   });
 
   return (
@@ -201,26 +200,27 @@ export function DocumentFolderView() {
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           className="pl-9"
-          placeholder="Dokumente in Ordnern suchen…"
+          placeholder={t("documents.searchInFolders")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
       {categories.length === 0 ? (
-        <EmptyState title="Keine Ordner" description="Sobald Dokumente verknüpft werden, erscheinen sie hier in Ordnern." />
+        <EmptyState title={t("documents.empty.noFolders")} description={t("documents.empty.noFoldersDescription")} />
       ) : (
         <Accordion type="multiple" defaultValue={categories.slice(0, 2)} className="space-y-2">
           {categories.map((cat) => {
             const folders = Object.entries(grouped[cat]).sort(([, a], [, b]) => a.name.localeCompare(b.name));
             const totalDocs = folders.reduce((s, [, f]) => s + f.docs.length, 0);
+            const catKey = cat === "financing_profile" ? "financing" : cat;
             return (
               <AccordionItem key={cat} value={cat} className="rounded-xl border bg-card px-4">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-2">
                     <FolderOpen className="h-4 w-4 text-primary" />
-                    <span className="font-medium">{CATEGORY_LABELS[cat] ?? cat}</span>
-                    <Badge variant="secondary">{folders.length} Ordner · {totalDocs} Dateien</Badge>
+                    <span className="font-medium">{t(`documents.categories.${catKey}`, { defaultValue: cat })}</span>
+                    <Badge variant="secondary">{t("documents.folders.summary", { folders: folders.length, docs: totalDocs })}</Badge>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
