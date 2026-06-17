@@ -356,6 +356,42 @@ export function FinancingQuickCheckWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.co_applicant_client_id, form.co_applicant_enabled, clientsQuery.data]);
 
+  // ---- Auto-Fill: Zusätzliche Mitantragsteller (aus Selbstauskunft) ----
+  const additionalIdsKey = (form.additional_co_applicants ?? [])
+    .map((a) => a.client_id || "")
+    .join("|");
+  useEffect(() => {
+    const list = form.additional_co_applicants ?? [];
+    list.forEach(async (a, idx) => {
+      if (!a.client_id || a.einkommen) return;
+      const c: any = clientsQuery.data?.find((x: any) => x.id === a.client_id);
+      const { data } = await supabase
+        .from("client_self_disclosures")
+        .select("annual_net_salary, salary_net_monthly, additional_income, income_job_two, income_rental")
+        .eq("client_id", a.client_id)
+        .maybeSingle();
+      const extrasMonthly =
+        Number(data?.additional_income ?? 0) +
+        Number(data?.income_job_two ?? 0) +
+        Number(data?.income_rental ?? 0);
+      const baseYearly = data?.annual_net_salary
+        ?? (data?.salary_net_monthly ? Number(data.salary_net_monthly) * 12 : null);
+      const yearly = (baseYearly ?? 0) + extrasMonthly * 12;
+      setForm((f) => {
+        const next = [...(f.additional_co_applicants ?? [])];
+        if (!next[idx] || next[idx].client_id !== a.client_id) return f;
+        const cur = next[idx];
+        next[idx] = {
+          ...cur,
+          einkommen: cur.einkommen || (yearly > 0 ? String(Math.round(yearly)) : cur.einkommen),
+          eigenkapital: cur.eigenkapital || (c?.equity != null ? String(c.equity) : cur.eigenkapital),
+        };
+        return { ...f, additional_co_applicants: next };
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [additionalIdsKey, clientsQuery.data]);
+
   // ---- Kombinierte Werte (Haupt + Mitantragsteller) ----
   const combined = useMemo(() => {
     const mainIncome = num(form.gross_income_yearly);
