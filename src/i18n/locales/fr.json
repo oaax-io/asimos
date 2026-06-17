@@ -920,7 +920,7 @@
         "client": "Client",
         "searchClient": "Rechercher un client…",
         "noClient": "Aucun client trouvé.",
-        "grossIncome": "Revenu annuel brut (CHF)",
+        "grossIncome": "Revenu annuel net (CHF)",
         "ownFundsTotal": "Fonds propres totaux (CHF)",
         "pensionPart": "dont caisse de pension (CHF)",
         "refiHint": "En cas de refinancement, seul le revenu est utilisé pour la charge supportable.",
