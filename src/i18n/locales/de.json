@@ -82,26 +82,86 @@
     "settings": "Einstellungen"
   },
   "pages": {
-    "dashboard": { "title": "Dashboard", "description": "Überblick über Aktivitäten und Kennzahlen" },
-    "leads": { "title": "Leads", "description": "Pipeline deiner Interessenten" },
-    "clients": { "title": "Kunden", "description": "Alle Käufer, Verkäufer, Mieter und Vermieter" },
-    "properties": { "title": "Immobilien", "description": "Dein Immobilienportfolio im Überblick" },
-    "matching": { "title": "Matching", "description": "Übersicht aller passenden Kunde–Immobilie Paare" },
-    "financing": { "title": "Finanzierungen", "description": "Übersicht aller Finanzierungs-Dossiers" },
-    "appointments": { "title": "Termine", "description": "Besichtigungen, Calls und Meetings" },
-    "tasks": { "title": "Aufgaben", "description": "Persönliche und teamübergreifende To-dos" },
-    "analytics": { "title": "Analytics", "description": "Unternehmens- und Portfolioübersicht auf einen Blick." },
-    "documents": { "title": "Dokumentencenter", "description": "Hochgeladene und generierte Dokumente an einem Ort" },
-    "media": { "title": "Mediathek", "description": "Bilder, Videos und Grundrisse für alle Objekte" },
-    "checklists": { "title": "Checklisten", "description": "Standardisierte Abläufe für wiederkehrende Prozesse" },
-    "mandates": { "title": "Mandate", "description": "Maklerverträge mit Eigentümern und Käufern" },
-    "reservations": { "title": "Reservationen", "description": "Reservationsverträge zwischen Käufern, Mietern und Objekten" },
-    "ndas": { "title": "NDAs", "description": "Vertraulichkeitsvereinbarungen mit Kunden und Partnern" },
-    "exposes": { "title": "Exposés", "description": "Wähle eine Vorlage – im nächsten Schritt wählst du Objekt, Inhalte, Galerie und Anhänge." },
-    "team": { "title": "Team", "description": "Mitarbeitende deiner Firma verwalten" },
-    "feedbackPage": { "title": "Feedback", "description": "Vorschläge und Probleme melden" },
-    "docs": { "title": "Dokumentation", "description": "Anleitungen und Hilfe zum System" },
-    "settings": { "title": "Einstellungen", "description": "Profil, Firma, Bankkonten, Vorlagen" }
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Überblick über Aktivitäten und Kennzahlen"
+    },
+    "leads": {
+      "title": "Leads",
+      "description": "Pipeline deiner Interessenten"
+    },
+    "clients": {
+      "title": "Kunden",
+      "description": "Alle Käufer, Verkäufer, Mieter und Vermieter"
+    },
+    "properties": {
+      "title": "Immobilien",
+      "description": "Dein Immobilienportfolio im Überblick"
+    },
+    "matching": {
+      "title": "Matching",
+      "description": "Übersicht aller passenden Kunde–Immobilie Paare"
+    },
+    "financing": {
+      "title": "Finanzierungen",
+      "description": "Übersicht aller Finanzierungs-Dossiers"
+    },
+    "appointments": {
+      "title": "Termine",
+      "description": "Besichtigungen, Calls und Meetings"
+    },
+    "tasks": {
+      "title": "Aufgaben",
+      "description": "Persönliche und teamübergreifende To-dos"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "description": "Unternehmens- und Portfolioübersicht auf einen Blick."
+    },
+    "documents": {
+      "title": "Dokumentencenter",
+      "description": "Hochgeladene und generierte Dokumente an einem Ort"
+    },
+    "media": {
+      "title": "Mediathek",
+      "description": "Bilder, Videos und Grundrisse für alle Objekte"
+    },
+    "checklists": {
+      "title": "Checklisten",
+      "description": "Standardisierte Abläufe für wiederkehrende Prozesse"
+    },
+    "mandates": {
+      "title": "Mandate",
+      "description": "Maklerverträge mit Eigentümern und Käufern"
+    },
+    "reservations": {
+      "title": "Reservationen",
+      "description": "Reservationsverträge zwischen Käufern, Mietern und Objekten"
+    },
+    "ndas": {
+      "title": "NDAs",
+      "description": "Vertraulichkeitsvereinbarungen mit Kunden und Partnern"
+    },
+    "exposes": {
+      "title": "Exposés",
+      "description": "Wähle eine Vorlage – im nächsten Schritt wählst du Objekt, Inhalte, Galerie und Anhänge."
+    },
+    "team": {
+      "title": "Team",
+      "description": "Mitarbeitende deiner Firma verwalten"
+    },
+    "feedbackPage": {
+      "title": "Feedback",
+      "description": "Vorschläge und Probleme melden"
+    },
+    "docs": {
+      "title": "Dokumentation",
+      "description": "Anleitungen und Hilfe zum System"
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "description": "Profil, Firma, Bankkonten, Vorlagen"
+    }
   },
   "dashboard": {
     "subtitle": "Übersicht über dein Tagesgeschäft",
@@ -627,6 +687,409 @@
       "approved": "Genehmigt",
       "rejected": "Abgelehnt",
       "cancelled": "Storniert"
+    },
+    "detail": {
+      "back": "Zurück",
+      "notFound": "Dossier nicht gefunden.",
+      "fallback": "Finanzierung",
+      "stats": {
+        "totalInvestment": "Gesamtinvestition",
+        "mortgage": "Hypothek",
+        "ownFunds": "Eigenmittel",
+        "affordability": "Tragbarkeit"
+      },
+      "tabs": {
+        "overview": "Übersicht",
+        "quickcheck": "Schnellprüfung",
+        "disclosure": "Selbstauskunft",
+        "ubs": "Bank Checkliste",
+        "documents": "Dokumente",
+        "bank": "Bank Einreichung",
+        "activity": "Aktivität"
+      },
+      "overview": {
+        "client": "Kunde",
+        "property": "Immobilie",
+        "noProperty": "Keine Immobilie verknüpft"
+      },
+      "quickcheck": {
+        "start": "Schnellprüfung starten",
+        "startDescription": "Erfasse die Eckdaten der Finanzierung im Wizard. Nach Abschluss erscheint hier das Ergebnis.",
+        "lastCheck": "Letzte Schnellprüfung: {{date}}",
+        "recalculate": "Neu berechnen",
+        "subtabs": {
+          "precheck": "Vorprüfung",
+          "detail": "Detailrechnung",
+          "scenarios": "Szenarien"
+        },
+        "metrics": {
+          "ltv": "Belehnung (LTV)",
+          "affordability": "Tragbarkeit",
+          "equityRatio": "Eigenmittelquote",
+          "hardEquity": "Harte Eigenmittel",
+          "limit": "Limit: {{value}}%"
+        },
+        "tips": {
+          "title": "Optimierungsvorschläge",
+          "allOk": "Alle Kennzahlen erfüllt — Finanzierung grundsätzlich bankfähig.",
+          "incomeNeeded": "Einkommen müsste um {{delta}} erhöht werden um Tragbarkeit auf 33% zu bringen (benötigt: {{needed}})",
+          "equityMissing": "Fehlende Eigenmittel: {{missing}} (mindestens {{needed}} des Kaufpreises erforderlich)",
+          "hardEquityLow": "PK-Anteil zu hoch — mindestens {{needed}} aus Barvermögen erforderlich (aktuell {{current}} harte Eigenmittel)",
+          "combinedIncome": "Berechnung mit kombiniertem Einkommen:",
+          "perYear": "/ Jahr",
+          "coIncomeMissing": "Einkommen von {{name}} nicht erfasst — Berechnung basiert nur auf Einkommen des Hauptantragstellers.",
+          "toClient": "→ Zum Kundenprofil"
+        },
+        "detail": {
+          "structure": "Finanzierungsstruktur",
+          "purchasePrice": "Kaufpreis",
+          "plusRenovation": "+ Renovationskosten",
+          "totalInvestment": "= Gesamtinvestition",
+          "ownFundsTotal": "Eigenmittel total ({{ratio}})",
+          "cashEquity": "davon Barvermögen",
+          "pensionEquity": "davon PK / Freizügigkeit",
+          "mortgageTotal": "Hypothek gesamt ({{ratio}})",
+          "firstMortgage": "1. Hypothek (≤ 65%)",
+          "secondMortgage": "2. Hypothek (65–80%)",
+          "amortization": "Amortisation 2. Hypo (über {{years}} J.)",
+          "perYearShort": "{{amount}}/J",
+          "yearlyCosts": "Jahreskosten (Tragbarkeit)",
+          "calcInterest": "Kalk. Zinssatz ({{rate}}%)",
+          "ancillary": "Nebenkosten ({{pct}}%)",
+          "amortLabel": "Amortisation",
+          "totalYearlyCost": "Total Wohnkosten p.a.",
+          "mainIncome": "Einkommen Hauptantragsteller",
+          "coApplicantIncome": "Einkommen {{role}} {{name}}",
+          "combinedIncome": "Kombiniertes Einkommen p.a.",
+          "grossIncome": "Bruttoeinkommen p.a.",
+          "affordabilityRatio": "Tragbarkeitsquote",
+          "minIncome": "Mindesteinkommen (33%)",
+          "roleSpouse": "Ehepartner/in",
+          "roleCo": "Mitantragsteller/in"
+        },
+        "scenarios": {
+          "title": "Interaktive Szenario-Regler",
+          "description": "Passe die Werte an um verschiedene Szenarien zu prüfen. Die Matrix aktualisiert sich live. Du kannst ein Szenario als neue Berechnung im Dossier speichern.",
+          "purchase": "Kaufpreis",
+          "equity": "Eigenmittel",
+          "renovation": "Renovationskosten",
+          "ownWork": "davon Eigenleistung",
+          "income": "Bruttoeinkommen",
+          "incomePerYear": "{{amount}} / Jahr",
+          "mortgage": "Gewünschte Hypothek",
+          "mortgageWithLtv": "{{amount}} ({{ltv}} Belehnung)",
+          "rate": "Kalk. Zinssatz",
+          "liveLtv": "Belehnung",
+          "liveAffordability": "Tragbarkeit",
+          "liveEquityRatio": "Eigenmittelquote",
+          "status": "Status",
+          "saveScenario": "Als Szenario speichern",
+          "reset": "Zurücksetzen",
+          "vsOriginal": "{{value}}% vs. Original",
+          "matrixTitle": "Sensitivitätsanalyse — Einkommen vs. Kaufpreis",
+          "matrixCorner": "Einkommen \\ Kaufpreis",
+          "matrixPerYearShort": "{{amount}}/J",
+          "matrixEqInsufficient": "EK!",
+          "legend": {
+            "realistic": "Realistisch",
+            "critical": "Kritisch",
+            "notFinanceable": "Nicht finanzierbar",
+            "eqInsufficient": "EK ungenügend"
+          },
+          "assumptions": "Eigenmittel {{equity}} · Zinssatz {{rate}}% · Nebenkosten {{anc}}% · Hypothek {{mortgage}}",
+          "savedTitle": "Gespeicherte Szenarien",
+          "noneSaved": "Noch keine Szenarien gespeichert.",
+          "load": "Laden",
+          "affordabilityShort": "Tragbarkeit",
+          "ltvShort": "Belehnung",
+          "saveDialog": {
+            "title": "Szenario speichern",
+            "description": "Vergib eine Bezeichnung für dieses Szenario.",
+            "label": "Bezeichnung",
+            "placeholder": "z.B. Mehr Eigenkapital",
+            "cancel": "Abbrechen",
+            "save": "Speichern",
+            "saving": "Speichern…"
+          },
+          "deleteDialog": {
+            "title": "Szenario löschen?",
+            "description": "Diese Aktion kann nicht rückgängig gemacht werden.",
+            "cancel": "Abbrechen",
+            "confirm": "Löschen"
+          },
+          "toast": {
+            "saved": "Szenario gespeichert",
+            "deleted": "Szenario gelöscht",
+            "loaded": "Szenario \"{{name}}\" geladen",
+            "saveFailed": "Speichern fehlgeschlagen",
+            "deleteFailed": "Löschen fehlgeschlagen"
+          }
+        }
+      },
+      "resetDialog": {
+        "title": "Schnellprüfung zurücksetzen und neu starten?",
+        "description": "Die gespeicherten Werte bleiben erhalten.",
+        "cancel": "Abbrechen",
+        "confirm": "Zurücksetzen"
+      },
+      "toast": {
+        "reset": "Schnellprüfung zurückgesetzt",
+        "resetFailed": "Zurücksetzen fehlgeschlagen"
+      }
+    },
+    "wizard": {
+      "headerTitle": "Schnellprüfung Finanzierung – Schritt {{step}} / {{total}}",
+      "stepLabels": {
+        "modules": "Module",
+        "property": "Objekt",
+        "client": "Kunde",
+        "metrics": "Kennzahlen",
+        "advanced": "Erweitert",
+        "summary": "Zusammenfassung"
+      },
+      "stepCounter": "Schritt {{step}} von {{total}}",
+      "back": "Zurück",
+      "next": "Weiter",
+      "submit": "Schnellprüfung starten",
+      "submitting": "Speichern…",
+      "toast": {
+        "created": "Schnellprüfung erstellt",
+        "saveError": "Fehler beim Speichern"
+      },
+      "modules": {
+        "intro": "Mehrere Bausteine kombinierbar. Mindestens eine Auswahl ist erforderlich.",
+        "purchase": {
+          "label": "Kauf",
+          "description": "Finanzierung für den Kauf einer Immobilie."
+        },
+        "renovation": {
+          "label": "Renovation",
+          "description": "Finanzierung von Umbau- oder Renovationsarbeiten."
+        },
+        "increase": {
+          "label": "Erhöhung bestehende Hypothek",
+          "description": "Aufstockung einer bestehenden Hypothek (z. B. für Investitionen)."
+        },
+        "refinance": {
+          "label": "Refinanzierung",
+          "description": "Wechsel der Bank oder Ablösung der bestehenden Hypothek."
+        },
+        "mortgage_increase": {
+          "label": "Hypothekaraufstockung",
+          "description": "Erhöhung der Hypothek bei der bestehenden Bank."
+        }
+      },
+      "property": {
+        "source": "Quelle",
+        "sourceCrm": "Immobilie aus CRM wählen",
+        "sourceCrmDesc": "Bestehendes Objekt auswählen, Daten werden übernommen.",
+        "sourceManual": "Manuell erfassen",
+        "sourceManualDesc": "Adresse und Kaufpreis selbst eingeben.",
+        "sourceLater": "Später erfassen",
+        "sourceLaterDesc": "Schritt überspringen — Felder bleiben leer.",
+        "object": "Objekt",
+        "loading": "Lade…",
+        "searchObject": "Objekt suchen…",
+        "noObject": "Kein Objekt gefunden.",
+        "unitOrWhole": "Gesamtobjekt oder Einheit",
+        "chooseWholeOrUnit": "Gesamtes Objekt oder Einheit wählen…",
+        "noUnit": "Keine Einheit gefunden.",
+        "whole": "Gesamtes Objekt",
+        "allUnitsIncl": "Alle {{count}} Einheiten inkl.",
+        "unitOne": "1 Einheit",
+        "unitOther": "{{count}} Einheiten",
+        "noUnits": "Keine Einheiten",
+        "unitPrefix": "Einheit",
+        "floorOg": "{{floor}}. OG",
+        "unitNr": "Nr. {{number}}",
+        "laterHint": "Sie können die Immobiliendaten später im Dossier ergänzen.",
+        "dataTitle": "Objektdaten",
+        "laterNone": "Keine Objektdaten erforderlich — werden später ergänzt.",
+        "crmEmpty": "Wählen Sie links ein Objekt aus dem CRM aus.",
+        "address": "Adresse",
+        "purchasePrice": "Kaufpreis (CHF)",
+        "crmFilled": "Werte aus CRM vorausgefüllt. Anpassungen gelten nur für diese Schnellprüfung."
+      },
+      "client": {
+        "sourceCrm": "Kunde aus CRM wählen",
+        "sourceCrmDescRefi": "Einkommen wird aus dem Kundenprofil vorausgefüllt.",
+        "sourceCrmDesc": "Selbstauskunft & Eigenkapital werden vorausgefüllt.",
+        "sourceManual": "Ohne Kunde / manuell",
+        "sourceManualDesc": "Schnellprüfung ohne Verknüpfung zu einem Kunden.",
+        "main": "Hauptkunde",
+        "client": "Kunde",
+        "searchClient": "Kunde suchen…",
+        "noClient": "Keinen Kunden gefunden.",
+        "grossIncome": "Brutto-Jahreseinkommen (CHF)",
+        "ownFundsTotal": "Eigenmittel total (CHF)",
+        "pensionPart": "davon Pensionskasse (CHF)",
+        "refiHint": "Bei Refinanzierung nur Einkommen für die Tragbarkeit.",
+        "crmHint": "Werte aus Kundenprofil & Selbstauskunft — editierbar.",
+        "manualHint": "Schnellprüfung wird ohne Kundenverknüpfung erstellt. Die Finanzdaten erfassen Sie in Schritt 4."
+      },
+      "coApplicant": {
+        "title": "Mitantragsteller / Ehepartner hinzufügen",
+        "descRelated": "Verknüpfte Personen aus dem Kundenprofil werden zuerst angezeigt.",
+        "desc": "Optional — kombiniert Einkommen und Eigenmittel für die Berechnung.",
+        "role": "Rolle *",
+        "roleSelect": "Rolle wählen…",
+        "roleSpouse": "Ehepartner/in",
+        "roleCo": "Mitantragsteller/in",
+        "relSpouse": "Ehepartner",
+        "relCo": "Mitantragsteller",
+        "relInvestor": "Mitinvestor",
+        "relOther": "Verbunden",
+        "crmClient": "Kunde aus CRM",
+        "missingDataWarn": "Einige Daten von {{name}} sind noch nicht erfasst. Ergänze die fehlenden Angaben im Kundenprofil für eine vollständige Berechnung.",
+        "toProfile": "Zum Kundenprofil",
+        "incomeRequired": "Das Einkommen ist für die Tragbarkeitsberechnung zwingend erforderlich. Ohne diesen Wert wird der Mitantragsteller in der Berechnung nicht berücksichtigt.",
+        "income": "Einkommen (CHF/J)",
+        "equity": "Eigenkapital (CHF)",
+        "pkPart": "PK-Anteil (CHF)",
+        "combinedTitle": "Kombinierte Werte",
+        "combinedIncome": "Kombiniertes Einkommen:",
+        "combinedEquity": "Kombinierte Eigenmittel:",
+        "combinedPk": "Kombinierter PK-Anteil:",
+        "perYear": "/ Jahr",
+        "checklist": {
+          "grossIncome": "Brutto-Jahreseinkommen",
+          "grossIncomeValue": "{{amount}} / Jahr (aus Selbstauskunft)",
+          "notRecorded": "nicht erfasst",
+          "equity": "Eigenkapital",
+          "pk": "PK / Freizügigkeit",
+          "pkValue": "{{amount}} (manuell)",
+          "pkOptional": "optional — nicht im CRM (Standard: CHF 0)"
+        }
+      },
+      "metrics": {
+        "objectTitle": "Objekt",
+        "objectValueFromCrm": "Objektwert (aus CRM)",
+        "step2": "Schritt 2",
+        "objectValueRequired": "Objektwert / Verkehrswert (CHF) *",
+        "usage": "Nutzung *",
+        "pleaseSelect": "Bitte wählen…",
+        "usageOwner": "Eigennutzung",
+        "usageRental": "Renditeobjekt",
+        "objectType": "Objektart *",
+        "objectTypes": {
+          "house": "Einfamilienhaus",
+          "apartment": "Eigentumswohnung",
+          "mixed_use": "Mehrfamilien-/Geschäftshaus",
+          "commercial": "Gewerbe",
+          "other": "Andere"
+        },
+        "mortgageTitle": "Hypothek",
+        "currentMortgage": "Aktuelle Hypothek (CHF) *",
+        "increaseAmount": "Aufstockung (CHF)",
+        "maxIncrease": "Max. Aufstockung ({{ltv}}%)",
+        "possible": "✓ möglich",
+        "notPossible": "✗ nicht möglich",
+        "headroom": "+{{amount}} Spielraum",
+        "overLimit": "−{{amount}} über Limit",
+        "newTotalMortgage": "Neue Gesamthypothek",
+        "newTotalFormula": "= Aktuelle Hypothek + Aufstockung",
+        "existingFinancing": "Bestehende Finanzierung",
+        "currentBank": "Aktuelle Bank",
+        "currentRate": "Aktueller Zinssatz (%)",
+        "rateExpiry": "Ablauf Zinsbindung",
+        "refiPurpose": "Refinanzierungs-Zweck",
+        "optional": "Optional",
+        "refiPurposes": {
+          "rate_optimisation": "Zinsoptimierung",
+          "bank_change": "Bankwechsel",
+          "consolidation": "Konsolidierung",
+          "cash_out": "Kapital-Auszahlung",
+          "other": "Andere"
+        },
+        "incomeObligations": "Einkommen & Verpflichtungen",
+        "incomeMain": "Einkommen Hauptkunde (CHF/J) *",
+        "grossIncome": "Brutto-Jahreseinkommen (CHF) *",
+        "incomePartner": "Einkommen Partner (CHF/J) *",
+        "obligationsCombined": "Verpflichtungen kombiniert (CHF/M)",
+        "obligationsMonthly": "Monatl. Verpflichtungen (CHF)",
+        "renovationCosts": "Renovationskosten (CHF)",
+        "obligationsHint": "Leasing, Kredite, Alimente — automatisch aus Selbstauskunft summiert (anpassbar).",
+        "combinedIncomeShort": "Kombiniertes Einkommen:",
+        "perYearShort": "/ J",
+        "ltvExceededWarn": "⚠ Neue Gesamthypothek übersteigt max. Belehnung ({{ltv}}% = {{amount}}). Aufstockung reduzieren oder Eigenmittel einbringen.",
+        "ltvLimitHintRental": "Hinweis: Belehnungsgrenze Renditeobjekt → max. 75 %.",
+        "ltvLimitHintOwner": "Hinweis: Belehnungsgrenze Eigennutzung → max. 80 %.",
+        "purchasePrice": "Kaufpreis (CHF) *",
+        "requestedMortgage": "Gewünschte Hypothek (CHF) *",
+        "ownFundsTotalReq": "Eigenmittel total (CHF) *",
+        "pkPart": "davon PK / Freizügigkeit (CHF)",
+        "grossIncomeReq": "Brutto-Jahreseinkommen (CHF) *",
+        "ownWork": "davon Eigenleistung (CHF)",
+        "kpi": {
+          "ltv": "Belehnung",
+          "affordability": "Tragbarkeit",
+          "equityRatio": "Eigenmittelquote"
+        },
+        "obligationsInAffordability": "Inkl. Verpflichtungen {{amount}}/Jahr in der Tragbarkeit."
+      },
+      "advanced": {
+        "toggle": "Erweiterte Einstellungen anpassen",
+        "calcRate": "Kalkulatorischer Zinssatz",
+        "ancillaryPct": "Nebenkosten (% der Gesamtinvestition)",
+        "amortYears": "Amortisationsdauer",
+        "years": "{{count}} Jahre",
+        "yearlyBurden": "Jährliche Belastung: {{amount}} (Zins + Nebenkosten + Amortisation)"
+      },
+      "summary": {
+        "financingType": "Finanzierungsart",
+        "modules": "Module",
+        "property": "Immobilie",
+        "designation": "Bezeichnung",
+        "address": "Adresse",
+        "propertyValue": "Objektwert / Verkehrswert",
+        "purchasePrice": "Kaufpreis",
+        "objectType": "Objektart",
+        "usage": "Nutzung",
+        "usageRental": "Renditeobjekt",
+        "usageOwner": "Eigennutzung",
+        "laterToCapture": "Später erfassen",
+        "noClient": "Ohne Kunde",
+        "client": "Kunde",
+        "grossIncome": "Brutto-Jahreseinkommen",
+        "ownFundsTotal": "Eigenmittel total",
+        "pkPart": "davon PK / Freizügigkeit",
+        "monthlyObligations": "Monatl. Verpflichtungen",
+        "existingFinancing": "Bestehende Finanzierung",
+        "currentBank": "Aktuelle Bank",
+        "currentRate": "Aktueller Zinssatz",
+        "rateExpiry": "Ablauf Zinsbindung",
+        "purpose": "Zweck",
+        "metrics": "Kennzahlen",
+        "currentMortgage": "Aktuelle Hypothek",
+        "increaseAmount": "Aufstockungsbetrag",
+        "newTotalMortgage": "Neue Gesamthypothek",
+        "requestedMortgage": "Gewünschte Hypothek",
+        "existingMortgage": "Bestehende Hypothek",
+        "renovationCosts": "Renovationskosten",
+        "ownWork": "davon Eigenleistung",
+        "calcRate": "Kalk. Zinssatz",
+        "ancillaryCosts": "Nebenkosten",
+        "amortDuration": "Amortisationsdauer",
+        "years": "{{count}} Jahre",
+        "livePreview": "Live-Vorschau",
+        "ltvExceeded": "⚠ Neue Gesamthypothek übersteigt max. Belehnung von {{ltv}}% ({{amount}})."
+      },
+      "status": {
+        "realistic": "Realistisch",
+        "critical": "Kritisch",
+        "not_financeable": "Nicht finanzierbar",
+        "incomplete": "Unvollständig"
+      },
+      "search": "Suchen…",
+      "bank": {
+        "label": "Aktuelle Bank",
+        "placeholder": "Bank suchen oder eingeben…",
+        "other": "(Sonstige)",
+        "search": "Bank suchen…",
+        "addCustom": "„{{value}}\" als Sonstige übernehmen",
+        "otherGroup": "Sonstige",
+        "useCustom": "„{{value}}\" verwenden"
+      }
     }
   },
   "appointments": {

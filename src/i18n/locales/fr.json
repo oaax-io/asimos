@@ -82,26 +82,86 @@
     "settings": "Paramètres"
   },
   "pages": {
-    "dashboard": { "title": "Tableau de bord", "description": "Vue d'ensemble des activités et indicateurs" },
-    "leads": { "title": "Prospects", "description": "Pipeline de vos intéressés" },
-    "clients": { "title": "Clients", "description": "Tous les acheteurs, vendeurs, locataires et bailleurs" },
-    "properties": { "title": "Biens", "description": "Votre portefeuille immobilier en un coup d'œil" },
-    "matching": { "title": "Mise en relation", "description": "Aperçu des correspondances client–bien" },
-    "financing": { "title": "Financements", "description": "Aperçu de tous les dossiers de financement" },
-    "appointments": { "title": "Rendez-vous", "description": "Visites, appels et réunions" },
-    "tasks": { "title": "Tâches", "description": "To-do personnelles et d'équipe" },
-    "analytics": { "title": "Analyses", "description": "Vue d'ensemble de l'entreprise et du portefeuille." },
-    "documents": { "title": "Centre de documents", "description": "Documents téléversés et générés au même endroit" },
-    "media": { "title": "Médiathèque", "description": "Images, vidéos et plans pour tous les biens" },
-    "checklists": { "title": "Listes de contrôle", "description": "Processus standardisés pour les tâches récurrentes" },
-    "mandates": { "title": "Mandats", "description": "Contrats de courtage avec propriétaires et acheteurs" },
-    "reservations": { "title": "Réservations", "description": "Contrats de réservation entre acheteurs, locataires et biens" },
-    "ndas": { "title": "Accords de confidentialité", "description": "Accords de confidentialité avec clients et partenaires" },
-    "exposes": { "title": "Exposés", "description": "Choisissez un modèle – à l'étape suivante, vous choisirez le bien, le contenu, la galerie et les pièces jointes." },
-    "team": { "title": "Équipe", "description": "Gérer les collaborateurs de votre entreprise" },
-    "feedbackPage": { "title": "Commentaires", "description": "Signaler suggestions et problèmes" },
-    "docs": { "title": "Documentation", "description": "Guides et aide sur le système" },
-    "settings": { "title": "Paramètres", "description": "Profil, entreprise, comptes bancaires, modèles" }
+    "dashboard": {
+      "title": "Tableau de bord",
+      "description": "Vue d'ensemble des activités et indicateurs"
+    },
+    "leads": {
+      "title": "Prospects",
+      "description": "Pipeline de vos intéressés"
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Tous les acheteurs, vendeurs, locataires et bailleurs"
+    },
+    "properties": {
+      "title": "Biens",
+      "description": "Votre portefeuille immobilier en un coup d'œil"
+    },
+    "matching": {
+      "title": "Mise en relation",
+      "description": "Aperçu des correspondances client–bien"
+    },
+    "financing": {
+      "title": "Financements",
+      "description": "Aperçu de tous les dossiers de financement"
+    },
+    "appointments": {
+      "title": "Rendez-vous",
+      "description": "Visites, appels et réunions"
+    },
+    "tasks": {
+      "title": "Tâches",
+      "description": "To-do personnelles et d'équipe"
+    },
+    "analytics": {
+      "title": "Analyses",
+      "description": "Vue d'ensemble de l'entreprise et du portefeuille."
+    },
+    "documents": {
+      "title": "Centre de documents",
+      "description": "Documents téléversés et générés au même endroit"
+    },
+    "media": {
+      "title": "Médiathèque",
+      "description": "Images, vidéos et plans pour tous les biens"
+    },
+    "checklists": {
+      "title": "Listes de contrôle",
+      "description": "Processus standardisés pour les tâches récurrentes"
+    },
+    "mandates": {
+      "title": "Mandats",
+      "description": "Contrats de courtage avec propriétaires et acheteurs"
+    },
+    "reservations": {
+      "title": "Réservations",
+      "description": "Contrats de réservation entre acheteurs, locataires et biens"
+    },
+    "ndas": {
+      "title": "Accords de confidentialité",
+      "description": "Accords de confidentialité avec clients et partenaires"
+    },
+    "exposes": {
+      "title": "Exposés",
+      "description": "Choisissez un modèle – à l'étape suivante, vous choisirez le bien, le contenu, la galerie et les pièces jointes."
+    },
+    "team": {
+      "title": "Équipe",
+      "description": "Gérer les collaborateurs de votre entreprise"
+    },
+    "feedbackPage": {
+      "title": "Commentaires",
+      "description": "Signaler suggestions et problèmes"
+    },
+    "docs": {
+      "title": "Documentation",
+      "description": "Guides et aide sur le système"
+    },
+    "settings": {
+      "title": "Paramètres",
+      "description": "Profil, entreprise, comptes bancaires, modèles"
+    }
   },
   "dashboard": {
     "subtitle": "Aperçu de votre journée",
@@ -627,6 +687,409 @@
       "approved": "Approuvé",
       "rejected": "Refusé",
       "cancelled": "Annulé"
+    },
+    "detail": {
+      "back": "Retour",
+      "notFound": "Dossier introuvable.",
+      "fallback": "Financement",
+      "stats": {
+        "totalInvestment": "Investissement total",
+        "mortgage": "Hypothèque",
+        "ownFunds": "Fonds propres",
+        "affordability": "Charge supportable"
+      },
+      "tabs": {
+        "overview": "Aperçu",
+        "quickcheck": "Vérification rapide",
+        "disclosure": "Auto-déclaration",
+        "ubs": "Checklist banque",
+        "documents": "Documents",
+        "bank": "Dépôt bancaire",
+        "activity": "Activité"
+      },
+      "overview": {
+        "client": "Client",
+        "property": "Bien",
+        "noProperty": "Aucun bien associé"
+      },
+      "quickcheck": {
+        "start": "Démarrer la vérification rapide",
+        "startDescription": "Saisissez les données clés du financement dans l'assistant. Le résultat s'affichera ici à la fin.",
+        "lastCheck": "Dernière vérification rapide : {{date}}",
+        "recalculate": "Recalculer",
+        "subtabs": {
+          "precheck": "Pré-examen",
+          "detail": "Calcul détaillé",
+          "scenarios": "Scénarios"
+        },
+        "metrics": {
+          "ltv": "Nantissement (LTV)",
+          "affordability": "Charge supportable",
+          "equityRatio": "Quote-part fonds propres",
+          "hardEquity": "Fonds propres durs",
+          "limit": "Limite : {{value}} %"
+        },
+        "tips": {
+          "title": "Suggestions d'optimisation",
+          "allOk": "Tous les ratios respectés — financement bancable en principe.",
+          "incomeNeeded": "Le revenu devrait être augmenté de {{delta}} pour ramener la charge à 33 % (requis : {{needed}})",
+          "equityMissing": "Fonds propres manquants : {{missing}} (au moins {{needed}} du prix d'achat requis)",
+          "hardEquityLow": "Part de la caisse de pension trop élevée — au moins {{needed}} en liquidités requis (actuellement {{current}} de fonds propres durs)",
+          "combinedIncome": "Calcul avec revenu combiné :",
+          "perYear": "/ an",
+          "coIncomeMissing": "Revenu de {{name}} non saisi — le calcul repose uniquement sur le revenu du demandeur principal.",
+          "toClient": "→ Vers le profil client"
+        },
+        "detail": {
+          "structure": "Structure de financement",
+          "purchasePrice": "Prix d'achat",
+          "plusRenovation": "+ Coûts de rénovation",
+          "totalInvestment": "= Investissement total",
+          "ownFundsTotal": "Fonds propres totaux ({{ratio}})",
+          "cashEquity": "dont liquidités",
+          "pensionEquity": "dont caisse de pension / libre passage",
+          "mortgageTotal": "Hypothèque totale ({{ratio}})",
+          "firstMortgage": "1ʳᵉ hypothèque (≤ 65 %)",
+          "secondMortgage": "2ᵉ hypothèque (65–80 %)",
+          "amortization": "Amortissement 2ᵉ hyp. (sur {{years}} ans)",
+          "perYearShort": "{{amount}}/an",
+          "yearlyCosts": "Coûts annuels (charge supportable)",
+          "calcInterest": "Taux calc. ({{rate}} %)",
+          "ancillary": "Charges annexes ({{pct}} %)",
+          "amortLabel": "Amortissement",
+          "totalYearlyCost": "Coûts de logement p.a.",
+          "mainIncome": "Revenu demandeur principal",
+          "coApplicantIncome": "Revenu {{role}} {{name}}",
+          "combinedIncome": "Revenu combiné p.a.",
+          "grossIncome": "Revenu brut p.a.",
+          "affordabilityRatio": "Quote de charge",
+          "minIncome": "Revenu minimum (33 %)",
+          "roleSpouse": "Conjoint/e",
+          "roleCo": "Co-demandeur/euse"
+        },
+        "scenarios": {
+          "title": "Curseurs de scénario interactifs",
+          "description": "Ajustez les valeurs pour tester différents scénarios. La matrice se met à jour en direct. Vous pouvez enregistrer un scénario comme nouveau calcul dans le dossier.",
+          "purchase": "Prix d'achat",
+          "equity": "Fonds propres",
+          "renovation": "Coûts de rénovation",
+          "ownWork": "dont travaux personnels",
+          "income": "Revenu brut",
+          "incomePerYear": "{{amount}} / an",
+          "mortgage": "Hypothèque souhaitée",
+          "mortgageWithLtv": "{{amount}} ({{ltv}} nantissement)",
+          "rate": "Taux calc.",
+          "liveLtv": "Nantissement",
+          "liveAffordability": "Charge supportable",
+          "liveEquityRatio": "Quote fonds propres",
+          "status": "Statut",
+          "saveScenario": "Enregistrer comme scénario",
+          "reset": "Réinitialiser",
+          "vsOriginal": "{{value}} % vs. original",
+          "matrixTitle": "Analyse de sensibilité — Revenu vs. Prix d'achat",
+          "matrixCorner": "Revenu \\ Prix d'achat",
+          "matrixPerYearShort": "{{amount}}/an",
+          "matrixEqInsufficient": "FP !",
+          "legend": {
+            "realistic": "Réaliste",
+            "critical": "Critique",
+            "notFinanceable": "Non finançable",
+            "eqInsufficient": "FP insuffisants"
+          },
+          "assumptions": "Fonds propres {{equity}} · Taux {{rate}} % · Charges {{anc}} % · Hypothèque {{mortgage}}",
+          "savedTitle": "Scénarios enregistrés",
+          "noneSaved": "Aucun scénario enregistré.",
+          "load": "Charger",
+          "affordabilityShort": "Charge",
+          "ltvShort": "Nantissement",
+          "saveDialog": {
+            "title": "Enregistrer le scénario",
+            "description": "Donnez un nom à ce scénario.",
+            "label": "Nom",
+            "placeholder": "p.ex. Plus de fonds propres",
+            "cancel": "Annuler",
+            "save": "Enregistrer",
+            "saving": "Enregistrement…"
+          },
+          "deleteDialog": {
+            "title": "Supprimer le scénario ?",
+            "description": "Cette action est irréversible.",
+            "cancel": "Annuler",
+            "confirm": "Supprimer"
+          },
+          "toast": {
+            "saved": "Scénario enregistré",
+            "deleted": "Scénario supprimé",
+            "loaded": "Scénario « {{name}} » chargé",
+            "saveFailed": "Échec de l'enregistrement",
+            "deleteFailed": "Échec de la suppression"
+          }
+        }
+      },
+      "resetDialog": {
+        "title": "Réinitialiser et redémarrer la vérification rapide ?",
+        "description": "Les valeurs enregistrées sont conservées.",
+        "cancel": "Annuler",
+        "confirm": "Réinitialiser"
+      },
+      "toast": {
+        "reset": "Vérification rapide réinitialisée",
+        "resetFailed": "Échec de la réinitialisation"
+      }
+    },
+    "wizard": {
+      "headerTitle": "Vérification rapide du financement – Étape {{step}} / {{total}}",
+      "stepLabels": {
+        "modules": "Modules",
+        "property": "Objet",
+        "client": "Client",
+        "metrics": "Indicateurs",
+        "advanced": "Avancé",
+        "summary": "Résumé"
+      },
+      "stepCounter": "Étape {{step}} sur {{total}}",
+      "back": "Retour",
+      "next": "Suivant",
+      "submit": "Démarrer la vérification rapide",
+      "submitting": "Enregistrement…",
+      "toast": {
+        "created": "Vérification rapide créée",
+        "saveError": "Erreur lors de l'enregistrement"
+      },
+      "modules": {
+        "intro": "Plusieurs modules combinables. Au moins une sélection est requise.",
+        "purchase": {
+          "label": "Achat",
+          "description": "Financement pour l'achat d'un bien immobilier."
+        },
+        "renovation": {
+          "label": "Rénovation",
+          "description": "Financement de travaux de transformation ou rénovation."
+        },
+        "increase": {
+          "label": "Augmentation d'hypothèque existante",
+          "description": "Augmentation d'une hypothèque existante (p.ex. pour investissements)."
+        },
+        "refinance": {
+          "label": "Refinancement",
+          "description": "Changement de banque ou remplacement de l'hypothèque existante."
+        },
+        "mortgage_increase": {
+          "label": "Augmentation hypothécaire",
+          "description": "Augmentation de l'hypothèque auprès de la même banque."
+        }
+      },
+      "property": {
+        "source": "Source",
+        "sourceCrm": "Choisir un bien du CRM",
+        "sourceCrmDesc": "Sélectionnez un bien existant, les données sont reprises.",
+        "sourceManual": "Saisie manuelle",
+        "sourceManualDesc": "Saisissez vous-même l'adresse et le prix d'achat.",
+        "sourceLater": "Saisir plus tard",
+        "sourceLaterDesc": "Passer l'étape — les champs restent vides.",
+        "object": "Objet",
+        "loading": "Chargement…",
+        "searchObject": "Rechercher un objet…",
+        "noObject": "Aucun objet trouvé.",
+        "unitOrWhole": "Objet entier ou unité",
+        "chooseWholeOrUnit": "Choisir l'objet entier ou une unité…",
+        "noUnit": "Aucune unité trouvée.",
+        "whole": "Objet entier",
+        "allUnitsIncl": "Toutes les {{count}} unités incluses.",
+        "unitOne": "1 unité",
+        "unitOther": "{{count}} unités",
+        "noUnits": "Aucune unité",
+        "unitPrefix": "Unité",
+        "floorOg": "{{floor}}ᵉ étage",
+        "unitNr": "N° {{number}}",
+        "laterHint": "Vous pourrez compléter les données du bien plus tard dans le dossier.",
+        "dataTitle": "Données de l'objet",
+        "laterNone": "Aucune donnée requise — sera complétée plus tard.",
+        "crmEmpty": "Sélectionnez à gauche un objet du CRM.",
+        "address": "Adresse",
+        "purchasePrice": "Prix d'achat (CHF)",
+        "crmFilled": "Valeurs pré-remplies depuis le CRM. Les modifications ne s'appliquent qu'à cette vérification rapide."
+      },
+      "client": {
+        "sourceCrm": "Choisir un client du CRM",
+        "sourceCrmDescRefi": "Le revenu sera pré-rempli depuis le profil client.",
+        "sourceCrmDesc": "L'auto-déclaration et les fonds propres seront pré-remplis.",
+        "sourceManual": "Sans client / manuel",
+        "sourceManualDesc": "Vérification rapide sans liaison à un client.",
+        "main": "Client principal",
+        "client": "Client",
+        "searchClient": "Rechercher un client…",
+        "noClient": "Aucun client trouvé.",
+        "grossIncome": "Revenu annuel brut (CHF)",
+        "ownFundsTotal": "Fonds propres totaux (CHF)",
+        "pensionPart": "dont caisse de pension (CHF)",
+        "refiHint": "En cas de refinancement, seul le revenu est utilisé pour la charge supportable.",
+        "crmHint": "Valeurs du profil client & auto-déclaration — éditables.",
+        "manualHint": "La vérification rapide est créée sans liaison client. Vous saisirez les données financières à l'étape 4."
+      },
+      "coApplicant": {
+        "title": "Ajouter un co-demandeur / conjoint",
+        "descRelated": "Les personnes liées depuis le profil client sont affichées en premier.",
+        "desc": "Optionnel — combine revenus et fonds propres pour le calcul.",
+        "role": "Rôle *",
+        "roleSelect": "Choisir un rôle…",
+        "roleSpouse": "Conjoint/e",
+        "roleCo": "Co-demandeur/euse",
+        "relSpouse": "Conjoint",
+        "relCo": "Co-demandeur",
+        "relInvestor": "Co-investisseur",
+        "relOther": "Lié",
+        "crmClient": "Client du CRM",
+        "missingDataWarn": "Certaines données de {{name}} ne sont pas encore saisies. Complétez les informations manquantes dans le profil client pour un calcul complet.",
+        "toProfile": "Vers le profil client",
+        "incomeRequired": "Le revenu est indispensable au calcul de la charge supportable. Sans cette valeur, le co-demandeur ne sera pas pris en compte dans le calcul.",
+        "income": "Revenu (CHF/an)",
+        "equity": "Fonds propres (CHF)",
+        "pkPart": "Part caisse de pension (CHF)",
+        "combinedTitle": "Valeurs combinées",
+        "combinedIncome": "Revenu combiné :",
+        "combinedEquity": "Fonds propres combinés :",
+        "combinedPk": "Part CP combinée :",
+        "perYear": "/ an",
+        "checklist": {
+          "grossIncome": "Revenu annuel brut",
+          "grossIncomeValue": "{{amount}} / an (auto-déclaration)",
+          "notRecorded": "non saisi",
+          "equity": "Fonds propres",
+          "pk": "Caisse de pension / libre passage",
+          "pkValue": "{{amount}} (manuel)",
+          "pkOptional": "optionnel — non dans le CRM (défaut : CHF 0)"
+        }
+      },
+      "metrics": {
+        "objectTitle": "Objet",
+        "objectValueFromCrm": "Valeur de l'objet (depuis CRM)",
+        "step2": "Étape 2",
+        "objectValueRequired": "Valeur de l'objet / valeur vénale (CHF) *",
+        "usage": "Utilisation *",
+        "pleaseSelect": "Veuillez choisir…",
+        "usageOwner": "Usage personnel",
+        "usageRental": "Objet de rendement",
+        "objectType": "Type d'objet *",
+        "objectTypes": {
+          "house": "Maison individuelle",
+          "apartment": "Appartement en PPE",
+          "mixed_use": "Immeuble mixte / commercial",
+          "commercial": "Commercial",
+          "other": "Autre"
+        },
+        "mortgageTitle": "Hypothèque",
+        "currentMortgage": "Hypothèque actuelle (CHF) *",
+        "increaseAmount": "Augmentation (CHF)",
+        "maxIncrease": "Augmentation max. ({{ltv}} %)",
+        "possible": "✓ possible",
+        "notPossible": "✗ impossible",
+        "headroom": "+{{amount}} de marge",
+        "overLimit": "−{{amount}} au-delà de la limite",
+        "newTotalMortgage": "Nouvelle hypothèque totale",
+        "newTotalFormula": "= Hypothèque actuelle + augmentation",
+        "existingFinancing": "Financement existant",
+        "currentBank": "Banque actuelle",
+        "currentRate": "Taux actuel (%)",
+        "rateExpiry": "Échéance des intérêts",
+        "refiPurpose": "But du refinancement",
+        "optional": "Optionnel",
+        "refiPurposes": {
+          "rate_optimisation": "Optimisation des taux",
+          "bank_change": "Changement de banque",
+          "consolidation": "Consolidation",
+          "cash_out": "Versement de capital",
+          "other": "Autre"
+        },
+        "incomeObligations": "Revenu & engagements",
+        "incomeMain": "Revenu client principal (CHF/an) *",
+        "grossIncome": "Revenu annuel brut (CHF) *",
+        "incomePartner": "Revenu partenaire (CHF/an) *",
+        "obligationsCombined": "Engagements combinés (CHF/mois)",
+        "obligationsMonthly": "Engagements mensuels (CHF)",
+        "renovationCosts": "Coûts de rénovation (CHF)",
+        "obligationsHint": "Leasing, crédits, pensions — sommés automatiquement depuis l'auto-déclaration (ajustable).",
+        "combinedIncomeShort": "Revenu combiné :",
+        "perYearShort": "/ an",
+        "ltvExceededWarn": "⚠ Nouvelle hypothèque totale dépasse le nantissement max. ({{ltv}} % = {{amount}}). Réduire l'augmentation ou apporter des fonds propres.",
+        "ltvLimitHintRental": "Note : limite de nantissement objet de rendement → max. 75 %.",
+        "ltvLimitHintOwner": "Note : limite de nantissement usage personnel → max. 80 %.",
+        "purchasePrice": "Prix d'achat (CHF) *",
+        "requestedMortgage": "Hypothèque souhaitée (CHF) *",
+        "ownFundsTotalReq": "Fonds propres totaux (CHF) *",
+        "pkPart": "dont caisse de pension / libre passage (CHF)",
+        "grossIncomeReq": "Revenu annuel brut (CHF) *",
+        "ownWork": "dont travaux personnels (CHF)",
+        "kpi": {
+          "ltv": "Nantissement",
+          "affordability": "Charge supportable",
+          "equityRatio": "Quote fonds propres"
+        },
+        "obligationsInAffordability": "Inclut engagements {{amount}}/an dans la charge."
+      },
+      "advanced": {
+        "toggle": "Ajuster les paramètres avancés",
+        "calcRate": "Taux d'intérêt calculatoire",
+        "ancillaryPct": "Charges annexes (% de l'investissement total)",
+        "amortYears": "Durée d'amortissement",
+        "years": "{{count}} ans",
+        "yearlyBurden": "Charge annuelle : {{amount}} (intérêts + charges + amortissement)"
+      },
+      "summary": {
+        "financingType": "Type de financement",
+        "modules": "Modules",
+        "property": "Bien",
+        "designation": "Désignation",
+        "address": "Adresse",
+        "propertyValue": "Valeur de l'objet / valeur vénale",
+        "purchasePrice": "Prix d'achat",
+        "objectType": "Type d'objet",
+        "usage": "Utilisation",
+        "usageRental": "Objet de rendement",
+        "usageOwner": "Usage personnel",
+        "laterToCapture": "À saisir plus tard",
+        "noClient": "Sans client",
+        "client": "Client",
+        "grossIncome": "Revenu annuel brut",
+        "ownFundsTotal": "Fonds propres totaux",
+        "pkPart": "dont caisse de pension / libre passage",
+        "monthlyObligations": "Engagements mensuels",
+        "existingFinancing": "Financement existant",
+        "currentBank": "Banque actuelle",
+        "currentRate": "Taux actuel",
+        "rateExpiry": "Échéance",
+        "purpose": "But",
+        "metrics": "Indicateurs",
+        "currentMortgage": "Hypothèque actuelle",
+        "increaseAmount": "Montant d'augmentation",
+        "newTotalMortgage": "Nouvelle hypothèque totale",
+        "requestedMortgage": "Hypothèque souhaitée",
+        "existingMortgage": "Hypothèque existante",
+        "renovationCosts": "Coûts de rénovation",
+        "ownWork": "dont travaux personnels",
+        "calcRate": "Taux calc.",
+        "ancillaryCosts": "Charges annexes",
+        "amortDuration": "Durée d'amortissement",
+        "years": "{{count}} ans",
+        "livePreview": "Aperçu en direct",
+        "ltvExceeded": "⚠ Nouvelle hypothèque totale dépasse le nantissement max. de {{ltv}} % ({{amount}})."
+      },
+      "status": {
+        "realistic": "Réaliste",
+        "critical": "Critique",
+        "not_financeable": "Non finançable",
+        "incomplete": "Incomplet"
+      },
+      "search": "Rechercher…",
+      "bank": {
+        "label": "Banque actuelle",
+        "placeholder": "Rechercher ou saisir une banque…",
+        "other": "(Autre)",
+        "search": "Rechercher une banque…",
+        "addCustom": "Utiliser « {{value}} » comme autre",
+        "otherGroup": "Autres",
+        "useCustom": "Utiliser « {{value}} »"
+      }
     }
   },
   "appointments": {
