@@ -620,7 +620,7 @@ function MediaPage() {
                     <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-medium">
-                          {uploadProgress.done} / {uploadProgress.total} hochgeladen
+                          {t("media.uploadedCount", { done: uploadProgress.done, total: uploadProgress.total })}
                         </span>
                         <span className="text-muted-foreground">{pct}%</span>
                       </div>
