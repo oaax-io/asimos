@@ -257,12 +257,12 @@ function FinancingPage() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Laden…</p>
+        <p className="text-sm text-muted-foreground">{t("financing.loading")}</p>
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Noch keine Finanzierung"
-          description="Starte mit einem Quick Check für einen Kunden."
-          action={<Button onClick={() => setWizardOpen(true)}><Plus className="mr-2 h-4 w-4" />Quick Check starten</Button>}
+          title={t("financing.empty.title")}
+          description={t("financing.empty.description")}
+          action={<Button onClick={() => setWizardOpen(true)}><Plus className="mr-2 h-4 w-4" />{t("financing.startQuickCheck")}</Button>}
         />
       ) : (
         <div className="grid gap-3">
@@ -281,7 +281,7 @@ function FinancingPage() {
       {hypoCalcs.length > 0 && (
         <div className="space-y-3 pt-2">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Gespeicherte Hyporechner Kosovo
+            {t("financing.savedHypo")}
           </h3>
           <div className="grid gap-3">
             {hypoCalcs.map((h: any) => (
@@ -289,17 +289,17 @@ function FinancingPage() {
                 <CardContent className="flex flex-wrap items-center gap-4 p-4">
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium truncate">{h.label || `Hyporechner ${h.term_years}J`}</p>
-                      <Badge variant="outline">{h.term_years} Jahre</Badge>
-                      <Badge variant="secondary">{h.interest_pct}% Zins</Badge>
+                      <p className="font-medium truncate">{h.label || t("financing.hypo.fallbackLabel", { years: h.term_years })}</p>
+                      <Badge variant="outline">{t("financing.hypo.years", { count: h.term_years })}</Badge>
+                      <Badge variant="secondary">{t("financing.hypo.interest", { value: h.interest_pct })}</Badge>
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                       {h.clients?.full_name && (
                         <span className="inline-flex items-center gap-1"><User className="h-3.5 w-3.5" />{h.clients.full_name}</span>
                       )}
-                      <span>Kaufpreis: {formatCurrency(Number(h.purchase_price))}</span>
-                      <span>Rate: {formatCurrency(Number(h.monthly_payment))}/Mo</span>
-                      <span>Erstellt {formatDate(h.created_at)}</span>
+                      <span>{t("financing.hypo.purchase", { amount: formatCurrency(Number(h.purchase_price)) })}</span>
+                      <span>{t("financing.hypo.rate", { amount: formatCurrency(Number(h.monthly_payment)) })}</span>
+                      <span>{t("financing.hypo.createdAt", { date: formatDate(h.created_at) })}</span>
                     </div>
                   </div>
                   <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
