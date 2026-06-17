@@ -239,6 +239,8 @@ function buildSteps(entity: EntityType, role: RoleChoice | "", method: "manual" 
 
 // ===========================================================
 export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
+  const { t, i18n } = useTranslation();
+  const numLocale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [stepIdx, setStepIdx] = useState(0);
