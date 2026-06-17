@@ -16,6 +16,16 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.14.0",
+    date: "17.06.2026",
+    changes: [
+      { type: "feature", text: "Mehrsprachigkeit Franzoesisch: Aufgaben, Dokumente und Mediathek vollstaendig auf Franzoesisch verfuegbar (DE/FR umschaltbar)" },
+      { type: "feature", text: "Neukunden-Wizard komplett uebersetzt: alle Schritte (Stammdaten, Kontaktperson, Suchprofil, Investment, Finanzierung, Eigentum, Tags, Review) inkl. Toast-Meldungen, Statuslabels und Footer-Navigation auf Franzoesisch" },
+      { type: "feature", text: "Immobilien-Wizard komplett uebersetzt: alle 10 Schritte (Typ, Struktur, Stammdaten, Adresse, Flaechen, Preis, Technik, Medien, Einheiten, Zusammenfassung) inkl. Heizungs-, Energie- und Vermarktungslabels auf Franzoesisch" },
+      { type: "improvement", text: "Lokalisierte Zahlenformatierung (CHF, m², %) je nach gewaehlter Sprache" },
+    ],
+  },
+  {
     version: "1.13.0",
     date: "04.06.2026",
     changes: [
