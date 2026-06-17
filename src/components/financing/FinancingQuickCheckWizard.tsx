@@ -668,15 +668,18 @@ export function FinancingQuickCheckWizard({
 function Step1Modules({
   form, toggleModule,
 }: { form: WizardForm; toggleModule: (m: WizardModule) => void }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
-        Mehrere Bausteine kombinierbar. Mindestens eine Auswahl ist erforderlich.
+        {t("financing.wizard.modules.intro")}
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         {MODULE_OPTIONS.map((opt) => {
           const Icon = opt.icon;
           const active = form.modules.includes(opt.key);
+          const label = t(`financing.wizard.modules.${opt.key}.label`, { defaultValue: opt.label });
+          const description = t(`financing.wizard.modules.${opt.key}.description`, { defaultValue: opt.description });
           return (
             <Card
               key={opt.key}
@@ -691,8 +694,8 @@ function Step1Modules({
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium">{opt.label}</p>
-                  <p className="text-xs text-muted-foreground">{opt.description}</p>
+                  <p className="font-medium">{label}</p>
+                  <p className="text-xs text-muted-foreground">{description}</p>
                 </div>
                 {active && <CheckCircle2 className="h-4 w-4 text-primary mt-1" />}
               </div>
@@ -704,7 +707,8 @@ function Step1Modules({
         <div className="flex flex-wrap gap-2 pt-1">
           {form.modules.map((m) => {
             const opt = MODULE_OPTIONS.find((o) => o.key === m);
-            return <Badge key={m} variant="secondary">{opt?.label ?? FINANCING_TYPE_LABELS[m as FinancingType]}</Badge>;
+            const label = opt ? t(`financing.wizard.modules.${opt.key}.label`, { defaultValue: opt.label }) : FINANCING_TYPE_LABELS[m as FinancingType];
+            return <Badge key={m} variant="secondary">{label}</Badge>;
           })}
         </div>
       )}
