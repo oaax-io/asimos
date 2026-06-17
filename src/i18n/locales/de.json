@@ -200,7 +200,7 @@
     "dossierStatus": {
       "title": "Finanzierungs-Dossiers nach Status",
       "draft": "Entwurf",
-      "quick_check": "Schnellprüfung",
+      "quick_check": "Quick-Check",
       "documents_missing": "Dokumente fehlen",
       "ready_for_bank": "Bereit für Bank",
       "submitted_to_bank": "Bei Bank eingereicht",
@@ -593,8 +593,8 @@
     "filters": {
       "type": "Art",
       "allTypes": "Alle Arten",
-      "quickCheck": "Schnellprüfung",
-      "allQuickCheck": "Schnellprüfung (alle)",
+      "quickCheck": "Quick-Check",
+      "allQuickCheck": "Quick-Check (alle)",
       "dossierStatus": "Dossier-Status",
       "allStatus": "Status (alle)",
       "bankType": "Banktyp",
@@ -619,7 +619,7 @@
     "loading": "Laden…",
     "empty": {
       "title": "Noch keine Finanzierung",
-      "description": "Starte mit einer Schnellprüfung für einen Kunden."
+      "description": "Starte mit einer Quick-Check für einen Kunden."
     },
     "savedHypo": "Gespeicherte Hyporechner Kosovo",
     "hypo": {
@@ -649,7 +649,7 @@
       "bankType": "Banktyp: {{type}}",
       "updatedAt": "Aktualisiert {{date}}",
       "select": "Auswählen",
-      "quickCheckPrefix": "Schnellprüfung:",
+      "quickCheckPrefix": "Quick-Check:",
       "notYetDone": "Noch nicht durchgeführt",
       "existingProperty": "Bestehende Immobilie",
       "quickEntry": "Quick-Erfassung",
@@ -680,7 +680,7 @@
     },
     "dossierStatus": {
       "draft": "Entwurf",
-      "quick_check": "Schnellprüfung",
+      "quick_check": "Quick-Check",
       "documents_missing": "Unterlagen fehlen",
       "ready_for_bank": "Bereit für Bank",
       "submitted_to_bank": "Bei Bank eingereicht",
@@ -700,7 +700,7 @@
       },
       "tabs": {
         "overview": "Übersicht",
-        "quickcheck": "Schnellprüfung",
+        "quickcheck": "Quick-Check",
         "disclosure": "Selbstauskunft",
         "ubs": "Bank Checkliste",
         "documents": "Dokumente",
@@ -713,9 +713,9 @@
         "noProperty": "Keine Immobilie verknüpft"
       },
       "quickcheck": {
-        "start": "Schnellprüfung starten",
+        "start": "Quick-Check starten",
         "startDescription": "Erfasse die Eckdaten der Finanzierung im Wizard. Nach Abschluss erscheint hier das Ergebnis.",
-        "lastCheck": "Letzte Schnellprüfung: {{date}}",
+        "lastCheck": "Letzte Quick-Check: {{date}}",
         "recalculate": "Neu berechnen",
         "subtabs": {
           "precheck": "Vorprüfung",
@@ -827,18 +827,18 @@
         }
       },
       "resetDialog": {
-        "title": "Schnellprüfung zurücksetzen und neu starten?",
+        "title": "Quick-Check zurücksetzen und neu starten?",
         "description": "Die gespeicherten Werte bleiben erhalten.",
         "cancel": "Abbrechen",
         "confirm": "Zurücksetzen"
       },
       "toast": {
-        "reset": "Schnellprüfung zurückgesetzt",
+        "reset": "Quick-Check zurückgesetzt",
         "resetFailed": "Zurücksetzen fehlgeschlagen"
       }
     },
     "wizard": {
-      "headerTitle": "Schnellprüfung Finanzierung – Schritt {{step}} / {{total}}",
+      "headerTitle": "Quick-Check Finanzierung – Schritt {{step}} / {{total}}",
       "stepLabels": {
         "modules": "Module",
         "property": "Objekt",
@@ -850,10 +850,10 @@
       "stepCounter": "Schritt {{step}} von {{total}}",
       "back": "Zurück",
       "next": "Weiter",
-      "submit": "Schnellprüfung starten",
+      "submit": "Quick-Check starten",
       "submitting": "Speichern…",
       "toast": {
-        "created": "Schnellprüfung erstellt",
+        "created": "Quick-Check erstellt",
         "saveError": "Fehler beim Speichern"
       },
       "modules": {
@@ -908,14 +908,14 @@
         "crmEmpty": "Wählen Sie links ein Objekt aus dem CRM aus.",
         "address": "Adresse",
         "purchasePrice": "Kaufpreis (CHF)",
-        "crmFilled": "Werte aus CRM vorausgefüllt. Anpassungen gelten nur für diese Schnellprüfung."
+        "crmFilled": "Werte aus CRM vorausgefüllt. Anpassungen gelten nur für diese Quick-Check."
       },
       "client": {
         "sourceCrm": "Kunde aus CRM wählen",
         "sourceCrmDescRefi": "Einkommen wird aus dem Kundenprofil vorausgefüllt.",
         "sourceCrmDesc": "Selbstauskunft & Eigenkapital werden vorausgefüllt.",
         "sourceManual": "Ohne Kunde / manuell",
-        "sourceManualDesc": "Schnellprüfung ohne Verknüpfung zu einem Kunden.",
+        "sourceManualDesc": "Quick-Check ohne Verknüpfung zu einem Kunden.",
         "main": "Hauptkunde",
         "client": "Kunde",
         "searchClient": "Kunde suchen…",
@@ -925,7 +925,7 @@
         "pensionPart": "davon Pensionskasse (CHF)",
         "refiHint": "Bei Refinanzierung nur Einkommen für die Tragbarkeit.",
         "crmHint": "Werte aus Kundenprofil & Selbstauskunft — editierbar.",
-        "manualHint": "Schnellprüfung wird ohne Kundenverknüpfung erstellt. Die Finanzdaten erfassen Sie in Schritt 4."
+        "manualHint": "Quick-Check wird ohne Kundenverknüpfung erstellt. Die Finanzdaten erfassen Sie in Schritt 4."
       },
       "coApplicant": {
         "title": "Mitantragsteller / Ehepartner hinzufügen",
