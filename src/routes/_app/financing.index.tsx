@@ -355,6 +355,7 @@ function DossierCard({
   selected: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation();
   const ds = (d.data_source ?? "existing_property") as "existing_property" | "quick_entry";
   const snap = (d.property_snapshot as any) ?? {};
   const propertyLabel = d.properties?.title
@@ -372,6 +373,14 @@ function DossierCard({
     : qcStatus === "not_financeable" ? "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400"
     : "border-border bg-muted/30 text-muted-foreground";
 
+  const typeLabel = (k?: string | null) =>
+    k ? t(`financing.type.${k}`, { defaultValue: FINANCING_TYPE_LABELS[k as FinancingType] ?? "—" }) : "—";
+  const qcStatusLabel = (k: string) =>
+    t(`financing.quickCheckStatus.${k}`, { defaultValue: QUICK_CHECK_LABELS[k as QuickCheckStatus] ?? k });
+  const dossierStatusLabel = (k: string) =>
+    t(`financing.dossierStatus.${k}`, { defaultValue: DOSSIER_STATUS_LABELS[k as DossierStatus] ?? k });
+  const bankShort = (b: string) => b === "ubs" ? t("financing.bankShort.ubs") : t("financing.bankShort.other");
+
   return (
     <Card className={cn("transition hover:shadow-md", selected && "ring-2 ring-primary")}>
       <CardContent className="space-y-3 p-4">
@@ -383,25 +392,25 @@ function DossierCard({
             <Checkbox
               checked={selected}
               onCheckedChange={onToggle}
-              aria-label="Auswählen"
+              aria-label={t("financing.card.select")}
             />
           </div>
           <Link to="/financing/$id" params={{ id: d.id }} className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="font-medium truncate">
-                {d.title || FINANCING_TYPE_LABELS[d.financing_type as FinancingType] || "Finanzierung"}
+                {d.title || typeLabel(d.financing_type) || t("financing.card.fallback")}
               </p>
-              <Badge variant="secondary">{FINANCING_TYPE_LABELS[d.financing_type as FinancingType] ?? "—"}</Badge>
+              <Badge variant="secondary">{typeLabel(d.financing_type)}</Badge>
               <Badge className={dossierTone(dossierStatus)}>
-                {DOSSIER_STATUS_LABELS[dossierStatus] ?? "Entwurf"}
+                {dossierStatusLabel(dossierStatus)}
               </Badge>
               <Badge variant="outline" className={qcTone(d.quick_check_status ?? "incomplete")}>
-                {QUICK_CHECK_LABELS[(d.quick_check_status ?? "incomplete") as QuickCheckStatus]}
+                {qcStatusLabel(d.quick_check_status ?? "incomplete")}
               </Badge>
               <Badge variant="outline" className="gap-1">
                 {ds === "existing_property"
-                  ? <><Database className="h-3 w-3" />Bestehende Immobilie</>
-                  : <><PencilLine className="h-3 w-3" />Quick-Erfassung</>}
+                  ? <><Database className="h-3 w-3" />{t("financing.card.existingProperty")}</>
+                  : <><PencilLine className="h-3 w-3" />{t("financing.card.quickEntry")}</>}
               </Badge>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -411,25 +420,30 @@ function DossierCard({
               {propertyLabel && (
                 <span className="inline-flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{propertyLabel}</span>
               )}
-              {d.bank_name && <span>Bank: {d.bank_name}{d.bank_type ? ` (${d.bank_type === "ubs" ? "UBS" : "andere"})` : ""}</span>}
-              {!d.bank_name && d.bank_type && <span>Banktyp: {d.bank_type === "ubs" ? "UBS" : "andere"}</span>}
-              <span>Aktualisiert {formatDate(d.updated_at)}</span>
+              {d.bank_name && (
+                <span>
+                  {d.bank_type
+                    ? t("financing.card.bankWithType", { name: d.bank_name, type: bankShort(d.bank_type) })
+                    : t("financing.card.bank", { name: d.bank_name })}
+                </span>
+              )}
+              {!d.bank_name && d.bank_type && <span>{t("financing.card.bankType", { type: bankShort(d.bank_type) })}</span>}
+              <span>{t("financing.card.updatedAt", { date: formatDate(d.updated_at) })}</span>
             </div>
           </Link>
         </div>
 
-        {/* Quick-Check Zusammenfassung — gleiche Optik wie im Kunden-Tab */}
         <Link to="/financing/$id" params={{ id: d.id }} className={`block rounded-lg border p-3 ${qcToneClass}`}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-semibold uppercase tracking-wide">
-              Quick Check: {qcStatus ? (QUICK_CHECK_LABELS[qcStatus] ?? qcStatus) : "Noch nicht durchgeführt"}
+              {t("financing.card.quickCheckPrefix")} {qcStatus ? qcStatusLabel(qcStatus) : t("financing.card.notYetDone")}
             </div>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-            <KPI label="Tragbarkeit" value={d.affordability_ratio != null ? `${Number(d.affordability_ratio).toFixed(1)}%` : "—"} />
-            <KPI label="Belehnung" value={d.loan_to_value_ratio != null ? `${Number(d.loan_to_value_ratio).toFixed(1)}%` : "—"} />
-            <KPI label="Hypothek" value={d.requested_mortgage != null ? formatCurrency(Number(d.requested_mortgage)) : "—"} />
-            <KPI label="Eigenmittel" value={d.own_funds_total != null ? formatCurrency(Number(d.own_funds_total)) : "—"} />
+            <KPI label={t("financing.card.kpi.affordability")} value={d.affordability_ratio != null ? `${Number(d.affordability_ratio).toFixed(1)}%` : "—"} />
+            <KPI label={t("financing.card.kpi.ltv")} value={d.loan_to_value_ratio != null ? `${Number(d.loan_to_value_ratio).toFixed(1)}%` : "—"} />
+            <KPI label={t("financing.card.kpi.mortgage")} value={d.requested_mortgage != null ? formatCurrency(Number(d.requested_mortgage)) : "—"} />
+            <KPI label={t("financing.card.kpi.ownFunds")} value={d.own_funds_total != null ? formatCurrency(Number(d.own_funds_total)) : "—"} />
           </div>
           {reasons.length > 0 && (
             <ul className="mt-3 space-y-1 text-xs">
