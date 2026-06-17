@@ -136,7 +136,7 @@ export function GeneratePdfButton({
           const finalUrl = blob ?? existing.fileUrl;
           setBlobUrl(finalUrl);
           triggerDownload(finalUrl);
-          toast.success("PDF geöffnet");
+          toast.success(t("documents.pdf.toast.opened"));
           return;
         }
       }
