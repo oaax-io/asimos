@@ -1038,11 +1038,11 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
               <div className="space-y-5">
                 {form.role_choice === "financing_applicant" && (
                   <div>
-                    <Label>Finanzierungsziel *</Label>
+                    <Label>{t("clientWizard.financing.goal")}</Label>
                     <Select value={form.financing_goal} onValueChange={(v) => set("financing_goal", v)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {FINANCING_GOALS.map((g) => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
+                        {FINANCING_GOALS.map((g) => <SelectItem key={g} value={g}>{t(`clientWizard.financingGoals.${g}`)}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
