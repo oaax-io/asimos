@@ -193,6 +193,7 @@ const TOTAL_STEPS = 6;
 export function FinancingQuickCheckWizard({
   open, onOpenChange, onCreated, defaultClientId, defaultPropertyId,
 }: Props) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<WizardForm>(() => emptyForm({
