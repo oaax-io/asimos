@@ -299,16 +299,21 @@ export function FinancingQuickCheckWizard({
     (async () => {
       const { data } = await supabase
         .from("client_self_disclosures")
-        .select("annual_net_salary, salary_net_monthly")
+        .select("annual_net_salary, salary_net_monthly, additional_income, income_job_two, income_rental")
         .eq("client_id", form.client_id)
         .maybeSingle();
       if (!data) return;
-      const yearly = data.annual_net_salary
+      const extrasMonthly =
+        Number(data.additional_income ?? 0) +
+        Number(data.income_job_two ?? 0) +
+        Number(data.income_rental ?? 0);
+      const baseYearly = data.annual_net_salary
         ?? (data.salary_net_monthly ? Number(data.salary_net_monthly) * 12 : null);
-      if (yearly) {
+      const yearly = (baseYearly ?? 0) + extrasMonthly * 12;
+      if (yearly > 0) {
         setForm((f) => ({
           ...f,
-          gross_income_yearly: f.gross_income_yearly || String(yearly),
+          gross_income_yearly: f.gross_income_yearly || String(Math.round(yearly)),
         }));
       }
     })();
@@ -330,21 +335,62 @@ export function FinancingQuickCheckWizard({
     (async () => {
       const { data } = await supabase
         .from("client_self_disclosures")
-        .select("annual_net_salary, salary_net_monthly")
+        .select("annual_net_salary, salary_net_monthly, additional_income, income_job_two, income_rental")
         .eq("client_id", form.co_applicant_client_id)
         .maybeSingle();
       if (!data) return;
-      const yearly = data.annual_net_salary
+      const extrasMonthly =
+        Number(data.additional_income ?? 0) +
+        Number(data.income_job_two ?? 0) +
+        Number(data.income_rental ?? 0);
+      const baseYearly = data.annual_net_salary
         ?? (data.salary_net_monthly ? Number(data.salary_net_monthly) * 12 : null);
-      if (yearly) {
+      const yearly = (baseYearly ?? 0) + extrasMonthly * 12;
+      if (yearly > 0) {
         setForm((f) => ({
           ...f,
-          co_applicant_einkommen: f.co_applicant_einkommen || String(yearly),
+          co_applicant_einkommen: f.co_applicant_einkommen || String(Math.round(yearly)),
         }));
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.co_applicant_client_id, form.co_applicant_enabled, clientsQuery.data]);
+
+  // ---- Auto-Fill: Zusätzliche Mitantragsteller (aus Selbstauskunft) ----
+  const additionalIdsKey = (form.additional_co_applicants ?? [])
+    .map((a) => a.client_id || "")
+    .join("|");
+  useEffect(() => {
+    const list = form.additional_co_applicants ?? [];
+    list.forEach(async (a, idx) => {
+      if (!a.client_id || a.einkommen) return;
+      const c: any = clientsQuery.data?.find((x: any) => x.id === a.client_id);
+      const { data } = await supabase
+        .from("client_self_disclosures")
+        .select("annual_net_salary, salary_net_monthly, additional_income, income_job_two, income_rental")
+        .eq("client_id", a.client_id)
+        .maybeSingle();
+      const extrasMonthly =
+        Number(data?.additional_income ?? 0) +
+        Number(data?.income_job_two ?? 0) +
+        Number(data?.income_rental ?? 0);
+      const baseYearly = data?.annual_net_salary
+        ?? (data?.salary_net_monthly ? Number(data.salary_net_monthly) * 12 : null);
+      const yearly = (baseYearly ?? 0) + extrasMonthly * 12;
+      setForm((f) => {
+        const next = [...(f.additional_co_applicants ?? [])];
+        if (!next[idx] || next[idx].client_id !== a.client_id) return f;
+        const cur = next[idx];
+        next[idx] = {
+          ...cur,
+          einkommen: cur.einkommen || (yearly > 0 ? String(Math.round(yearly)) : cur.einkommen),
+          eigenkapital: cur.eigenkapital || (c?.equity != null ? String(c.equity) : cur.eigenkapital),
+        };
+        return { ...f, additional_co_applicants: next };
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [additionalIdsKey, clientsQuery.data]);
 
   // ---- Kombinierte Werte (Haupt + Mitantragsteller) ----
   const combined = useMemo(() => {
