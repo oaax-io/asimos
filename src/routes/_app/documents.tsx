@@ -116,8 +116,8 @@ function DocumentsPage() {
 
   const upload = useMutation({
     mutationFn: async () => {
-      if (!file) throw new Error("Bitte Datei auswählen");
-      if (!form.related_id) throw new Error("Bitte Verknüpfung wählen");
+      if (!file) throw new Error(t("documents.toasts.fileRequired"));
+      if (!form.related_id) throw new Error(t("documents.toasts.linkRequired"));
       setUploading(true);
       const ext = file.name.split(".").pop() ?? "bin";
       const path = `${form.related_type}/${form.related_id}/${crypto.randomUUID()}.${ext}`;
