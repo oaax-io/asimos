@@ -738,23 +738,23 @@ function MediaPage() {
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => setPropertyFilter("all")}>
             <ArrowLeft className="mr-1 h-4 w-4" />
-            Alle Ordner
+            {t("media.folders.allFolders")}
           </Button>
           {duplicateCount > 0 && (
             <div className="ml-auto flex items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50 px-3 py-1.5 text-xs text-amber-900 dark:border-amber-700/40 dark:bg-amber-950/40 dark:text-amber-200">
               <Copy className="h-3.5 w-3.5" />
-              <span>{duplicateCount} mögliche Duplikat(e) erkannt</span>
+              <span>{t("media.duplicates.detected", { count: duplicateCount })}</span>
               <Button
                 size="sm"
                 variant="outline"
                 className="h-7"
                 onClick={async () => {
-                  if (await confirm({ title: "Duplikate löschen?", description: `${duplicateCount} doppelte Datei(en) werden entfernt. Das älteste/Cover-Bild bleibt erhalten.`, confirmText: "Löschen" })) {
+                  if (await confirm({ title: t("media.duplicates.confirmTitle"), description: t("media.duplicates.confirmDescription", { count: duplicateCount }), confirmText: t("media.duplicates.confirm") })) {
                     removeDuplicates.mutate(propertyFilter);
                   }
                 }}
               >
-                Duplikate entfernen
+                {t("media.duplicates.remove")}
               </Button>
             </div>
           )}
