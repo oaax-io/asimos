@@ -982,7 +982,7 @@ function MediaPage() {
                   )}
                   <span className="inline-flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {new Date(current.created_at).toLocaleString("de-CH", { dateStyle: "medium", timeStyle: "short" })}
+                    {new Date(current.created_at).toLocaleString(dateLocale, { dateStyle: "medium", timeStyle: "short" })}
                   </span>
                   {(current.uploader?.full_name || current.uploader?.email) && (
                     <span className="inline-flex items-center gap-1">
