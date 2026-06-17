@@ -293,7 +293,7 @@ function MediaPage() {
       await syncPropertyImages(item.property_id);
     },
     onSuccess: () => {
-      toast.success("Titelbild gesetzt");
+      toast.success(t("media.toasts.coverSet"));
       qc.invalidateQueries({ queryKey: ["property-media"] });
     },
   });
