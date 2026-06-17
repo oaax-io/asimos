@@ -886,9 +886,9 @@ function MediaPage() {
                     variant="secondary"
                     size="icon"
                     className="h-8 w-8 bg-card/95 text-foreground border border-border shadow-md backdrop-blur-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-                    title="Umbenennen"
+                    title={t("media.actions.rename")}
                     onClick={() => {
-                      const next = window.prompt("Neuer Titel", m.title ?? m.file_name ?? "");
+                      const next = window.prompt(t("media.newTitlePrompt"), m.title ?? m.file_name ?? "");
                       if (next !== null) rename.mutate({ id: m.id, title: next });
                     }}
                   >
