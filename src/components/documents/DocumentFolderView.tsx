@@ -53,6 +53,7 @@ function formatBytes(bytes: number | null | undefined) {
 }
 
 export function DocumentFolderView() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
 
   const { data: uploaded = [] } = useQuery({
