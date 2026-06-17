@@ -28,17 +28,9 @@ import {
 import { toast } from "sonner";
 import { formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
+import { useTranslation } from "react-i18next";
 
-const CATEGORY_LABELS: Record<string, string> = {
-  client: "Kunden",
-  property: "Immobilien",
-  lead: "Leads",
-  mandate: "Mandate",
-  reservation: "Reservationen",
-  financing: "Finanzierungen",
-  financing_profile: "Finanzierungen",
-  other: "Sonstige",
-};
+const CATEGORY_KEYS = ["client","property","lead","mandate","reservation","financing","other"];
 
 type AnyDoc = {
   id: string;
