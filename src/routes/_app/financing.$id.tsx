@@ -275,18 +275,18 @@ function FinancingDetailPage() {
       <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Quick Check zurücksetzen und neu starten?</AlertDialogTitle>
+            <AlertDialogTitle>{t("financing.detail.resetDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Die gespeicherten Werte bleiben erhalten.
+              {t("financing.detail.resetDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t("financing.detail.resetDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => resetMutation.mutate()}
               disabled={resetMutation.isPending}
             >
-              Zurücksetzen
+              {t("financing.detail.resetDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
