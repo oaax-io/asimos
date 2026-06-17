@@ -1554,79 +1554,85 @@ function Step6Summary({
   isRefiOnly: boolean;
   effectiveMortgage: number;
 }) {
+  const { t } = useTranslation();
   const client = clients.find((c) => c.id === form.client_id);
   const property = properties.find((p) => p.id === form.property_id);
-  const moduleLabels = form.modules.map((m) => MODULE_OPTIONS.find((o) => o.key === m)?.label).filter(Boolean).join(" + ");
+  const moduleLabels = form.modules
+    .map((m) => t(`financing.wizard.modules.${m}.label`, { defaultValue: MODULE_OPTIONS.find((o) => o.key === m)?.label ?? m }))
+    .filter(Boolean)
+    .join(" + ");
   const propertyLabel = form.property_source === "crm"
     ? (property?.title ?? "—")
     : form.property_source === "manual"
       ? (form.property_title || "—")
-      : "Später erfassen";
+      : t("financing.wizard.summary.laterToCapture");
   const clientLabel = form.client_source === "crm"
     ? (client?.full_name ?? "—")
-    : "Ohne Kunde";
-  const propertyValueLabel = isRefiOnly ? "Objektwert / Verkehrswert" : "Kaufpreis";
+    : t("financing.wizard.summary.noClient");
+  const propertyValueLabel = isRefiOnly
+    ? t("financing.wizard.summary.propertyValue")
+    : t("financing.wizard.summary.purchasePrice");
 
   return (
     <div className="space-y-4">
-      <SummaryGroup title="Finanzierungsart">
-        <SumRow label="Module" value={moduleLabels || "—"} />
+      <SummaryGroup title={t("financing.wizard.summary.financingType")}>
+        <SumRow label={t("financing.wizard.summary.modules")} value={moduleLabels || "—"} />
       </SummaryGroup>
 
-      <SummaryGroup title="Immobilie">
-        <SumRow label="Bezeichnung" value={propertyLabel} />
-        {form.property_address && <SumRow label="Adresse" value={form.property_address} />}
+      <SummaryGroup title={t("financing.wizard.summary.property")}>
+        <SumRow label={t("financing.wizard.summary.designation")} value={propertyLabel} />
+        {form.property_address && <SumRow label={t("financing.wizard.summary.address")} value={form.property_address} />}
         {form.property_purchase_price && <SumRow label={propertyValueLabel} value={formatCurrency(num(form.property_purchase_price))} />}
-        {isRefiOnly && form.object_type && <SumRow label="Objektart" value={OBJECT_TYPE_LABELS[form.object_type]} />}
-        {isRefiOnly && form.usage_type && <SumRow label="Nutzung" value={form.usage_type === "rental" ? "Renditeobjekt" : "Eigennutzung"} />}
+        {isRefiOnly && form.object_type && <SumRow label={t("financing.wizard.summary.objectType")} value={t(`financing.wizard.metrics.objectTypes.${form.object_type}`, { defaultValue: OBJECT_TYPE_LABELS[form.object_type] })} />}
+        {isRefiOnly && form.usage_type && <SumRow label={t("financing.wizard.summary.usage")} value={form.usage_type === "rental" ? t("financing.wizard.summary.usageRental") : t("financing.wizard.summary.usageOwner")} />}
       </SummaryGroup>
 
-      <SummaryGroup title="Kunde">
-        <SumRow label="Kunde" value={clientLabel} />
-        {form.gross_income_yearly && <SumRow label="Brutto-Jahreseinkommen" value={formatCurrency(num(form.gross_income_yearly))} />}
-        {!isRefiOnly && form.own_funds_total && <SumRow label="Eigenmittel total" value={formatCurrency(num(form.own_funds_total))} />}
-        {!isRefiOnly && form.own_funds_pension_fund && <SumRow label="davon PK / Freizügigkeit" value={formatCurrency(num(form.own_funds_pension_fund))} />}
-        {isRefiOnly && form.monthly_obligations && <SumRow label="Monatl. Verpflichtungen" value={formatCurrency(num(form.monthly_obligations))} />}
+      <SummaryGroup title={t("financing.wizard.summary.client")}>
+        <SumRow label={t("financing.wizard.summary.client")} value={clientLabel} />
+        {form.gross_income_yearly && <SumRow label={t("financing.wizard.summary.grossIncome")} value={formatCurrency(num(form.gross_income_yearly))} />}
+        {!isRefiOnly && form.own_funds_total && <SumRow label={t("financing.wizard.summary.ownFundsTotal")} value={formatCurrency(num(form.own_funds_total))} />}
+        {!isRefiOnly && form.own_funds_pension_fund && <SumRow label={t("financing.wizard.summary.pkPart")} value={formatCurrency(num(form.own_funds_pension_fund))} />}
+        {isRefiOnly && form.monthly_obligations && <SumRow label={t("financing.wizard.summary.monthlyObligations")} value={formatCurrency(num(form.monthly_obligations))} />}
       </SummaryGroup>
 
       {isRefiOnly && (form.current_bank || form.interest_rate_current || form.interest_rate_expiry || form.refi_purpose) && (
-        <SummaryGroup title="Bestehende Finanzierung">
-          {form.current_bank && <SumRow label="Aktuelle Bank" value={form.current_bank} />}
-          {form.interest_rate_current && <SumRow label="Aktueller Zinssatz" value={`${num(form.interest_rate_current).toFixed(2)} %`} />}
-          {form.interest_rate_expiry && <SumRow label="Ablauf Zinsbindung" value={form.interest_rate_expiry} />}
-          {form.refi_purpose && <SumRow label="Zweck" value={REFI_PURPOSE_LABELS[form.refi_purpose]} />}
+        <SummaryGroup title={t("financing.wizard.summary.existingFinancing")}>
+          {form.current_bank && <SumRow label={t("financing.wizard.summary.currentBank")} value={form.current_bank} />}
+          {form.interest_rate_current && <SumRow label={t("financing.wizard.summary.currentRate")} value={`${num(form.interest_rate_current).toFixed(2)} %`} />}
+          {form.interest_rate_expiry && <SumRow label={t("financing.wizard.summary.rateExpiry")} value={form.interest_rate_expiry} />}
+          {form.refi_purpose && <SumRow label={t("financing.wizard.summary.purpose")} value={t(`financing.wizard.metrics.refiPurposes.${form.refi_purpose}`, { defaultValue: REFI_PURPOSE_LABELS[form.refi_purpose] })} />}
         </SummaryGroup>
       )}
 
-      <SummaryGroup title="Kennzahlen">
+      <SummaryGroup title={t("financing.wizard.summary.metrics")}>
         {isRefiOnly ? (
           <>
-            <SumRow label="Aktuelle Hypothek" value={formatCurrency(num(form.existing_mortgage))} />
-            <SumRow label="Aufstockungsbetrag" value={formatCurrency(num(form.requested_increase))} />
-            <SumRow label="Neue Gesamthypothek" value={formatCurrency(effectiveMortgage)} />
+            <SumRow label={t("financing.wizard.summary.currentMortgage")} value={formatCurrency(num(form.existing_mortgage))} />
+            <SumRow label={t("financing.wizard.summary.increaseAmount")} value={formatCurrency(num(form.requested_increase))} />
+            <SumRow label={t("financing.wizard.summary.newTotalMortgage")} value={formatCurrency(effectiveMortgage)} />
           </>
         ) : (
           <>
-            <SumRow label="Gewünschte Hypothek" value={formatCurrency(num(form.requested_mortgage))} />
-            {form.existing_mortgage && <SumRow label="Bestehende Hypothek" value={formatCurrency(num(form.existing_mortgage))} />}
+            <SumRow label={t("financing.wizard.summary.requestedMortgage")} value={formatCurrency(num(form.requested_mortgage))} />
+            {form.existing_mortgage && <SumRow label={t("financing.wizard.summary.existingMortgage")} value={formatCurrency(num(form.existing_mortgage))} />}
           </>
         )}
-        {form.renovation_costs && <SumRow label="Renovationskosten" value={formatCurrency(num(form.renovation_costs))} />}
-        {form.renovation_own_work && <SumRow label="davon Eigenleistung" value={formatCurrency(num(form.renovation_own_work))} />}
-        <SumRow label="Kalk. Zinssatz" value={`${num(form.calc_rate).toFixed(1)} %`} />
-        <SumRow label="Nebenkosten" value={`${num(form.ancillary_pct).toFixed(1)} %`} />
-        <SumRow label="Amortisationsdauer" value={`${form.amortisation_years} Jahre`} />
+        {form.renovation_costs && <SumRow label={t("financing.wizard.summary.renovationCosts")} value={formatCurrency(num(form.renovation_costs))} />}
+        {form.renovation_own_work && <SumRow label={t("financing.wizard.summary.ownWork")} value={formatCurrency(num(form.renovation_own_work))} />}
+        <SumRow label={t("financing.wizard.summary.calcRate")} value={`${num(form.calc_rate).toFixed(1)} %`} />
+        <SumRow label={t("financing.wizard.summary.ancillaryCosts")} value={`${num(form.ancillary_pct).toFixed(1)} %`} />
+        <SumRow label={t("financing.wizard.summary.amortDuration")} value={t("financing.wizard.summary.years", { count: Number(form.amortisation_years) })} />
       </SummaryGroup>
 
       <div className="rounded-lg border p-4 bg-card">
         <div className="flex items-center justify-between mb-2">
-          <p className="font-semibold">Live-Vorschau</p>
+          <p className="font-semibold">{t("financing.wizard.summary.livePreview")}</p>
           <StatusBadge status={status} />
         </div>
         <KpiPreview kpis={kpis} hideEquity={isRefiOnly} />
         {isRefiOnly && kpis.ltvExceeded && (
           <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
-            ⚠ Neue Gesamthypothek übersteigt max. Belehnung von {kpis.maxLtv}% ({formatCurrency(kpis.maxMortgageAllowed)}).
+            {t("financing.wizard.summary.ltvExceeded", { ltv: kpis.maxLtv, amount: formatCurrency(kpis.maxMortgageAllowed) })}
           </p>
         )}
       </div>
