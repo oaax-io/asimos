@@ -200,7 +200,7 @@
     "dossierStatus": {
       "title": "Dossiers de financement par statut",
       "draft": "Brouillon",
-      "quick_check": "Vérification rapide",
+      "quick_check": "Quick-Check",
       "documents_missing": "Documents manquants",
       "ready_for_bank": "Prêt pour la banque",
       "submitted_to_bank": "Soumis à la banque",
@@ -593,8 +593,8 @@
     "filters": {
       "type": "Type",
       "allTypes": "Tous les types",
-      "quickCheck": "Vérification rapide",
-      "allQuickCheck": "Vérification rapide (toutes)",
+      "quickCheck": "Quick-Check",
+      "allQuickCheck": "Quick-Check (toutes)",
       "dossierStatus": "Statut du dossier",
       "allStatus": "Statut (tous)",
       "bankType": "Type de banque",
@@ -619,7 +619,7 @@
     "loading": "Chargement…",
     "empty": {
       "title": "Aucun financement",
-      "description": "Commencez par une vérification rapide pour un client."
+      "description": "Commencez par une Quick-Check pour un client."
     },
     "savedHypo": "Calculateurs hypothécaires Kosovo enregistrés",
     "hypo": {
@@ -649,7 +649,7 @@
       "bankType": "Type de banque : {{type}}",
       "updatedAt": "Mis à jour le {{date}}",
       "select": "Sélectionner",
-      "quickCheckPrefix": "Vérification rapide :",
+      "quickCheckPrefix": "Quick-Check :",
       "notYetDone": "Pas encore effectué",
       "existingProperty": "Bien existant",
       "quickEntry": "Saisie rapide",
@@ -680,7 +680,7 @@
     },
     "dossierStatus": {
       "draft": "Brouillon",
-      "quick_check": "Vérification rapide",
+      "quick_check": "Quick-Check",
       "documents_missing": "Documents manquants",
       "ready_for_bank": "Prêt pour la banque",
       "submitted_to_bank": "Soumis à la banque",
@@ -700,7 +700,7 @@
       },
       "tabs": {
         "overview": "Aperçu",
-        "quickcheck": "Vérification rapide",
+        "quickcheck": "Quick-Check",
         "disclosure": "Auto-déclaration",
         "ubs": "Checklist banque",
         "documents": "Documents",
@@ -713,9 +713,9 @@
         "noProperty": "Aucun bien associé"
       },
       "quickcheck": {
-        "start": "Démarrer la vérification rapide",
+        "start": "Démarrer la Quick-Check",
         "startDescription": "Saisissez les données clés du financement dans l'assistant. Le résultat s'affichera ici à la fin.",
-        "lastCheck": "Dernière vérification rapide : {{date}}",
+        "lastCheck": "Dernière Quick-Check : {{date}}",
         "recalculate": "Recalculer",
         "subtabs": {
           "precheck": "Pré-examen",
@@ -827,18 +827,18 @@
         }
       },
       "resetDialog": {
-        "title": "Réinitialiser et redémarrer la vérification rapide ?",
+        "title": "Réinitialiser et redémarrer la Quick-Check ?",
         "description": "Les valeurs enregistrées sont conservées.",
         "cancel": "Annuler",
         "confirm": "Réinitialiser"
       },
       "toast": {
-        "reset": "Vérification rapide réinitialisée",
+        "reset": "Quick-Check réinitialisée",
         "resetFailed": "Échec de la réinitialisation"
       }
     },
     "wizard": {
-      "headerTitle": "Vérification rapide du financement – Étape {{step}} / {{total}}",
+      "headerTitle": "Quick-Check du financement – Étape {{step}} / {{total}}",
       "stepLabels": {
         "modules": "Modules",
         "property": "Objet",
@@ -850,10 +850,10 @@
       "stepCounter": "Étape {{step}} sur {{total}}",
       "back": "Retour",
       "next": "Suivant",
-      "submit": "Démarrer la vérification rapide",
+      "submit": "Démarrer la Quick-Check",
       "submitting": "Enregistrement…",
       "toast": {
-        "created": "Vérification rapide créée",
+        "created": "Quick-Check créée",
         "saveError": "Erreur lors de l'enregistrement"
       },
       "modules": {
@@ -908,14 +908,14 @@
         "crmEmpty": "Sélectionnez à gauche un objet du CRM.",
         "address": "Adresse",
         "purchasePrice": "Prix d'achat (CHF)",
-        "crmFilled": "Valeurs pré-remplies depuis le CRM. Les modifications ne s'appliquent qu'à cette vérification rapide."
+        "crmFilled": "Valeurs pré-remplies depuis le CRM. Les modifications ne s'appliquent qu'à cette Quick-Check."
       },
       "client": {
         "sourceCrm": "Choisir un client du CRM",
         "sourceCrmDescRefi": "Le revenu sera pré-rempli depuis le profil client.",
         "sourceCrmDesc": "L'auto-déclaration et les fonds propres seront pré-remplis.",
         "sourceManual": "Sans client / manuel",
-        "sourceManualDesc": "Vérification rapide sans liaison à un client.",
+        "sourceManualDesc": "Quick-Check sans liaison à un client.",
         "main": "Client principal",
         "client": "Client",
         "searchClient": "Rechercher un client…",
@@ -925,7 +925,7 @@
         "pensionPart": "dont caisse de pension (CHF)",
         "refiHint": "En cas de refinancement, seul le revenu est utilisé pour la charge supportable.",
         "crmHint": "Valeurs du profil client & auto-déclaration — éditables.",
-        "manualHint": "La vérification rapide est créée sans liaison client. Vous saisirez les données financières à l'étape 4."
+        "manualHint": "La Quick-Check est créée sans liaison client. Vous saisirez les données financières à l'étape 4."
       },
       "coApplicant": {
         "title": "Ajouter un co-demandeur / conjoint",
@@ -1098,8 +1098,8 @@
       "sendToClient": "Envoyer au client",
       "continueDossier": "Continuer le dossier",
       "discard": "Ne pas poursuivre",
-      "reportTitle": "Vérification rapide de financement – {{name}}",
-      "activity": "Rapport de vérification rapide généré (statut : {{status}})",
+      "reportTitle": "Quick-Check de financement – {{name}}",
+      "activity": "Rapport de Quick-Check généré (statut : {{status}})",
       "toast": {
         "generated": "Rapport généré",
         "generateError": "Erreur lors de la génération",
