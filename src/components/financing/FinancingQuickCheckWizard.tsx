@@ -1269,6 +1269,10 @@ function CoApplicantSection({
                 </div>
               )}
 
+              <IncomeBreakdownPanel breakdown={coIncomeBreakdown} />
+
+
+
               <div className="rounded-md bg-background border p-3 space-y-1">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                   <Users className="h-3 w-3" /> {t("financing.wizard.coApplicant.combinedTitle")}
