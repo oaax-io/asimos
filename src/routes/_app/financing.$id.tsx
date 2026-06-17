@@ -121,7 +121,7 @@ function FinancingDetailPage() {
           <div className="flex gap-2">
             <Badge>{DOSSIER_STATUS_LABELS[dossier.dossier_status as DossierStatus] ?? t("financing.dossierStatus.draft")}</Badge>
             {dossier.quick_check_status && (
-              <Badge variant="outline">{QUICK_CHECK_LABELS[dossier.quick_check_status as QuickCheckStatus]}</Badge>
+              <Badge variant="outline">{t(`financing.quickCheckStatus.${dossier.quick_check_status}`, { defaultValue: QUICK_CHECK_LABELS[dossier.quick_check_status as QuickCheckStatus] })}</Badge>
             )}
           </div>
         }
@@ -192,7 +192,7 @@ function FinancingDetailPage() {
             <>
               <Card>
                 <CardContent className="p-4 flex flex-wrap items-center gap-3">
-                  <Badge className={qcBadgeTone(qcStatus)}>{QUICK_CHECK_LABELS[qcStatus]}</Badge>
+                  <Badge className={qcBadgeTone(qcStatus)}>{t(`financing.quickCheckStatus.${qcStatus}`, { defaultValue: QUICK_CHECK_LABELS[qcStatus] })}</Badge>
                   {lastCheckAt && (
                     <span className="text-sm text-muted-foreground">
                       {t("financing.detail.quickcheck.lastCheck", { date: lastCheckAt })}
@@ -937,7 +937,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveEquityRatio")} value={pct(liveEqRatio)} delta={liveEqRatio - original.equityRatio} betterWhenLower={false} />
             <div className="rounded-lg border p-3 flex flex-col justify-center">
               <p className="text-xs text-muted-foreground">{t("financing.detail.quickcheck.scenarios.status")}</p>
-              <Badge className={cn("mt-1 w-fit", qcBadgeTone(liveStatus))}>{QUICK_CHECK_LABELS[liveStatus]}</Badge>
+              <Badge className={cn("mt-1 w-fit", qcBadgeTone(liveStatus))}>{t(`financing.quickCheckStatus.${liveStatus}`, { defaultValue: QUICK_CHECK_LABELS[liveStatus] })}</Badge>
             </div>
           </div>
 
@@ -1023,7 +1023,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
                         <p className="font-semibold">{s.bezeichnung}</p>
                         <p className="text-xs text-muted-foreground">{formatDateOnly(s.created_at)}</p>
                       </div>
-                      <Badge className={qcBadgeTone(st)}>{QUICK_CHECK_LABELS[st]}</Badge>
+                      <Badge className={qcBadgeTone(st)}>{t(`financing.quickCheckStatus.${st}`, { defaultValue: QUICK_CHECK_LABELS[st] })}</Badge>
                     </div>
                     <div className="flex gap-3 text-xs text-muted-foreground tabular-nums">
                       <span>{t("financing.detail.quickcheck.scenarios.affordabilityShort")}: <span className="font-medium text-foreground">{s.tragbarkeit != null ? pct(Number(s.tragbarkeit)) : "—"}</span></span>

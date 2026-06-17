@@ -1090,6 +1090,24 @@
         "otherGroup": "Autres",
         "useCustom": "Utiliser « {{value}} »"
       }
+    },
+    "actions": {
+      "generateReport": "Générer le rapport",
+      "regenerateReport": "Régénérer le rapport",
+      "viewReport": "Voir le rapport",
+      "sendToClient": "Envoyer au client",
+      "continueDossier": "Continuer le dossier",
+      "discard": "Ne pas poursuivre",
+      "reportTitle": "Vérification rapide de financement – {{name}}",
+      "activity": "Rapport de vérification rapide généré (statut : {{status}})",
+      "toast": {
+        "generated": "Rapport généré",
+        "generateError": "Erreur lors de la génération",
+        "noReport": "Aucun rapport disponible – veuillez d'abord en générer un.",
+        "openError": "Impossible d'ouvrir le rapport.",
+        "popupBlocked": "Pop-up bloquée – veuillez autoriser les pop-ups."
+      },
+      "role": "Client"
     }
   },
   "appointments": {
@@ -1108,6 +1126,22 @@
       "folders": "Dossiers",
       "uploaded": "Documents téléversés",
       "generated": "Documents générés"
+    },
+    "pdf": {
+      "generate": "Générer le PDF",
+      "creating": "Création…",
+      "download": "Télécharger le PDF",
+      "fallbackTitle": "Utiliser l'impression du navigateur comme solution de repli ?",
+      "fallbackDescriptionDefault": "Le PDF n'a pas pu être généré.",
+      "fallbackReasonDefault": "Le service PDF n'a pas renvoyé de fichier.",
+      "cancel": "Annuler",
+      "openPrint": "Ouvrir l'impression du navigateur",
+      "toast": {
+        "noContent": "Aucun contenu à générer",
+        "opened": "PDF ouvert",
+        "created": "PDF créé",
+        "failed": "Le PDF n'a pas pu être généré. Utiliser l'impression du navigateur ?"
+      }
     }
   }
 }

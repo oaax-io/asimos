@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { FileText, Eye, Send, ArrowRight, XCircle } from "lucide-react";
@@ -23,6 +24,7 @@ type Props = {
 export function FinancingQuickCheckActions({
   dossierId, dossier, onContinue, onDiscard, showWorkflowButtons = true,
 }: Props) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [sendOpen, setSendOpen] = useState(false);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
@@ -124,7 +126,7 @@ export function FinancingQuickCheckActions({
       };
 
       const payload: any = {
-        title: `Finanzierungs Quick-Check – ${dossier.clients?.full_name ?? ""}`.trim(),
+        title: t("financing.actions.reportTitle", { name: dossier.clients?.full_name ?? "" }).trim(),
         document_type: "financing_quick_check",
         related_type: "financing_dossier",
         related_id: dossierId,
@@ -139,29 +141,33 @@ export function FinancingQuickCheckActions({
         .select("id")
         .single();
       if (error) throw error;
+      const statusKey = dossier.quick_check_status ?? null;
+      const statusLabel = statusKey
+        ? t(`financing.quickCheckStatus.${statusKey}`, { defaultValue: statusKey })
+        : "—";
       await logActivity({
         relatedType: "financing_dossier",
         relatedId: dossierId,
-        action: `Quick-Check-Bericht generiert (Status: ${dossier.quick_check_status ?? "—"})`,
+        action: t("financing.actions.activity", { status: statusLabel }),
         metadata: { generated_document_id: data.id },
       });
       return data.id as string;
     },
     onSuccess: (id) => {
-      toast.success("Bericht generiert");
+      toast.success(t("financing.actions.toast.generated"));
       qc.invalidateQueries({ queryKey: ["financing_quick_check_report", dossierId] });
       qc.invalidateQueries({ queryKey: ["financing_documents"] });
       qc.invalidateQueries({ queryKey: ["generated-documents"] });
       qc.invalidateQueries({ queryKey: ["activity_logs", "financing_dossier", dossierId] });
       openPreview(id);
     },
-    onError: (e: any) => toast.error(e.message ?? "Fehler beim Generieren"),
+    onError: (e: any) => toast.error(e.message ?? t("financing.actions.toast.generateError")),
   });
 
   const openPreview = async (idOverride?: string) => {
     const id = idOverride ?? reportQuery.data?.id;
     if (!id) {
-      toast.error("Kein Bericht vorhanden – bitte zuerst generieren.");
+      toast.error(t("financing.actions.toast.noReport"));
       return;
     }
     const { data, error } = await supabase
@@ -170,12 +176,12 @@ export function FinancingQuickCheckActions({
       .eq("id", id)
       .maybeSingle();
     if (error || !data?.html_content) {
-      toast.error("Bericht konnte nicht geöffnet werden.");
+      toast.error(t("financing.actions.toast.openError"));
       return;
     }
     const w = window.open("", "_blank");
     if (!w) {
-      toast.error("Popup blockiert – bitte Popups erlauben.");
+      toast.error(t("financing.actions.toast.popupBlocked"));
       return;
     }
     w.document.open();
@@ -194,7 +200,7 @@ export function FinancingQuickCheckActions({
   };
 
   const recipients = dossier.clients?.email
-    ? [{ name: dossier.clients?.full_name ?? "", email: dossier.clients.email, role: "Kunde" }]
+    ? [{ name: dossier.clients?.full_name ?? "", email: dossier.clients.email, role: t("financing.actions.role") }]
     : [];
 
   const hasReport = !!reportQuery.data?.id;
@@ -202,17 +208,17 @@ export function FinancingQuickCheckActions({
   // even if the saved report was generated before the brandkit was updated).
   const liveInput = buildInput();
   const liveHtml = buildReportHtml(liveInput, buildRecommendations(liveInput));
-  const reportTitle = `Finanzierungs Quick-Check – ${dossier.clients?.full_name ?? ""}`.trim();
+  const reportTitle = t("financing.actions.reportTitle", { name: dossier.clients?.full_name ?? "" }).trim();
 
   return (
     <>
       <div className="flex flex-wrap gap-2">
         <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
           <FileText className="mr-1 h-4 w-4" />
-          {hasReport ? "Bericht neu generieren" : "Bericht generieren"}
+          {hasReport ? t("financing.actions.regenerateReport") : t("financing.actions.generateReport")}
         </Button>
         <Button variant="outline" onClick={() => openPreview()} disabled={!hasReport}>
-          <Eye className="mr-1 h-4 w-4" />Bericht ansehen
+          <Eye className="mr-1 h-4 w-4" />{t("financing.actions.viewReport")}
         </Button>
         <GeneratePdfButton
           html={liveHtml}
@@ -224,16 +230,16 @@ export function FinancingQuickCheckActions({
           size="default"
         />
         <Button variant="outline" onClick={onSend}>
-          <Send className="mr-1 h-4 w-4" />An Kunde senden
+          <Send className="mr-1 h-4 w-4" />{t("financing.actions.sendToClient")}
         </Button>
         {showWorkflowButtons && onContinue && (
           <Button variant="secondary" onClick={onContinue}>
-            <ArrowRight className="mr-1 h-4 w-4" />Dossier weiterbearbeiten
+            <ArrowRight className="mr-1 h-4 w-4" />{t("financing.actions.continueDossier")}
           </Button>
         )}
         {showWorkflowButtons && onDiscard && (
           <Button variant="ghost" onClick={onDiscard}>
-            <XCircle className="mr-1 h-4 w-4" />Nicht weiterverfolgen
+            <XCircle className="mr-1 h-4 w-4" />{t("financing.actions.discard")}
           </Button>
         )}
       </div>
@@ -243,7 +249,7 @@ export function FinancingQuickCheckActions({
           open={sendOpen}
           onOpenChange={(v) => { setSendOpen(v); if (!v) setActiveDocId(null); }}
           generatedDocumentId={activeDocId}
-          documentTitle={`Finanzierungs Quick-Check – ${dossier.clients?.full_name ?? ""}`.trim()}
+          documentTitle={reportTitle}
           initialRecipients={recipients}
         />
       )}
