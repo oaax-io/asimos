@@ -246,8 +246,8 @@ function MediaPage() {
         await syncPropertyImages(form.property_id);
         toast.success(
           processed.length === 1
-            ? "Bild hochgeladen"
-            : `Alle ${processed.length} Dateien hochgeladen`,
+            ? t("media.toasts.uploaded")
+            : t("media.toasts.uploadedAll", { count: processed.length }),
           { id: toastId },
         );
       } catch (err) {
