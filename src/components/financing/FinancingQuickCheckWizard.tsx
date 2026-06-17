@@ -1016,6 +1016,16 @@ function Step3Client({
             relatedMap={relatedMap}
             isRefiOnly={isRefiOnly}
           />
+
+          <div className="lg:col-span-2">
+            <AdditionalCoApplicantsSection
+              form={form}
+              update={update}
+              clients={clients}
+              loading={loading}
+              isRefiOnly={isRefiOnly}
+            />
+          </div>
         </div>
       )}
 
