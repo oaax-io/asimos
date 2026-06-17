@@ -782,10 +782,10 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Szenario gelöscht");
+      toast.success(t("financing.detail.quickcheck.scenarios.toast.deleted"));
       queryClient.invalidateQueries({ queryKey: ["financing_scenarios", dossierId] });
     },
-    onError: (e: Error) => toast.error(e.message ?? "Löschen fehlgeschlagen"),
+    onError: (e: Error) => toast.error(e.message ?? t("financing.detail.quickcheck.scenarios.toast.deleteFailed")),
   });
 
   const loadScenario = (s: ScenarioRow) => {
@@ -794,7 +794,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     if (s.bruttoeinkommen != null) setIncome(Math.round(Number(s.bruttoeinkommen)));
     if (s.hypothek != null) setMortgage(Math.round(Number(s.hypothek)));
     if (s.kalk_zinssatz != null) setRate(Math.round(Number(s.kalk_zinssatz) * 10) / 10);
-    toast.success(`Szenario "${s.bezeichnung}" geladen`);
+    toast.success(t("financing.detail.quickcheck.scenarios.toast.loaded", { name: s.bezeichnung }));
   };
 
   const liveLtv = live.result.loan_to_value_ratio;
