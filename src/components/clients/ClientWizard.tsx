@@ -725,17 +725,16 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             {currentStep === "method" && (
               <div className="space-y-4">
                 <div>
-                  <p className="text-base font-semibold">Wie möchtest du den Kunden erfassen?</p>
+                  <p className="text-base font-semibold">{t("clientWizard.method.question")}</p>
                   <p className="text-sm text-muted-foreground">
-                    Mit einer Selbstauskunft (PDF) füllen wir Stammdaten, Finanzen und
-                    Mitantragsteller automatisch aus.
+                    {t("clientWizard.method.hint")}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {([
-                    { v: "manual", title: "Manuell erfassen", desc: "Schrittweise Eingabe mit Rolle und Stammdaten", Icon: ClipboardCheck },
-                    { v: "upload", title: "Selbstauskunft hochladen", desc: "PDF analysieren – Kunde wird automatisch angelegt", Icon: Sparkles },
-                  ] as const).map(({ v, title, desc, Icon }) => {
+                    { v: "manual", k: "manual", Icon: ClipboardCheck },
+                    { v: "upload", k: "upload", Icon: Sparkles },
+                  ] as const).map(({ v, k, Icon }) => {
                     const active = form.creation_method === v;
                     return (
                       <button type="button" key={v}
@@ -747,8 +746,8 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                           <Icon className="h-5 w-5" />
                         </span>
                         <span className="flex-1">
-                          <span className="block font-semibold">{title}</span>
-                          <span className="block text-sm text-muted-foreground">{desc}</span>
+                          <span className="block font-semibold">{t(`clientWizard.method.${k}.title`)}</span>
+                          <span className="block text-sm text-muted-foreground">{t(`clientWizard.method.${k}.desc`)}</span>
                         </span>
                         {active && <Check className="h-5 w-5 text-primary" />}
                       </button>
@@ -760,9 +759,9 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                   <div className="rounded-xl border border-dashed p-6 text-center space-y-3">
                     <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
                     <div>
-                      <p className="font-medium">Selbstauskunft als PDF hochladen</p>
+                      <p className="font-medium">{t("clientWizard.method.pdfTitle")}</p>
                       <p className="text-sm text-muted-foreground">
-                        Erkennt automatisch Antragsteller 1 und – falls vorhanden – Antragsteller 2.
+                        {t("clientWizard.method.pdfHint")}
                       </p>
                     </div>
                     <input
@@ -778,7 +777,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                     <Button type="button" disabled={uploading}
                       onClick={() => fileInputRef.current?.click()}>
                       {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                      {uploading ? "Wird analysiert…" : "PDF auswählen"}
+                      {uploading ? t("clientWizard.method.analyzing") : t("clientWizard.method.selectPdf")}
                     </Button>
                   </div>
                 )}
