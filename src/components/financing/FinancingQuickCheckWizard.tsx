@@ -99,6 +99,23 @@ type ClientSource = "crm" | "manual";
 
 type CoApplicantRole = "ehepartner" | "mitantragsteller";
 
+export type AdditionalCoApplicant = {
+  client_id: string;
+  role: CoApplicantRole | "";
+  einkommen: string;
+  eigenkapital: string;
+  pk_anteil: string;
+};
+
+const MAX_CO_APPLICANTS = 10; // total Mitantragsteller incl. primary
+const emptyAdditional = (): AdditionalCoApplicant => ({
+  client_id: "",
+  role: "mitantragsteller",
+  einkommen: "",
+  eigenkapital: "",
+  pk_anteil: "",
+});
+
 export type WizardForm = {
   modules: WizardModule[];
 
