@@ -691,14 +691,14 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
             {currentStep === "entity" && (
               <div className="space-y-4">
                 <div>
-                  <p className="text-base font-semibold">Was möchtest du erfassen?</p>
-                  <p className="text-sm text-muted-foreground">Wähle die Art des Kunden.</p>
+                  <p className="text-base font-semibold">{t("clientWizard.entity.question")}</p>
+                  <p className="text-sm text-muted-foreground">{t("clientWizard.entity.hint")}</p>
                 </div>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {([
-                    { v: "person",  title: "Privatperson",        desc: "Eine natürliche Person",   Icon: User },
-                    { v: "company", title: "Unternehmen / Firma", desc: "Eine juristische Person", Icon: Building2 },
-                  ] as const).map(({ v, title, desc, Icon }) => {
+                    { v: "person",  k: "person",  Icon: User },
+                    { v: "company", k: "company", Icon: Building2 },
+                  ] as const).map(({ v, k, Icon }) => {
                     const active = form.entity_type === v;
                     return (
                       <button type="button" key={v}
@@ -710,8 +710,8 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
                           <Icon className="h-5 w-5" />
                         </span>
                         <span className="flex-1">
-                          <span className="block font-semibold">{title}</span>
-                          <span className="block text-sm text-muted-foreground">{desc}</span>
+                          <span className="block font-semibold">{t(`clientWizard.entity.${k}.title`)}</span>
+                          <span className="block text-sm text-muted-foreground">{t(`clientWizard.entity.${k}.desc`)}</span>
                         </span>
                         {active && <Check className="h-5 w-5 text-primary" />}
                       </button>
