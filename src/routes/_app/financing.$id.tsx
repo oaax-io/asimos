@@ -42,6 +42,7 @@ function FinancingDetailPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [resetOpen, setResetOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
 
