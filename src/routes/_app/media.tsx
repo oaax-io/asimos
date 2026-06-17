@@ -841,7 +841,7 @@ function MediaPage() {
                   )}
                 </button>
                 <div className="p-3">
-                  <p className="truncate text-sm font-medium">{m.title ?? m.file_name ?? "Ohne Titel"}</p>
+                  <p className="truncate text-sm font-medium">{m.title ?? m.file_name ?? t("media.untitled")}</p>
                   {m.properties && (
                     <Link
                       to="/properties/$id"
