@@ -1782,6 +1782,12 @@ function Step6Summary({
         {!isRefiOnly && form.own_funds_total && <SumRow label={t("financing.wizard.summary.ownFundsTotal")} value={formatCurrency(num(form.own_funds_total))} />}
         {!isRefiOnly && form.own_funds_pension_fund && <SumRow label={t("financing.wizard.summary.pkPart")} value={formatCurrency(num(form.own_funds_pension_fund))} />}
         {isRefiOnly && form.monthly_obligations && <SumRow label={t("financing.wizard.summary.monthlyObligations")} value={formatCurrency(num(form.monthly_obligations))} />}
+        {(form.additional_co_applicants?.filter((a) => !!a.client_id).length ?? 0) > 0 && (
+          <SumRow
+            label={t("financing.wizard.summary.additionalCoApplicants", { defaultValue: "Weitere Mitantragsteller" })}
+            value={String(form.additional_co_applicants.filter((a) => !!a.client_id).length)}
+          />
+        )}
       </SummaryGroup>
 
       {isRefiOnly && (form.current_bank || form.interest_rate_current || form.interest_rate_expiry || form.refi_purpose) && (
