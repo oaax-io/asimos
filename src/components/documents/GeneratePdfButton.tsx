@@ -173,7 +173,7 @@ export function GeneratePdfButton({
   if (blobUrl) {
     return (
       <Button variant={variant} size={size} onClick={() => triggerDownload(blobUrl)}>
-        <FileDown className="mr-2 size-4" /> PDF herunterladen
+        <FileDown className="mr-2 size-4" /> {t("documents.pdf.download")}
       </Button>
     );
   }
@@ -182,19 +182,19 @@ export function GeneratePdfButton({
     <>
       <Button variant={variant} size={size} onClick={handle} disabled={disabled || loading || !html}>
         {loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <FileDown className="mr-2 size-4" />}
-        {loading ? "Wird erstellt…" : "PDF generieren"}
+        {loading ? t("documents.pdf.creating") : t("documents.pdf.generate")}
       </Button>
 
       <AlertDialog open={!!fallbackReason} onOpenChange={(open) => !open && setFallbackReason(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Browser-Druck als Fallback verwenden?</AlertDialogTitle>
+            <AlertDialogTitle>{t("documents.pdf.fallbackTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {fallbackReason ?? "PDF konnte nicht generiert werden."}
+              {fallbackReason ?? t("documents.pdf.fallbackDescriptionDefault")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t("documents.pdf.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 setFallbackReason(null);
