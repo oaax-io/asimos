@@ -326,59 +326,61 @@ function startOfWeek(d: Date) {
 function AppointmentForm({
   form, setForm, clients, properties, employees,
 }: { form: any; setForm: (f: any) => void; clients: any[]; properties: any[]; employees: any[] }) {
+  const { t } = useTranslation();
+  const labels = useApptLabels();
   return (
     <div className="space-y-3">
-      <div><Label>Titel *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Besichtigung Hauptstrasse 12" /></div>
+      <div><Label>{t("appointments.form.title")} *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={t("appointments.form.titlePlaceholder")} /></div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label>Typ</Label>
+          <Label>{t("appointments.form.type")}</Label>
           <Select value={form.appointment_type} onValueChange={(v) => setForm({ ...form, appointment_type: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{TYPES.map(t => <SelectItem key={t} value={t}>{apptTypeLabels[t]}</SelectItem>)}</SelectContent>
+            <SelectContent>{TYPES.map(ty => <SelectItem key={ty} value={ty}>{labels.types[ty]}</SelectItem>)}</SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Status</Label>
+          <Label>{t("appointments.form.status")}</Label>
           <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}</SelectContent>
+            <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s}>{labels.statuses[s]}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div><Label>Start *</Label><Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} /></div>
-        <div><Label>Ende</Label><Input type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} /></div>
-        <div className="col-span-2"><Label>Ort</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Adresse, Treffpunkt oder Link" /></div>
+        <div><Label>{t("appointments.form.start")} *</Label><Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} /></div>
+        <div><Label>{t("appointments.form.end")}</Label><Input type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} /></div>
+        <div className="col-span-2"><Label>{t("appointments.form.location")}</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder={t("appointments.form.locationPlaceholder")} /></div>
         <div>
-          <Label>Kunde</Label>
+          <Label>{t("appointments.form.client")}</Label>
           <Select value={form.client_id || "none"} onValueChange={(v) => setForm({ ...form, client_id: v === "none" ? "" : v })}>
-            <SelectTrigger><SelectValue placeholder="Keiner" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("appointments.form.clientPlaceholder")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Kein Kunde</SelectItem>
+              <SelectItem value="none">{t("appointments.form.clientNone")}</SelectItem>
               {clients.map((c: any) => <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div>
-          <Label>Immobilie</Label>
+          <Label>{t("appointments.form.property")}</Label>
           <Select value={form.property_id || "none"} onValueChange={(v) => setForm({ ...form, property_id: v === "none" ? "" : v })}>
-            <SelectTrigger><SelectValue placeholder="Keine" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("appointments.form.propertyPlaceholder")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Keine Immobilie</SelectItem>
+              <SelectItem value="none">{t("appointments.form.propertyNone")}</SelectItem>
               {properties.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div className="col-span-2">
-          <Label>Zuständig</Label>
+          <Label>{t("appointments.form.assignee")}</Label>
           <Select value={form.assigned_to || "none"} onValueChange={(v) => setForm({ ...form, assigned_to: v === "none" ? "" : v })}>
-            <SelectTrigger><SelectValue placeholder="Mir zuweisen" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("appointments.form.assignToMe")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Mir zuweisen</SelectItem>
+              <SelectItem value="none">{t("appointments.form.assignToMe")}</SelectItem>
               {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
       </div>
-      <div><Label>Notizen</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+      <div><Label>{t("appointments.form.notes")}</Label><Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
     </div>
   );
 }
@@ -386,17 +388,18 @@ function AppointmentForm({
 function AppointmentDialog({
   open, onOpenChange, title, form, setForm, clients, properties, employees, onSubmit, submitting,
 }: any) {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>Verknüpfe Termin mit Kunde und/oder Immobilie und weise einen Mitarbeiter zu.</DialogDescription>
+          <DialogDescription>{t("appointments.dialogDescription")}</DialogDescription>
         </DialogHeader>
         <AppointmentForm form={form} setForm={setForm} clients={clients} properties={properties} employees={employees} />
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Abbrechen</Button>
-          <Button onClick={onSubmit} disabled={submitting}>Speichern</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("appointments.actions.cancel")}</Button>
+          <Button onClick={onSubmit} disabled={submitting}>{t("appointments.actions.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -406,6 +409,7 @@ function AppointmentDialog({
 function AppointmentEditDrawer({
   appt, open, onClose, clients, properties, employees, onSave, onDelete,
 }: any) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ ...emptyForm });
 
   useEffect(() => {
@@ -429,16 +433,16 @@ function AppointmentEditDrawer({
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>Termin bearbeiten</SheetTitle>
-          <SheetDescription>Aktualisiere Details, Status oder Zuweisung.</SheetDescription>
+          <SheetTitle>{t("appointments.edit")}</SheetTitle>
+          <SheetDescription>{t("appointments.editDescription")}</SheetDescription>
         </SheetHeader>
         <div className="my-4">
           <AppointmentForm form={form} setForm={setForm} clients={clients} properties={properties} employees={employees} />
         </div>
         <SheetFooter className="flex-row justify-between gap-2">
-          <Button variant="outline" onClick={onDelete}><Trash2 className="mr-1 h-4 w-4" />Löschen</Button>
+          <Button variant="outline" onClick={onDelete}><Trash2 className="mr-1 h-4 w-4" />{t("appointments.actions.delete")}</Button>
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={onClose}>Schliessen</Button>
+            <Button variant="ghost" onClick={onClose}>{t("appointments.actions.close")}</Button>
             <Button onClick={() => onSave({
               title: form.title.trim(),
               appointment_type: form.appointment_type,
@@ -450,7 +454,7 @@ function AppointmentEditDrawer({
               client_id: form.client_id || null,
               property_id: form.property_id || null,
               assigned_to: form.assigned_to || null,
-            })} disabled={!form.title.trim() || !form.starts_at}>Speichern</Button>
+            })} disabled={!form.title.trim() || !form.starts_at}>{t("appointments.actions.save")}</Button>
           </div>
         </SheetFooter>
       </SheetContent>
