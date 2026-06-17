@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/_app/financing/")({ component: FinancingP
 const ALL = "__all__";
 
 function FinancingPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
@@ -46,18 +48,22 @@ function FinancingPage() {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const canDelete = useIsOwnerOrAdmin();
 
+  const typeLabel = (k: string) => t(`financing.type.${k}`, { defaultValue: FINANCING_TYPE_LABELS[k as FinancingType] ?? k });
+  const qcLabel = (k: string) => t(`financing.quickCheckStatus.${k}`, { defaultValue: QUICK_CHECK_LABELS[k as QuickCheckStatus] ?? k });
+  const dossierLabel = (k: string) => t(`financing.dossierStatus.${k}`, { defaultValue: DOSSIER_STATUS_LABELS[k as DossierStatus] ?? k });
+
   const deleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
       const { error } = await supabase.from("financing_dossiers").delete().in("id", ids);
       if (error) throw error;
     },
     onSuccess: (_data, ids) => {
-      toast.success(ids.length === 1 ? "Finanzierung gelöscht" : `${ids.length} Finanzierungen gelöscht`);
+      toast.success(t("financing.toast.deleted", { count: ids.length }));
       setSelected(new Set());
       setConfirmDeleteOpen(false);
       qc.invalidateQueries({ queryKey: ["financing_dossiers"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Löschen fehlgeschlagen"),
+    onError: (e: any) => toast.error(e.message ?? t("financing.toast.deleteFailed")),
   });
 
   const { data: dossiers = [], isLoading } = useQuery({
@@ -139,10 +145,10 @@ function FinancingPage() {
         action={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setHypoOpen(true)}>
-              <Calculator className="mr-2 h-4 w-4" /> Hyporechner Kosovo
+              <Calculator className="mr-2 h-4 w-4" /> {t("financing.hypoButton")}
             </Button>
             <Button onClick={() => setWizardOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Quick Check starten
+              <Plus className="mr-2 h-4 w-4" /> {t("financing.startQuickCheck")}
             </Button>
           </div>
         }
@@ -151,50 +157,50 @@ function FinancingPage() {
       <div className="flex flex-wrap gap-2">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input className="pl-9" placeholder={t("financing.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Art" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.type")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Alle Arten</SelectItem>
-            {Object.entries(FINANCING_TYPE_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
+            <SelectItem value={ALL}>{t("financing.filters.allTypes")}</SelectItem>
+            {Object.keys(FINANCING_TYPE_LABELS).map((k) => (
+              <SelectItem key={k} value={k}>{typeLabel(k)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={qcFilter} onValueChange={setQcFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Quick Check" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.quickCheck")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Quick Check (alle)</SelectItem>
-            {Object.entries(QUICK_CHECK_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
+            <SelectItem value={ALL}>{t("financing.filters.allQuickCheck")}</SelectItem>
+            {Object.keys(QUICK_CHECK_LABELS).map((k) => (
+              <SelectItem key={k} value={k}>{qcLabel(k)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Dossier-Status" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.dossierStatus")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Status (alle)</SelectItem>
-            {Object.entries(DOSSIER_STATUS_LABELS).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
+            <SelectItem value={ALL}>{t("financing.filters.allStatus")}</SelectItem>
+            {Object.keys(DOSSIER_STATUS_LABELS).map((k) => (
+              <SelectItem key={k} value={k}>{dossierLabel(k)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={bankFilter} onValueChange={setBankFilter}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Banktyp" /></SelectTrigger>
+          <SelectTrigger className="w-[150px]"><SelectValue placeholder={t("financing.filters.bankType")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Banktyp (alle)</SelectItem>
+            <SelectItem value={ALL}>{t("financing.filters.allBankTypes")}</SelectItem>
             <SelectItem value="ubs">UBS</SelectItem>
-            <SelectItem value="other">Andere Bank</SelectItem>
-            <SelectItem value="none">Keine Bank</SelectItem>
+            <SelectItem value="other">{t("financing.filters.otherBank")}</SelectItem>
+            <SelectItem value="none">{t("financing.filters.noBank")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Datenbasis" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.dataSource")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Datenbasis (alle)</SelectItem>
-            <SelectItem value="existing_property">Bestehende Immobilie</SelectItem>
-            <SelectItem value="quick_entry">Quick-Erfassung</SelectItem>
+            <SelectItem value={ALL}>{t("financing.filters.allDataSources")}</SelectItem>
+            <SelectItem value="existing_property">{t("financing.filters.existingProperty")}</SelectItem>
+            <SelectItem value="quick_entry">{t("financing.filters.quickEntry")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -205,10 +211,10 @@ function FinancingPage() {
             <Checkbox
               checked={allVisibleSelected}
               onCheckedChange={toggleAllVisible}
-              aria-label="Alle auswählen"
+              aria-label={t("financing.bulk.selectAll")}
             />
             <span className="text-muted-foreground">
-              {selectionCount > 0 ? `${selectionCount} ausgewählt` : "Alle auswählen"}
+              {selectionCount > 0 ? t("financing.bulk.selected", { count: selectionCount }) : t("financing.bulk.selectAll")}
             </span>
           </label>
           {selectionCount > 0 && (
@@ -216,16 +222,16 @@ function FinancingPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.info("Zuweisen kommt bald")}
+                onClick={() => toast.info(t("financing.bulk.assignSoon"))}
               >
-                <UserPlus className="mr-2 h-4 w-4" />Zuweisen
+                <UserPlus className="mr-2 h-4 w-4" />{t("financing.bulk.assign")}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.info("Dokumentgenerierung kommt bald")}
+                onClick={() => toast.info(t("financing.bulk.docSoon"))}
               >
-                <FileText className="mr-2 h-4 w-4" />Dokument generieren
+                <FileText className="mr-2 h-4 w-4" />{t("financing.bulk.generateDocument")}
               </Button>
               {canDelete && (
                 <Button
@@ -234,14 +240,14 @@ function FinancingPage() {
                   onClick={() => setConfirmDeleteOpen(true)}
                   disabled={deleteMutation.isPending}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />Löschen
+                  <Trash2 className="mr-2 h-4 w-4" />{t("financing.bulk.delete")}
                 </Button>
               )}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelected(new Set())}
-                aria-label="Auswahl aufheben"
+                aria-label={t("financing.bulk.clear")}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -251,12 +257,12 @@ function FinancingPage() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Laden…</p>
+        <p className="text-sm text-muted-foreground">{t("financing.loading")}</p>
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Noch keine Finanzierung"
-          description="Starte mit einem Quick Check für einen Kunden."
-          action={<Button onClick={() => setWizardOpen(true)}><Plus className="mr-2 h-4 w-4" />Quick Check starten</Button>}
+          title={t("financing.empty.title")}
+          description={t("financing.empty.description")}
+          action={<Button onClick={() => setWizardOpen(true)}><Plus className="mr-2 h-4 w-4" />{t("financing.startQuickCheck")}</Button>}
         />
       ) : (
         <div className="grid gap-3">
@@ -275,7 +281,7 @@ function FinancingPage() {
       {hypoCalcs.length > 0 && (
         <div className="space-y-3 pt-2">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Gespeicherte Hyporechner Kosovo
+            {t("financing.savedHypo")}
           </h3>
           <div className="grid gap-3">
             {hypoCalcs.map((h: any) => (
@@ -283,17 +289,17 @@ function FinancingPage() {
                 <CardContent className="flex flex-wrap items-center gap-4 p-4">
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium truncate">{h.label || `Hyporechner ${h.term_years}J`}</p>
-                      <Badge variant="outline">{h.term_years} Jahre</Badge>
-                      <Badge variant="secondary">{h.interest_pct}% Zins</Badge>
+                      <p className="font-medium truncate">{h.label || t("financing.hypo.fallbackLabel", { years: h.term_years })}</p>
+                      <Badge variant="outline">{t("financing.hypo.years", { count: h.term_years })}</Badge>
+                      <Badge variant="secondary">{t("financing.hypo.interest", { value: h.interest_pct })}</Badge>
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                       {h.clients?.full_name && (
                         <span className="inline-flex items-center gap-1"><User className="h-3.5 w-3.5" />{h.clients.full_name}</span>
                       )}
-                      <span>Kaufpreis: {formatCurrency(Number(h.purchase_price))}</span>
-                      <span>Rate: {formatCurrency(Number(h.monthly_payment))}/Mo</span>
-                      <span>Erstellt {formatDate(h.created_at)}</span>
+                      <span>{t("financing.hypo.purchase", { amount: formatCurrency(Number(h.purchase_price)) })}</span>
+                      <span>{t("financing.hypo.rate", { amount: formatCurrency(Number(h.monthly_payment)) })}</span>
+                      <span>{t("financing.hypo.createdAt", { date: formatDate(h.created_at) })}</span>
                     </div>
                   </div>
                   <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -320,20 +326,20 @@ function FinancingPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {selectionCount === 1 ? "Finanzierung löschen?" : `${selectionCount} Finanzierungen löschen?`}
+              {t("financing.deleteDialog.title", { count: selectionCount })}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Diese Aktion kann nicht rückgängig gemacht werden.
+              {t("financing.deleteDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t("financing.deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteMutation.mutate(Array.from(selected))}
               disabled={deleteMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Löschen
+              {t("financing.deleteDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -349,6 +355,7 @@ function DossierCard({
   selected: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation();
   const ds = (d.data_source ?? "existing_property") as "existing_property" | "quick_entry";
   const snap = (d.property_snapshot as any) ?? {};
   const propertyLabel = d.properties?.title
@@ -366,6 +373,14 @@ function DossierCard({
     : qcStatus === "not_financeable" ? "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400"
     : "border-border bg-muted/30 text-muted-foreground";
 
+  const typeLabel = (k?: string | null) =>
+    k ? t(`financing.type.${k}`, { defaultValue: FINANCING_TYPE_LABELS[k as FinancingType] ?? "—" }) : "—";
+  const qcStatusLabel = (k: string) =>
+    t(`financing.quickCheckStatus.${k}`, { defaultValue: QUICK_CHECK_LABELS[k as QuickCheckStatus] ?? k });
+  const dossierStatusLabel = (k: string) =>
+    t(`financing.dossierStatus.${k}`, { defaultValue: DOSSIER_STATUS_LABELS[k as DossierStatus] ?? k });
+  const bankShort = (b: string) => b === "ubs" ? t("financing.bankShort.ubs") : t("financing.bankShort.other");
+
   return (
     <Card className={cn("transition hover:shadow-md", selected && "ring-2 ring-primary")}>
       <CardContent className="space-y-3 p-4">
@@ -377,25 +392,25 @@ function DossierCard({
             <Checkbox
               checked={selected}
               onCheckedChange={onToggle}
-              aria-label="Auswählen"
+              aria-label={t("financing.card.select")}
             />
           </div>
           <Link to="/financing/$id" params={{ id: d.id }} className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="font-medium truncate">
-                {d.title || FINANCING_TYPE_LABELS[d.financing_type as FinancingType] || "Finanzierung"}
+                {d.title || typeLabel(d.financing_type) || t("financing.card.fallback")}
               </p>
-              <Badge variant="secondary">{FINANCING_TYPE_LABELS[d.financing_type as FinancingType] ?? "—"}</Badge>
+              <Badge variant="secondary">{typeLabel(d.financing_type)}</Badge>
               <Badge className={dossierTone(dossierStatus)}>
-                {DOSSIER_STATUS_LABELS[dossierStatus] ?? "Entwurf"}
+                {dossierStatusLabel(dossierStatus)}
               </Badge>
               <Badge variant="outline" className={qcTone(d.quick_check_status ?? "incomplete")}>
-                {QUICK_CHECK_LABELS[(d.quick_check_status ?? "incomplete") as QuickCheckStatus]}
+                {qcStatusLabel(d.quick_check_status ?? "incomplete")}
               </Badge>
               <Badge variant="outline" className="gap-1">
                 {ds === "existing_property"
-                  ? <><Database className="h-3 w-3" />Bestehende Immobilie</>
-                  : <><PencilLine className="h-3 w-3" />Quick-Erfassung</>}
+                  ? <><Database className="h-3 w-3" />{t("financing.card.existingProperty")}</>
+                  : <><PencilLine className="h-3 w-3" />{t("financing.card.quickEntry")}</>}
               </Badge>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -405,25 +420,30 @@ function DossierCard({
               {propertyLabel && (
                 <span className="inline-flex items-center gap-1"><Building2 className="h-3.5 w-3.5" />{propertyLabel}</span>
               )}
-              {d.bank_name && <span>Bank: {d.bank_name}{d.bank_type ? ` (${d.bank_type === "ubs" ? "UBS" : "andere"})` : ""}</span>}
-              {!d.bank_name && d.bank_type && <span>Banktyp: {d.bank_type === "ubs" ? "UBS" : "andere"}</span>}
-              <span>Aktualisiert {formatDate(d.updated_at)}</span>
+              {d.bank_name && (
+                <span>
+                  {d.bank_type
+                    ? t("financing.card.bankWithType", { name: d.bank_name, type: bankShort(d.bank_type) })
+                    : t("financing.card.bank", { name: d.bank_name })}
+                </span>
+              )}
+              {!d.bank_name && d.bank_type && <span>{t("financing.card.bankType", { type: bankShort(d.bank_type) })}</span>}
+              <span>{t("financing.card.updatedAt", { date: formatDate(d.updated_at) })}</span>
             </div>
           </Link>
         </div>
 
-        {/* Quick-Check Zusammenfassung — gleiche Optik wie im Kunden-Tab */}
         <Link to="/financing/$id" params={{ id: d.id }} className={`block rounded-lg border p-3 ${qcToneClass}`}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-semibold uppercase tracking-wide">
-              Quick Check: {qcStatus ? (QUICK_CHECK_LABELS[qcStatus] ?? qcStatus) : "Noch nicht durchgeführt"}
+              {t("financing.card.quickCheckPrefix")} {qcStatus ? qcStatusLabel(qcStatus) : t("financing.card.notYetDone")}
             </div>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-            <KPI label="Tragbarkeit" value={d.affordability_ratio != null ? `${Number(d.affordability_ratio).toFixed(1)}%` : "—"} />
-            <KPI label="Belehnung" value={d.loan_to_value_ratio != null ? `${Number(d.loan_to_value_ratio).toFixed(1)}%` : "—"} />
-            <KPI label="Hypothek" value={d.requested_mortgage != null ? formatCurrency(Number(d.requested_mortgage)) : "—"} />
-            <KPI label="Eigenmittel" value={d.own_funds_total != null ? formatCurrency(Number(d.own_funds_total)) : "—"} />
+            <KPI label={t("financing.card.kpi.affordability")} value={d.affordability_ratio != null ? `${Number(d.affordability_ratio).toFixed(1)}%` : "—"} />
+            <KPI label={t("financing.card.kpi.ltv")} value={d.loan_to_value_ratio != null ? `${Number(d.loan_to_value_ratio).toFixed(1)}%` : "—"} />
+            <KPI label={t("financing.card.kpi.mortgage")} value={d.requested_mortgage != null ? formatCurrency(Number(d.requested_mortgage)) : "—"} />
+            <KPI label={t("financing.card.kpi.ownFunds")} value={d.own_funds_total != null ? formatCurrency(Number(d.own_funds_total)) : "—"} />
           </div>
           {reasons.length > 0 && (
             <ul className="mt-3 space-y-1 text-xs">
