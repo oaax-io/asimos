@@ -1011,7 +1011,7 @@
         },
         "incomeObligations": "Einkommen & Verpflichtungen",
         "incomeMain": "Einkommen Hauptkunde (CHF/J) *",
-        "grossIncome": "Brutto-Jahreseinkommen (CHF) *",
+        "grossIncome": "Netto-Jahreseinkommen (CHF) *",
         "incomePartner": "Einkommen Partner (CHF/J) *",
         "obligationsCombined": "Verpflichtungen kombiniert (CHF/M)",
         "obligationsMonthly": "Monatl. Verpflichtungen (CHF)",
