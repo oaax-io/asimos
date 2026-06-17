@@ -120,7 +120,7 @@ export function GeneratePdfButton({
 
   const handle = async () => {
     if (!html) {
-      toast.error("Kein Inhalt zum Generieren");
+      toast.error(t("documents.pdf.toast.noContent"));
       return;
     }
     setLoading(true);
