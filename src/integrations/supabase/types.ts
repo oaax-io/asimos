@@ -1272,6 +1272,7 @@ export type Database = {
       }
       financing_dossiers: {
         Row: {
+          additional_co_applicants: Json
           affordability_ratio: number | null
           agency_id: string | null
           amortisation_yearly: number | null
@@ -1362,6 +1363,7 @@ export type Database = {
           valuation_status: string | null
         }
         Insert: {
+          additional_co_applicants?: Json
           affordability_ratio?: number | null
           agency_id?: string | null
           amortisation_yearly?: number | null
@@ -1452,6 +1454,7 @@ export type Database = {
           valuation_status?: string | null
         }
         Update: {
+          additional_co_applicants?: Json
           affordability_ratio?: number | null
           agency_id?: string | null
           amortisation_yearly?: number | null

@@ -1,0 +1,1 @@
+ALTER TABLE public.financing_dossiers ADD COLUMN IF NOT EXISTS additional_co_applicants jsonb NOT NULL DEFAULT '[]'::jsonb;
