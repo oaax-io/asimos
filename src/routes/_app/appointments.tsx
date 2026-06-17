@@ -215,28 +215,31 @@ function ListView({
 function ApptCard({
   a, employees, dim, onOpen, onStatus,
 }: { a: any; employees: any[]; dim?: boolean; onOpen: (id: string) => void; onStatus: (id: string, s: string) => void }) {
+  const { t, i18n } = useTranslation();
+  const labels = useApptLabels();
+  const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-DE";
   const assignee = employees.find((e) => e.id === a.assigned_to);
   return (
     <Card className={`cursor-pointer transition hover:shadow-soft ${dim ? "opacity-70" : ""}`} onClick={() => onOpen(a.id)}>
       <CardContent className="p-5">
         <div className="flex items-center justify-between gap-2">
-          <Badge variant="secondary">{apptTypeLabels[a.appointment_type as keyof typeof apptTypeLabels]}</Badge>
-          <Badge variant={STATUS_VARIANTS[a.status]}>{STATUS_LABELS[a.status as keyof typeof STATUS_LABELS]}</Badge>
+          <Badge variant="secondary">{labels.types[a.appointment_type]}</Badge>
+          <Badge variant={STATUS_VARIANTS[a.status]}>{labels.statuses[a.status]}</Badge>
         </div>
         <h3 className="mt-2 line-clamp-1 font-semibold">{a.title}</h3>
         <div className="mt-2 space-y-1 text-xs text-muted-foreground">
           <p className="flex items-center gap-1"><CalIcon className="h-3 w-3" />{formatDateTime(a.starts_at)}</p>
-          {a.ends_at && <p className="flex items-center gap-1"><Clock className="h-3 w-3" />bis {formatDateTime(a.ends_at)}</p>}
+          {a.ends_at && <p className="flex items-center gap-1"><Clock className="h-3 w-3" />{t("appointments.card.until")} {formatDateTime(a.ends_at)}</p>}
           {a.location && <p className="flex items-center gap-1"><MapPin className="h-3 w-3" />{a.location}</p>}
-          {a.clients?.full_name && <p>Kunde: {a.clients.full_name}</p>}
-          {a.properties?.title && <p>Objekt: {a.properties.title}</p>}
-          {assignee && <p>Zuständig: {assignee.full_name || assignee.email}</p>}
+          {a.clients?.full_name && <p>{t("appointments.card.client")}: {a.clients.full_name}</p>}
+          {a.properties?.title && <p>{t("appointments.card.property")}: {a.properties.title}</p>}
+          {assignee && <p>{t("appointments.card.assignee")}: {assignee.full_name || assignee.email}</p>}
         </div>
         <div className="mt-3" onClick={(e) => e.stopPropagation()}>
           <Select value={a.status} onValueChange={(v) => onStatus(a.id, v)}>
             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {STATUSES.map(s => <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>)}
+              {STATUSES.map(s => <SelectItem key={s} value={s}>{labels.statuses[s]}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -244,8 +247,11 @@ function ApptCard({
     </Card>
   );
 }
+void 0; // keep separator
 
 function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => void }) {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-DE";
   const [anchor, setAnchor] = useState(() => startOfWeek(new Date()));
   const days = Array.from({ length: 7 }, (_, i) => new Date(anchor.getTime() + i * 86400000));
   const byDay = useMemo(() => {
@@ -264,11 +270,11 @@ function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => voi
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => setAnchor(new Date(anchor.getTime() - 7 * 86400000))}><ChevronLeft className="h-4 w-4" /></Button>
-          <Button variant="outline" size="sm" onClick={() => setAnchor(startOfWeek(new Date()))}>Heute</Button>
+          <Button variant="outline" size="sm" onClick={() => setAnchor(startOfWeek(new Date()))}>{t("appointments.week.today")}</Button>
           <Button variant="outline" size="icon" onClick={() => setAnchor(new Date(anchor.getTime() + 7 * 86400000))}><ChevronRight className="h-4 w-4" /></Button>
         </div>
         <p className="text-sm text-muted-foreground">
-          {new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "short" }).format(days[0])} – {new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "short", year: "numeric" }).format(days[6])}
+          {new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short" }).format(days[0])} – {new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short", year: "numeric" }).format(days[6])}
         </p>
       </div>
       <div className="grid gap-2 md:grid-cols-7">
@@ -279,7 +285,7 @@ function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => voi
             <div key={d.toISOString()} className={`rounded-xl border bg-card p-3 ${isToday ? "ring-2 ring-primary/30" : ""}`}>
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(d)}
+                  {new Intl.DateTimeFormat(locale, { weekday: "short" }).format(d)}
                 </p>
                 <p className={`text-lg font-bold ${isToday ? "text-primary" : ""}`}>{d.getDate()}</p>
               </div>
@@ -292,7 +298,7 @@ function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => voi
                     className="block w-full rounded-md border bg-accent/30 p-2 text-left text-xs transition hover:bg-accent"
                   >
                     <p className="font-medium text-primary">
-                      {new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}
+                      {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}
                     </p>
                     <p className="line-clamp-2 font-medium">{a.title}</p>
                     {a.location && <p className="line-clamp-1 text-muted-foreground">{a.location}</p>}
