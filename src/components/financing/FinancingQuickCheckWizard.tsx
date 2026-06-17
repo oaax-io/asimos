@@ -540,17 +540,24 @@ export function FinancingQuickCheckWizard({
     },
     onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["financing_dossiers"] });
-      toast.success("Quick Check erstellt");
+      toast.success(t("financing.wizard.toast.created"));
       onOpenChange(false);
       onCreated?.(id);
       navigate({ to: "/financing/$id", params: { id } });
     },
-    onError: (e: any) => toast.error(e.message ?? "Fehler beim Speichern"),
+    onError: (e: any) => toast.error(e.message ?? t("financing.wizard.toast.saveError")),
   });
 
-  const headerTitle = `Quick Check Finanzierung – Schritt ${step} / ${TOTAL_STEPS}`;
+  const headerTitle = t("financing.wizard.headerTitle", { step, total: TOTAL_STEPS });
 
-  const stepLabels = ["Module", "Objekt", "Kunde", "Kennzahlen", "Erweitert", "Zusammenfassung"];
+  const stepLabels = [
+    t("financing.wizard.stepLabels.modules"),
+    t("financing.wizard.stepLabels.property"),
+    t("financing.wizard.stepLabels.client"),
+    t("financing.wizard.stepLabels.metrics"),
+    t("financing.wizard.stepLabels.advanced"),
+    t("financing.wizard.stepLabels.summary"),
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
