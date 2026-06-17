@@ -610,7 +610,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
           dossier_status: "draft",
           quick_check_status: "incomplete",
           data_source: linkedPropertyId ? "existing_property" : "manual",
-          title: `Finanzierung – ${fullName}`,
+          title: t("clientWizard.toasts.financingTitle", { name: fullName }),
           purchase_price: num(form.fin_purchase_price),
           renovation_costs: num(form.fin_renovation_costs),
           existing_mortgage: num(form.fin_existing_mortgage),
