@@ -66,7 +66,7 @@ export function DocumentFolderView() {
       if (error) throw error;
       return (data ?? []).map<AnyDoc>((d) => ({
         id: d.id,
-        name: d.file_name ?? "Unbenannt",
+        name: d.file_name ?? t("documents.fields.unnamed"),
         related_type: d.related_type ?? null,
         related_id: d.related_id ?? null,
         file_url: d.file_url,
@@ -88,7 +88,7 @@ export function DocumentFolderView() {
       if (error) throw error;
       return (data ?? []).map<AnyDoc>((d: any) => ({
         id: d.id,
-        name: d.title ?? "Generiertes Dokument",
+        name: d.title ?? t("documents.folders.generatedFallback"),
         related_type: d.related_type ?? null,
         related_id: d.related_id ?? null,
         file_url: d.file_url ?? null,
@@ -107,8 +107,8 @@ export function DocumentFolderView() {
     const map: Record<string, Set<string>> = {};
     for (const d of all) {
       if (!d.related_type || !d.related_id) continue;
-      const t = d.related_type === "financing_profile" ? "financing" : d.related_type;
-      (map[t] ??= new Set()).add(d.related_id);
+      const typeKey = d.related_type === "financing_profile" ? "financing" : d.related_type;
+      (map[typeKey] ??= new Set()).add(d.related_id);
     }
     return map;
   }, [all]);
