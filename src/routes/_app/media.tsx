@@ -279,7 +279,7 @@ function MediaPage() {
       await syncPropertyImages(item.property_id);
     },
     onSuccess: () => {
-      toast.success("Gelöscht");
+      toast.success(t("media.toasts.deleted"));
       qc.invalidateQueries({ queryKey: ["property-media"] });
     },
     onError: (e: Error) => toast.error(e.message),
