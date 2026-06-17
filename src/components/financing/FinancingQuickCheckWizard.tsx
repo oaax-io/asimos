@@ -354,14 +354,21 @@ export function FinancingQuickCheckWizard({
         .select("annual_net_salary, salary_net_monthly, additional_income, income_job_two, income_rental")
         .eq("client_id", form.co_applicant_client_id)
         .maybeSingle();
-      if (!data) return;
-      const extrasMonthly =
-        Number(data.additional_income ?? 0) +
-        Number(data.income_job_two ?? 0) +
-        Number(data.income_rental ?? 0);
-      const baseYearly = data.annual_net_salary
-        ?? (data.salary_net_monthly ? Number(data.salary_net_monthly) * 12 : null);
-      const yearly = (baseYearly ?? 0) + extrasMonthly * 12;
+      if (!data) {
+        setCoIncomeBreakdown(null);
+        return;
+      }
+      const bd: IncomeBreakdown = {
+        annual_net_salary: Number(data.annual_net_salary ?? 0),
+        salary_net_monthly: Number(data.salary_net_monthly ?? 0),
+        additional_income: Number(data.additional_income ?? 0),
+        income_job_two: Number(data.income_job_two ?? 0),
+        income_rental: Number(data.income_rental ?? 0),
+      };
+      setCoIncomeBreakdown(bd);
+      const extrasMonthly = bd.additional_income + bd.income_job_two + bd.income_rental;
+      const baseYearly = bd.annual_net_salary || bd.salary_net_monthly * 12;
+      const yearly = baseYearly + extrasMonthly * 12;
       if (yearly > 0) {
         setForm((f) => ({
           ...f,
