@@ -361,7 +361,7 @@ export function ClientWizard({ open, onOpenChange, onCreated }: Props) {
       if (hasCo && coFields) {
         const coFirst = (coFields.first_name as string | undefined)?.trim() ?? "";
         const coLast = (coFields.last_name as string | undefined)?.trim() ?? "";
-        const coName = [coFirst, coLast].filter(Boolean).join(" ") || "Mitantragsteller";
+        const coName = [coFirst, coLast].filter(Boolean).join(" ") || t("clientWizard.toasts.coApplicantFallback");
 
         const { data: coClient, error: coErr } = await supabase
           .from("clients")
