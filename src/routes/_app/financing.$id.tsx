@@ -150,7 +150,7 @@ function FinancingDetailPage() {
           <div className="grid gap-3 md:grid-cols-2">
             <Card>
               <CardContent className="p-4 space-y-2">
-                <h3 className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />Kunde</h3>
+                <h3 className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{t("financing.detail.overview.client")}</h3>
                 {dossier.clients ? (
                   <Link to="/clients/$id" params={{ id: dossier.clients.id }} className="text-sm text-primary hover:underline">
                     {dossier.clients.full_name}
@@ -162,12 +162,12 @@ function FinancingDetailPage() {
             </Card>
             <Card>
               <CardContent className="p-4 space-y-2">
-                <h3 className="font-semibold flex items-center gap-2"><Building2 className="h-4 w-4" />Immobilie</h3>
+                <h3 className="font-semibold flex items-center gap-2"><Building2 className="h-4 w-4" />{t("financing.detail.overview.property")}</h3>
                 {dossier.properties ? (
                   <Link to="/properties/$id" params={{ id: dossier.properties.id }} className="text-sm text-primary hover:underline">
                     {dossier.properties.title}
                   </Link>
-                ) : <p className="text-sm text-muted-foreground">Keine Immobilie verknüpft</p>}
+                ) : <p className="text-sm text-muted-foreground">{t("financing.detail.overview.noProperty")}</p>}
                 {dossier.properties?.city && <p className="text-xs text-muted-foreground">{dossier.properties.city}</p>}
               </CardContent>
             </Card>
@@ -180,12 +180,12 @@ function FinancingDetailPage() {
             <Card>
               <CardContent className="p-6 space-y-4">
                 <div>
-                  <h3 className="font-semibold">Quick Check starten</h3>
+                  <h3 className="font-semibold">{t("financing.detail.quickcheck.start")}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Erfasse die Eckdaten der Finanzierung im Wizard. Nach Abschluss erscheint hier das Ergebnis.
+                    {t("financing.detail.quickcheck.startDescription")}
                   </p>
                 </div>
-                <Button onClick={() => setWizardOpen(true)}>Quick Check starten</Button>
+                <Button onClick={() => setWizardOpen(true)}>{t("financing.detail.quickcheck.start")}</Button>
               </CardContent>
             </Card>
           ) : (
@@ -195,12 +195,12 @@ function FinancingDetailPage() {
                   <Badge className={qcBadgeTone(qcStatus)}>{QUICK_CHECK_LABELS[qcStatus]}</Badge>
                   {lastCheckAt && (
                     <span className="text-sm text-muted-foreground">
-                      Letzter Quick Check: {lastCheckAt}
+                      {t("financing.detail.quickcheck.lastCheck", { date: lastCheckAt })}
                     </span>
                   )}
                   <div className="ml-auto flex flex-wrap items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
-                      <RotateCcw className="mr-1 h-4 w-4" />Neu berechnen
+                      <RotateCcw className="mr-1 h-4 w-4" />{t("financing.detail.quickcheck.recalculate")}
                     </Button>
                     <FinancingQuickCheckActions
                       dossierId={dossier.id}
@@ -213,9 +213,9 @@ function FinancingDetailPage() {
 
               <Tabs defaultValue="vorpruefung">
                 <TabsList>
-                  <TabsTrigger value="vorpruefung">Vorprüfung</TabsTrigger>
-                  <TabsTrigger value="detail">Detailrechnung</TabsTrigger>
-                  <TabsTrigger value="szenarien">Szenarien</TabsTrigger>
+                  <TabsTrigger value="vorpruefung">{t("financing.detail.quickcheck.subtabs.precheck")}</TabsTrigger>
+                  <TabsTrigger value="detail">{t("financing.detail.quickcheck.subtabs.detail")}</TabsTrigger>
+                  <TabsTrigger value="szenarien">{t("financing.detail.quickcheck.subtabs.scenarios")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="vorpruefung" className="space-y-4">
@@ -233,6 +233,7 @@ function FinancingDetailPage() {
             </>
           )}
         </TabsContent>
+
 
         <TabsContent value="disclosure">
           <FinancingSelfDisclosureTab
