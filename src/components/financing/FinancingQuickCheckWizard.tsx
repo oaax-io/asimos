@@ -1173,6 +1173,7 @@ function DataQualityChecklist({
   income: number; equity: number; pk: number;
   hideEquity?: boolean;
 }) {
+  const { t } = useTranslation();
   const Row = ({ ok, label, value, fallback }: {
     ok: boolean; label: string; value: string; fallback: string;
   }) => (
@@ -1189,28 +1190,29 @@ function DataQualityChecklist({
       <span className="text-right tabular-nums">{ok ? value : fallback}</span>
     </li>
   );
+  const notRecorded = t("financing.wizard.coApplicant.checklist.notRecorded");
   return (
     <ul className="rounded-md border bg-background p-3 divide-y divide-border/50">
       <Row
         ok={hasIncome}
-        label="Brutto-Jahreseinkommen"
-        value={`${formatCurrency(income)} / Jahr (aus Selbstauskunft)`}
-        fallback="nicht erfasst"
+        label={t("financing.wizard.coApplicant.checklist.grossIncome")}
+        value={t("financing.wizard.coApplicant.checklist.grossIncomeValue", { amount: formatCurrency(income) })}
+        fallback={notRecorded}
       />
       {!hideEquity && (
         <>
           <Row
             ok={hasEquity}
-            label="Eigenkapital"
+            label={t("financing.wizard.coApplicant.checklist.equity")}
             value={formatCurrency(equity)}
-            fallback="nicht erfasst"
+            fallback={notRecorded}
           />
           {/* PK nicht aus dem CRM — optional, aber grün sobald manuell erfasst */}
           <Row
             ok={pk > 0}
-            label="PK / Freizügigkeit"
-            value={`${formatCurrency(pk)} (manuell)`}
-            fallback="optional — nicht im CRM (Standard: CHF 0)"
+            label={t("financing.wizard.coApplicant.checklist.pk")}
+            value={t("financing.wizard.coApplicant.checklist.pkValue", { amount: formatCurrency(pk) })}
+            fallback={t("financing.wizard.coApplicant.checklist.pkOptional")}
           />
         </>
       )}
@@ -1226,11 +1228,12 @@ type Kpis = {
 };
 
 function KpiPreview({ kpis, hideEquity }: { kpis: Kpis; hideEquity?: boolean }) {
+  const { t } = useTranslation();
   return (
     <p className="text-xs text-muted-foreground">
-      Belehnung: <span className="font-medium text-foreground">{kpis.ltv.toFixed(1)}%</span>
-      {" · "}Tragbarkeit: <span className="font-medium text-foreground">{kpis.affordability.toFixed(1)}%</span>
-      {!hideEquity && <>{" · "}Eigenmittelquote: <span className="font-medium text-foreground">{kpis.equityRatio.toFixed(1)}%</span></>}
+      {t("financing.wizard.metrics.kpi.ltv")}: <span className="font-medium text-foreground">{kpis.ltv.toFixed(1)}%</span>
+      {" · "}{t("financing.wizard.metrics.kpi.affordability")}: <span className="font-medium text-foreground">{kpis.affordability.toFixed(1)}%</span>
+      {!hideEquity && <>{" · "}{t("financing.wizard.metrics.kpi.equityRatio")}: <span className="font-medium text-foreground">{kpis.equityRatio.toFixed(1)}%</span></>}
     </p>
   );
 }
