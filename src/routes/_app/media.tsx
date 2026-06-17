@@ -321,7 +321,7 @@ function MediaPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Umbenannt");
+      toast.success(t("media.toasts.renamed"));
       qc.invalidateQueries({ queryKey: ["property-media"] });
     },
     onError: (e: Error) => toast.error(e.message),
