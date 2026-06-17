@@ -590,6 +590,7 @@ function DetailRow({ label, value, bold, indent, divider }: {
 }
 
 function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
+  const { t } = useTranslation();
   const i = deriveInputs(dossier);
   const affTone = toneFor(i.affordability, 33, 38, "max");
 
@@ -597,48 +598,50 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
     <div className="grid gap-3 md:grid-cols-2">
       <Card>
         <CardContent className="p-4 space-y-1">
-          <h3 className="font-semibold mb-2">Finanzierungsstruktur</h3>
-          <DetailRow label="Kaufpreis" value={chf(i.purchase)} />
-          {i.reno > 0 && <DetailRow label="+ Renovationskosten" value={chf(i.reno)} />}
-          <DetailRow label="= Gesamtinvestition" value={chf(i.total)} bold divider />
-          <DetailRow label={`Eigenmittel total (${pct(i.equityRatio)})`} value={chf(i.equity)} divider />
-          <DetailRow label="davon Barvermögen" value={chf(i.hardEquity)} indent />
-          <DetailRow label="davon PK / Freizügigkeit" value={chf(i.pension + i.vested)} indent />
-          <DetailRow label={`Hypothek gesamt (${pct(i.ltv)})`} value={chf(i.mortgage)} divider />
-          <DetailRow label="1. Hypothek (≤ 65%)" value={chf(i.firstMortgage)} indent />
-          <DetailRow label="2. Hypothek (65–80%)" value={chf(i.secondMortgage)} indent />
-          <DetailRow label={`Amortisation 2. Hypo (über ${i.amortYears} J.)`} value={`${chf(i.amort)}/J`} divider />
+          <h3 className="font-semibold mb-2">{t("financing.detail.quickcheck.detail.structure")}</h3>
+          <DetailRow label={t("financing.detail.quickcheck.detail.purchasePrice")} value={chf(i.purchase)} />
+          {i.reno > 0 && <DetailRow label={t("financing.detail.quickcheck.detail.plusRenovation")} value={chf(i.reno)} />}
+          <DetailRow label={t("financing.detail.quickcheck.detail.totalInvestment")} value={chf(i.total)} bold divider />
+          <DetailRow label={t("financing.detail.quickcheck.detail.ownFundsTotal", { ratio: pct(i.equityRatio) })} value={chf(i.equity)} divider />
+          <DetailRow label={t("financing.detail.quickcheck.detail.cashEquity")} value={chf(i.hardEquity)} indent />
+          <DetailRow label={t("financing.detail.quickcheck.detail.pensionEquity")} value={chf(i.pension + i.vested)} indent />
+          <DetailRow label={t("financing.detail.quickcheck.detail.mortgageTotal", { ratio: pct(i.ltv) })} value={chf(i.mortgage)} divider />
+          <DetailRow label={t("financing.detail.quickcheck.detail.firstMortgage")} value={chf(i.firstMortgage)} indent />
+          <DetailRow label={t("financing.detail.quickcheck.detail.secondMortgage")} value={chf(i.secondMortgage)} indent />
+          <DetailRow label={t("financing.detail.quickcheck.detail.amortization", { years: i.amortYears })} value={t("financing.detail.quickcheck.detail.perYearShort", { amount: chf(i.amort) })} divider />
         </CardContent>
       </Card>
       <Card>
         <CardContent className="p-4 space-y-1">
-          <h3 className="font-semibold mb-2">Jahreskosten (Tragbarkeit)</h3>
-          <DetailRow label={`Kalk. Zinssatz (${i.rate.toFixed(1)}%)`} value={chf(i.interest)} />
-          <DetailRow label={`Nebenkosten (${i.ancillaryPct.toFixed(1)}%)`} value={chf(i.ancillary)} />
-          <DetailRow label="Amortisation" value={chf(i.amort)} />
-          <DetailRow label="Total Wohnkosten p.a." value={chf(i.yearly)} bold divider />
+          <h3 className="font-semibold mb-2">{t("financing.detail.quickcheck.detail.yearlyCosts")}</h3>
+          <DetailRow label={t("financing.detail.quickcheck.detail.calcInterest", { rate: i.rate.toFixed(1) })} value={chf(i.interest)} />
+          <DetailRow label={t("financing.detail.quickcheck.detail.ancillary", { pct: i.ancillaryPct.toFixed(1) })} value={chf(i.ancillary)} />
+          <DetailRow label={t("financing.detail.quickcheck.detail.amortLabel")} value={chf(i.amort)} />
+          <DetailRow label={t("financing.detail.quickcheck.detail.totalYearlyCost")} value={chf(i.yearly)} bold divider />
           {(() => {
             const coIncome = n(dossier.co_applicant_einkommen);
             const mainIncome = n(dossier.gross_income_yearly);
             const coName = dossier.co_applicant?.full_name;
-            const role = dossier.co_applicant_role === "ehepartner" ? "Ehepartner/in" : "Mitantragsteller/in";
+            const role = dossier.co_applicant_role === "ehepartner"
+              ? t("financing.detail.quickcheck.detail.roleSpouse")
+              : t("financing.detail.quickcheck.detail.roleCo");
             if (coIncome > 0 && coName) {
               return (
                 <>
-                  <DetailRow label="Einkommen Hauptantragsteller" value={chf(mainIncome)} />
-                  <DetailRow label={`Einkommen ${role} ${coName}`} value={chf(coIncome)} />
-                  <DetailRow label="Kombiniertes Einkommen p.a." value={chf(i.income)} bold />
+                  <DetailRow label={t("financing.detail.quickcheck.detail.mainIncome")} value={chf(mainIncome)} />
+                  <DetailRow label={t("financing.detail.quickcheck.detail.coApplicantIncome", { role, name: coName })} value={chf(coIncome)} />
+                  <DetailRow label={t("financing.detail.quickcheck.detail.combinedIncome")} value={chf(i.income)} bold />
                 </>
               );
             }
-            return <DetailRow label="Bruttoeinkommen p.a." value={chf(i.income)} />;
+            return <DetailRow label={t("financing.detail.quickcheck.detail.grossIncome")} value={chf(i.income)} />;
           })()}
           <div className="my-2 border-t" />
           <div className="flex justify-between gap-4 text-sm">
-            <span>Tragbarkeitsquote</span>
+            <span>{t("financing.detail.quickcheck.detail.affordabilityRatio")}</span>
             <span className={cn("font-semibold tabular-nums", toneText(affTone))}>{pct(i.affordability)}</span>
           </div>
-          <DetailRow label="Mindesteinkommen (33%)" value={chf(i.minIncome)} />
+          <DetailRow label={t("financing.detail.quickcheck.detail.minIncome")} value={chf(i.minIncome)} />
         </CardContent>
       </Card>
     </div>
