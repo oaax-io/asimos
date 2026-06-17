@@ -1072,6 +1072,7 @@ function Step3Client({
                     <Field label={t("financing.wizard.client.pensionPart")} type="number" value={form.own_funds_pension_fund} onChange={(v) => update("own_funds_pension_fund", v)} />
                   </>
                 )}
+                <IncomeBreakdownPanel breakdown={mainIncomeBreakdown} />
                 <p className="sm:col-span-2 text-[11px] text-muted-foreground">
                   {isRefiOnly
                     ? t("financing.wizard.client.refiHint")
@@ -1089,6 +1090,7 @@ function Step3Client({
             toggle={toggleCoApplicant}
             relatedMap={relatedMap}
             isRefiOnly={isRefiOnly}
+            coIncomeBreakdown={coIncomeBreakdown}
           />
 
           <div className="lg:col-span-2">
