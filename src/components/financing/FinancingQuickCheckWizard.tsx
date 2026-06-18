@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
-  FINANCING_TYPE_LABELS, calcQuickCheck, type FinancingType,
+  FINANCING_TYPE_LABELS, calcQuickCheck, type FinancingType, type QuickCheckStatus,
 } from "@/lib/financing";
 import { formatCurrency, propertyTypeLabels } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -105,6 +105,24 @@ export type AdditionalCoApplicant = {
   einkommen: string;
   eigenkapital: string;
   pk_anteil: string;
+};
+
+type CombinedValues = {
+  coActive: boolean;
+  coIncomeMissing: boolean;
+  mainIncome: number;
+  mainEquity: number;
+  mainPk: number;
+  coIncome: number;
+  coEquity: number;
+  coPk: number;
+  extrasCount: number;
+  extrasIncome: number;
+  extrasEquity: number;
+  extrasPk: number;
+  incomeCombined: number;
+  equityCombined: number;
+  pkCombined: number;
 };
 
 const MAX_CO_APPLICANTS = 10; // total Mitantragsteller incl. primary
