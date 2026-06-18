@@ -351,8 +351,8 @@ function PropertyDetail() {
       <div className="mb-4 flex items-center justify-between">
         <Button variant="ghost" asChild><Link to="/properties"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link></Button>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" asChild>
-            <Link to="/properties/$id/expose" params={{ id }}><FileText className="mr-1 h-4 w-4" />Exposé</Link>
+          <Button variant="outline" onClick={() => setExposeOpen(true)}>
+            <FileText className="mr-1 h-4 w-4" />Exposé
           </Button>
           <Button variant="outline" onClick={() => setFinancingOpen(true)}>
             <Banknote className="mr-1 h-4 w-4" />Finanzierung starten
