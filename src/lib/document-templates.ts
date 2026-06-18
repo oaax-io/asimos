@@ -66,6 +66,7 @@ export type TemplateContext = {
     valid_from?: string | null;
     valid_until?: string | null;
     purpose?: string | null;
+    penalty_amount?: number | string | null;
   } | null;
   financing?: {
     bank_name?: string | null;
