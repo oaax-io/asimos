@@ -516,7 +516,7 @@ export function FinancingQuickCheckWizard({
     // Refi: Verpflichtungen (CHF/Monat) → jährlich in Tragbarkeit
     const obligationsYearly = isRefiOnly ? num(form.monthly_obligations) * 12 : 0;
     // Max. Belehnung nach Nutzung (nur Refi; sonst Standard 80%)
-    const maxLtv = isRefiOnly && form.usage_type ? maxLtvForUsage(form.usage_type) : 80;
+    const maxLtv = isRefiOnly && form.usage_type ? maxLtvForUsage(form.usage_type, num(form.owner_occupied_share)) : 80;
 
     const ltv = total > 0 ? (mortgage / total) * 100 : 0;
     const equityRatio = total > 0 ? (equity / total) * 100 : 0;
