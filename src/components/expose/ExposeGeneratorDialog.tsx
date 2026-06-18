@@ -31,7 +31,33 @@ type MediaRow = {
   file_name: string | null;
   file_type: string | null;
   title: string | null;
+  is_cover?: boolean | null;
 };
+
+/**
+ * Fetch an image URL and turn it into a data: URI. Required because the PDF
+ * microservice (Puppeteer) cannot authenticate against private Supabase
+ * Storage URLs — sending raw URLs results in broken images. Returns null on
+ * failure so the renderer can fall back to a themed placeholder.
+ */
+async function urlToDataUri(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, { credentials: "include" });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const buf = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    const mime = blob.type || "image/jpeg";
+    return `data:${mime};base64,${btoa(binary)}`;
+  } catch {
+    return null;
+  }
+}
 
 const DEFAULT_SECTIONS: Required<ExposeSections> = {
   beschreibung: true,
