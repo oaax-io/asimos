@@ -544,7 +544,7 @@ export function FinancingQuickCheckWizard({
       return true;
     }
     if (step === 4) {
-      const income = num(form.gross_income_yearly);
+      const income = combined.incomeCombined;
       if (isRefiOnly) {
         const existing = num(form.existing_mortgage);
         const mortgage = effectiveMortgage;
@@ -563,7 +563,7 @@ export function FinancingQuickCheckWizard({
     }
     if (step === 5) return true;
     return true;
-  }, [step, form, isRefiOnly, effectiveMortgage]);
+  }, [step, form, isRefiOnly, effectiveMortgage, combined.incomeCombined]);
 
   const navigate = useNavigate();
 
@@ -769,11 +769,12 @@ export function FinancingQuickCheckWizard({
             <Step6Summary
               form={form}
               kpis={liveKpis}
-              status={liveResult.status}
+              status={liveStatus}
               clients={clientsQuery.data ?? []}
               properties={propertiesQuery.data ?? []}
               isRefiOnly={isRefiOnly}
               effectiveMortgage={effectiveMortgage}
+              combined={combined}
             />
           )}
         </div>
