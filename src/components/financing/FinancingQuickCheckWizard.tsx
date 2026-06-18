@@ -1712,6 +1712,7 @@ function Step4Metrics({
                       <SelectContent>
                         <SelectItem value="owner_occupied">{t("financing.wizard.metrics.usageOwner")}</SelectItem>
                         <SelectItem value="rental">{t("financing.wizard.metrics.usageRental")}</SelectItem>
+                        <SelectItem value="mixed">{t("financing.wizard.metrics.usageMixed")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
