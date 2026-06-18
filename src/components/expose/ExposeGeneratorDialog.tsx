@@ -156,7 +156,7 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
       if (!propertyId) return [];
       const { data, error } = await supabase
         .from("property_media")
-        .select("id,file_url,file_name,file_type,title")
+        .select("id,file_url,file_name,file_type,title,is_cover")
         .eq("property_id", propertyId)
         .order("sort_order", { ascending: true });
       if (error) throw error;
