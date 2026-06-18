@@ -571,6 +571,7 @@ export function FinancingQuickCheckWizard({
           && mortgage > 0
           && income > 0
           && !!form.usage_type
+          && (form.usage_type !== "mixed" || (num(form.owner_occupied_share) > 0 && num(form.owner_occupied_share) < 100))
           && !!form.object_type;
       }
       const equity = num(form.own_funds_total);
