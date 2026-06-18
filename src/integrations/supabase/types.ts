@@ -2445,6 +2445,7 @@ export type Database = {
           is_unit: boolean
           listing_type: Database["public"]["Enums"]["listing_type"]
           living_area: number | null
+          macro_location: Json | null
           marketing_type: string | null
           old_crm_id: string | null
           owner_client_id: string | null
@@ -2503,6 +2504,7 @@ export type Database = {
           is_unit?: boolean
           listing_type?: Database["public"]["Enums"]["listing_type"]
           living_area?: number | null
+          macro_location?: Json | null
           marketing_type?: string | null
           old_crm_id?: string | null
           owner_client_id?: string | null
@@ -2561,6 +2563,7 @@ export type Database = {
           is_unit?: boolean
           listing_type?: Database["public"]["Enums"]["listing_type"]
           living_area?: number | null
+          macro_location?: Json | null
           marketing_type?: string | null
           old_crm_id?: string | null
           owner_client_id?: string | null
