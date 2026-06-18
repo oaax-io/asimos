@@ -1915,7 +1915,7 @@ function Step5Advanced({
 
 /* ==================== Schritt 6 ==================== */
 function Step6Summary({
-  form, kpis, status, clients, properties, isRefiOnly, effectiveMortgage,
+  form, kpis, status, clients, properties, isRefiOnly, effectiveMortgage, combined,
 }: {
   form: WizardForm;
   kpis: Kpis;
@@ -1924,6 +1924,7 @@ function Step6Summary({
   properties: any[];
   isRefiOnly: boolean;
   effectiveMortgage: number;
+  combined: CombinedValues;
 }) {
   const { t } = useTranslation();
   const client = clients.find((c) => c.id === form.client_id);
@@ -1943,6 +1944,22 @@ function Step6Summary({
   const propertyValueLabel = isRefiOnly
     ? t("financing.wizard.summary.propertyValue")
     : t("financing.wizard.summary.purchasePrice");
+  const coApplicant = combined.coActive ? clients.find((c) => c.id === form.co_applicant_client_id) : null;
+  const additionalApplicants = (form.additional_co_applicants ?? [])
+    .filter((a) => !!a.client_id)
+    .map((a, idx) => ({
+      ...a,
+      name: clients.find((c) => c.id === a.client_id)?.full_name ?? "—",
+      label: t("financing.wizard.summary.additionalApplicantNumber", { count: idx + 2 }),
+    }));
+  const applicantValue = (income: number, equity: number, pk: number) => {
+    const parts = [income > 0 ? `${formatCurrency(income)} / Jahr` : t("financing.wizard.summary.noIncome")];
+    if (!isRefiOnly) {
+      parts.push(`${t("financing.wizard.summary.ownFundsShort")}: ${formatCurrency(equity)}`);
+      if (pk > 0) parts.push(`${t("financing.wizard.summary.pkShort")}: ${formatCurrency(pk)}`);
+    }
+    return parts.join(" · ");
+  };
 
   return (
     <div className="space-y-4">
@@ -1959,17 +1976,20 @@ function Step6Summary({
       </SummaryGroup>
 
       <SummaryGroup title={t("financing.wizard.summary.client")}>
-        <SumRow label={t("financing.wizard.summary.client")} value={clientLabel} />
-        {form.gross_income_yearly && <SumRow label={t("financing.wizard.summary.grossIncome")} value={formatCurrency(num(form.gross_income_yearly))} />}
-        {!isRefiOnly && form.own_funds_total && <SumRow label={t("financing.wizard.summary.ownFundsTotal")} value={formatCurrency(num(form.own_funds_total))} />}
-        {!isRefiOnly && form.own_funds_pension_fund && <SumRow label={t("financing.wizard.summary.pkPart")} value={formatCurrency(num(form.own_funds_pension_fund))} />}
-        {isRefiOnly && form.monthly_obligations && <SumRow label={t("financing.wizard.summary.monthlyObligations")} value={formatCurrency(num(form.monthly_obligations))} />}
-        {(form.additional_co_applicants?.filter((a) => !!a.client_id).length ?? 0) > 0 && (
+        <SumRow label={t("financing.wizard.summary.mainApplicant")} value={`${clientLabel} · ${applicantValue(combined.mainIncome, combined.mainEquity, combined.mainPk)}`} />
+        {combined.coActive && (
           <SumRow
-            label={t("financing.wizard.summary.additionalCoApplicants", { defaultValue: "Weitere Mitantragsteller" })}
-            value={String(form.additional_co_applicants.filter((a) => !!a.client_id).length)}
+            label={form.co_applicant_role === "ehepartner" ? t("financing.wizard.summary.spouse") : t("financing.wizard.summary.coApplicant")}
+            value={`${coApplicant?.full_name ?? "—"} · ${applicantValue(combined.coIncome, combined.coEquity, combined.coPk)}`}
           />
         )}
+        {additionalApplicants.map((a) => (
+          <SumRow key={a.client_id} label={a.label} value={`${a.name} · ${applicantValue(num(a.einkommen), num(a.eigenkapital), num(a.pk_anteil))}`} />
+        ))}
+        <SumRow label={t("financing.wizard.summary.combinedIncome")} value={`${formatCurrency(combined.incomeCombined)} / Jahr`} />
+        {!isRefiOnly && <SumRow label={t("financing.wizard.summary.combinedEquity")} value={formatCurrency(combined.equityCombined)} />}
+        {!isRefiOnly && combined.pkCombined > 0 && <SumRow label={t("financing.wizard.summary.combinedPk")} value={formatCurrency(combined.pkCombined)} />}
+        {isRefiOnly && form.monthly_obligations && <SumRow label={t("financing.wizard.summary.monthlyObligations")} value={formatCurrency(num(form.monthly_obligations))} />}
       </SummaryGroup>
 
       {isRefiOnly && (form.current_bank || form.interest_rate_current || form.interest_rate_expiry || form.refi_purpose) && (
