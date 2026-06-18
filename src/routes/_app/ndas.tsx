@@ -79,6 +79,7 @@ function NdasPage() {
     valid_from: "",
     valid_until: "",
     notes: "",
+    penalty_amount: 10000,
   });
 
   const { data: ndas = [], isLoading } = useQuery<NdaRow[]>({
