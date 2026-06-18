@@ -435,7 +435,7 @@ export function FinancingQuickCheckWizard({
   }, [additionalIdsKey, clientsQuery.data]);
 
   // ---- Kombinierte Werte (Haupt + Mitantragsteller) ----
-  const combined = useMemo(() => {
+  const combined = useMemo<CombinedValues>(() => {
     const mainIncome = num(form.gross_income_yearly);
     const mainEquity = num(form.own_funds_total);
     const mainPk = num(form.own_funds_pension_fund);
@@ -523,6 +523,14 @@ export function FinancingQuickCheckWizard({
     return { ltv, equityRatio, affordability, total, ancillary, amort, yearly, obligationsYearly, maxLtv, maxMortgageAllowed, ltvExceeded };
   }, [form, combined, effectiveMortgage, isRefiOnly]);
 
+  const liveStatus = useMemo<QuickCheckStatus>(() => {
+    if (liveResult.status === "incomplete") return liveResult.status;
+    if (isRefiOnly && liveKpis.ltvExceeded) return "not_financeable";
+    if (liveKpis.affordability > 38) return "not_financeable";
+    if (liveKpis.affordability > 33) return liveResult.status === "not_financeable" ? "not_financeable" : "critical";
+    return liveResult.status;
+  }, [isRefiOnly, liveKpis.affordability, liveKpis.ltvExceeded, liveResult.status]);
+
   // ---- Validierung ----
   const canNext = useMemo(() => {
     if (step === 1) return form.modules.length > 0;
@@ -585,6 +593,14 @@ export function FinancingQuickCheckWizard({
         ancillary_costs_yearly: ancillary,
         amortisation_yearly: amort,
       });
+
+      const resultStatus: QuickCheckStatus = (() => {
+        if (result.status === "incomplete") return result.status;
+        if (isRefiOnly && liveKpis.ltvExceeded) return "not_financeable";
+        if (liveKpis.affordability > 38) return "not_financeable";
+        if (liveKpis.affordability > 33) return result.status === "not_financeable" ? "not_financeable" : "critical";
+        return result.status;
+      })();
 
       const primaryType: FinancingType = (form.modules[0] as FinancingType) ?? "purchase";
 
@@ -649,8 +665,8 @@ export function FinancingQuickCheckWizard({
         amortisation_yearly: amort,
         total_investment: result.total_investment || null,
         loan_to_value_ratio: result.loan_to_value_ratio || null,
-        affordability_ratio: result.affordability_ratio || null,
-        quick_check_status: result.status,
+        affordability_ratio: liveKpis.affordability || result.affordability_ratio || null,
+        quick_check_status: resultStatus,
         quick_check_reasons: result.reasons,
         status: "draft" as const,
         dossier_status: "quick_check" as const,
