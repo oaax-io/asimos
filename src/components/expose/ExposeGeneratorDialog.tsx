@@ -303,9 +303,7 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
           gallery_cols: galleryCols,
           static_map_url: mapUrl,
           pois,
-          attachment_image_urls: imageMedia
-            .filter((m) => selectedImageIds.has(m.id) && !gallerySource.includes(m.file_url))
-            .map((m) => m.file_url),
+          attachment_image_urls: attachmentImageDataUrls,
           attachment_doc_names: docMedia
             .filter((m) => selectedDocIds.has(m.id))
             .map((m) => m.title || m.file_name || m.file_url.split("/").pop() || "Dokument"),
