@@ -555,10 +555,6 @@ function PropertyDetail() {
                 <AccordionTrigger className="font-display text-base">Mandat</AccordionTrigger>
                 <AccordionContent><MandateTab propertyId={id} /></AccordionContent>
               </AccordionItem>
-              <AccordionItem value="expose" className="rounded-xl border px-4">
-                <AccordionTrigger className="font-display text-base">Exposé</AccordionTrigger>
-                <AccordionContent><ExposeTab propertyId={id} property={p} /></AccordionContent>
-              </AccordionItem>
               <AccordionItem value="reservation" className="rounded-xl border px-4">
                 <AccordionTrigger className="font-display text-base">Reservation</AccordionTrigger>
                 <AccordionContent><ReservationTab propertyId={id} /></AccordionContent>
