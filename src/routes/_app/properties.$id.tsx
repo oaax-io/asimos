@@ -596,6 +596,7 @@ function OverviewTab({ p }: { p: any }) {
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-6">
+        <MacroLocationCard property={p} />
         {p.description ? (
           <Card><CardContent className="p-6">
             <h2 className="mb-2 font-semibold">Beschreibung</h2>
