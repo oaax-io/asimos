@@ -27,6 +27,7 @@ import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 import { useAuth } from "@/lib/auth";
 import { extractPropertyImagePaths } from "@/lib/property-media";
+import { MacroLocationCard } from "@/components/properties/MacroLocationCard";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
