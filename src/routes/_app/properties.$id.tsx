@@ -28,6 +28,7 @@ import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuick
 import { useAuth } from "@/lib/auth";
 import { extractPropertyImagePaths } from "@/lib/property-media";
 import { MacroLocationCard } from "@/components/properties/MacroLocationCard";
+import { PublicShareCard } from "@/components/properties/PublicShareCard";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
@@ -546,7 +547,7 @@ function PropertyDetail() {
               </AccordionItem>
               <AccordionItem value="expose" className="rounded-xl border px-4">
                 <AccordionTrigger className="font-display text-base">Exposé</AccordionTrigger>
-                <AccordionContent><ExposeTab propertyId={id} /></AccordionContent>
+                <AccordionContent><ExposeTab propertyId={id} property={p} /></AccordionContent>
               </AccordionItem>
               <AccordionItem value="reservation" className="rounded-xl border px-4">
                 <AccordionTrigger className="font-display text-base">Reservation</AccordionTrigger>
@@ -1698,7 +1699,7 @@ function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: s
   );
 }
 
-function ExposeTab({ propertyId }: { propertyId: string }) {
+function ExposeTab({ propertyId, property }: { propertyId: string; property: any }) {
   const { data: exposes = [], isLoading } = useQuery({
     queryKey: ["exposes", propertyId],
     queryFn: async () => {
@@ -1714,6 +1715,7 @@ function ExposeTab({ propertyId }: { propertyId: string }) {
 
   return (
     <div className="space-y-4">
+      <PublicShareCard property={property} />
       <Card><CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
         <div>
           <h3 className="font-display text-lg font-semibold">Exposé erstellen</h3>
