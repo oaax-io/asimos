@@ -431,6 +431,7 @@ export function renderTemplate(template: string, ctx: TemplateContext): string {
  * Used by wizards to ask the user only for missing values.
  */
 export function findMissingVariables(template: string, ctx: TemplateContext): string[] {
+  const fullCtx: TemplateContext = { ...ctx, today: ctx.today ?? new Date().toISOString() };
   const used = new Set<string>();
   template.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_, path) => {
     used.add(String(path));
@@ -440,8 +441,8 @@ export function findMissingVariables(template: string, ctx: TemplateContext): st
   for (const path of used) {
     if (BRAND_ALIASES[path]) continue;
     if (path.startsWith("check.")) continue;
-    const resolved = FLAT_ALIASES[path] ?? path;
-    if (!resolveNested(ctx, resolved)) missing.push(path);
+    // Use getValue so fallbacks (e.g. company.legal_name → company.name) are honored
+    if (!getValue(fullCtx, path)) missing.push(path);
   }
   return missing;
 }
