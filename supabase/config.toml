@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.parse-self-disclosure]
 verify_jwt = false
+
+[functions.property-macro-location]
+verify_jwt = false
