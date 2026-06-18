@@ -987,6 +987,10 @@
         "pleaseSelect": "Bitte wählen…",
         "usageOwner": "Eigennutzung",
         "usageRental": "Renditeobjekt",
+        "usageMixed": "Gemischt (Eigennutzung + Rendite)",
+        "ownerShareLabel": "Anteil Eigennutzung / Rendite",
+        "mixedLtvHint": "Gewichtete Belehnungsgrenze: {{ltv}} % (Eigennutzung {{owner}} % @ 80 % + Rendite {{rental}} % @ 75 %)",
+        "ltvLimitHintMixed": "Hinweis: Gemischte Nutzung → gewichtete Belehnungsgrenze {{ltv}} %.",
         "objectType": "Objektart *",
         "objectTypes": {
           "house": "Einfamilienhaus",
