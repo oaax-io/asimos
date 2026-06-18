@@ -393,6 +393,15 @@ function PropertyDetail() {
         onCreated={(dossierId) => navigate({ to: "/financing/$id", params: { id: dossierId } })}
       />
 
+      <Dialog open={exposeOpen} onOpenChange={setExposeOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Exposé</DialogTitle>
+          </DialogHeader>
+          <ExposeTab propertyId={id} property={p} />
+        </DialogContent>
+      </Dialog>
+
       {/* Parent / Unit context banner */}
       {p.is_unit && parent && (
         <Card className="mb-4 border-primary/30 bg-primary/5">
