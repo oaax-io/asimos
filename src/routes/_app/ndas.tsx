@@ -4,15 +4,20 @@ import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, FileLock2, FileText, Eye } from "lucide-react";
+import { Plus, Search, FileLock2, FileText, Eye, Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
@@ -55,6 +60,7 @@ type NdaRow = {
   valid_until: string | null;
   notes: string | null;
   penalty_amount: number | null;
+  is_archived: boolean | null;
   generated_document_id: string | null;
   clients: { full_name: string } | null;
   properties: { title: string } | null;
@@ -69,6 +75,9 @@ function NdasPage() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [archiveFilter, setArchiveFilter] = useState<"active" | "archived" | "all">("active");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [genFor, setGenFor] = useState<NdaRow | null>(null);
   const [previewFor, setPreviewFor] = useState<NdaRow | null>(null);
   const [form, setForm] = useState({
@@ -80,6 +89,15 @@ function NdasPage() {
     valid_until: "",
     notes: "",
     penalty_amount: 10000,
+  });
+
+  const { data: canManage = false } = useQuery({
+    queryKey: ["is-manager-or-above"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("is_manager_or_above");
+      if (error) return false;
+      return !!data;
+    },
   });
 
   const { data: ndas = [], isLoading } = useQuery<NdaRow[]>({
@@ -137,10 +155,47 @@ function NdasPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["nda-agreements"] }),
   });
 
+  const archiveBulk = useMutation({
+    mutationFn: async ({ ids, archive }: { ids: string[]; archive: boolean }) => {
+      const { data: u } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("nda_agreements" as any)
+        .update({
+          is_archived: archive,
+          archived_at: archive ? new Date().toISOString() : null,
+          archived_by: archive ? u.user?.id ?? null : null,
+        } as any)
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      toast.success(v.archive ? `${v.ids.length} NDA(s) archiviert` : `${v.ids.length} NDA(s) wiederhergestellt`);
+      setSelected(new Set());
+      qc.invalidateQueries({ queryKey: ["nda-agreements"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteBulk = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("nda_agreements" as any).delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_d, ids) => {
+      toast.success(`${ids.length} NDA(s) gelöscht`);
+      setSelected(new Set());
+      setConfirmDelete(false);
+      qc.invalidateQueries({ queryKey: ["nda-agreements"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const filtered = useMemo(
     () =>
       ndas.filter((n) => {
+        const archived = !!n.is_archived;
+        if (archiveFilter === "active" && archived) return false;
+        if (archiveFilter === "archived" && !archived) return false;
         if (statusFilter !== "all" && n.status !== statusFilter) return false;
         if (search) {
           const c = n.clients?.full_name?.toLowerCase() ?? "";
@@ -149,8 +204,25 @@ function NdasPage() {
         }
         return true;
       }),
-    [ndas, statusFilter, search],
+    [ndas, statusFilter, search, archiveFilter],
   );
+
+  const allSelected = filtered.length > 0 && filtered.every((n) => selected.has(n.id));
+  const someSelected = selected.size > 0;
+  const selectedIds = Array.from(selected);
+  const selectedRows = ndas.filter((n) => selected.has(n.id));
+  const allSelectedArchived = selectedRows.length > 0 && selectedRows.every((n) => n.is_archived);
+
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(filtered.map((n) => n.id)));
+  };
+  const toggleOne = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelected(next);
+  };
 
   return (
     <>
@@ -243,7 +315,7 @@ function NdasPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative max-w-sm flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder="NDAs suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -255,6 +327,52 @@ function NdasPage() {
             {Object.entries(STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={archiveFilter} onValueChange={(v) => setArchiveFilter(v as any)}>
+          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Aktiv</SelectItem>
+            <SelectItem value="archived">Archiviert</SelectItem>
+            <SelectItem value="all">Alle</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {someSelected && canManage && (
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">{selected.size} ausgewählt</span>
+            {allSelectedArchived ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => archiveBulk.mutate({ ids: selectedIds, archive: false })}
+                disabled={archiveBulk.isPending}
+              >
+                <ArchiveRestore className="mr-1 size-4" /> Wiederherstellen
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => archiveBulk.mutate({ ids: selectedIds, archive: true })}
+                disabled={archiveBulk.isPending}
+              >
+                <Archive className="mr-1 size-4" /> Archivieren
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setConfirmDelete(true)}
+              disabled={deleteBulk.isPending}
+            >
+              <Trash2 className="mr-1 size-4" /> Löschen
+            </Button>
+          </div>
+        )}
+        {someSelected && !canManage && (
+          <span className="ml-auto text-xs text-muted-foreground">
+            Archivieren/Löschen nur für Manager und höher.
+          </span>
+        )}
       </div>
 
       {isLoading ? (
@@ -266,6 +384,13 @@ function NdasPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={toggleAll}
+                    aria-label="Alle auswählen"
+                  />
+                </TableHead>
                 <TableHead>Kunde</TableHead>
                 <TableHead>Objekt</TableHead>
                 <TableHead>Typ</TableHead>
@@ -277,11 +402,21 @@ function NdasPage() {
             </TableHeader>
             <TableBody>
               {filtered.map((n) => (
-                <TableRow key={n.id}>
+                <TableRow key={n.id} data-state={selected.has(n.id) ? "selected" : undefined}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selected.has(n.id)}
+                      onCheckedChange={() => toggleOne(n.id)}
+                      aria-label="Zeile auswählen"
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <FileLock2 className="size-4 text-muted-foreground" />
                       {n.clients?.full_name ?? "—"}
+                      {n.is_archived && (
+                        <Badge variant="outline" className="ml-1 text-xs">Archiviert</Badge>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>{n.properties?.title ?? "—"}</TableCell>
@@ -356,6 +491,26 @@ function NdasPage() {
           }}
         />
       )}
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>NDA(s) endgültig löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selected.size} NDA(s) werden unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig gemacht werden. Ziehe stattdessen ggf. das Archivieren in Betracht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteBulk.mutate(selectedIds)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
