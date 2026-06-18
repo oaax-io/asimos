@@ -63,8 +63,14 @@ function mapPropertyTypeToObject(t: string | null | undefined): "" | "house" | "
 }
 
 // Max. Belehnung in % nach Nutzung
-function maxLtvForUsage(usage: string): number {
+// Bei "mixed" (gemischte Nutzung) wird die Belehnungsgrenze anteilig gewichtet:
+// Eigennutzungsanteil → 80 %, Rendite-Anteil → 75 %.
+function maxLtvForUsage(usage: string, ownerSharePct?: number): number {
   if (usage === "rental") return 75;
+  if (usage === "mixed") {
+    const share = Math.min(100, Math.max(0, ownerSharePct ?? 50)) / 100;
+    return Math.round((80 * share + 75 * (1 - share)) * 10) / 10;
+  }
   return 80; // owner_occupied oder unbekannt → konservativ Standard
 }
 
@@ -182,7 +188,8 @@ export type WizardForm = {
   amortisation_years: string;
 
   // Refinanzierung – zusätzliche Felder (nur aktiv wenn isRefiOnly)
-  usage_type: "" | "owner_occupied" | "rental";
+  usage_type: "" | "owner_occupied" | "rental" | "mixed";
+  owner_occupied_share: string; // Anteil Eigennutzung in % (nur relevant wenn usage_type = "mixed")
   object_type: "" | "house" | "apartment" | "commercial" | "mixed_use" | "other";
   current_bank: string;
   interest_rate_current: string;
@@ -219,6 +226,7 @@ const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
   ancillary_pct: "1",
   amortisation_years: "15",
   usage_type: "",
+  owner_occupied_share: "",
   object_type: "",
   current_bank: "",
   interest_rate_current: "",
@@ -508,7 +516,7 @@ export function FinancingQuickCheckWizard({
     // Refi: Verpflichtungen (CHF/Monat) → jährlich in Tragbarkeit
     const obligationsYearly = isRefiOnly ? num(form.monthly_obligations) * 12 : 0;
     // Max. Belehnung nach Nutzung (nur Refi; sonst Standard 80%)
-    const maxLtv = isRefiOnly && form.usage_type ? maxLtvForUsage(form.usage_type) : 80;
+    const maxLtv = isRefiOnly && form.usage_type ? maxLtvForUsage(form.usage_type, num(form.owner_occupied_share)) : 80;
 
     const ltv = total > 0 ? (mortgage / total) * 100 : 0;
     const equityRatio = total > 0 ? (equity / total) * 100 : 0;
@@ -563,6 +571,7 @@ export function FinancingQuickCheckWizard({
           && mortgage > 0
           && income > 0
           && !!form.usage_type
+          && (form.usage_type !== "mixed" || (num(form.owner_occupied_share) > 0 && num(form.owner_occupied_share) < 100))
           && !!form.object_type;
       }
       const equity = num(form.own_funds_total);
@@ -653,6 +662,7 @@ export function FinancingQuickCheckWizard({
             price: purchase,
           } : {}),
           ...(isRefiOnly && form.object_type ? { object_type: form.object_type } : {}),
+          ...(isRefiOnly && form.usage_type === "mixed" ? { owner_occupied_share_pct: num(form.owner_occupied_share) } : {}),
         },
         data_source: form.property_source === "crm" ? "existing_property" : "quick_entry",
         financing_type: primaryType,
@@ -1702,6 +1712,7 @@ function Step4Metrics({
                       <SelectContent>
                         <SelectItem value="owner_occupied">{t("financing.wizard.metrics.usageOwner")}</SelectItem>
                         <SelectItem value="rental">{t("financing.wizard.metrics.usageRental")}</SelectItem>
+                        <SelectItem value="mixed">{t("financing.wizard.metrics.usageMixed")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1719,7 +1730,31 @@ function Step4Metrics({
                     </Select>
                   </div>
                 </div>
+                {form.usage_type === "mixed" && (() => {
+                  const share = Math.min(100, Math.max(0, num(form.owner_occupied_share) || 50));
+                  const rentalShare = 100 - share;
+                  const weightedLtv = Math.round((80 * share + 75 * rentalShare) / 100 * 10) / 10;
+                  return (
+                    <div className="rounded-md border bg-background p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">{t("financing.wizard.metrics.ownerShareLabel")}</Label>
+                        <span className="text-xs font-medium tabular-nums">{share}% / {rentalShare}%</span>
+                      </div>
+                      <Slider
+                        value={[share]}
+                        min={0}
+                        max={100}
+                        step={5}
+                        onValueChange={([v]) => update("owner_occupied_share", String(v))}
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        {t("financing.wizard.metrics.mixedLtvHint", { ltv: weightedLtv, owner: share, rental: rentalShare })}
+                      </p>
+                    </div>
+                  );
+                })()}
               </section>
+
 
               {(() => {
                 const maxIncrease = Math.max(0, kpis.maxMortgageAllowed - num(form.existing_mortgage));
@@ -1836,7 +1871,9 @@ function Step4Metrics({
           <p className="text-[11px] text-muted-foreground">
             {form.usage_type === "rental"
               ? t("financing.wizard.metrics.ltvLimitHintRental")
-              : t("financing.wizard.metrics.ltvLimitHintOwner")}
+              : form.usage_type === "mixed"
+                ? t("financing.wizard.metrics.ltvLimitHintMixed", { ltv: kpis.maxLtv })
+                : t("financing.wizard.metrics.ltvLimitHintOwner")}
           </p>
         </>
       ) : (
@@ -1997,7 +2034,21 @@ function Step6Summary({
         {form.property_address && <SumRow label={t("financing.wizard.summary.address")} value={form.property_address} />}
         {form.property_purchase_price && <SumRow label={propertyValueLabel} value={formatCurrency(num(form.property_purchase_price))} />}
         {isRefiOnly && form.object_type && <SumRow label={t("financing.wizard.summary.objectType")} value={t(`financing.wizard.metrics.objectTypes.${form.object_type}`, { defaultValue: OBJECT_TYPE_LABELS[form.object_type] })} />}
-        {isRefiOnly && form.usage_type && <SumRow label={t("financing.wizard.summary.usage")} value={form.usage_type === "rental" ? t("financing.wizard.summary.usageRental") : t("financing.wizard.summary.usageOwner")} />}
+        {isRefiOnly && form.usage_type && (
+          <SumRow
+            label={t("financing.wizard.summary.usage")}
+            value={
+              form.usage_type === "rental"
+                ? t("financing.wizard.summary.usageRental")
+                : form.usage_type === "mixed"
+                  ? t("financing.wizard.summary.usageMixedValue", {
+                      owner: Math.min(100, Math.max(0, num(form.owner_occupied_share) || 50)),
+                      rental: 100 - Math.min(100, Math.max(0, num(form.owner_occupied_share) || 50)),
+                    })
+                  : t("financing.wizard.summary.usageOwner")
+            }
+          />
+        )}
       </SummaryGroup>
 
       <SummaryGroup title={t("financing.wizard.summary.client")}>

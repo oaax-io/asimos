@@ -987,6 +987,10 @@
         "pleaseSelect": "Veuillez choisir…",
         "usageOwner": "Usage personnel",
         "usageRental": "Objet de rendement",
+        "usageMixed": "Mixte (usage personnel + rendement)",
+        "ownerShareLabel": "Part usage personnel / rendement",
+        "mixedLtvHint": "Limite d'avance pondérée : {{ltv}} % (usage personnel {{owner}} % à 80 % + rendement {{rental}} % à 75 %)",
+        "ltvLimitHintMixed": "Note : usage mixte → limite d'avance pondérée {{ltv}} %.",
         "objectType": "Type d'objet *",
         "objectTypes": {
           "house": "Maison individuelle",
@@ -1064,6 +1068,7 @@
         "usage": "Utilisation",
         "usageRental": "Objet de rendement",
         "usageOwner": "Usage personnel",
+        "usageMixedValue": "Mixte ({{owner}}% usage personnel / {{rental}}% rendement)",
         "laterToCapture": "À saisir plus tard",
         "noClient": "Sans client",
         "client": "Client",
