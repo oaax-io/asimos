@@ -288,6 +288,7 @@ function MatchingPage() {
                         key={`${m.client.id}_${m.property.id}`}
                         client={m.client}
                         property={m.property}
+                        coverUrl={coverByProperty.get(m.property.id)}
                         score={m.score}
                         reasons={m.reasons}
                         onSave={() => save.mutate({ client_id: m.client.id, property_id: m.property.id, score: m.score, reasons: m.reasons })}
