@@ -524,12 +524,18 @@ export function FinancingQuickCheckWizard({
   }, [form, combined, effectiveMortgage, isRefiOnly]);
 
   const liveStatus = useMemo<QuickCheckStatus>(() => {
+    if (isRefiOnly) {
+      if (liveKpis.total <= 0 || effectiveMortgage <= 0 || combined.incomeCombined <= 0) return "incomplete";
+      if (liveKpis.ltvExceeded || liveKpis.affordability > 38) return "not_financeable";
+      if (liveKpis.affordability > 33) return "critical";
+      return "realistic";
+    }
     if (liveResult.status === "incomplete") return liveResult.status;
     if (isRefiOnly && liveKpis.ltvExceeded) return "not_financeable";
     if (liveKpis.affordability > 38) return "not_financeable";
     if (liveKpis.affordability > 33) return liveResult.status === "not_financeable" ? "not_financeable" : "critical";
     return liveResult.status;
-  }, [isRefiOnly, liveKpis.affordability, liveKpis.ltvExceeded, liveResult.status]);
+  }, [combined.incomeCombined, effectiveMortgage, isRefiOnly, liveKpis.affordability, liveKpis.ltvExceeded, liveKpis.total, liveResult.status]);
 
   // ---- Validierung ----
   const canNext = useMemo(() => {
@@ -595,6 +601,12 @@ export function FinancingQuickCheckWizard({
       });
 
       const resultStatus: QuickCheckStatus = (() => {
+        if (isRefiOnly) {
+          if ((purchase ?? 0) <= 0 || mortgage <= 0 || incomeCombined <= 0) return "incomplete";
+          if (liveKpis.ltvExceeded || liveKpis.affordability > 38) return "not_financeable";
+          if (liveKpis.affordability > 33) return "critical";
+          return "realistic";
+        }
         if (result.status === "incomplete") return result.status;
         if (isRefiOnly && liveKpis.ltvExceeded) return "not_financeable";
         if (liveKpis.affordability > 38) return "not_financeable";
