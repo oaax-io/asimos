@@ -331,6 +331,7 @@ function NdasPage() {
               valid_from: genFor.valid_from,
               valid_until: genFor.valid_until,
               purpose: genFor.notes?.startsWith("Zweck: ") ? genFor.notes.slice(7) : undefined,
+              penalty_amount: genFor.penalty_amount ?? 10000,
             },
           }}
         />
