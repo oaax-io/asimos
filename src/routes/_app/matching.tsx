@@ -47,6 +47,24 @@ function MatchingPage() {
     queryKey: ["properties"],
     queryFn: async () => (await supabase.from("properties").select("*")).data ?? [],
   });
+  const { data: media = [] } = useQuery({
+    queryKey: ["property_media_min"],
+    queryFn: async () =>
+      (await supabase
+        .from("property_media")
+        .select("property_id,file_url,is_cover,sort_order")
+        .order("is_cover", { ascending: false })
+        .order("sort_order", { ascending: true })
+      ).data ?? [],
+  });
+  const coverByProperty = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of media as any[]) {
+      if (!m.file_url) continue;
+      if (!map.has(m.property_id)) map.set(m.property_id, m.file_url);
+    }
+    return map;
+  }, [media]);
   const { data: disclosures = [] } = useQuery({
     queryKey: ["self_disclosures_all"],
     queryFn: async () =>
@@ -270,6 +288,7 @@ function MatchingPage() {
                         key={`${m.client.id}_${m.property.id}`}
                         client={m.client}
                         property={m.property}
+                        coverUrl={coverByProperty.get(m.property.id)}
                         score={m.score}
                         reasons={m.reasons}
                         onSave={() => save.mutate({ client_id: m.client.id, property_id: m.property.id, score: m.score, reasons: m.reasons })}
@@ -318,6 +337,7 @@ function MatchingPage() {
                 <MatchCard
                   key={p.id}
                   property={p}
+                  coverUrl={coverByProperty.get(p.id)}
                   score={score}
                   reasons={reasons}
                   onSave={() => save.mutate({ client_id: selected!.id, property_id: p.id, score, reasons })}
@@ -331,24 +351,34 @@ function MatchingPage() {
   );
 }
 
+function affordabilityChipClass(ratio: number): string {
+  if (ratio <= 28) return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/30";
+  if (ratio <= 33) return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/20";
+  if (ratio <= 38) return "bg-amber-500/15 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/30";
+  return "bg-destructive/15 text-destructive ring-1 ring-destructive/30";
+}
+
 function MatchCard({
   client,
   property: p,
+  coverUrl,
   score,
   reasons,
   onSave,
 }: {
   client?: Client;
   property: Property;
+  coverUrl?: string;
   score: number;
   reasons: string[];
   onSave: () => void;
 }) {
+  const cover = coverUrl ?? p.images?.[0];
   return (
     <Card className="overflow-hidden transition hover:shadow-glow">
       <div className="aspect-[16/10] overflow-hidden bg-muted">
-        {p.images?.[0]
-          ? <img src={p.images[0]} alt={p.title} className="h-full w-full object-cover" />
+        {cover
+          ? <img src={cover} alt={p.title} className="h-full w-full object-cover" loading="lazy" />
           : <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">Kein Bild</div>}
       </div>
       <CardContent className="p-4">
@@ -369,9 +399,24 @@ function MatchCard({
         </p>
         <p className="mt-1.5 font-display text-base font-bold">{formatCurrency(p.price ? Number(p.price) : null)}</p>
         <div className="mt-2 flex flex-wrap gap-1">
-          {reasons.slice(0, 4).map((r) => (
-            <span key={r} className="rounded-full bg-accent/60 px-2 py-0.5 text-[10px] text-accent-foreground">{r}</span>
-          ))}
+          {reasons.slice(0, 4).map((r) => {
+            const m = r.match(/Tragbarkeit\s+(\d+(?:\.\d+)?)%/i);
+            if (m) {
+              const ratio = Number(m[1]);
+              return (
+                <span
+                  key={r}
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${affordabilityChipClass(ratio)}`}
+                  title="Kalkulatorische Tragbarkeit (Richtwert max. 33 %)"
+                >
+                  {r}
+                </span>
+              );
+            }
+            return (
+              <span key={r} className="rounded-full bg-accent/60 px-2 py-0.5 text-[10px] text-accent-foreground">{r}</span>
+            );
+          })}
         </div>
         <div className="mt-3 flex gap-2">
           <Button size="sm" className="flex-1" onClick={onSave}>Vormerken</Button>
