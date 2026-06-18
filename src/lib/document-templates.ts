@@ -1549,7 +1549,7 @@ export const DEFAULT_NDA_ASIMO = `<!--skin:asimo-->
 
     <div class="a-section">
       <h4>6. Konventionalstrafe</h4>
-      <p>Bei jeder schuldhaften Verletzung der Geheimhaltungspflicht ist eine Konventionalstrafe in Höhe von CHF 10'000 geschuldet. Die Geltendmachung weitergehenden Schadens bleibt vorbehalten.</p>
+      <p>Bei jeder schuldhaften Verletzung der Geheimhaltungspflicht ist eine Konventionalstrafe in Höhe von <strong>{{nda.penalty_amount}}</strong> geschuldet. Die Geltendmachung weitergehenden Schadens bleibt vorbehalten.</p>
     </div>
 
     <div class="a-section">
