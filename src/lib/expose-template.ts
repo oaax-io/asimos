@@ -191,7 +191,7 @@ function attachmentsPages(d: ExposeData, t: ExposeTheme, headerHtml: (label: str
     <div class="page">
       ${headerHtml("Anhänge · Fotos")}
       <div class="attach-grid">
-        ${slice.map((u) => `<div class="attach-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
+        ${slice.map((u) => `<div class="attach-cell">${imgOrPh(u, t)}</div>`).join("")}
       </div>
       ${footer(d, t, startPage + out.length, 0)}
     </div>`);
@@ -277,7 +277,7 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
         <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Galerie</div></header>
         <h2 class="section-title">Bilder</h2>
         <div class="gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
-          ${slice.map((u) => `<div class="g-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
+          ${slice.map((u) => `<div class="g-cell">${imgOrPh(u, t)}</div>`).join("")}
         </div>
         ${footer(d, t, pages.length + 1, 0)}
       </div>`);
@@ -419,7 +419,7 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
       <div class="page">
         <header class="ph"><div>${esc(d.title)}</div><div class="muted">Galerie</div></header>
         <div class="m-gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
-          ${slice.map((u) => `<div class="m-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
+          ${slice.map((u) => `<div class="m-cell">${imgOrPh(u, t)}</div>`).join("")}
         </div>
         ${footer(d, t, pages.length + 1, 0)}
       </div>`);
@@ -570,7 +570,7 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
         <div class="lx-rule double"></div>
         <h2 class="lx-h2">Impressionen</h2>
         <div class="lx-gal" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
-          ${slice.map((u, idx) => `<figure class="lx-gc ${i === 0 && idx === 0 ? "feat" : ""}"><img src="${esc(u)}" alt=""/></figure>`).join("")}
+          ${slice.map((u, idx) => `<figure class="lx-gc ${i === 0 && idx === 0 ? "feat" : ""}">${imgOrPh(u, t)}</figure>`).join("")}
         </div>
         ${footer(d, t, pages.length + 1, 0)}
       </div>`);
