@@ -63,8 +63,14 @@ function mapPropertyTypeToObject(t: string | null | undefined): "" | "house" | "
 }
 
 // Max. Belehnung in % nach Nutzung
-function maxLtvForUsage(usage: string): number {
+// Bei "mixed" (gemischte Nutzung) wird die Belehnungsgrenze anteilig gewichtet:
+// Eigennutzungsanteil → 80 %, Rendite-Anteil → 75 %.
+function maxLtvForUsage(usage: string, ownerSharePct?: number): number {
   if (usage === "rental") return 75;
+  if (usage === "mixed") {
+    const share = Math.min(100, Math.max(0, ownerSharePct ?? 50)) / 100;
+    return Math.round((80 * share + 75 * (1 - share)) * 10) / 10;
+  }
   return 80; // owner_occupied oder unbekannt → konservativ Standard
 }
 
