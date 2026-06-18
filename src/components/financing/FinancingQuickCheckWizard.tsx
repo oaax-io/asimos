@@ -662,6 +662,7 @@ export function FinancingQuickCheckWizard({
             price: purchase,
           } : {}),
           ...(isRefiOnly && form.object_type ? { object_type: form.object_type } : {}),
+          ...(isRefiOnly && form.usage_type === "mixed" ? { owner_occupied_share_pct: num(form.owner_occupied_share) } : {}),
         },
         data_source: form.property_source === "crm" ? "existing_property" : "quick_entry",
         financing_type: primaryType,
