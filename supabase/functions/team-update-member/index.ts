@@ -101,6 +101,16 @@ Deno.serve(async (req) => {
         if (profErr) return json({ error: profErr.message }, 400);
       }
 
+      // Sync public.user_roles so RLS reflects the new role
+      if (typeof updates.role === "string") {
+        const appRoles = ["owner", "admin", "manager", "agent", "assistant", "employee"];
+        await admin.from("user_roles").delete().eq("user_id", userId).in("role", appRoles);
+        const { error: roleErr } = await admin
+          .from("user_roles")
+          .insert({ user_id: userId, role: updates.role as string });
+        if (roleErr) return json({ error: roleErr.message }, 400);
+      }
+
       // E-Mail auch im Auth aktualisieren
       if (typeof body.email === "string" && body.email.trim()) {
         const { error: authErr } = await admin.auth.admin.updateUserById(userId, {
