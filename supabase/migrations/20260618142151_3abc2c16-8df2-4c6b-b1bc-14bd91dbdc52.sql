@@ -1,0 +1,1 @@
+ALTER TABLE public.nda_agreements ADD COLUMN IF NOT EXISTS penalty_amount numeric NOT NULL DEFAULT 10000;

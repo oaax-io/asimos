@@ -2211,6 +2211,7 @@ export type Database = {
           id: string
           nda_type: string
           notes: string | null
+          penalty_amount: number
           property_id: string | null
           status: string
           template_id: string | null
@@ -2226,6 +2227,7 @@ export type Database = {
           id?: string
           nda_type?: string
           notes?: string | null
+          penalty_amount?: number
           property_id?: string | null
           status?: string
           template_id?: string | null
@@ -2241,6 +2243,7 @@ export type Database = {
           id?: string
           nda_type?: string
           notes?: string | null
+          penalty_amount?: number
           property_id?: string | null
           status?: string
           template_id?: string | null
