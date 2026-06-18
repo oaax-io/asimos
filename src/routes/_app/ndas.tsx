@@ -113,6 +113,7 @@ function NdasPage() {
         valid_from: form.valid_from || null,
         valid_until: form.valid_until || null,
         notes: form.notes.trim() || (form.purpose ? `Zweck: ${form.purpose}` : null),
+        penalty_amount: form.penalty_amount,
         status: "draft",
       } as any).select("*, clients(full_name), properties(title)").single();
       if (error) throw error;
@@ -121,7 +122,7 @@ function NdasPage() {
     onSuccess: (row) => {
       toast.success("NDA erstellt");
       qc.invalidateQueries({ queryKey: ["nda-agreements"] });
-      setForm({ client_id: "", property_id: "", nda_type: "mutual", purpose: "", valid_from: "", valid_until: "", notes: "" });
+      setForm({ client_id: "", property_id: "", nda_type: "mutual", purpose: "", valid_from: "", valid_until: "", notes: "", penalty_amount: 10000 });
       setOpen(false);
       setGenFor(row);
     },
