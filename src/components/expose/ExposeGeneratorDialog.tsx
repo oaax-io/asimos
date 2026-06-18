@@ -219,20 +219,43 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
       if (p.renovated_at) push("Renoviert", String(p.renovated_at));
       if (p.energy_class) push("Energieklasse", p.energy_class);
 
-      // Gallery: selected image media (or fall back to images array)
-      const selectedImgUrls = imageMedia
-        .filter((m) => selectedImageIds.has(m.id))
-        .map((m) => m.file_url);
+      // Gallery: selected image media (or fall back to images array).
+      // The cover image is the one explicitly flagged is_cover=true; if none
+      // is flagged, the first selected image is used as cover.
+      const selectedImageMedia = imageMedia.filter((m) => selectedImageIds.has(m.id));
+      const coverMedia =
+        selectedImageMedia.find((m) => m.is_cover) ?? selectedImageMedia[0] ?? null;
+      const galleryMedia = selectedImageMedia.filter((m) => m.id !== coverMedia?.id);
+
       const fallbackImgs: string[] = Array.isArray(p.images) ? p.images : [];
-      const gallerySource = selectedImgUrls.length > 0 ? selectedImgUrls : fallbackImgs;
-      const coverUrl = gallerySource[0] ?? null;
-      let galleryUrls = sections.galerie ? gallerySource.slice(1) : [];
+      const coverSourceUrl = coverMedia?.file_url ?? fallbackImgs[0] ?? null;
+      const gallerySourceUrls =
+        galleryMedia.length > 0 ? galleryMedia.map((m) => m.file_url) : fallbackImgs.slice(coverMedia ? 0 : 1);
+
+      // Convert to base64 data URIs so the headless-Chrome PDF service can
+      // actually display them (private storage URLs are otherwise unreachable
+      // to the renderer and end up as broken images).
+      const coverUrl = coverSourceUrl ? (await urlToDataUri(coverSourceUrl)) : null;
+      let galleryUrls: string[] = sections.galerie
+        ? (await Promise.all(gallerySourceUrls.map((u) => urlToDataUri(u)))).map(
+            (u) => u ?? "__placeholder__",
+          )
+        : [];
       // If gallery section is enabled but there are no real images, fill with
       // placeholder tokens so the layout still renders a visible photo section.
       if (sections.galerie && galleryUrls.length === 0) {
         const placeholderCount = galleryLayout === "fullpage" ? 2 : galleryLayout === "grid4" ? 6 : 4;
         galleryUrls = Array.from({ length: placeholderCount }, () => "__placeholder__");
       }
+
+      // Attachment images: anything selected that's not used as cover or in gallery.
+      const usedIds = new Set<string>();
+      if (coverMedia) usedIds.add(coverMedia.id);
+      galleryMedia.forEach((m) => usedIds.add(m.id));
+      const attachmentMedia = selectedImageMedia.filter((m) => !usedIds.has(m.id));
+      const attachmentImageDataUrls = (
+        await Promise.all(attachmentMedia.map((m) => urlToDataUri(m.file_url)))
+      ).filter((u): u is string => !!u);
 
       // Map + POIs — geocode from address
       let mapUrl: string | null = null;
