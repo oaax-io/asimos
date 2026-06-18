@@ -2456,6 +2456,8 @@ export type Database = {
           postal_code: string | null
           price: number | null
           property_type: Database["public"]["Enums"]["property_type"]
+          public_enabled: boolean
+          public_token: string | null
           raw_import: Json | null
           renovated_at: number | null
           rent: number | null
@@ -2515,6 +2517,8 @@ export type Database = {
           postal_code?: string | null
           price?: number | null
           property_type?: Database["public"]["Enums"]["property_type"]
+          public_enabled?: boolean
+          public_token?: string | null
           raw_import?: Json | null
           renovated_at?: number | null
           rent?: number | null
@@ -2574,6 +2578,8 @@ export type Database = {
           postal_code?: string | null
           price?: number | null
           property_type?: Database["public"]["Enums"]["property_type"]
+          public_enabled?: boolean
+          public_token?: string | null
           raw_import?: Json | null
           renovated_at?: number | null
           rent?: number | null
@@ -3080,6 +3086,11 @@ export type Database = {
       is_manager_or_above: { Args: never; Returns: boolean }
       is_owner_or_admin: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
+      property_set_public: {
+        Args: { _enabled: boolean; _id: string }
+        Returns: string
+      }
+      public_property_view: { Args: { _token: string }; Returns: Json }
       self_disclosure_link_resolve: {
         Args: { _token: string }
         Returns: {
