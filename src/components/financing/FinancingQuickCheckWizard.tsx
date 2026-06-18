@@ -1601,6 +1601,8 @@ function Step4Metrics({
     coActive: boolean;
     mainIncome: number;
     coIncome: number;
+    extrasCount: number;
+    extrasIncome: number;
     incomeCombined: number;
   };
 }) {
@@ -1778,7 +1780,7 @@ function Step4Metrics({
                   )}
                 </div>
                 <p className="text-[11px] text-muted-foreground">{t("financing.wizard.metrics.obligationsHint")}</p>
-                {coActive && (
+                {(coActive || combined.extrasCount > 0) && (
                   <div className="rounded-md bg-background border p-2.5 text-xs flex justify-between">
                     <span className="text-muted-foreground">{t("financing.wizard.metrics.combinedIncomeShort")}</span>
                     <span className="font-semibold tabular-nums">{formatCurrency(combined.incomeCombined)} {t("financing.wizard.metrics.perYearShort")}</span>
@@ -1812,6 +1814,12 @@ function Step4Metrics({
               <Field label={t("financing.wizard.metrics.renovationCosts")} type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
               <Field label={t("financing.wizard.metrics.ownWork")} type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
             </>
+          )}
+          {(coActive || combined.extrasCount > 0) && (
+            <div className="rounded-md bg-card border p-2.5 text-xs flex justify-between sm:col-span-2">
+              <span className="text-muted-foreground">{t("financing.wizard.metrics.combinedIncomeShort")}</span>
+              <span className="font-semibold tabular-nums">{formatCurrency(combined.incomeCombined)} {t("financing.wizard.metrics.perYearShort")}</span>
+            </div>
           )}
         </div>
       )}
