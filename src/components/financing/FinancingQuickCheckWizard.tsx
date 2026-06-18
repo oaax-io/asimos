@@ -188,7 +188,8 @@ export type WizardForm = {
   amortisation_years: string;
 
   // Refinanzierung – zusätzliche Felder (nur aktiv wenn isRefiOnly)
-  usage_type: "" | "owner_occupied" | "rental";
+  usage_type: "" | "owner_occupied" | "rental" | "mixed";
+  owner_occupied_share: string; // Anteil Eigennutzung in % (nur relevant wenn usage_type = "mixed")
   object_type: "" | "house" | "apartment" | "commercial" | "mixed_use" | "other";
   current_bank: string;
   interest_rate_current: string;
