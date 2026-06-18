@@ -1730,7 +1730,31 @@ function Step4Metrics({
                     </Select>
                   </div>
                 </div>
+                {form.usage_type === "mixed" && (() => {
+                  const share = Math.min(100, Math.max(0, num(form.owner_occupied_share) || 50));
+                  const rentalShare = 100 - share;
+                  const weightedLtv = Math.round((80 * share + 75 * rentalShare) / 100 * 10) / 10;
+                  return (
+                    <div className="rounded-md border bg-background p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">{t("financing.wizard.metrics.ownerShareLabel")}</Label>
+                        <span className="text-xs font-medium tabular-nums">{share}% / {rentalShare}%</span>
+                      </div>
+                      <Slider
+                        value={[share]}
+                        min={0}
+                        max={100}
+                        step={5}
+                        onValueChange={([v]) => update("owner_occupied_share", String(v))}
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        {t("financing.wizard.metrics.mixedLtvHint", { ltv: weightedLtv, owner: share, rental: rentalShare })}
+                      </p>
+                    </div>
+                  );
+                })()}
               </section>
+
 
               {(() => {
                 const maxIncrease = Math.max(0, kpis.maxMortgageAllowed - num(form.existing_mortgage));
