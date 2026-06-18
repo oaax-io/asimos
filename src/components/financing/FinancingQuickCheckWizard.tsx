@@ -1610,7 +1610,7 @@ function DataQualityChecklist({
 
 /* ==================== Schritt 4 ==================== */
 type Kpis = {
-  ltv: number; equityRatio: number; affordability: number;
+  ltv: number; ltvForDecision: number; equityRatio: number; affordability: number; affordabilityForDecision: number;
   total: number; ancillary: number; amort: number; yearly: number;
   obligationsYearly: number; maxLtv: number; maxMortgageAllowed: number; ltvExceeded: boolean;
 };
@@ -2055,6 +2055,11 @@ function Step6Summary({
         {isRefiOnly && kpis.ltvExceeded && (
           <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
             {t("financing.wizard.summary.ltvExceeded", { ltv: kpis.maxLtv, amount: formatCurrency(kpis.maxMortgageAllowed) })}
+          </p>
+        )}
+        {isRefiOnly && (
+          <p className="text-[11px] text-muted-foreground mt-2">
+            {t("financing.wizard.summary.refiDecisionHint")}
           </p>
         )}
       </div>
