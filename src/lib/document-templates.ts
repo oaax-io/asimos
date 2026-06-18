@@ -299,6 +299,7 @@ const NUMERIC_KEYS = new Set([
   "financing.budget",
   "financing.equity",
   "financing.income",
+  "nda.penalty_amount",
 ]);
 const DATE_KEYS = new Set([
   "mandate.valid_from",
