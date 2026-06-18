@@ -66,6 +66,29 @@ function esc(str: string | null | undefined): string {
     .replace(/'/g, "&#39;");
 }
 
+const PLACEHOLDER = "__placeholder__";
+const isPh = (u: string | null | undefined) => !u || u === PLACEHOLDER;
+
+/** Inline SVG placeholder: house icon + "Foto folgt" caption, themed. */
+function phSvg(t: ExposeTheme): string {
+  const fg = encodeURIComponent(t.primary);
+  const bg = encodeURIComponent(t.accent);
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300' preserveAspectRatio='xMidYMid slice'>`
+    + `<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23${fg.slice(3)}' stop-opacity='0.08'/><stop offset='1' stop-color='%23${bg.slice(3)}' stop-opacity='0.18'/></linearGradient></defs>`
+    + `<rect width='400' height='300' fill='url(%23g)'/>`
+    + `<g fill='none' stroke='%23${fg.slice(3)}' stroke-opacity='0.45' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' transform='translate(160 100)'>`
+    + `<path d='M0 40 L40 8 L80 40 L80 80 L0 80 Z'/><path d='M30 80 L30 56 L50 56 L50 80'/></g>`
+    + `<text x='200' y='220' text-anchor='middle' font-family='Helvetica,Arial,sans-serif' font-size='14' font-weight='600' letter-spacing='3' fill='%23${fg.slice(3)}' fill-opacity='0.55'>FOTO FOLGT</text>`
+    + `</svg>`;
+  return `data:image/svg+xml;utf8,${svg}`;
+}
+
+/** Image tag that falls back to a themed SVG placeholder. */
+function imgOrPh(url: string | null | undefined, t: ExposeTheme, alt = ""): string {
+  const src = isPh(url) ? phSvg(t) : esc(url!);
+  return `<img src="${src}" alt="${esc(alt)}"/>`;
+}
+
 function priceBlock(d: ExposeData) {
   if (d.price) return { kicker: `${d.listing_type_label ?? ""}preis`, value: fmtCHF(d.price) };
   if (d.rent) return { kicker: "Miete", value: `${fmtCHF(d.rent)} / Mt.` };
@@ -168,7 +191,7 @@ function attachmentsPages(d: ExposeData, t: ExposeTheme, headerHtml: (label: str
     <div class="page">
       ${headerHtml("Anhänge · Fotos")}
       <div class="attach-grid">
-        ${slice.map((u) => `<div class="attach-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
+        ${slice.map((u) => `<div class="attach-cell">${imgOrPh(u, t)}</div>`).join("")}
       </div>
       ${footer(d, t, startPage + out.length, 0)}
     </div>`);
@@ -254,7 +277,7 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
         <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Galerie</div></header>
         <h2 class="section-title">Bilder</h2>
         <div class="gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
-          ${slice.map((u) => `<div class="g-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
+          ${slice.map((u) => `<div class="g-cell">${imgOrPh(u, t)}</div>`).join("")}
         </div>
         ${footer(d, t, pages.length + 1, 0)}
       </div>`);
@@ -396,7 +419,7 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
       <div class="page">
         <header class="ph"><div>${esc(d.title)}</div><div class="muted">Galerie</div></header>
         <div class="m-gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
-          ${slice.map((u) => `<div class="m-cell"><img src="${esc(u)}" alt=""/></div>`).join("")}
+          ${slice.map((u) => `<div class="m-cell">${imgOrPh(u, t)}</div>`).join("")}
         </div>
         ${footer(d, t, pages.length + 1, 0)}
       </div>`);
@@ -547,7 +570,7 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
         <div class="lx-rule double"></div>
         <h2 class="lx-h2">Impressionen</h2>
         <div class="lx-gal" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
-          ${slice.map((u, idx) => `<figure class="lx-gc ${i === 0 && idx === 0 ? "feat" : ""}"><img src="${esc(u)}" alt=""/></figure>`).join("")}
+          ${slice.map((u, idx) => `<figure class="lx-gc ${i === 0 && idx === 0 ? "feat" : ""}">${imgOrPh(u, t)}</figure>`).join("")}
         </div>
         ${footer(d, t, pages.length + 1, 0)}
       </div>`);

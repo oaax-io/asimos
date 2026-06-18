@@ -200,7 +200,13 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
       const fallbackImgs: string[] = Array.isArray(p.images) ? p.images : [];
       const gallerySource = selectedImgUrls.length > 0 ? selectedImgUrls : fallbackImgs;
       const coverUrl = gallerySource[0] ?? null;
-      const galleryUrls = sections.galerie ? gallerySource.slice(1) : [];
+      let galleryUrls = sections.galerie ? gallerySource.slice(1) : [];
+      // If gallery section is enabled but there are no real images, fill with
+      // placeholder tokens so the layout still renders a visible photo section.
+      if (sections.galerie && galleryUrls.length === 0) {
+        const placeholderCount = galleryLayout === "fullpage" ? 2 : galleryLayout === "grid4" ? 6 : 4;
+        galleryUrls = Array.from({ length: placeholderCount }, () => "__placeholder__");
+      }
 
       // Map + POIs — geocode from address
       let mapUrl: string | null = null;
