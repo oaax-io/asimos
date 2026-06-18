@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
-  FINANCING_TYPE_LABELS, calcQuickCheck, type FinancingType,
+  FINANCING_TYPE_LABELS, calcQuickCheck, type FinancingType, type QuickCheckStatus,
 } from "@/lib/financing";
 import { formatCurrency, propertyTypeLabels } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -105,6 +105,24 @@ export type AdditionalCoApplicant = {
   einkommen: string;
   eigenkapital: string;
   pk_anteil: string;
+};
+
+type CombinedValues = {
+  coActive: boolean;
+  coIncomeMissing: boolean;
+  mainIncome: number;
+  mainEquity: number;
+  mainPk: number;
+  coIncome: number;
+  coEquity: number;
+  coPk: number;
+  extrasCount: number;
+  extrasIncome: number;
+  extrasEquity: number;
+  extrasPk: number;
+  incomeCombined: number;
+  equityCombined: number;
+  pkCombined: number;
 };
 
 const MAX_CO_APPLICANTS = 10; // total Mitantragsteller incl. primary
@@ -417,7 +435,7 @@ export function FinancingQuickCheckWizard({
   }, [additionalIdsKey, clientsQuery.data]);
 
   // ---- Kombinierte Werte (Haupt + Mitantragsteller) ----
-  const combined = useMemo(() => {
+  const combined = useMemo<CombinedValues>(() => {
     const mainIncome = num(form.gross_income_yearly);
     const mainEquity = num(form.own_funds_total);
     const mainPk = num(form.own_funds_pension_fund);
@@ -505,6 +523,20 @@ export function FinancingQuickCheckWizard({
     return { ltv, equityRatio, affordability, total, ancillary, amort, yearly, obligationsYearly, maxLtv, maxMortgageAllowed, ltvExceeded };
   }, [form, combined, effectiveMortgage, isRefiOnly]);
 
+  const liveStatus = useMemo<QuickCheckStatus>(() => {
+    if (isRefiOnly) {
+      if (liveKpis.total <= 0 || effectiveMortgage <= 0 || combined.incomeCombined <= 0) return "incomplete";
+      if (liveKpis.ltvExceeded || liveKpis.affordability > 38) return "not_financeable";
+      if (liveKpis.affordability > 33) return "critical";
+      return "realistic";
+    }
+    if (liveResult.status === "incomplete") return liveResult.status;
+    if (isRefiOnly && liveKpis.ltvExceeded) return "not_financeable";
+    if (liveKpis.affordability > 38) return "not_financeable";
+    if (liveKpis.affordability > 33) return liveResult.status === "not_financeable" ? "not_financeable" : "critical";
+    return liveResult.status;
+  }, [combined.incomeCombined, effectiveMortgage, isRefiOnly, liveKpis.affordability, liveKpis.ltvExceeded, liveKpis.total, liveResult.status]);
+
   // ---- Validierung ----
   const canNext = useMemo(() => {
     if (step === 1) return form.modules.length > 0;
@@ -518,7 +550,7 @@ export function FinancingQuickCheckWizard({
       return true;
     }
     if (step === 4) {
-      const income = num(form.gross_income_yearly);
+      const income = combined.incomeCombined;
       if (isRefiOnly) {
         const existing = num(form.existing_mortgage);
         const mortgage = effectiveMortgage;
@@ -537,7 +569,7 @@ export function FinancingQuickCheckWizard({
     }
     if (step === 5) return true;
     return true;
-  }, [step, form, isRefiOnly, effectiveMortgage]);
+  }, [step, form, isRefiOnly, effectiveMortgage, combined.incomeCombined]);
 
   const navigate = useNavigate();
 
@@ -567,6 +599,42 @@ export function FinancingQuickCheckWizard({
         ancillary_costs_yearly: ancillary,
         amortisation_yearly: amort,
       });
+
+      const resultStatus: QuickCheckStatus = (() => {
+        if (isRefiOnly) {
+          if ((purchase ?? 0) <= 0 || mortgage <= 0 || incomeCombined <= 0) return "incomplete";
+          if (liveKpis.ltvExceeded || liveKpis.affordability > 38) return "not_financeable";
+          if (liveKpis.affordability > 33) return "critical";
+          return "realistic";
+        }
+        if (result.status === "incomplete") return result.status;
+        if (liveKpis.affordability > 38) return "not_financeable";
+        if (liveKpis.affordability > 33) return result.status === "not_financeable" ? "not_financeable" : "critical";
+        return result.status;
+      })();
+
+      const resultReasons = isRefiOnly
+        ? resultStatus === "incomplete"
+          ? [{ key: "missing", label: "Pflichtdaten fehlen (Objektwert, Hypothek, Einkommen)", tone: "warn" as const }]
+          : [
+              {
+                key: "ltv",
+                label: liveKpis.ltvExceeded
+                  ? `Belehnung zu hoch (${liveKpis.ltv.toFixed(1)}%, max. ${liveKpis.maxLtv.toFixed(0)}%)`
+                  : `Belehnung ausreichend (${liveKpis.ltv.toFixed(1)}%, max. ${liveKpis.maxLtv.toFixed(0)}%)`,
+                tone: liveKpis.ltvExceeded ? "bad" as const : "ok" as const,
+              },
+              {
+                key: "afford",
+                label: liveKpis.affordability <= 33
+                  ? `Tragbarkeit gut (${liveKpis.affordability.toFixed(1)}%)`
+                  : liveKpis.affordability <= 38
+                    ? `Tragbarkeit kritisch (${liveKpis.affordability.toFixed(1)}%)`
+                    : `Tragbarkeit zu hoch (${liveKpis.affordability.toFixed(1)}%)`,
+                tone: liveKpis.affordability <= 33 ? "ok" as const : liveKpis.affordability <= 38 ? "warn" as const : "bad" as const,
+              },
+            ]
+        : result.reasons;
 
       const primaryType: FinancingType = (form.modules[0] as FinancingType) ?? "purchase";
 
@@ -631,9 +699,9 @@ export function FinancingQuickCheckWizard({
         amortisation_yearly: amort,
         total_investment: result.total_investment || null,
         loan_to_value_ratio: result.loan_to_value_ratio || null,
-        affordability_ratio: result.affordability_ratio || null,
-        quick_check_status: result.status,
-        quick_check_reasons: result.reasons,
+        affordability_ratio: liveKpis.affordability || result.affordability_ratio || null,
+        quick_check_status: resultStatus,
+        quick_check_reasons: resultReasons,
         status: "draft" as const,
         dossier_status: "quick_check" as const,
       };
@@ -735,11 +803,12 @@ export function FinancingQuickCheckWizard({
             <Step6Summary
               form={form}
               kpis={liveKpis}
-              status={liveResult.status}
+              status={liveStatus}
               clients={clientsQuery.data ?? []}
               properties={propertiesQuery.data ?? []}
               isRefiOnly={isRefiOnly}
               effectiveMortgage={effectiveMortgage}
+              combined={combined}
             />
           )}
         </div>
@@ -1566,6 +1635,8 @@ function Step4Metrics({
     coActive: boolean;
     mainIncome: number;
     coIncome: number;
+    extrasCount: number;
+    extrasIncome: number;
     incomeCombined: number;
   };
 }) {
@@ -1743,7 +1814,7 @@ function Step4Metrics({
                   )}
                 </div>
                 <p className="text-[11px] text-muted-foreground">{t("financing.wizard.metrics.obligationsHint")}</p>
-                {coActive && (
+                {(coActive || combined.extrasCount > 0) && (
                   <div className="rounded-md bg-background border p-2.5 text-xs flex justify-between">
                     <span className="text-muted-foreground">{t("financing.wizard.metrics.combinedIncomeShort")}</span>
                     <span className="font-semibold tabular-nums">{formatCurrency(combined.incomeCombined)} {t("financing.wizard.metrics.perYearShort")}</span>
@@ -1777,6 +1848,12 @@ function Step4Metrics({
               <Field label={t("financing.wizard.metrics.renovationCosts")} type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
               <Field label={t("financing.wizard.metrics.ownWork")} type="number" value={form.renovation_own_work} onChange={(v) => update("renovation_own_work", v)} />
             </>
+          )}
+          {(coActive || combined.extrasCount > 0) && (
+            <div className="rounded-md bg-card border p-2.5 text-xs flex justify-between sm:col-span-2">
+              <span className="text-muted-foreground">{t("financing.wizard.metrics.combinedIncomeShort")}</span>
+              <span className="font-semibold tabular-nums">{formatCurrency(combined.incomeCombined)} {t("financing.wizard.metrics.perYearShort")}</span>
+            </div>
           )}
         </div>
       )}
@@ -1860,7 +1937,7 @@ function Step5Advanced({
 
 /* ==================== Schritt 6 ==================== */
 function Step6Summary({
-  form, kpis, status, clients, properties, isRefiOnly, effectiveMortgage,
+  form, kpis, status, clients, properties, isRefiOnly, effectiveMortgage, combined,
 }: {
   form: WizardForm;
   kpis: Kpis;
@@ -1869,6 +1946,7 @@ function Step6Summary({
   properties: any[];
   isRefiOnly: boolean;
   effectiveMortgage: number;
+  combined: CombinedValues;
 }) {
   const { t } = useTranslation();
   const client = clients.find((c) => c.id === form.client_id);
@@ -1888,6 +1966,22 @@ function Step6Summary({
   const propertyValueLabel = isRefiOnly
     ? t("financing.wizard.summary.propertyValue")
     : t("financing.wizard.summary.purchasePrice");
+  const coApplicant = combined.coActive ? clients.find((c) => c.id === form.co_applicant_client_id) : null;
+  const additionalApplicants = (form.additional_co_applicants ?? [])
+    .filter((a) => !!a.client_id)
+    .map((a, idx) => ({
+      ...a,
+      name: clients.find((c) => c.id === a.client_id)?.full_name ?? "—",
+      label: t("financing.wizard.summary.additionalApplicantNumber", { count: combined.coActive ? idx + 2 : idx + 1 }),
+    }));
+  const applicantValue = (income: number, equity: number, pk: number) => {
+    const parts = [income > 0 ? `${formatCurrency(income)} ${t("financing.wizard.coApplicant.perYear")}` : t("financing.wizard.summary.noIncome")];
+    if (!isRefiOnly) {
+      parts.push(`${t("financing.wizard.summary.ownFundsShort")}: ${formatCurrency(equity)}`);
+      if (pk > 0) parts.push(`${t("financing.wizard.summary.pkShort")}: ${formatCurrency(pk)}`);
+    }
+    return parts.join(" · ");
+  };
 
   return (
     <div className="space-y-4">
@@ -1904,17 +1998,20 @@ function Step6Summary({
       </SummaryGroup>
 
       <SummaryGroup title={t("financing.wizard.summary.client")}>
-        <SumRow label={t("financing.wizard.summary.client")} value={clientLabel} />
-        {form.gross_income_yearly && <SumRow label={t("financing.wizard.summary.grossIncome")} value={formatCurrency(num(form.gross_income_yearly))} />}
-        {!isRefiOnly && form.own_funds_total && <SumRow label={t("financing.wizard.summary.ownFundsTotal")} value={formatCurrency(num(form.own_funds_total))} />}
-        {!isRefiOnly && form.own_funds_pension_fund && <SumRow label={t("financing.wizard.summary.pkPart")} value={formatCurrency(num(form.own_funds_pension_fund))} />}
-        {isRefiOnly && form.monthly_obligations && <SumRow label={t("financing.wizard.summary.monthlyObligations")} value={formatCurrency(num(form.monthly_obligations))} />}
-        {(form.additional_co_applicants?.filter((a) => !!a.client_id).length ?? 0) > 0 && (
+        <SumRow label={t("financing.wizard.summary.mainApplicant")} value={`${clientLabel} · ${applicantValue(combined.mainIncome, combined.mainEquity, combined.mainPk)}`} />
+        {combined.coActive && (
           <SumRow
-            label={t("financing.wizard.summary.additionalCoApplicants", { defaultValue: "Weitere Mitantragsteller" })}
-            value={String(form.additional_co_applicants.filter((a) => !!a.client_id).length)}
+            label={form.co_applicant_role === "ehepartner" ? t("financing.wizard.summary.spouse") : t("financing.wizard.summary.coApplicant")}
+            value={`${coApplicant?.full_name ?? "—"} · ${applicantValue(combined.coIncome, combined.coEquity, combined.coPk)}`}
           />
         )}
+        {additionalApplicants.map((a) => (
+          <SumRow key={a.client_id} label={a.label} value={`${a.name} · ${applicantValue(num(a.einkommen), num(a.eigenkapital), num(a.pk_anteil))}`} />
+        ))}
+        <SumRow label={t("financing.wizard.summary.combinedIncome")} value={`${formatCurrency(combined.incomeCombined)} ${t("financing.wizard.coApplicant.perYear")}`} />
+        {!isRefiOnly && <SumRow label={t("financing.wizard.summary.combinedEquity")} value={formatCurrency(combined.equityCombined)} />}
+        {!isRefiOnly && combined.pkCombined > 0 && <SumRow label={t("financing.wizard.summary.combinedPk")} value={formatCurrency(combined.pkCombined)} />}
+        {isRefiOnly && form.monthly_obligations && <SumRow label={t("financing.wizard.summary.monthlyObligations")} value={formatCurrency(num(form.monthly_obligations))} />}
       </SummaryGroup>
 
       {isRefiOnly && (form.current_bank || form.interest_rate_current || form.interest_rate_expiry || form.refi_purpose) && (
