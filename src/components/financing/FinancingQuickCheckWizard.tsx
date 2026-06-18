@@ -1871,7 +1871,9 @@ function Step4Metrics({
           <p className="text-[11px] text-muted-foreground">
             {form.usage_type === "rental"
               ? t("financing.wizard.metrics.ltvLimitHintRental")
-              : t("financing.wizard.metrics.ltvLimitHintOwner")}
+              : form.usage_type === "mixed"
+                ? t("financing.wizard.metrics.ltvLimitHintMixed", { ltv: kpis.maxLtv })
+                : t("financing.wizard.metrics.ltvLimitHintOwner")}
           </p>
         </>
       ) : (
