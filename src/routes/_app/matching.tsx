@@ -337,6 +337,7 @@ function MatchingPage() {
                 <MatchCard
                   key={p.id}
                   property={p}
+                  coverUrl={coverByProperty.get(p.id)}
                   score={score}
                   reasons={reasons}
                   onSave={() => save.mutate({ client_id: selected!.id, property_id: p.id, score, reasons })}
@@ -350,24 +351,34 @@ function MatchingPage() {
   );
 }
 
+function affordabilityChipClass(ratio: number): string {
+  if (ratio <= 28) return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/30";
+  if (ratio <= 33) return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-500/20";
+  if (ratio <= 38) return "bg-amber-500/15 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/30";
+  return "bg-destructive/15 text-destructive ring-1 ring-destructive/30";
+}
+
 function MatchCard({
   client,
   property: p,
+  coverUrl,
   score,
   reasons,
   onSave,
 }: {
   client?: Client;
   property: Property;
+  coverUrl?: string;
   score: number;
   reasons: string[];
   onSave: () => void;
 }) {
+  const cover = coverUrl ?? p.images?.[0];
   return (
     <Card className="overflow-hidden transition hover:shadow-glow">
       <div className="aspect-[16/10] overflow-hidden bg-muted">
-        {p.images?.[0]
-          ? <img src={p.images[0]} alt={p.title} className="h-full w-full object-cover" />
+        {cover
+          ? <img src={cover} alt={p.title} className="h-full w-full object-cover" loading="lazy" />
           : <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">Kein Bild</div>}
       </div>
       <CardContent className="p-4">
@@ -388,9 +399,24 @@ function MatchCard({
         </p>
         <p className="mt-1.5 font-display text-base font-bold">{formatCurrency(p.price ? Number(p.price) : null)}</p>
         <div className="mt-2 flex flex-wrap gap-1">
-          {reasons.slice(0, 4).map((r) => (
-            <span key={r} className="rounded-full bg-accent/60 px-2 py-0.5 text-[10px] text-accent-foreground">{r}</span>
-          ))}
+          {reasons.slice(0, 4).map((r) => {
+            const m = r.match(/Tragbarkeit\s+(\d+(?:\.\d+)?)%/i);
+            if (m) {
+              const ratio = Number(m[1]);
+              return (
+                <span
+                  key={r}
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${affordabilityChipClass(ratio)}`}
+                  title="Kalkulatorische Tragbarkeit (Richtwert max. 33 %)"
+                >
+                  {r}
+                </span>
+              );
+            }
+            return (
+              <span key={r} className="rounded-full bg-accent/60 px-2 py-0.5 text-[10px] text-accent-foreground">{r}</span>
+            );
+          })}
         </div>
         <div className="mt-3 flex gap-2">
           <Button size="sm" className="flex-1" onClick={onSave}>Vormerken</Button>
