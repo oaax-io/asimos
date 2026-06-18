@@ -47,6 +47,24 @@ function MatchingPage() {
     queryKey: ["properties"],
     queryFn: async () => (await supabase.from("properties").select("*")).data ?? [],
   });
+  const { data: media = [] } = useQuery({
+    queryKey: ["property_media_min"],
+    queryFn: async () =>
+      (await supabase
+        .from("property_media")
+        .select("property_id,file_url,is_cover,sort_order")
+        .order("is_cover", { ascending: false })
+        .order("sort_order", { ascending: true })
+      ).data ?? [],
+  });
+  const coverByProperty = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of media as any[]) {
+      if (!m.file_url) continue;
+      if (!map.has(m.property_id)) map.set(m.property_id, m.file_url);
+    }
+    return map;
+  }, [media]);
   const { data: disclosures = [] } = useQuery({
     queryKey: ["self_disclosures_all"],
     queryFn: async () =>
