@@ -63,6 +63,7 @@ function PropertyDetail() {
   const { user } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [financingOpen, setFinancingOpen] = useState(false);
+  const [exposeOpen, setExposeOpen] = useState(false);
   const [tab, setTab] = useState("overview");
 
   const { data: p, isLoading } = useQuery({
@@ -351,8 +352,8 @@ function PropertyDetail() {
       <div className="mb-4 flex items-center justify-between">
         <Button variant="ghost" asChild><Link to="/properties"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link></Button>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" asChild>
-            <Link to="/properties/$id/expose" params={{ id }}><FileText className="mr-1 h-4 w-4" />Exposé</Link>
+          <Button variant="outline" onClick={() => setExposeOpen(true)}>
+            <FileText className="mr-1 h-4 w-4" />Exposé
           </Button>
           <Button variant="outline" onClick={() => setFinancingOpen(true)}>
             <Banknote className="mr-1 h-4 w-4" />Finanzierung starten
@@ -391,6 +392,15 @@ function PropertyDetail() {
         defaultClientId={currentOwners[0]?.client_id}
         onCreated={(dossierId) => navigate({ to: "/financing/$id", params: { id: dossierId } })}
       />
+
+      <Dialog open={exposeOpen} onOpenChange={setExposeOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Exposé</DialogTitle>
+          </DialogHeader>
+          <ExposeTab propertyId={id} property={p} />
+        </DialogContent>
+      </Dialog>
 
       {/* Parent / Unit context banner */}
       {p.is_unit && parent && (
@@ -544,10 +554,6 @@ function PropertyDetail() {
               <AccordionItem value="mandate" className="rounded-xl border px-4">
                 <AccordionTrigger className="font-display text-base">Mandat</AccordionTrigger>
                 <AccordionContent><MandateTab propertyId={id} /></AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="expose" className="rounded-xl border px-4">
-                <AccordionTrigger className="font-display text-base">Exposé</AccordionTrigger>
-                <AccordionContent><ExposeTab propertyId={id} property={p} /></AccordionContent>
               </AccordionItem>
               <AccordionItem value="reservation" className="rounded-xl border px-4">
                 <AccordionTrigger className="font-display text-base">Reservation</AccordionTrigger>
