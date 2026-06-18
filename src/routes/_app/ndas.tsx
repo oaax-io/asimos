@@ -54,10 +54,15 @@ type NdaRow = {
   valid_from: string | null;
   valid_until: string | null;
   notes: string | null;
+  penalty_amount: number | null;
   generated_document_id: string | null;
   clients: { full_name: string } | null;
   properties: { title: string } | null;
 };
+
+function formatChf(n: number): string {
+  return `CHF ${n.toLocaleString("de-CH", { maximumFractionDigits: 0 })}`;
+}
 
 function NdasPage() {
   const qc = useQueryClient();
