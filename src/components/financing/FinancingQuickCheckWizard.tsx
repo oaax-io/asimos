@@ -2034,7 +2034,21 @@ function Step6Summary({
         {form.property_address && <SumRow label={t("financing.wizard.summary.address")} value={form.property_address} />}
         {form.property_purchase_price && <SumRow label={propertyValueLabel} value={formatCurrency(num(form.property_purchase_price))} />}
         {isRefiOnly && form.object_type && <SumRow label={t("financing.wizard.summary.objectType")} value={t(`financing.wizard.metrics.objectTypes.${form.object_type}`, { defaultValue: OBJECT_TYPE_LABELS[form.object_type] })} />}
-        {isRefiOnly && form.usage_type && <SumRow label={t("financing.wizard.summary.usage")} value={form.usage_type === "rental" ? t("financing.wizard.summary.usageRental") : t("financing.wizard.summary.usageOwner")} />}
+        {isRefiOnly && form.usage_type && (
+          <SumRow
+            label={t("financing.wizard.summary.usage")}
+            value={
+              form.usage_type === "rental"
+                ? t("financing.wizard.summary.usageRental")
+                : form.usage_type === "mixed"
+                  ? t("financing.wizard.summary.usageMixedValue", {
+                      owner: Math.min(100, Math.max(0, num(form.owner_occupied_share) || 50)),
+                      rental: 100 - Math.min(100, Math.max(0, num(form.owner_occupied_share) || 50)),
+                    })
+                  : t("financing.wizard.summary.usageOwner")
+            }
+          />
+        )}
       </SummaryGroup>
 
       <SummaryGroup title={t("financing.wizard.summary.client")}>
