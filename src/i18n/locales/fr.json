@@ -1100,7 +1100,8 @@
         "amortDuration": "Durée d'amortissement",
         "years": "{{count}} ans",
         "livePreview": "Aperçu en direct",
-        "ltvExceeded": "⚠ Nouvelle hypothèque totale dépasse le nantissement max. de {{ltv}} % ({{amount}})."
+        "ltvExceeded": "⚠ Nouvelle hypothèque totale dépasse le nantissement max. de {{ltv}} % ({{amount}}).",
+        "refiDecisionHint": "Pour un refinancement, la quote-part de fonds propres n'est pas prise en compte dans la décision ; le nantissement et la charge supportable sont déterminants."
       },
       "status": {
         "realistic": "Réaliste",

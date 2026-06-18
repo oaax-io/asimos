@@ -1100,7 +1100,8 @@
         "amortDuration": "Amortisationsdauer",
         "years": "{{count}} Jahre",
         "livePreview": "Live-Vorschau",
-        "ltvExceeded": "⚠ Neue Gesamthypothek übersteigt max. Belehnung von {{ltv}}% ({{amount}})."
+        "ltvExceeded": "⚠ Neue Gesamthypothek übersteigt max. Belehnung von {{ltv}}% ({{amount}}).",
+        "refiDecisionHint": "Bei Refinanzierung wird die Eigenmittelquote nicht für den Entscheid gewertet; massgebend sind Belehnung und Tragbarkeit."
       },
       "status": {
         "realistic": "Realistisch",

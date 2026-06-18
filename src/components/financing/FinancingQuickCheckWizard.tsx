@@ -45,6 +45,7 @@ const numOrNull = (v: string) => {
   const n = parseFloat(String(v).replace(",", "."));
   return Number.isFinite(n) ? n : null;
 };
+const roundPercentForDecision = (v: number) => Math.round((v + Number.EPSILON) * 10) / 10;
 
 // Map property_type (CRM) → object_type (Wizard-Refi)
 function mapPropertyTypeToObject(t: string | null | undefined): "" | "house" | "apartment" | "commercial" | "mixed_use" | "other" {
@@ -517,25 +518,27 @@ export function FinancingQuickCheckWizard({
     const amort = years > 0 ? secondMortgage / years : 0;
     const yearly = mortgage * (rate / 100) + ancillary + amort + obligationsYearly;
     const affordability = income > 0 ? (yearly / income) * 100 : 0;
+    const ltvForDecision = roundPercentForDecision(ltv);
+    const affordabilityForDecision = roundPercentForDecision(affordability);
     // Aufstockungs-Plausibilität (Refi)
     const maxMortgageAllowed = total * (maxLtv / 100);
-    const ltvExceeded = isRefiOnly && total > 0 && mortgage > maxMortgageAllowed;
-    return { ltv, equityRatio, affordability, total, ancillary, amort, yearly, obligationsYearly, maxLtv, maxMortgageAllowed, ltvExceeded };
+    const ltvExceeded = isRefiOnly && total > 0 && ltvForDecision > maxLtv;
+    return { ltv, ltvForDecision, equityRatio, affordability, affordabilityForDecision, total, ancillary, amort, yearly, obligationsYearly, maxLtv, maxMortgageAllowed, ltvExceeded };
   }, [form, combined, effectiveMortgage, isRefiOnly]);
 
   const liveStatus = useMemo<QuickCheckStatus>(() => {
     if (isRefiOnly) {
       if (liveKpis.total <= 0 || effectiveMortgage <= 0 || combined.incomeCombined <= 0) return "incomplete";
-      if (liveKpis.ltvExceeded || liveKpis.affordability > 38) return "not_financeable";
-      if (liveKpis.affordability > 33) return "critical";
+      if (liveKpis.ltvExceeded || liveKpis.affordabilityForDecision > 38) return "not_financeable";
+      if (liveKpis.affordabilityForDecision > 33) return "critical";
       return "realistic";
     }
     if (liveResult.status === "incomplete") return liveResult.status;
     if (isRefiOnly && liveKpis.ltvExceeded) return "not_financeable";
-    if (liveKpis.affordability > 38) return "not_financeable";
-    if (liveKpis.affordability > 33) return liveResult.status === "not_financeable" ? "not_financeable" : "critical";
+    if (liveKpis.affordabilityForDecision > 38) return "not_financeable";
+    if (liveKpis.affordabilityForDecision > 33) return liveResult.status === "not_financeable" ? "not_financeable" : "critical";
     return liveResult.status;
-  }, [combined.incomeCombined, effectiveMortgage, isRefiOnly, liveKpis.affordability, liveKpis.ltvExceeded, liveKpis.total, liveResult.status]);
+  }, [combined.incomeCombined, effectiveMortgage, isRefiOnly, liveKpis.affordabilityForDecision, liveKpis.ltvExceeded, liveKpis.total, liveResult.status]);
 
   // ---- Validierung ----
   const canNext = useMemo(() => {
@@ -603,13 +606,13 @@ export function FinancingQuickCheckWizard({
       const resultStatus: QuickCheckStatus = (() => {
         if (isRefiOnly) {
           if ((purchase ?? 0) <= 0 || mortgage <= 0 || incomeCombined <= 0) return "incomplete";
-          if (liveKpis.ltvExceeded || liveKpis.affordability > 38) return "not_financeable";
-          if (liveKpis.affordability > 33) return "critical";
+          if (liveKpis.ltvExceeded || liveKpis.affordabilityForDecision > 38) return "not_financeable";
+          if (liveKpis.affordabilityForDecision > 33) return "critical";
           return "realistic";
         }
         if (result.status === "incomplete") return result.status;
-        if (liveKpis.affordability > 38) return "not_financeable";
-        if (liveKpis.affordability > 33) return result.status === "not_financeable" ? "not_financeable" : "critical";
+        if (liveKpis.affordabilityForDecision > 38) return "not_financeable";
+        if (liveKpis.affordabilityForDecision > 33) return result.status === "not_financeable" ? "not_financeable" : "critical";
         return result.status;
       })();
 
@@ -626,12 +629,12 @@ export function FinancingQuickCheckWizard({
               },
               {
                 key: "afford",
-                label: liveKpis.affordability <= 33
-                  ? `Tragbarkeit gut (${liveKpis.affordability.toFixed(1)}%)`
-                  : liveKpis.affordability <= 38
-                    ? `Tragbarkeit kritisch (${liveKpis.affordability.toFixed(1)}%)`
-                    : `Tragbarkeit zu hoch (${liveKpis.affordability.toFixed(1)}%)`,
-                tone: liveKpis.affordability <= 33 ? "ok" as const : liveKpis.affordability <= 38 ? "warn" as const : "bad" as const,
+                label: liveKpis.affordabilityForDecision <= 33
+                  ? `Tragbarkeit gut (${liveKpis.affordabilityForDecision.toFixed(1)}%)`
+                  : liveKpis.affordabilityForDecision <= 38
+                    ? `Tragbarkeit kritisch (${liveKpis.affordabilityForDecision.toFixed(1)}%)`
+                    : `Tragbarkeit zu hoch (${liveKpis.affordabilityForDecision.toFixed(1)}%)`,
+                tone: liveKpis.affordabilityForDecision <= 33 ? "ok" as const : liveKpis.affordabilityForDecision <= 38 ? "warn" as const : "bad" as const,
               },
             ]
         : result.reasons;
@@ -1607,7 +1610,7 @@ function DataQualityChecklist({
 
 /* ==================== Schritt 4 ==================== */
 type Kpis = {
-  ltv: number; equityRatio: number; affordability: number;
+  ltv: number; ltvForDecision: number; equityRatio: number; affordability: number; affordabilityForDecision: number;
   total: number; ancillary: number; amort: number; yearly: number;
   obligationsYearly: number; maxLtv: number; maxMortgageAllowed: number; ltvExceeded: boolean;
 };
@@ -2052,6 +2055,11 @@ function Step6Summary({
         {isRefiOnly && kpis.ltvExceeded && (
           <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
             {t("financing.wizard.summary.ltvExceeded", { ltv: kpis.maxLtv, amount: formatCurrency(kpis.maxMortgageAllowed) })}
+          </p>
+        )}
+        {isRefiOnly && (
+          <p className="text-[11px] text-muted-foreground mt-2">
+            {t("financing.wizard.summary.refiDecisionHint")}
           </p>
         )}
       </div>
