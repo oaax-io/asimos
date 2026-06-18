@@ -1699,7 +1699,7 @@ function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: s
   );
 }
 
-function ExposeTab({ propertyId }: { propertyId: string }) {
+function ExposeTab({ propertyId, property }: { propertyId: string; property: any }) {
   const { data: exposes = [], isLoading } = useQuery({
     queryKey: ["exposes", propertyId],
     queryFn: async () => {
@@ -1715,6 +1715,7 @@ function ExposeTab({ propertyId }: { propertyId: string }) {
 
   return (
     <div className="space-y-4">
+      <PublicShareCard property={property} />
       <Card><CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
         <div>
           <h3 className="font-display text-lg font-semibold">Exposé erstellen</h3>
