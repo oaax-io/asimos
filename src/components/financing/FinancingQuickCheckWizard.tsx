@@ -608,11 +608,33 @@ export function FinancingQuickCheckWizard({
           return "realistic";
         }
         if (result.status === "incomplete") return result.status;
-        if (isRefiOnly && liveKpis.ltvExceeded) return "not_financeable";
         if (liveKpis.affordability > 38) return "not_financeable";
         if (liveKpis.affordability > 33) return result.status === "not_financeable" ? "not_financeable" : "critical";
         return result.status;
       })();
+
+      const resultReasons = isRefiOnly
+        ? resultStatus === "incomplete"
+          ? [{ key: "missing", label: "Pflichtdaten fehlen (Objektwert, Hypothek, Einkommen)", tone: "warn" as const }]
+          : [
+              {
+                key: "ltv",
+                label: liveKpis.ltvExceeded
+                  ? `Belehnung zu hoch (${liveKpis.ltv.toFixed(1)}%, max. ${liveKpis.maxLtv.toFixed(0)}%)`
+                  : `Belehnung ausreichend (${liveKpis.ltv.toFixed(1)}%, max. ${liveKpis.maxLtv.toFixed(0)}%)`,
+                tone: liveKpis.ltvExceeded ? "bad" as const : "ok" as const,
+              },
+              {
+                key: "afford",
+                label: liveKpis.affordability <= 33
+                  ? `Tragbarkeit gut (${liveKpis.affordability.toFixed(1)}%)`
+                  : liveKpis.affordability <= 38
+                    ? `Tragbarkeit kritisch (${liveKpis.affordability.toFixed(1)}%)`
+                    : `Tragbarkeit zu hoch (${liveKpis.affordability.toFixed(1)}%)`,
+                tone: liveKpis.affordability <= 33 ? "ok" as const : liveKpis.affordability <= 38 ? "warn" as const : "bad" as const,
+              },
+            ]
+        : result.reasons;
 
       const primaryType: FinancingType = (form.modules[0] as FinancingType) ?? "purchase";
 
@@ -679,7 +701,7 @@ export function FinancingQuickCheckWizard({
         loan_to_value_ratio: result.loan_to_value_ratio || null,
         affordability_ratio: liveKpis.affordability || result.affordability_ratio || null,
         quick_check_status: resultStatus,
-        quick_check_reasons: result.reasons,
+        quick_check_reasons: resultReasons,
         status: "draft" as const,
         dossier_status: "quick_check" as const,
       };
