@@ -2204,11 +2204,14 @@ export type Database = {
       }
       nda_agreements: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
           client_id: string | null
           created_at: string
           created_by: string | null
           generated_document_id: string | null
           id: string
+          is_archived: boolean
           nda_type: string
           notes: string | null
           penalty_amount: number
@@ -2220,11 +2223,14 @@ export type Database = {
           valid_until: string | null
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
           generated_document_id?: string | null
           id?: string
+          is_archived?: boolean
           nda_type?: string
           notes?: string | null
           penalty_amount?: number
@@ -2236,11 +2242,14 @@ export type Database = {
           valid_until?: string | null
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
           client_id?: string | null
           created_at?: string
           created_by?: string | null
           generated_document_id?: string | null
           id?: string
+          is_archived?: boolean
           nda_type?: string
           notes?: string | null
           penalty_amount?: number
