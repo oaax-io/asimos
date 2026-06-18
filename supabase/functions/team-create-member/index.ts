@@ -95,6 +95,14 @@ Deno.serve(async (req) => {
       .eq("id", newUserId);
     if (updErr) return json({ error: updErr.message }, 400);
 
+    // Sync public.user_roles so RLS (is_manager_or_above, is_agent, ...) works
+    const appRoles = ["owner", "admin", "manager", "agent", "assistant", "employee"];
+    await admin.from("user_roles").delete().eq("user_id", newUserId).in("role", appRoles);
+    const { error: roleErr } = await admin
+      .from("user_roles")
+      .insert({ user_id: newUserId, role });
+    if (roleErr) return json({ error: roleErr.message }, 400);
+
     return json({ ok: true, user_id: newUserId, password: generatedPassword, mode });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
