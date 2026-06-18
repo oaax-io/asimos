@@ -262,6 +262,7 @@ export const AVAILABLE_VARIABLES = [
   { key: "nda.valid_from", label: "NDA – Gültig ab", group: "NDA" },
   { key: "nda.valid_until", label: "NDA – Gültig bis", group: "NDA" },
   { key: "nda.purpose", label: "NDA – Zweck", group: "NDA" },
+  { key: "nda.penalty_amount", label: "NDA – Konventionalstrafe", group: "NDA" },
   // Financing
   { key: "financing.bank_name", label: "Finanzierung – Bank", group: "Finanzierung" },
   { key: "financing.bank_contact", label: "Finanzierung – Kontakt", group: "Finanzierung" },
