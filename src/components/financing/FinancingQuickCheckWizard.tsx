@@ -226,6 +226,7 @@ const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
   ancillary_pct: "1",
   amortisation_years: "15",
   usage_type: "",
+  owner_occupied_share: "",
   object_type: "",
   current_bank: "",
   interest_rate_current: "",
