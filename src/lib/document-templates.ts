@@ -66,6 +66,7 @@ export type TemplateContext = {
     valid_from?: string | null;
     valid_until?: string | null;
     purpose?: string | null;
+    penalty_amount?: number | string | null;
   } | null;
   financing?: {
     bank_name?: string | null;
@@ -261,6 +262,7 @@ export const AVAILABLE_VARIABLES = [
   { key: "nda.valid_from", label: "NDA – Gültig ab", group: "NDA" },
   { key: "nda.valid_until", label: "NDA – Gültig bis", group: "NDA" },
   { key: "nda.purpose", label: "NDA – Zweck", group: "NDA" },
+  { key: "nda.penalty_amount", label: "NDA – Konventionalstrafe", group: "NDA" },
   // Financing
   { key: "financing.bank_name", label: "Finanzierung – Bank", group: "Finanzierung" },
   { key: "financing.bank_contact", label: "Finanzierung – Kontakt", group: "Finanzierung" },
@@ -297,6 +299,7 @@ const NUMERIC_KEYS = new Set([
   "financing.budget",
   "financing.equity",
   "financing.income",
+  "nda.penalty_amount",
 ]);
 const DATE_KEYS = new Set([
   "mandate.valid_from",
@@ -1546,7 +1549,7 @@ export const DEFAULT_NDA_ASIMO = `<!--skin:asimo-->
 
     <div class="a-section">
       <h4>6. Konventionalstrafe</h4>
-      <p>Bei jeder schuldhaften Verletzung der Geheimhaltungspflicht ist eine Konventionalstrafe in Höhe von CHF 10'000 geschuldet. Die Geltendmachung weitergehenden Schadens bleibt vorbehalten.</p>
+      <p>Bei jeder schuldhaften Verletzung der Geheimhaltungspflicht ist eine Konventionalstrafe in Höhe von <strong>{{nda.penalty_amount}}</strong> geschuldet. Die Geltendmachung weitergehenden Schadens bleibt vorbehalten.</p>
     </div>
 
     <div class="a-section">

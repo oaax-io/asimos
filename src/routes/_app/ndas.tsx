@@ -12,6 +12,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
@@ -53,10 +54,15 @@ type NdaRow = {
   valid_from: string | null;
   valid_until: string | null;
   notes: string | null;
+  penalty_amount: number | null;
   generated_document_id: string | null;
   clients: { full_name: string } | null;
   properties: { title: string } | null;
 };
+
+function formatChf(n: number): string {
+  return `CHF ${n.toLocaleString("de-CH", { maximumFractionDigits: 0 })}`;
+}
 
 function NdasPage() {
   const qc = useQueryClient();
@@ -73,6 +79,7 @@ function NdasPage() {
     valid_from: "",
     valid_until: "",
     notes: "",
+    penalty_amount: 10000,
   });
 
   const { data: ndas = [], isLoading } = useQuery<NdaRow[]>({
@@ -106,6 +113,7 @@ function NdasPage() {
         valid_from: form.valid_from || null,
         valid_until: form.valid_until || null,
         notes: form.notes.trim() || (form.purpose ? `Zweck: ${form.purpose}` : null),
+        penalty_amount: form.penalty_amount,
         status: "draft",
       } as any).select("*, clients(full_name), properties(title)").single();
       if (error) throw error;
@@ -114,7 +122,7 @@ function NdasPage() {
     onSuccess: (row) => {
       toast.success("NDA erstellt");
       qc.invalidateQueries({ queryKey: ["nda-agreements"] });
-      setForm({ client_id: "", property_id: "", nda_type: "mutual", purpose: "", valid_from: "", valid_until: "", notes: "" });
+      setForm({ client_id: "", property_id: "", nda_type: "mutual", purpose: "", valid_from: "", valid_until: "", notes: "", penalty_amount: 10000 });
       setOpen(false);
       setGenFor(row);
     },
@@ -199,6 +207,24 @@ function NdasPage() {
                   <div>
                     <Label>Gültig bis</Label>
                     <Input type="date" value={form.valid_until} onChange={(e) => setForm({ ...form, valid_until: e.target.value })} />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label>Konventionalstrafe</Label>
+                    <span className="text-sm font-medium tabular-nums">{formatChf(form.penalty_amount)}</span>
+                  </div>
+                  <Slider
+                    className="mt-2"
+                    min={5000}
+                    max={100000}
+                    step={1000}
+                    value={[form.penalty_amount]}
+                    onValueChange={([v]) => setForm({ ...form, penalty_amount: v })}
+                  />
+                  <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+                    <span>CHF 5'000</span>
+                    <span>CHF 100'000</span>
                   </div>
                 </div>
                 <div>
@@ -305,6 +331,7 @@ function NdasPage() {
               valid_from: genFor.valid_from,
               valid_until: genFor.valid_until,
               purpose: genFor.notes?.startsWith("Zweck: ") ? genFor.notes.slice(7) : undefined,
+              penalty_amount: genFor.penalty_amount ?? 10000,
             },
           }}
         />
@@ -324,6 +351,7 @@ function NdasPage() {
               valid_from: previewFor.valid_from,
               valid_until: previewFor.valid_until,
               purpose: previewFor.notes?.startsWith("Zweck: ") ? previewFor.notes.slice(7) : undefined,
+              penalty_amount: previewFor.penalty_amount ?? 10000,
             },
           }}
         />
