@@ -1950,10 +1950,10 @@ function Step6Summary({
     .map((a, idx) => ({
       ...a,
       name: clients.find((c) => c.id === a.client_id)?.full_name ?? "—",
-      label: t("financing.wizard.summary.additionalApplicantNumber", { count: idx + 2 }),
+      label: t("financing.wizard.summary.additionalApplicantNumber", { count: combined.coActive ? idx + 2 : idx + 1 }),
     }));
   const applicantValue = (income: number, equity: number, pk: number) => {
-    const parts = [income > 0 ? `${formatCurrency(income)} / Jahr` : t("financing.wizard.summary.noIncome")];
+    const parts = [income > 0 ? `${formatCurrency(income)} ${t("financing.wizard.coApplicant.perYear")}` : t("financing.wizard.summary.noIncome")];
     if (!isRefiOnly) {
       parts.push(`${t("financing.wizard.summary.ownFundsShort")}: ${formatCurrency(equity)}`);
       if (pk > 0) parts.push(`${t("financing.wizard.summary.pkShort")}: ${formatCurrency(pk)}`);
@@ -1986,7 +1986,7 @@ function Step6Summary({
         {additionalApplicants.map((a) => (
           <SumRow key={a.client_id} label={a.label} value={`${a.name} · ${applicantValue(num(a.einkommen), num(a.eigenkapital), num(a.pk_anteil))}`} />
         ))}
-        <SumRow label={t("financing.wizard.summary.combinedIncome")} value={`${formatCurrency(combined.incomeCombined)} / Jahr`} />
+        <SumRow label={t("financing.wizard.summary.combinedIncome")} value={`${formatCurrency(combined.incomeCombined)} ${t("financing.wizard.coApplicant.perYear")}`} />
         {!isRefiOnly && <SumRow label={t("financing.wizard.summary.combinedEquity")} value={formatCurrency(combined.equityCombined)} />}
         {!isRefiOnly && combined.pkCombined > 0 && <SumRow label={t("financing.wizard.summary.combinedPk")} value={formatCurrency(combined.pkCombined)} />}
         {isRefiOnly && form.monthly_obligations && <SumRow label={t("financing.wizard.summary.monthlyObligations")} value={formatCurrency(num(form.monthly_obligations))} />}
