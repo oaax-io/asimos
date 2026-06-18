@@ -93,6 +93,12 @@ type StepIdx = 0 | 1 | 2 | 3 | 4;
 const isImage = (m: MediaRow) =>
   m.file_type === "image" || /\.(jpe?g|png|webp|gif|avif|jfif)$/i.test(m.file_url);
 
+function getMediaDisplayUrl(path?: string | null) {
+  if (!path) return "";
+  if (/^(https?:|data:|blob:)/i.test(path)) return path;
+  return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+}
+
 export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
   const [step, setStep] = useState<StepIdx>(0);
   const [propertyId, setPropertyId] = useState<string>("");
@@ -235,9 +241,9 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
       // Convert to base64 data URIs so the headless-Chrome PDF service can
       // actually display them (private storage URLs are otherwise unreachable
       // to the renderer and end up as broken images).
-      const coverUrl = coverSourceUrl ? (await urlToDataUri(coverSourceUrl)) : null;
+      const coverUrl = coverSourceUrl ? (await urlToDataUri(getMediaDisplayUrl(coverSourceUrl))) : null;
       let galleryUrls: string[] = sections.galerie
-        ? (await Promise.all(gallerySourceUrls.map((u) => urlToDataUri(u)))).map(
+        ? (await Promise.all(gallerySourceUrls.map((u) => urlToDataUri(getMediaDisplayUrl(u))))).map(
             (u) => u ?? "__placeholder__",
           )
         : [];
@@ -254,7 +260,7 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
       galleryMedia.forEach((m) => usedIds.add(m.id));
       const attachmentMedia = selectedImageMedia.filter((m) => !usedIds.has(m.id));
       const attachmentImageDataUrls = (
-        await Promise.all(attachmentMedia.map((m) => urlToDataUri(m.file_url)))
+        await Promise.all(attachmentMedia.map((m) => urlToDataUri(getMediaDisplayUrl(m.file_url))))
       ).filter((u): u is string => !!u);
 
       // Map + POIs — geocode from address
@@ -506,7 +512,7 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
                             checked ? "border-primary" : "border-transparent hover:border-primary/40",
                           )}
                         >
-                          <img src={m.file_url} alt="" className="h-full w-full object-cover" />
+                          <img src={getMediaDisplayUrl(m.file_url)} alt={m.title || m.file_name || "Objektfoto"} className="h-full w-full object-cover" />
                           {checked && (
                             <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
                               <Check className="h-3 w-3" />
