@@ -351,6 +351,7 @@ function NdasPage() {
               valid_from: previewFor.valid_from,
               valid_until: previewFor.valid_until,
               purpose: previewFor.notes?.startsWith("Zweck: ") ? previewFor.notes.slice(7) : undefined,
+              penalty_amount: previewFor.penalty_amount ?? 10000,
             },
           }}
         />
