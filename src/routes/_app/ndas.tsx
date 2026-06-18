@@ -210,6 +210,24 @@ function NdasPage() {
                   </div>
                 </div>
                 <div>
+                  <div className="flex items-center justify-between">
+                    <Label>Konventionalstrafe</Label>
+                    <span className="text-sm font-medium tabular-nums">{formatChf(form.penalty_amount)}</span>
+                  </div>
+                  <Slider
+                    className="mt-2"
+                    min={5000}
+                    max={100000}
+                    step={1000}
+                    value={[form.penalty_amount]}
+                    onValueChange={([v]) => setForm({ ...form, penalty_amount: v })}
+                  />
+                  <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+                    <span>CHF 5'000</span>
+                    <span>CHF 100'000</span>
+                  </div>
+                </div>
+                <div>
                   <Label>Notizen</Label>
                   <Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
                 </div>
