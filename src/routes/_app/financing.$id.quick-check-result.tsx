@@ -192,14 +192,17 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const delta = required - m.income;
     tips.push(`Einkommen müsste um CHF ${chf(delta)} erhöht werden, um Tragbarkeit auf 33% zu bringen (benötigt: CHF ${chf(required)}).`);
   }
-  if (m.equityRatio < 20 && m.total > 0) {
+  if (!isRefi && m.equityRatio < 20 && m.total > 0) {
     const required = m.total * 0.2;
     const delta = required - m.equity;
     tips.push(`Fehlende Eigenmittel: CHF ${chf(delta)} (mindestens CHF ${chf(required)} erforderlich).`);
   }
-  if (m.hardRatio < 10 && m.total > 0) {
+  if (!isRefi && m.hardRatio < 10 && m.total > 0) {
     const required = m.total * 0.1;
     tips.push(`PK-Anteil zu hoch — mindestens CHF ${chf(required)} aus Barvermögen erforderlich (aktuell CHF ${chf(m.hardEquity)} harte Eigenmittel).`);
+  }
+  if (isRefi && m.ltv > 80 && m.total > 0) {
+    tips.push(`Belehnung übersteigt 80% (${m.ltv.toFixed(1)}%) — Aufstockung auf max. CHF ${chf(m.total * 0.8)} reduzieren.`);
   }
   if (tips.length === 0) {
     tips.push("Alle Kennzahlen erfüllt — Finanzierung grundsätzlich bankfähig.");
@@ -210,8 +213,8 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <KpiCard label="Belehnung (LTV)" value={m.ltv} limit={80} mode="max" />
         <KpiCard label="Tragbarkeit" value={m.afford} limit={33} mode="max" />
-        <KpiCard label="Eigenmittelquote" value={m.equityRatio} limit={20} mode="min" />
-        <KpiCard label="Harte Eigenmittel" value={m.hardRatio} limit={10} mode="min" />
+        {!isRefi && <KpiCard label="Eigenmittelquote" value={m.equityRatio} limit={20} mode="min" />}
+        {!isRefi && <KpiCard label="Harte Eigenmittel" value={m.hardRatio} limit={10} mode="min" />}
       </div>
 
       <Card>
