@@ -131,38 +131,6 @@ function StatusBadge({ status }: { status: QuickCheckStatus }) {
 
 // ---------------- Tab Vorprüfung ----------------
 
-function isRefiDossier(dossier: any): boolean {
-  const modules: string[] = Array.isArray(dossier?.financing_modules) ? dossier.financing_modules : [];
-  if (modules.length > 0) {
-    if (modules.includes("purchase") || modules.includes("new_build")) return false;
-    return modules.includes("refinance") || modules.includes("increase") || modules.includes("mortgage_increase");
-  }
-  const t = dossier?.financing_type;
-  return t === "refinance" || t === "increase" || t === "mortgage_increase";
-}
-
-function computeDisplayStatus(dossier: any, isRefi: boolean): QuickCheckStatus {
-  const saved = (dossier?.quick_check_status as QuickCheckStatus) ?? "incomplete";
-  if (!isRefi) return saved;
-  if (saved === "incomplete") return saved;
-  // Refi: nur Tragbarkeit + Belehnung entscheiden, Eigenmittel werden ignoriert
-  const purchase = numv(dossier.purchase_price);
-  const reno = numv(dossier.renovation_costs);
-  const total = numv(dossier.total_investment) || (purchase + reno);
-  const mortgage = numv(dossier.requested_mortgage);
-  const income = effectiveIncome(dossier);
-  if (total <= 0 || mortgage <= 0 || income <= 0) return "incomplete";
-  const yearly = numv(dossier.yearly_costs) ||
-    (mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
-      + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
-      + numv(dossier.amortisation_yearly));
-  const ltv = total > 0 ? (mortgage / total) * 100 : 0;
-  const afford = income > 0 ? (yearly / income) * 100 : 0;
-  if (ltv > 80 || afford > 38) return "not_financeable";
-  if (afford > 33) return "critical";
-  return "realistic";
-}
-
 function VorpruefungTab({ dossier }: { dossier: any }) {
   const isRefi = isRefinancingDossier(dossier);
   const m = useMemo(() => {
@@ -174,10 +142,12 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const pension = effectivePension(dossier);
     const hardEquity = Math.max(0, equity - pension);
     const income = effectiveIncome(dossier);
+    const obligationsYearly = isRefi ? numv(dossier.monthly_obligations) * 12 : 0;
     const yearly = numv(dossier.yearly_costs) ||
       (mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
         + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
-        + numv(dossier.amortisation_yearly));
+        + numv(dossier.amortisation_yearly)
+        + obligationsYearly);
 
     const ltv = total > 0 ? (mortgage / total) * 100 : 0;
     const afford = income > 0 ? (yearly / income) * 100 : 0;
@@ -185,7 +155,7 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const hardRatio = total > 0 ? (hardEquity / total) * 100 : 0;
 
     return { purchase, total, mortgage, equity, hardEquity, income, yearly, ltv, afford, equityRatio, hardRatio };
-  }, [dossier]);
+  }, [dossier, isRefi]);
 
   const tips: string[] = [];
   if (m.afford > 33 && m.income > 0) {
@@ -344,6 +314,8 @@ function DetailTab({ dossier }: { dossier: any }) {
   const mortgage = numv(dossier.requested_mortgage);
   const income = effectiveIncome(dossier);
   const rate = numv(dossier.calculated_interest_rate, 5);
+  const isRefi = isRefinancingDossier(dossier);
+  const obligationsYearly = isRefi ? numv(dossier.monthly_obligations) * 12 : 0;
 
   // 1./2. Hypothek (CH-Standard: 1. Hypo bis 65% des Wertes, 2. Hypo 65–80%)
   const firstMortgageMax = total * 0.65;
@@ -353,7 +325,7 @@ function DetailTab({ dossier }: { dossier: any }) {
 
   const interestCost = mortgage * (rate / 100);
   const ancillary = dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01;
-  const totalYearly = interestCost + ancillary + amortYearly;
+  const totalYearly = interestCost + ancillary + amortYearly + obligationsYearly;
   const afford = income > 0 ? (totalYearly / income) * 100 : 0;
   const minIncome = totalYearly / 0.33;
   const equityRatio = total > 0 ? (equity / total) * 100 : 0;
@@ -390,6 +362,7 @@ function DetailTab({ dossier }: { dossier: any }) {
           <Row label={`Kalk. Zinssatz (${rate.toFixed(1)}%)`} value={`CHF ${chf(interestCost)}`} />
           <Row label="Nebenkosten (1%)" value={`CHF ${chf(ancillary)}`} />
           <Row label="Amortisation" value={`CHF ${chf(amortYearly)}`} />
+          {obligationsYearly > 0 && <Row label="Verpflichtungen p.a." value={`CHF ${chf(obligationsYearly)}`} />}
           <Divider />
           <Row label="Total Wohnkosten p.a." value={`CHF ${chf(totalYearly)}`} bold />
           <Row label="Bruttoeinkommen p.a." value={`CHF ${chf(income)}`} />
