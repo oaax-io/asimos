@@ -372,11 +372,11 @@ const TRAGBARKEIT_EXPENSE_FIELDS = [
   "life_insurance_expense",
 ] as const;
 
-function applicantExpenseGroups(d: any) {
+function applicantExpenseGroups(d: any, fieldsToUse: readonly (typeof expenseFields)[number][] = TRAGBARKEIT_EXPENSE_FIELDS) {
   const disclosures = new Map(((d?.applicant_disclosures ?? []) as any[]).map((r) => [String(r.client_id), r]));
   return applicantList(d).map((applicant) => {
     const disclosure = disclosures.get(applicant.id) ?? {};
-    const fields = TRAGBARKEIT_EXPENSE_FIELDS
+    const fields = fieldsToUse
       .map((field) => ({ label: expenseLabels[field], monthly: numv((disclosure as any)[field]) }))
       .filter((row) => row.monthly > 0);
     const monthly = fields.reduce((sum, row) => sum + row.monthly, 0);
@@ -386,6 +386,10 @@ function applicantExpenseGroups(d: any) {
 
 function totalApplicantExpensesMonthly(d: any): number {
   return applicantExpenseGroups(d).reduce((sum, group) => sum + group.monthly, 0);
+}
+
+function totalAllApplicantExpensesMonthly(d: any): number {
+  return applicantExpenseGroups(d, expenseFields).reduce((sum, group) => sum + group.monthly, 0);
 }
 
 // Eigenmittel beider Partner zusammen (inkl. PK / Freizügigkeit – zählen als Eigenmittel)
