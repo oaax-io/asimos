@@ -34,14 +34,15 @@ export function DossierQualityCard({ dossierId, dossier }: Props) {
   const qcStatus = displayQuickCheckStatus(dossier);
   const dossierStatus = dossier.dossier_status as DossierStatus | null;
   const isRefi = isRefinancingDossier(dossier);
-  const ltv = Number(dossier.loan_to_value_ratio ?? 0);
-  const affordability = Number(dossier.affordability_ratio ?? 0);
+  const refiMetrics = isRefi ? calculateRefiQualityMetrics(dossier) : null;
+  const ltv = refiMetrics?.ltv ?? Number(dossier.loan_to_value_ratio ?? 0);
+  const affordability = refiMetrics?.affordability ?? Number(dossier.affordability_ratio ?? 0);
   const equityOk = ltv > 0 && ltv <= 80;
   const affordabilityOk = affordability > 0 && affordability <= 33;
   const hasMandatoryFinancials =
     Number(dossier.requested_mortgage ?? 0) > 0 &&
     Number(dossier.total_investment ?? 0) > 0 &&
-    Number(dossier.gross_income_yearly ?? 0) > 0;
+    Number(refiMetrics?.income ?? dossier.gross_income_yearly ?? 0) > 0;
 
   const risks: string[] = [];
   if (!equityOk && ltv > 0) risks.push(`Belehnung ${ltv.toFixed(1)}% (über 80%)`);
@@ -147,6 +148,43 @@ function computeVerdict(requiredPct: number, qcStatus: QuickCheckStatus | null, 
   if (requiredPct >= 90) return "ready";
   if (requiredPct >= 60) return "missing";
   return "critical";
+}
+
+function calculateRefiQualityMetrics(dossier: any) {
+  const total = num(dossier.total_investment) || num(dossier.purchase_price) + num(dossier.renovation_costs);
+  const mortgage = num(dossier.requested_mortgage);
+  const rate = num(dossier.calculated_interest_rate, 5);
+  const ancillary = dossier.ancillary_costs_yearly != null ? num(dossier.ancillary_costs_yearly) : total * 0.01;
+  const secondMortgage = Math.max(0, mortgage - total * 0.6667);
+  const amort = dossier.amortisation_yearly != null ? num(dossier.amortisation_yearly) : secondMortgage / 15;
+  const extraIncome = Array.isArray(dossier.additional_co_applicants)
+    ? dossier.additional_co_applicants.reduce((sum: number, applicant: any) => sum + num(applicant?.einkommen), 0)
+    : 0;
+  const income = Math.max(
+    num(dossier.einkommen_kombiniert),
+    num(dossier.gross_income_yearly) + num(dossier.co_applicant_einkommen) + extraIncome,
+  );
+  const obligationsMonthly = relevantRefiExpensesMonthly(dossier) || num(dossier.monthly_obligations);
+  const yearly = mortgage * (rate / 100) + ancillary + amort + obligationsMonthly * 12;
+  return {
+    income,
+    ltv: total > 0 ? (mortgage / total) * 100 : 0,
+    affordability: income > 0 ? (yearly / income) * 100 : 0,
+  };
+}
+
+function relevantRefiExpensesMonthly(dossier: any): number {
+  const fields = ["leasing_expense", "credit_expense", "alimony_expense", "life_insurance_expense"];
+  const disclosures = Array.isArray(dossier.applicant_disclosures) ? dossier.applicant_disclosures : [];
+  return disclosures.reduce((sum: number, row: any) => (
+    sum + fields.reduce((fieldSum, field) => fieldSum + num(row?.[field]), 0)
+  ), 0);
+}
+
+function num(value: unknown, fallback = 0): number {
+  if (value == null || value === "") return fallback;
+  const n = typeof value === "string" ? Number(value) : (value as number);
+  return Number.isFinite(n) ? n : fallback;
 }
 
 function VerdictBadge({ verdict }: { verdict: Verdict }) {
