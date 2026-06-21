@@ -882,7 +882,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     const scenarioPurchase = isRefi ? original.purchase : p;
     const total = scenarioPurchase + scenarioReno;
     const ancillary = total * (original.ancillaryPct / 100);
-    const firstMortgageMax = total * 0.6667;
+    const firstMortgageMax = total * 0.65;
     const second = Math.max(0, mort - firstMortgageMax);
     const amort = second / original.amortYears;
     const result = calcQuickCheck({
@@ -898,7 +898,8 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       amortisation_yearly: amort,
     });
     const expensesYearly = isRefi ? monthlyExpenses * 12 : 0;
-    const affordability = inc > 0 ? ((result.yearly_costs + expensesYearly) / inc) * 100 : 0;
+    // Bank-Tragbarkeit: nur Wohnkosten (result.yearly_costs) / Einkommen.
+    const affordability = inc > 0 ? (result.yearly_costs / inc) * 100 : 0;
     const ltv = total > 0 ? (mort / total) * 100 : 0;
     const status: QuickCheckStatus = isRefi
       ? (ltv > 80 || affordability > 38 ? "not_financeable" : affordability > 33 ? "critical" : "realistic")
