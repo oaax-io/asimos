@@ -58,7 +58,8 @@ function QuickCheckResultPage() {
   if (!dossier) return <p className="text-sm text-muted-foreground">Dossier nicht gefunden.</p>;
   if (dossier.quick_check_status === "incomplete") return null;
 
-  const status = (dossier.quick_check_status as QuickCheckStatus) ?? "incomplete";
+  const isRefi = isRefiDossier(dossier);
+  const status = computeDisplayStatus(dossier, isRefi);
   const title =
     dossier.title ||
     FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType] ||
@@ -129,7 +130,40 @@ function StatusBadge({ status }: { status: QuickCheckStatus }) {
 
 // ---------------- Tab Vorprüfung ----------------
 
+function isRefiDossier(dossier: any): boolean {
+  const modules: string[] = Array.isArray(dossier?.financing_modules) ? dossier.financing_modules : [];
+  if (modules.length > 0) {
+    if (modules.includes("purchase") || modules.includes("new_build")) return false;
+    return modules.includes("refinance") || modules.includes("increase") || modules.includes("mortgage_increase");
+  }
+  const t = dossier?.financing_type;
+  return t === "refinance" || t === "increase" || t === "mortgage_increase";
+}
+
+function computeDisplayStatus(dossier: any, isRefi: boolean): QuickCheckStatus {
+  const saved = (dossier?.quick_check_status as QuickCheckStatus) ?? "incomplete";
+  if (!isRefi) return saved;
+  if (saved === "incomplete") return saved;
+  // Refi: nur Tragbarkeit + Belehnung entscheiden, Eigenmittel werden ignoriert
+  const purchase = numv(dossier.purchase_price);
+  const reno = numv(dossier.renovation_costs);
+  const total = numv(dossier.total_investment) || (purchase + reno);
+  const mortgage = numv(dossier.requested_mortgage);
+  const income = effectiveIncome(dossier);
+  if (total <= 0 || mortgage <= 0 || income <= 0) return "incomplete";
+  const yearly = numv(dossier.yearly_costs) ||
+    (mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
+      + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
+      + numv(dossier.amortisation_yearly));
+  const ltv = total > 0 ? (mortgage / total) * 100 : 0;
+  const afford = income > 0 ? (yearly / income) * 100 : 0;
+  if (ltv > 80 || afford > 38) return "not_financeable";
+  if (afford > 33) return "critical";
+  return "realistic";
+}
+
 function VorpruefungTab({ dossier }: { dossier: any }) {
+  const isRefi = isRefiDossier(dossier);
   const m = useMemo(() => {
     const purchase = numv(dossier.purchase_price);
     const reno = numv(dossier.renovation_costs);
@@ -158,14 +192,17 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const delta = required - m.income;
     tips.push(`Einkommen müsste um CHF ${chf(delta)} erhöht werden, um Tragbarkeit auf 33% zu bringen (benötigt: CHF ${chf(required)}).`);
   }
-  if (m.equityRatio < 20 && m.total > 0) {
+  if (!isRefi && m.equityRatio < 20 && m.total > 0) {
     const required = m.total * 0.2;
     const delta = required - m.equity;
     tips.push(`Fehlende Eigenmittel: CHF ${chf(delta)} (mindestens CHF ${chf(required)} erforderlich).`);
   }
-  if (m.hardRatio < 10 && m.total > 0) {
+  if (!isRefi && m.hardRatio < 10 && m.total > 0) {
     const required = m.total * 0.1;
     tips.push(`PK-Anteil zu hoch — mindestens CHF ${chf(required)} aus Barvermögen erforderlich (aktuell CHF ${chf(m.hardEquity)} harte Eigenmittel).`);
+  }
+  if (isRefi && m.ltv > 80 && m.total > 0) {
+    tips.push(`Belehnung übersteigt 80% (${m.ltv.toFixed(1)}%) — Aufstockung auf max. CHF ${chf(m.total * 0.8)} reduzieren.`);
   }
   if (tips.length === 0) {
     tips.push("Alle Kennzahlen erfüllt — Finanzierung grundsätzlich bankfähig.");
@@ -176,8 +213,8 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <KpiCard label="Belehnung (LTV)" value={m.ltv} limit={80} mode="max" />
         <KpiCard label="Tragbarkeit" value={m.afford} limit={33} mode="max" />
-        <KpiCard label="Eigenmittelquote" value={m.equityRatio} limit={20} mode="min" />
-        <KpiCard label="Harte Eigenmittel" value={m.hardRatio} limit={10} mode="min" />
+        {!isRefi && <KpiCard label="Eigenmittelquote" value={m.equityRatio} limit={20} mode="min" />}
+        {!isRefi && <KpiCard label="Harte Eigenmittel" value={m.hardRatio} limit={10} mode="min" />}
       </div>
 
       <Card>

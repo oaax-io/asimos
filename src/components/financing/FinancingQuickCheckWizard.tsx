@@ -2206,11 +2206,32 @@ function Step6Summary({
         {isRefiOnly && form.monthly_obligations && <SumRow label={t("financing.wizard.summary.monthlyObligations")} value={formatCurrency(num(form.monthly_obligations))} />}
       </SummaryGroup>
 
-      {isRefiOnly && (form.current_bank || form.interest_rate_current || form.interest_rate_expiry || form.refi_purpose) && (
+      {isRefiOnly && (form.current_bank || form.existing_mortgage || form.existing_mortgage_2 || form.interest_rate_current || form.interest_rate_current_2 || form.refi_purpose) && (
         <SummaryGroup title={t("financing.wizard.summary.existingFinancing")}>
           {form.current_bank && <SumRow label={t("financing.wizard.summary.currentBank")} value={form.current_bank} />}
-          {form.interest_rate_current && <SumRow label={t("financing.wizard.summary.currentRate")} value={`${num(form.interest_rate_current).toFixed(2)} %`} />}
-          {form.interest_rate_expiry && <SumRow label={t("financing.wizard.summary.rateExpiry")} value={form.interest_rate_expiry} />}
+          {form.existing_mortgage && (
+            <SumRow
+              label="Hypothek 1"
+              value={[
+                formatCurrency(num(form.existing_mortgage)),
+                form.interest_rate_current ? `${num(form.interest_rate_current).toFixed(2)} %` : null,
+                form.interest_rate_expiry || null,
+              ].filter(Boolean).join(" · ")}
+            />
+          )}
+          {form.existing_mortgage_2 && (
+            <SumRow
+              label="Hypothek 2"
+              value={[
+                formatCurrency(num(form.existing_mortgage_2)),
+                form.interest_rate_current_2 ? `${num(form.interest_rate_current_2).toFixed(2)} %` : null,
+                form.interest_rate_expiry_2 || null,
+              ].filter(Boolean).join(" · ")}
+            />
+          )}
+          {(form.existing_mortgage || form.existing_mortgage_2) && (
+            <SumRow label="Bestehende Finanzierung gesamt" value={formatCurrency(num(form.existing_mortgage) + num(form.existing_mortgage_2))} />
+          )}
           {form.refi_purpose && <SumRow label={t("financing.wizard.summary.purpose")} value={t(`financing.wizard.metrics.refiPurposes.${form.refi_purpose}`, { defaultValue: REFI_PURPOSE_LABELS[form.refi_purpose] })} />}
         </SummaryGroup>
       )}
@@ -2218,7 +2239,7 @@ function Step6Summary({
       <SummaryGroup title={t("financing.wizard.summary.metrics")}>
         {isRefiOnly ? (
           <>
-            <SumRow label={t("financing.wizard.summary.currentMortgage")} value={formatCurrency(num(form.existing_mortgage))} />
+            <SumRow label={t("financing.wizard.summary.currentMortgage")} value={formatCurrency(num(form.existing_mortgage) + num(form.existing_mortgage_2))} />
             <SumRow label={t("financing.wizard.summary.increaseAmount")} value={formatCurrency(num(form.requested_increase))} />
             <SumRow label={t("financing.wizard.summary.newTotalMortgage")} value={formatCurrency(effectiveMortgage)} />
           </>
