@@ -98,7 +98,7 @@ function FinancingDetailPage() {
   if (!dossier) return <p className="text-sm text-muted-foreground">{t("financing.detail.notFound")}</p>;
 
   const reasons = (dossier.quick_check_reasons as any[]) ?? [];
-  const qcStatus = (dossier.quick_check_status ?? "incomplete") as QuickCheckStatus;
+  const qcStatus = displayQuickCheckStatus(dossier);
   const isIncomplete = qcStatus === "incomplete";
   const lastCheckAt = dossier.updated_at ? formatDateTime(dossier.updated_at) : null;
 
