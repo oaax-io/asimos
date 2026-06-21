@@ -421,6 +421,10 @@ type Inputs = {
   housingYearly: number;
   expensesMonthly: number;
   expensesYearly: number;
+  allExpensesMonthly: number;
+  allExpensesYearly: number;
+  totalBudgetYearly: number;
+  budgetRatio: number;
   ltv: number;
   affordability: number;
   equityRatio: number;
@@ -490,11 +494,18 @@ function applicantList(d: Dossier): { id: string; name: string; income: number }
   return rows.filter((row, index, arr) => arr.findIndex((x) => x.id === row.id) === index);
 }
 
-function applicantExpenseGroups(d: Dossier) {
+const TRAGBARKEIT_RELEVANT_EXPENSE_FIELDS = [
+  "leasing_expense",
+  "credit_expense",
+  "alimony_expense",
+  "life_insurance_expense",
+] as const;
+
+function applicantExpenseGroups(d: Dossier, fieldsToUse: readonly (typeof expenseFields)[number][] = expenseFields) {
   const disclosures = new Map((d.applicant_disclosures ?? []).map((r) => [String(r.client_id), r]));
   return applicantList(d).map((applicant) => {
     const disclosure = disclosures.get(applicant.id) ?? {};
-    const fields = expenseFields
+    const fields = fieldsToUse
       .map((field) => ({ label: expenseLabels[field], monthly: n(disclosure[field]) }))
       .filter((row) => row.monthly > 0);
     const monthly = fields.reduce((sum, row) => sum + row.monthly, 0);
@@ -504,6 +515,10 @@ function applicantExpenseGroups(d: Dossier) {
 
 function totalApplicantExpensesMonthly(d: Dossier): number {
   return applicantExpenseGroups(d).reduce((sum, group) => sum + group.monthly, 0);
+}
+
+function totalTragbarkeitRelevantExpensesMonthly(d: Dossier): number {
+  return applicantExpenseGroups(d, TRAGBARKEIT_RELEVANT_EXPENSE_FIELDS).reduce((sum, group) => sum + group.monthly, 0);
 }
 
 function toneFor(value: number, limit: number, warn: number, mode: "max" | "min"): "ok" | "warn" | "bad" {
