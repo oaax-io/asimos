@@ -431,6 +431,7 @@ type Inputs = {
   equityRatio: number;
   hardRatio: number;
   minIncome: number;
+  monthlyAvailable: number;
 };
 
 function deriveInputs(d: Dossier): Inputs {
@@ -457,7 +458,7 @@ function deriveInputs(d: Dossier): Inputs {
     ? n(d.ancillary_costs_yearly)
     : total * 0.01;
   const ancillaryPct = total > 0 ? (ancillary / total) * 100 : 1;
-  const firstMortgageMax = total * 0.6667;
+  const firstMortgageMax = total * 0.65;
   const firstMortgage = Math.min(mortgage, firstMortgageMax);
   const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
   const amortYears = 15;
@@ -467,25 +468,27 @@ function deriveInputs(d: Dossier): Inputs {
   const interest = mortgage * (rate / 100);
   const housingYearly = interest + ancillary + amort;
   const disclosedExpensesMonthly = totalApplicantExpensesMonthly(d);
-  const relevantExpensesMonthly = totalTragbarkeitRelevantExpensesMonthly(d);
   const allExpensesMonthly = isRefinancingDossier(d) ? (disclosedExpensesMonthly || n(d.monthly_obligations)) : 0;
-  const expensesMonthly = isRefinancingDossier(d) ? (relevantExpensesMonthly || n(d.monthly_obligations)) : 0;
+  const expensesMonthly = allExpensesMonthly;
   const allExpensesYearly = allExpensesMonthly * 12;
-  const expensesYearly = expensesMonthly * 12;
-  const yearly = housingYearly + expensesYearly;
+  const expensesYearly = allExpensesYearly;
+  // Bank-Tragbarkeit (CH-Standard): nur Wohnkosten / Einkommen.
+  const yearly = housingYearly;
+  // Budgetquote: alle Haushaltsausgaben + Wohnkosten.
   const totalBudgetYearly = housingYearly + allExpensesYearly;
   const ltv = total > 0 ? (mortgage / total) * 100 : 0;
-  const affordability = income > 0 ? (yearly / income) * 100 : 0;
+  const affordability = income > 0 ? (housingYearly / income) * 100 : 0;
   const budgetRatio = income > 0 ? (totalBudgetYearly / income) * 100 : 0;
   const equityRatio = total > 0 ? (equity / total) * 100 : 0;
   const hardRatio = total > 0 ? (hardEquity / total) * 100 : 0;
-  const minIncome = yearly > 0 ? yearly / 0.33 : 0;
+  const minIncome = housingYearly > 0 ? housingYearly / 0.33 : 0;
+  const monthlyAvailable = Math.max(0, (income - housingYearly - allExpensesYearly) / 12);
   return {
     total, purchase, reno, mortgage, equity, pension, vested, hardEquity,
     income, rate, ancillary, ancillaryPct, firstMortgage, secondMortgage,
     amortYears, amort, yearly, interest, housingYearly, expensesMonthly, expensesYearly,
     allExpensesMonthly, allExpensesYearly, totalBudgetYearly, budgetRatio, ltv, affordability, equityRatio,
-    hardRatio, minIncome,
+    hardRatio, minIncome, monthlyAvailable,
   };
 }
 
@@ -615,8 +618,8 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
     const delta = Math.max(0, incomeNeeded - i.income);
     tips.push({
       tone: "warn",
-      text: isRefi && i.expensesYearly > 0
-        ? `Tragbarkeit ${pct(i.affordability)} — Wohnkosten plus tragbarkeitsrelevante Verpflichtungen (${chf(i.expensesYearly)} p.a.) sind eingerechnet. Einkommen müsste um ${chf(delta)} steigen oder Verpflichtungen müssten sinken (benötigt: ${chf(incomeNeeded)} p.a.).`
+      text: isRefi
+        ? `Bank-Tragbarkeit ${pct(i.affordability)} — Wohnkosten (${chf(i.housingYearly)} p.a.) übersteigen 33% des Einkommens. Einkommen müsste um ${chf(delta)} steigen (benötigt: ${chf(incomeNeeded)} p.a.) oder Hypothek/Zins reduzieren.`
         : t("financing.detail.quickcheck.tips.incomeNeeded", { delta: chf(delta), needed: chf(incomeNeeded) }),
     });
   }
@@ -649,12 +652,26 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
           <RefiBarometerCard label="Aufstockungswunsch" value={chf(n(dossier.requested_increase))} detail="Zusätzlich gewünschter Betrag" />
           <RefiBarometerCard label="Neue Hypothek" value={chf(i.mortgage)} detail={`Belehnung ${pct(i.ltv)} / max. 80%`} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
           <RefiBarometerCard label="Einnahmen p.a." value={chf(i.income)} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
-          <RefiBarometerCard label="Jahresausgaben p.a." value={chf(i.allExpensesYearly)} detail={`${chf(i.allExpensesMonthly)} / Monat gemäss Selbstauskunft`} />
+          <RefiBarometerCard
+            label="Bank-Tragbarkeit"
+            value={pct(i.affordability)}
+            detail={`Wohnkosten ${chf(i.housingYearly)} p.a. / Limit 33%`}
+            tone={affTone}
+            fillPct={i.affordability * (100 / 50)}
+            limitPct={33 * (100 / 50)}
+          />
+          <RefiBarometerCard
+            label="Budgetquote (Haushaltsbelastung)"
+            value={pct(i.budgetRatio)}
+            detail={`Wohnkosten + alle Ausgaben (${chf(i.totalBudgetYearly)} p.a.)`}
+          />
+          <RefiBarometerCard label="Mindesteinkommen (33%)" value={chf(i.minIncome)} detail="Einkommen, damit Bank-Tragbarkeit ≤ 33%" />
+          <RefiBarometerCard label="Verfügbar pro Monat" value={chf(i.monthlyAvailable)} detail="Einkommen − Wohnkosten − Haushaltsausgaben" />
           <Card>
             <CardContent className="p-4 space-y-2">
               <p className="text-sm text-muted-foreground">Finanzierbarkeit</p>
               <Badge className={cn("w-fit", qcBadgeTone(refiStatus))}>{t(`financing.quickCheckStatus.${refiStatus}`, { defaultValue: QUICK_CHECK_LABELS[refiStatus] })}</Badge>
-              <p className={cn("text-2xl font-semibold", toneText(affTone))}>{pct(i.affordability)}</p>
+              <p className="text-xs text-muted-foreground">{i.affordability <= 33 && i.ltv <= 80 ? "Finanzierbar: JA" : i.affordability <= 38 && i.ltv <= 80 ? "Finanzierbar: KRITISCH" : "Finanzierbar: NEIN"}</p>
             </CardContent>
           </Card>
         </div>
@@ -726,7 +743,7 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
   const i = deriveInputs(dossier);
   const affTone = toneFor(i.affordability, 33, 38, "max");
   const expenseGroups = applicantExpenseGroups(dossier);
-  const relevantExpenseGroups = applicantExpenseGroups(dossier, TRAGBARKEIT_RELEVANT_EXPENSE_FIELDS);
+  void TRAGBARKEIT_RELEVANT_EXPENSE_FIELDS;
 
   return (
     <div className="grid gap-3 md:grid-cols-2">
@@ -769,21 +786,10 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
                   ))}
                 </div>
               ))}
-              {i.allExpensesYearly > 0 && <DetailRow label="Jahresausgaben total" value={chf(i.allExpensesYearly)} bold divider />}
-              {i.expensesYearly > 0 && (
-                <>
-                  {relevantExpenseGroups.map((group) => group.yearly > 0 && (
-                    <DetailRow key={`relevant-${group.id}`} label={`davon tragbarkeitsrelevant ${group.name}`} value={chf(group.yearly)} indent />
-                  ))}
-                  <DetailRow label="Tragbarkeitsrelevante Verpflichtungen" value={chf(i.expensesYearly)} bold />
-                </>
-              )}
+              {i.allExpensesYearly > 0 && <DetailRow label="Haushaltsausgaben total p.a. (informativ)" value={chf(i.allExpensesYearly)} bold divider />}
             </>
           )}
-          <DetailRow label="Total Tragbarkeitskosten p.a." value={chf(i.yearly)} bold divider />
-          {isRefi && i.allExpensesYearly > i.expensesYearly && (
-            <DetailRow label={`Budgetbelastung inkl. aller Ausgaben (${pct(i.budgetRatio)})`} value={chf(i.totalBudgetYearly)} />
-          )}
+          <DetailRow label="Wohnkosten p.a. (Bank-Tragbarkeit)" value={chf(i.housingYearly)} bold divider />
           {applicantList(dossier).length > 1 ? (
             <>
               {applicantList(dossier).map((applicant) => (
@@ -796,10 +802,18 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
           )}
           <div className="my-2 border-t" />
           <div className="flex justify-between gap-4 text-sm">
-            <span>{t("financing.detail.quickcheck.detail.affordabilityRatio")}</span>
+            <span className="font-semibold">Bank-Tragbarkeit (Wohnkosten / Einkommen)</span>
             <span className={cn("font-semibold tabular-nums", toneText(affTone))}>{pct(i.affordability)}</span>
           </div>
-          <DetailRow label={t("financing.detail.quickcheck.detail.minIncome")} value={chf(i.minIncome)} />
+          <DetailRow label="Mindesteinkommen (33%-Regel)" value={chf(i.minIncome)} />
+          <DetailRow label="Finanzierbar" value={i.affordability <= 33 && i.ltv <= 80 ? "JA" : i.affordability <= 38 && i.ltv <= 80 ? "Kritisch" : "NEIN"} />
+          {isRefi && i.allExpensesYearly > 0 && (
+            <>
+              <div className="my-2 border-t" />
+              <DetailRow label="Budgetquote (Haushaltsbelastung)" value={pct(i.budgetRatio)} />
+              <DetailRow label="Verfügbares Einkommen / Monat" value={chf(i.monthlyAvailable)} />
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -868,7 +882,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     const scenarioPurchase = isRefi ? original.purchase : p;
     const total = scenarioPurchase + scenarioReno;
     const ancillary = total * (original.ancillaryPct / 100);
-    const firstMortgageMax = total * 0.6667;
+    const firstMortgageMax = total * 0.65;
     const second = Math.max(0, mort - firstMortgageMax);
     const amort = second / original.amortYears;
     const result = calcQuickCheck({
@@ -884,7 +898,8 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       amortisation_yearly: amort,
     });
     const expensesYearly = isRefi ? monthlyExpenses * 12 : 0;
-    const affordability = inc > 0 ? ((result.yearly_costs + expensesYearly) / inc) * 100 : 0;
+    // Bank-Tragbarkeit: nur Wohnkosten (result.yearly_costs) / Einkommen.
+    const affordability = inc > 0 ? (result.yearly_costs / inc) * 100 : 0;
     const ltv = total > 0 ? (mort / total) * 100 : 0;
     const status: QuickCheckStatus = isRefi
       ? (ltv > 80 || affordability > 38 ? "not_financeable" : affordability > 33 ? "critical" : "realistic")
@@ -983,7 +998,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       const p = Math.max(0, live.p + dPrice);
       const total = p + live.rn;
       const ancillary = total * (original.ancillaryPct / 100);
-      const firstMortgageMax = total * 0.6667;
+      const firstMortgageMax = total * 0.65;
       const second = Math.max(0, live.mort - firstMortgageMax);
       const amort = second / original.amortYears;
       const result = calcQuickCheck({
@@ -999,8 +1014,9 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
         amortisation_yearly: amort,
       });
       const eqRatio = total > 0 ? (live.eq / total) * 100 : 0;
+      // Bank-Tragbarkeit: nur Wohnkosten / Einkommen.
       const aff = isRefi
-        ? (Math.max(0, live.inc + dInc) > 0 ? ((result.yearly_costs + live.expensesYearly) / Math.max(0, live.inc + dInc)) * 100 : 0)
+        ? (Math.max(0, live.inc + dInc) > 0 ? (result.yearly_costs / Math.max(0, live.inc + dInc)) * 100 : 0)
         : result.affordability_ratio;
       const ltv = total > 0 ? (live.mort / total) * 100 : 0;
       let tone: Cell["tone"];

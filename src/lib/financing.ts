@@ -193,14 +193,14 @@ export function displayQuickCheckStatus(d: any): QuickCheckStatus {
   const income = Math.max(incomeCombined, itemizedIncome);
   if (total <= 0 || mortgage <= 0 || income <= 0) return "incomplete";
   const rate = num(d?.calculated_interest_rate, 5);
-  const firstMortgageMax = total * 0.6667;
+  const firstMortgageMax = total * 0.65;
   const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
   const amort = d?.amortisation_yearly != null ? num(d?.amortisation_yearly) : secondMortgage / 15;
-  const obligationsYearly = refiRelevantExpensesMonthly(d) * 12;
+  // Bank-Tragbarkeit (CH-Standard): nur Wohnkosten (Zins + NK + Amort) / Bruttoeinkommen.
+  // Private Verpflichtungen (Leasing/Krankenkasse/...) gehören in die Budgetquote, nicht in die Bank-Tragbarkeit.
   const yearly = mortgage * (rate / 100)
     + (d?.ancillary_costs_yearly != null ? num(d.ancillary_costs_yearly) : total * 0.01)
-    + amort
-    + obligationsYearly;
+    + amort;
   const ltv = total > 0 ? (mortgage / total) * 100 : 0;
   const afford = income > 0 ? (yearly / income) * 100 : 0;
   if (ltv > 80 || afford > 38) return "not_financeable";

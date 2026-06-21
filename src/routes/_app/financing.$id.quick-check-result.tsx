@@ -161,16 +161,14 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const obligationsYearly = isRefi ? obligationsMonthly * 12 : 0;
     const allExpensesMonthly = isRefi ? (totalAllApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations)) : 0;
     const allExpensesYearly = allExpensesMonthly * 12;
-    const firstMortgageMax = total * 0.6667;
+    const firstMortgageMax = total * 0.65;
     const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
     const amort = dossier.amortisation_yearly != null ? numv(dossier.amortisation_yearly) : secondMortgage / 15;
-    // Saved yearly_costs enthält keine Verpflichtungen → bei Refi immer frisch berechnen.
+    // Bank-Tragbarkeit (CH-Standard): nur Wohnkosten / Einkommen.
     const baseYearly = mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
       + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
       + amort;
-    const yearly = isRefi
-      ? baseYearly + obligationsYearly
-      : (numv(dossier.yearly_costs) || baseYearly);
+    const yearly = isRefi ? baseYearly : (numv(dossier.yearly_costs) || baseYearly);
 
     const ltv = total > 0 ? (mortgage / total) * 100 : 0;
     const afford = income > 0 ? (yearly / income) * 100 : 0;
@@ -184,10 +182,7 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
   if (m.afford > 33 && m.income > 0) {
     const required = m.yearly / 0.33;
     const delta = required - m.income;
-    if (isRefi && m.obligationsYearly > 0) {
-      tips.push(`Tragbarkeit ${m.afford.toFixed(1)}% — die Jahresausgaben der Antragsteller (CHF ${chf(m.obligationsYearly)} p.a.) sind eingerechnet. Ausgaben reduzieren oder Einkommen erhöhen.`);
-    }
-    tips.push(`Einkommen müsste um CHF ${chf(delta)} erhöht werden, um Tragbarkeit auf 33% zu bringen (benötigt: CHF ${chf(required)}).`);
+    tips.push(`Bank-Tragbarkeit ${m.afford.toFixed(1)}% — Einkommen müsste um CHF ${chf(delta)} steigen, um auf 33% zu kommen (benötigt: CHF ${chf(required)}).`);
   }
   if (!isRefi && m.equityRatio < 20 && m.total > 0) {
     const required = m.total * 0.2;
@@ -876,22 +871,26 @@ function RefiScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => v
 
   const newMortgage = s.existingMortgage + s.existingMortgage2 + s.requestedIncrease;
   const ltv = s.propertyValue > 0 ? (newMortgage / s.propertyValue) * 100 : 0;
-  const firstMortgageMax = s.propertyValue * 0.6667;
+  const firstMortgageMax = s.propertyValue * 0.65;
   const secondMortgage = Math.max(0, newMortgage - firstMortgageMax);
   const amortYearly = secondMortgage / 15;
   const interest = newMortgage * (s.rate / 100);
   const ancillary = s.propertyValue * 0.01;
   const obligationsYearly = s.obligationsMonthly * 12;
-  const yearly = interest + ancillary + amortYearly + obligationsYearly;
-  const afford = s.income > 0 ? (yearly / s.income) * 100 : 0;
+  // Bank-Tragbarkeit: Wohnkosten / Einkommen (private Verpflichtungen sind Budget, nicht Bank).
+  const housingYearly = interest + ancillary + amortYearly;
+  const yearly = housingYearly;
+  const afford = s.income > 0 ? (housingYearly / s.income) * 100 : 0;
+  const budgetRatio = s.income > 0 ? ((housingYearly + obligationsYearly) / s.income) * 100 : 0;
 
   const origNewMortgage = original.existingMortgage + original.existingMortgage2 + original.requestedIncrease;
   const origLtv = original.propertyValue > 0 ? (origNewMortgage / original.propertyValue) * 100 : 0;
-  const origFirstMax = original.propertyValue * 0.6667;
+  const origFirstMax = original.propertyValue * 0.65;
   const origSecond = Math.max(0, origNewMortgage - origFirstMax);
   const origAmort = origSecond / 15;
-  const origYearly = origNewMortgage * (original.rate / 100) + original.propertyValue * 0.01 + origAmort + original.obligationsMonthly * 12;
-  const origAfford = original.income > 0 ? (origYearly / original.income) * 100 : 0;
+  const origHousing = origNewMortgage * (original.rate / 100) + original.propertyValue * 0.01 + origAmort;
+  const origYearly = origHousing;
+  const origAfford = original.income > 0 ? (origHousing / original.income) * 100 : 0;
 
   const status: QuickCheckStatus =
     ltv > 80 || afford > 38 ? "not_financeable" :
@@ -1026,15 +1025,17 @@ function RefiScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => v
           </div>
           <div className="grid grid-cols-2 gap-3">
             <DeltaMetric label="Belehnung (LTV)" value={ltv} original={origLtv} mode="max" limit={80} />
-            <DeltaMetric label="Tragbarkeit" value={afford} original={origAfford} mode="max" limit={33} />
+            <DeltaMetric label="Bank-Tragbarkeit" value={afford} original={origAfford} mode="max" limit={33} />
+            <DeltaMetric label="Budgetquote" value={budgetRatio} original={budgetRatio} mode="max" limit={80} />
           </div>
           <div className="rounded-lg border p-3 space-y-1.5 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Neue Hypothek</span><span className="tabular-nums font-medium">CHF {chf(newMortgage)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Zinskosten p.a.</span><span className="tabular-nums">CHF {chf(interest)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Nebenkosten p.a.</span><span className="tabular-nums">CHF {chf(ancillary)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Amortisation p.a.</span><span className="tabular-nums">CHF {chf(amortYearly)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Fixe Verpflichtungen p.a.</span><span className="tabular-nums">CHF {chf(obligationsYearly)}</span></div>
-            <div className="flex justify-between border-t pt-1.5 mt-1.5"><span className="font-medium">Total p.a.</span><span className="tabular-nums font-semibold">CHF {chf(yearly)}</span></div>
+            <div className="flex justify-between border-t pt-1.5 mt-1.5"><span className="font-medium">Wohnkosten p.a. (Bank-Tragbarkeit)</span><span className="tabular-nums font-semibold">CHF {chf(yearly)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Fixe Verpflichtungen p.a. (Budget)</span><span className="tabular-nums">CHF {chf(obligationsYearly)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Mindesteinkommen (33%)</span><span className="tabular-nums">CHF {chf(yearly / 0.33)}</span></div>
           </div>
           <div className="space-y-1.5 text-sm pt-2 border-t">
             {tips.map((t, i) => (
