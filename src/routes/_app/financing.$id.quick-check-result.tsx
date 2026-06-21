@@ -182,10 +182,7 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
   if (m.afford > 33 && m.income > 0) {
     const required = m.yearly / 0.33;
     const delta = required - m.income;
-    if (isRefi && m.obligationsYearly > 0) {
-      tips.push(`Tragbarkeit ${m.afford.toFixed(1)}% — die Jahresausgaben der Antragsteller (CHF ${chf(m.obligationsYearly)} p.a.) sind eingerechnet. Ausgaben reduzieren oder Einkommen erhöhen.`);
-    }
-    tips.push(`Einkommen müsste um CHF ${chf(delta)} erhöht werden, um Tragbarkeit auf 33% zu bringen (benötigt: CHF ${chf(required)}).`);
+    tips.push(`Bank-Tragbarkeit ${m.afford.toFixed(1)}% — Einkommen müsste um CHF ${chf(delta)} steigen, um auf 33% zu kommen (benötigt: CHF ${chf(required)}).`);
   }
   if (!isRefi && m.equityRatio < 20 && m.total > 0) {
     const required = m.total * 0.2;
