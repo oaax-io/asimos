@@ -749,24 +749,16 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
             </>
           )}
           <DetailRow label="Total Tragbarkeitskosten p.a." value={chf(i.yearly)} bold divider />
-          {(() => {
-            const coIncome = n(dossier.co_applicant_einkommen);
-            const mainIncome = n(dossier.gross_income_yearly);
-            const coName = dossier.co_applicant?.full_name;
-            const role = dossier.co_applicant_role === "ehepartner"
-              ? t("financing.detail.quickcheck.detail.roleSpouse")
-              : t("financing.detail.quickcheck.detail.roleCo");
-            if (coIncome > 0 && coName) {
-              return (
-                <>
-                  <DetailRow label={t("financing.detail.quickcheck.detail.mainIncome")} value={chf(mainIncome)} />
-                  <DetailRow label={t("financing.detail.quickcheck.detail.coApplicantIncome", { role, name: coName })} value={chf(coIncome)} />
-                  <DetailRow label={t("financing.detail.quickcheck.detail.combinedIncome")} value={chf(i.income)} bold />
-                </>
-              );
-            }
-            return <DetailRow label={t("financing.detail.quickcheck.detail.grossIncome")} value={chf(i.income)} />;
-          })()}
+          {applicantList(dossier).length > 1 ? (
+            <>
+              {applicantList(dossier).map((applicant) => (
+                <DetailRow key={applicant.id} label={`Einkommen ${applicant.name}`} value={chf(applicant.income)} />
+              ))}
+              <DetailRow label={t("financing.detail.quickcheck.detail.combinedIncome")} value={chf(i.income)} bold />
+            </>
+          ) : (
+            <DetailRow label={t("financing.detail.quickcheck.detail.grossIncome")} value={chf(i.income)} />
+          )}
           <div className="my-2 border-t" />
           <div className="flex justify-between gap-4 text-sm">
             <span>{t("financing.detail.quickcheck.detail.affordabilityRatio")}</span>
