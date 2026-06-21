@@ -17,7 +17,7 @@ import {
 import { ArrowLeft, User, Building2, Banknote, RotateCcw, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import {
-  FINANCING_TYPE_LABELS, DOSSIER_STATUS_LABELS, QUICK_CHECK_LABELS,
+  FINANCING_TYPE_LABELS, DOSSIER_STATUS_LABELS, QUICK_CHECK_LABELS, displayQuickCheckStatus,
   calcQuickCheck,
   type FinancingType, type DossierStatus, type QuickCheckStatus,
 } from "@/lib/financing";
