@@ -828,15 +828,18 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     const r = Math.round(rate * 10) / 10;
     const rn = Math.round(reno);
     const ow = Math.min(Math.round(ownWork), rn);
-    const effectiveEq = eq + ow;
+    const monthlyExpenses = Math.round(expensesMonthly);
+    const effectiveEq = isRefi ? original.equity : eq + ow;
+    const scenarioReno = isRefi ? original.reno : rn;
+    const scenarioPurchase = isRefi ? original.purchase : p;
     const total = p + rn;
     const ancillary = total * (original.ancillaryPct / 100);
     const firstMortgageMax = total * 0.6667;
     const second = Math.max(0, mort - firstMortgageMax);
     const amort = second / original.amortYears;
     const result = calcQuickCheck({
-      purchase_price: p,
-      renovation_costs: rn,
+      purchase_price: scenarioPurchase,
+      renovation_costs: scenarioReno,
       requested_mortgage: mort,
       own_funds_total: effectiveEq,
       own_funds_pension_fund: original.pension,
@@ -846,8 +849,14 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       ancillary_costs_yearly: ancillary,
       amortisation_yearly: amort,
     });
-    return { p, eq: effectiveEq, inc, mort, r, total, rn, ow, result };
-  }, [purchase, equity, income, mortgage, rate, reno, ownWork, original]);
+    const expensesYearly = isRefi ? monthlyExpenses * 12 : 0;
+    const affordability = inc > 0 ? ((result.yearly_costs + expensesYearly) / inc) * 100 : 0;
+    const ltv = total > 0 ? (mort / total) * 100 : 0;
+    const status: QuickCheckStatus = isRefi
+      ? (ltv > 80 || affordability > 38 ? "not_financeable" : affordability > 33 ? "critical" : "realistic")
+      : result.status;
+    return { p, eq: effectiveEq, inc, mort, r, total, rn, ow, monthlyExpenses, expensesYearly, result, ltv, affordability, status };
+  }, [purchase, equity, income, mortgage, rate, reno, ownWork, expensesMonthly, isRefi, original]);
 
   const reset = () => {
     setPurchase(Math.round(original.purchase));
@@ -857,6 +866,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     setRate(Math.round(original.rate * 10) / 10);
     setReno(Math.round(original.reno));
     setOwnWork(Math.round(n((dossier as { renovation_own_work?: number | string | null }).renovation_own_work)));
+    setExpensesMonthly(Math.round(original.expensesMonthly));
   };
 
   const saveMutation = useMutation({
