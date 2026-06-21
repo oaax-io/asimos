@@ -121,7 +121,7 @@ function FinancingDetailPage() {
           <div className="flex gap-2">
             <Badge>{DOSSIER_STATUS_LABELS[dossier.dossier_status as DossierStatus] ?? t("financing.dossierStatus.draft")}</Badge>
             {dossier.quick_check_status && (
-              <Badge variant="outline">{t(`financing.quickCheckStatus.${dossier.quick_check_status}`, { defaultValue: QUICK_CHECK_LABELS[dossier.quick_check_status as QuickCheckStatus] })}</Badge>
+              <Badge variant="outline">{t(`financing.quickCheckStatus.${qcStatus}`, { defaultValue: QUICK_CHECK_LABELS[qcStatus] })}</Badge>
             )}
           </div>
         }
