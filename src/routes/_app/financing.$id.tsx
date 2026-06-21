@@ -431,6 +431,7 @@ type Inputs = {
   equityRatio: number;
   hardRatio: number;
   minIncome: number;
+  monthlyAvailable: number;
 };
 
 function deriveInputs(d: Dossier): Inputs {
