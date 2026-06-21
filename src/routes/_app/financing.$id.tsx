@@ -725,6 +725,7 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
   const i = deriveInputs(dossier);
   const affTone = toneFor(i.affordability, 33, 38, "max");
   const expenseGroups = applicantExpenseGroups(dossier);
+  const relevantExpenseGroups = applicantExpenseGroups(dossier, TRAGBARKEIT_RELEVANT_EXPENSE_FIELDS);
 
   return (
     <div className="grid gap-3 md:grid-cols-2">
@@ -767,7 +768,15 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
                   ))}
                 </div>
               ))}
-              {i.expensesYearly > 0 && <DetailRow label="Jahresausgaben total" value={chf(i.expensesYearly)} bold divider />}
+              {i.allExpensesYearly > 0 && <DetailRow label="Jahresausgaben total" value={chf(i.allExpensesYearly)} bold divider />}
+              {i.expensesYearly > 0 && (
+                <>
+                  {relevantExpenseGroups.map((group) => group.yearly > 0 && (
+                    <DetailRow key={`relevant-${group.id}`} label={`davon tragbarkeitsrelevant ${group.name}`} value={chf(group.yearly)} indent />
+                  ))}
+                  <DetailRow label="Tragbarkeitsrelevante Verpflichtungen" value={chf(i.expensesYearly)} bold />
+                </>
+              )}
             </>
           )}
           <DetailRow label="Total Tragbarkeitskosten p.a." value={chf(i.yearly)} bold divider />
