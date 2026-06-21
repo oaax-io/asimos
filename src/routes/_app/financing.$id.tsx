@@ -832,7 +832,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     const effectiveEq = isRefi ? original.equity : eq + ow;
     const scenarioReno = isRefi ? original.reno : rn;
     const scenarioPurchase = isRefi ? original.purchase : p;
-    const total = p + rn;
+    const total = scenarioPurchase + scenarioReno;
     const ancillary = total * (original.ancillaryPct / 100);
     const firstMortgageMax = total * 0.6667;
     const second = Math.max(0, mort - firstMortgageMax);
@@ -880,11 +880,11 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
         bruttoeinkommen: live.inc,
         hypothek: live.mort,
         kalk_zinssatz: live.r,
-        tragbarkeit: r.affordability_ratio,
-        belehnung: r.loan_to_value_ratio,
+        tragbarkeit: live.affordability,
+        belehnung: live.ltv,
         eigenmittelquote: live.total > 0 ? (live.eq / live.total) * 100 : 0,
         harte_eigenmittel: r.hard_equity,
-        status: r.status,
+        status: live.status,
       } as never);
       if (error) throw error;
     },
@@ -934,10 +934,10 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     toast.success(t("financing.detail.quickcheck.scenarios.toast.loaded", { name: s.bezeichnung }));
   };
 
-  const liveLtv = live.result.loan_to_value_ratio;
-  const liveAff = live.result.affordability_ratio;
+  const liveLtv = live.ltv;
+  const liveAff = live.affordability;
   const liveEqRatio = live.total > 0 ? (live.eq / live.total) * 100 : 0;
-  const liveStatus = live.result.status as QuickCheckStatus;
+  const liveStatus = live.status;
 
   // Matrix uses slider values for equity, mortgage, rate
   const priceSteps = [-200000, -100000, 0, 100000, 200000];
