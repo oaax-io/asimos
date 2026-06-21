@@ -224,7 +224,7 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
               </div>
             </CardContent>
           </Card>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1">
             <RefiBarometerCard label="Aufstockungswunsch" value={`CHF ${chf(numv(dossier.requested_increase))}`} detail="Zusätzlich gewünschter Betrag" />
             <RefiBarometerCard label="Neue Hypothek" value={`CHF ${chf(m.mortgage)}`} detail={`Belehnung ${m.ltv.toFixed(1)}% / max. 80%`} tone={m.ltv <= 80 ? "ok" : "bad"} fillPct={m.ltv} limitPct={80} />
             <RefiBarometerCard label="Einnahmen p.a." value={`CHF ${chf(m.income)}`} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
@@ -701,33 +701,6 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
             max={Math.round(original.purchase * 1.5) || 100000}
             step={10000}
             onChange={(v) => setS((p) => ({ ...p, purchase: Math.round(v) }))}
-            display={(v) => `CHF ${chf(v)}`}
-          />
-          <SliderRow
-            label="Eigenmittel (bar / PK / FZ)" unit="CHF"
-            value={s.equity}
-            min={0}
-            max={Math.max(Math.round((s.purchase + s.reno) * 0.5), Math.round(original.equity * 2.0), 200000)}
-            step={5000}
-            onChange={(v) => setS((p) => ({ ...p, equity: Math.round(v) }))}
-            display={(v) => `CHF ${chf(v)}`}
-          />
-          <SliderRow
-            label="Renovationskosten" unit="CHF"
-            value={s.reno}
-            min={0}
-            max={Math.max(Math.round(original.reno * 2.0), Math.round(s.purchase * 0.5), 200000)}
-            step={5000}
-            onChange={(v) => setS((p) => ({ ...p, reno: Math.round(v) }))}
-            display={(v) => `CHF ${chf(v)}`}
-          />
-          <SliderRow
-            label="davon Eigenleistung" unit="CHF"
-            value={s.ownWork}
-            min={0}
-            max={Math.max(s.reno, 50000)}
-            step={1000}
-            onChange={(v) => setS((p) => ({ ...p, ownWork: Math.round(v) }))}
             display={(v) => `CHF ${chf(v)}`}
           />
           <SliderRow
