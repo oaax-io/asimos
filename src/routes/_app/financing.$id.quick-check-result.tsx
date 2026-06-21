@@ -143,11 +143,13 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const hardEquity = Math.max(0, equity - pension);
     const income = effectiveIncome(dossier);
     const obligationsYearly = isRefi ? numv(dossier.monthly_obligations) * 12 : 0;
-    const yearly = numv(dossier.yearly_costs) ||
-      (mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
-        + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
-        + numv(dossier.amortisation_yearly)
-        + obligationsYearly);
+    // Saved yearly_costs enthält keine Verpflichtungen → bei Refi immer frisch berechnen.
+    const baseYearly = mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
+      + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
+      + numv(dossier.amortisation_yearly);
+    const yearly = isRefi
+      ? baseYearly + obligationsYearly
+      : (numv(dossier.yearly_costs) || baseYearly);
 
     const ltv = total > 0 ? (mortgage / total) * 100 : 0;
     const afford = income > 0 ? (yearly / income) * 100 : 0;
@@ -161,6 +163,10 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
   if (m.afford > 33 && m.income > 0) {
     const required = m.yearly / 0.33;
     const delta = required - m.income;
+    if (isRefi && numv(dossier.monthly_obligations) > 0) {
+      const obligationsYearly = numv(dossier.monthly_obligations) * 12;
+      tips.push(`Tragbarkeit ${m.afford.toFixed(1)}% — die laufenden Verpflichtungen (CHF ${chf(obligationsYearly)} p.a.) belasten die Quote stark. Ablösung/Reduktion bestehender Kredite oder Leasings prüfen.`);
+    }
     tips.push(`Einkommen müsste um CHF ${chf(delta)} erhöht werden, um Tragbarkeit auf 33% zu bringen (benötigt: CHF ${chf(required)}).`);
   }
   if (!isRefi && m.equityRatio < 20 && m.total > 0) {
@@ -184,8 +190,17 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <KpiCard label="Belehnung (LTV)" value={m.ltv} limit={80} mode="max" />
         <KpiCard label="Tragbarkeit" value={m.afford} limit={33} mode="max" />
-        {!isRefi && <KpiCard label="Eigenmittelquote" value={m.equityRatio} limit={20} mode="min" />}
-        {!isRefi && <KpiCard label="Harte Eigenmittel" value={m.hardRatio} limit={10} mode="min" />}
+        {isRefi ? (
+          <>
+            <KpiPlaceholder label="Eigenmittelquote" />
+            <KpiPlaceholder label="Harte Eigenmittel" />
+          </>
+        ) : (
+          <>
+            <KpiCard label="Eigenmittelquote" value={m.equityRatio} limit={20} mode="min" />
+            <KpiCard label="Harte Eigenmittel" value={m.hardRatio} limit={10} mode="min" />
+          </>
+        )}
       </div>
 
       <Card>
@@ -245,6 +260,25 @@ function KpiCard({ label, value, limit, mode }: {
     </Card>
   );
 }
+
+function KpiPlaceholder({ label }: { label: string }) {
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-baseline justify-between">
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-xs text-muted-foreground">Refinanzierung</p>
+        </div>
+        <p className="text-lg font-semibold text-muted-foreground">Nicht benötigt</p>
+        <p className="text-xs text-muted-foreground">
+          Bei Refinanzierung / Aufstockung ohne Kauf werden keine zusätzlichen Eigenmittel verlangt.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+
 
 // ---------------- helpers ----------------
 
