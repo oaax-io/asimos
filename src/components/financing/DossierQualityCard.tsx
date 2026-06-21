@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, AlertTriangle, XCircle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { checklistStats, type ChecklistRow } from "@/lib/financing-checklist";
-import { type QuickCheckStatus, type DossierStatus } from "@/lib/financing";
+import { type QuickCheckStatus, type DossierStatus, displayQuickCheckStatus, isRefinancingDossier } from "@/lib/financing";
 
 type Props = {
   dossierId: string;
