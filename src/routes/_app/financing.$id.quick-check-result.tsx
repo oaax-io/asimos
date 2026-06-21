@@ -1028,7 +1028,8 @@ function RefiScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => v
           </div>
           <div className="grid grid-cols-2 gap-3">
             <DeltaMetric label="Belehnung (LTV)" value={ltv} original={origLtv} mode="max" limit={80} />
-            <DeltaMetric label="Tragbarkeit" value={afford} original={origAfford} mode="max" limit={33} />
+            <DeltaMetric label="Bank-Tragbarkeit" value={afford} original={origAfford} mode="max" limit={33} />
+            <DeltaMetric label="Budgetquote" value={budgetRatio} original={budgetRatio} mode="max" limit={80} />
           </div>
           <div className="rounded-lg border p-3 space-y-1.5 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Neue Hypothek</span><span className="tabular-nums font-medium">CHF {chf(newMortgage)}</span></div>
