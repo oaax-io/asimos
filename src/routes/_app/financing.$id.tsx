@@ -652,12 +652,26 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
           <RefiBarometerCard label="Aufstockungswunsch" value={chf(n(dossier.requested_increase))} detail="Zusätzlich gewünschter Betrag" />
           <RefiBarometerCard label="Neue Hypothek" value={chf(i.mortgage)} detail={`Belehnung ${pct(i.ltv)} / max. 80%`} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
           <RefiBarometerCard label="Einnahmen p.a." value={chf(i.income)} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
-          <RefiBarometerCard label="Jahresausgaben p.a." value={chf(i.allExpensesYearly)} detail={`${chf(i.allExpensesMonthly)} / Monat gemäss Selbstauskunft`} />
+          <RefiBarometerCard
+            label="Bank-Tragbarkeit"
+            value={pct(i.affordability)}
+            detail={`Wohnkosten ${chf(i.housingYearly)} p.a. / Limit 33%`}
+            tone={affTone}
+            fillPct={i.affordability * (100 / 50)}
+            limitPct={33 * (100 / 50)}
+          />
+          <RefiBarometerCard
+            label="Budgetquote (Haushaltsbelastung)"
+            value={pct(i.budgetRatio)}
+            detail={`Wohnkosten + alle Ausgaben (${chf(i.totalBudgetYearly)} p.a.)`}
+          />
+          <RefiBarometerCard label="Mindesteinkommen (33%)" value={chf(i.minIncome)} detail="Einkommen, damit Bank-Tragbarkeit ≤ 33%" />
+          <RefiBarometerCard label="Verfügbar pro Monat" value={chf(i.monthlyAvailable)} detail="Einkommen − Wohnkosten − Haushaltsausgaben" />
           <Card>
             <CardContent className="p-4 space-y-2">
               <p className="text-sm text-muted-foreground">Finanzierbarkeit</p>
               <Badge className={cn("w-fit", qcBadgeTone(refiStatus))}>{t(`financing.quickCheckStatus.${refiStatus}`, { defaultValue: QUICK_CHECK_LABELS[refiStatus] })}</Badge>
-              <p className={cn("text-2xl font-semibold", toneText(affTone))}>{pct(i.affordability)}</p>
+              <p className="text-xs text-muted-foreground">{i.affordability <= 33 && i.ltv <= 80 ? "Finanzierbar: JA" : i.affordability <= 38 && i.ltv <= 80 ? "Finanzierbar: KRITISCH" : "Finanzierbar: NEIN"}</p>
             </CardContent>
           </Card>
         </div>
