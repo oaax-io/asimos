@@ -366,6 +366,28 @@ export function ClientSelfDisclosureWizard({
         .upsert(persistPayload, { onConflict: "client_id" });
       if (error) throw error;
 
+      // Kunden-Stammdaten (full_name) aus der Selbstauskunft synchronisieren,
+      // damit Vor- und Nachname überall korrekt erscheinen.
+      try {
+        const sdFirst = (form.first_name as string | undefined)?.trim() ?? "";
+        const sdLast = (form.last_name as string | undefined)?.trim() ?? "";
+        const fullName = [sdFirst, sdLast].filter(Boolean).join(" ");
+        if (sdFirst && sdLast) {
+          await supabase
+            .from("clients")
+            .update({
+              full_name: fullName,
+              contact_first_name: sdFirst,
+              contact_last_name: sdLast,
+            })
+            .eq("id", clientId);
+          qc.invalidateQueries({ queryKey: ["client", clientId] });
+          qc.invalidateQueries({ queryKey: ["clients"] });
+        }
+      } catch {
+        // Sync ist best-effort – Fehler hier nicht fatal
+      }
+
       lastSyncedSnapshotRef.current = persistSnapshot;
       setPendingSync(false);
       setAutosaveState("saved");
