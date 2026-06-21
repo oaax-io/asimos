@@ -194,7 +194,11 @@ export type WizardForm = {
   current_bank: string;
   interest_rate_current: string;
   interest_rate_expiry: string;
-  refi_purpose: "" | "rate_optimisation" | "bank_change" | "consolidation" | "cash_out" | "other";
+  // Optionale 2. Tranche (manche Finanzierungen haben 2 Hypotheken mit unterschiedlichen Zinssätzen)
+  existing_mortgage_2: string;
+  interest_rate_current_2: string;
+  interest_rate_expiry_2: string;
+  refi_purpose: "" | "rate_optimisation" | "bank_change" | "consolidation" | "cash_out" | "renovation" | "other";
   monthly_obligations: string;
 };
 
@@ -232,6 +236,9 @@ const emptyForm = (defaults?: Partial<WizardForm>): WizardForm => ({
   interest_rate_current: "",
   interest_rate_expiry: "",
   refi_purpose: "",
+  existing_mortgage_2: "",
+  interest_rate_current_2: "",
+  interest_rate_expiry_2: "",
   monthly_obligations: "",
   ...defaults,
 });
@@ -480,11 +487,11 @@ export function FinancingQuickCheckWizard({
     return m.includes("refinance") || m.includes("increase") || m.includes("mortgage_increase");
   }, [form.modules]);
 
-  // Effektive Hypothek: bei Refi = aktuelle Hypothek + Aufstockung
+  // Effektive Hypothek: bei Refi = aktuelle Hypothek (Tranche 1 + 2) + Aufstockung
   const effectiveMortgage = useMemo(() => {
-    if (isRefiOnly) return num(form.existing_mortgage) + num(form.requested_increase);
+    if (isRefiOnly) return num(form.existing_mortgage) + num(form.existing_mortgage_2) + num(form.requested_increase);
     return num(form.requested_mortgage);
-  }, [isRefiOnly, form.existing_mortgage, form.requested_increase, form.requested_mortgage]);
+  }, [isRefiOnly, form.existing_mortgage, form.existing_mortgage_2, form.requested_increase, form.requested_mortgage]);
 
   // ---- Live-KPIs (Schritt 4 + 5 + 6) ----
   const liveResult = useMemo(() => {
@@ -563,16 +570,12 @@ export function FinancingQuickCheckWizard({
     if (step === 4) {
       const income = combined.incomeCombined;
       if (isRefiOnly) {
-        const existing = num(form.existing_mortgage);
         const mortgage = effectiveMortgage;
         const propertyVal = num(form.property_purchase_price); // dient als Objektwert
         return propertyVal > 0
-          && existing > 0
           && mortgage > 0
           && income > 0
-          && !!form.usage_type
-          && (form.usage_type !== "mixed" || (num(form.owner_occupied_share) > 0 && num(form.owner_occupied_share) < 100))
-          && !!form.object_type;
+          && (form.usage_type !== "mixed" || (num(form.owner_occupied_share) > 0 && num(form.owner_occupied_share) < 100));
       }
       const equity = num(form.own_funds_total);
       const purchase = num(form.property_purchase_price);
@@ -683,6 +686,9 @@ export function FinancingQuickCheckWizard({
         current_bank: isRefiOnly && form.current_bank ? form.current_bank : null,
         interest_rate_current: isRefiOnly ? (numOrNull(form.interest_rate_current) ?? null) : null,
         interest_rate_expiry: isRefiOnly && form.interest_rate_expiry ? form.interest_rate_expiry : null,
+        existing_mortgage_2: isRefiOnly ? (numOrNull(form.existing_mortgage_2) ?? null) : null,
+        interest_rate_current_2: isRefiOnly ? (numOrNull(form.interest_rate_current_2) ?? null) : null,
+        interest_rate_expiry_2: isRefiOnly && form.interest_rate_expiry_2 ? form.interest_rate_expiry_2 : null,
         // Hauptantragsteller-Einzelwerte (unverändert)
         own_funds_total: combined.mainEquity || null,
         own_funds_pension_fund: combined.mainPk || null,
@@ -810,7 +816,7 @@ export function FinancingQuickCheckWizard({
               coIncomeBreakdown={coIncomeBreakdown}
             />
           )}
-          {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} isRefiOnly={isRefiOnly} effectiveMortgage={effectiveMortgage} combined={combined} />}
+          {step === 4 && <Step4Metrics form={form} update={update} kpis={liveKpis} isRefiOnly={isRefiOnly} effectiveMortgage={effectiveMortgage} combined={combined} clients={clientsQuery.data ?? []} />}
           {step === 5 && <Step5Advanced form={form} update={update} kpis={liveKpis} />}
           {step === 6 && (
             <Step6Summary
@@ -1292,9 +1298,14 @@ function CoApplicantSection({
   const mainIncome = num(form.gross_income_yearly);
   const mainEquity = num(form.own_funds_total);
   const mainPk = num(form.own_funds_pension_fund);
-  const incomeCombined = hasIncome ? mainIncome + incomeNum : mainIncome;
-  const equityCombined = mainEquity + equityNum;
-  const pkCombined = mainPk + pkNum;
+  // Zusätzliche Mitantragsteller mitberücksichtigen
+  const extras = (form.additional_co_applicants ?? []).filter((a) => !!a.client_id);
+  const extrasIncome = extras.reduce((s, a) => s + num(a.einkommen), 0);
+  const extrasEquity = extras.reduce((s, a) => s + num(a.eigenkapital), 0);
+  const extrasPk = extras.reduce((s, a) => s + num(a.pk_anteil), 0);
+  const incomeCombined = mainIncome + (hasIncome ? incomeNum : 0) + extrasIncome;
+  const equityCombined = mainEquity + equityNum + extrasEquity;
+  const pkCombined = mainPk + pkNum + extrasPk;
 
   return (
     <div className="rounded-lg border bg-card p-4 space-y-4">
@@ -1637,38 +1648,42 @@ function KpiPreview({ kpis, hideEquity }: { kpis: Kpis; hideEquity?: boolean }) 
 }
 
 function Step4Metrics({
-  form, update, kpis, isRefiOnly, effectiveMortgage, combined,
+  form, update, kpis, isRefiOnly, effectiveMortgage, combined, clients,
 }: {
   form: WizardForm;
   update: <K extends keyof WizardForm>(k: K, v: WizardForm[K]) => void;
   kpis: Kpis;
   isRefiOnly: boolean;
   effectiveMortgage: number;
-  combined: {
-    coActive: boolean;
-    mainIncome: number;
-    coIncome: number;
-    extrasCount: number;
-    extrasIncome: number;
-    incomeCombined: number;
-  };
+  combined: CombinedValues;
+  clients: ClientLite[];
 }) {
   const { t } = useTranslation();
   const showRenovation = form.modules.includes("renovation");
   const objectValueFromCrm = isRefiOnly && form.property_source === "crm" && !!form.property_purchase_price;
   const coActive = combined.coActive;
 
-  // Auto-Fill: monatliche Verpflichtungen aus Selbstauskunft (Leasing + Kredite + Alimente)
+  // Auto-Fill: monatliche Verpflichtungen aus Selbstauskunft ALLER Antragsteller
+  // (Leasing + Kredite + Alimente) — Hauptkunde + primärer Co + alle weiteren Mitantragsteller
+  const allApplicantIds = useMemo(() => {
+    const ids: string[] = [];
+    if (form.client_id) ids.push(form.client_id);
+    if (coActive && form.co_applicant_client_id) ids.push(form.co_applicant_client_id);
+    for (const a of form.additional_co_applicants ?? []) {
+      if (a.client_id) ids.push(a.client_id);
+    }
+    return Array.from(new Set(ids));
+  }, [form.client_id, form.co_applicant_client_id, coActive, form.additional_co_applicants]);
+
   useEffect(() => {
     if (!isRefiOnly) return;
     if (form.monthly_obligations) return; // bereits gesetzt → nicht überschreiben
-    const ids = [form.client_id, coActive ? form.co_applicant_client_id : null].filter(Boolean) as string[];
-    if (ids.length === 0) return;
+    if (allApplicantIds.length === 0) return;
     (async () => {
       const { data } = await supabase
         .from("client_self_disclosures")
         .select("leasing_expense, credit_expense, alimony_expense")
-        .in("client_id", ids);
+        .in("client_id", allApplicantIds);
       if (!data || data.length === 0) return;
       const total = data.reduce((sum, r: any) =>
         sum + Number(r.leasing_expense ?? 0) + Number(r.credit_expense ?? 0) + Number(r.alimony_expense ?? 0)
@@ -1676,7 +1691,34 @@ function Step4Metrics({
       if (total > 0) update("monthly_obligations", String(total));
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRefiOnly, form.client_id, form.co_applicant_client_id, coActive]);
+  }, [isRefiOnly, allApplicantIds.join(",")]);
+
+  // Pro-Antragsteller-Übersicht (Einkommen + Verpflichtungen aus Selbstauskunft)
+  const applicantsBreakdown = useQuery({
+    queryKey: ["wizard_applicants_breakdown", allApplicantIds.join(",")],
+    enabled: isRefiOnly && allApplicantIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_self_disclosures")
+        .select("client_id, leasing_expense, credit_expense, alimony_expense")
+        .in("client_id", allApplicantIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const obligationsByClient = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of applicantsBreakdown.data ?? []) {
+      m.set((r as any).client_id, Number((r as any).leasing_expense ?? 0) + Number((r as any).credit_expense ?? 0) + Number((r as any).alimony_expense ?? 0));
+    }
+    return m;
+  }, [applicantsBreakdown.data]);
+  const totalApplicantsObligations = useMemo(() => {
+    let sum = 0;
+    for (const v of obligationsByClient.values()) sum += v;
+    return sum;
+  }, [obligationsByClient]);
+
 
 
   return (
@@ -1757,15 +1799,19 @@ function Step4Metrics({
 
 
               {(() => {
-                const maxIncrease = Math.max(0, kpis.maxMortgageAllowed - num(form.existing_mortgage));
+                const currentTotal = num(form.existing_mortgage) + num(form.existing_mortgage_2);
+                const maxIncrease = Math.max(0, kpis.maxMortgageAllowed - currentTotal);
                 const requested = num(form.requested_increase);
                 const fits = !kpis.ltvExceeded;
                 const hasBase = kpis.maxMortgageAllowed > 0;
                 return (
                   <section className="rounded-lg border bg-card p-4 space-y-3">
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.metrics.mortgageTitle")}</h3>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <Field label={t("financing.wizard.metrics.currentMortgage")} type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
+                    <div className="rounded-md border bg-background p-3 text-sm">
+                      <span className="text-xs text-muted-foreground">{t("financing.wizard.metrics.currentMortgage")} (Tranche 1 + 2)</span>
+                      <div className="font-semibold text-base">{formatCurrency(currentTotal)}</div>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-1">
                       <Field label={t("financing.wizard.metrics.increaseAmount")} type="number" value={form.requested_increase} onChange={(v) => update("requested_increase", v)} />
                     </div>
                     {hasBase && (
@@ -1805,10 +1851,27 @@ function Step4Metrics({
               <section className="rounded-lg border bg-card p-4 space-y-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.metrics.existingFinancing")}</h3>
                 <SwissBankSelect value={form.current_bank} onChange={(v) => update("current_bank", v)} />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label={t("financing.wizard.metrics.currentRate")} type="number" value={form.interest_rate_current} onChange={(v) => update("interest_rate_current", v)} />
-                  <Field label={t("financing.wizard.metrics.rateExpiry")} type="date" value={form.interest_rate_expiry} onChange={(v) => update("interest_rate_expiry", v)} />
+
+                {/* Tranche 1 */}
+                <div className="space-y-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Hypothek 1</p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Field label="Betrag (CHF)" type="number" value={form.existing_mortgage} onChange={(v) => update("existing_mortgage", v)} />
+                    <Field label={t("financing.wizard.metrics.currentRate")} type="number" value={form.interest_rate_current} onChange={(v) => update("interest_rate_current", v)} />
+                    <Field label={t("financing.wizard.metrics.rateExpiry")} type="date" value={form.interest_rate_expiry} onChange={(v) => update("interest_rate_expiry", v)} />
+                  </div>
                 </div>
+
+                {/* Tranche 2 (optional) */}
+                <div className="space-y-2 pt-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Hypothek 2 (optional)</p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <Field label="Betrag (CHF)" type="number" value={form.existing_mortgage_2} onChange={(v) => update("existing_mortgage_2", v)} />
+                    <Field label={t("financing.wizard.metrics.currentRate")} type="number" value={form.interest_rate_current_2} onChange={(v) => update("interest_rate_current_2", v)} />
+                    <Field label={t("financing.wizard.metrics.rateExpiry")} type="date" value={form.interest_rate_expiry_2} onChange={(v) => update("interest_rate_expiry_2", v)} />
+                  </div>
+                </div>
+
                 <div className="space-y-1">
                   <Label className="text-xs">{t("financing.wizard.metrics.refiPurpose")}</Label>
                   <Select value={form.refi_purpose} onValueChange={(v) => update("refi_purpose", v as WizardForm["refi_purpose"])}>
@@ -1818,6 +1881,7 @@ function Step4Metrics({
                       <SelectItem value="bank_change">{t("financing.wizard.metrics.refiPurposes.bank_change")}</SelectItem>
                       <SelectItem value="consolidation">{t("financing.wizard.metrics.refiPurposes.consolidation")}</SelectItem>
                       <SelectItem value="cash_out">{t("financing.wizard.metrics.refiPurposes.cash_out")}</SelectItem>
+                      <SelectItem value="renovation">{t("financing.wizard.metrics.refiPurposes.renovation")}</SelectItem>
                       <SelectItem value="other">{t("financing.wizard.metrics.refiPurposes.other")}</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1826,31 +1890,84 @@ function Step4Metrics({
 
               <section className="rounded-lg border bg-card p-4 space-y-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("financing.wizard.metrics.incomeObligations")}</h3>
-                <div className="grid gap-3 sm:grid-cols-2">
+
+                {/* Hauptkunde */}
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("financing.wizard.metrics.incomeMain")}{!coActive && combined.extrasCount === 0 ? "" : ""}</Label>
                   <Field
-                    label={coActive ? t("financing.wizard.metrics.incomeMain") : t("financing.wizard.metrics.grossIncome")}
+                    label={(clients.find((c) => c.id === form.client_id)?.full_name ?? t("financing.wizard.metrics.incomeMain")) + " (CHF/J)"}
                     type="number"
                     value={form.gross_income_yearly}
                     onChange={(v) => update("gross_income_yearly", v)}
                   />
-                  {coActive && (
-                    <Field
-                      label={t("financing.wizard.metrics.incomePartner")}
-                      type="number"
-                      value={form.co_applicant_einkommen}
-                      onChange={(v) => update("co_applicant_einkommen", v)}
-                    />
-                  )}
-                  <Field
-                    label={coActive ? t("financing.wizard.metrics.obligationsCombined") : t("financing.wizard.metrics.obligationsMonthly")}
-                    type="number"
-                    value={form.monthly_obligations}
-                    onChange={(v) => update("monthly_obligations", v)}
-                  />
-                  {showRenovation && (
-                    <Field label={t("financing.wizard.metrics.renovationCosts")} type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
-                  )}
                 </div>
+
+                {/* Primärer Mitantragsteller */}
+                {coActive && (
+                  <Field
+                    label={(clients.find((c) => c.id === form.co_applicant_client_id)?.full_name ?? t("financing.wizard.metrics.incomePartner")) + " (CHF/J)"}
+                    type="number"
+                    value={form.co_applicant_einkommen}
+                    onChange={(v) => update("co_applicant_einkommen", v)}
+                  />
+                )}
+
+                {/* Weitere Mitantragsteller (read-only Übersicht) */}
+                {(form.additional_co_applicants ?? []).filter((a) => !!a.client_id).length > 0 && (
+                  <div className="rounded-md border bg-background p-2.5 space-y-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Weitere Mitantragsteller</p>
+                    <ul className="text-xs space-y-0.5">
+                      {(form.additional_co_applicants ?? []).filter((a) => !!a.client_id).map((a, i) => (
+                        <li key={i} className="flex justify-between">
+                          <span className="text-muted-foreground">{clients.find((c) => c.id === a.client_id)?.full_name ?? `Mitantragsteller ${i + 2}`}</span>
+                          <span className="tabular-nums font-medium">{formatCurrency(num(a.einkommen))} / J</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Verpflichtungen */}
+                <Field
+                  label={(coActive || combined.extrasCount > 0) ? "Verpflichtungen kombiniert (CHF/M, alle Personen)" : t("financing.wizard.metrics.obligationsMonthly")}
+                  type="number"
+                  value={form.monthly_obligations}
+                  onChange={(v) => update("monthly_obligations", v)}
+                />
+                {totalApplicantsObligations > 0 && (
+                  <div className="rounded-md border bg-background p-2.5 text-xs space-y-1">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Verpflichtungen je Person (Selbstauskunft)</p>
+                    <ul className="space-y-0.5">
+                      {allApplicantIds.map((id) => {
+                        const c = clients.find((x) => x.id === id);
+                        const v = obligationsByClient.get(id) ?? 0;
+                        return (
+                          <li key={id} className="flex justify-between">
+                            <span className="text-muted-foreground">{c?.full_name ?? id}</span>
+                            <span className="tabular-nums font-medium">{formatCurrency(v)} / M</span>
+                          </li>
+                        );
+                      })}
+                      <li className="flex justify-between border-t pt-1 mt-1">
+                        <span className="font-semibold">Summe</span>
+                        <span className="tabular-nums font-semibold">{formatCurrency(totalApplicantsObligations)} / M</span>
+                      </li>
+                    </ul>
+                    {num(form.monthly_obligations) !== totalApplicantsObligations && (
+                      <button
+                        type="button"
+                        onClick={() => update("monthly_obligations", String(totalApplicantsObligations))}
+                        className="text-[11px] text-primary hover:underline"
+                      >
+                        Summe übernehmen
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {showRenovation && (
+                  <Field label={t("financing.wizard.metrics.renovationCosts")} type="number" value={form.renovation_costs} onChange={(v) => update("renovation_costs", v)} />
+                )}
                 <p className="text-[11px] text-muted-foreground">{t("financing.wizard.metrics.obligationsHint")}</p>
                 {(coActive || combined.extrasCount > 0) && (
                   <div className="rounded-md bg-background border p-2.5 text-xs flex justify-between">
