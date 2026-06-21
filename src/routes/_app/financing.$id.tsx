@@ -651,7 +651,7 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
               <li key={idx} className={toneText(tp.tone)}>• {tp.text}</li>
             ))}
           </ul>
-          {(() => {
+          {!isRefi && (() => {
             const coIncome = n(dossier.co_applicant_einkommen);
             const coName = dossier.co_applicant?.full_name;
             const coId = dossier.co_applicant_client_id;
