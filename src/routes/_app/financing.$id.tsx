@@ -466,18 +466,24 @@ function deriveInputs(d: Dossier): Inputs {
   const interest = mortgage * (rate / 100);
   const housingYearly = interest + ancillary + amort;
   const disclosedExpensesMonthly = totalApplicantExpensesMonthly(d);
-  const expensesMonthly = isRefinancingDossier(d) ? (disclosedExpensesMonthly || n(d.monthly_obligations)) : 0;
+  const relevantExpensesMonthly = totalTragbarkeitRelevantExpensesMonthly(d);
+  const allExpensesMonthly = isRefinancingDossier(d) ? (disclosedExpensesMonthly || n(d.monthly_obligations)) : 0;
+  const expensesMonthly = isRefinancingDossier(d) ? (relevantExpensesMonthly || n(d.monthly_obligations)) : 0;
+  const allExpensesYearly = allExpensesMonthly * 12;
   const expensesYearly = expensesMonthly * 12;
   const yearly = housingYearly + expensesYearly;
+  const totalBudgetYearly = housingYearly + allExpensesYearly;
   const ltv = total > 0 ? (mortgage / total) * 100 : 0;
   const affordability = income > 0 ? (yearly / income) * 100 : 0;
+  const budgetRatio = income > 0 ? (totalBudgetYearly / income) * 100 : 0;
   const equityRatio = total > 0 ? (equity / total) * 100 : 0;
   const hardRatio = total > 0 ? (hardEquity / total) * 100 : 0;
   const minIncome = yearly > 0 ? yearly / 0.33 : 0;
   return {
     total, purchase, reno, mortgage, equity, pension, vested, hardEquity,
     income, rate, ancillary, ancillaryPct, firstMortgage, secondMortgage,
-    amortYears, amort, yearly, interest, housingYearly, expensesMonthly, expensesYearly, ltv, affordability, equityRatio,
+    amortYears, amort, yearly, interest, housingYearly, expensesMonthly, expensesYearly,
+    allExpensesMonthly, allExpensesYearly, totalBudgetYearly, budgetRatio, ltv, affordability, equityRatio,
     hardRatio, minIncome,
   };
 }
