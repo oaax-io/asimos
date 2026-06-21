@@ -112,6 +112,7 @@ function FinancingDetailPage() {
 
   const reasons = (dossier.quick_check_reasons as any[]) ?? [];
   const qcStatus = displayQuickCheckStatus(dossier);
+  const isRefi = isRefinancingDossier(dossier);
   const isIncomplete = qcStatus === "incomplete";
   const lastCheckAt = dossier.updated_at ? formatDateTime(dossier.updated_at) : null;
 
@@ -141,9 +142,9 @@ function FinancingDetailPage() {
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={Banknote} label={t("financing.detail.stats.totalInvestment")} value={fmt(dossier.total_investment)} />
-        <Stat icon={Banknote} label={t("financing.detail.stats.mortgage")} value={fmt(dossier.requested_mortgage)} />
-        <Stat icon={Banknote} label={t("financing.detail.stats.ownFunds")} value={fmt(dossier.own_funds_total)} />
+        <Stat icon={Banknote} label={isRefi ? "Immobilienwert" : t("financing.detail.stats.totalInvestment")} value={fmt(dossier.total_investment)} />
+        <Stat icon={Banknote} label={isRefi ? "Neue Hypothek" : t("financing.detail.stats.mortgage")} value={fmt(dossier.requested_mortgage)} />
+        <Stat icon={Banknote} label={isRefi ? "Aufstockungswunsch" : t("financing.detail.stats.ownFunds")} value={isRefi ? fmt(dossier.requested_increase) : fmt(dossier.own_funds_total)} />
         <Stat icon={Banknote} label={t("financing.detail.stats.affordability")} value={dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"} />
       </div>
 
@@ -622,7 +623,7 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
   return (
     <>
       {isRefi ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="space-y-3">
           <RefiBarometerCard label="Aufstockungswunsch" value={chf(n(dossier.requested_increase))} detail="Zusätzlich gewünschter Betrag" />
           <RefiBarometerCard label="Neue Hypothek" value={chf(i.mortgage)} detail={`Belehnung ${pct(i.ltv)} / max. 80%`} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
           <RefiBarometerCard label="Einnahmen p.a." value={chf(i.income)} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
@@ -791,6 +792,7 @@ type ScenarioRow = {
 function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
   const { t } = useTranslation();
   const original = useMemo(() => deriveInputs(dossier), [dossier]);
+  const isRefi = isRefinancingDossier(dossier);
   const dossierId = String((dossier as { id?: string }).id ?? "");
   const queryClient = useQueryClient();
 
@@ -801,6 +803,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
   const [rate, setRate] = useState<number>(Math.round(original.rate * 10) / 10);
   const [reno, setReno] = useState<number>(Math.round(original.reno));
   const [ownWork, setOwnWork] = useState<number>(Math.round(n((dossier as { renovation_own_work?: number | string | null }).renovation_own_work)));
+  const [expensesMonthly, setExpensesMonthly] = useState<number>(Math.round(original.expensesMonthly));
 
   const [saveOpen, setSaveOpen] = useState(false);
   const [scenarioName, setScenarioName] = useState("");
@@ -814,6 +817,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
   const mortgageMax = Math.round(original.mortgage * 1.3) || 100000;
   const renoMax = Math.max(Math.round(original.reno * 2.0), Math.round(purchase * 0.5), 200000);
   const ownWorkMax = Math.max(reno, 50000);
+  const expensesMax = Math.max(Math.round(original.expensesMonthly * 2), 10000);
 
   // Live calculation based on slider values
   const live = useMemo(() => {
@@ -824,15 +828,18 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     const r = Math.round(rate * 10) / 10;
     const rn = Math.round(reno);
     const ow = Math.min(Math.round(ownWork), rn);
-    const effectiveEq = eq + ow;
-    const total = p + rn;
+    const monthlyExpenses = Math.round(expensesMonthly);
+    const effectiveEq = isRefi ? original.equity : eq + ow;
+    const scenarioReno = isRefi ? original.reno : rn;
+    const scenarioPurchase = isRefi ? original.purchase : p;
+    const total = scenarioPurchase + scenarioReno;
     const ancillary = total * (original.ancillaryPct / 100);
     const firstMortgageMax = total * 0.6667;
     const second = Math.max(0, mort - firstMortgageMax);
     const amort = second / original.amortYears;
     const result = calcQuickCheck({
-      purchase_price: p,
-      renovation_costs: rn,
+      purchase_price: scenarioPurchase,
+      renovation_costs: scenarioReno,
       requested_mortgage: mort,
       own_funds_total: effectiveEq,
       own_funds_pension_fund: original.pension,
@@ -842,8 +849,14 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       ancillary_costs_yearly: ancillary,
       amortisation_yearly: amort,
     });
-    return { p, eq: effectiveEq, inc, mort, r, total, rn, ow, result };
-  }, [purchase, equity, income, mortgage, rate, reno, ownWork, original]);
+    const expensesYearly = isRefi ? monthlyExpenses * 12 : 0;
+    const affordability = inc > 0 ? ((result.yearly_costs + expensesYearly) / inc) * 100 : 0;
+    const ltv = total > 0 ? (mort / total) * 100 : 0;
+    const status: QuickCheckStatus = isRefi
+      ? (ltv > 80 || affordability > 38 ? "not_financeable" : affordability > 33 ? "critical" : "realistic")
+      : result.status;
+    return { p, eq: effectiveEq, inc, mort, r, total, rn, ow, monthlyExpenses, expensesYearly, result, ltv, affordability, status };
+  }, [purchase, equity, income, mortgage, rate, reno, ownWork, expensesMonthly, isRefi, original]);
 
   const reset = () => {
     setPurchase(Math.round(original.purchase));
@@ -853,6 +866,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     setRate(Math.round(original.rate * 10) / 10);
     setReno(Math.round(original.reno));
     setOwnWork(Math.round(n((dossier as { renovation_own_work?: number | string | null }).renovation_own_work)));
+    setExpensesMonthly(Math.round(original.expensesMonthly));
   };
 
   const saveMutation = useMutation({
@@ -866,11 +880,11 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
         bruttoeinkommen: live.inc,
         hypothek: live.mort,
         kalk_zinssatz: live.r,
-        tragbarkeit: r.affordability_ratio,
-        belehnung: r.loan_to_value_ratio,
+        tragbarkeit: live.affordability,
+        belehnung: live.ltv,
         eigenmittelquote: live.total > 0 ? (live.eq / live.total) * 100 : 0,
         harte_eigenmittel: r.hard_equity,
-        status: r.status,
+        status: live.status,
       } as never);
       if (error) throw error;
     },
@@ -920,10 +934,10 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
     toast.success(t("financing.detail.quickcheck.scenarios.toast.loaded", { name: s.bezeichnung }));
   };
 
-  const liveLtv = live.result.loan_to_value_ratio;
-  const liveAff = live.result.affordability_ratio;
+  const liveLtv = live.ltv;
+  const liveAff = live.affordability;
   const liveEqRatio = live.total > 0 ? (live.eq / live.total) * 100 : 0;
-  const liveStatus = live.result.status as QuickCheckStatus;
+  const liveStatus = live.status;
 
   // Matrix uses slider values for equity, mortgage, rate
   const priceSteps = [-200000, -100000, 0, 100000, 200000];
@@ -951,10 +965,16 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
         amortisation_yearly: amort,
       });
       const eqRatio = total > 0 ? (live.eq / total) * 100 : 0;
-      const aff = result.affordability_ratio;
+      const aff = isRefi
+        ? (Math.max(0, live.inc + dInc) > 0 ? ((result.yearly_costs + live.expensesYearly) / Math.max(0, live.inc + dInc)) * 100 : 0)
+        : result.affordability_ratio;
+      const ltv = total > 0 ? (live.mort / total) * 100 : 0;
       let tone: Cell["tone"];
       let label: string;
-      if (eqRatio < 10) { tone = "gray"; label = t("financing.detail.quickcheck.scenarios.matrixEqInsufficient"); }
+      if (isRefi && (ltv > 80 || aff > 38)) { tone = "bad"; label = pct(aff); }
+      else if (isRefi && aff > 33) { tone = "warn"; label = pct(aff); }
+      else if (isRefi) { tone = "ok"; label = pct(aff); }
+      else if (eqRatio < 10) { tone = "gray"; label = t("financing.detail.quickcheck.scenarios.matrixEqInsufficient"); }
       else if (aff > 38 || eqRatio < 15) { tone = "bad"; label = pct(aff); }
       else if (aff > 33 || eqRatio < 20) { tone = "warn"; label = pct(aff); }
       else { tone = "ok"; label = pct(aff); }
@@ -988,42 +1008,46 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             </p>
           </div>
 
-          <SliderRow
-            label={t("financing.detail.quickcheck.scenarios.purchase")}
-            display={chf(purchase)}
-            value={purchase}
-            min={purchaseMin}
-            max={purchaseMax}
-            step={10000}
-            onChange={setPurchase}
-          />
-          <SliderRow
-            label={t("financing.detail.quickcheck.scenarios.equity")}
-            display={`${chf(equity)} (${pct(equityPctNow)})`}
-            value={equity}
-            min={0}
-            max={equityMax}
-            step={5000}
-            onChange={setEquity}
-          />
-          <SliderRow
-            label={t("financing.detail.quickcheck.scenarios.renovation")}
-            display={chf(reno)}
-            value={reno}
-            min={0}
-            max={renoMax}
-            step={5000}
-            onChange={(v) => setReno(Math.round(v))}
-          />
-          <SliderRow
-            label={t("financing.detail.quickcheck.scenarios.ownWork")}
-            display={chf(ownWork)}
-            value={ownWork}
-            min={0}
-            max={ownWorkMax}
-            step={1000}
-            onChange={(v) => setOwnWork(Math.round(v))}
-          />
+          {!isRefi && (
+            <>
+              <SliderRow
+                label={t("financing.detail.quickcheck.scenarios.purchase")}
+                display={chf(purchase)}
+                value={purchase}
+                min={purchaseMin}
+                max={purchaseMax}
+                step={10000}
+                onChange={setPurchase}
+              />
+              <SliderRow
+                label={t("financing.detail.quickcheck.scenarios.equity")}
+                display={`${chf(equity)} (${pct(equityPctNow)})`}
+                value={equity}
+                min={0}
+                max={equityMax}
+                step={5000}
+                onChange={setEquity}
+              />
+              <SliderRow
+                label={t("financing.detail.quickcheck.scenarios.renovation")}
+                display={chf(reno)}
+                value={reno}
+                min={0}
+                max={renoMax}
+                step={5000}
+                onChange={(v) => setReno(Math.round(v))}
+              />
+              <SliderRow
+                label={t("financing.detail.quickcheck.scenarios.ownWork")}
+                display={chf(ownWork)}
+                value={ownWork}
+                min={0}
+                max={ownWorkMax}
+                step={1000}
+                onChange={(v) => setOwnWork(Math.round(v))}
+              />
+            </>
+          )}
           <SliderRow
             label={t("financing.detail.quickcheck.scenarios.income")}
             display={t("financing.detail.quickcheck.scenarios.incomePerYear", { amount: chf(income) })}
@@ -1042,6 +1066,17 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             step={10000}
             onChange={setMortgage}
           />
+          {isRefi && (
+            <SliderRow
+              label="Fixe Verpflichtungen"
+              display={`${chf(expensesMonthly)} / Monat`}
+              value={expensesMonthly}
+              min={0}
+              max={expensesMax}
+              step={100}
+              onChange={setExpensesMonthly}
+            />
+          )}
           <SliderRow
             label={t("financing.detail.quickcheck.scenarios.rate")}
             display={`${rate.toFixed(1)}%`}
@@ -1054,10 +1089,10 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
           />
 
           {/* Live result */}
-          <div className="grid gap-2 sm:grid-cols-4 pt-2 border-t">
+          <div className={cn("grid gap-2 pt-2 border-t", isRefi ? "sm:grid-cols-3" : "sm:grid-cols-4")}>
             <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveLtv")} value={pct(liveLtv)} delta={liveLtv - original.ltv} betterWhenLower />
             <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveAffordability")} value={pct(liveAff)} delta={liveAff - original.affordability} betterWhenLower />
-            <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveEquityRatio")} value={pct(liveEqRatio)} delta={liveEqRatio - original.equityRatio} betterWhenLower={false} />
+            {!isRefi && <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveEquityRatio")} value={pct(liveEqRatio)} delta={liveEqRatio - original.equityRatio} betterWhenLower={false} />}
             <div className="rounded-lg border p-3 flex flex-col justify-center">
               <p className="text-xs text-muted-foreground">{t("financing.detail.quickcheck.scenarios.status")}</p>
               <Badge className={cn("mt-1 w-fit", qcBadgeTone(liveStatus))}>{t(`financing.quickCheckStatus.${liveStatus}`, { defaultValue: QUICK_CHECK_LABELS[liveStatus] })}</Badge>
@@ -1121,10 +1156,12 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             <LegendDot tone="ok" label={t("financing.detail.quickcheck.scenarios.legend.realistic")} />
             <LegendDot tone="warn" label={t("financing.detail.quickcheck.scenarios.legend.critical")} />
             <LegendDot tone="bad" label={t("financing.detail.quickcheck.scenarios.legend.notFinanceable")} />
-            <LegendDot tone="gray" label={t("financing.detail.quickcheck.scenarios.legend.eqInsufficient")} />
+            {!isRefi && <LegendDot tone="gray" label={t("financing.detail.quickcheck.scenarios.legend.eqInsufficient")} />}
           </div>
           <p className="text-xs text-muted-foreground">
-            {t("financing.detail.quickcheck.scenarios.assumptions", { equity: chf(live.eq), rate: live.r.toFixed(1), anc: original.ancillaryPct.toFixed(1), mortgage: chf(live.mort) })}
+            {isRefi
+              ? `Annahmen: Kalkulationszins ${live.r.toFixed(1)}%, Nebenkosten ${original.ancillaryPct.toFixed(1)}%, Hypothek ${chf(live.mort)}, Verpflichtungen ${chf(live.expensesYearly)} p.a.`
+              : t("financing.detail.quickcheck.scenarios.assumptions", { equity: chf(live.eq), rate: live.r.toFixed(1), anc: original.ancillaryPct.toFixed(1), mortgage: chf(live.mort) })}
           </p>
         </CardContent>
       </Card>
