@@ -163,6 +163,10 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
   if (m.afford > 33 && m.income > 0) {
     const required = m.yearly / 0.33;
     const delta = required - m.income;
+    if (isRefi && numv(dossier.monthly_obligations) > 0) {
+      const obligationsYearly = numv(dossier.monthly_obligations) * 12;
+      tips.push(`Tragbarkeit ${m.afford.toFixed(1)}% — die laufenden Verpflichtungen (CHF ${chf(obligationsYearly)} p.a.) belasten die Quote stark. Ablösung/Reduktion bestehender Kredite oder Leasings prüfen.`);
+    }
     tips.push(`Einkommen müsste um CHF ${chf(delta)} erhöht werden, um Tragbarkeit auf 33% zu bringen (benötigt: CHF ${chf(required)}).`);
   }
   if (!isRefi && m.equityRatio < 20 && m.total > 0) {
@@ -186,8 +190,17 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <KpiCard label="Belehnung (LTV)" value={m.ltv} limit={80} mode="max" />
         <KpiCard label="Tragbarkeit" value={m.afford} limit={33} mode="max" />
-        {!isRefi && <KpiCard label="Eigenmittelquote" value={m.equityRatio} limit={20} mode="min" />}
-        {!isRefi && <KpiCard label="Harte Eigenmittel" value={m.hardRatio} limit={10} mode="min" />}
+        {isRefi ? (
+          <>
+            <KpiPlaceholder label="Eigenmittelquote" />
+            <KpiPlaceholder label="Harte Eigenmittel" />
+          </>
+        ) : (
+          <>
+            <KpiCard label="Eigenmittelquote" value={m.equityRatio} limit={20} mode="min" />
+            <KpiCard label="Harte Eigenmittel" value={m.hardRatio} limit={10} mode="min" />
+          </>
+        )}
       </div>
 
       <Card>
