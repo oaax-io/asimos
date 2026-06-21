@@ -194,10 +194,13 @@ export function displayQuickCheckStatus(d: any): QuickCheckStatus {
     : num(d?.gross_income_yearly) + num(d?.co_applicant_einkommen) + extraIncome;
   if (total <= 0 || mortgage <= 0 || income <= 0) return "incomplete";
   const rate = num(d?.calculated_interest_rate, 5);
+  const firstMortgageMax = total * 0.6667;
+  const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
+  const amort = d?.amortisation_yearly != null ? num(d?.amortisation_yearly) : secondMortgage / 15;
   const obligationsYearly = num(d?.monthly_obligations) * 12;
   const yearly = mortgage * (rate / 100)
     + (d?.ancillary_costs_yearly != null ? num(d.ancillary_costs_yearly) : total * 0.01)
-    + num(d?.amortisation_yearly)
+    + amort
     + obligationsYearly;
   const ltv = total > 0 ? (mortgage / total) * 100 : 0;
   const afford = income > 0 ? (yearly / income) * 100 : 0;
