@@ -547,6 +547,31 @@ function MetricCard({
   );
 }
 
+function RefiBarometerCard({
+  label, value, detail, tone = "ok", fillPct, limitPct,
+}: {
+  label: string; value: string; detail: string; tone?: "ok" | "warn" | "bad"; fillPct?: number; limitPct?: number;
+}) {
+  const hasBar = fillPct != null && limitPct != null;
+  const fill = Math.max(0, Math.min(100, fillPct ?? 0));
+  const limit = Math.max(0, Math.min(100, limitPct ?? 0));
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-2">
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className={cn("text-2xl font-semibold", hasBar ? toneText(tone) : "text-foreground")}>{value}</p>
+        <p className="text-xs text-muted-foreground">{detail}</p>
+        {hasBar && (
+          <div className="relative h-2 w-full rounded bg-muted">
+            <div className={cn("h-2 rounded transition-all", toneBar(tone))} style={{ width: `${fill}%` }} />
+            <div className="absolute top-[-2px] h-3 w-px bg-foreground/70" style={{ left: `${limit}%` }} aria-hidden />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
   const { t } = useTranslation();
   const isRefi = isRefinancingDossier(dossier);
