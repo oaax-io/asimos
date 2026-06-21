@@ -1303,12 +1303,15 @@ export type Database = {
           eigenkapital_kombiniert: number | null
           einkommen_kombiniert: number | null
           existing_mortgage: number | null
+          existing_mortgage_2: number | null
           financing_modules: string[]
           financing_type: Database["public"]["Enums"]["financing_type"] | null
           gross_income_yearly: number | null
           id: string
           interest_rate_current: number | null
+          interest_rate_current_2: number | null
           interest_rate_expiry: string | null
+          interest_rate_expiry_2: string | null
           internal_notes: string | null
           land_price: number | null
           loan_to_value_ratio: number | null
@@ -1394,12 +1397,15 @@ export type Database = {
           eigenkapital_kombiniert?: number | null
           einkommen_kombiniert?: number | null
           existing_mortgage?: number | null
+          existing_mortgage_2?: number | null
           financing_modules?: string[]
           financing_type?: Database["public"]["Enums"]["financing_type"] | null
           gross_income_yearly?: number | null
           id?: string
           interest_rate_current?: number | null
+          interest_rate_current_2?: number | null
           interest_rate_expiry?: string | null
+          interest_rate_expiry_2?: string | null
           internal_notes?: string | null
           land_price?: number | null
           loan_to_value_ratio?: number | null
@@ -1485,12 +1491,15 @@ export type Database = {
           eigenkapital_kombiniert?: number | null
           einkommen_kombiniert?: number | null
           existing_mortgage?: number | null
+          existing_mortgage_2?: number | null
           financing_modules?: string[]
           financing_type?: Database["public"]["Enums"]["financing_type"] | null
           gross_income_yearly?: number | null
           id?: string
           interest_rate_current?: number | null
+          interest_rate_current_2?: number | null
           interest_rate_expiry?: string | null
+          interest_rate_expiry_2?: string | null
           internal_notes?: string | null
           land_price?: number | null
           loan_to_value_ratio?: number | null
