@@ -131,38 +131,6 @@ function StatusBadge({ status }: { status: QuickCheckStatus }) {
 
 // ---------------- Tab Vorprüfung ----------------
 
-function isRefiDossier(dossier: any): boolean {
-  const modules: string[] = Array.isArray(dossier?.financing_modules) ? dossier.financing_modules : [];
-  if (modules.length > 0) {
-    if (modules.includes("purchase") || modules.includes("new_build")) return false;
-    return modules.includes("refinance") || modules.includes("increase") || modules.includes("mortgage_increase");
-  }
-  const t = dossier?.financing_type;
-  return t === "refinance" || t === "increase" || t === "mortgage_increase";
-}
-
-function computeDisplayStatus(dossier: any, isRefi: boolean): QuickCheckStatus {
-  const saved = (dossier?.quick_check_status as QuickCheckStatus) ?? "incomplete";
-  if (!isRefi) return saved;
-  if (saved === "incomplete") return saved;
-  // Refi: nur Tragbarkeit + Belehnung entscheiden, Eigenmittel werden ignoriert
-  const purchase = numv(dossier.purchase_price);
-  const reno = numv(dossier.renovation_costs);
-  const total = numv(dossier.total_investment) || (purchase + reno);
-  const mortgage = numv(dossier.requested_mortgage);
-  const income = effectiveIncome(dossier);
-  if (total <= 0 || mortgage <= 0 || income <= 0) return "incomplete";
-  const yearly = numv(dossier.yearly_costs) ||
-    (mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
-      + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
-      + numv(dossier.amortisation_yearly));
-  const ltv = total > 0 ? (mortgage / total) * 100 : 0;
-  const afford = income > 0 ? (yearly / income) * 100 : 0;
-  if (ltv > 80 || afford > 38) return "not_financeable";
-  if (afford > 33) return "critical";
-  return "realistic";
-}
-
 function VorpruefungTab({ dossier }: { dossier: any }) {
   const isRefi = isRefinancingDossier(dossier);
   const m = useMemo(() => {
