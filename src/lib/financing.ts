@@ -189,9 +189,8 @@ export function displayQuickCheckStatus(d: any): QuickCheckStatus {
     ? d.additional_co_applicants.reduce((sum: number, a: any) => sum + num(a?.einkommen), 0)
     : 0;
   const incomeCombined = num(d?.einkommen_kombiniert);
-  const income = incomeCombined > 0
-    ? incomeCombined
-    : num(d?.gross_income_yearly) + num(d?.co_applicant_einkommen) + extraIncome;
+  const itemizedIncome = num(d?.gross_income_yearly) + num(d?.co_applicant_einkommen) + extraIncome;
+  const income = Math.max(incomeCombined, itemizedIncome);
   if (total <= 0 || mortgage <= 0 || income <= 0) return "incomplete";
   const rate = num(d?.calculated_interest_rate, 5);
   const firstMortgageMax = total * 0.6667;
