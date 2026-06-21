@@ -281,6 +281,36 @@ function KpiCard({ label, value, limit, mode }: {
   );
 }
 
+function RefiBarometerCard({
+  label, value, detail, tone = "ok", fillPct, limitPct,
+}: {
+  label: string; value: string; detail: string; tone?: "ok" | "warn" | "bad"; fillPct?: number; limitPct?: number;
+}) {
+  const hasBar = fillPct != null && limitPct != null;
+  const fill = Math.max(0, Math.min(100, fillPct ?? 0));
+  const limit = Math.max(0, Math.min(100, limitPct ?? 0));
+  const colors = {
+    ok: { bar: "bg-emerald-500", text: "text-emerald-600" },
+    warn: { bar: "bg-amber-500", text: "text-amber-600" },
+    bad: { bar: "bg-red-500", text: "text-red-600" },
+  }[tone];
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-2">
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className={`text-3xl font-semibold ${hasBar ? colors.text : "text-foreground"}`}>{value}</p>
+        <p className="text-xs text-muted-foreground">{detail}</p>
+        {hasBar && (
+          <div className="relative h-2.5 w-full rounded-full bg-muted overflow-hidden">
+            <div className={`h-full ${colors.bar} transition-all`} style={{ width: `${fill}%` }} />
+            <div className="absolute top-0 h-full w-0.5 bg-foreground/70" style={{ left: `${limit}%` }} aria-hidden />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function KpiPlaceholder({ label }: { label: string }) {
   return (
     <Card>
