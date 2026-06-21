@@ -786,21 +786,10 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
                   ))}
                 </div>
               ))}
-              {i.allExpensesYearly > 0 && <DetailRow label="Jahresausgaben total" value={chf(i.allExpensesYearly)} bold divider />}
-              {i.expensesYearly > 0 && (
-                <>
-                  {relevantExpenseGroups.map((group) => group.yearly > 0 && (
-                    <DetailRow key={`relevant-${group.id}`} label={`davon tragbarkeitsrelevant ${group.name}`} value={chf(group.yearly)} indent />
-                  ))}
-                  <DetailRow label="Tragbarkeitsrelevante Verpflichtungen" value={chf(i.expensesYearly)} bold />
-                </>
-              )}
+              {i.allExpensesYearly > 0 && <DetailRow label="Haushaltsausgaben total p.a. (informativ)" value={chf(i.allExpensesYearly)} bold divider />}
             </>
           )}
-          <DetailRow label="Total Tragbarkeitskosten p.a." value={chf(i.yearly)} bold divider />
-          {isRefi && i.allExpensesYearly > i.expensesYearly && (
-            <DetailRow label={`Budgetbelastung inkl. aller Ausgaben (${pct(i.budgetRatio)})`} value={chf(i.totalBudgetYearly)} />
-          )}
+          <DetailRow label="Wohnkosten p.a. (Bank-Tragbarkeit)" value={chf(i.housingYearly)} bold divider />
           {applicantList(dossier).length > 1 ? (
             <>
               {applicantList(dossier).map((applicant) => (
@@ -813,10 +802,18 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
           )}
           <div className="my-2 border-t" />
           <div className="flex justify-between gap-4 text-sm">
-            <span>{t("financing.detail.quickcheck.detail.affordabilityRatio")}</span>
+            <span className="font-semibold">Bank-Tragbarkeit (Wohnkosten / Einkommen)</span>
             <span className={cn("font-semibold tabular-nums", toneText(affTone))}>{pct(i.affordability)}</span>
           </div>
-          <DetailRow label={t("financing.detail.quickcheck.detail.minIncome")} value={chf(i.minIncome)} />
+          <DetailRow label="Mindesteinkommen (33%-Regel)" value={chf(i.minIncome)} />
+          <DetailRow label="Finanzierbar" value={i.affordability <= 33 && i.ltv <= 80 ? "JA" : i.affordability <= 38 && i.ltv <= 80 ? "Kritisch" : "NEIN"} />
+          {isRefi && i.allExpensesYearly > 0 && (
+            <>
+              <div className="my-2 border-t" />
+              <DetailRow label="Budgetquote (Haushaltsbelastung)" value={pct(i.budgetRatio)} />
+              <DetailRow label="Verfügbares Einkommen / Monat" value={chf(i.monthlyAvailable)} />
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
