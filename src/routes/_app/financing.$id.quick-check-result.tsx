@@ -127,7 +127,9 @@ function ResultTabs({ dossier }: { dossier: any }) {
         <DetailTab dossier={dossier} />
       </TabsContent>
       <TabsContent value="szenarien" className="space-y-4">
-        <ScenariosTab dossier={dossier} onSaved={() => setTab("vorpruefung")} />
+        {isRefinancingDossier(dossier)
+          ? <RefiScenariosTab dossier={dossier} onSaved={() => setTab("vorpruefung")} />
+          : <ScenariosTab dossier={dossier} onSaved={() => setTab("vorpruefung")} />}
       </TabsContent>
     </Tabs>
   );
@@ -844,5 +846,239 @@ function DeltaMetric({ label, value, original, mode, limit }: {
         </p>
       )}
     </div>
+  );
+}
+
+// ---------------- Tab Szenarien (Refinanzierung) ----------------
+
+type RefiScenarioState = {
+  existingMortgage: number;
+  existingMortgage2: number;
+  requestedIncrease: number;
+  income: number;
+  obligationsMonthly: number;
+  rate: number;
+  propertyValue: number;
+};
+
+function RefiScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void }) {
+  const qc = useQueryClient();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const original: RefiScenarioState = useMemo(() => {
+    const purchase = numv(dossier.purchase_price);
+    const reno = numv(dossier.renovation_costs);
+    const propertyValue = numv(dossier.total_investment) || (purchase + reno) || numv(dossier.property_value);
+    const obligationsMonthly = totalApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations);
+    return {
+      existingMortgage: Math.round(numv(dossier.existing_mortgage)),
+      existingMortgage2: Math.round(numv(dossier.existing_mortgage_2)),
+      requestedIncrease: Math.round(numv(dossier.requested_increase)),
+      income: Math.round(effectiveIncome(dossier)),
+      obligationsMonthly: Math.round(obligationsMonthly),
+      rate: Math.round(numv(dossier.calculated_interest_rate, 5) * 10) / 10,
+      propertyValue: Math.round(propertyValue),
+    };
+  }, [dossier]);
+
+  const [s, setS] = useState<RefiScenarioState>(original);
+  useEffect(() => { setS(original); }, [original]);
+
+  const newMortgage = s.existingMortgage + s.existingMortgage2 + s.requestedIncrease;
+  const ltv = s.propertyValue > 0 ? (newMortgage / s.propertyValue) * 100 : 0;
+  const firstMortgageMax = s.propertyValue * 0.6667;
+  const secondMortgage = Math.max(0, newMortgage - firstMortgageMax);
+  const amortYearly = secondMortgage / 15;
+  const interest = newMortgage * (s.rate / 100);
+  const ancillary = s.propertyValue * 0.01;
+  const obligationsYearly = s.obligationsMonthly * 12;
+  const yearly = interest + ancillary + amortYearly + obligationsYearly;
+  const afford = s.income > 0 ? (yearly / s.income) * 100 : 0;
+
+  const origNewMortgage = original.existingMortgage + original.existingMortgage2 + original.requestedIncrease;
+  const origLtv = original.propertyValue > 0 ? (origNewMortgage / original.propertyValue) * 100 : 0;
+  const origFirstMax = original.propertyValue * 0.6667;
+  const origSecond = Math.max(0, origNewMortgage - origFirstMax);
+  const origAmort = origSecond / 15;
+  const origYearly = origNewMortgage * (original.rate / 100) + original.propertyValue * 0.01 + origAmort + original.obligationsMonthly * 12;
+  const origAfford = original.income > 0 ? (origYearly / original.income) * 100 : 0;
+
+  const status: QuickCheckStatus =
+    ltv > 80 || afford > 38 ? "not_financeable" :
+    afford > 33 ? "critical" : "realistic";
+
+  const tips: string[] = [];
+  if (afford > 33 && s.income > 0) {
+    const required = yearly / 0.33;
+    tips.push(`Tragbarkeit ${afford.toFixed(1)}% — Einkommen müsste auf CHF ${chf(required)} steigen oder fixe Verpflichtungen reduzieren.`);
+  }
+  if (ltv > 80 && s.propertyValue > 0) {
+    const maxMortgage = s.propertyValue * 0.8;
+    tips.push(`Belehnung ${ltv.toFixed(1)}% übersteigt 80% — neue Hypothek auf max. CHF ${chf(maxMortgage)} reduzieren (Aufstockung um CHF ${chf(newMortgage - maxMortgage)} kürzen).`);
+  }
+  if (tips.length === 0) {
+    tips.push("Refinanzierung grundsätzlich bankfähig — alle Kennzahlen erfüllt.");
+  }
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const newStatus: QuickCheckStatus =
+        ltv > 80 || afford > 38 ? "not_financeable" :
+        afford > 33 ? "critical" : "realistic";
+      const coApp = hasCoApplicant(dossier);
+      const incomeUpdate = coApp
+        ? { einkommen_kombiniert: s.income }
+        : { gross_income_yearly: s.income };
+      const { error } = await supabase.from("financing_dossiers").update({
+        existing_mortgage: s.existingMortgage,
+        existing_mortgage_2: s.existingMortgage2,
+        requested_increase: s.requestedIncrease,
+        requested_mortgage: newMortgage,
+        calculated_interest_rate: s.rate,
+        monthly_obligations: s.obligationsMonthly,
+        ...incomeUpdate,
+        loan_to_value_ratio: ltv,
+        affordability_ratio: afford,
+        quick_check_status: newStatus,
+      }).eq("id", dossier.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Dossier aktualisiert");
+      qc.invalidateQueries({ queryKey: ["financing_dossier", dossier.id] });
+      setConfirmOpen(false);
+      onSaved();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Fehler beim Speichern"),
+  });
+
+  return (
+    <>
+      <Card>
+        <CardContent className="p-5">
+          <p className="text-sm text-muted-foreground">
+            Verschiebe die Regler, um zu sehen, wie sich Aufstockung, Zinssatz oder
+            Verpflichtungen auf Tragbarkeit und Belehnung der Refinanzierung auswirken.
+            Originalwerte bleiben gespeichert, bis du sie explizit übernimmst.
+          </p>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card><CardContent className="p-5 space-y-5">
+          <SliderRow
+            label="Bestehende Hypothek 1" unit="CHF"
+            value={s.existingMortgage}
+            min={0}
+            max={Math.max(Math.round(original.existingMortgage * 1.5), 1000000)}
+            step={10000}
+            onChange={(v) => setS((p) => ({ ...p, existingMortgage: Math.round(v) }))}
+            display={(v) => `CHF ${chf(v)}`}
+          />
+          <SliderRow
+            label="Bestehende Hypothek 2" unit="CHF"
+            value={s.existingMortgage2}
+            min={0}
+            max={Math.max(Math.round(original.existingMortgage2 * 1.5), 500000)}
+            step={10000}
+            onChange={(v) => setS((p) => ({ ...p, existingMortgage2: Math.round(v) }))}
+            display={(v) => `CHF ${chf(v)}`}
+          />
+          <SliderRow
+            label="Aufstockungswunsch" unit="CHF"
+            value={s.requestedIncrease}
+            min={0}
+            max={Math.max(Math.round(original.requestedIncrease * 2.0), 500000)}
+            step={10000}
+            onChange={(v) => setS((p) => ({ ...p, requestedIncrease: Math.round(v) }))}
+            display={(v) => `CHF ${chf(v)}`}
+          />
+          <SliderRow
+            label="Liegenschaftswert" unit="CHF"
+            value={s.propertyValue}
+            min={Math.round(original.propertyValue * 0.5) || 100000}
+            max={Math.round(original.propertyValue * 1.5) || 2000000}
+            step={10000}
+            onChange={(v) => setS((p) => ({ ...p, propertyValue: Math.round(v) }))}
+            display={(v) => `CHF ${chf(v)}`}
+          />
+          <SliderRow
+            label="Bruttoeinkommen p.a." unit="CHF"
+            value={s.income}
+            min={Math.round(original.income * 0.5) || 50000}
+            max={Math.round(original.income * 2.0) || 300000}
+            step={5000}
+            onChange={(v) => setS((p) => ({ ...p, income: Math.round(v) }))}
+            display={(v) => `CHF ${chf(v)}`}
+          />
+          <SliderRow
+            label="Fixe Verpflichtungen p.M. (Leasing/Kredit/Alimente)" unit="CHF"
+            value={s.obligationsMonthly}
+            min={0}
+            max={Math.max(Math.round(original.obligationsMonthly * 2.0), 5000)}
+            step={100}
+            onChange={(v) => setS((p) => ({ ...p, obligationsMonthly: Math.round(v) }))}
+            display={(v) => `CHF ${chf(v)}`}
+          />
+          <SliderRow
+            label="Kalk. Zinssatz" unit="%"
+            value={s.rate}
+            min={1.0} max={8.0} step={0.1}
+            onChange={(v) => setS((p) => ({ ...p, rate: Math.round(v * 10) / 10 }))}
+            display={(v) => `${v.toFixed(1)}%`}
+          />
+        </CardContent></Card>
+
+        <Card><CardContent className="p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">Live-Ergebnis Refinanzierung</h3>
+            <StatusBadge status={status} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <DeltaMetric label="Belehnung (LTV)" value={ltv} original={origLtv} mode="max" limit={80} />
+            <DeltaMetric label="Tragbarkeit" value={afford} original={origAfford} mode="max" limit={33} />
+          </div>
+          <div className="rounded-lg border p-3 space-y-1.5 text-sm">
+            <div className="flex justify-between"><span className="text-muted-foreground">Neue Hypothek</span><span className="tabular-nums font-medium">CHF {chf(newMortgage)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Zinskosten p.a.</span><span className="tabular-nums">CHF {chf(interest)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Nebenkosten p.a.</span><span className="tabular-nums">CHF {chf(ancillary)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Amortisation p.a.</span><span className="tabular-nums">CHF {chf(amortYearly)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Fixe Verpflichtungen p.a.</span><span className="tabular-nums">CHF {chf(obligationsYearly)}</span></div>
+            <div className="flex justify-between border-t pt-1.5 mt-1.5"><span className="font-medium">Total p.a.</span><span className="tabular-nums font-semibold">CHF {chf(yearly)}</span></div>
+          </div>
+          <div className="space-y-1.5 text-sm pt-2 border-t">
+            {tips.map((t, i) => (
+              <div key={i} className="flex gap-2"><span className="text-muted-foreground">•</span><span>{t}</span></div>
+            ))}
+          </div>
+        </CardContent></Card>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={() => setConfirmOpen(true)} disabled={saveMutation.isPending}>
+          <Save className="mr-1 h-4 w-4" />Werte übernehmen
+        </Button>
+        <Button variant="outline" onClick={() => setS(original)} disabled={saveMutation.isPending}>
+          <RotateCcw className="mr-1 h-4 w-4" />Zurücksetzen
+        </Button>
+      </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Refinanzierung mit neuen Werten aktualisieren?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Die Originalwerte werden überschrieben und der Quick Check neu berechnet.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saveMutation.isPending}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); saveMutation.mutate(); }} disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? "Speichern…" : "Übernehmen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
