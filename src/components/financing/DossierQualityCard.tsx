@@ -31,8 +31,9 @@ export function DossierQualityCard({ dossierId, dossier }: Props) {
   });
 
   const stats = checklistStats(rows);
-  const qcStatus = dossier.quick_check_status as QuickCheckStatus | null;
+  const qcStatus = displayQuickCheckStatus(dossier);
   const dossierStatus = dossier.dossier_status as DossierStatus | null;
+  const isRefi = isRefinancingDossier(dossier);
   const ltv = Number(dossier.loan_to_value_ratio ?? 0);
   const affordability = Number(dossier.affordability_ratio ?? 0);
   const equityOk = ltv > 0 && ltv <= 80;
@@ -45,7 +46,7 @@ export function DossierQualityCard({ dossierId, dossier }: Props) {
   const risks: string[] = [];
   if (!equityOk && ltv > 0) risks.push(`Belehnung ${ltv.toFixed(1)}% (über 80%)`);
   if (!affordabilityOk && affordability > 0) risks.push(`Tragbarkeit ${affordability.toFixed(1)}% (über 33%)`);
-  if (qcStatus === "not_financeable") risks.push("Quick Check: nicht finanzierbar");
+  if (qcStatus === "not_financeable") risks.push(isRefi ? "Quick Check: nicht finanzierbar (Tragbarkeit/Belehnung)" : "Quick Check: nicht finanzierbar");
   if (qcStatus === "critical") risks.push("Quick Check: kritisch");
   if (!hasMandatoryFinancials) risks.push("Pflichtdaten unvollständig (Hypothek, Investition, Einkommen)");
 
