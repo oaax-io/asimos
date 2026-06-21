@@ -695,8 +695,10 @@ function DetailRow({ label, value, bold, indent, divider }: {
 
 function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
   const { t } = useTranslation();
+  const isRefi = isRefinancingDossier(dossier);
   const i = deriveInputs(dossier);
   const affTone = toneFor(i.affordability, 33, 38, "max");
+  const expenseGroups = applicantExpenseGroups(dossier);
 
   return (
     <div className="grid gap-3 md:grid-cols-2">
@@ -706,9 +708,16 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
           <DetailRow label={t("financing.detail.quickcheck.detail.purchasePrice")} value={chf(i.purchase)} />
           {i.reno > 0 && <DetailRow label={t("financing.detail.quickcheck.detail.plusRenovation")} value={chf(i.reno)} />}
           <DetailRow label={t("financing.detail.quickcheck.detail.totalInvestment")} value={chf(i.total)} bold divider />
-          <DetailRow label={t("financing.detail.quickcheck.detail.ownFundsTotal", { ratio: pct(i.equityRatio) })} value={chf(i.equity)} divider />
-          <DetailRow label={t("financing.detail.quickcheck.detail.cashEquity")} value={chf(i.hardEquity)} indent />
-          <DetailRow label={t("financing.detail.quickcheck.detail.pensionEquity")} value={chf(i.pension + i.vested)} indent />
+          {isRefi && n(dossier.existing_mortgage) > 0 && <DetailRow label="Bestehende Hypothek 1" value={chf(n(dossier.existing_mortgage))} divider />}
+          {isRefi && n(dossier.existing_mortgage_2) > 0 && <DetailRow label="Bestehende Hypothek 2" value={chf(n(dossier.existing_mortgage_2))} indent />}
+          {isRefi && n(dossier.requested_increase) > 0 && <DetailRow label="Aufstockungswunsch" value={chf(n(dossier.requested_increase))} indent />}
+          {!isRefi && (
+            <>
+              <DetailRow label={t("financing.detail.quickcheck.detail.ownFundsTotal", { ratio: pct(i.equityRatio) })} value={chf(i.equity)} divider />
+              <DetailRow label={t("financing.detail.quickcheck.detail.cashEquity")} value={chf(i.hardEquity)} indent />
+              <DetailRow label={t("financing.detail.quickcheck.detail.pensionEquity")} value={chf(i.pension + i.vested)} indent />
+            </>
+          )}
           <DetailRow label={t("financing.detail.quickcheck.detail.mortgageTotal", { ratio: pct(i.ltv) })} value={chf(i.mortgage)} divider />
           <DetailRow label={t("financing.detail.quickcheck.detail.firstMortgage")} value={chf(i.firstMortgage)} indent />
           <DetailRow label={t("financing.detail.quickcheck.detail.secondMortgage")} value={chf(i.secondMortgage)} indent />
@@ -721,7 +730,21 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
           <DetailRow label={t("financing.detail.quickcheck.detail.calcInterest", { rate: i.rate.toFixed(1) })} value={chf(i.interest)} />
           <DetailRow label={t("financing.detail.quickcheck.detail.ancillary", { pct: i.ancillaryPct.toFixed(1) })} value={chf(i.ancillary)} />
           <DetailRow label={t("financing.detail.quickcheck.detail.amortLabel")} value={chf(i.amort)} />
-          <DetailRow label={t("financing.detail.quickcheck.detail.totalYearlyCost")} value={chf(i.yearly)} bold divider />
+          <DetailRow label="Wohnkosten p.a." value={chf(i.housingYearly)} bold divider />
+          {isRefi && (
+            <>
+              {expenseGroups.map((group) => group.yearly > 0 && (
+                <div key={group.id} className="space-y-1 pt-2">
+                  <DetailRow label={`Jahresausgaben ${group.name}`} value={chf(group.yearly)} bold divider />
+                  {group.fields.map((field) => (
+                    <DetailRow key={`${group.id}-${field.label}`} label={field.label} value={chf(field.monthly * 12)} indent />
+                  ))}
+                </div>
+              ))}
+              {i.expensesYearly > 0 && <DetailRow label="Jahresausgaben total" value={chf(i.expensesYearly)} bold divider />}
+            </>
+          )}
+          <DetailRow label="Total Tragbarkeitskosten p.a." value={chf(i.yearly)} bold divider />
           {(() => {
             const coIncome = n(dossier.co_applicant_einkommen);
             const mainIncome = n(dossier.gross_income_yearly);
