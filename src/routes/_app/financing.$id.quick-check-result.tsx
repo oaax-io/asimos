@@ -15,6 +15,7 @@ import {
 import { ArrowLeft, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
 import { FinancingQuickCheckActions } from "@/components/financing/FinancingQuickCheckActions";
+import { expenseFields, expenseLabels } from "@/lib/self-disclosure";
 import {
   FINANCING_TYPE_LABELS, QUICK_CHECK_LABELS, calcQuickCheck,
   displayQuickCheckStatus, isRefinancingDossier,
@@ -36,15 +37,27 @@ function QuickCheckResultPage() {
         .from("financing_dossiers").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      const [clientRes, propRes] = await Promise.all([
+      const additionalApplicants = Array.isArray((data as any).additional_co_applicants) ? (data as any).additional_co_applicants : [];
+      const applicantIds = Array.from(new Set([
+        data.client_id,
+        (data as any).co_applicant_client_id,
+        ...additionalApplicants.map((a: any) => a?.client_id),
+      ].filter(Boolean))) as string[];
+      const [clientRes, propRes, applicantClientsRes, disclosuresRes] = await Promise.all([
         data.client_id
           ? supabase.from("clients").select("id, full_name, email, phone").eq("id", data.client_id).maybeSingle()
           : Promise.resolve({ data: null }),
         data.property_id
           ? supabase.from("properties").select("id, title, city, price").eq("id", data.property_id).maybeSingle()
           : Promise.resolve({ data: null }),
+        applicantIds.length > 0
+          ? supabase.from("clients").select("id, full_name").in("id", applicantIds)
+          : Promise.resolve({ data: [] }),
+        applicantIds.length > 0
+          ? supabase.from("client_self_disclosures").select(`client_id, ${expenseFields.join(", ")}`).in("client_id", applicantIds)
+          : Promise.resolve({ data: [] }),
       ]);
-      return { ...data, clients: clientRes.data, properties: propRes.data } as any;
+      return { ...data, clients: clientRes.data, properties: propRes.data, applicant_clients: applicantClientsRes.data ?? [], applicant_disclosures: disclosuresRes.data ?? [] } as any;
     },
   });
 
