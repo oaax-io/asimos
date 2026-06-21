@@ -618,8 +618,8 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
     const delta = Math.max(0, incomeNeeded - i.income);
     tips.push({
       tone: "warn",
-      text: isRefi && i.expensesYearly > 0
-        ? `Tragbarkeit ${pct(i.affordability)} — Wohnkosten plus tragbarkeitsrelevante Verpflichtungen (${chf(i.expensesYearly)} p.a.) sind eingerechnet. Einkommen müsste um ${chf(delta)} steigen oder Verpflichtungen müssten sinken (benötigt: ${chf(incomeNeeded)} p.a.).`
+      text: isRefi
+        ? `Bank-Tragbarkeit ${pct(i.affordability)} — Wohnkosten (${chf(i.housingYearly)} p.a.) übersteigen 33% des Einkommens. Einkommen müsste um ${chf(delta)} steigen (benötigt: ${chf(incomeNeeded)} p.a.) oder Hypothek/Zins reduzieren.`
         : t("financing.detail.quickcheck.tips.incomeNeeded", { delta: chf(delta), needed: chf(incomeNeeded) }),
     });
   }
