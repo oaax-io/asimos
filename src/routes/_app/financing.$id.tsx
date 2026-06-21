@@ -1060,6 +1060,17 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             step={10000}
             onChange={setMortgage}
           />
+          {isRefi && (
+            <SliderRow
+              label="Fixe Verpflichtungen"
+              display={`${chf(expensesMonthly)} / Monat`}
+              value={expensesMonthly}
+              min={0}
+              max={expensesMax}
+              step={100}
+              onChange={setExpensesMonthly}
+            />
+          )}
           <SliderRow
             label={t("financing.detail.quickcheck.scenarios.rate")}
             display={`${rate.toFixed(1)}%`}
@@ -1072,10 +1083,10 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
           />
 
           {/* Live result */}
-          <div className="grid gap-2 sm:grid-cols-4 pt-2 border-t">
+          <div className="grid gap-2 sm:grid-cols-3 pt-2 border-t">
             <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveLtv")} value={pct(liveLtv)} delta={liveLtv - original.ltv} betterWhenLower />
             <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveAffordability")} value={pct(liveAff)} delta={liveAff - original.affordability} betterWhenLower />
-            <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveEquityRatio")} value={pct(liveEqRatio)} delta={liveEqRatio - original.equityRatio} betterWhenLower={false} />
+            {!isRefi && <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveEquityRatio")} value={pct(liveEqRatio)} delta={liveEqRatio - original.equityRatio} betterWhenLower={false} />}
             <div className="rounded-lg border p-3 flex flex-col justify-center">
               <p className="text-xs text-muted-foreground">{t("financing.detail.quickcheck.scenarios.status")}</p>
               <Badge className={cn("mt-1 w-fit", qcBadgeTone(liveStatus))}>{t(`financing.quickCheckStatus.${liveStatus}`, { defaultValue: QUICK_CHECK_LABELS[liveStatus] })}</Badge>
