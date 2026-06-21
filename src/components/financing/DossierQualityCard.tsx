@@ -155,7 +155,7 @@ function calculateRefiQualityMetrics(dossier: any) {
   const mortgage = num(dossier.requested_mortgage);
   const rate = num(dossier.calculated_interest_rate, 5);
   const ancillary = dossier.ancillary_costs_yearly != null ? num(dossier.ancillary_costs_yearly) : total * 0.01;
-  const secondMortgage = Math.max(0, mortgage - total * 0.6667);
+  const secondMortgage = Math.max(0, mortgage - total * 0.65);
   const amort = dossier.amortisation_yearly != null ? num(dossier.amortisation_yearly) : secondMortgage / 15;
   const extraIncome = Array.isArray(dossier.additional_co_applicants)
     ? dossier.additional_co_applicants.reduce((sum: number, applicant: any) => sum + num(applicant?.einkommen), 0)
@@ -164,8 +164,8 @@ function calculateRefiQualityMetrics(dossier: any) {
     num(dossier.einkommen_kombiniert),
     num(dossier.gross_income_yearly) + num(dossier.co_applicant_einkommen) + extraIncome,
   );
-  const obligationsMonthly = relevantRefiExpensesMonthly(dossier) || num(dossier.monthly_obligations);
-  const yearly = mortgage * (rate / 100) + ancillary + amort + obligationsMonthly * 12;
+  // Bank-Tragbarkeit: nur Wohnkosten / Einkommen (CH-Standard).
+  const yearly = mortgage * (rate / 100) + ancillary + amort;
   return {
     income,
     ltv: total > 0 ? (mortgage / total) * 100 : 0,
