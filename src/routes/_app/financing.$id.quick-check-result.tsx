@@ -187,7 +187,7 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const hardRatio = total > 0 ? (hardEquity / total) * 100 : 0;
 
     return { purchase, total, mortgage, equity, hardEquity, income, yearly, ltv, afford, equityRatio, hardRatio };
-  }, [dossier]);
+  }, [dossier, isRefi]);
 
   const tips: string[] = [];
   if (m.afford > 33 && m.income > 0) {
