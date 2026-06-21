@@ -276,6 +276,9 @@ function KpiPlaceholder({ label }: { label: string }) {
       </CardContent>
     </Card>
   );
+}
+
+
 
 // ---------------- helpers ----------------
 
