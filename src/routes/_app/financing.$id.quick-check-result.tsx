@@ -204,19 +204,32 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
   return (
     <>
       {isRefi ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <RefiBarometerCard label="Aufstockungswunsch" value={`CHF ${chf(numv(dossier.requested_increase))}`} detail="Zusätzlich gewünschter Betrag" />
-          <RefiBarometerCard label="Neue Hypothek" value={`CHF ${chf(m.mortgage)}`} detail={`Belehnung ${m.ltv.toFixed(1)}% / max. 80%`} tone={m.ltv <= 80 ? "ok" : "bad"} fillPct={m.ltv} limitPct={80} />
-          <RefiBarometerCard label="Einnahmen p.a." value={`CHF ${chf(m.income)}`} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
-          <RefiBarometerCard label="Ausgaben p.a." value={`CHF ${chf(m.obligationsYearly)}`} detail={`CHF ${chf(m.obligationsMonthly)} / Monat`} tone={m.afford <= 33 ? "ok" : m.afford <= 38 ? "warn" : "bad"} fillPct={m.afford * (100 / 60)} limitPct={33 * (100 / 60)} />
-          <Card>
-            <CardContent className="p-5 space-y-2">
-              <p className="text-sm text-muted-foreground">Finanzierbarkeit</p>
-              <StatusBadge status={displayQuickCheckStatus(dossier)} />
-              <p className={`text-3xl font-semibold ${m.afford <= 33 ? "text-emerald-600" : m.afford <= 38 ? "text-amber-600" : "text-red-600"}`}>{m.afford.toFixed(1)}%</p>
+        <div className="space-y-4">
+          <Card className="border-2">
+            <CardContent className="p-6 flex flex-wrap items-center justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Finanzierbarkeit</p>
+                <div className="flex items-center gap-3">
+                  <StatusBadge status={displayQuickCheckStatus(dossier)} />
+                  <span className={`text-3xl font-semibold ${m.afford <= 33 ? "text-emerald-600" : m.afford <= 38 ? "text-amber-600" : "text-red-600"}`}>{m.afford.toFixed(1)}%</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Tragbarkeit (Limit 33% / max. 38%)</p>
+              </div>
+              <div className="text-right space-y-1">
+                <p className="text-xs text-muted-foreground">Belehnung (LTV)</p>
+                <p className={`text-2xl font-semibold ${m.ltv <= 80 ? "text-emerald-600" : "text-red-600"}`}>{m.ltv.toFixed(1)}%</p>
+                <p className="text-xs text-muted-foreground">Limit 80%</p>
+              </div>
             </CardContent>
           </Card>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <RefiBarometerCard label="Aufstockungswunsch" value={`CHF ${chf(numv(dossier.requested_increase))}`} detail="Zusätzlich gewünschter Betrag" />
+            <RefiBarometerCard label="Neue Hypothek" value={`CHF ${chf(m.mortgage)}`} detail={`Belehnung ${m.ltv.toFixed(1)}% / max. 80%`} tone={m.ltv <= 80 ? "ok" : "bad"} fillPct={m.ltv} limitPct={80} />
+            <RefiBarometerCard label="Einnahmen p.a." value={`CHF ${chf(m.income)}`} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
+            <RefiBarometerCard label="Fixe Verpflichtungen p.a." value={`CHF ${chf(m.obligationsYearly)}`} detail={`CHF ${chf(m.obligationsMonthly)} / Monat (Leasing, Kredit, Alimente)`} />
+          </div>
         </div>
+
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           <KpiCard label="Belehnung (LTV)" value={m.ltv} limit={80} mode="max" />
@@ -346,11 +359,22 @@ function applicantList(d: any): { id: string; name: string; income: number }[] {
   return rows.filter((row, index, arr) => arr.findIndex((x) => x.id === row.id) === index);
 }
 
+// Nur echte fixe Verpflichtungen für Tragbarkeit (CH-Bankstandard).
+// Miete, Lebenshaltung, Steuern, Telecom, Versicherungen, Nebenkosten zählen NICHT,
+// weil sie entweder durch die neuen Wohnkosten ersetzt werden (Miete, NK) oder
+// im 33%-Tragbarkeitspuffer enthalten sind.
+const TRAGBARKEIT_EXPENSE_FIELDS = [
+  "leasing_expense",
+  "credit_expense",
+  "alimony_expense",
+  "life_insurance_expense",
+] as const;
+
 function applicantExpenseGroups(d: any) {
   const disclosures = new Map(((d?.applicant_disclosures ?? []) as any[]).map((r) => [String(r.client_id), r]));
   return applicantList(d).map((applicant) => {
     const disclosure = disclosures.get(applicant.id) ?? {};
-    const fields = expenseFields
+    const fields = TRAGBARKEIT_EXPENSE_FIELDS
       .map((field) => ({ label: expenseLabels[field], monthly: numv((disclosure as any)[field]) }))
       .filter((row) => row.monthly > 0);
     const monthly = fields.reduce((sum, row) => sum + row.monthly, 0);
@@ -473,13 +497,13 @@ function DetailTab({ dossier }: { dossier: any }) {
           {isRefi && expenseGroups.map((group) => group.yearly > 0 && (
             <div key={group.id} className="space-y-1 pt-2">
               <Divider />
-              <Row label={`Jahresausgaben ${group.name}`} value={`CHF ${chf(group.yearly)}`} bold />
+              <Row label={`Fixe Verpflichtungen ${group.name}`} value={`CHF ${chf(group.yearly)}`} bold />
               {group.fields.map((field) => (
                 <Row key={`${group.id}-${field.label}`} label={field.label} value={`CHF ${chf(field.monthly * 12)}`} muted />
               ))}
             </div>
           ))}
-          {obligationsYearly > 0 && <Row label="Jahresausgaben total" value={`CHF ${chf(obligationsYearly)}`} />}
+          {obligationsYearly > 0 && <Row label="Fixe Verpflichtungen total" value={`CHF ${chf(obligationsYearly)}`} />}
           <Divider />
           <Row label="Total Tragbarkeitskosten p.a." value={`CHF ${chf(totalYearly)}`} bold />
           <Row label="Bruttoeinkommen p.a." value={`CHF ${chf(income)}`} />
