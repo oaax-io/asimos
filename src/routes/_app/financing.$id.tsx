@@ -112,6 +112,7 @@ function FinancingDetailPage() {
 
   const reasons = (dossier.quick_check_reasons as any[]) ?? [];
   const qcStatus = displayQuickCheckStatus(dossier);
+  const isRefi = isRefinancingDossier(dossier);
   const isIncomplete = qcStatus === "incomplete";
   const lastCheckAt = dossier.updated_at ? formatDateTime(dossier.updated_at) : null;
 
@@ -141,9 +142,9 @@ function FinancingDetailPage() {
       />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={Banknote} label={t("financing.detail.stats.totalInvestment")} value={fmt(dossier.total_investment)} />
-        <Stat icon={Banknote} label={t("financing.detail.stats.mortgage")} value={fmt(dossier.requested_mortgage)} />
-        <Stat icon={Banknote} label={t("financing.detail.stats.ownFunds")} value={fmt(dossier.own_funds_total)} />
+        <Stat icon={Banknote} label={isRefi ? "Immobilienwert" : t("financing.detail.stats.totalInvestment")} value={fmt(dossier.total_investment)} />
+        <Stat icon={Banknote} label={isRefi ? "Neue Hypothek" : t("financing.detail.stats.mortgage")} value={fmt(dossier.requested_mortgage)} />
+        <Stat icon={Banknote} label={isRefi ? "Aufstockungswunsch" : t("financing.detail.stats.ownFunds")} value={isRefi ? fmt(dossier.requested_increase) : fmt(dossier.own_funds_total)} />
         <Stat icon={Banknote} label={t("financing.detail.stats.affordability")} value={dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"} />
       </div>
 
