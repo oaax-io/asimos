@@ -109,7 +109,7 @@ function FinancingPage() {
     return dossiers.filter((d: any) => {
       if (statusFilter !== ALL && d.dossier_status !== statusFilter) return false;
       if (typeFilter !== ALL && d.financing_type !== typeFilter) return false;
-      if (qcFilter !== ALL && (d.quick_check_status ?? "incomplete") !== qcFilter) return false;
+      if (qcFilter !== ALL && displayQuickCheckStatus(d) !== qcFilter) return false;
       if (bankFilter !== ALL && (d.bank_type ?? "none") !== bankFilter) return false;
       if (sourceFilter !== ALL && (d.data_source ?? "existing_property") !== sourceFilter) return false;
       if (!s) return true;
