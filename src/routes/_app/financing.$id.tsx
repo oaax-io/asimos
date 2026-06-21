@@ -1002,42 +1002,46 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             </p>
           </div>
 
-          <SliderRow
-            label={t("financing.detail.quickcheck.scenarios.purchase")}
-            display={chf(purchase)}
-            value={purchase}
-            min={purchaseMin}
-            max={purchaseMax}
-            step={10000}
-            onChange={setPurchase}
-          />
-          <SliderRow
-            label={t("financing.detail.quickcheck.scenarios.equity")}
-            display={`${chf(equity)} (${pct(equityPctNow)})`}
-            value={equity}
-            min={0}
-            max={equityMax}
-            step={5000}
-            onChange={setEquity}
-          />
-          <SliderRow
-            label={t("financing.detail.quickcheck.scenarios.renovation")}
-            display={chf(reno)}
-            value={reno}
-            min={0}
-            max={renoMax}
-            step={5000}
-            onChange={(v) => setReno(Math.round(v))}
-          />
-          <SliderRow
-            label={t("financing.detail.quickcheck.scenarios.ownWork")}
-            display={chf(ownWork)}
-            value={ownWork}
-            min={0}
-            max={ownWorkMax}
-            step={1000}
-            onChange={(v) => setOwnWork(Math.round(v))}
-          />
+          {!isRefi && (
+            <>
+              <SliderRow
+                label={t("financing.detail.quickcheck.scenarios.purchase")}
+                display={chf(purchase)}
+                value={purchase}
+                min={purchaseMin}
+                max={purchaseMax}
+                step={10000}
+                onChange={setPurchase}
+              />
+              <SliderRow
+                label={t("financing.detail.quickcheck.scenarios.equity")}
+                display={`${chf(equity)} (${pct(equityPctNow)})`}
+                value={equity}
+                min={0}
+                max={equityMax}
+                step={5000}
+                onChange={setEquity}
+              />
+              <SliderRow
+                label={t("financing.detail.quickcheck.scenarios.renovation")}
+                display={chf(reno)}
+                value={reno}
+                min={0}
+                max={renoMax}
+                step={5000}
+                onChange={(v) => setReno(Math.round(v))}
+              />
+              <SliderRow
+                label={t("financing.detail.quickcheck.scenarios.ownWork")}
+                display={chf(ownWork)}
+                value={ownWork}
+                min={0}
+                max={ownWorkMax}
+                step={1000}
+                onChange={(v) => setOwnWork(Math.round(v))}
+              />
+            </>
+          )}
           <SliderRow
             label={t("financing.detail.quickcheck.scenarios.income")}
             display={t("financing.detail.quickcheck.scenarios.incomePerYear", { amount: chf(income) })}
