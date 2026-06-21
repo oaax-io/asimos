@@ -113,6 +113,7 @@ function FinancingDetailPage() {
   const reasons = (dossier.quick_check_reasons as any[]) ?? [];
   const qcStatus = displayQuickCheckStatus(dossier);
   const isRefi = isRefinancingDossier(dossier);
+  const refiInputs = isRefi ? deriveInputs(dossier) : null;
   const isIncomplete = qcStatus === "incomplete";
   const lastCheckAt = dossier.updated_at ? formatDateTime(dossier.updated_at) : null;
 
@@ -145,7 +146,7 @@ function FinancingDetailPage() {
         <Stat icon={Banknote} label={isRefi ? "Immobilienwert" : t("financing.detail.stats.totalInvestment")} value={fmt(dossier.total_investment)} />
         <Stat icon={Banknote} label={isRefi ? "Neue Hypothek" : t("financing.detail.stats.mortgage")} value={fmt(dossier.requested_mortgage)} />
         <Stat icon={Banknote} label={isRefi ? "Aufstockungswunsch" : t("financing.detail.stats.ownFunds")} value={isRefi ? fmt(dossier.requested_increase) : fmt(dossier.own_funds_total)} />
-        <Stat icon={Banknote} label={t("financing.detail.stats.affordability")} value={dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"} />
+        <Stat icon={Banknote} label={t("financing.detail.stats.affordability")} value={refiInputs ? pct(refiInputs.affordability) : dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"} />
       </div>
 
       <Tabs defaultValue="overview">
@@ -421,6 +422,10 @@ type Inputs = {
   housingYearly: number;
   expensesMonthly: number;
   expensesYearly: number;
+  allExpensesMonthly: number;
+  allExpensesYearly: number;
+  totalBudgetYearly: number;
+  budgetRatio: number;
   ltv: number;
   affordability: number;
   equityRatio: number;
@@ -462,18 +467,24 @@ function deriveInputs(d: Dossier): Inputs {
   const interest = mortgage * (rate / 100);
   const housingYearly = interest + ancillary + amort;
   const disclosedExpensesMonthly = totalApplicantExpensesMonthly(d);
-  const expensesMonthly = isRefinancingDossier(d) ? (disclosedExpensesMonthly || n(d.monthly_obligations)) : 0;
+  const relevantExpensesMonthly = totalTragbarkeitRelevantExpensesMonthly(d);
+  const allExpensesMonthly = isRefinancingDossier(d) ? (disclosedExpensesMonthly || n(d.monthly_obligations)) : 0;
+  const expensesMonthly = isRefinancingDossier(d) ? (relevantExpensesMonthly || n(d.monthly_obligations)) : 0;
+  const allExpensesYearly = allExpensesMonthly * 12;
   const expensesYearly = expensesMonthly * 12;
   const yearly = housingYearly + expensesYearly;
+  const totalBudgetYearly = housingYearly + allExpensesYearly;
   const ltv = total > 0 ? (mortgage / total) * 100 : 0;
   const affordability = income > 0 ? (yearly / income) * 100 : 0;
+  const budgetRatio = income > 0 ? (totalBudgetYearly / income) * 100 : 0;
   const equityRatio = total > 0 ? (equity / total) * 100 : 0;
   const hardRatio = total > 0 ? (hardEquity / total) * 100 : 0;
   const minIncome = yearly > 0 ? yearly / 0.33 : 0;
   return {
     total, purchase, reno, mortgage, equity, pension, vested, hardEquity,
     income, rate, ancillary, ancillaryPct, firstMortgage, secondMortgage,
-    amortYears, amort, yearly, interest, housingYearly, expensesMonthly, expensesYearly, ltv, affordability, equityRatio,
+    amortYears, amort, yearly, interest, housingYearly, expensesMonthly, expensesYearly,
+    allExpensesMonthly, allExpensesYearly, totalBudgetYearly, budgetRatio, ltv, affordability, equityRatio,
     hardRatio, minIncome,
   };
 }
@@ -490,11 +501,18 @@ function applicantList(d: Dossier): { id: string; name: string; income: number }
   return rows.filter((row, index, arr) => arr.findIndex((x) => x.id === row.id) === index);
 }
 
-function applicantExpenseGroups(d: Dossier) {
+const TRAGBARKEIT_RELEVANT_EXPENSE_FIELDS = [
+  "leasing_expense",
+  "credit_expense",
+  "alimony_expense",
+  "life_insurance_expense",
+] as const;
+
+function applicantExpenseGroups(d: Dossier, fieldsToUse: readonly (typeof expenseFields)[number][] = expenseFields) {
   const disclosures = new Map((d.applicant_disclosures ?? []).map((r) => [String(r.client_id), r]));
   return applicantList(d).map((applicant) => {
     const disclosure = disclosures.get(applicant.id) ?? {};
-    const fields = expenseFields
+    const fields = fieldsToUse
       .map((field) => ({ label: expenseLabels[field], monthly: n(disclosure[field]) }))
       .filter((row) => row.monthly > 0);
     const monthly = fields.reduce((sum, row) => sum + row.monthly, 0);
@@ -504,6 +522,10 @@ function applicantExpenseGroups(d: Dossier) {
 
 function totalApplicantExpensesMonthly(d: Dossier): number {
   return applicantExpenseGroups(d).reduce((sum, group) => sum + group.monthly, 0);
+}
+
+function totalTragbarkeitRelevantExpensesMonthly(d: Dossier): number {
+  return applicantExpenseGroups(d, TRAGBARKEIT_RELEVANT_EXPENSE_FIELDS).reduce((sum, group) => sum + group.monthly, 0);
 }
 
 function toneFor(value: number, limit: number, warn: number, mode: "max" | "min"): "ok" | "warn" | "bad" {
@@ -594,7 +616,7 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
     tips.push({
       tone: "warn",
       text: isRefi && i.expensesYearly > 0
-        ? `Tragbarkeit ${pct(i.affordability)} — die Jahresausgaben der Antragsteller (${chf(i.expensesYearly)}) sind eingerechnet. Einkommen müsste um ${chf(delta)} steigen oder Ausgaben müssten sinken (benötigt: ${chf(incomeNeeded)} p.a.).`
+        ? `Tragbarkeit ${pct(i.affordability)} — Wohnkosten plus tragbarkeitsrelevante Verpflichtungen (${chf(i.expensesYearly)} p.a.) sind eingerechnet. Einkommen müsste um ${chf(delta)} steigen oder Verpflichtungen müssten sinken (benötigt: ${chf(incomeNeeded)} p.a.).`
         : t("financing.detail.quickcheck.tips.incomeNeeded", { delta: chf(delta), needed: chf(incomeNeeded) }),
     });
   }
@@ -627,7 +649,7 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
           <RefiBarometerCard label="Aufstockungswunsch" value={chf(n(dossier.requested_increase))} detail="Zusätzlich gewünschter Betrag" />
           <RefiBarometerCard label="Neue Hypothek" value={chf(i.mortgage)} detail={`Belehnung ${pct(i.ltv)} / max. 80%`} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
           <RefiBarometerCard label="Einnahmen p.a." value={chf(i.income)} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
-          <RefiBarometerCard label="Ausgaben p.a." value={chf(i.expensesYearly)} detail={`${chf(i.expensesMonthly)} / Monat`} tone={affTone} fillPct={i.affordability * (100 / 60)} limitPct={33 * (100 / 60)} />
+          <RefiBarometerCard label="Jahresausgaben p.a." value={chf(i.allExpensesYearly)} detail={`${chf(i.allExpensesMonthly)} / Monat gemäss Selbstauskunft`} />
           <Card>
             <CardContent className="p-4 space-y-2">
               <p className="text-sm text-muted-foreground">Finanzierbarkeit</p>
@@ -704,6 +726,7 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
   const i = deriveInputs(dossier);
   const affTone = toneFor(i.affordability, 33, 38, "max");
   const expenseGroups = applicantExpenseGroups(dossier);
+  const relevantExpenseGroups = applicantExpenseGroups(dossier, TRAGBARKEIT_RELEVANT_EXPENSE_FIELDS);
 
   return (
     <div className="grid gap-3 md:grid-cols-2">
@@ -746,10 +769,21 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
                   ))}
                 </div>
               ))}
-              {i.expensesYearly > 0 && <DetailRow label="Jahresausgaben total" value={chf(i.expensesYearly)} bold divider />}
+              {i.allExpensesYearly > 0 && <DetailRow label="Jahresausgaben total" value={chf(i.allExpensesYearly)} bold divider />}
+              {i.expensesYearly > 0 && (
+                <>
+                  {relevantExpenseGroups.map((group) => group.yearly > 0 && (
+                    <DetailRow key={`relevant-${group.id}`} label={`davon tragbarkeitsrelevant ${group.name}`} value={chf(group.yearly)} indent />
+                  ))}
+                  <DetailRow label="Tragbarkeitsrelevante Verpflichtungen" value={chf(i.expensesYearly)} bold />
+                </>
+              )}
             </>
           )}
           <DetailRow label="Total Tragbarkeitskosten p.a." value={chf(i.yearly)} bold divider />
+          {isRefi && i.allExpensesYearly > i.expensesYearly && (
+            <DetailRow label={`Budgetbelastung inkl. aller Ausgaben (${pct(i.budgetRatio)})`} value={chf(i.totalBudgetYearly)} />
+          )}
           {applicantList(dossier).length > 1 ? (
             <>
               {applicantList(dossier).map((applicant) => (

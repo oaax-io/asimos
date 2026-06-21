@@ -196,7 +196,7 @@ export function displayQuickCheckStatus(d: any): QuickCheckStatus {
   const firstMortgageMax = total * 0.6667;
   const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
   const amort = d?.amortisation_yearly != null ? num(d?.amortisation_yearly) : secondMortgage / 15;
-  const obligationsYearly = num(d?.monthly_obligations) * 12;
+  const obligationsYearly = refiRelevantExpensesMonthly(d) * 12;
   const yearly = mortgage * (rate / 100)
     + (d?.ancillary_costs_yearly != null ? num(d.ancillary_costs_yearly) : total * 0.01)
     + amort
@@ -211,6 +211,15 @@ export function displayQuickCheckStatus(d: any): QuickCheckStatus {
 function num(v: unknown, fallback = 0): number {
   const n = typeof v === "string" ? parseFloat(v) : (v as number);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function refiRelevantExpensesMonthly(d: any): number {
+  const fields = ["leasing_expense", "credit_expense", "alimony_expense", "life_insurance_expense"];
+  const disclosures = Array.isArray(d?.applicant_disclosures) ? d.applicant_disclosures : [];
+  const disclosed = disclosures.reduce((sum: number, row: any) => (
+    sum + fields.reduce((fieldSum, field) => fieldSum + num(row?.[field]), 0)
+  ), 0);
+  return disclosed || num(d?.monthly_obligations);
 }
 
 function worse(a: QuickCheckStatus, b: QuickCheckStatus): QuickCheckStatus {

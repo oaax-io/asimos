@@ -159,6 +159,8 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const income = effectiveIncome(dossier);
     const obligationsMonthly = totalApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations);
     const obligationsYearly = isRefi ? obligationsMonthly * 12 : 0;
+    const allExpensesMonthly = isRefi ? (totalAllApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations)) : 0;
+    const allExpensesYearly = allExpensesMonthly * 12;
     const firstMortgageMax = total * 0.6667;
     const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
     const amort = dossier.amortisation_yearly != null ? numv(dossier.amortisation_yearly) : secondMortgage / 15;
@@ -175,7 +177,7 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const equityRatio = total > 0 ? (equity / total) * 100 : 0;
     const hardRatio = total > 0 ? (hardEquity / total) * 100 : 0;
 
-    return { purchase, total, mortgage, equity, hardEquity, income, yearly, ltv, afford, equityRatio, hardRatio, obligationsMonthly, obligationsYearly };
+    return { purchase, total, mortgage, equity, hardEquity, income, yearly, ltv, afford, equityRatio, hardRatio, obligationsMonthly, obligationsYearly, allExpensesMonthly, allExpensesYearly };
   }, [dossier, isRefi]);
 
   const tips: string[] = [];
@@ -228,7 +230,7 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
             <RefiBarometerCard label="Aufstockungswunsch" value={`CHF ${chf(numv(dossier.requested_increase))}`} detail="Zusätzlich gewünschter Betrag" />
             <RefiBarometerCard label="Neue Hypothek" value={`CHF ${chf(m.mortgage)}`} detail={`Belehnung ${m.ltv.toFixed(1)}% / max. 80%`} tone={m.ltv <= 80 ? "ok" : "bad"} fillPct={m.ltv} limitPct={80} />
             <RefiBarometerCard label="Einnahmen p.a." value={`CHF ${chf(m.income)}`} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
-            <RefiBarometerCard label="Fixe Verpflichtungen p.a." value={`CHF ${chf(m.obligationsYearly)}`} detail={`CHF ${chf(m.obligationsMonthly)} / Monat (Leasing, Kredit, Alimente)`} />
+            <RefiBarometerCard label="Jahresausgaben p.a." value={`CHF ${chf(m.allExpensesYearly)}`} detail={`CHF ${chf(m.allExpensesMonthly)} / Monat gemäss Selbstauskunft`} />
           </div>
         </div>
 
@@ -372,11 +374,11 @@ const TRAGBARKEIT_EXPENSE_FIELDS = [
   "life_insurance_expense",
 ] as const;
 
-function applicantExpenseGroups(d: any) {
+function applicantExpenseGroups(d: any, fieldsToUse: readonly (typeof expenseFields)[number][] = TRAGBARKEIT_EXPENSE_FIELDS) {
   const disclosures = new Map(((d?.applicant_disclosures ?? []) as any[]).map((r) => [String(r.client_id), r]));
   return applicantList(d).map((applicant) => {
     const disclosure = disclosures.get(applicant.id) ?? {};
-    const fields = TRAGBARKEIT_EXPENSE_FIELDS
+    const fields = fieldsToUse
       .map((field) => ({ label: expenseLabels[field], monthly: numv((disclosure as any)[field]) }))
       .filter((row) => row.monthly > 0);
     const monthly = fields.reduce((sum, row) => sum + row.monthly, 0);
@@ -386,6 +388,10 @@ function applicantExpenseGroups(d: any) {
 
 function totalApplicantExpensesMonthly(d: any): number {
   return applicantExpenseGroups(d).reduce((sum, group) => sum + group.monthly, 0);
+}
+
+function totalAllApplicantExpensesMonthly(d: any): number {
+  return applicantExpenseGroups(d, expenseFields).reduce((sum, group) => sum + group.monthly, 0);
 }
 
 // Eigenmittel beider Partner zusammen (inkl. PK / Freizügigkeit – zählen als Eigenmittel)
@@ -440,9 +446,12 @@ function DetailTab({ dossier }: { dossier: any }) {
   const income = effectiveIncome(dossier);
   const rate = numv(dossier.calculated_interest_rate, 5);
   const isRefi = isRefinancingDossier(dossier);
-  const expenseGroups = applicantExpenseGroups(dossier);
+  const expenseGroups = applicantExpenseGroups(dossier, expenseFields);
+  const relevantExpenseGroups = applicantExpenseGroups(dossier);
   const obligationsMonthly = totalApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations);
   const obligationsYearly = isRefi ? obligationsMonthly * 12 : 0;
+  const allExpensesMonthly = isRefi ? (totalAllApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations)) : 0;
+  const allExpensesYearly = allExpensesMonthly * 12;
 
   // 1./2. Hypothek (CH-Standard: 1. Hypo bis 65% des Wertes, 2. Hypo 65–80%)
   const firstMortgageMax = total * 0.65;
@@ -499,13 +508,21 @@ function DetailTab({ dossier }: { dossier: any }) {
           {isRefi && expenseGroups.map((group) => group.yearly > 0 && (
             <div key={group.id} className="space-y-1 pt-2">
               <Divider />
-              <Row label={`Fixe Verpflichtungen ${group.name}`} value={`CHF ${chf(group.yearly)}`} bold />
+              <Row label={`Jahresausgaben ${group.name}`} value={`CHF ${chf(group.yearly)}`} bold />
               {group.fields.map((field) => (
                 <Row key={`${group.id}-${field.label}`} label={field.label} value={`CHF ${chf(field.monthly * 12)}`} muted />
               ))}
             </div>
           ))}
-          {obligationsYearly > 0 && <Row label="Fixe Verpflichtungen total" value={`CHF ${chf(obligationsYearly)}`} />}
+          {allExpensesYearly > 0 && <Row label="Jahresausgaben total" value={`CHF ${chf(allExpensesYearly)}`} />}
+          {obligationsYearly > 0 && (
+            <>
+              {relevantExpenseGroups.map((group) => group.yearly > 0 && (
+                <Row key={`relevant-${group.id}`} label={`davon tragbarkeitsrelevant ${group.name}`} value={`CHF ${chf(group.yearly)}`} muted />
+              ))}
+              <Row label="Tragbarkeitsrelevante Verpflichtungen" value={`CHF ${chf(obligationsYearly)}`} />
+            </>
+          )}
           <Divider />
           <Row label="Total Tragbarkeitskosten p.a." value={`CHF ${chf(totalYearly)}`} bold />
           <Row label="Bruttoeinkommen p.a." value={`CHF ${chf(income)}`} />
