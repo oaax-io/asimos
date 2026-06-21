@@ -127,7 +127,9 @@ function ResultTabs({ dossier }: { dossier: any }) {
         <DetailTab dossier={dossier} />
       </TabsContent>
       <TabsContent value="szenarien" className="space-y-4">
-        <ScenariosTab dossier={dossier} onSaved={() => setTab("vorpruefung")} />
+        {isRefinancingDossier(dossier)
+          ? <RefiScenariosTab dossier={dossier} onSaved={() => setTab("vorpruefung")} />
+          : <ScenariosTab dossier={dossier} onSaved={() => setTab("vorpruefung")} />}
       </TabsContent>
     </Tabs>
   );
