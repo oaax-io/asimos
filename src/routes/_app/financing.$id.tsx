@@ -457,7 +457,7 @@ function deriveInputs(d: Dossier): Inputs {
     ? n(d.ancillary_costs_yearly)
     : total * 0.01;
   const ancillaryPct = total > 0 ? (ancillary / total) * 100 : 1;
-  const firstMortgageMax = total * 0.6667;
+  const firstMortgageMax = total * 0.65;
   const firstMortgage = Math.min(mortgage, firstMortgageMax);
   const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
   const amortYears = 15;
@@ -467,25 +467,27 @@ function deriveInputs(d: Dossier): Inputs {
   const interest = mortgage * (rate / 100);
   const housingYearly = interest + ancillary + amort;
   const disclosedExpensesMonthly = totalApplicantExpensesMonthly(d);
-  const relevantExpensesMonthly = totalTragbarkeitRelevantExpensesMonthly(d);
   const allExpensesMonthly = isRefinancingDossier(d) ? (disclosedExpensesMonthly || n(d.monthly_obligations)) : 0;
-  const expensesMonthly = isRefinancingDossier(d) ? (relevantExpensesMonthly || n(d.monthly_obligations)) : 0;
+  const expensesMonthly = allExpensesMonthly;
   const allExpensesYearly = allExpensesMonthly * 12;
-  const expensesYearly = expensesMonthly * 12;
-  const yearly = housingYearly + expensesYearly;
+  const expensesYearly = allExpensesYearly;
+  // Bank-Tragbarkeit (CH-Standard): nur Wohnkosten / Einkommen.
+  const yearly = housingYearly;
+  // Budgetquote: alle Haushaltsausgaben + Wohnkosten.
   const totalBudgetYearly = housingYearly + allExpensesYearly;
   const ltv = total > 0 ? (mortgage / total) * 100 : 0;
-  const affordability = income > 0 ? (yearly / income) * 100 : 0;
+  const affordability = income > 0 ? (housingYearly / income) * 100 : 0;
   const budgetRatio = income > 0 ? (totalBudgetYearly / income) * 100 : 0;
   const equityRatio = total > 0 ? (equity / total) * 100 : 0;
   const hardRatio = total > 0 ? (hardEquity / total) * 100 : 0;
-  const minIncome = yearly > 0 ? yearly / 0.33 : 0;
+  const minIncome = housingYearly > 0 ? housingYearly / 0.33 : 0;
+  const monthlyAvailable = Math.max(0, (income - housingYearly - allExpensesYearly) / 12);
   return {
     total, purchase, reno, mortgage, equity, pension, vested, hardEquity,
     income, rate, ancillary, ancillaryPct, firstMortgage, secondMortgage,
     amortYears, amort, yearly, interest, housingYearly, expensesMonthly, expensesYearly,
     allExpensesMonthly, allExpensesYearly, totalBudgetYearly, budgetRatio, ltv, affordability, equityRatio,
-    hardRatio, minIncome,
+    hardRatio, minIncome, monthlyAvailable,
   };
 }
 
