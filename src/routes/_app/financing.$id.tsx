@@ -743,7 +743,7 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
   const i = deriveInputs(dossier);
   const affTone = toneFor(i.affordability, 33, 38, "max");
   const expenseGroups = applicantExpenseGroups(dossier);
-  const relevantExpenseGroups = applicantExpenseGroups(dossier, TRAGBARKEIT_RELEVANT_EXPENSE_FIELDS);
+  void TRAGBARKEIT_RELEVANT_EXPENSE_FIELDS;
 
   return (
     <div className="grid gap-3 md:grid-cols-2">
