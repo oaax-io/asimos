@@ -346,11 +346,22 @@ function applicantList(d: any): { id: string; name: string; income: number }[] {
   return rows.filter((row, index, arr) => arr.findIndex((x) => x.id === row.id) === index);
 }
 
+// Nur echte fixe Verpflichtungen für Tragbarkeit (CH-Bankstandard).
+// Miete, Lebenshaltung, Steuern, Telecom, Versicherungen, Nebenkosten zählen NICHT,
+// weil sie entweder durch die neuen Wohnkosten ersetzt werden (Miete, NK) oder
+// im 33%-Tragbarkeitspuffer enthalten sind.
+const TRAGBARKEIT_EXPENSE_FIELDS = [
+  "leasing_expense",
+  "credit_expense",
+  "alimony_expense",
+  "life_insurance_expense",
+] as const;
+
 function applicantExpenseGroups(d: any) {
   const disclosures = new Map(((d?.applicant_disclosures ?? []) as any[]).map((r) => [String(r.client_id), r]));
   return applicantList(d).map((applicant) => {
     const disclosure = disclosures.get(applicant.id) ?? {};
-    const fields = expenseFields
+    const fields = TRAGBARKEIT_EXPENSE_FIELDS
       .map((field) => ({ label: expenseLabels[field], monthly: numv((disclosure as any)[field]) }))
       .filter((row) => row.monthly > 0);
     const monthly = fields.reduce((sum, row) => sum + row.monthly, 0);
