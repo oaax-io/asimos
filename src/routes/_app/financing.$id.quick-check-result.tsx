@@ -164,7 +164,7 @@ function computeDisplayStatus(dossier: any, isRefi: boolean): QuickCheckStatus {
 }
 
 function VorpruefungTab({ dossier }: { dossier: any }) {
-  const isRefi = isRefiDossier(dossier);
+  const isRefi = isRefinancingDossier(dossier);
   const m = useMemo(() => {
     const purchase = numv(dossier.purchase_price);
     const reno = numv(dossier.renovation_costs);
