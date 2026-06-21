@@ -340,11 +340,42 @@ function numv(v: unknown, fallback = 0): number {
 
 // Berücksichtigt Mitantragsteller/Ehepartner: nutzt kombiniertes Einkommen sofern gesetzt.
 function effectiveIncome(d: any): number {
+  const extraIncome = Array.isArray(d?.additional_co_applicants)
+    ? d.additional_co_applicants.reduce((sum: number, a: any) => sum + numv(a?.einkommen), 0)
+    : 0;
   const combined = numv(d?.einkommen_kombiniert);
   if (combined > 0) return combined;
   const main = numv(d?.gross_income_yearly);
   const co = numv(d?.co_applicant_einkommen);
-  return main + co;
+  return main + co + extraIncome;
+}
+
+function applicantList(d: any): { id: string; name: string; income: number }[] {
+  const clientMap = new Map(((d?.applicant_clients ?? []) as any[]).map((c) => [c.id, c.full_name]));
+  const extras = Array.isArray(d?.additional_co_applicants) ? d.additional_co_applicants : [];
+  const rows: { id: string; name: string; income: number }[] = [];
+  if (d?.clients?.id) rows.push({ id: d.clients.id, name: d.clients.full_name, income: numv(d.gross_income_yearly) });
+  if (d?.co_applicant_client_id) rows.push({ id: d.co_applicant_client_id, name: clientMap.get(d.co_applicant_client_id) ?? "Mitantragsteller", income: numv(d.co_applicant_einkommen) });
+  for (const a of extras) {
+    if (a?.client_id) rows.push({ id: a.client_id, name: clientMap.get(a.client_id) ?? "Mitantragsteller", income: numv(a.einkommen) });
+  }
+  return rows.filter((row, index, arr) => arr.findIndex((x) => x.id === row.id) === index);
+}
+
+function applicantExpenseGroups(d: any) {
+  const disclosures = new Map(((d?.applicant_disclosures ?? []) as any[]).map((r) => [String(r.client_id), r]));
+  return applicantList(d).map((applicant) => {
+    const disclosure = disclosures.get(applicant.id) ?? {};
+    const fields = expenseFields
+      .map((field) => ({ label: expenseLabels[field], monthly: numv((disclosure as any)[field]) }))
+      .filter((row) => row.monthly > 0);
+    const monthly = fields.reduce((sum, row) => sum + row.monthly, 0);
+    return { ...applicant, fields, monthly, yearly: monthly * 12 };
+  });
+}
+
+function totalApplicantExpensesMonthly(d: any): number {
+  return applicantExpenseGroups(d).reduce((sum, group) => sum + group.monthly, 0);
 }
 
 // Eigenmittel beider Partner zusammen (inkl. PK / Freizügigkeit – zählen als Eigenmittel)
