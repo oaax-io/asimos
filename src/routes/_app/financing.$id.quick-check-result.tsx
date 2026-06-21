@@ -1036,8 +1036,9 @@ function RefiScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => v
             <div className="flex justify-between"><span className="text-muted-foreground">Zinskosten p.a.</span><span className="tabular-nums">CHF {chf(interest)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Nebenkosten p.a.</span><span className="tabular-nums">CHF {chf(ancillary)}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Amortisation p.a.</span><span className="tabular-nums">CHF {chf(amortYearly)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Fixe Verpflichtungen p.a.</span><span className="tabular-nums">CHF {chf(obligationsYearly)}</span></div>
-            <div className="flex justify-between border-t pt-1.5 mt-1.5"><span className="font-medium">Total p.a.</span><span className="tabular-nums font-semibold">CHF {chf(yearly)}</span></div>
+            <div className="flex justify-between border-t pt-1.5 mt-1.5"><span className="font-medium">Wohnkosten p.a. (Bank-Tragbarkeit)</span><span className="tabular-nums font-semibold">CHF {chf(yearly)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Fixe Verpflichtungen p.a. (Budget)</span><span className="tabular-nums">CHF {chf(obligationsYearly)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Mindesteinkommen (33%)</span><span className="tabular-nums">CHF {chf(yearly / 0.33)}</span></div>
           </div>
           <div className="space-y-1.5 text-sm pt-2 border-t">
             {tips.map((t, i) => (
