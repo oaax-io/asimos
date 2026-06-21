@@ -508,7 +508,7 @@ function DetailTab({ dossier }: { dossier: any }) {
           {isRefi && expenseGroups.map((group) => group.yearly > 0 && (
             <div key={group.id} className="space-y-1 pt-2">
               <Divider />
-              <Row label={`Fixe Verpflichtungen ${group.name}`} value={`CHF ${chf(group.yearly)}`} bold />
+              <Row label={`Jahresausgaben ${group.name}`} value={`CHF ${chf(group.yearly)}`} bold />
               {group.fields.map((field) => (
                 <Row key={`${group.id}-${field.label}`} label={field.label} value={`CHF ${chf(field.monthly * 12)}`} muted />
               ))}
