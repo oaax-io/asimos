@@ -261,6 +261,22 @@ function KpiCard({ label, value, limit, mode }: {
   );
 }
 
+function KpiPlaceholder({ label }: { label: string }) {
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-baseline justify-between">
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-xs text-muted-foreground">Refinanzierung</p>
+        </div>
+        <p className="text-lg font-semibold text-muted-foreground">Nicht benötigt</p>
+        <p className="text-xs text-muted-foreground">
+          Bei Refinanzierung / Aufstockung ohne Kauf werden keine zusätzlichen Eigenmittel verlangt.
+        </p>
+      </CardContent>
+    </Card>
+  );
+
 // ---------------- helpers ----------------
 
 function numv(v: unknown, fallback = 0): number {
