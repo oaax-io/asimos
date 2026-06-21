@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { FinancingQuickCheckActions } from "@/components/financing/FinancingQuickCheckActions";
 import {
   FINANCING_TYPE_LABELS, QUICK_CHECK_LABELS, calcQuickCheck,
+  displayQuickCheckStatus, isRefinancingDossier,
   type FinancingType, type QuickCheckStatus,
 } from "@/lib/financing";
 
