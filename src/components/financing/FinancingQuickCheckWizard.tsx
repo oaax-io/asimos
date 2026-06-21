@@ -1675,6 +1675,25 @@ function Step4Metrics({
     return Array.from(new Set(ids));
   }, [form.client_id, form.co_applicant_client_id, coActive, form.additional_co_applicants]);
 
+  // Alle Ausgabenfelder aus der Selbstauskunft (vollständig, nicht nur Leasing/Kredit)
+  const ALL_EXPENSE_FIELDS = [
+    "mortgage_expense",
+    "rent_expense",
+    "leasing_expense",
+    "credit_expense",
+    "life_insurance_expense",
+    "alimony_expense",
+    "health_insurance_expense",
+    "property_insurance_expense",
+    "utilities_expense",
+    "telecom_expense",
+    "living_costs_expense",
+    "taxes_expense",
+    "miscellaneous_expense",
+  ] as const;
+  const sumAllExpenses = (r: any): number =>
+    ALL_EXPENSE_FIELDS.reduce((s, f) => s + Number(r?.[f] ?? 0), 0);
+
   useEffect(() => {
     if (!isRefiOnly) return;
     if (form.monthly_obligations) return; // bereits gesetzt → nicht überschreiben
@@ -1682,25 +1701,23 @@ function Step4Metrics({
     (async () => {
       const { data } = await supabase
         .from("client_self_disclosures")
-        .select("leasing_expense, credit_expense, alimony_expense")
+        .select(ALL_EXPENSE_FIELDS.join(", ") + ", client_id")
         .in("client_id", allApplicantIds);
       if (!data || data.length === 0) return;
-      const total = data.reduce((sum, r: any) =>
-        sum + Number(r.leasing_expense ?? 0) + Number(r.credit_expense ?? 0) + Number(r.alimony_expense ?? 0)
-      , 0);
+      const total = data.reduce((sum, r: any) => sum + sumAllExpenses(r), 0);
       if (total > 0) update("monthly_obligations", String(total));
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRefiOnly, allApplicantIds.join(",")]);
 
-  // Pro-Antragsteller-Übersicht (Einkommen + Verpflichtungen aus Selbstauskunft)
+  // Pro-Antragsteller-Übersicht (alle Ausgaben aus Selbstauskunft)
   const applicantsBreakdown = useQuery({
     queryKey: ["wizard_applicants_breakdown", allApplicantIds.join(",")],
     enabled: isRefiOnly && allApplicantIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("client_self_disclosures")
-        .select("client_id, leasing_expense, credit_expense, alimony_expense")
+        .select("client_id, " + ALL_EXPENSE_FIELDS.join(", "))
         .in("client_id", allApplicantIds);
       if (error) throw error;
       return data ?? [];
@@ -1709,7 +1726,7 @@ function Step4Metrics({
   const obligationsByClient = useMemo(() => {
     const m = new Map<string, number>();
     for (const r of applicantsBreakdown.data ?? []) {
-      m.set((r as any).client_id, Number((r as any).leasing_expense ?? 0) + Number((r as any).credit_expense ?? 0) + Number((r as any).alimony_expense ?? 0));
+      m.set((r as any).client_id, sumAllExpenses(r));
     }
     return m;
   }, [applicantsBreakdown.data]);
