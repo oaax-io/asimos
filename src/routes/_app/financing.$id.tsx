@@ -549,11 +549,13 @@ function MetricCard({
 
 function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
   const { t } = useTranslation();
+  const isRefi = isRefinancingDossier(dossier);
   const i = deriveInputs(dossier);
   const ltvTone = toneFor(i.ltv, 80, 90, "max");
   const affTone = toneFor(i.affordability, 33, 38, "max");
   const eqTone = toneFor(i.equityRatio, 20, 15, "min");
   const hardTone = toneFor(i.hardRatio, 10, 7, "min");
+  const refiStatus = displayQuickCheckStatus(dossier);
 
   const tips: { tone: "ok" | "warn" | "bad"; text: string }[] = [];
   if (i.affordability > 33 && i.income > 0) {
@@ -561,10 +563,15 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
     const delta = Math.max(0, incomeNeeded - i.income);
     tips.push({
       tone: "warn",
-      text: t("financing.detail.quickcheck.tips.incomeNeeded", { delta: chf(delta), needed: chf(incomeNeeded) }),
+      text: isRefi && i.expensesYearly > 0
+        ? `Tragbarkeit ${pct(i.affordability)} — die Jahresausgaben der Antragsteller (${chf(i.expensesYearly)}) sind eingerechnet. Einkommen müsste um ${chf(delta)} steigen oder Ausgaben müssten sinken (benötigt: ${chf(incomeNeeded)} p.a.).`
+        : t("financing.detail.quickcheck.tips.incomeNeeded", { delta: chf(delta), needed: chf(incomeNeeded) }),
     });
   }
-  if (i.equityRatio < 20 && i.total > 0) {
+  if (isRefi && i.ltv > 80 && i.total > 0) {
+    tips.push({ tone: "warn", text: `Belehnung ${pct(i.ltv)} — neue Hypothek auf maximal ${chf(i.total * 0.8)} reduzieren.` });
+  }
+  if (!isRefi && i.equityRatio < 20 && i.total > 0) {
     const needed = i.total * 0.20;
     const missing = Math.max(0, needed - i.equity);
     tips.push({
@@ -572,7 +579,7 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
       text: t("financing.detail.quickcheck.tips.equityMissing", { missing: chf(missing), needed: chf(needed) }),
     });
   }
-  if (i.hardRatio < 10 && i.total > 0) {
+  if (!isRefi && i.hardRatio < 10 && i.total > 0) {
     const neededHard = i.total * 0.10;
     tips.push({
       tone: "warn",
@@ -585,12 +592,28 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
 
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <MetricCard label={t("financing.detail.quickcheck.metrics.ltv")} value={pct(i.ltv)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 80 })} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
-        <MetricCard label={t("financing.detail.quickcheck.metrics.affordability")} value={pct(i.affordability)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 33 })} tone={affTone} fillPct={i.affordability * (100 / 50)} limitPct={33 * (100 / 50)} />
-        <MetricCard label={t("financing.detail.quickcheck.metrics.equityRatio")} value={pct(i.equityRatio)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 20 })} tone={eqTone} fillPct={i.equityRatio * (100 / 50)} limitPct={20 * (100 / 50)} />
-        <MetricCard label={t("financing.detail.quickcheck.metrics.hardEquity")} value={pct(i.hardRatio)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 10 })} tone={hardTone} fillPct={i.hardRatio * (100 / 30)} limitPct={10 * (100 / 30)} />
-      </div>
+      {isRefi ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <RefiBarometerCard label="Aufstockungswunsch" value={chf(n(dossier.requested_increase))} detail="Zusätzlich gewünschter Betrag" />
+          <RefiBarometerCard label="Neue Hypothek" value={chf(i.mortgage)} detail={`Belehnung ${pct(i.ltv)} / max. 80%`} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
+          <RefiBarometerCard label="Einnahmen p.a." value={chf(i.income)} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
+          <RefiBarometerCard label="Ausgaben p.a." value={chf(i.expensesYearly)} detail={`${chf(i.expensesMonthly)} / Monat`} tone={affTone} fillPct={i.affordability * (100 / 60)} limitPct={33 * (100 / 60)} />
+          <Card>
+            <CardContent className="p-4 space-y-2">
+              <p className="text-sm text-muted-foreground">Finanzierbarkeit</p>
+              <Badge className={cn("w-fit", qcBadgeTone(refiStatus))}>{t(`financing.quickCheckStatus.${refiStatus}`, { defaultValue: QUICK_CHECK_LABELS[refiStatus] })}</Badge>
+              <p className={cn("text-2xl font-semibold", toneText(affTone))}>{pct(i.affordability)}</p>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <MetricCard label={t("financing.detail.quickcheck.metrics.ltv")} value={pct(i.ltv)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 80 })} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
+          <MetricCard label={t("financing.detail.quickcheck.metrics.affordability")} value={pct(i.affordability)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 33 })} tone={affTone} fillPct={i.affordability * (100 / 50)} limitPct={33 * (100 / 50)} />
+          <MetricCard label={t("financing.detail.quickcheck.metrics.equityRatio")} value={pct(i.equityRatio)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 20 })} tone={eqTone} fillPct={i.equityRatio * (100 / 50)} limitPct={20 * (100 / 50)} />
+          <MetricCard label={t("financing.detail.quickcheck.metrics.hardEquity")} value={pct(i.hardRatio)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 10 })} tone={hardTone} fillPct={i.hardRatio * (100 / 30)} limitPct={10 * (100 / 30)} />
+        </div>
+      )}
       <Card>
         <CardContent className="p-4 space-y-2">
           <h3 className="font-semibold">{t("financing.detail.quickcheck.tips.title")}</h3>
