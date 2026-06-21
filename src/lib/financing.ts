@@ -190,7 +190,7 @@ export function displayQuickCheckStatus(d: any): QuickCheckStatus {
     : 0;
   const incomeCombined = num(d?.einkommen_kombiniert);
   const income = incomeCombined > 0
-    ? incomeCombined + extraIncome
+    ? incomeCombined
     : num(d?.gross_income_yearly) + num(d?.co_applicant_einkommen) + extraIncome;
   if (total <= 0 || mortgage <= 0 || income <= 0) return "incomplete";
   const rate = num(d?.calculated_interest_rate, 5);
