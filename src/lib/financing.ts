@@ -164,6 +164,44 @@ export function calcQuickCheck(input: QuickCheckInput): QuickCheckResult {
   };
 }
 
+// True wenn Dossier eine reine Refi/Aufstockung ist (kein Kauf/Neubau).
+export function isRefinancingDossier(d: any): boolean {
+  const modules: string[] = Array.isArray(d?.financing_modules) ? d.financing_modules : [];
+  if (modules.length > 0) {
+    if (modules.includes("purchase") || modules.includes("new_build")) return false;
+    return modules.includes("refinance") || modules.includes("increase") || modules.includes("mortgage_increase");
+  }
+  const t = d?.financing_type;
+  return t === "refinance" || t === "increase" || t === "mortgage_increase";
+}
+
+// Anzeige-Status: bei Refi werden Eigenmittel/harte Eigenmittel ignoriert,
+// es zählen nur Belehnung (≤80%) und Tragbarkeit (≤33% / ≤38%).
+export function displayQuickCheckStatus(d: any): QuickCheckStatus {
+  const saved = (d?.quick_check_status as QuickCheckStatus) ?? "incomplete";
+  if (!isRefinancingDossier(d)) return saved;
+  if (saved === "incomplete") return saved;
+  const purchase = num(d?.purchase_price);
+  const reno = num(d?.renovation_costs);
+  const total = num(d?.total_investment) || (purchase + reno);
+  const mortgage = num(d?.requested_mortgage);
+  const incomeCombined = num(d?.einkommen_kombiniert);
+  const income = incomeCombined > 0
+    ? incomeCombined
+    : num(d?.gross_income_yearly) + num(d?.co_applicant_einkommen);
+  if (total <= 0 || mortgage <= 0 || income <= 0) return "incomplete";
+  const rate = num(d?.calculated_interest_rate, 5);
+  const yearly = num(d?.yearly_costs) ||
+    (mortgage * (rate / 100)
+      + (d?.ancillary_costs_yearly != null ? num(d.ancillary_costs_yearly) : total * 0.01)
+      + num(d?.amortisation_yearly));
+  const ltv = total > 0 ? (mortgage / total) * 100 : 0;
+  const afford = income > 0 ? (yearly / income) * 100 : 0;
+  if (ltv > 80 || afford > 38) return "not_financeable";
+  if (afford > 33) return "critical";
+  return "realistic";
+}
+
 function num(v: unknown, fallback = 0): number {
   const n = typeof v === "string" ? parseFloat(v) : (v as number);
   return Number.isFinite(n) ? n : fallback;
