@@ -204,19 +204,32 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
   return (
     <>
       {isRefi ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <RefiBarometerCard label="Aufstockungswunsch" value={`CHF ${chf(numv(dossier.requested_increase))}`} detail="Zusätzlich gewünschter Betrag" />
-          <RefiBarometerCard label="Neue Hypothek" value={`CHF ${chf(m.mortgage)}`} detail={`Belehnung ${m.ltv.toFixed(1)}% / max. 80%`} tone={m.ltv <= 80 ? "ok" : "bad"} fillPct={m.ltv} limitPct={80} />
-          <RefiBarometerCard label="Einnahmen p.a." value={`CHF ${chf(m.income)}`} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
-          <RefiBarometerCard label="Ausgaben p.a." value={`CHF ${chf(m.obligationsYearly)}`} detail={`CHF ${chf(m.obligationsMonthly)} / Monat`} tone={m.afford <= 33 ? "ok" : m.afford <= 38 ? "warn" : "bad"} fillPct={m.afford * (100 / 60)} limitPct={33 * (100 / 60)} />
-          <Card>
-            <CardContent className="p-5 space-y-2">
-              <p className="text-sm text-muted-foreground">Finanzierbarkeit</p>
-              <StatusBadge status={displayQuickCheckStatus(dossier)} />
-              <p className={`text-3xl font-semibold ${m.afford <= 33 ? "text-emerald-600" : m.afford <= 38 ? "text-amber-600" : "text-red-600"}`}>{m.afford.toFixed(1)}%</p>
+        <div className="space-y-4">
+          <Card className="border-2">
+            <CardContent className="p-6 flex flex-wrap items-center justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Finanzierbarkeit</p>
+                <div className="flex items-center gap-3">
+                  <StatusBadge status={displayQuickCheckStatus(dossier)} />
+                  <span className={`text-3xl font-semibold ${m.afford <= 33 ? "text-emerald-600" : m.afford <= 38 ? "text-amber-600" : "text-red-600"}`}>{m.afford.toFixed(1)}%</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Tragbarkeit (Limit 33% / max. 38%)</p>
+              </div>
+              <div className="text-right space-y-1">
+                <p className="text-xs text-muted-foreground">Belehnung (LTV)</p>
+                <p className={`text-2xl font-semibold ${m.ltv <= 80 ? "text-emerald-600" : "text-red-600"}`}>{m.ltv.toFixed(1)}%</p>
+                <p className="text-xs text-muted-foreground">Limit 80%</p>
+              </div>
             </CardContent>
           </Card>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <RefiBarometerCard label="Aufstockungswunsch" value={`CHF ${chf(numv(dossier.requested_increase))}`} detail="Zusätzlich gewünschter Betrag" />
+            <RefiBarometerCard label="Neue Hypothek" value={`CHF ${chf(m.mortgage)}`} detail={`Belehnung ${m.ltv.toFixed(1)}% / max. 80%`} tone={m.ltv <= 80 ? "ok" : "bad"} fillPct={m.ltv} limitPct={80} />
+            <RefiBarometerCard label="Einnahmen p.a." value={`CHF ${chf(m.income)}`} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
+            <RefiBarometerCard label="Fixe Verpflichtungen p.a." value={`CHF ${chf(m.obligationsYearly)}`} detail={`CHF ${chf(m.obligationsMonthly)} / Monat (Leasing, Kredit, Alimente)`} />
+          </div>
         </div>
+
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           <KpiCard label="Belehnung (LTV)" value={m.ltv} limit={80} mode="max" />
