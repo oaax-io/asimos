@@ -965,10 +965,16 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
         amortisation_yearly: amort,
       });
       const eqRatio = total > 0 ? (live.eq / total) * 100 : 0;
-      const aff = result.affordability_ratio;
+      const aff = isRefi
+        ? (Math.max(0, live.inc + dInc) > 0 ? ((result.yearly_costs + live.expensesYearly) / Math.max(0, live.inc + dInc)) * 100 : 0)
+        : result.affordability_ratio;
+      const ltv = total > 0 ? (live.mort / total) * 100 : 0;
       let tone: Cell["tone"];
       let label: string;
-      if (eqRatio < 10) { tone = "gray"; label = t("financing.detail.quickcheck.scenarios.matrixEqInsufficient"); }
+      if (isRefi && (ltv > 80 || aff > 38)) { tone = "bad"; label = pct(aff); }
+      else if (isRefi && aff > 33) { tone = "warn"; label = pct(aff); }
+      else if (isRefi) { tone = "ok"; label = pct(aff); }
+      else if (eqRatio < 10) { tone = "gray"; label = t("financing.detail.quickcheck.scenarios.matrixEqInsufficient"); }
       else if (aff > 38 || eqRatio < 15) { tone = "bad"; label = pct(aff); }
       else if (aff > 33 || eqRatio < 20) { tone = "warn"; label = pct(aff); }
       else { tone = "ok"; label = pct(aff); }
@@ -1083,7 +1089,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
           />
 
           {/* Live result */}
-          <div className="grid gap-2 sm:grid-cols-3 pt-2 border-t">
+          <div className={cn("grid gap-2 pt-2 border-t", isRefi ? "sm:grid-cols-3" : "sm:grid-cols-4")}>
             <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveLtv")} value={pct(liveLtv)} delta={liveLtv - original.ltv} betterWhenLower />
             <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveAffordability")} value={pct(liveAff)} delta={liveAff - original.affordability} betterWhenLower />
             {!isRefi && <LiveMetric label={t("financing.detail.quickcheck.scenarios.liveEquityRatio")} value={pct(liveEqRatio)} delta={liveEqRatio - original.equityRatio} betterWhenLower={false} />}
@@ -1150,10 +1156,12 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
             <LegendDot tone="ok" label={t("financing.detail.quickcheck.scenarios.legend.realistic")} />
             <LegendDot tone="warn" label={t("financing.detail.quickcheck.scenarios.legend.critical")} />
             <LegendDot tone="bad" label={t("financing.detail.quickcheck.scenarios.legend.notFinanceable")} />
-            <LegendDot tone="gray" label={t("financing.detail.quickcheck.scenarios.legend.eqInsufficient")} />
+            {!isRefi && <LegendDot tone="gray" label={t("financing.detail.quickcheck.scenarios.legend.eqInsufficient")} />}
           </div>
           <p className="text-xs text-muted-foreground">
-            {t("financing.detail.quickcheck.scenarios.assumptions", { equity: chf(live.eq), rate: live.r.toFixed(1), anc: original.ancillaryPct.toFixed(1), mortgage: chf(live.mort) })}
+            {isRefi
+              ? `Annahmen: Kalkulationszins ${live.r.toFixed(1)}%, Nebenkosten ${original.ancillaryPct.toFixed(1)}%, Hypothek ${chf(live.mort)}, Verpflichtungen ${chf(live.expensesYearly)} p.a.`
+              : t("financing.detail.quickcheck.scenarios.assumptions", { equity: chf(live.eq), rate: live.r.toFixed(1), anc: original.ancillaryPct.toFixed(1), mortgage: chf(live.mort) })}
           </p>
         </CardContent>
       </Card>
