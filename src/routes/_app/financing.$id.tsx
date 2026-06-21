@@ -16,9 +16,10 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeft, User, Building2, Banknote, RotateCcw, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
+import { expenseFields, expenseLabels } from "@/lib/self-disclosure";
 import {
   FINANCING_TYPE_LABELS, DOSSIER_STATUS_LABELS, QUICK_CHECK_LABELS, displayQuickCheckStatus,
-  calcQuickCheck,
+  calcQuickCheck, isRefinancingDossier,
   type FinancingType, type DossierStatus, type QuickCheckStatus,
 } from "@/lib/financing";
 import { cn } from "@/lib/utils";
@@ -56,7 +57,13 @@ function FinancingDetailPage() {
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      const [clientRes, propRes, coRes] = await Promise.all([
+      const additionalApplicants = Array.isArray((data as any).additional_co_applicants) ? (data as any).additional_co_applicants : [];
+      const applicantIds = Array.from(new Set([
+        data.client_id,
+        (data as any).co_applicant_client_id,
+        ...additionalApplicants.map((a: any) => a?.client_id),
+      ].filter(Boolean))) as string[];
+      const [clientRes, propRes, coRes, applicantClientsRes, disclosuresRes] = await Promise.all([
         data.client_id
           ? supabase.from("clients").select("id, full_name, email, phone").eq("id", data.client_id).maybeSingle()
           : Promise.resolve({ data: null }),
@@ -66,8 +73,14 @@ function FinancingDetailPage() {
         (data as { co_applicant_client_id?: string | null }).co_applicant_client_id
           ? supabase.from("clients").select("id, full_name").eq("id", (data as { co_applicant_client_id: string }).co_applicant_client_id).maybeSingle()
           : Promise.resolve({ data: null }),
+        applicantIds.length > 0
+          ? supabase.from("clients").select("id, full_name").in("id", applicantIds)
+          : Promise.resolve({ data: [] }),
+        applicantIds.length > 0
+          ? supabase.from("client_self_disclosures").select(`client_id, ${expenseFields.join(", ")}`).in("client_id", applicantIds)
+          : Promise.resolve({ data: [] }),
       ]);
-      return { ...data, clients: clientRes.data, properties: propRes.data, co_applicant: coRes.data } as any;
+      return { ...data, clients: clientRes.data, properties: propRes.data, co_applicant: coRes.data, applicant_clients: applicantClientsRes.data ?? [], applicant_disclosures: disclosuresRes.data ?? [] } as any;
     },
   });
 
@@ -359,6 +372,14 @@ type Dossier = Record<string, unknown> & {
   pk_anteil_kombiniert?: number | string | null;
   co_applicant?: { id: string; full_name: string } | null;
   clients?: { id: string; full_name: string; email?: string | null; phone?: string | null } | null;
+  applicant_clients?: { id: string; full_name: string }[] | null;
+  applicant_disclosures?: Record<string, unknown>[] | null;
+  additional_co_applicants?: unknown;
+  monthly_obligations?: number | string | null;
+  existing_mortgage?: number | string | null;
+  existing_mortgage_2?: number | string | null;
+  requested_increase?: number | string | null;
+  new_total_mortgage?: number | string | null;
 };
 
 function n(v: unknown, fallback = 0): number {
@@ -396,6 +417,9 @@ type Inputs = {
   amort: number;
   yearly: number;
   interest: number;
+  housingYearly: number;
+  expensesMonthly: number;
+  expensesYearly: number;
   ltv: number;
   affordability: number;
   equityRatio: number;
@@ -416,8 +440,12 @@ function deriveInputs(d: Dossier): Inputs {
   const vested = n(d.own_funds_vested_benefits);
   const pensionRelated = pension + vested;
   const hardEquity = Math.max(0, equity - pensionRelated);
-  const income = d.einkommen_kombiniert != null && d.einkommen_kombiniert !== ""
-    ? n(d.einkommen_kombiniert) : n(d.gross_income_yearly);
+  const extraIncome = Array.isArray(d.additional_co_applicants)
+    ? (d.additional_co_applicants as any[]).reduce((sum, a) => sum + n(a?.einkommen), 0)
+    : 0;
+  const storedCombinedIncome = n(d.einkommen_kombiniert);
+  const itemizedIncome = n(d.gross_income_yearly) + n(d.co_applicant_einkommen) + extraIncome;
+  const income = Math.max(storedCombinedIncome, itemizedIncome);
   const rate = n(d.calculated_interest_rate, 5);
   const ancillary = d.ancillary_costs_yearly != null && d.ancillary_costs_yearly !== ""
     ? n(d.ancillary_costs_yearly)
@@ -431,7 +459,11 @@ function deriveInputs(d: Dossier): Inputs {
     ? n(d.amortisation_yearly)
     : secondMortgage / amortYears;
   const interest = mortgage * (rate / 100);
-  const yearly = interest + ancillary + amort;
+  const housingYearly = interest + ancillary + amort;
+  const disclosedExpensesMonthly = totalApplicantExpensesMonthly(d);
+  const expensesMonthly = isRefinancingDossier(d) ? (disclosedExpensesMonthly || n(d.monthly_obligations)) : 0;
+  const expensesYearly = expensesMonthly * 12;
+  const yearly = housingYearly + expensesYearly;
   const ltv = total > 0 ? (mortgage / total) * 100 : 0;
   const affordability = income > 0 ? (yearly / income) * 100 : 0;
   const equityRatio = total > 0 ? (equity / total) * 100 : 0;
@@ -440,9 +472,37 @@ function deriveInputs(d: Dossier): Inputs {
   return {
     total, purchase, reno, mortgage, equity, pension, vested, hardEquity,
     income, rate, ancillary, ancillaryPct, firstMortgage, secondMortgage,
-    amortYears, amort, yearly, interest, ltv, affordability, equityRatio,
+    amortYears, amort, yearly, interest, housingYearly, expensesMonthly, expensesYearly, ltv, affordability, equityRatio,
     hardRatio, minIncome,
   };
+}
+
+function applicantList(d: Dossier): { id: string; name: string; income: number }[] {
+  const clientMap = new Map((d.applicant_clients ?? []).map((c) => [c.id, c.full_name]));
+  const extras = Array.isArray(d.additional_co_applicants) ? d.additional_co_applicants as any[] : [];
+  const rows: { id: string; name: string; income: number }[] = [];
+  if (d.clients?.id) rows.push({ id: d.clients.id, name: d.clients.full_name, income: n(d.gross_income_yearly) });
+  if (d.co_applicant_client_id) rows.push({ id: d.co_applicant_client_id, name: d.co_applicant?.full_name ?? clientMap.get(d.co_applicant_client_id) ?? "Mitantragsteller", income: n(d.co_applicant_einkommen) });
+  for (const a of extras) {
+    if (a?.client_id) rows.push({ id: a.client_id, name: clientMap.get(a.client_id) ?? "Mitantragsteller", income: n(a.einkommen) });
+  }
+  return rows.filter((row, index, arr) => arr.findIndex((x) => x.id === row.id) === index);
+}
+
+function applicantExpenseGroups(d: Dossier) {
+  const disclosures = new Map((d.applicant_disclosures ?? []).map((r) => [String(r.client_id), r]));
+  return applicantList(d).map((applicant) => {
+    const disclosure = disclosures.get(applicant.id) ?? {};
+    const fields = expenseFields
+      .map((field) => ({ label: expenseLabels[field], monthly: n(disclosure[field]) }))
+      .filter((row) => row.monthly > 0);
+    const monthly = fields.reduce((sum, row) => sum + row.monthly, 0);
+    return { ...applicant, fields, monthly, yearly: monthly * 12 };
+  });
+}
+
+function totalApplicantExpensesMonthly(d: Dossier): number {
+  return applicantExpenseGroups(d).reduce((sum, group) => sum + group.monthly, 0);
 }
 
 function toneFor(value: number, limit: number, warn: number, mode: "max" | "min"): "ok" | "warn" | "bad" {
@@ -491,13 +551,40 @@ function MetricCard({
   );
 }
 
+function RefiBarometerCard({
+  label, value, detail, tone = "ok", fillPct, limitPct,
+}: {
+  label: string; value: string; detail: string; tone?: "ok" | "warn" | "bad"; fillPct?: number; limitPct?: number;
+}) {
+  const hasBar = fillPct != null && limitPct != null;
+  const fill = Math.max(0, Math.min(100, fillPct ?? 0));
+  const limit = Math.max(0, Math.min(100, limitPct ?? 0));
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-2">
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className={cn("text-2xl font-semibold", hasBar ? toneText(tone) : "text-foreground")}>{value}</p>
+        <p className="text-xs text-muted-foreground">{detail}</p>
+        {hasBar && (
+          <div className="relative h-2 w-full rounded bg-muted">
+            <div className={cn("h-2 rounded transition-all", toneBar(tone))} style={{ width: `${fill}%` }} />
+            <div className="absolute top-[-2px] h-3 w-px bg-foreground/70" style={{ left: `${limit}%` }} aria-hidden />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
   const { t } = useTranslation();
+  const isRefi = isRefinancingDossier(dossier);
   const i = deriveInputs(dossier);
   const ltvTone = toneFor(i.ltv, 80, 90, "max");
   const affTone = toneFor(i.affordability, 33, 38, "max");
   const eqTone = toneFor(i.equityRatio, 20, 15, "min");
   const hardTone = toneFor(i.hardRatio, 10, 7, "min");
+  const refiStatus = displayQuickCheckStatus(dossier);
 
   const tips: { tone: "ok" | "warn" | "bad"; text: string }[] = [];
   if (i.affordability > 33 && i.income > 0) {
@@ -505,10 +592,15 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
     const delta = Math.max(0, incomeNeeded - i.income);
     tips.push({
       tone: "warn",
-      text: t("financing.detail.quickcheck.tips.incomeNeeded", { delta: chf(delta), needed: chf(incomeNeeded) }),
+      text: isRefi && i.expensesYearly > 0
+        ? `Tragbarkeit ${pct(i.affordability)} — die Jahresausgaben der Antragsteller (${chf(i.expensesYearly)}) sind eingerechnet. Einkommen müsste um ${chf(delta)} steigen oder Ausgaben müssten sinken (benötigt: ${chf(incomeNeeded)} p.a.).`
+        : t("financing.detail.quickcheck.tips.incomeNeeded", { delta: chf(delta), needed: chf(incomeNeeded) }),
     });
   }
-  if (i.equityRatio < 20 && i.total > 0) {
+  if (isRefi && i.ltv > 80 && i.total > 0) {
+    tips.push({ tone: "warn", text: `Belehnung ${pct(i.ltv)} — neue Hypothek auf maximal ${chf(i.total * 0.8)} reduzieren.` });
+  }
+  if (!isRefi && i.equityRatio < 20 && i.total > 0) {
     const needed = i.total * 0.20;
     const missing = Math.max(0, needed - i.equity);
     tips.push({
@@ -516,7 +608,7 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
       text: t("financing.detail.quickcheck.tips.equityMissing", { missing: chf(missing), needed: chf(needed) }),
     });
   }
-  if (i.hardRatio < 10 && i.total > 0) {
+  if (!isRefi && i.hardRatio < 10 && i.total > 0) {
     const neededHard = i.total * 0.10;
     tips.push({
       tone: "warn",
@@ -529,12 +621,28 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
 
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <MetricCard label={t("financing.detail.quickcheck.metrics.ltv")} value={pct(i.ltv)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 80 })} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
-        <MetricCard label={t("financing.detail.quickcheck.metrics.affordability")} value={pct(i.affordability)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 33 })} tone={affTone} fillPct={i.affordability * (100 / 50)} limitPct={33 * (100 / 50)} />
-        <MetricCard label={t("financing.detail.quickcheck.metrics.equityRatio")} value={pct(i.equityRatio)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 20 })} tone={eqTone} fillPct={i.equityRatio * (100 / 50)} limitPct={20 * (100 / 50)} />
-        <MetricCard label={t("financing.detail.quickcheck.metrics.hardEquity")} value={pct(i.hardRatio)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 10 })} tone={hardTone} fillPct={i.hardRatio * (100 / 30)} limitPct={10 * (100 / 30)} />
-      </div>
+      {isRefi ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <RefiBarometerCard label="Aufstockungswunsch" value={chf(n(dossier.requested_increase))} detail="Zusätzlich gewünschter Betrag" />
+          <RefiBarometerCard label="Neue Hypothek" value={chf(i.mortgage)} detail={`Belehnung ${pct(i.ltv)} / max. 80%`} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
+          <RefiBarometerCard label="Einnahmen p.a." value={chf(i.income)} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
+          <RefiBarometerCard label="Ausgaben p.a." value={chf(i.expensesYearly)} detail={`${chf(i.expensesMonthly)} / Monat`} tone={affTone} fillPct={i.affordability * (100 / 60)} limitPct={33 * (100 / 60)} />
+          <Card>
+            <CardContent className="p-4 space-y-2">
+              <p className="text-sm text-muted-foreground">Finanzierbarkeit</p>
+              <Badge className={cn("w-fit", qcBadgeTone(refiStatus))}>{t(`financing.quickCheckStatus.${refiStatus}`, { defaultValue: QUICK_CHECK_LABELS[refiStatus] })}</Badge>
+              <p className={cn("text-2xl font-semibold", toneText(affTone))}>{pct(i.affordability)}</p>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <MetricCard label={t("financing.detail.quickcheck.metrics.ltv")} value={pct(i.ltv)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 80 })} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
+          <MetricCard label={t("financing.detail.quickcheck.metrics.affordability")} value={pct(i.affordability)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 33 })} tone={affTone} fillPct={i.affordability * (100 / 50)} limitPct={33 * (100 / 50)} />
+          <MetricCard label={t("financing.detail.quickcheck.metrics.equityRatio")} value={pct(i.equityRatio)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 20 })} tone={eqTone} fillPct={i.equityRatio * (100 / 50)} limitPct={20 * (100 / 50)} />
+          <MetricCard label={t("financing.detail.quickcheck.metrics.hardEquity")} value={pct(i.hardRatio)} limitLabel={t("financing.detail.quickcheck.metrics.limit", { value: 10 })} tone={hardTone} fillPct={i.hardRatio * (100 / 30)} limitPct={10 * (100 / 30)} />
+        </div>
+      )}
       <Card>
         <CardContent className="p-4 space-y-2">
           <h3 className="font-semibold">{t("financing.detail.quickcheck.tips.title")}</h3>
@@ -543,7 +651,7 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
               <li key={idx} className={toneText(tp.tone)}>• {tp.text}</li>
             ))}
           </ul>
-          {(() => {
+          {!isRefi && (() => {
             const coIncome = n(dossier.co_applicant_einkommen);
             const coName = dossier.co_applicant?.full_name;
             const coId = dossier.co_applicant_client_id;
@@ -591,8 +699,10 @@ function DetailRow({ label, value, bold, indent, divider }: {
 
 function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
   const { t } = useTranslation();
+  const isRefi = isRefinancingDossier(dossier);
   const i = deriveInputs(dossier);
   const affTone = toneFor(i.affordability, 33, 38, "max");
+  const expenseGroups = applicantExpenseGroups(dossier);
 
   return (
     <div className="grid gap-3 md:grid-cols-2">
@@ -602,9 +712,16 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
           <DetailRow label={t("financing.detail.quickcheck.detail.purchasePrice")} value={chf(i.purchase)} />
           {i.reno > 0 && <DetailRow label={t("financing.detail.quickcheck.detail.plusRenovation")} value={chf(i.reno)} />}
           <DetailRow label={t("financing.detail.quickcheck.detail.totalInvestment")} value={chf(i.total)} bold divider />
-          <DetailRow label={t("financing.detail.quickcheck.detail.ownFundsTotal", { ratio: pct(i.equityRatio) })} value={chf(i.equity)} divider />
-          <DetailRow label={t("financing.detail.quickcheck.detail.cashEquity")} value={chf(i.hardEquity)} indent />
-          <DetailRow label={t("financing.detail.quickcheck.detail.pensionEquity")} value={chf(i.pension + i.vested)} indent />
+          {isRefi && n(dossier.existing_mortgage) > 0 && <DetailRow label="Bestehende Hypothek 1" value={chf(n(dossier.existing_mortgage))} divider />}
+          {isRefi && n(dossier.existing_mortgage_2) > 0 && <DetailRow label="Bestehende Hypothek 2" value={chf(n(dossier.existing_mortgage_2))} indent />}
+          {isRefi && n(dossier.requested_increase) > 0 && <DetailRow label="Aufstockungswunsch" value={chf(n(dossier.requested_increase))} indent />}
+          {!isRefi && (
+            <>
+              <DetailRow label={t("financing.detail.quickcheck.detail.ownFundsTotal", { ratio: pct(i.equityRatio) })} value={chf(i.equity)} divider />
+              <DetailRow label={t("financing.detail.quickcheck.detail.cashEquity")} value={chf(i.hardEquity)} indent />
+              <DetailRow label={t("financing.detail.quickcheck.detail.pensionEquity")} value={chf(i.pension + i.vested)} indent />
+            </>
+          )}
           <DetailRow label={t("financing.detail.quickcheck.detail.mortgageTotal", { ratio: pct(i.ltv) })} value={chf(i.mortgage)} divider />
           <DetailRow label={t("financing.detail.quickcheck.detail.firstMortgage")} value={chf(i.firstMortgage)} indent />
           <DetailRow label={t("financing.detail.quickcheck.detail.secondMortgage")} value={chf(i.secondMortgage)} indent />
@@ -617,25 +734,31 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
           <DetailRow label={t("financing.detail.quickcheck.detail.calcInterest", { rate: i.rate.toFixed(1) })} value={chf(i.interest)} />
           <DetailRow label={t("financing.detail.quickcheck.detail.ancillary", { pct: i.ancillaryPct.toFixed(1) })} value={chf(i.ancillary)} />
           <DetailRow label={t("financing.detail.quickcheck.detail.amortLabel")} value={chf(i.amort)} />
-          <DetailRow label={t("financing.detail.quickcheck.detail.totalYearlyCost")} value={chf(i.yearly)} bold divider />
-          {(() => {
-            const coIncome = n(dossier.co_applicant_einkommen);
-            const mainIncome = n(dossier.gross_income_yearly);
-            const coName = dossier.co_applicant?.full_name;
-            const role = dossier.co_applicant_role === "ehepartner"
-              ? t("financing.detail.quickcheck.detail.roleSpouse")
-              : t("financing.detail.quickcheck.detail.roleCo");
-            if (coIncome > 0 && coName) {
-              return (
-                <>
-                  <DetailRow label={t("financing.detail.quickcheck.detail.mainIncome")} value={chf(mainIncome)} />
-                  <DetailRow label={t("financing.detail.quickcheck.detail.coApplicantIncome", { role, name: coName })} value={chf(coIncome)} />
-                  <DetailRow label={t("financing.detail.quickcheck.detail.combinedIncome")} value={chf(i.income)} bold />
-                </>
-              );
-            }
-            return <DetailRow label={t("financing.detail.quickcheck.detail.grossIncome")} value={chf(i.income)} />;
-          })()}
+          <DetailRow label="Wohnkosten p.a." value={chf(i.housingYearly)} bold divider />
+          {isRefi && (
+            <>
+              {expenseGroups.map((group) => group.yearly > 0 && (
+                <div key={group.id} className="space-y-1 pt-2">
+                  <DetailRow label={`Jahresausgaben ${group.name}`} value={chf(group.yearly)} bold divider />
+                  {group.fields.map((field) => (
+                    <DetailRow key={`${group.id}-${field.label}`} label={field.label} value={chf(field.monthly * 12)} indent />
+                  ))}
+                </div>
+              ))}
+              {i.expensesYearly > 0 && <DetailRow label="Jahresausgaben total" value={chf(i.expensesYearly)} bold divider />}
+            </>
+          )}
+          <DetailRow label="Total Tragbarkeitskosten p.a." value={chf(i.yearly)} bold divider />
+          {applicantList(dossier).length > 1 ? (
+            <>
+              {applicantList(dossier).map((applicant) => (
+                <DetailRow key={applicant.id} label={`Einkommen ${applicant.name}`} value={chf(applicant.income)} />
+              ))}
+              <DetailRow label={t("financing.detail.quickcheck.detail.combinedIncome")} value={chf(i.income)} bold />
+            </>
+          ) : (
+            <DetailRow label={t("financing.detail.quickcheck.detail.grossIncome")} value={chf(i.income)} />
+          )}
           <div className="my-2 border-t" />
           <div className="flex justify-between gap-4 text-sm">
             <span>{t("financing.detail.quickcheck.detail.affordabilityRatio")}</span>

@@ -15,6 +15,7 @@ import {
 import { ArrowLeft, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
 import { FinancingQuickCheckActions } from "@/components/financing/FinancingQuickCheckActions";
+import { expenseFields, expenseLabels } from "@/lib/self-disclosure";
 import {
   FINANCING_TYPE_LABELS, QUICK_CHECK_LABELS, calcQuickCheck,
   displayQuickCheckStatus, isRefinancingDossier,
@@ -36,15 +37,27 @@ function QuickCheckResultPage() {
         .from("financing_dossiers").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      const [clientRes, propRes] = await Promise.all([
+      const additionalApplicants = Array.isArray((data as any).additional_co_applicants) ? (data as any).additional_co_applicants : [];
+      const applicantIds = Array.from(new Set([
+        data.client_id,
+        (data as any).co_applicant_client_id,
+        ...additionalApplicants.map((a: any) => a?.client_id),
+      ].filter(Boolean))) as string[];
+      const [clientRes, propRes, applicantClientsRes, disclosuresRes] = await Promise.all([
         data.client_id
           ? supabase.from("clients").select("id, full_name, email, phone").eq("id", data.client_id).maybeSingle()
           : Promise.resolve({ data: null }),
         data.property_id
           ? supabase.from("properties").select("id, title, city, price").eq("id", data.property_id).maybeSingle()
           : Promise.resolve({ data: null }),
+        applicantIds.length > 0
+          ? supabase.from("clients").select("id, full_name").in("id", applicantIds)
+          : Promise.resolve({ data: [] }),
+        applicantIds.length > 0
+          ? supabase.from("client_self_disclosures").select(`client_id, ${expenseFields.join(", ")}`).in("client_id", applicantIds)
+          : Promise.resolve({ data: [] }),
       ]);
-      return { ...data, clients: clientRes.data, properties: propRes.data } as any;
+      return { ...data, clients: clientRes.data, properties: propRes.data, applicant_clients: applicantClientsRes.data ?? [], applicant_disclosures: disclosuresRes.data ?? [] } as any;
     },
   });
 
@@ -142,11 +155,15 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const pension = effectivePension(dossier);
     const hardEquity = Math.max(0, equity - pension);
     const income = effectiveIncome(dossier);
-    const obligationsYearly = isRefi ? numv(dossier.monthly_obligations) * 12 : 0;
+    const obligationsMonthly = totalApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations);
+    const obligationsYearly = isRefi ? obligationsMonthly * 12 : 0;
+    const firstMortgageMax = total * 0.6667;
+    const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
+    const amort = dossier.amortisation_yearly != null ? numv(dossier.amortisation_yearly) : secondMortgage / 15;
     // Saved yearly_costs enthält keine Verpflichtungen → bei Refi immer frisch berechnen.
     const baseYearly = mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
       + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
-      + numv(dossier.amortisation_yearly);
+      + amort;
     const yearly = isRefi
       ? baseYearly + obligationsYearly
       : (numv(dossier.yearly_costs) || baseYearly);
@@ -156,16 +173,15 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const equityRatio = total > 0 ? (equity / total) * 100 : 0;
     const hardRatio = total > 0 ? (hardEquity / total) * 100 : 0;
 
-    return { purchase, total, mortgage, equity, hardEquity, income, yearly, ltv, afford, equityRatio, hardRatio };
+    return { purchase, total, mortgage, equity, hardEquity, income, yearly, ltv, afford, equityRatio, hardRatio, obligationsMonthly, obligationsYearly };
   }, [dossier, isRefi]);
 
   const tips: string[] = [];
   if (m.afford > 33 && m.income > 0) {
     const required = m.yearly / 0.33;
     const delta = required - m.income;
-    if (isRefi && numv(dossier.monthly_obligations) > 0) {
-      const obligationsYearly = numv(dossier.monthly_obligations) * 12;
-      tips.push(`Tragbarkeit ${m.afford.toFixed(1)}% — die laufenden Verpflichtungen (CHF ${chf(obligationsYearly)} p.a.) belasten die Quote stark. Ablösung/Reduktion bestehender Kredite oder Leasings prüfen.`);
+    if (isRefi && m.obligationsYearly > 0) {
+      tips.push(`Tragbarkeit ${m.afford.toFixed(1)}% — die Jahresausgaben der Antragsteller (CHF ${chf(m.obligationsYearly)} p.a.) sind eingerechnet. Ausgaben reduzieren oder Einkommen erhöhen.`);
     }
     tips.push(`Einkommen müsste um CHF ${chf(delta)} erhöht werden, um Tragbarkeit auf 33% zu bringen (benötigt: CHF ${chf(required)}).`);
   }
@@ -187,21 +203,28 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <KpiCard label="Belehnung (LTV)" value={m.ltv} limit={80} mode="max" />
-        <KpiCard label="Tragbarkeit" value={m.afford} limit={33} mode="max" />
-        {isRefi ? (
-          <>
-            <KpiPlaceholder label="Eigenmittelquote" />
-            <KpiPlaceholder label="Harte Eigenmittel" />
-          </>
-        ) : (
-          <>
-            <KpiCard label="Eigenmittelquote" value={m.equityRatio} limit={20} mode="min" />
-            <KpiCard label="Harte Eigenmittel" value={m.hardRatio} limit={10} mode="min" />
-          </>
-        )}
-      </div>
+      {isRefi ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <RefiBarometerCard label="Aufstockungswunsch" value={`CHF ${chf(numv(dossier.requested_increase))}`} detail="Zusätzlich gewünschter Betrag" />
+          <RefiBarometerCard label="Neue Hypothek" value={`CHF ${chf(m.mortgage)}`} detail={`Belehnung ${m.ltv.toFixed(1)}% / max. 80%`} tone={m.ltv <= 80 ? "ok" : "bad"} fillPct={m.ltv} limitPct={80} />
+          <RefiBarometerCard label="Einnahmen p.a." value={`CHF ${chf(m.income)}`} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
+          <RefiBarometerCard label="Ausgaben p.a." value={`CHF ${chf(m.obligationsYearly)}`} detail={`CHF ${chf(m.obligationsMonthly)} / Monat`} tone={m.afford <= 33 ? "ok" : m.afford <= 38 ? "warn" : "bad"} fillPct={m.afford * (100 / 60)} limitPct={33 * (100 / 60)} />
+          <Card>
+            <CardContent className="p-5 space-y-2">
+              <p className="text-sm text-muted-foreground">Finanzierbarkeit</p>
+              <StatusBadge status={displayQuickCheckStatus(dossier)} />
+              <p className={`text-3xl font-semibold ${m.afford <= 33 ? "text-emerald-600" : m.afford <= 38 ? "text-amber-600" : "text-red-600"}`}>{m.afford.toFixed(1)}%</p>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <KpiCard label="Belehnung (LTV)" value={m.ltv} limit={80} mode="max" />
+          <KpiCard label="Tragbarkeit" value={m.afford} limit={33} mode="max" />
+          <KpiCard label="Eigenmittelquote" value={m.equityRatio} limit={20} mode="min" />
+          <KpiCard label="Harte Eigenmittel" value={m.hardRatio} limit={10} mode="min" />
+        </div>
+      )}
 
       <Card>
         <CardContent className="p-5 space-y-2">
@@ -261,24 +284,35 @@ function KpiCard({ label, value, limit, mode }: {
   );
 }
 
-function KpiPlaceholder({ label }: { label: string }) {
+function RefiBarometerCard({
+  label, value, detail, tone = "ok", fillPct, limitPct,
+}: {
+  label: string; value: string; detail: string; tone?: "ok" | "warn" | "bad"; fillPct?: number; limitPct?: number;
+}) {
+  const hasBar = fillPct != null && limitPct != null;
+  const fill = Math.max(0, Math.min(100, fillPct ?? 0));
+  const limit = Math.max(0, Math.min(100, limitPct ?? 0));
+  const colors = {
+    ok: { bar: "bg-emerald-500", text: "text-emerald-600" },
+    warn: { bar: "bg-amber-500", text: "text-amber-600" },
+    bad: { bar: "bg-red-500", text: "text-red-600" },
+  }[tone];
   return (
     <Card>
-      <CardContent className="p-5 space-y-3">
-        <div className="flex items-baseline justify-between">
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="text-xs text-muted-foreground">Refinanzierung</p>
-        </div>
-        <p className="text-lg font-semibold text-muted-foreground">Nicht benötigt</p>
-        <p className="text-xs text-muted-foreground">
-          Bei Refinanzierung / Aufstockung ohne Kauf werden keine zusätzlichen Eigenmittel verlangt.
-        </p>
+      <CardContent className="p-5 space-y-2">
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className={`text-3xl font-semibold ${hasBar ? colors.text : "text-foreground"}`}>{value}</p>
+        <p className="text-xs text-muted-foreground">{detail}</p>
+        {hasBar && (
+          <div className="relative h-2.5 w-full rounded-full bg-muted overflow-hidden">
+            <div className={`h-full ${colors.bar} transition-all`} style={{ width: `${fill}%` }} />
+            <div className="absolute top-0 h-full w-0.5 bg-foreground/70" style={{ left: `${limit}%` }} aria-hidden />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
-
-
 
 // ---------------- helpers ----------------
 
@@ -290,11 +324,42 @@ function numv(v: unknown, fallback = 0): number {
 
 // Berücksichtigt Mitantragsteller/Ehepartner: nutzt kombiniertes Einkommen sofern gesetzt.
 function effectiveIncome(d: any): number {
+  const extraIncome = Array.isArray(d?.additional_co_applicants)
+    ? d.additional_co_applicants.reduce((sum: number, a: any) => sum + numv(a?.einkommen), 0)
+    : 0;
   const combined = numv(d?.einkommen_kombiniert);
   if (combined > 0) return combined;
   const main = numv(d?.gross_income_yearly);
   const co = numv(d?.co_applicant_einkommen);
-  return main + co;
+  return main + co + extraIncome;
+}
+
+function applicantList(d: any): { id: string; name: string; income: number }[] {
+  const clientMap = new Map(((d?.applicant_clients ?? []) as any[]).map((c) => [c.id, c.full_name]));
+  const extras = Array.isArray(d?.additional_co_applicants) ? d.additional_co_applicants : [];
+  const rows: { id: string; name: string; income: number }[] = [];
+  if (d?.clients?.id) rows.push({ id: d.clients.id, name: d.clients.full_name, income: numv(d.gross_income_yearly) });
+  if (d?.co_applicant_client_id) rows.push({ id: d.co_applicant_client_id, name: clientMap.get(d.co_applicant_client_id) ?? "Mitantragsteller", income: numv(d.co_applicant_einkommen) });
+  for (const a of extras) {
+    if (a?.client_id) rows.push({ id: a.client_id, name: clientMap.get(a.client_id) ?? "Mitantragsteller", income: numv(a.einkommen) });
+  }
+  return rows.filter((row, index, arr) => arr.findIndex((x) => x.id === row.id) === index);
+}
+
+function applicantExpenseGroups(d: any) {
+  const disclosures = new Map(((d?.applicant_disclosures ?? []) as any[]).map((r) => [String(r.client_id), r]));
+  return applicantList(d).map((applicant) => {
+    const disclosure = disclosures.get(applicant.id) ?? {};
+    const fields = expenseFields
+      .map((field) => ({ label: expenseLabels[field], monthly: numv((disclosure as any)[field]) }))
+      .filter((row) => row.monthly > 0);
+    const monthly = fields.reduce((sum, row) => sum + row.monthly, 0);
+    return { ...applicant, fields, monthly, yearly: monthly * 12 };
+  });
+}
+
+function totalApplicantExpensesMonthly(d: any): number {
+  return applicantExpenseGroups(d).reduce((sum, group) => sum + group.monthly, 0);
 }
 
 // Eigenmittel beider Partner zusammen (inkl. PK / Freizügigkeit – zählen als Eigenmittel)
@@ -349,7 +414,9 @@ function DetailTab({ dossier }: { dossier: any }) {
   const income = effectiveIncome(dossier);
   const rate = numv(dossier.calculated_interest_rate, 5);
   const isRefi = isRefinancingDossier(dossier);
-  const obligationsYearly = isRefi ? numv(dossier.monthly_obligations) * 12 : 0;
+  const expenseGroups = applicantExpenseGroups(dossier);
+  const obligationsMonthly = totalApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations);
+  const obligationsYearly = isRefi ? obligationsMonthly * 12 : 0;
 
   // 1./2. Hypothek (CH-Standard: 1. Hypo bis 65% des Wertes, 2. Hypo 65–80%)
   const firstMortgageMax = total * 0.65;
@@ -379,10 +446,17 @@ function DetailTab({ dossier }: { dossier: any }) {
             <Row label="davon Eigenleistung" value={`CHF ${chf(numv(dossier.renovation_own_work))}`} muted />
           )}
           <Row label="= Gesamtinvestition" value={`CHF ${chf(total)}`} bold />
-          <Divider />
-          <Row label="Eigenmittel total" value={`CHF ${chf(equity)} (${equityRatio.toFixed(1)}%)`} />
-          <Row label="davon Barvermögen" value={`CHF ${chf(cash)}`} muted />
-          <Row label="davon PK / Freizügigkeit" value={`CHF ${chf(pension)}`} muted />
+          {isRefi && numv(dossier.existing_mortgage) > 0 && <Row label="Bestehende Hypothek 1" value={`CHF ${chf(numv(dossier.existing_mortgage))}`} />}
+          {isRefi && numv(dossier.existing_mortgage_2) > 0 && <Row label="Bestehende Hypothek 2" value={`CHF ${chf(numv(dossier.existing_mortgage_2))}`} muted />}
+          {isRefi && numv(dossier.requested_increase) > 0 && <Row label="Aufstockungswunsch" value={`CHF ${chf(numv(dossier.requested_increase))}`} muted />}
+          {!isRefi && (
+            <>
+              <Divider />
+              <Row label="Eigenmittel total" value={`CHF ${chf(equity)} (${equityRatio.toFixed(1)}%)`} />
+              <Row label="davon Barvermögen" value={`CHF ${chf(cash)}`} muted />
+              <Row label="davon PK / Freizügigkeit" value={`CHF ${chf(pension)}`} muted />
+            </>
+          )}
           <Row label="Hypothek gesamt" value={`CHF ${chf(mortgage)} (${mortgageRatio.toFixed(1)}%)`} />
           <Row label="1. Hypothek (≤ 65%)" value={`CHF ${chf(firstMortgage)}`} muted />
           <Row label="2. Hypothek (65–80%)" value={`CHF ${chf(secondMortgage)}`} muted />
@@ -396,9 +470,18 @@ function DetailTab({ dossier }: { dossier: any }) {
           <Row label={`Kalk. Zinssatz (${rate.toFixed(1)}%)`} value={`CHF ${chf(interestCost)}`} />
           <Row label="Nebenkosten (1%)" value={`CHF ${chf(ancillary)}`} />
           <Row label="Amortisation" value={`CHF ${chf(amortYearly)}`} />
-          {obligationsYearly > 0 && <Row label="Verpflichtungen p.a." value={`CHF ${chf(obligationsYearly)}`} />}
+          {isRefi && expenseGroups.map((group) => group.yearly > 0 && (
+            <div key={group.id} className="space-y-1 pt-2">
+              <Divider />
+              <Row label={`Jahresausgaben ${group.name}`} value={`CHF ${chf(group.yearly)}`} bold />
+              {group.fields.map((field) => (
+                <Row key={`${group.id}-${field.label}`} label={field.label} value={`CHF ${chf(field.monthly * 12)}`} muted />
+              ))}
+            </div>
+          ))}
+          {obligationsYearly > 0 && <Row label="Jahresausgaben total" value={`CHF ${chf(obligationsYearly)}`} />}
           <Divider />
-          <Row label="Total Wohnkosten p.a." value={`CHF ${chf(totalYearly)}`} bold />
+          <Row label="Total Tragbarkeitskosten p.a." value={`CHF ${chf(totalYearly)}`} bold />
           <Row label="Bruttoeinkommen p.a." value={`CHF ${chf(income)}`} />
           <Divider />
           <div className="flex justify-between items-baseline">

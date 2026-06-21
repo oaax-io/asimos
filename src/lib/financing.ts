@@ -185,18 +185,22 @@ export function displayQuickCheckStatus(d: any): QuickCheckStatus {
   const reno = num(d?.renovation_costs);
   const total = num(d?.total_investment) || (purchase + reno);
   const mortgage = num(d?.requested_mortgage);
+  const extraIncome = Array.isArray(d?.additional_co_applicants)
+    ? d.additional_co_applicants.reduce((sum: number, a: any) => sum + num(a?.einkommen), 0)
+    : 0;
   const incomeCombined = num(d?.einkommen_kombiniert);
-  const income = incomeCombined > 0
-    ? incomeCombined
-    : num(d?.gross_income_yearly) + num(d?.co_applicant_einkommen);
+  const itemizedIncome = num(d?.gross_income_yearly) + num(d?.co_applicant_einkommen) + extraIncome;
+  const income = Math.max(incomeCombined, itemizedIncome);
   if (total <= 0 || mortgage <= 0 || income <= 0) return "incomplete";
   const rate = num(d?.calculated_interest_rate, 5);
+  const firstMortgageMax = total * 0.6667;
+  const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
+  const amort = d?.amortisation_yearly != null ? num(d?.amortisation_yearly) : secondMortgage / 15;
   const obligationsYearly = num(d?.monthly_obligations) * 12;
-  const yearly = num(d?.yearly_costs) ||
-    (mortgage * (rate / 100)
-      + (d?.ancillary_costs_yearly != null ? num(d.ancillary_costs_yearly) : total * 0.01)
-      + num(d?.amortisation_yearly)
-      + obligationsYearly);
+  const yearly = mortgage * (rate / 100)
+    + (d?.ancillary_costs_yearly != null ? num(d.ancillary_costs_yearly) : total * 0.01)
+    + amort
+    + obligationsYearly;
   const ltv = total > 0 ? (mortgage / total) * 100 : 0;
   const afford = income > 0 ? (yearly / income) * 100 : 0;
   if (ltv > 80 || afford > 38) return "not_financeable";
