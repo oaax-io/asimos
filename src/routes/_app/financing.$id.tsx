@@ -781,6 +781,9 @@ function QuickCheckDetail({ dossier }: { dossier: Dossier }) {
             </>
           )}
           <DetailRow label="Total Tragbarkeitskosten p.a." value={chf(i.yearly)} bold divider />
+          {isRefi && i.allExpensesYearly > i.expensesYearly && (
+            <DetailRow label={`Budgetbelastung inkl. aller Ausgaben (${pct(i.budgetRatio)})`} value={chf(i.totalBudgetYearly)} />
+          )}
           {applicantList(dossier).length > 1 ? (
             <>
               {applicantList(dossier).map((applicant) => (
