@@ -159,6 +159,8 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const income = effectiveIncome(dossier);
     const obligationsMonthly = totalApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations);
     const obligationsYearly = isRefi ? obligationsMonthly * 12 : 0;
+    const allExpensesMonthly = isRefi ? (totalAllApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations)) : 0;
+    const allExpensesYearly = allExpensesMonthly * 12;
     const firstMortgageMax = total * 0.6667;
     const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
     const amort = dossier.amortisation_yearly != null ? numv(dossier.amortisation_yearly) : secondMortgage / 15;
@@ -175,7 +177,7 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const equityRatio = total > 0 ? (equity / total) * 100 : 0;
     const hardRatio = total > 0 ? (hardEquity / total) * 100 : 0;
 
-    return { purchase, total, mortgage, equity, hardEquity, income, yearly, ltv, afford, equityRatio, hardRatio, obligationsMonthly, obligationsYearly };
+    return { purchase, total, mortgage, equity, hardEquity, income, yearly, ltv, afford, equityRatio, hardRatio, obligationsMonthly, obligationsYearly, allExpensesMonthly, allExpensesYearly };
   }, [dossier, isRefi]);
 
   const tips: string[] = [];
@@ -228,7 +230,7 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
             <RefiBarometerCard label="Aufstockungswunsch" value={`CHF ${chf(numv(dossier.requested_increase))}`} detail="Zusätzlich gewünschter Betrag" />
             <RefiBarometerCard label="Neue Hypothek" value={`CHF ${chf(m.mortgage)}`} detail={`Belehnung ${m.ltv.toFixed(1)}% / max. 80%`} tone={m.ltv <= 80 ? "ok" : "bad"} fillPct={m.ltv} limitPct={80} />
             <RefiBarometerCard label="Einnahmen p.a." value={`CHF ${chf(m.income)}`} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
-            <RefiBarometerCard label="Fixe Verpflichtungen p.a." value={`CHF ${chf(m.obligationsYearly)}`} detail={`CHF ${chf(m.obligationsMonthly)} / Monat (Leasing, Kredit, Alimente)`} />
+            <RefiBarometerCard label="Jahresausgaben p.a." value={`CHF ${chf(m.allExpensesYearly)}`} detail={`CHF ${chf(m.allExpensesMonthly)} / Monat gemäss Selbstauskunft`} />
           </div>
         </div>
 
