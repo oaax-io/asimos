@@ -405,8 +405,8 @@ function DossierCard({
               <Badge className={dossierTone(dossierStatus)}>
                 {dossierStatusLabel(dossierStatus)}
               </Badge>
-              <Badge variant="outline" className={qcTone(d.quick_check_status ?? "incomplete")}>
-                {qcStatusLabel(d.quick_check_status ?? "incomplete")}
+              <Badge variant="outline" className={qcTone(qcStatus ?? "incomplete")}>
+                {qcStatusLabel(qcStatus ?? "incomplete")}
               </Badge>
               <Badge variant="outline" className="gap-1">
                 {ds === "existing_property"
