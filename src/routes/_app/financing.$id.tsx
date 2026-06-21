@@ -792,6 +792,7 @@ type ScenarioRow = {
 function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
   const { t } = useTranslation();
   const original = useMemo(() => deriveInputs(dossier), [dossier]);
+  const isRefi = isRefinancingDossier(dossier);
   const dossierId = String((dossier as { id?: string }).id ?? "");
   const queryClient = useQueryClient();
 
@@ -802,6 +803,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
   const [rate, setRate] = useState<number>(Math.round(original.rate * 10) / 10);
   const [reno, setReno] = useState<number>(Math.round(original.reno));
   const [ownWork, setOwnWork] = useState<number>(Math.round(n((dossier as { renovation_own_work?: number | string | null }).renovation_own_work)));
+  const [expensesMonthly, setExpensesMonthly] = useState<number>(Math.round(original.expensesMonthly));
 
   const [saveOpen, setSaveOpen] = useState(false);
   const [scenarioName, setScenarioName] = useState("");
@@ -815,6 +817,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
   const mortgageMax = Math.round(original.mortgage * 1.3) || 100000;
   const renoMax = Math.max(Math.round(original.reno * 2.0), Math.round(purchase * 0.5), 200000);
   const ownWorkMax = Math.max(reno, 50000);
+  const expensesMax = Math.max(Math.round(original.expensesMonthly * 2), 10000);
 
   // Live calculation based on slider values
   const live = useMemo(() => {
