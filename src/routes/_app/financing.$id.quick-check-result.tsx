@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { FinancingQuickCheckActions } from "@/components/financing/FinancingQuickCheckActions";
 import {
   FINANCING_TYPE_LABELS, QUICK_CHECK_LABELS, calcQuickCheck,
+  displayQuickCheckStatus, isRefinancingDossier,
   type FinancingType, type QuickCheckStatus,
 } from "@/lib/financing";
 
@@ -58,8 +59,8 @@ function QuickCheckResultPage() {
   if (!dossier) return <p className="text-sm text-muted-foreground">Dossier nicht gefunden.</p>;
   if (dossier.quick_check_status === "incomplete") return null;
 
-  const isRefi = isRefiDossier(dossier);
-  const status = computeDisplayStatus(dossier, isRefi);
+  const isRefi = isRefinancingDossier(dossier);
+  const status = displayQuickCheckStatus(dossier);
   const title =
     dossier.title ||
     FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType] ||
@@ -163,7 +164,7 @@ function computeDisplayStatus(dossier: any, isRefi: boolean): QuickCheckStatus {
 }
 
 function VorpruefungTab({ dossier }: { dossier: any }) {
-  const isRefi = isRefiDossier(dossier);
+  const isRefi = isRefinancingDossier(dossier);
   const m = useMemo(() => {
     const purchase = numv(dossier.purchase_price);
     const reno = numv(dossier.renovation_costs);
