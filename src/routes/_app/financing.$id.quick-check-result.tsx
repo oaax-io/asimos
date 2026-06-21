@@ -155,7 +155,8 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const pension = effectivePension(dossier);
     const hardEquity = Math.max(0, equity - pension);
     const income = effectiveIncome(dossier);
-    const obligationsYearly = isRefi ? numv(dossier.monthly_obligations) * 12 : 0;
+    const obligationsMonthly = totalApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations);
+    const obligationsYearly = isRefi ? obligationsMonthly * 12 : 0;
     // Saved yearly_costs enthält keine Verpflichtungen → bei Refi immer frisch berechnen.
     const baseYearly = mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
       + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
@@ -169,16 +170,15 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const equityRatio = total > 0 ? (equity / total) * 100 : 0;
     const hardRatio = total > 0 ? (hardEquity / total) * 100 : 0;
 
-    return { purchase, total, mortgage, equity, hardEquity, income, yearly, ltv, afford, equityRatio, hardRatio };
+    return { purchase, total, mortgage, equity, hardEquity, income, yearly, ltv, afford, equityRatio, hardRatio, obligationsMonthly, obligationsYearly };
   }, [dossier, isRefi]);
 
   const tips: string[] = [];
   if (m.afford > 33 && m.income > 0) {
     const required = m.yearly / 0.33;
     const delta = required - m.income;
-    if (isRefi && numv(dossier.monthly_obligations) > 0) {
-      const obligationsYearly = numv(dossier.monthly_obligations) * 12;
-      tips.push(`Tragbarkeit ${m.afford.toFixed(1)}% — die laufenden Verpflichtungen (CHF ${chf(obligationsYearly)} p.a.) belasten die Quote stark. Ablösung/Reduktion bestehender Kredite oder Leasings prüfen.`);
+    if (isRefi && m.obligationsYearly > 0) {
+      tips.push(`Tragbarkeit ${m.afford.toFixed(1)}% — die Jahresausgaben der Antragsteller (CHF ${chf(m.obligationsYearly)} p.a.) sind eingerechnet. Ausgaben reduzieren oder Einkommen erhöhen.`);
     }
     tips.push(`Einkommen müsste um CHF ${chf(delta)} erhöht werden, um Tragbarkeit auf 33% zu bringen (benötigt: CHF ${chf(required)}).`);
   }
@@ -200,21 +200,28 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <KpiCard label="Belehnung (LTV)" value={m.ltv} limit={80} mode="max" />
-        <KpiCard label="Tragbarkeit" value={m.afford} limit={33} mode="max" />
-        {isRefi ? (
-          <>
-            <KpiPlaceholder label="Eigenmittelquote" />
-            <KpiPlaceholder label="Harte Eigenmittel" />
-          </>
-        ) : (
-          <>
-            <KpiCard label="Eigenmittelquote" value={m.equityRatio} limit={20} mode="min" />
-            <KpiCard label="Harte Eigenmittel" value={m.hardRatio} limit={10} mode="min" />
-          </>
-        )}
-      </div>
+      {isRefi ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <RefiBarometerCard label="Aufstockungswunsch" value={`CHF ${chf(numv(dossier.requested_increase))}`} detail="Zusätzlich gewünschter Betrag" />
+          <RefiBarometerCard label="Neue Hypothek" value={`CHF ${chf(m.mortgage)}`} detail={`Belehnung ${m.ltv.toFixed(1)}% / max. 80%`} tone={m.ltv <= 80 ? "ok" : "bad"} fillPct={m.ltv} limitPct={80} />
+          <RefiBarometerCard label="Einnahmen p.a." value={`CHF ${chf(m.income)}`} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
+          <RefiBarometerCard label="Ausgaben p.a." value={`CHF ${chf(m.obligationsYearly)}`} detail={`CHF ${chf(m.obligationsMonthly)} / Monat`} tone={m.afford <= 33 ? "ok" : m.afford <= 38 ? "warn" : "bad"} fillPct={m.afford * (100 / 60)} limitPct={33 * (100 / 60)} />
+          <Card>
+            <CardContent className="p-5 space-y-2">
+              <p className="text-sm text-muted-foreground">Finanzierbarkeit</p>
+              <StatusBadge status={displayQuickCheckStatus(dossier)} />
+              <p className={`text-3xl font-semibold ${m.afford <= 33 ? "text-emerald-600" : m.afford <= 38 ? "text-amber-600" : "text-red-600"}`}>{m.afford.toFixed(1)}%</p>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <KpiCard label="Belehnung (LTV)" value={m.ltv} limit={80} mode="max" />
+          <KpiCard label="Tragbarkeit" value={m.afford} limit={33} mode="max" />
+          <KpiCard label="Eigenmittelquote" value={m.equityRatio} limit={20} mode="min" />
+          <KpiCard label="Harte Eigenmittel" value={m.hardRatio} limit={10} mode="min" />
+        </div>
+      )}
 
       <Card>
         <CardContent className="p-5 space-y-2">
