@@ -143,11 +143,13 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const hardEquity = Math.max(0, equity - pension);
     const income = effectiveIncome(dossier);
     const obligationsYearly = isRefi ? numv(dossier.monthly_obligations) * 12 : 0;
-    const yearly = numv(dossier.yearly_costs) ||
-      (mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
-        + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
-        + numv(dossier.amortisation_yearly)
-        + obligationsYearly);
+    // Saved yearly_costs enthält keine Verpflichtungen → bei Refi immer frisch berechnen.
+    const baseYearly = mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
+      + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
+      + numv(dossier.amortisation_yearly);
+    const yearly = isRefi
+      ? baseYearly + obligationsYearly
+      : (numv(dossier.yearly_costs) || baseYearly);
 
     const ltv = total > 0 ? (mortgage / total) * 100 : 0;
     const afford = income > 0 ? (yearly / income) * 100 : 0;
