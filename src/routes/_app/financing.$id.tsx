@@ -998,7 +998,7 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
       const p = Math.max(0, live.p + dPrice);
       const total = p + live.rn;
       const ancillary = total * (original.ancillaryPct / 100);
-      const firstMortgageMax = total * 0.6667;
+      const firstMortgageMax = total * 0.65;
       const second = Math.max(0, live.mort - firstMortgageMax);
       const amort = second / original.amortYears;
       const result = calcQuickCheck({
@@ -1014,8 +1014,9 @@ function QuickCheckScenarios({ dossier }: { dossier: Dossier }) {
         amortisation_yearly: amort,
       });
       const eqRatio = total > 0 ? (live.eq / total) * 100 : 0;
+      // Bank-Tragbarkeit: nur Wohnkosten / Einkommen.
       const aff = isRefi
-        ? (Math.max(0, live.inc + dInc) > 0 ? ((result.yearly_costs + live.expensesYearly) / Math.max(0, live.inc + dInc)) * 100 : 0)
+        ? (Math.max(0, live.inc + dInc) > 0 ? (result.yearly_costs / Math.max(0, live.inc + dInc)) * 100 : 0)
         : result.affordability_ratio;
       const ltv = total > 0 ? (live.mort / total) * 100 : 0;
       let tone: Cell["tone"];
