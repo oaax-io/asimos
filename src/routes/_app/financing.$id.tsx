@@ -615,7 +615,7 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
     tips.push({
       tone: "warn",
       text: isRefi && i.expensesYearly > 0
-        ? `Tragbarkeit ${pct(i.affordability)} — die Jahresausgaben der Antragsteller (${chf(i.expensesYearly)}) sind eingerechnet. Einkommen müsste um ${chf(delta)} steigen oder Ausgaben müssten sinken (benötigt: ${chf(incomeNeeded)} p.a.).`
+        ? `Tragbarkeit ${pct(i.affordability)} — Wohnkosten plus tragbarkeitsrelevante Verpflichtungen (${chf(i.expensesYearly)} p.a.) sind eingerechnet. Einkommen müsste um ${chf(delta)} steigen oder Verpflichtungen müssten sinken (benötigt: ${chf(incomeNeeded)} p.a.).`
         : t("financing.detail.quickcheck.tips.incomeNeeded", { delta: chf(delta), needed: chf(incomeNeeded) }),
     });
   }
@@ -648,7 +648,7 @@ function QuickCheckVorpruefung({ dossier }: { dossier: Dossier }) {
           <RefiBarometerCard label="Aufstockungswunsch" value={chf(n(dossier.requested_increase))} detail="Zusätzlich gewünschter Betrag" />
           <RefiBarometerCard label="Neue Hypothek" value={chf(i.mortgage)} detail={`Belehnung ${pct(i.ltv)} / max. 80%`} tone={ltvTone} fillPct={i.ltv} limitPct={80} />
           <RefiBarometerCard label="Einnahmen p.a." value={chf(i.income)} detail={`${applicantList(dossier).length || 1} Antragsteller`} />
-          <RefiBarometerCard label="Ausgaben p.a." value={chf(i.expensesYearly)} detail={`${chf(i.expensesMonthly)} / Monat`} tone={affTone} fillPct={i.affordability * (100 / 60)} limitPct={33 * (100 / 60)} />
+          <RefiBarometerCard label="Jahresausgaben p.a." value={chf(i.allExpensesYearly)} detail={`${chf(i.allExpensesMonthly)} / Monat gemäss Selbstauskunft`} />
           <Card>
             <CardContent className="p-4 space-y-2">
               <p className="text-sm text-muted-foreground">Finanzierbarkeit</p>
