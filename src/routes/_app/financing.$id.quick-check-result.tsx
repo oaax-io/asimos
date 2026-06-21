@@ -874,22 +874,26 @@ function RefiScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => v
 
   const newMortgage = s.existingMortgage + s.existingMortgage2 + s.requestedIncrease;
   const ltv = s.propertyValue > 0 ? (newMortgage / s.propertyValue) * 100 : 0;
-  const firstMortgageMax = s.propertyValue * 0.6667;
+  const firstMortgageMax = s.propertyValue * 0.65;
   const secondMortgage = Math.max(0, newMortgage - firstMortgageMax);
   const amortYearly = secondMortgage / 15;
   const interest = newMortgage * (s.rate / 100);
   const ancillary = s.propertyValue * 0.01;
   const obligationsYearly = s.obligationsMonthly * 12;
-  const yearly = interest + ancillary + amortYearly + obligationsYearly;
-  const afford = s.income > 0 ? (yearly / s.income) * 100 : 0;
+  // Bank-Tragbarkeit: Wohnkosten / Einkommen (private Verpflichtungen sind Budget, nicht Bank).
+  const housingYearly = interest + ancillary + amortYearly;
+  const yearly = housingYearly;
+  const afford = s.income > 0 ? (housingYearly / s.income) * 100 : 0;
+  const budgetRatio = s.income > 0 ? ((housingYearly + obligationsYearly) / s.income) * 100 : 0;
 
   const origNewMortgage = original.existingMortgage + original.existingMortgage2 + original.requestedIncrease;
   const origLtv = original.propertyValue > 0 ? (origNewMortgage / original.propertyValue) * 100 : 0;
-  const origFirstMax = original.propertyValue * 0.6667;
+  const origFirstMax = original.propertyValue * 0.65;
   const origSecond = Math.max(0, origNewMortgage - origFirstMax);
   const origAmort = origSecond / 15;
-  const origYearly = origNewMortgage * (original.rate / 100) + original.propertyValue * 0.01 + origAmort + original.obligationsMonthly * 12;
-  const origAfford = original.income > 0 ? (origYearly / original.income) * 100 : 0;
+  const origHousing = origNewMortgage * (original.rate / 100) + original.propertyValue * 0.01 + origAmort;
+  const origYearly = origHousing;
+  const origAfford = original.income > 0 ? (origHousing / original.income) * 100 : 0;
 
   const status: QuickCheckStatus =
     ltv > 80 || afford > 38 ? "not_financeable" :
