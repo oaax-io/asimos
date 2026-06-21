@@ -161,16 +161,14 @@ function VorpruefungTab({ dossier }: { dossier: any }) {
     const obligationsYearly = isRefi ? obligationsMonthly * 12 : 0;
     const allExpensesMonthly = isRefi ? (totalAllApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations)) : 0;
     const allExpensesYearly = allExpensesMonthly * 12;
-    const firstMortgageMax = total * 0.6667;
+    const firstMortgageMax = total * 0.65;
     const secondMortgage = Math.max(0, mortgage - firstMortgageMax);
     const amort = dossier.amortisation_yearly != null ? numv(dossier.amortisation_yearly) : secondMortgage / 15;
-    // Saved yearly_costs enthält keine Verpflichtungen → bei Refi immer frisch berechnen.
+    // Bank-Tragbarkeit (CH-Standard): nur Wohnkosten / Einkommen.
     const baseYearly = mortgage * (numv(dossier.calculated_interest_rate, 5) / 100)
       + (dossier.ancillary_costs_yearly != null ? numv(dossier.ancillary_costs_yearly) : total * 0.01)
       + amort;
-    const yearly = isRefi
-      ? baseYearly + obligationsYearly
-      : (numv(dossier.yearly_costs) || baseYearly);
+    const yearly = isRefi ? baseYearly : (numv(dossier.yearly_costs) || baseYearly);
 
     const ltv = total > 0 ? (mortgage / total) * 100 : 0;
     const afford = income > 0 ? (yearly / income) * 100 : 0;
