@@ -440,8 +440,12 @@ function deriveInputs(d: Dossier): Inputs {
   const vested = n(d.own_funds_vested_benefits);
   const pensionRelated = pension + vested;
   const hardEquity = Math.max(0, equity - pensionRelated);
-  const income = d.einkommen_kombiniert != null && d.einkommen_kombiniert !== ""
-    ? n(d.einkommen_kombiniert) : n(d.gross_income_yearly);
+  const extraIncome = Array.isArray(d.additional_co_applicants)
+    ? (d.additional_co_applicants as any[]).reduce((sum, a) => sum + n(a?.einkommen), 0)
+    : 0;
+  const storedCombinedIncome = n(d.einkommen_kombiniert);
+  const itemizedIncome = n(d.gross_income_yearly) + n(d.co_applicant_einkommen) + extraIncome;
+  const income = Math.max(storedCombinedIncome, itemizedIncome);
   const rate = n(d.calculated_interest_rate, 5);
   const ancillary = d.ancillary_costs_yearly != null && d.ancillary_costs_yearly !== ""
     ? n(d.ancillary_costs_yearly)
