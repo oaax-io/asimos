@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   FINANCING_TYPE_LABELS, DOSSIER_STATUS_LABELS, QUICK_CHECK_LABELS,
+  displayQuickCheckStatus,
   type FinancingType, type DossierStatus, type QuickCheckStatus,
 } from "@/lib/financing";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
