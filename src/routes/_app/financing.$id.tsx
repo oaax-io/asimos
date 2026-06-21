@@ -16,9 +16,10 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeft, User, Building2, Banknote, RotateCcw, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
+import { expenseFields, expenseLabels } from "@/lib/self-disclosure";
 import {
   FINANCING_TYPE_LABELS, DOSSIER_STATUS_LABELS, QUICK_CHECK_LABELS, displayQuickCheckStatus,
-  calcQuickCheck,
+  calcQuickCheck, isRefinancingDossier,
   type FinancingType, type DossierStatus, type QuickCheckStatus,
 } from "@/lib/financing";
 import { cn } from "@/lib/utils";
@@ -56,7 +57,13 @@ function FinancingDetailPage() {
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      const [clientRes, propRes, coRes] = await Promise.all([
+      const additionalApplicants = Array.isArray((data as any).additional_co_applicants) ? (data as any).additional_co_applicants : [];
+      const applicantIds = Array.from(new Set([
+        data.client_id,
+        (data as any).co_applicant_client_id,
+        ...additionalApplicants.map((a: any) => a?.client_id),
+      ].filter(Boolean))) as string[];
+      const [clientRes, propRes, coRes, applicantClientsRes, disclosuresRes] = await Promise.all([
         data.client_id
           ? supabase.from("clients").select("id, full_name, email, phone").eq("id", data.client_id).maybeSingle()
           : Promise.resolve({ data: null }),
@@ -66,8 +73,14 @@ function FinancingDetailPage() {
         (data as { co_applicant_client_id?: string | null }).co_applicant_client_id
           ? supabase.from("clients").select("id, full_name").eq("id", (data as { co_applicant_client_id: string }).co_applicant_client_id).maybeSingle()
           : Promise.resolve({ data: null }),
+        applicantIds.length > 0
+          ? supabase.from("clients").select("id, full_name").in("id", applicantIds)
+          : Promise.resolve({ data: [] }),
+        applicantIds.length > 0
+          ? supabase.from("client_self_disclosures").select(`client_id, ${expenseFields.join(", ")}`).in("client_id", applicantIds)
+          : Promise.resolve({ data: [] }),
       ]);
-      return { ...data, clients: clientRes.data, properties: propRes.data, co_applicant: coRes.data } as any;
+      return { ...data, clients: clientRes.data, properties: propRes.data, co_applicant: coRes.data, applicant_clients: applicantClientsRes.data ?? [], applicant_disclosures: disclosuresRes.data ?? [] } as any;
     },
   });
 
