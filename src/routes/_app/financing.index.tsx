@@ -366,7 +366,7 @@ function DossierCard({
 
   const reasons: Array<{ key: string; label: string; tone: "ok" | "warn" | "bad" }> =
     Array.isArray(d.quick_check_reasons) ? d.quick_check_reasons : [];
-  const qcStatus = d.quick_check_status as QuickCheckStatus | null;
+  const qcStatus = displayQuickCheckStatus(d);
   const dossierStatus = (d.dossier_status ?? "draft") as DossierStatus;
   const qcToneClass =
     qcStatus === "realistic" ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
