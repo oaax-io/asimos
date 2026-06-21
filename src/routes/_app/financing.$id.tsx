@@ -372,6 +372,14 @@ type Dossier = Record<string, unknown> & {
   pk_anteil_kombiniert?: number | string | null;
   co_applicant?: { id: string; full_name: string } | null;
   clients?: { id: string; full_name: string; email?: string | null; phone?: string | null } | null;
+  applicant_clients?: { id: string; full_name: string }[] | null;
+  applicant_disclosures?: Record<string, unknown>[] | null;
+  additional_co_applicants?: unknown;
+  monthly_obligations?: number | string | null;
+  existing_mortgage?: number | string | null;
+  existing_mortgage_2?: number | string | null;
+  requested_increase?: number | string | null;
+  new_total_mortgage?: number | string | null;
 };
 
 function n(v: unknown, fallback = 0): number {
@@ -409,6 +417,9 @@ type Inputs = {
   amort: number;
   yearly: number;
   interest: number;
+  housingYearly: number;
+  expensesMonthly: number;
+  expensesYearly: number;
   ltv: number;
   affordability: number;
   equityRatio: number;
@@ -444,7 +455,11 @@ function deriveInputs(d: Dossier): Inputs {
     ? n(d.amortisation_yearly)
     : secondMortgage / amortYears;
   const interest = mortgage * (rate / 100);
-  const yearly = interest + ancillary + amort;
+  const housingYearly = interest + ancillary + amort;
+  const disclosedExpensesMonthly = totalApplicantExpensesMonthly(d);
+  const expensesMonthly = isRefinancingDossier(d) ? (disclosedExpensesMonthly || n(d.monthly_obligations)) : 0;
+  const expensesYearly = expensesMonthly * 12;
+  const yearly = housingYearly + expensesYearly;
   const ltv = total > 0 ? (mortgage / total) * 100 : 0;
   const affordability = income > 0 ? (yearly / income) * 100 : 0;
   const equityRatio = total > 0 ? (equity / total) * 100 : 0;
@@ -453,9 +468,37 @@ function deriveInputs(d: Dossier): Inputs {
   return {
     total, purchase, reno, mortgage, equity, pension, vested, hardEquity,
     income, rate, ancillary, ancillaryPct, firstMortgage, secondMortgage,
-    amortYears, amort, yearly, interest, ltv, affordability, equityRatio,
+    amortYears, amort, yearly, interest, housingYearly, expensesMonthly, expensesYearly, ltv, affordability, equityRatio,
     hardRatio, minIncome,
   };
+}
+
+function applicantList(d: Dossier): { id: string; name: string; income: number }[] {
+  const clientMap = new Map((d.applicant_clients ?? []).map((c) => [c.id, c.full_name]));
+  const extras = Array.isArray(d.additional_co_applicants) ? d.additional_co_applicants as any[] : [];
+  const rows: { id: string; name: string; income: number }[] = [];
+  if (d.clients?.id) rows.push({ id: d.clients.id, name: d.clients.full_name, income: n(d.gross_income_yearly) });
+  if (d.co_applicant_client_id) rows.push({ id: d.co_applicant_client_id, name: d.co_applicant?.full_name ?? clientMap.get(d.co_applicant_client_id) ?? "Mitantragsteller", income: n(d.co_applicant_einkommen) });
+  for (const a of extras) {
+    if (a?.client_id) rows.push({ id: a.client_id, name: clientMap.get(a.client_id) ?? "Mitantragsteller", income: n(a.einkommen) });
+  }
+  return rows.filter((row, index, arr) => arr.findIndex((x) => x.id === row.id) === index);
+}
+
+function applicantExpenseGroups(d: Dossier) {
+  const disclosures = new Map((d.applicant_disclosures ?? []).map((r) => [String(r.client_id), r]));
+  return applicantList(d).map((applicant) => {
+    const disclosure = disclosures.get(applicant.id) ?? {};
+    const fields = expenseFields
+      .map((field) => ({ label: expenseLabels[field], monthly: n(disclosure[field]) }))
+      .filter((row) => row.monthly > 0);
+    const monthly = fields.reduce((sum, row) => sum + row.monthly, 0);
+    return { ...applicant, fields, monthly, yearly: monthly * 12 };
+  });
+}
+
+function totalApplicantExpensesMonthly(d: Dossier): number {
+  return applicantExpenseGroups(d).reduce((sum, group) => sum + group.monthly, 0);
 }
 
 function toneFor(value: number, limit: number, warn: number, mode: "max" | "min"): "ok" | "warn" | "bad" {
