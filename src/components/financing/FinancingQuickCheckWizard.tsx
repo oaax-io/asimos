@@ -74,6 +74,10 @@ function maxLtvForUsage(usage: string, ownerSharePct?: number): number {
   return 80; // owner_occupied oder unbekannt → konservativ Standard
 }
 
+function ownerShareForMixed(value: string): number {
+  return String(value ?? "").trim() === "" ? 50 : num(value);
+}
+
 const OBJECT_TYPE_LABELS: Record<string, string> = {
   house: "Einfamilienhaus",
   apartment: "Eigentumswohnung",
@@ -523,7 +527,7 @@ export function FinancingQuickCheckWizard({
     // Refi: Verpflichtungen (CHF/Monat) → jährlich in Tragbarkeit
     const obligationsYearly = isRefiOnly ? num(form.monthly_obligations) * 12 : 0;
     // Max. Belehnung nach Nutzung (nur Refi; sonst Standard 80%)
-    const maxLtv = isRefiOnly && form.usage_type ? maxLtvForUsage(form.usage_type, num(form.owner_occupied_share)) : 80;
+    const maxLtv = isRefiOnly && form.usage_type ? maxLtvForUsage(form.usage_type, ownerShareForMixed(form.owner_occupied_share)) : 80;
 
     const ltv = total > 0 ? (mortgage / total) * 100 : 0;
     const equityRatio = total > 0 ? (equity / total) * 100 : 0;
@@ -575,7 +579,7 @@ export function FinancingQuickCheckWizard({
         return propertyVal > 0
           && mortgage > 0
           && income > 0
-          && (form.usage_type !== "mixed" || (num(form.owner_occupied_share) > 0 && num(form.owner_occupied_share) < 100));
+          && (form.usage_type !== "mixed" || (ownerShareForMixed(form.owner_occupied_share) > 0 && ownerShareForMixed(form.owner_occupied_share) < 100));
       }
       const equity = num(form.own_funds_total);
       const purchase = num(form.property_purchase_price);
