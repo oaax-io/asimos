@@ -58,7 +58,8 @@ function QuickCheckResultPage() {
   if (!dossier) return <p className="text-sm text-muted-foreground">Dossier nicht gefunden.</p>;
   if (dossier.quick_check_status === "incomplete") return null;
 
-  const status = (dossier.quick_check_status as QuickCheckStatus) ?? "incomplete";
+  const isRefi = isRefiDossier(dossier);
+  const status = computeDisplayStatus(dossier, isRefi);
   const title =
     dossier.title ||
     FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType] ||
