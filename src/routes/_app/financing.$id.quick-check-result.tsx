@@ -446,9 +446,12 @@ function DetailTab({ dossier }: { dossier: any }) {
   const income = effectiveIncome(dossier);
   const rate = numv(dossier.calculated_interest_rate, 5);
   const isRefi = isRefinancingDossier(dossier);
-  const expenseGroups = applicantExpenseGroups(dossier);
+  const expenseGroups = applicantExpenseGroups(dossier, expenseFields);
+  const relevantExpenseGroups = applicantExpenseGroups(dossier);
   const obligationsMonthly = totalApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations);
   const obligationsYearly = isRefi ? obligationsMonthly * 12 : 0;
+  const allExpensesMonthly = isRefi ? (totalAllApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations)) : 0;
+  const allExpensesYearly = allExpensesMonthly * 12;
 
   // 1./2. Hypothek (CH-Standard: 1. Hypo bis 65% des Wertes, 2. Hypo 65–80%)
   const firstMortgageMax = total * 0.65;
@@ -511,7 +514,15 @@ function DetailTab({ dossier }: { dossier: any }) {
               ))}
             </div>
           ))}
-          {obligationsYearly > 0 && <Row label="Fixe Verpflichtungen total" value={`CHF ${chf(obligationsYearly)}`} />}
+          {allExpensesYearly > 0 && <Row label="Jahresausgaben total" value={`CHF ${chf(allExpensesYearly)}`} />}
+          {obligationsYearly > 0 && (
+            <>
+              {relevantExpenseGroups.map((group) => group.yearly > 0 && (
+                <Row key={`relevant-${group.id}`} label={`davon tragbarkeitsrelevant ${group.name}`} value={`CHF ${chf(group.yearly)}`} muted />
+              ))}
+              <Row label="Tragbarkeitsrelevante Verpflichtungen" value={`CHF ${chf(obligationsYearly)}`} />
+            </>
+          )}
           <Divider />
           <Row label="Total Tragbarkeitskosten p.a." value={`CHF ${chf(totalYearly)}`} bold />
           <Row label="Bruttoeinkommen p.a." value={`CHF ${chf(income)}`} />
