@@ -433,7 +433,9 @@ function DetailTab({ dossier }: { dossier: any }) {
   const income = effectiveIncome(dossier);
   const rate = numv(dossier.calculated_interest_rate, 5);
   const isRefi = isRefinancingDossier(dossier);
-  const obligationsYearly = isRefi ? numv(dossier.monthly_obligations) * 12 : 0;
+  const expenseGroups = applicantExpenseGroups(dossier);
+  const obligationsMonthly = totalApplicantExpensesMonthly(dossier) || numv(dossier.monthly_obligations);
+  const obligationsYearly = isRefi ? obligationsMonthly * 12 : 0;
 
   // 1./2. Hypothek (CH-Standard: 1. Hypo bis 65% des Wertes, 2. Hypo 65–80%)
   const firstMortgageMax = total * 0.65;
@@ -463,10 +465,17 @@ function DetailTab({ dossier }: { dossier: any }) {
             <Row label="davon Eigenleistung" value={`CHF ${chf(numv(dossier.renovation_own_work))}`} muted />
           )}
           <Row label="= Gesamtinvestition" value={`CHF ${chf(total)}`} bold />
-          <Divider />
-          <Row label="Eigenmittel total" value={`CHF ${chf(equity)} (${equityRatio.toFixed(1)}%)`} />
-          <Row label="davon Barvermögen" value={`CHF ${chf(cash)}`} muted />
-          <Row label="davon PK / Freizügigkeit" value={`CHF ${chf(pension)}`} muted />
+          {isRefi && numv(dossier.existing_mortgage) > 0 && <Row label="Bestehende Hypothek 1" value={`CHF ${chf(numv(dossier.existing_mortgage))}`} />}
+          {isRefi && numv(dossier.existing_mortgage_2) > 0 && <Row label="Bestehende Hypothek 2" value={`CHF ${chf(numv(dossier.existing_mortgage_2))}`} muted />}
+          {isRefi && numv(dossier.requested_increase) > 0 && <Row label="Aufstockungswunsch" value={`CHF ${chf(numv(dossier.requested_increase))}`} muted />}
+          {!isRefi && (
+            <>
+              <Divider />
+              <Row label="Eigenmittel total" value={`CHF ${chf(equity)} (${equityRatio.toFixed(1)}%)`} />
+              <Row label="davon Barvermögen" value={`CHF ${chf(cash)}`} muted />
+              <Row label="davon PK / Freizügigkeit" value={`CHF ${chf(pension)}`} muted />
+            </>
+          )}
           <Row label="Hypothek gesamt" value={`CHF ${chf(mortgage)} (${mortgageRatio.toFixed(1)}%)`} />
           <Row label="1. Hypothek (≤ 65%)" value={`CHF ${chf(firstMortgage)}`} muted />
           <Row label="2. Hypothek (65–80%)" value={`CHF ${chf(secondMortgage)}`} muted />
@@ -480,9 +489,18 @@ function DetailTab({ dossier }: { dossier: any }) {
           <Row label={`Kalk. Zinssatz (${rate.toFixed(1)}%)`} value={`CHF ${chf(interestCost)}`} />
           <Row label="Nebenkosten (1%)" value={`CHF ${chf(ancillary)}`} />
           <Row label="Amortisation" value={`CHF ${chf(amortYearly)}`} />
-          {obligationsYearly > 0 && <Row label="Verpflichtungen p.a." value={`CHF ${chf(obligationsYearly)}`} />}
+          {isRefi && expenseGroups.map((group) => group.yearly > 0 && (
+            <div key={group.id} className="space-y-1 pt-2">
+              <Divider />
+              <Row label={`Jahresausgaben ${group.name}`} value={`CHF ${chf(group.yearly)}`} bold />
+              {group.fields.map((field) => (
+                <Row key={`${group.id}-${field.label}`} label={field.label} value={`CHF ${chf(field.monthly * 12)}`} muted />
+              ))}
+            </div>
+          ))}
+          {obligationsYearly > 0 && <Row label="Jahresausgaben total" value={`CHF ${chf(obligationsYearly)}`} />}
           <Divider />
-          <Row label="Total Wohnkosten p.a." value={`CHF ${chf(totalYearly)}`} bold />
+          <Row label="Total Tragbarkeitskosten p.a." value={`CHF ${chf(totalYearly)}`} bold />
           <Row label="Bruttoeinkommen p.a." value={`CHF ${chf(income)}`} />
           <Divider />
           <div className="flex justify-between items-baseline">
