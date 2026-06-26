@@ -26,6 +26,46 @@ const STATUSES = ["open","in_progress","waiting","done","cancelled"] as const;
 const PRIORITIES = ["low","normal","high","urgent"] as const;
 const RELATED_TYPES = ["client","property","mandate","reservation","lead"] as const;
 
+const SUBJECT_PRESETS: string[] = [
+  "Notartermin planen",
+  "Notartermin durchführen",
+  "Kundenordner erstellen",
+  "Besichtigung organisieren",
+  "Besichtigung durchführen",
+  "Exposé erstellen",
+  "Exposé versenden",
+  "Inserat schalten",
+  "Inserat aktualisieren",
+  "Fotos / Drohnenaufnahmen organisieren",
+  "Grundriss erstellen / aktualisieren",
+  "Energieausweis anfordern",
+  "Grundbuchauszug anfordern",
+  "Auszug aus Liegenschaftskataster anfordern",
+  "Verkaufsunterlagen zusammenstellen",
+  "Kaufvertragsentwurf prüfen",
+  "Kaufvertrag unterzeichnen",
+  "Reservationsvereinbarung erstellen",
+  "Mietvertrag aufsetzen",
+  "Mietvertrag unterzeichnen",
+  "Übergabeprotokoll erstellen",
+  "Schlüsselübergabe vereinbaren",
+  "Objektbewertung durchführen",
+  "Markt- und Lageanalyse erstellen",
+  "Finanzierungsbestätigung einholen",
+  "Selbstauskunft anfordern",
+  "Bonitätsprüfung durchführen",
+  "Kunde kontaktieren / Rückruf",
+  "Termin mit Eigentümer vereinbaren",
+  "Termin mit Käufer vereinbaren",
+  "Maklervertrag aufsetzen",
+  "Maklervertrag unterzeichnen",
+  "Provisionsrechnung erstellen",
+  "Handwerker / Gutachter beauftragen",
+  "Renovationsangebot einholen",
+  "Objektübergabe vorbereiten",
+  "Nachfassen / Follow-up",
+];
+
 const PRIORITY_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   low: "outline", normal: "secondary", high: "default", urgent: "destructive",
 };
@@ -443,6 +483,15 @@ function TaskForm({
   const labels = useTaskLabels();
   return (
     <div className="space-y-3">
+      <div>
+        <Label>Betreff-Vorlage</Label>
+        <Select value={SUBJECT_PRESETS.includes(form.title) ? form.title : ""} onValueChange={(v) => setForm({ ...form, title: v })}>
+          <SelectTrigger><SelectValue placeholder="Vorlage auswählen (optional)" /></SelectTrigger>
+          <SelectContent className="max-h-72">
+            {SUBJECT_PRESETS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
       <div><Label>{t("tasks.form.title")} *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
       <div><Label>{t("tasks.form.description")}</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
       <div className="grid grid-cols-3 gap-3">
