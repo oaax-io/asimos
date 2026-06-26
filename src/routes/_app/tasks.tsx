@@ -393,10 +393,48 @@ function TasksPage() {
         optionsFor={optionsFor}
         onSave={(patch) => update.mutate({ id: editing!.id, patch }, { onSuccess: () => { toast.success(t("tasks.toasts.updated")); setEditId(null); } })}
         onDelete={async () => { if (await confirm({ title: t("tasks.confirmDelete.title"), confirmText: t("tasks.confirmDelete.confirm") })) remove.mutate(editing!.id); }}
+        onRequestWaiting={(task) => { setWaitingComment(""); setWaitingFor({ id: task.id, title: task.title }); }}
       />
+
+      <Dialog open={!!waitingFor} onOpenChange={(o) => { if (!o) setWaitingFor(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Aufgabe auf Pendent setzen</DialogTitle>
+            <DialogDescription>
+              {waitingFor?.title ? `„${waitingFor.title}" – ` : ""}Bitte gib einen Kommentar an, warum die Aufgabe pendent ist.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            rows={4}
+            autoFocus
+            placeholder="Kommentar zum Pendent-Status…"
+            value={waitingComment}
+            onChange={(e) => setWaitingComment(e.target.value)}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWaitingFor(null)}>{t("tasks.actions.cancel")}</Button>
+            <Button
+              disabled={!waitingComment.trim() || update.isPending}
+              onClick={() => {
+                if (!waitingFor) return;
+                const current = tasks.find((x: any) => x.id === waitingFor.id);
+                const stamp = new Date().toLocaleString("de-CH");
+                const existing = (current?.description ?? "").trim();
+                const entry = `— ${stamp} — Pendent: ${waitingComment.trim()}`;
+                const newDesc = existing ? `${existing}\n\n${entry}` : entry;
+                update.mutate(
+                  { id: waitingFor.id, patch: { status: "waiting", description: newDesc } },
+                  { onSuccess: () => { toast.success("Aufgabe auf Pendent gesetzt"); setWaitingFor(null); setEditId(null); } },
+                );
+              }}
+            >Speichern</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
+
 
 function TaskForm({
   form, setForm, employees, optionsFor,
