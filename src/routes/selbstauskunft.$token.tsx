@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import {
   AlertTriangle, CheckCircle2, Loader2, Save, Send, ClipboardList,
+  Users, Plus, Trash2, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -22,6 +23,8 @@ import {
   incomeLabels,
   maritalStatusOptions,
   salutationOptions,
+  relationshipTypeLabels,
+  relationshipTypes,
   formatCHF,
 } from "@/lib/self-disclosure";
 import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
@@ -53,6 +56,17 @@ const JOB = [
   { key: "employed_as", label: "Beschäftigt als" },
   { key: "employed_since", label: "Beschäftigt seit", type: "date" },
 ];
+
+type CoApplicant = Row & { relationship_type: string };
+
+const STEPS = [
+  { id: "personal", label: "Persönlich" },
+  { id: "job", label: "Beruf" },
+  { id: "income", label: "Einnahmen" },
+  { id: "expenses", label: "Ausgaben" },
+  { id: "coapplicants", label: "Mitantragsteller" },
+  { id: "review", label: "Übermitteln" },
+] as const;
 
 function PublicSelfDisclosure() {
   const { token } = Route.useParams();
@@ -124,6 +138,9 @@ function FormBody({
   onSubmitted: () => void;
 }) {
   const [form, setForm] = useState<Row>(initial ?? {});
+  const [step, setStep] = useState(0);
+  const [coApplicants, setCoApplicants] = useState<CoApplicant[]>([]);
+
   useEffect(() => {
     setForm(initial ?? {});
   }, [initial]);
@@ -163,8 +180,21 @@ function FormBody({
         _payload: buildPayload(),
       });
       if (e1) throw e1;
-      const { error: e2 } = await supabase.rpc("self_disclosure_link_submit", {
+      const cleanedCoApplicants = coApplicants
+        .map((c) => {
+          const o: Row = { relationship_type: c.relationship_type || "co_applicant" };
+          Object.entries(c).forEach(([k, v]) => {
+            if (k === "relationship_type") return;
+            if (v === "" || v === undefined || v === null) return;
+            o[k] = v;
+          });
+          return o;
+        })
+        .filter((c) => (c.first_name || "").toString().trim() || (c.last_name || "").toString().trim());
+
+      const { error: e2 } = await supabase.rpc("self_disclosure_link_submit_full", {
         _token: token,
+        _coapplicants: cleanedCoApplicants,
       });
       if (e2) throw e2;
     },
@@ -174,6 +204,23 @@ function FormBody({
     },
     onError: (e: any) => toast.error(e.message ?? "Fehler beim Übermitteln"),
   });
+
+  const addCoApplicant = (relationship_type: string) =>
+    setCoApplicants((arr) => [
+      ...arr,
+      { relationship_type, country: "CH" },
+    ]);
+
+  const updateCoApplicant = (idx: number, k: string, v: any) =>
+    setCoApplicants((arr) =>
+      arr.map((c, i) => (i === idx ? { ...c, [k]: v } : c)),
+    );
+
+  const removeCoApplicant = (idx: number) =>
+    setCoApplicants((arr) => arr.filter((_, i) => i !== idx));
+
+  const currentStep = STEPS[step];
+  const isLast = step === STEPS.length - 1;
 
   return (
     <Shell>
@@ -189,142 +236,407 @@ function FormBody({
         </div>
       </div>
 
+      {/* Stepper */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {STEPS.map((s, i) => (
+          <button
+            key={s.id}
+            onClick={() => setStep(i)}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+              i === step
+                ? "bg-primary text-primary-foreground"
+                : i < step
+                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+                  : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {i + 1}. {s.label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-6">
-        <BenchmarkCard benchmark={benchmark} />
+        {currentStep.id === "personal" && (
+          <Section title="Persönliche Angaben">
+            <Grid>
+              <FieldRow label="Anrede">
+                <Select
+                  value={(form.salutation as string) ?? ""}
+                  onValueChange={(v) => set("salutation", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectContent>
+                    {salutationOptions.map((o) => (
+                      <SelectItem key={o} value={o}>{o}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FieldRow>
+              <FieldRow label="Familienstand">
+                <Select
+                  value={(form.marital_status as string) ?? ""}
+                  onValueChange={(v) => set("marital_status", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectContent>
+                    {maritalStatusOptions.map((o) => (
+                      <SelectItem key={o} value={o}>{o}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FieldRow>
+              {STAMM.map((f) => (
+                <FieldRow key={f.key} label={f.label}>
+                  <Input
+                    type={f.type ?? "text"}
+                    value={(form[f.key] as string) ?? ""}
+                    onChange={(e) => set(f.key, e.target.value)}
+                  />
+                </FieldRow>
+              ))}
+            </Grid>
+          </Section>
+        )}
 
-        <Section title="Persönliche Angaben">
-          <Grid>
-            <FieldRow label="Anrede">
-              <Select
-                value={(form.salutation as string) ?? ""}
-                onValueChange={(v) => set("salutation", v)}
-              >
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>
-                  {salutationOptions.map((o) => (
-                    <SelectItem key={o} value={o}>{o}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FieldRow>
-            <FieldRow label="Familienstand">
-              <Select
-                value={(form.marital_status as string) ?? ""}
-                onValueChange={(v) => set("marital_status", v)}
-              >
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>
-                  {maritalStatusOptions.map((o) => (
-                    <SelectItem key={o} value={o}>{o}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FieldRow>
-            {STAMM.map((f) => (
-              <FieldRow key={f.key} label={f.label}>
-                <Input
-                  type={f.type ?? "text"}
-                  value={(form[f.key] as string) ?? ""}
-                  onChange={(e) => set(f.key, e.target.value)}
+        {currentStep.id === "job" && (
+          <Section title="Beruf">
+            <Grid>
+              <FieldRow label="Status">
+                <Select
+                  value={(form.employment_status as string) ?? ""}
+                  onValueChange={(v) => set("employment_status", v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectContent>
+                    {employmentStatusOptions.map((o) => (
+                      <SelectItem key={o} value={o}>{o}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FieldRow>
+              {JOB.map((f) => (
+                <FieldRow key={f.key} label={f.label}>
+                  <Input
+                    type={f.type ?? "text"}
+                    value={(form[f.key] as string) ?? ""}
+                    onChange={(e) => set(f.key, e.target.value)}
+                  />
+                </FieldRow>
+              ))}
+              <FieldRow label="Lohn netto monatlich">
+                <Money value={form.salary_net_monthly} onChange={(n) => set("salary_net_monthly", n)} />
+              </FieldRow>
+            </Grid>
+          </Section>
+        )}
+
+        {currentStep.id === "income" && (
+          <>
+            <BenchmarkCard benchmark={benchmark} />
+            <Section
+              title="Einnahmen monatlich"
+              right={
+                <span className="text-sm text-muted-foreground">
+                  Total:{" "}
+                  <strong className="text-foreground">{formatCHF(benchmark.totalIncome)}</strong>
+                </span>
+              }
+            >
+              <Grid>
+                {incomeFields.map((f) => (
+                  <FieldRow key={f} label={incomeLabels[f]}>
+                    <Money value={form[f]} onChange={(n) => set(f, n)} />
+                  </FieldRow>
+                ))}
+              </Grid>
+            </Section>
+          </>
+        )}
+
+        {currentStep.id === "expenses" && (
+          <>
+            <BenchmarkCard benchmark={benchmark} />
+            <Section
+              title="Ausgaben monatlich"
+              right={
+                <span className="text-sm text-muted-foreground">
+                  Total:{" "}
+                  <strong className="text-foreground">{formatCHF(benchmark.totalExpenses)}</strong>
+                </span>
+              }
+            >
+              <Grid>
+                {expenseFields.map((f) => (
+                  <FieldRow key={f} label={expenseLabels[f]}>
+                    <Money value={form[f]} onChange={(n) => set(f, n)} />
+                  </FieldRow>
+                ))}
+              </Grid>
+            </Section>
+          </>
+        )}
+
+        {currentStep.id === "coapplicants" && (
+          <Section
+            title="Mitantragsteller / Ehepartner (optional)"
+            right={
+              <span className="text-xs text-muted-foreground">
+                <Users className="inline h-3 w-3 mr-1" />
+                {coApplicants.length}
+              </span>
+            }
+          >
+            <p className="mb-4 text-sm text-muted-foreground">
+              Möchten Sie Ihre Ehepartnerin / Ihren Ehepartner oder weitere
+              Mitantragsteller mit angeben? Diese werden bei Ihrem Berater als
+              eigene Person mit Ihnen verknüpft erfasst.
+            </p>
+
+            <div className="mb-4 flex flex-wrap gap-2">
+              {relationshipTypes.map((t) => (
+                <Button
+                  key={t}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addCoApplicant(t)}
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  {relationshipTypeLabels[t]}
+                </Button>
+              ))}
+            </div>
+
+            <div className="space-y-6">
+              {coApplicants.map((c, idx) => (
+                <Card key={idx} className="border-dashed">
+                  <CardContent className="p-4 space-y-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-primary" />
+                        <h4 className="font-semibold">
+                          Person {idx + 1} —{" "}
+                          {relationshipTypeLabels[
+                            (c.relationship_type as keyof typeof relationshipTypeLabels) ?? "co_applicant"
+                          ]}
+                        </h4>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeCoApplicant(idx)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+
+                    <Grid>
+                      <FieldRow label="Beziehung">
+                        <Select
+                          value={c.relationship_type}
+                          onValueChange={(v) => updateCoApplicant(idx, "relationship_type", v)}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {relationshipTypes.map((t) => (
+                              <SelectItem key={t} value={t}>{relationshipTypeLabels[t]}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FieldRow>
+                      <FieldRow label="Anrede">
+                        <Select
+                          value={(c.salutation as string) ?? ""}
+                          onValueChange={(v) => updateCoApplicant(idx, "salutation", v)}
+                        >
+                          <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                          <SelectContent>
+                            {salutationOptions.map((o) => (
+                              <SelectItem key={o} value={o}>{o}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FieldRow>
+                      <FieldRow label="Familienstand">
+                        <Select
+                          value={(c.marital_status as string) ?? ""}
+                          onValueChange={(v) => updateCoApplicant(idx, "marital_status", v)}
+                        >
+                          <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                          <SelectContent>
+                            {maritalStatusOptions.map((o) => (
+                              <SelectItem key={o} value={o}>{o}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FieldRow>
+                      {STAMM.map((f) => (
+                        <FieldRow key={f.key} label={f.label}>
+                          <Input
+                            type={f.type ?? "text"}
+                            value={(c[f.key] as string) ?? ""}
+                            onChange={(e) => updateCoApplicant(idx, f.key, e.target.value)}
+                          />
+                        </FieldRow>
+                      ))}
+                      <FieldRow label="Status">
+                        <Select
+                          value={(c.employment_status as string) ?? ""}
+                          onValueChange={(v) => updateCoApplicant(idx, "employment_status", v)}
+                        >
+                          <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                          <SelectContent>
+                            {employmentStatusOptions.map((o) => (
+                              <SelectItem key={o} value={o}>{o}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FieldRow>
+                      {JOB.map((f) => (
+                        <FieldRow key={f.key} label={f.label}>
+                          <Input
+                            type={f.type ?? "text"}
+                            value={(c[f.key] as string) ?? ""}
+                            onChange={(e) => updateCoApplicant(idx, f.key, e.target.value)}
+                          />
+                        </FieldRow>
+                      ))}
+                      <FieldRow label="Lohn netto monatlich">
+                        <Money
+                          value={c.salary_net_monthly}
+                          onChange={(n) => updateCoApplicant(idx, "salary_net_monthly", n)}
+                        />
+                      </FieldRow>
+                    </Grid>
+
+                    <div>
+                      <h5 className="mb-2 text-sm font-semibold">Weitere Einnahmen / Monat</h5>
+                      <Grid>
+                        {incomeFields
+                          .filter((f) => f !== "salary_net_monthly")
+                          .map((f) => (
+                            <FieldRow key={f} label={incomeLabels[f]}>
+                              <Money
+                                value={c[f]}
+                                onChange={(n) => updateCoApplicant(idx, f, n)}
+                              />
+                            </FieldRow>
+                          ))}
+                      </Grid>
+                    </div>
+
+                    <div>
+                      <h5 className="mb-2 text-sm font-semibold">Ausgaben / Monat</h5>
+                      <Grid>
+                        {expenseFields.map((f) => (
+                          <FieldRow key={f} label={expenseLabels[f]}>
+                            <Money
+                              value={c[f]}
+                              onChange={(n) => updateCoApplicant(idx, f, n)}
+                            />
+                          </FieldRow>
+                        ))}
+                      </Grid>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {coApplicants.length === 0 && (
+                <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  Keine zusätzliche Person erfasst. Sie können diesen Schritt auch
+                  überspringen.
+                </p>
+              )}
+            </div>
+          </Section>
+        )}
+
+        {currentStep.id === "review" && (
+          <>
+            <BenchmarkCard benchmark={benchmark} />
+            <Section title="Zusammenfassung">
+              <div className="space-y-2 text-sm">
+                <Summary label="Name" value={`${form.first_name ?? ""} ${form.last_name ?? ""}`.trim()} />
+                <Summary label="E-Mail" value={form.email} />
+                <Summary label="Arbeitgeber" value={form.employer_name} />
+                <Summary label="Lohn netto / Monat" value={formatCHF(form.salary_net_monthly)} />
+                <Summary label="Einnahmen Total" value={formatCHF(benchmark.totalIncome)} />
+                <Summary label="Ausgaben Total" value={formatCHF(benchmark.totalExpenses)} />
+                <Summary label="Reserve" value={formatCHF(benchmark.reserveTotal)} />
+                <Summary
+                  label="Mitantragsteller"
+                  value={
+                    coApplicants.length
+                      ? coApplicants
+                          .map(
+                            (c) =>
+                              `${c.first_name ?? ""} ${c.last_name ?? ""} (${
+                                relationshipTypeLabels[
+                                  (c.relationship_type as keyof typeof relationshipTypeLabels) ?? "co_applicant"
+                                ]
+                              })`,
+                          )
+                          .join(", ")
+                      : "Keine"
+                  }
                 />
-              </FieldRow>
-            ))}
-          </Grid>
-        </Section>
+              </div>
+              <p className="mt-4 text-xs text-muted-foreground">
+                Mit dem Klick auf „Übermitteln" senden Sie die Selbstauskunft sowie
+                alle erfassten zusätzlichen Personen an Ihren Berater.
+              </p>
+            </Section>
+          </>
+        )}
 
-        <Section title="Beruf">
-          <Grid>
-            <FieldRow label="Status">
-              <Select
-                value={(form.employment_status as string) ?? ""}
-                onValueChange={(v) => set("employment_status", v)}
-              >
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>
-                  {employmentStatusOptions.map((o) => (
-                    <SelectItem key={o} value={o}>{o}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FieldRow>
-            {JOB.map((f) => (
-              <FieldRow key={f.key} label={f.label}>
-                <Input
-                  type={f.type ?? "text"}
-                  value={(form[f.key] as string) ?? ""}
-                  onChange={(e) => set(f.key, e.target.value)}
-                />
-              </FieldRow>
-            ))}
-            <FieldRow label="Lohn netto monatlich">
-              <Money value={form.salary_net_monthly} onChange={(n) => set("salary_net_monthly", n)} />
-            </FieldRow>
-          </Grid>
-        </Section>
-
-        <Section
-          title="Einnahmen monatlich"
-          right={
-            <span className="text-sm text-muted-foreground">
-              Total:{" "}
-              <strong className="text-foreground">{formatCHF(benchmark.totalIncome)}</strong>
-            </span>
-          }
-        >
-          <Grid>
-            {incomeFields.map((f) => (
-              <FieldRow key={f} label={incomeLabels[f]}>
-                <Money value={form[f]} onChange={(n) => set(f, n)} />
-              </FieldRow>
-            ))}
-          </Grid>
-        </Section>
-
-        <Section
-          title="Ausgaben monatlich"
-          right={
-            <span className="text-sm text-muted-foreground">
-              Total:{" "}
-              <strong className="text-foreground">{formatCHF(benchmark.totalExpenses)}</strong>
-            </span>
-          }
-        >
-          <Grid>
-            {expenseFields.map((f) => (
-              <FieldRow key={f} label={expenseLabels[f]}>
-                <Money value={form[f]} onChange={(n) => set(f, n)} />
-              </FieldRow>
-            ))}
-          </Grid>
-        </Section>
-
-        <div className="sticky bottom-4 z-10 flex flex-wrap justify-end gap-2">
+        {/* Navigation */}
+        <div className="sticky bottom-4 z-10 flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-background/80 p-3 backdrop-blur">
           <Button
             variant="outline"
-            onClick={() => save.mutate()}
-            disabled={save.isPending}
-            size="lg"
+            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            disabled={step === 0}
           >
-            {save.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
-            Zwischenspeichern
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Zurück
           </Button>
-          <Button
-            onClick={() => submit.mutate()}
-            disabled={submit.isPending}
-            size="lg"
-            className="shadow-glow"
-          >
-            {submit.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => save.mutate()}
+              disabled={save.isPending}
+            >
+              {save.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Zwischenspeichern
+            </Button>
+
+            {isLast ? (
+              <Button
+                onClick={() => submit.mutate()}
+                disabled={submit.isPending}
+                size="lg"
+                className="shadow-glow"
+              >
+                {submit.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="mr-2 h-4 w-4" />
+                )}
+                Übermitteln
+              </Button>
             ) : (
-              <Send className="mr-2 h-4 w-4" />
+              <Button onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}>
+                Weiter
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
             )}
-            Übermitteln
-          </Button>
+          </div>
         </div>
       </div>
     </Shell>
@@ -370,6 +682,17 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
     <div>
       <Label className="mb-1 block text-xs text-muted-foreground">{label}</Label>
       {children}
+    </div>
+  );
+}
+
+function Summary({ label, value }: { label: string; value: any }) {
+  return (
+    <div className="flex justify-between gap-2 border-b border-dashed py-1">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-right">
+        {value && String(value).trim() !== "" ? value : "—"}
+      </span>
     </div>
   );
 }
