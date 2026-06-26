@@ -296,7 +296,8 @@ function WeekView({ appts, tasks = [], onOpen }: { appts: any[]; tasks?: any[]; 
       <div className="grid gap-2 md:grid-cols-7">
         {days.map((d) => {
           const isToday = d.toDateString() === new Date().toDateString();
-          const items = byDay[d.toDateString()] ?? [];
+          const items = byDay[d.toDateString()] ?? { appts: [], tasks: [] };
+          const total = items.appts.length + items.tasks.length;
           return (
             <div key={d.toISOString()} className={`rounded-xl border bg-card p-3 ${isToday ? "ring-2 ring-primary/30" : ""}`}>
               <div className="mb-2 flex items-center justify-between">
@@ -306,8 +307,8 @@ function WeekView({ appts, tasks = [], onOpen }: { appts: any[]; tasks?: any[]; 
                 <p className={`text-lg font-bold ${isToday ? "text-primary" : ""}`}>{d.getDate()}</p>
               </div>
               <div className="space-y-1.5">
-                {items.length === 0 && <p className="text-xs text-muted-foreground">—</p>}
-                {items.map((a) => (
+                {total === 0 && <p className="text-xs text-muted-foreground">—</p>}
+                {items.appts.map((a) => (
                   <button
                     key={a.id}
                     onClick={() => onOpen(a.id)}
@@ -319,6 +320,19 @@ function WeekView({ appts, tasks = [], onOpen }: { appts: any[]; tasks?: any[]; 
                     <p className="line-clamp-2 font-medium">{a.title}</p>
                     {a.location && <p className="line-clamp-1 text-muted-foreground">{a.location}</p>}
                   </button>
+                ))}
+                {items.tasks.map((tk: any) => (
+                  <Link
+                    key={tk.id}
+                    to="/tasks"
+                    className={`block w-full rounded-md border border-l-4 p-2 text-left text-xs transition hover:bg-accent ${tk.status === "done" ? "border-l-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20" : "border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/20"}`}
+                  >
+                    <p className="flex items-center gap-1 font-medium text-amber-700 dark:text-amber-400">
+                      <CheckSquare className="h-3 w-3" />
+                      {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(tk.due_date))}
+                    </p>
+                    <p className={`line-clamp-2 font-medium ${tk.status === "done" ? "line-through text-muted-foreground" : ""}`}>{tk.title}</p>
+                  </Link>
                 ))}
               </div>
             </div>
