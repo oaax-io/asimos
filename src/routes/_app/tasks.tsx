@@ -483,6 +483,15 @@ function TaskForm({
   const labels = useTaskLabels();
   return (
     <div className="space-y-3">
+      <div>
+        <Label>Betreff-Vorlage</Label>
+        <Select value={SUBJECT_PRESETS.includes(form.title) ? form.title : ""} onValueChange={(v) => setForm({ ...form, title: v })}>
+          <SelectTrigger><SelectValue placeholder="Vorlage auswählen (optional)" /></SelectTrigger>
+          <SelectContent className="max-h-72">
+            {SUBJECT_PRESETS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
       <div><Label>{t("tasks.form.title")} *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
       <div><Label>{t("tasks.form.description")}</Label><Textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
       <div className="grid grid-cols-3 gap-3">
