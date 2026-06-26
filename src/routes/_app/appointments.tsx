@@ -156,9 +156,14 @@ function AppointmentsPage() {
 
       <Tabs value={view} onValueChange={(v) => setView(v as any)} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="list">{t("appointments.tabs.list")}</TabsTrigger>
+          <TabsTrigger value="month">{t("appointments.tabs.month", { defaultValue: "Monat" })}</TabsTrigger>
           <TabsTrigger value="week">{t("appointments.tabs.week")}</TabsTrigger>
+          <TabsTrigger value="list">{t("appointments.tabs.list")}</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="month">
+          <MonthView appts={appts} tasks={tasks} onOpen={(id) => setEditId(id)} />
+        </TabsContent>
 
         <TabsContent value="list">
           <ListView
@@ -170,7 +175,7 @@ function AppointmentsPage() {
         </TabsContent>
 
         <TabsContent value="week">
-          <WeekView appts={appts} onOpen={(id) => setEditId(id)} />
+          <WeekView appts={appts} tasks={tasks} onOpen={(id) => setEditId(id)} />
         </TabsContent>
       </Tabs>
 
