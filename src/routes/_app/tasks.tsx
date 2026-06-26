@@ -618,7 +618,7 @@ function TaskEditDrawer({
                 description: form.description.trim() || null,
                 status: form.status,
                 priority: form.priority,
-                due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
+                due_date: form.due_date ? new Date(`${form.due_date}T12:00:00`).toISOString() : null,
                 assigned_to: form.assigned_to || null,
                 related_type: form.related_type !== "none" ? form.related_type : null,
                 related_id: form.related_type !== "none" && form.related_id ? form.related_id : null,
