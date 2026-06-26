@@ -17,7 +17,7 @@ import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/tasks")({ component: TasksPage });
@@ -67,7 +67,7 @@ const SUBJECT_PRESETS: string[] = [
 ];
 
 const PRIORITY_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-  low: "outline", normal: "secondary", high: "default", urgent: "destructive",
+  low: "outline", normal: "secondary", high: "destructive", urgent: "destructive",
 };
 
 const STATUS_STYLES: Record<string, { dot: string; badge: string; trigger: string; border: string }> = {
@@ -167,7 +167,7 @@ function TasksPage() {
         description: form.description.trim() || null,
         status: form.status,
         priority: form.priority,
-        due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
+        due_date: form.due_date ? new Date(`${form.due_date}T12:00:00`).toISOString() : null,
         created_by: user?.id ?? null,
         assigned_to: form.assigned_to || user?.id || null,
         related_type: form.related_type !== "none" ? form.related_type : null,
@@ -344,7 +344,7 @@ function TasksPage() {
             return (
               <Card
                 key={tk.id}
-                className={`cursor-pointer border border-border/80 border-l-4 bg-card shadow-sm transition hover:-translate-y-px hover:border-border hover:shadow-md ${overdue ? "border-l-destructive bg-destructive/5" : sStyle.border}`}
+                className={`cursor-pointer border border-border/80 border-l-4 bg-muted/40 shadow-sm transition hover:-translate-y-px hover:border-border hover:bg-muted/60 hover:shadow-md ${overdue ? "border-l-destructive bg-destructive/5" : sStyle.border}`}
                 onClick={() => setEditId(tk.id)}
               >
                 <CardContent className="flex items-start gap-3 p-4">
@@ -385,9 +385,13 @@ function TasksPage() {
                         </Badge>
                       )}
                       {tk.due_date && (
-                        <span className={`text-muted-foreground ${overdue ? "text-destructive font-medium" : ""}`}>
-                          {t("tasks.due")}: {formatDateTime(tk.due_date)}
-                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`gap-1 text-xs font-semibold ${overdue ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-primary/30 bg-primary/10 text-primary"}`}
+                        >
+                          <Clock className="h-3 w-3" />
+                          {t("tasks.due")}: {formatDate(tk.due_date)}
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -511,7 +515,7 @@ function TaskForm({
         </div>
         <div>
           <Label>{t("tasks.form.dueDate")}</Label>
-          <Input type="datetime-local" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
+          <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
         </div>
       </div>
       <div className="grid grid-cols-3 gap-3">
@@ -569,7 +573,7 @@ function TaskEditDrawer({
         description: task.description ?? "",
         status: task.status ?? "open",
         priority: task.priority ?? "normal",
-        due_date: task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : "",
+        due_date: task.due_date ? new Date(task.due_date).toISOString().slice(0, 10) : "",
         assigned_to: task.assigned_to ?? "",
         related_type: task.related_type ?? "none",
         related_id: task.related_id ?? "",
@@ -614,7 +618,7 @@ function TaskEditDrawer({
                 description: form.description.trim() || null,
                 status: form.status,
                 priority: form.priority,
-                due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
+                due_date: form.due_date ? new Date(`${form.due_date}T12:00:00`).toISOString() : null,
                 assigned_to: form.assigned_to || null,
                 related_type: form.related_type !== "none" ? form.related_type : null,
                 related_id: form.related_type !== "none" && form.related_id ? form.related_id : null,
