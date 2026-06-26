@@ -17,7 +17,7 @@ import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/tasks")({ component: TasksPage });
