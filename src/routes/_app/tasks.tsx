@@ -163,6 +163,37 @@ function TasksPage() {
     },
   });
 
+  // Live updates: toast when somebody else changes tasks
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel("tasks-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (payload) => {
+        const row: any = payload.new ?? payload.old;
+        const actor = (row as any)?.updated_by ?? null;
+        if (actor && actor === user.id) {
+          qc.invalidateQueries({ queryKey: ["tasks"] });
+          return;
+        }
+        const title = (payload.new as any)?.title ?? (payload.old as any)?.title ?? t("tasks.title");
+        if (payload.eventType === "INSERT") toast.info(`${t("tasks.toasts.created")}: ${title}`);
+        else if (payload.eventType === "UPDATE") {
+          const oldRow: any = payload.old; const newRow: any = payload.new;
+          if (oldRow?.assigned_to !== newRow?.assigned_to && newRow?.assigned_to === user.id) {
+            toast.info(`${t("tasks.toasts.assignedToYou", { defaultValue: "Aufgabe dir zugewiesen" })}: ${title}`);
+          } else if (oldRow?.status !== newRow?.status) {
+            toast.info(`${title} → ${t(`tasks.status.${newRow?.status}`)}`);
+          } else {
+            toast.message(`${t("tasks.toasts.updated")}: ${title}`);
+          }
+        } else if (payload.eventType === "DELETE") toast.message(`${t("tasks.toasts.deleted")}: ${title}`);
+        qc.invalidateQueries({ queryKey: ["tasks"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user, qc, t]);
+
+
   const now = Date.now();
   const filtered = useMemo(() => tasks.filter((tk: any) => {
     if (search && !`${tk.title} ${tk.description ?? ""}`.toLowerCase().includes(search.toLowerCase())) return false;
