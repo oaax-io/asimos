@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar as CalIcon, MapPin, Clock, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Plus, Calendar as CalIcon, MapPin, Clock, ChevronLeft, ChevronRight, Trash2, CheckSquare } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,7 +62,15 @@ function AppointmentsPage() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
-  const [view, setView] = useState<"list" | "week">("list");
+  const [view, setView] = useState<"month" | "list" | "week">("month");
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["tasks-with-due"],
+    queryFn: async () => (await supabase
+      .from("tasks")
+      .select("id, title, due_date, status, priority, related_type, related_id, assigned_to")
+      .not("due_date", "is", null)).data ?? [],
+  });
 
   const { data: appts = [] } = useQuery({
     queryKey: ["appointments"],
@@ -147,9 +156,14 @@ function AppointmentsPage() {
 
       <Tabs value={view} onValueChange={(v) => setView(v as any)} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="list">{t("appointments.tabs.list")}</TabsTrigger>
+          <TabsTrigger value="month">{t("appointments.tabs.month", { defaultValue: "Monat" })}</TabsTrigger>
           <TabsTrigger value="week">{t("appointments.tabs.week")}</TabsTrigger>
+          <TabsTrigger value="list">{t("appointments.tabs.list")}</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="month">
+          <MonthView appts={appts} tasks={tasks} onOpen={(id) => setEditId(id)} />
+        </TabsContent>
 
         <TabsContent value="list">
           <ListView
@@ -161,7 +175,7 @@ function AppointmentsPage() {
         </TabsContent>
 
         <TabsContent value="week">
-          <WeekView appts={appts} onOpen={(id) => setEditId(id)} />
+          <WeekView appts={appts} tasks={tasks} onOpen={(id) => setEditId(id)} />
         </TabsContent>
       </Tabs>
 
@@ -248,21 +262,24 @@ function ApptCard({
 }
 void 0; // keep separator
 
-function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => void }) {
+function WeekView({ appts, tasks = [], onOpen }: { appts: any[]; tasks?: any[]; onOpen: (id: string) => void }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-DE";
   const [anchor, setAnchor] = useState(() => startOfWeek(new Date()));
   const days = Array.from({ length: 7 }, (_, i) => new Date(anchor.getTime() + i * 86400000));
   const byDay = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    days.forEach((d) => { map[d.toDateString()] = []; });
+    const map: Record<string, { appts: any[]; tasks: any[] }> = {};
+    days.forEach((d) => { map[d.toDateString()] = { appts: [], tasks: [] }; });
     for (const a of appts) {
-      const d = new Date(a.starts_at);
-      const key = d.toDateString();
-      if (key in map) map[key].push(a);
+      const key = new Date(a.starts_at).toDateString();
+      if (key in map) map[key].appts.push(a);
+    }
+    for (const tk of tasks) {
+      const key = new Date(tk.due_date).toDateString();
+      if (key in map) map[key].tasks.push(tk);
     }
     return map;
-  }, [appts, anchor]);
+  }, [appts, tasks, anchor]);
 
   return (
     <div>
@@ -279,7 +296,8 @@ function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => voi
       <div className="grid gap-2 md:grid-cols-7">
         {days.map((d) => {
           const isToday = d.toDateString() === new Date().toDateString();
-          const items = byDay[d.toDateString()] ?? [];
+          const items = byDay[d.toDateString()] ?? { appts: [], tasks: [] };
+          const total = items.appts.length + items.tasks.length;
           return (
             <div key={d.toISOString()} className={`rounded-xl border bg-card p-3 ${isToday ? "ring-2 ring-primary/30" : ""}`}>
               <div className="mb-2 flex items-center justify-between">
@@ -289,8 +307,8 @@ function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => voi
                 <p className={`text-lg font-bold ${isToday ? "text-primary" : ""}`}>{d.getDate()}</p>
               </div>
               <div className="space-y-1.5">
-                {items.length === 0 && <p className="text-xs text-muted-foreground">—</p>}
-                {items.map((a) => (
+                {total === 0 && <p className="text-xs text-muted-foreground">—</p>}
+                {items.appts.map((a) => (
                   <button
                     key={a.id}
                     onClick={() => onOpen(a.id)}
@@ -302,6 +320,19 @@ function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => voi
                     <p className="line-clamp-2 font-medium">{a.title}</p>
                     {a.location && <p className="line-clamp-1 text-muted-foreground">{a.location}</p>}
                   </button>
+                ))}
+                {items.tasks.map((tk: any) => (
+                  <Link
+                    key={tk.id}
+                    to="/tasks"
+                    className={`block w-full rounded-md border border-l-4 p-2 text-left text-xs transition hover:bg-accent ${tk.status === "done" ? "border-l-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20" : "border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/20"}`}
+                  >
+                    <p className="flex items-center gap-1 font-medium text-amber-700 dark:text-amber-400">
+                      <CheckSquare className="h-3 w-3" />
+                      {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(tk.due_date))}
+                    </p>
+                    <p className={`line-clamp-2 font-medium ${tk.status === "done" ? "line-through text-muted-foreground" : ""}`}>{tk.title}</p>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -320,7 +351,114 @@ function startOfWeek(d: Date) {
   return x;
 }
 
-/* -------------------- Form / Dialog / Drawer -------------------- */
+function MonthView({ appts, tasks, onOpen }: { appts: any[]; tasks: any[]; onOpen: (id: string) => void }) {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-DE";
+  const [anchor, setAnchor] = useState(() => {
+    const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d;
+  });
+
+  const { gridStart, gridDays, monthIdx } = useMemo(() => {
+    const first = new Date(anchor);
+    const dow = (first.getDay() + 6) % 7;
+    const start = new Date(first); start.setDate(first.getDate() - dow);
+    return {
+      gridStart: start,
+      gridDays: Array.from({ length: 42 }, (_, i) => new Date(start.getTime() + i * 86400000)),
+      monthIdx: first.getMonth(),
+    };
+  }, [anchor]);
+
+  const byDay = useMemo(() => {
+    const map: Record<string, { appts: any[]; tasks: any[] }> = {};
+    gridDays.forEach((d) => { map[d.toDateString()] = { appts: [], tasks: [] }; });
+    for (const a of appts) {
+      const key = new Date(a.starts_at).toDateString();
+      if (key in map) map[key].appts.push(a);
+    }
+    for (const tk of tasks) {
+      const key = new Date(tk.due_date).toDateString();
+      if (key in map) map[key].tasks.push(tk);
+    }
+    return map;
+  }, [appts, tasks, gridDays]);
+
+  const todayKey = new Date().toDateString();
+  const weekdays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(gridStart.getTime() + i * 86400000);
+    return new Intl.DateTimeFormat(locale, { weekday: "short" }).format(d);
+  });
+
+  const shift = (delta: number) => {
+    const d = new Date(anchor); d.setMonth(d.getMonth() + delta); setAnchor(d);
+  };
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={() => shift(-1)}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="outline" size="sm" onClick={() => { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); setAnchor(d); }}>{t("appointments.week.today")}</Button>
+          <Button variant="outline" size="icon" onClick={() => shift(1)}><ChevronRight className="h-4 w-4" /></Button>
+        </div>
+        <p className="text-sm font-semibold">
+          {new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(anchor)}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border bg-border">
+        {weekdays.map((w) => (
+          <div key={w} className="bg-muted/50 px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">{w}</div>
+        ))}
+        {gridDays.map((d) => {
+          const inMonth = d.getMonth() === monthIdx;
+          const isToday = d.toDateString() === todayKey;
+          const items = byDay[d.toDateString()] ?? { appts: [], tasks: [] };
+          const all = [
+            ...items.appts.map((a) => ({ kind: "appt" as const, id: a.id, time: a.starts_at, title: a.title, status: a.status })),
+            ...items.tasks.map((tk) => ({ kind: "task" as const, id: tk.id, time: tk.due_date, title: tk.title, status: tk.status })),
+          ].sort((a, b) => +new Date(a.time) - +new Date(b.time));
+          return (
+            <div
+              key={d.toISOString()}
+              className={`min-h-[100px] bg-card p-1.5 ${inMonth ? "" : "bg-muted/20 text-muted-foreground"} ${isToday ? "ring-2 ring-inset ring-primary/40" : ""}`}
+            >
+              <div className={`mb-1 text-right text-xs font-semibold ${isToday ? "text-primary" : ""}`}>{d.getDate()}</div>
+              <div className="space-y-1">
+                {all.slice(0, 3).map((it) => (
+                  it.kind === "appt" ? (
+                    <button
+                      key={`a-${it.id}`}
+                      onClick={() => onOpen(it.id)}
+                      className="block w-full truncate rounded border-l-2 border-l-primary bg-primary/10 px-1.5 py-0.5 text-left text-[11px] font-medium text-primary hover:bg-primary/20"
+                      title={it.title}
+                    >
+                      {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(it.time))} {it.title}
+                    </button>
+                  ) : (
+                    <Link
+                      key={`t-${it.id}`}
+                      to="/tasks"
+                      className={`flex w-full items-center gap-1 truncate rounded border-l-2 px-1.5 py-0.5 text-left text-[11px] font-medium hover:opacity-80 ${it.status === "done" ? "border-l-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 line-through" : "border-l-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400"}`}
+                      title={it.title}
+                    >
+                      <CheckSquare className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{it.title}</span>
+                    </Link>
+                  )
+                ))}
+                {all.length > 3 && (
+                  <p className="px-1 text-[10px] text-muted-foreground">+{all.length - 3} {t("appointments.month.more", { defaultValue: "weitere" })}</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 
 function AppointmentForm({
   form, setForm, clients, properties, employees,
