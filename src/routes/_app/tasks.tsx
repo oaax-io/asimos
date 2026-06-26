@@ -30,12 +30,12 @@ const PRIORITY_VARIANTS: Record<string, "default" | "secondary" | "outline" | "d
   low: "outline", normal: "secondary", high: "default", urgent: "destructive",
 };
 
-const STATUS_STYLES: Record<string, { dot: string; badge: string; trigger: string }> = {
-  open:        { dot: "bg-slate-400",   badge: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700",       trigger: "border-slate-300 bg-slate-50 text-slate-700 dark:bg-slate-900 dark:text-slate-200" },
-  in_progress: { dot: "bg-blue-500",    badge: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900",            trigger: "border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300" },
-  waiting:     { dot: "bg-amber-500",   badge: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-900",      trigger: "border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300" },
-  done:        { dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-900", trigger: "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" },
-  cancelled:   { dot: "bg-rose-500",    badge: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-900",            trigger: "border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300" },
+const STATUS_STYLES: Record<string, { dot: string; badge: string; trigger: string; border: string }> = {
+  open:        { dot: "bg-slate-400",   badge: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700",       trigger: "border-slate-300 bg-slate-50 text-slate-700 dark:bg-slate-900 dark:text-slate-200",       border: "border-l-slate-400" },
+  in_progress: { dot: "bg-blue-500",    badge: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900",            trigger: "border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",             border: "border-l-blue-500" },
+  waiting:     { dot: "bg-amber-500",   badge: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-900",      trigger: "border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300",        border: "border-l-amber-500" },
+  done:        { dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-900", trigger: "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300", border: "border-l-emerald-500" },
+  cancelled:   { dot: "bg-rose-500",    badge: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-900",            trigger: "border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300",             border: "border-l-rose-500" },
 };
 
 function initials(name?: string | null) {
