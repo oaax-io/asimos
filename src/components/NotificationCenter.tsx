@@ -29,6 +29,33 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
   lead: UserPlus,
 };
 
+const TYPE_STYLES: Record<string, { icon: string; iconUnread: string; accent: string; unreadBg: string }> = {
+  appointment: {
+    icon: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
+    iconUnread: "bg-sky-500 text-white",
+    accent: "border-l-sky-500",
+    unreadBg: "bg-sky-50/70 dark:bg-sky-950/20",
+  },
+  task: {
+    icon: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+    iconUnread: "bg-amber-500 text-white",
+    accent: "border-l-amber-500",
+    unreadBg: "bg-amber-50/70 dark:bg-amber-950/20",
+  },
+  lead: {
+    icon: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+    iconUnread: "bg-emerald-500 text-white",
+    accent: "border-l-emerald-500",
+    unreadBg: "bg-emerald-50/70 dark:bg-emerald-950/20",
+  },
+};
+const DEFAULT_TYPE_STYLE = {
+  icon: "bg-muted text-muted-foreground",
+  iconUnread: "bg-primary text-primary-foreground",
+  accent: "border-l-primary",
+  unreadBg: "bg-primary/5",
+};
+
 export function NotificationCenter() {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -175,16 +202,17 @@ export function NotificationCenter() {
             <ul className="divide-y">
               {notifications.map((n) => {
                 const Icon = TYPE_ICONS[n.type] ?? Info;
+                const style = TYPE_STYLES[n.type] ?? DEFAULT_TYPE_STYLE;
                 return (
                   <li
                     key={n.id}
                     onClick={() => handleClick(n)}
                     className={cn(
-                      "flex cursor-pointer gap-3 px-4 py-3 transition hover:bg-muted/50",
-                      !n.is_read && "bg-primary/5",
+                      "flex cursor-pointer gap-3 border-l-4 px-4 py-3 transition hover:bg-muted/50",
+                      !n.is_read ? `${style.accent} ${style.unreadBg}` : "border-l-transparent",
                     )}
                   >
-                    <div className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md", !n.is_read ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>
+                    <div className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md", !n.is_read ? style.iconUnread : style.icon)}>
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1">
