@@ -262,21 +262,24 @@ function ApptCard({
 }
 void 0; // keep separator
 
-function WeekView({ appts, onOpen }: { appts: any[]; onOpen: (id: string) => void }) {
+function WeekView({ appts, tasks = [], onOpen }: { appts: any[]; tasks?: any[]; onOpen: (id: string) => void }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-DE";
   const [anchor, setAnchor] = useState(() => startOfWeek(new Date()));
   const days = Array.from({ length: 7 }, (_, i) => new Date(anchor.getTime() + i * 86400000));
   const byDay = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    days.forEach((d) => { map[d.toDateString()] = []; });
+    const map: Record<string, { appts: any[]; tasks: any[] }> = {};
+    days.forEach((d) => { map[d.toDateString()] = { appts: [], tasks: [] }; });
     for (const a of appts) {
-      const d = new Date(a.starts_at);
-      const key = d.toDateString();
-      if (key in map) map[key].push(a);
+      const key = new Date(a.starts_at).toDateString();
+      if (key in map) map[key].appts.push(a);
+    }
+    for (const tk of tasks) {
+      const key = new Date(tk.due_date).toDateString();
+      if (key in map) map[key].tasks.push(tk);
     }
     return map;
-  }, [appts, anchor]);
+  }, [appts, tasks, anchor]);
 
   return (
     <div>
