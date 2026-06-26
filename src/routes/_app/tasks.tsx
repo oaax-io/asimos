@@ -26,6 +26,46 @@ const STATUSES = ["open","in_progress","waiting","done","cancelled"] as const;
 const PRIORITIES = ["low","normal","high","urgent"] as const;
 const RELATED_TYPES = ["client","property","mandate","reservation","lead"] as const;
 
+const SUBJECT_PRESETS: string[] = [
+  "Notartermin planen",
+  "Notartermin durchführen",
+  "Kundenordner erstellen",
+  "Besichtigung organisieren",
+  "Besichtigung durchführen",
+  "Exposé erstellen",
+  "Exposé versenden",
+  "Inserat schalten",
+  "Inserat aktualisieren",
+  "Fotos / Drohnenaufnahmen organisieren",
+  "Grundriss erstellen / aktualisieren",
+  "Energieausweis anfordern",
+  "Grundbuchauszug anfordern",
+  "Auszug aus Liegenschaftskataster anfordern",
+  "Verkaufsunterlagen zusammenstellen",
+  "Kaufvertragsentwurf prüfen",
+  "Kaufvertrag unterzeichnen",
+  "Reservationsvereinbarung erstellen",
+  "Mietvertrag aufsetzen",
+  "Mietvertrag unterzeichnen",
+  "Übergabeprotokoll erstellen",
+  "Schlüsselübergabe vereinbaren",
+  "Objektbewertung durchführen",
+  "Markt- und Lageanalyse erstellen",
+  "Finanzierungsbestätigung einholen",
+  "Selbstauskunft anfordern",
+  "Bonitätsprüfung durchführen",
+  "Kunde kontaktieren / Rückruf",
+  "Termin mit Eigentümer vereinbaren",
+  "Termin mit Käufer vereinbaren",
+  "Maklervertrag aufsetzen",
+  "Maklervertrag unterzeichnen",
+  "Provisionsrechnung erstellen",
+  "Handwerker / Gutachter beauftragen",
+  "Renovationsangebot einholen",
+  "Objektübergabe vorbereiten",
+  "Nachfassen / Follow-up",
+];
+
 const PRIORITY_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   low: "outline", normal: "secondary", high: "default", urgent: "destructive",
 };
