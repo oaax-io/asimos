@@ -65,7 +65,7 @@ function AppointmentsPage() {
   const [view, setView] = useState<"month" | "list" | "week">("month");
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ["tasks-with-due"],
+    queryKey: ["tasks", "with-due"],
     queryFn: async () => (await supabase
       .from("tasks")
       .select("id, title, due_date, status, priority, related_type, related_id, assigned_to")
