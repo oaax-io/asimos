@@ -30,6 +30,19 @@ const PRIORITY_VARIANTS: Record<string, "default" | "secondary" | "outline" | "d
   low: "outline", normal: "secondary", high: "default", urgent: "destructive",
 };
 
+const STATUS_STYLES: Record<string, { dot: string; badge: string; trigger: string }> = {
+  open:        { dot: "bg-slate-400",   badge: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700",       trigger: "border-slate-300 bg-slate-50 text-slate-700 dark:bg-slate-900 dark:text-slate-200" },
+  in_progress: { dot: "bg-blue-500",    badge: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900",            trigger: "border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300" },
+  waiting:     { dot: "bg-amber-500",   badge: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-900",      trigger: "border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300" },
+  done:        { dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-900", trigger: "border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" },
+  cancelled:   { dot: "bg-rose-500",    badge: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-900",            trigger: "border-rose-300 bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300" },
+};
+
+function initials(name?: string | null) {
+  if (!name) return "?";
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]?.toUpperCase()).join("");
+}
+
 const emptyForm = {
   title: "", description: "", status: "open", priority: "normal",
   due_date: "", assigned_to: "", related_type: "none", related_id: "",
@@ -150,6 +163,37 @@ function TasksPage() {
     },
   });
 
+  // Live updates: toast when somebody else changes tasks
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel("tasks-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, (payload) => {
+        const row: any = payload.new ?? payload.old;
+        const actor = (row as any)?.updated_by ?? null;
+        if (actor && actor === user.id) {
+          qc.invalidateQueries({ queryKey: ["tasks"] });
+          return;
+        }
+        const title = (payload.new as any)?.title ?? (payload.old as any)?.title ?? t("tasks.title");
+        if (payload.eventType === "INSERT") toast.info(`${t("tasks.toasts.created")}: ${title}`);
+        else if (payload.eventType === "UPDATE") {
+          const oldRow: any = payload.old; const newRow: any = payload.new;
+          if (oldRow?.assigned_to !== newRow?.assigned_to && newRow?.assigned_to === user.id) {
+            toast.info(`${t("tasks.toasts.assignedToYou", { defaultValue: "Aufgabe dir zugewiesen" })}: ${title}`);
+          } else if (oldRow?.status !== newRow?.status) {
+            toast.info(`${title} → ${t(`tasks.status.${newRow?.status}`)}`);
+          } else {
+            toast.message(`${t("tasks.toasts.updated")}: ${title}`);
+          }
+        } else if (payload.eventType === "DELETE") toast.message(`${t("tasks.toasts.deleted")}: ${title}`);
+        qc.invalidateQueries({ queryKey: ["tasks"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user, qc, t]);
+
+
   const now = Date.now();
   const filtered = useMemo(() => tasks.filter((tk: any) => {
     if (search && !`${tk.title} ${tk.description ?? ""}`.toLowerCase().includes(search.toLowerCase())) return false;
@@ -251,6 +295,9 @@ function TasksPage() {
             const overdue = tk.due_date && new Date(tk.due_date).getTime() < now && tk.status !== "done" && tk.status !== "cancelled";
             const Icon = tk.status === "done" ? CheckCircle2 : tk.status === "in_progress" ? Clock : tk.priority === "urgent" ? AlertCircle : Circle;
             const assignee = employees.find((e: any) => e.id === tk.assigned_to);
+            const assigneeName = (assignee as any)?.full_name || (assignee as any)?.email;
+            const relatedLabel = tk.related_id ? (optionsFor(tk.related_type).find(o => o.id === tk.related_id)?.label) : null;
+            const sStyle = STATUS_STYLES[tk.status] ?? STATUS_STYLES.open;
             return (
               <Card
                 key={tk.id}
@@ -268,27 +315,53 @@ function TasksPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className={`font-medium ${tk.status === "done" ? "text-muted-foreground line-through" : ""}`}>{tk.title}</h3>
+                      <Badge variant="outline" className={`text-xs ${sStyle.badge}`}>
+                        <span className={`mr-1 inline-block h-1.5 w-1.5 rounded-full ${sStyle.dot}`} />
+                        {labels.status[tk.status] ?? tk.status}
+                      </Badge>
                       {tk.priority !== "normal" && (
                         <Badge variant={PRIORITY_VARIANTS[tk.priority]}>{labels.priority[tk.priority] ?? tk.priority}</Badge>
-                      )}
-                      {tk.related_type && (
-                        <Badge variant="outline" className="text-xs">{labels.related[tk.related_type] ?? tk.related_type}</Badge>
                       )}
                       {overdue && <Badge variant="destructive" className="text-xs">{t("tasks.overdue")}</Badge>}
                     </div>
                     {tk.description && <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{tk.description}</p>}
-                    <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      {tk.due_date && <span className={overdue ? "text-destructive font-medium" : ""}>{t("tasks.due")}: {formatDateTime(tk.due_date)}</span>}
-                      {assignee && <span>· {(assignee as any).full_name || (assignee as any).email}</span>}
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                      {tk.related_type && (
+                        <Badge variant="secondary" className="gap-1 font-normal">
+                          <span className="text-muted-foreground">{labels.related[tk.related_type] ?? tk.related_type}:</span>
+                          <span className="font-medium">{relatedLabel ?? "—"}</span>
+                        </Badge>
+                      )}
+                      {assignee && (
+                        <Badge variant="outline" className="gap-1.5 font-normal">
+                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-semibold text-primary">{initials(assigneeName)}</span>
+                          {assigneeName}
+                        </Badge>
+                      )}
+                      {tk.due_date && (
+                        <span className={`text-muted-foreground ${overdue ? "text-destructive font-medium" : ""}`}>
+                          {t("tasks.due")}: {formatDateTime(tk.due_date)}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <Select
                     value={tk.status}
                     onValueChange={(v) => update.mutate({ id: tk.id, patch: { status: v } })}
                   >
-                    <SelectTrigger className="h-8 w-32 text-xs" onClick={(e) => e.stopPropagation()}><SelectValue /></SelectTrigger>
+                    <SelectTrigger className={`h-8 w-36 text-xs ${sStyle.trigger}`} onClick={(e) => e.stopPropagation()}>
+                      <span className={`mr-1 inline-block h-2 w-2 rounded-full ${sStyle.dot}`} />
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
-                      {STATUSES.map(s => <SelectItem key={s} value={s}>{labels.status[s]}</SelectItem>)}
+                      {STATUSES.map(s => (
+                        <SelectItem key={s} value={s}>
+                          <span className="flex items-center gap-2">
+                            <span className={`inline-block h-2 w-2 rounded-full ${STATUS_STYLES[s]?.dot ?? "bg-slate-400"}`} />
+                            {labels.status[s]}
+                          </span>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </CardContent>
