@@ -65,12 +65,15 @@ function TasksPage() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [waitingFor, setWaitingFor] = useState<{ id: string; title: string } | null>(null);
+  const [waitingComment, setWaitingComment] = useState("");
   const [search, setSearch] = useState("");
   const [fStatus, setFStatus] = useState("active");
   const [fPriority, setFPriority] = useState("all");
   const [fAssignee, setFAssignee] = useState("all");
   const [fDue, setFDue] = useState("all");
   const [form, setForm] = useState({ ...emptyForm });
+
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["tasks"],
