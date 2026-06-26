@@ -515,7 +515,7 @@ function TaskForm({
         </div>
         <div>
           <Label>{t("tasks.form.dueDate")}</Label>
-          <Input type="datetime-local" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
+          <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
         </div>
       </div>
       <div className="grid grid-cols-3 gap-3">
