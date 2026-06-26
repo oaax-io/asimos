@@ -555,16 +555,23 @@ function TaskEditDrawer({
           <Button variant="outline" onClick={onDelete}><Trash2 className="mr-1 h-4 w-4" />{t("tasks.actions.delete")}</Button>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={onClose}>{t("tasks.actions.close")}</Button>
-            <Button onClick={() => onSave({
-              title: form.title.trim(),
-              description: form.description.trim() || null,
-              status: form.status,
-              priority: form.priority,
-              due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
-              assigned_to: form.assigned_to || null,
-              related_type: form.related_type !== "none" ? form.related_type : null,
-              related_id: form.related_type !== "none" && form.related_id ? form.related_id : null,
-            })} disabled={!form.title.trim()}>{t("tasks.actions.save")}</Button>
+            <Button onClick={() => {
+              if (form.status === "waiting" && task?.status !== "waiting") {
+                onRequestWaiting(task);
+                return;
+              }
+              onSave({
+                title: form.title.trim(),
+                description: form.description.trim() || null,
+                status: form.status,
+                priority: form.priority,
+                due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
+                assigned_to: form.assigned_to || null,
+                related_type: form.related_type !== "none" ? form.related_type : null,
+                related_id: form.related_type !== "none" && form.related_id ? form.related_id : null,
+              });
+            }} disabled={!form.title.trim()}>{t("tasks.actions.save")}</Button>
+
           </div>
         </SheetFooter>
       </SheetContent>
