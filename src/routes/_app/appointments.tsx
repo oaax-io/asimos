@@ -62,7 +62,15 @@ function AppointmentsPage() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
-  const [view, setView] = useState<"list" | "week">("list");
+  const [view, setView] = useState<"month" | "list" | "week">("month");
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["tasks-with-due"],
+    queryFn: async () => (await supabase
+      .from("tasks")
+      .select("id, title, due_date, status, priority, related_type, related_id, assigned_to")
+      .not("due_date", "is", null)).data ?? [],
+  });
 
   const { data: appts = [] } = useQuery({
     queryKey: ["appointments"],
