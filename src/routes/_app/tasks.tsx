@@ -573,7 +573,7 @@ function TaskEditDrawer({
         description: task.description ?? "",
         status: task.status ?? "open",
         priority: task.priority ?? "normal",
-        due_date: task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : "",
+        due_date: task.due_date ? new Date(task.due_date).toISOString().slice(0, 10) : "",
         assigned_to: task.assigned_to ?? "",
         related_type: task.related_type ?? "none",
         related_id: task.related_id ?? "",
