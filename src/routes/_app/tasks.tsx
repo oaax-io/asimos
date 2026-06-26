@@ -67,7 +67,7 @@ const SUBJECT_PRESETS: string[] = [
 ];
 
 const PRIORITY_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-  low: "outline", normal: "secondary", high: "default", urgent: "destructive",
+  low: "outline", normal: "secondary", high: "destructive", urgent: "destructive",
 };
 
 const STATUS_STYLES: Record<string, { dot: string; badge: string; trigger: string; border: string }> = {
