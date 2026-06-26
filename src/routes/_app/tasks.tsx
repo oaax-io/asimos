@@ -65,12 +65,15 @@ function TasksPage() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [waitingFor, setWaitingFor] = useState<{ id: string; title: string } | null>(null);
+  const [waitingComment, setWaitingComment] = useState("");
   const [search, setSearch] = useState("");
   const [fStatus, setFStatus] = useState("active");
   const [fPriority, setFPriority] = useState("all");
   const [fAssignee, setFAssignee] = useState("all");
   const [fDue, setFDue] = useState("all");
   const [form, setForm] = useState({ ...emptyForm });
+
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["tasks"],
@@ -350,7 +353,14 @@ function TasksPage() {
                   </div>
                   <Select
                     value={tk.status}
-                    onValueChange={(v) => update.mutate({ id: tk.id, patch: { status: v } })}
+                    onValueChange={(v) => {
+                      if (v === "waiting" && tk.status !== "waiting") {
+                        setWaitingComment("");
+                        setWaitingFor({ id: tk.id, title: tk.title });
+                      } else {
+                        update.mutate({ id: tk.id, patch: { status: v } });
+                      }
+                    }}
                   >
                     <SelectTrigger className={`h-8 w-36 text-xs ${sStyle.trigger}`} onClick={(e) => e.stopPropagation()}>
                       <span className={`mr-1 inline-block h-2 w-2 rounded-full ${sStyle.dot}`} />
@@ -367,6 +377,7 @@ function TasksPage() {
                       ))}
                     </SelectContent>
                   </Select>
+
                 </CardContent>
               </Card>
             );
@@ -382,10 +393,48 @@ function TasksPage() {
         optionsFor={optionsFor}
         onSave={(patch) => update.mutate({ id: editing!.id, patch }, { onSuccess: () => { toast.success(t("tasks.toasts.updated")); setEditId(null); } })}
         onDelete={async () => { if (await confirm({ title: t("tasks.confirmDelete.title"), confirmText: t("tasks.confirmDelete.confirm") })) remove.mutate(editing!.id); }}
+        onRequestWaiting={(task) => { setWaitingComment(""); setWaitingFor({ id: task.id, title: task.title }); }}
       />
+
+      <Dialog open={!!waitingFor} onOpenChange={(o) => { if (!o) setWaitingFor(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Aufgabe auf Pendent setzen</DialogTitle>
+            <DialogDescription>
+              {waitingFor?.title ? `„${waitingFor.title}" – ` : ""}Bitte gib einen Kommentar an, warum die Aufgabe pendent ist.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            rows={4}
+            autoFocus
+            placeholder="Kommentar zum Pendent-Status…"
+            value={waitingComment}
+            onChange={(e) => setWaitingComment(e.target.value)}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWaitingFor(null)}>{t("tasks.actions.cancel")}</Button>
+            <Button
+              disabled={!waitingComment.trim() || update.isPending}
+              onClick={() => {
+                if (!waitingFor) return;
+                const current = tasks.find((x: any) => x.id === waitingFor.id);
+                const stamp = new Date().toLocaleString("de-CH");
+                const existing = (current?.description ?? "").trim();
+                const entry = `— ${stamp} — Pendent: ${waitingComment.trim()}`;
+                const newDesc = existing ? `${existing}\n\n${entry}` : entry;
+                update.mutate(
+                  { id: waitingFor.id, patch: { status: "waiting", description: newDesc } },
+                  { onSuccess: () => { toast.success("Aufgabe auf Pendent gesetzt"); setWaitingFor(null); setEditId(null); } },
+                );
+              }}
+            >Speichern</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
+
 
 function TaskForm({
   form, setForm, employees, optionsFor,
@@ -453,12 +502,14 @@ function TaskForm({
 }
 
 function TaskEditDrawer({
-  task, open, onClose, employees, optionsFor, onSave, onDelete,
+  task, open, onClose, employees, optionsFor, onSave, onDelete, onRequestWaiting,
 }: {
   task: any; open: boolean; onClose: () => void;
   employees: any[]; optionsFor: (t: string) => { id: string; label: string }[];
   onSave: (patch: any) => void; onDelete: () => void;
+  onRequestWaiting: (task: any) => void;
 }) {
+
   const { t } = useTranslation();
   const [form, setForm] = useState<any>({ ...emptyForm });
 
@@ -504,16 +555,23 @@ function TaskEditDrawer({
           <Button variant="outline" onClick={onDelete}><Trash2 className="mr-1 h-4 w-4" />{t("tasks.actions.delete")}</Button>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={onClose}>{t("tasks.actions.close")}</Button>
-            <Button onClick={() => onSave({
-              title: form.title.trim(),
-              description: form.description.trim() || null,
-              status: form.status,
-              priority: form.priority,
-              due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
-              assigned_to: form.assigned_to || null,
-              related_type: form.related_type !== "none" ? form.related_type : null,
-              related_id: form.related_type !== "none" && form.related_id ? form.related_id : null,
-            })} disabled={!form.title.trim()}>{t("tasks.actions.save")}</Button>
+            <Button onClick={() => {
+              if (form.status === "waiting" && task?.status !== "waiting") {
+                onRequestWaiting(task);
+                return;
+              }
+              onSave({
+                title: form.title.trim(),
+                description: form.description.trim() || null,
+                status: form.status,
+                priority: form.priority,
+                due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
+                assigned_to: form.assigned_to || null,
+                related_type: form.related_type !== "none" ? form.related_type : null,
+                related_id: form.related_type !== "none" && form.related_id ? form.related_id : null,
+              });
+            }} disabled={!form.title.trim()}>{t("tasks.actions.save")}</Button>
+
           </div>
         </SheetFooter>
       </SheetContent>
