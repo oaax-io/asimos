@@ -3117,6 +3117,10 @@ export type Database = {
         Args: { _token: string }
         Returns: undefined
       }
+      self_disclosure_link_submit_full: {
+        Args: { _coapplicants?: Json; _token: string }
+        Returns: undefined
+      }
       send_self_disclosure_reminders: { Args: never; Returns: number }
       set_default_template: {
         Args: { _template_id: string }
