@@ -385,9 +385,13 @@ function TasksPage() {
                         </Badge>
                       )}
                       {tk.due_date && (
-                        <span className={`text-muted-foreground ${overdue ? "text-destructive font-medium" : ""}`}>
-                          {t("tasks.due")}: {formatDateTime(tk.due_date)}
-                        </span>
+                        <Badge
+                          variant="outline"
+                          className={`gap-1 text-xs font-semibold ${overdue ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-primary/30 bg-primary/10 text-primary"}`}
+                        >
+                          <Clock className="h-3 w-3" />
+                          {t("tasks.due")}: {formatDate(tk.due_date)}
+                        </Badge>
                       )}
                     </div>
                   </div>
