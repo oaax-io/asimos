@@ -301,8 +301,7 @@ function TasksPage() {
             return (
               <Card
                 key={tk.id}
-                className={`cursor-pointer border-l-4 bg-card shadow-sm transition hover:-translate-y-px hover:shadow-md ${overdue ? "border-l-destructive bg-destructive/5" : ""}`}
-                style={overdue ? undefined : { borderLeftColor: `var(--tw-${sStyle.dot})` }}
+                className={`cursor-pointer border border-border/80 border-l-4 bg-card shadow-sm transition hover:-translate-y-px hover:border-border hover:shadow-md ${overdue ? "border-l-destructive bg-destructive/5" : sStyle.border}`}
                 onClick={() => setEditId(tk.id)}
               >
                 <CardContent className="flex items-start gap-3 p-4">
