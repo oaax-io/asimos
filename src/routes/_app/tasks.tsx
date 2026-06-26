@@ -327,8 +327,11 @@ function TasksPage() {
                     {tk.description && <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{tk.description}</p>}
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                       {tk.related_type && (
-                        <Badge variant="secondary" className="gap-1 font-normal">
-                          <span className="text-muted-foreground">{labels.related[tk.related_type] ?? tk.related_type}:</span>
+                        <Badge
+                          variant="secondary"
+                          className={`gap-1 font-normal ${tk.related_type === "client" ? "border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-100 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200" : ""}`}
+                        >
+                          <span className={tk.related_type === "client" ? "text-amber-700 dark:text-amber-300/80" : "text-muted-foreground"}>{labels.related[tk.related_type] ?? tk.related_type}:</span>
                           <span className="font-medium">{relatedLabel ?? "—"}</span>
                         </Badge>
                       )}
