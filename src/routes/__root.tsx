@@ -68,7 +68,7 @@ function RootComponent() {
       <AuthProvider>
         <ConfirmProvider>
           <Outlet />
-          <Toaster richColors position="top-right" />
+          <Toaster richColors position="bottom-right" />
         </ConfirmProvider>
       </AuthProvider>
     </QueryClientProvider>
