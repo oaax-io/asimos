@@ -502,12 +502,14 @@ function TaskForm({
 }
 
 function TaskEditDrawer({
-  task, open, onClose, employees, optionsFor, onSave, onDelete,
+  task, open, onClose, employees, optionsFor, onSave, onDelete, onRequestWaiting,
 }: {
   task: any; open: boolean; onClose: () => void;
   employees: any[]; optionsFor: (t: string) => { id: string; label: string }[];
   onSave: (patch: any) => void; onDelete: () => void;
+  onRequestWaiting: (task: any) => void;
 }) {
+
   const { t } = useTranslation();
   const [form, setForm] = useState<any>({ ...emptyForm });
 
