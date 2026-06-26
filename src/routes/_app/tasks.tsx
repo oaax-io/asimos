@@ -353,7 +353,14 @@ function TasksPage() {
                   </div>
                   <Select
                     value={tk.status}
-                    onValueChange={(v) => update.mutate({ id: tk.id, patch: { status: v } })}
+                    onValueChange={(v) => {
+                      if (v === "waiting" && tk.status !== "waiting") {
+                        setWaitingComment("");
+                        setWaitingFor({ id: tk.id, title: tk.title });
+                      } else {
+                        update.mutate({ id: tk.id, patch: { status: v } });
+                      }
+                    }}
                   >
                     <SelectTrigger className={`h-8 w-36 text-xs ${sStyle.trigger}`} onClick={(e) => e.stopPropagation()}>
                       <span className={`mr-1 inline-block h-2 w-2 rounded-full ${sStyle.dot}`} />
@@ -370,6 +377,7 @@ function TasksPage() {
                       ))}
                     </SelectContent>
                   </Select>
+
                 </CardContent>
               </Card>
             );
