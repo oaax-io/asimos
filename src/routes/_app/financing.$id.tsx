@@ -183,7 +183,6 @@ function FinancingDetailPage() {
             value="overview"
             className="relative flex items-center gap-2.5 px-5 py-2 text-sm font-medium text-muted-foreground rounded-lg transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border data-[state=active]:border-border/60 hover:text-foreground"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-primary opacity-0 data-[state=active]:opacity-100 transition-opacity" data-state="inactive" />
             {t("financing.detail.tabs.overview")}
           </TabsTrigger>
           <TabsTrigger
