@@ -358,7 +358,6 @@ function FinancingDetailPage() {
         <TabsContent value="activity">
           <ActivityTab relatedType="financing_dossier" relatedId={id} />
         </TabsContent>
-      </Tabs>
 
       <FinancingQuickCheckWizard
         open={wizardOpen}
@@ -404,7 +403,7 @@ function FinancingDetailPage() {
         open={!!openClientId}
         onOpenChange={(o) => { if (!o) setOpenClientId(null); }}
       />
-    </div>
+    </Tabs>
   );
 }
 
