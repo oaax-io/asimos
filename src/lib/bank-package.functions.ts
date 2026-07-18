@@ -507,10 +507,13 @@ export const buildBankPackage = createServerFn({ method: "POST" })
         `Erstellt: ${new Date().toLocaleString("de-CH")}`,
         ``,
         `Inhalt:`,
-        `- 00_Dossier_${clientSlug}.pdf: Master-Dossier mit Kunde, Ehepartner, Finanzierung, Checkliste, Notizen`,
+        `- 00_Dossier_${clientSlug}.pdf: Master-Dossier mit allen Antragstellern, Objekt, Finanzierung, Checkliste, Notizen`,
         `- 01_Kunde/: Unterlagen des Hauptantragstellers`,
-        coApplicantData ? `- 02_Ehepartner/: Unterlagen des Mitantragstellers` : null,
-        property ? `- 03_Objekt/: Unterlagen zum Objekt` : null,
+        coApplicantData ? `- 02_Ehepartner/: Unterlagen des Ehepartners / Mitantragstellers` : null,
+        ...Array.from(extraFolderByClient.entries()).map(
+          ([, folder]) => `- ${folder}/: Unterlagen weiterer Mitantragsteller`,
+        ),
+        property ? `- 03_Objekt/: Unterlagen zum Objekt (inkl. Bilder unter 03_Objekt/Bilder/)` : null,
         `- 04_Finanzierung/: Unterlagen zur Finanzierung`,
         `- 06_Generiert/: Generierte Dokumente (Quick-Check PDF etc.)`,
       ]
