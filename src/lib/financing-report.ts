@@ -219,6 +219,7 @@ export function buildReportHtml(input: ReportInput, recs: Recommendation[]): str
   @page { size: A4; margin: 20mm 16mm 28mm; }
   * { box-sizing: border-box; }
   body { font-family: ${fontFamily}; color:#111827; font-size:11.5px; line-height:1.6; margin:0; }
+  @media screen { body { padding: 20mm 16mm 28mm; } }
   h1 { font-size:24px; margin:0 0 4px; color:${primary}; letter-spacing:-0.01em; }
   h2 { font-size:13px; margin:22px 0 10px; color:${primary}; text-transform:uppercase; letter-spacing:0.06em; font-weight:600; padding-bottom:6px; border-bottom:1px solid ${hexAlpha(primary, 0.15)}; page-break-after:avoid; }
   h3 { font-size:12.5px; margin:0 0 6px; color:${primary}; page-break-after:avoid; }
