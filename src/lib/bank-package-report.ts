@@ -738,17 +738,45 @@ export function buildBankPackageHtml(input: BankPackageInput): string {
     ? applicantBlock(locale, input.coApplicant)
     : `<p class="muted">${t(locale, "no_coapp")}</p>`;
 
-  const propertyHtml = input.property
+  const p = input.property;
+  const propAddress = p
+    ? [
+        [p.address, p.postal_code].filter(Boolean).join(" "),
+        [p.postal_code ? null : null, p.city].filter(Boolean).join(" "),
+        p.country,
+      ].filter(Boolean).join(", ")
+    : "";
+  const propertyHtml = p
     ? `
       <table class="kv">
-        ${kv("Bezeichnung", dash(input.property.title))}
-        ${kv("Adresse", dash([input.property.address, input.property.city].filter(Boolean).join(", ")))}
-        ${kv("Typ", dash(input.property.type))}
-        ${kv("Fläche", input.property.area != null ? `${input.property.area} m²` : "—")}
-        ${kv("Zimmer", input.property.rooms != null ? String(input.property.rooms) : "—")}
+        ${kv("Bezeichnung", dash(p.title))}
+        ${kv("Adresse", dash([p.address, [p.postal_code, p.city].filter(Boolean).join(" "), p.country].filter(Boolean).join(", ") || propAddress))}
+        ${kv("Objekttyp", dash(p.property_type))}
+        ${kv("Nutzung", dash(p.listing_type))}
+        ${kv("Kaufpreis / Wert", fmt(p.price ?? null))}
+        ${kv("Wohnfläche", p.living_area != null ? `${p.living_area} m²` : (p.area != null ? `${p.area} m²` : "—"))}
+        ${kv("Grundstücksfläche", p.plot_area != null ? `${p.plot_area} m²` : "—")}
+        ${kv("Zimmer", p.rooms != null ? String(p.rooms) : "—")}
+        ${kv("Badezimmer", p.bathrooms != null ? String(p.bathrooms) : "—")}
+        ${kv("Stockwerk", p.floor != null ? String(p.floor) : "—")}
+        ${kv("Baujahr", p.year_built != null ? String(p.year_built) : "—")}
+        ${kv("Energieklasse", dash(p.energy_class))}
+        ${kv("Heizung", dash(p.heating_type))}
+        ${kv("Zustand", dash(p.condition))}
       </table>
     `
     : `<p class="muted">${t(locale, "no_property")}</p>`;
+
+  const additionalApplicantsHtml = (input.additionalApplicants ?? []).length
+    ? (input.additionalApplicants ?? [])
+        .map(
+          (a, i) => `
+      <h3>Weiterer Mitantragsteller ${i + 1}${a.full_name ? ` – ${escapeHtml(a.full_name)}` : ""}</h3>
+      ${applicantBlock(locale, a)}
+    `,
+        )
+        .join("")
+    : "";
 
   return `<!doctype html>
 <html lang="${locale}-CH"><head><meta charset="utf-8"/>
