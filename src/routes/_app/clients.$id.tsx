@@ -521,7 +521,24 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
               <FileSignature className="h-4 w-4" />Finanzierung
-              {dossier && (
+              {dossier?.quick_check_status && (
+                <Badge
+                  variant="secondary"
+                  className={
+                    "ml-1 h-5 px-1.5 text-[10px] font-medium " +
+                    (dossier.quick_check_status === "realistic"
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                      : dossier.quick_check_status === "critical"
+                        ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                        : dossier.quick_check_status === "not_financeable"
+                          ? "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30"
+                          : "")
+                  }
+                >
+                  {QUICK_CHECK_LABELS[dossier.quick_check_status as QuickCheckStatus] ?? dossier.quick_check_status}
+                </Badge>
+              )}
+              {!dossier?.quick_check_status && dossier && (
                 <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{dossier.completion_percent}%</Badge>
               )}
             </TabsTrigger>
