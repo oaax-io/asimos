@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import { ArrowLeft, User, Building2, Banknote, RotateCcw, ArrowUp, ArrowDown, Trash2, FileText, ChevronRight } from "lucide-react";
+import { ArrowLeft, User, Building2, Banknote, RotateCcw, ArrowUp, ArrowDown, Trash2, FileText, ChevronRight, ClipboardCheck, Calculator, LineChart } from "lucide-react";
 import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { formatCurrency } from "@/lib/format";
 import { expenseFields, expenseLabels } from "@/lib/self-disclosure";
@@ -310,10 +310,16 @@ function FinancingDetailPage() {
                 </p>
               )}
               <Tabs defaultValue="vorpruefung">
-                <TabsList className="gap-1 bg-muted/60 p-1 rounded-xl">
-                  <TabsTrigger value="vorpruefung" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.quickcheck.subtabs.precheck")}</TabsTrigger>
-                  <TabsTrigger value="detail" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.quickcheck.subtabs.detail")}</TabsTrigger>
-                  <TabsTrigger value="szenarien" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.quickcheck.subtabs.scenarios")}</TabsTrigger>
+                <TabsList className="w-full flex justify-start gap-0 bg-transparent border-b border-border rounded-none p-0 h-auto">
+                  <SubTabTrigger value="vorpruefung" icon={<ClipboardCheck className="h-4 w-4" />}>
+                    {t("financing.detail.quickcheck.subtabs.precheck")}
+                  </SubTabTrigger>
+                  <SubTabTrigger value="detail" icon={<Calculator className="h-4 w-4" />}>
+                    {t("financing.detail.quickcheck.subtabs.detail")}
+                  </SubTabTrigger>
+                  <SubTabTrigger value="szenarien" icon={<LineChart className="h-4 w-4" />}>
+                    {t("financing.detail.quickcheck.subtabs.scenarios")}
+                  </SubTabTrigger>
                 </TabsList>
 
                 <TabsContent value="vorpruefung" className="space-y-4">
@@ -487,6 +493,28 @@ function spouseIds(dossier: Dossier) {
 function coApplicants(dossier: Dossier) {
   const mainId = dossier.clients?.id;
   return (dossier.applicant_clients ?? []).filter((c) => c.id !== mainId && !spouseIds(dossier).has(c.id));
+}
+
+function SubTabTrigger({
+  value,
+  icon,
+  children,
+}: {
+  value: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <TabsTrigger
+      value={value}
+      className={cn(
+        "relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-none border-b-2 border-transparent transition-colors hover:text-foreground data-[state=active]:text-foreground data-[state=active]:border-primary"
+      )}
+    >
+      {icon}
+      <span>{children}</span>
+    </TabsTrigger>
+  );
 }
 
 // ───────── Quick Check Sub-Tabs ─────────
