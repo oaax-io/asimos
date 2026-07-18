@@ -247,7 +247,7 @@ export const buildBankPackage = createServerFn({ method: "POST" })
         .order("is_cover", { ascending: false })
         .order("sort_order", { ascending: true })
         .limit(15);
-      propertyMedia = (media ?? []) as NonNullable<typeof propertyMedia>;
+      propertyMedia = (media ?? []) as typeof propertyMedia;
     }
 
     // 5) Checkliste
