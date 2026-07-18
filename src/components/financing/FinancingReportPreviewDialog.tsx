@@ -192,12 +192,18 @@ export function FinancingReportPreviewDialog({ open, onOpenChange, dossierId, do
             <DialogTitle>{reportTitle || "Finanzierungsbericht"}</DialogTitle>
             <DialogDescription>Vorschau des finalen Finanzierungsdokuments — als PDF exportieren oder an den Kunden senden.</DialogDescription>
           </DialogHeader>
-          <div className="flex-1 min-h-0 bg-muted/30">
-            <iframe
-              title="Finanzierungsbericht Vorschau"
-              srcDoc={liveHtml}
-              className="w-full h-full bg-white"
-            />
+          <div className="flex-1 min-h-0 overflow-auto bg-muted/40 p-6 flex justify-center">
+            <div
+              className="bg-white shadow-lg ring-1 ring-black/5 shrink-0"
+              style={{ width: "210mm", minHeight: "297mm" }}
+            >
+              <iframe
+                title="Finanzierungsbericht Vorschau"
+                srcDoc={liveHtml}
+                className="w-full bg-white border-0 block"
+                style={{ height: "297mm", minHeight: "297mm" }}
+              />
+            </div>
           </div>
           <DialogFooter className="px-6 py-3 border-t bg-background flex-wrap gap-2 sm:justify-between">
             <div className="flex flex-wrap gap-2">
