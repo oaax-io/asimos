@@ -189,7 +189,7 @@ function FinancingDetailPage() {
                     client={r.related}
                   />
                 ))}
-                {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id === dossier.co_applicant_client_id).map((c: { id: string; full_name: string }) => (
+                {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id === dossier.co_applicant_client_id && !spouseIds(dossier).has(c.id)).map((c: { id: string; full_name: string }) => (
                   <ApplicantRow
                     key={c.id}
                     label={t("financing.wizard.summary.coApplicant")}
