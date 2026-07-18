@@ -272,6 +272,8 @@ function FinancingDetailPage() {
                   <QuickCheckScenarios dossier={dossier} />
                 </TabsContent>
               </Tabs>
+              <DossierQualityCard dossierId={dossier.id} dossier={dossier} />
+
             </>
           )}
         </TabsContent>
