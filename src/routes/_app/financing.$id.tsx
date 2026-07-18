@@ -310,10 +310,16 @@ function FinancingDetailPage() {
                 </p>
               )}
               <Tabs defaultValue="vorpruefung">
-                <TabsList className="gap-1 bg-muted/60 p-1 rounded-xl">
-                  <TabsTrigger value="vorpruefung" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.quickcheck.subtabs.precheck")}</TabsTrigger>
-                  <TabsTrigger value="detail" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.quickcheck.subtabs.detail")}</TabsTrigger>
-                  <TabsTrigger value="szenarien" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.quickcheck.subtabs.scenarios")}</TabsTrigger>
+                <TabsList className="w-full flex justify-start gap-0 bg-transparent border-b border-border rounded-none p-0 h-auto">
+                  <SubTabTrigger value="vorpruefung" icon={<ClipboardCheck className="h-4 w-4" />}>
+                    {t("financing.detail.quickcheck.subtabs.precheck")}
+                  </SubTabTrigger>
+                  <SubTabTrigger value="detail" icon={<Calculator className="h-4 w-4" />}>
+                    {t("financing.detail.quickcheck.subtabs.detail")}
+                  </SubTabTrigger>
+                  <SubTabTrigger value="szenarien" icon={<LineChart className="h-4 w-4" />}>
+                    {t("financing.detail.quickcheck.subtabs.scenarios")}
+                  </SubTabTrigger>
                 </TabsList>
 
                 <TabsContent value="vorpruefung" className="space-y-4">
