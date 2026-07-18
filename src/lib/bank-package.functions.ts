@@ -138,13 +138,47 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       };
     }
 
-    // 2) Kunde + Ehepartner laden
-    const clientIds = [dossier.client_id, dossier.co_applicant_client_id].filter(Boolean) as string[];
+    // 2) Kunde + Ehepartner + zusätzliche Mitantragsteller laden
+    // Zusätzliche Mitantragsteller können aus zwei Quellen stammen:
+    //   a) dossier.additional_co_applicants (jsonb array) mit optionaler client_id
+    //   b) client_relationships (Ehepartner/Partner des Hauptkunden)
+    const additionalRaw = Array.isArray((dossier as any).additional_co_applicants)
+      ? ((dossier as any).additional_co_applicants as Array<Record<string, unknown>>)
+      : [];
+    const additionalIdsFromDossier = additionalRaw
+      .map((a) => (typeof a?.client_id === "string" ? a.client_id : null))
+      .filter((v): v is string => !!v);
+
+    let relationshipIds: string[] = [];
+    if (dossier.client_id) {
+      const { data: rels } = await supabaseAdmin
+        .from("client_relationships")
+        .select("client_id, related_client_id, relationship_type")
+        .or(`client_id.eq.${dossier.client_id},related_client_id.eq.${dossier.client_id}`);
+      relationshipIds = (rels ?? [])
+        .map((r: any) => (r.client_id === dossier.client_id ? r.related_client_id : r.client_id))
+        .filter((v: string | null): v is string => !!v);
+    }
+
+    const excluded = new Set([dossier.client_id, dossier.co_applicant_client_id].filter(Boolean) as string[]);
+    const extraApplicantIds = Array.from(
+      new Set([...additionalIdsFromDossier, ...relationshipIds].filter((id) => id && !excluded.has(id))),
+    );
+
+    const clientIds = [
+      dossier.client_id,
+      dossier.co_applicant_client_id,
+      ...extraApplicantIds,
+    ].filter(Boolean) as string[];
+
     const { data: clients } = await supabaseAdmin.from("clients").select("*").in("id", clientIds);
     const mainClient = clients?.find((c) => c.id === dossier.client_id) ?? null;
     const coClient = dossier.co_applicant_client_id
       ? (clients?.find((c) => c.id === dossier.co_applicant_client_id) ?? null)
       : null;
+    const extraClients = extraApplicantIds
+      .map((id) => clients?.find((c) => c.id === id) ?? null)
+      .filter(Boolean) as NonNullable<typeof mainClient>[];
 
     // 3) Selbstauskünfte
     const { data: disclosures } = await supabaseAdmin
@@ -155,16 +189,61 @@ export const buildBankPackage = createServerFn({ method: "POST" })
     const coDisclosure = dossier.co_applicant_client_id
       ? (disclosures?.find((d) => d.client_id === dossier.co_applicant_client_id) ?? null)
       : null;
+    const discByClient = new Map(
+      (disclosures ?? []).map((d) => [d.client_id as string, d]),
+    );
 
-    // 4) Property optional
-    let property: { title?: string | null; address?: string | null; city?: string | null; type?: string | null; area?: number | null; rooms?: number | null } | null = null;
+    // Folder-Namen pro Extra-Antragsteller vorbereiten
+    const extraFolderByClient = new Map<string, string>();
+    extraClients.forEach((c, idx) => {
+      const nameSlug = safeFolderName(c.full_name || `Mitantragsteller_${idx + 1}`);
+      extraFolderByClient.set(c.id, `02b_Mitantragsteller_${idx + 1}_${nameSlug}`);
+    });
+
+    // 4) Property optional (mit umfassenden Details + Bildern)
+    let property:
+      | {
+          title?: string | null;
+          address?: string | null;
+          postal_code?: string | null;
+          city?: string | null;
+          country?: string | null;
+          property_type?: string | null;
+          listing_type?: string | null;
+          price?: number | null;
+          living_area?: number | null;
+          plot_area?: number | null;
+          area?: number | null;
+          rooms?: number | null;
+          bathrooms?: number | null;
+          floor?: number | null;
+          year_built?: number | null;
+          energy_class?: string | null;
+          heating_type?: string | null;
+          condition?: string | null;
+        }
+      | null = null;
+    let propertyMedia:
+      | Array<{ file_url: string; file_name: string | null; file_type: string | null; is_cover: boolean }>
+      | null = null;
     if (dossier.property_id) {
       const { data: prop } = await supabaseAdmin
         .from("properties")
-        .select("title, address, city, type, area, rooms")
+        .select(
+          "title, address, postal_code, city, country, property_type, listing_type, price, living_area, plot_area, area, rooms, bathrooms, floor, year_built, energy_class, heating_type, condition",
+        )
         .eq("id", dossier.property_id)
         .maybeSingle();
       property = (prop as typeof property) ?? null;
+
+      const { data: media } = await supabaseAdmin
+        .from("property_media")
+        .select("file_url, file_name, file_type, is_cover, sort_order")
+        .eq("property_id", dossier.property_id)
+        .order("is_cover", { ascending: false })
+        .order("sort_order", { ascending: true })
+        .limit(15);
+      propertyMedia = (media ?? []) as never;
     }
 
     // 5) Checkliste
