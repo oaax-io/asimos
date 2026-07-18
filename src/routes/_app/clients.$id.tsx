@@ -777,6 +777,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
           <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["roles"]} />
           <ClientActivityTab clientId={id} userId={user!.id} notes={client.notes} />
         </TabsContent>
+        </div>
       </Tabs>
     </div>
   );
