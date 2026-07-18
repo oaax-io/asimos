@@ -138,13 +138,47 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       };
     }
 
-    // 2) Kunde + Ehepartner laden
-    const clientIds = [dossier.client_id, dossier.co_applicant_client_id].filter(Boolean) as string[];
+    // 2) Kunde + Ehepartner + zusätzliche Mitantragsteller laden
+    // Zusätzliche Mitantragsteller können aus zwei Quellen stammen:
+    //   a) dossier.additional_co_applicants (jsonb array) mit optionaler client_id
+    //   b) client_relationships (Ehepartner/Partner des Hauptkunden)
+    const additionalRaw = Array.isArray((dossier as any).additional_co_applicants)
+      ? ((dossier as any).additional_co_applicants as Array<Record<string, unknown>>)
+      : [];
+    const additionalIdsFromDossier = additionalRaw
+      .map((a) => (typeof a?.client_id === "string" ? a.client_id : null))
+      .filter((v): v is string => !!v);
+
+    let relationshipIds: string[] = [];
+    if (dossier.client_id) {
+      const { data: rels } = await supabaseAdmin
+        .from("client_relationships")
+        .select("client_id, related_client_id, relationship_type")
+        .or(`client_id.eq.${dossier.client_id},related_client_id.eq.${dossier.client_id}`);
+      relationshipIds = (rels ?? [])
+        .map((r: any) => (r.client_id === dossier.client_id ? r.related_client_id : r.client_id))
+        .filter((v: string | null): v is string => !!v);
+    }
+
+    const excluded = new Set([dossier.client_id, dossier.co_applicant_client_id].filter(Boolean) as string[]);
+    const extraApplicantIds = Array.from(
+      new Set([...additionalIdsFromDossier, ...relationshipIds].filter((id) => id && !excluded.has(id))),
+    );
+
+    const clientIds = [
+      dossier.client_id,
+      dossier.co_applicant_client_id,
+      ...extraApplicantIds,
+    ].filter(Boolean) as string[];
+
     const { data: clients } = await supabaseAdmin.from("clients").select("*").in("id", clientIds);
     const mainClient = clients?.find((c) => c.id === dossier.client_id) ?? null;
     const coClient = dossier.co_applicant_client_id
       ? (clients?.find((c) => c.id === dossier.co_applicant_client_id) ?? null)
       : null;
+    const extraClients = extraApplicantIds
+      .map((id) => clients?.find((c) => c.id === id) ?? null)
+      .filter(Boolean) as NonNullable<typeof mainClient>[];
 
     // 3) Selbstauskünfte
     const { data: disclosures } = await supabaseAdmin
@@ -155,16 +189,65 @@ export const buildBankPackage = createServerFn({ method: "POST" })
     const coDisclosure = dossier.co_applicant_client_id
       ? (disclosures?.find((d) => d.client_id === dossier.co_applicant_client_id) ?? null)
       : null;
+    const discByClient = new Map(
+      (disclosures ?? []).map((d) => [d.client_id as string, d]),
+    );
 
-    // 4) Property optional
-    let property: { title?: string | null; address?: string | null; city?: string | null; type?: string | null; area?: number | null; rooms?: number | null } | null = null;
+    // Folder-Namen pro Extra-Antragsteller vorbereiten
+    const extraFolderByClient = new Map<string, string>();
+    extraClients.forEach((c, idx) => {
+      const nameSlug = safeFolderName(c.full_name || `Mitantragsteller_${idx + 1}`);
+      extraFolderByClient.set(c.id, `02b_Mitantragsteller_${idx + 1}_${nameSlug}`);
+    });
+
+    // 4) Property optional (mit umfassenden Details + Bildern)
+    let property:
+      | {
+          title?: string | null;
+          address?: string | null;
+          postal_code?: string | null;
+          city?: string | null;
+          country?: string | null;
+          property_type?: string | null;
+          listing_type?: string | null;
+          price?: number | null;
+          living_area?: number | null;
+          plot_area?: number | null;
+          area?: number | null;
+          rooms?: number | null;
+          bathrooms?: number | null;
+          floor?: number | null;
+          year_built?: number | null;
+          energy_class?: string | null;
+          heating_type?: string | null;
+          condition?: string | null;
+        }
+      | null = null;
+    let propertyMedia: Array<{
+      file_url: string;
+      file_name: string | null;
+      file_type: string | null;
+      is_cover: boolean;
+      sort_order?: number | null;
+    }> = [];
     if (dossier.property_id) {
       const { data: prop } = await supabaseAdmin
         .from("properties")
-        .select("title, address, city, type, area, rooms")
+        .select(
+          "title, address, postal_code, city, country, property_type, listing_type, price, living_area, plot_area, area, rooms, bathrooms, floor, year_built, energy_class, heating_type, condition",
+        )
         .eq("id", dossier.property_id)
         .maybeSingle();
       property = (prop as typeof property) ?? null;
+
+      const { data: media } = await supabaseAdmin
+        .from("property_media")
+        .select("file_url, file_name, file_type, is_cover, sort_order")
+        .eq("property_id", dossier.property_id)
+        .order("is_cover", { ascending: false })
+        .order("sort_order", { ascending: true })
+        .limit(15);
+      propertyMedia = (media ?? []) as typeof propertyMedia;
     }
 
     // 5) Checkliste
@@ -174,11 +257,11 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       .eq("dossier_id", data.dossierId)
       .order("sort_order", { ascending: true });
 
-    // 6) Dokumente (Kunde, Ehepartner, Objekt, Financing)
+    // 6) Dokumente (Kunde, Ehepartner, weitere Mitantragsteller, Objekt, Financing)
     const orParts: string[] = [`and(related_type.eq.financing,related_id.eq.${data.dossierId})`];
-    if (dossier.client_id) orParts.push(`and(related_type.eq.client,related_id.eq.${dossier.client_id})`);
-    if (dossier.co_applicant_client_id)
-      orParts.push(`and(related_type.eq.client,related_id.eq.${dossier.co_applicant_client_id})`);
+    for (const cid of clientIds) {
+      orParts.push(`and(related_type.eq.client,related_id.eq.${cid})`);
+    }
     if (dossier.property_id) orParts.push(`and(related_type.eq.property,related_id.eq.${dossier.property_id})`);
 
     const { data: documents } = await supabaseAdmin
@@ -220,11 +303,28 @@ export const buildBankPackage = createServerFn({ method: "POST" })
     const sourceLabel = (d: DocSource): { folder: string; label: string } => {
       if (d.related_type === "client") {
         if (d.related_id === dossier.co_applicant_client_id) return { folder: "02_Ehepartner", label: "Ehepartner" };
+        if (d.related_id && extraFolderByClient.has(d.related_id)) {
+          return { folder: extraFolderByClient.get(d.related_id)!, label: "Weiterer Mitantragsteller" };
+        }
         return { folder: "01_Kunde", label: "Kunde" };
       }
       if (d.related_type === "property") return { folder: "03_Objekt", label: "Objekt" };
       if (d.related_type === "financing") return { folder: "04_Finanzierung", label: "Finanzierung" };
       return { folder: "05_Sonstige", label: "Sonstige" };
+    };
+
+    const addToZipBytes = (folder: string, filename: string, bytes: Uint8Array, sourceText: string) => {
+      const cleaned = safeFileName(filename, "datei.bin");
+      const targetFolder = safeFolderName(folder);
+      const fullPath = `${targetFolder}/${dedupeFileName(usedNames, cleaned)}`;
+      zipEntries[fullPath] = bytes;
+      totalBytes += bytes.byteLength;
+      inventory.push({
+        folder: targetFolder,
+        filename: fullPath.split("/").pop() ?? cleaned,
+        source: sourceText,
+        size_bytes: bytes.byteLength,
+      });
     };
 
     const addToZip = async (d: DocSource, isGenerated: boolean) => {
@@ -239,17 +339,13 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       const baseName = isGenerated
         ? (d.title ?? d.file_name ?? `generiert_${d.related_id ?? "datei"}.pdf`)
         : (d.file_name ?? `datei_${d.related_id ?? "x"}`);
-      const cleaned = safeFileName(baseName, "datei.bin");
-      const targetFolder = safeFolderName(isGenerated ? "06_Generiert" : sourceLabel(d).folder);
-      const fullPath = `${targetFolder}/${dedupeFileName(usedNames, cleaned)}`;
-      zipEntries[fullPath] = fetched.bytes;
-      totalBytes += fetched.size;
-      inventory.push({
-        folder: targetFolder,
-        filename: fullPath.split("/").pop() ?? cleaned,
-        source: isGenerated ? "Generiert" : sourceLabel(d).label,
-        size_bytes: fetched.size,
-      });
+      const { folder, label } = sourceLabel(d);
+      addToZipBytes(
+        isGenerated ? "06_Generiert" : folder,
+        baseName,
+        fetched.bytes,
+        isGenerated ? "Generiert" : label,
+      );
     };
 
     for (const d of documents ?? []) await addToZip(d as DocSource, false);
@@ -258,6 +354,28 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       if (d.document_type === "bank_package") continue;
       await addToZip(d as DocSource, true);
     }
+
+    // Objekt-Bilder (Cover zuerst) als eigenständige Anhänge unter 03_Objekt/Bilder
+    for (let i = 0; i < propertyMedia.length; i++) {
+      if (totalBytes >= MAX_TOTAL_ATTACHMENT_BYTES) break;
+      const m = propertyMedia[i];
+      if (!m.file_url) continue;
+      const fetched = await fetchAttachment(m.file_url, supabaseAdmin);
+      if (!fetched) continue;
+      if (fetched.size > MAX_ATTACHMENT_BYTES) continue;
+      if (totalBytes + fetched.size > MAX_TOTAL_ATTACHMENT_BYTES) break;
+      const ext = (() => {
+        const raw = m.file_url.split("?")[0].split(".").pop();
+        return raw && raw.length <= 5 ? `.${raw.toLowerCase()}` : "";
+      })();
+      const idx = String(i + 1).padStart(2, "0");
+      const name = m.is_cover
+        ? `Cover${ext}`
+        : (m.file_name ? safeFileName(m.file_name, `Bild_${idx}${ext}`) : `Bild_${idx}${ext}`);
+      addToZipBytes("03_Objekt/Bilder", name, fetched.bytes, "Objekt-Bild");
+    }
+
+
 
     // 9) Master-HTML & PDF
     const applicantData = {
@@ -300,12 +418,34 @@ export const buildBankPackage = createServerFn({ method: "POST" })
         }
       : null;
 
+    const additionalApplicantsData = extraClients.map((c) => {
+      const disc = discByClient.get(c.id) ?? null;
+      return {
+        full_name: c.full_name ?? null,
+        email: c.email ?? null,
+        phone: c.phone ?? null,
+        address: [c.address, c.postal_code, c.city].filter(Boolean).join(", ") || null,
+        birth_date: (disc as any)?.birth_date ?? null,
+        nationality: (disc as any)?.nationality ?? null,
+        marital_status: (disc as any)?.marital_status ?? null,
+        employment_status: (disc as any)?.employment_status ?? null,
+        employer_name: (disc as any)?.employer_name ?? null,
+        salary_net_monthly: (disc as any)?.salary_net_monthly ?? null,
+        annual_net_salary: (disc as any)?.annual_net_salary ?? null,
+        total_income_monthly: (disc as any)?.total_income_monthly ?? null,
+        total_expenses_monthly: (disc as any)?.total_expenses_monthly ?? null,
+        reserve_total: (disc as any)?.reserve_total ?? null,
+        disclosure: (disc ?? null) as never,
+      };
+    });
+
     const html = buildBankPackageHtml({
       locale: data.locale,
       brand: brand ?? null,
       dossier: dossier as BankPackageInput["dossier"],
       applicant: applicantData,
       coApplicant: coApplicantData,
+      additionalApplicants: additionalApplicantsData,
       property,
       checklist: (checklistRows ?? []).map((c) => ({
         label: c.label,
@@ -367,10 +507,13 @@ export const buildBankPackage = createServerFn({ method: "POST" })
         `Erstellt: ${new Date().toLocaleString("de-CH")}`,
         ``,
         `Inhalt:`,
-        `- 00_Dossier_${clientSlug}.pdf: Master-Dossier mit Kunde, Ehepartner, Finanzierung, Checkliste, Notizen`,
+        `- 00_Dossier_${clientSlug}.pdf: Master-Dossier mit allen Antragstellern, Objekt, Finanzierung, Checkliste, Notizen`,
         `- 01_Kunde/: Unterlagen des Hauptantragstellers`,
-        coApplicantData ? `- 02_Ehepartner/: Unterlagen des Mitantragstellers` : null,
-        property ? `- 03_Objekt/: Unterlagen zum Objekt` : null,
+        coApplicantData ? `- 02_Ehepartner/: Unterlagen des Ehepartners / Mitantragstellers` : null,
+        ...Array.from(extraFolderByClient.entries()).map(
+          ([, folder]) => `- ${folder}/: Unterlagen weiterer Mitantragsteller`,
+        ),
+        property ? `- 03_Objekt/: Unterlagen zum Objekt (inkl. Bilder unter 03_Objekt/Bilder/)` : null,
         `- 04_Finanzierung/: Unterlagen zur Finanzierung`,
         `- 06_Generiert/: Generierte Dokumente (Quick-Check PDF etc.)`,
       ]
