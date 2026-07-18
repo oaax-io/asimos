@@ -143,10 +143,22 @@ function FinancingDetailPage() {
           ].filter(Boolean).join(" · ")
         }
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge>{DOSSIER_STATUS_LABELS[dossier.dossier_status as DossierStatus] ?? t("financing.dossierStatus.draft")}</Badge>
             {dossier.quick_check_status && (
               <Badge variant="outline">{t(`financing.quickCheckStatus.${qcStatus}`, { defaultValue: QUICK_CHECK_LABELS[qcStatus] })}</Badge>
+            )}
+            {!isIncomplete && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
+                  <RotateCcw className="mr-1 h-4 w-4" />{t("financing.detail.quickcheck.recalculate")}
+                </Button>
+                <FinancingQuickCheckActions
+                  dossierId={dossier.id}
+                  dossier={dossier}
+                  showWorkflowButtons={false}
+                />
+              </>
             )}
           </div>
         }
@@ -162,13 +174,15 @@ function FinancingDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="overview">{t("financing.detail.tabs.overview")}</TabsTrigger>
-          <TabsTrigger value="quickcheck">{t("financing.detail.tabs.quickcheck")}</TabsTrigger>
           <TabsTrigger value="disclosure">{t("financing.detail.tabs.disclosure")}</TabsTrigger>
           <TabsTrigger value="ubs">{t("financing.detail.tabs.ubs")}</TabsTrigger>
           <TabsTrigger value="documents">{t("financing.detail.tabs.documents")}</TabsTrigger>
           <TabsTrigger value="bank">{t("financing.detail.tabs.bank")}</TabsTrigger>
           <TabsTrigger value="activity">{t("financing.detail.tabs.activity")}</TabsTrigger>
         </TabsList>
+
+
+
 
 
         <TabsContent value="overview" className="space-y-4">
@@ -219,9 +233,7 @@ function FinancingDetailPage() {
             </Card>
           </div>
           <DossierQualityCard dossierId={dossier.id} dossier={dossier} />
-        </TabsContent>
 
-        <TabsContent value="quickcheck" className="space-y-4">
           {isIncomplete ? (
             <Card>
               <CardContent className="p-6 space-y-4">
@@ -236,27 +248,11 @@ function FinancingDetailPage() {
             </Card>
           ) : (
             <>
-              <Card>
-                <CardContent className="p-4 flex flex-wrap items-center gap-3">
-                  <Badge className={qcBadgeTone(qcStatus)}>{t(`financing.quickCheckStatus.${qcStatus}`, { defaultValue: QUICK_CHECK_LABELS[qcStatus] })}</Badge>
-                  {lastCheckAt && (
-                    <span className="text-sm text-muted-foreground">
-                      {t("financing.detail.quickcheck.lastCheck", { date: lastCheckAt })}
-                    </span>
-                  )}
-                  <div className="ml-auto flex flex-wrap items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
-                      <RotateCcw className="mr-1 h-4 w-4" />{t("financing.detail.quickcheck.recalculate")}
-                    </Button>
-                    <FinancingQuickCheckActions
-                      dossierId={dossier.id}
-                      dossier={dossier}
-                      showWorkflowButtons={false}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
+              {lastCheckAt && (
+                <p className="text-sm text-muted-foreground">
+                  {t("financing.detail.quickcheck.lastCheck", { date: lastCheckAt })}
+                </p>
+              )}
               <Tabs defaultValue="vorpruefung">
                 <TabsList>
                   <TabsTrigger value="vorpruefung">{t("financing.detail.quickcheck.subtabs.precheck")}</TabsTrigger>
@@ -279,6 +275,8 @@ function FinancingDetailPage() {
             </>
           )}
         </TabsContent>
+
+
 
 
         <TabsContent value="disclosure">
