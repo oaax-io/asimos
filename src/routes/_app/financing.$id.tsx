@@ -232,7 +232,7 @@ function FinancingDetailPage() {
               </CardContent>
             </Card>
           </div>
-          <DossierQualityCard dossierId={dossier.id} dossier={dossier} />
+
 
           {isIncomplete ? (
             <Card>
