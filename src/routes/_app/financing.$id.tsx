@@ -199,7 +199,7 @@ function FinancingDetailPage() {
       </section>
 
       <Tabs defaultValue="overview">
-        <TabsList className="inline-flex flex-wrap h-auto items-center gap-0 bg-muted/50 p-1.5 rounded-xl border border-border shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]">
+        <TabsList className="inline-flex flex-wrap h-auto items-center gap-0 bg-background p-1.5 rounded-xl border border-border shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_12px_rgba(0,0,0,0.05)]">
           <TabsTrigger
             value="overview"
             className="relative flex items-center gap-2.5 px-5 py-2 text-sm font-medium text-muted-foreground rounded-lg border border-transparent transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60 hover:text-foreground"
