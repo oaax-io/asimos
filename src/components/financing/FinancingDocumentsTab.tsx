@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FileText, ExternalLink, FileBadge, Files, User, Building2, Banknote, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type Props = { dossierId: string; clientId?: string | null; propertyId?: string | null };
 
