@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import { ArrowLeft, User, Building2, Banknote, RotateCcw, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
+import { ArrowLeft, User, Building2, Banknote, RotateCcw, ArrowUp, ArrowDown, Trash2, FileText } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { expenseFields, expenseLabels } from "@/lib/self-disclosure";
 import {
@@ -28,7 +28,7 @@ import { UbsChecklistTab } from "@/components/financing/UbsChecklistTab";
 import { FinancingDocumentsTab } from "@/components/financing/FinancingDocumentsTab";
 import { BankSubmissionTab } from "@/components/financing/BankSubmissionTab";
 import { DossierQualityCard } from "@/components/financing/DossierQualityCard";
-import { FinancingQuickCheckActions } from "@/components/financing/FinancingQuickCheckActions";
+import { FinancingReportPreviewDialog } from "@/components/financing/FinancingReportPreviewDialog";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -46,6 +46,7 @@ function FinancingDetailPage() {
   const { t } = useTranslation();
   const [resetOpen, setResetOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const { data: dossier, isLoading } = useQuery({
     queryKey: ["financing_dossier", id],
@@ -144,20 +145,18 @@ function FinancingDetailPage() {
         }
         action={
           <div className="flex flex-wrap items-center gap-2">
-            <Badge>{DOSSIER_STATUS_LABELS[dossier.dossier_status as DossierStatus] ?? t("financing.dossierStatus.draft")}</Badge>
+            <Badge variant="outline">{DOSSIER_STATUS_LABELS[dossier.dossier_status as DossierStatus] ?? t("financing.dossierStatus.draft")}</Badge>
             {dossier.quick_check_status && (
               <Badge className={qcBadgeTone(qcStatus)}>{t(`financing.quickCheckStatus.${qcStatus}`, { defaultValue: QUICK_CHECK_LABELS[qcStatus] })}</Badge>
             )}
             {!isIncomplete && (
               <>
+                <Button size="sm" onClick={() => setPreviewOpen(true)}>
+                  <FileText className="mr-1 h-4 w-4" />Bericht ansehen
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
                   <RotateCcw className="mr-1 h-4 w-4" />{t("financing.detail.quickcheck.recalculate")}
                 </Button>
-                <FinancingQuickCheckActions
-                  dossierId={dossier.id}
-                  dossier={dossier}
-                  showWorkflowButtons={false}
-                />
               </>
             )}
           </div>
@@ -168,17 +167,21 @@ function FinancingDetailPage() {
         <Stat icon={Banknote} label={isRefi ? "Immobilienwert" : t("financing.detail.stats.totalInvestment")} value={fmt(dossier.total_investment)} />
         <Stat icon={Banknote} label={isRefi ? "Neue Hypothek" : t("financing.detail.stats.mortgage")} value={fmt(dossier.requested_mortgage)} />
         <Stat icon={Banknote} label={isRefi ? "Aufstockungswunsch" : t("financing.detail.stats.ownFunds")} value={isRefi ? fmt(dossier.requested_increase) : fmt(dossier.own_funds_total)} />
-        <Stat icon={Banknote} label={t("financing.detail.stats.affordability")} value={refiInputs ? pct(refiInputs.affordability) : dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"} />
+        <Stat
+          icon={Banknote}
+          label={t("financing.detail.stats.affordability")}
+          value={refiInputs ? pct(refiInputs.affordability) : dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"}
+          tone={affordabilityTone(refiInputs?.affordability ?? (dossier.affordability_ratio != null ? Number(dossier.affordability_ratio) : null))}
+        />
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="overview">{t("financing.detail.tabs.overview")}</TabsTrigger>
-          
-          <TabsTrigger value="ubs">{t("financing.detail.tabs.ubs")}</TabsTrigger>
-          <TabsTrigger value="documents">{t("financing.detail.tabs.documents")}</TabsTrigger>
-          <TabsTrigger value="bank">{t("financing.detail.tabs.bank")}</TabsTrigger>
-          <TabsTrigger value="activity">{t("financing.detail.tabs.activity")}</TabsTrigger>
+        <TabsList className="flex-wrap h-auto gap-1 bg-muted/60 p-1 rounded-xl">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.overview")}</TabsTrigger>
+          <TabsTrigger value="ubs" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.ubs")}</TabsTrigger>
+          <TabsTrigger value="documents" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.documents")}</TabsTrigger>
+          <TabsTrigger value="bank" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.bank")}</TabsTrigger>
+          <TabsTrigger value="activity" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.activity")}</TabsTrigger>
         </TabsList>
 
 
@@ -254,10 +257,10 @@ function FinancingDetailPage() {
                 </p>
               )}
               <Tabs defaultValue="vorpruefung">
-                <TabsList>
-                  <TabsTrigger value="vorpruefung">{t("financing.detail.quickcheck.subtabs.precheck")}</TabsTrigger>
-                  <TabsTrigger value="detail">{t("financing.detail.quickcheck.subtabs.detail")}</TabsTrigger>
-                  <TabsTrigger value="szenarien">{t("financing.detail.quickcheck.subtabs.scenarios")}</TabsTrigger>
+                <TabsList className="gap-1 bg-muted/60 p-1 rounded-xl">
+                  <TabsTrigger value="vorpruefung" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.quickcheck.subtabs.precheck")}</TabsTrigger>
+                  <TabsTrigger value="detail" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.quickcheck.subtabs.detail")}</TabsTrigger>
+                  <TabsTrigger value="szenarien" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.quickcheck.subtabs.scenarios")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="vorpruefung" className="space-y-4">
@@ -311,6 +314,13 @@ function FinancingDetailPage() {
         }}
       />
 
+      <FinancingReportPreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        dossierId={dossier.id}
+        dossier={dossier}
+      />
+
       <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -355,12 +365,27 @@ function fmt(v: any) {
   return formatCurrency(n);
 }
 
-function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function affordabilityTone(v: number | null | undefined): "ok" | "warn" | "bad" | null {
+  if (v == null || !Number.isFinite(v)) return null;
+  if (v <= 33) return "ok";
+  if (v <= 38) return "warn";
+  return "bad";
+}
+
+function Stat({ icon: Icon, label, value, tone }: { icon: any; label: string; value: string; tone?: "ok" | "warn" | "bad" | null }) {
+  const toneClass =
+    tone === "ok" ? "text-emerald-600" :
+    tone === "warn" ? "text-amber-600" :
+    tone === "bad" ? "text-red-600" : "";
+  const borderClass =
+    tone === "ok" ? "border-emerald-200" :
+    tone === "warn" ? "border-amber-200" :
+    tone === "bad" ? "border-red-200" : "";
   return (
-    <Card>
+    <Card className={cn(borderClass)}>
       <CardContent className="p-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground"><Icon className="h-4 w-4" />{label}</div>
-        <p className="mt-1 text-lg font-semibold">{value}</p>
+        <p className={cn("mt-1 text-lg font-semibold", toneClass)}>{value}</p>
       </CardContent>
     </Card>
   );
