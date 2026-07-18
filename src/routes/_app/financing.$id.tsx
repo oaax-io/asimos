@@ -148,53 +148,58 @@ function FinancingDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/financing" })}>
-        <ArrowLeft className="mr-1 h-4 w-4" />{t("financing.detail.back")}
-      </Button>
+      <section className="relative overflow-hidden rounded-2xl border border-border bg-muted/70 p-6 shadow-[var(--shadow-soft)]">
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 via-primary/80 to-primary/40" />
+        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/financing" })}>
+          <ArrowLeft className="mr-1 h-4 w-4" />{t("financing.detail.back")}
+        </Button>
 
-      <PageHeader
-        title={dossier.title || FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType] || t("financing.detail.fallback")}
-        description={
-          [
-            FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType],
-            dossier.clients?.full_name,
-            dossier.properties?.title,
-          ].filter(Boolean).join(" · ")
-        }
-        action={
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline">{DOSSIER_STATUS_LABELS[dossier.dossier_status as DossierStatus] ?? t("financing.dossierStatus.draft")}</Badge>
-            {dossier.quick_check_status && (
-              <Badge className={qcBadgeTone(qcStatus)}>{t(`financing.quickCheckStatus.${qcStatus}`, { defaultValue: QUICK_CHECK_LABELS[qcStatus] })}</Badge>
-            )}
-            {!isIncomplete && (
-              <>
-                <Button size="sm" onClick={() => setPreviewOpen(true)}>
-                  <FileText className="mr-1 h-4 w-4" />Bericht ansehen
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
-                  <RotateCcw className="mr-1 h-4 w-4" />{t("financing.detail.quickcheck.recalculate")}
-                </Button>
-              </>
-            )}
-          </div>
-        }
-      />
+        <div className="mt-4">
+          <PageHeader
+            title={dossier.title || FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType] || t("financing.detail.fallback")}
+            description={
+              [
+                FINANCING_TYPE_LABELS[dossier.financing_type as FinancingType],
+                dossier.clients?.full_name,
+                dossier.properties?.title,
+              ].filter(Boolean).join(" · ")
+            }
+            action={
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline">{DOSSIER_STATUS_LABELS[dossier.dossier_status as DossierStatus] ?? t("financing.dossierStatus.draft")}</Badge>
+                {dossier.quick_check_status && (
+                  <Badge className={qcBadgeTone(qcStatus)}>{t(`financing.quickCheckStatus.${qcStatus}`, { defaultValue: QUICK_CHECK_LABELS[qcStatus] })}</Badge>
+                )}
+                {!isIncomplete && (
+                  <>
+                    <Button size="sm" onClick={() => setPreviewOpen(true)}>
+                      <FileText className="mr-1 h-4 w-4" />Bericht ansehen
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
+                      <RotateCcw className="mr-1 h-4 w-4" />{t("financing.detail.quickcheck.recalculate")}
+                    </Button>
+                  </>
+                )}
+              </div>
+            }
+          />
+        </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat icon={Banknote} label={isRefi ? "Immobilienwert" : t("financing.detail.stats.totalInvestment")} value={fmt(dossier.total_investment)} />
-        <Stat icon={Banknote} label={isRefi ? "Neue Hypothek" : t("financing.detail.stats.mortgage")} value={fmt(dossier.requested_mortgage)} />
-        <Stat icon={Banknote} label={isRefi ? "Aufstockungswunsch" : t("financing.detail.stats.ownFunds")} value={isRefi ? fmt(dossier.requested_increase) : fmt(dossier.own_funds_total)} />
-        <Stat
-          icon={Banknote}
-          label={t("financing.detail.stats.affordability")}
-          value={refiInputs ? pct(refiInputs.affordability) : dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"}
-          tone={affordabilityTone(refiInputs?.affordability ?? (dossier.affordability_ratio != null ? Number(dossier.affordability_ratio) : null))}
-        />
-      </div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Stat icon={Banknote} label={isRefi ? "Immobilienwert" : t("financing.detail.stats.totalInvestment")} value={fmt(dossier.total_investment)} />
+          <Stat icon={Banknote} label={isRefi ? "Neue Hypothek" : t("financing.detail.stats.mortgage")} value={fmt(dossier.requested_mortgage)} />
+          <Stat icon={Banknote} label={isRefi ? "Aufstockungswunsch" : t("financing.detail.stats.ownFunds")} value={isRefi ? fmt(dossier.requested_increase) : fmt(dossier.own_funds_total)} />
+          <Stat
+            icon={Banknote}
+            label={t("financing.detail.stats.affordability")}
+            value={refiInputs ? pct(refiInputs.affordability) : dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"}
+            tone={affordabilityTone(refiInputs?.affordability ?? (dossier.affordability_ratio != null ? Number(dossier.affordability_ratio) : null))}
+          />
+        </div>
+      </section>
 
       <Tabs defaultValue="overview">
-        <TabsList className="inline-flex flex-wrap h-auto items-center gap-0 bg-muted/50 p-1.5 rounded-xl border border-border shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]">
+        <TabsList className="inline-flex flex-wrap h-auto items-center gap-0 bg-background p-1.5 rounded-xl border border-border shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_12px_rgba(0,0,0,0.05)]">
           <TabsTrigger
             value="overview"
             className="relative flex items-center gap-2.5 px-5 py-2 text-sm font-medium text-muted-foreground rounded-lg border border-transparent transition-colors data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60 hover:text-foreground"
@@ -447,7 +452,7 @@ function Stat({ icon: Icon, label, value, tone }: { icon: any; label: string; va
     tone === "warn" ? "border-amber-200" :
     tone === "bad" ? "border-red-200" : "";
   return (
-    <Card className={cn(borderClass)}>
+    <Card className={cn("bg-card/90 shadow-sm backdrop-blur-sm", borderClass)}>
       <CardContent className="p-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground"><Icon className="h-4 w-4" />{label}</div>
         <p className={cn("mt-1 text-lg font-semibold", toneClass)}>{value}</p>
