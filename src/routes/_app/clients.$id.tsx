@@ -319,8 +319,8 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         onOpenChange={setEditOpen}
       />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className={inDialog ? "sticky top-0 z-20 -mx-6 -mt-6 px-6 pt-6 bg-background/95 backdrop-blur rounded-t-2xl" : ""}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className={inDialog ? "flex flex-col h-full" : "space-y-6"}>
+        <div className={inDialog ? "shrink-0 sticky top-0 z-20 px-6 pt-6 bg-background/95 backdrop-blur rounded-t-2xl border-b border-border/50 shadow-sm" : ""}>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             {inDialog ? (
               <div className="flex flex-wrap items-center gap-3">
