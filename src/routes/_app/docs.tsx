@@ -16,6 +16,35 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.15.0",
+    date: "18.07.2026",
+    changes: [
+      { type: "feature", text: "Makrolage KI-Analyse: pro Immobilie generierbar (Lage, Verkehr, Infrastruktur, Bildung, Freizeit) inkl. Icons und Standortbeschreibung, dauerhaft am Objekt gespeichert und in der Objekt-Uebersicht sichtbar" },
+      { type: "feature", text: "Exposé-Zentrale pro Immobilie: neues Modal ueber den 'Exposé'-Button im Immobilien-Header — Template waehlen (Classic / Modern / Luxury), PDF generieren, oeffentlichen Freigabe-Link (/p/:token) erstellen und verwalten" },
+      { type: "feature", text: "Oeffentliche Objekt-Landingpage: /p/:token zeigt Details, Fotos, Einheiten und (falls vorhanden) Makrolage/Marktanalyse — ohne Login teilbar" },
+      { type: "feature", text: "Selbstauskunft-Wizard fuer Kunden: mehrstufig mit optionalem Ehepartner und weiteren Mitantragstellern — alle Personen werden automatisch als verknuepfte Kunden angelegt" },
+      { type: "feature", text: "Refinanzierungs-Wizard: zwei Hypothekentranchen mit eigenen Zinssaetzen, neuer Zweck 'Renovation', Ausgaben aller Antragsteller werden aus der Selbstauskunft uebernommen" },
+      { type: "feature", text: "Aufgaben mit Betreff-Presets (Notartermin, Kundenordner, Objektbesichtigung …), Pending-Status verlangt Kommentar via Modal, Aufgaben mit Faelligkeitsdatum erscheinen im Kalender (Monatsansicht als Standard)" },
+      { type: "feature", text: "Live-Benachrichtigungen: Toasts unten rechts + farbcodiertes Notification-Center in der Glocke (Blau = Termine, Amber = Aufgaben, Gruen = Leads)" },
+      { type: "feature", text: "Bank-Einreichungs-Paket vollstaendig: enthaelt jetzt alle Antragsteller (Ehepartner + Mitantragsteller), Objektdaten und Objekt-Medien im Ordner 03_Immobilie" },
+      { type: "feature", text: "Bank-Dropdown mit vollstaendiger Liste Schweizer Banken" },
+      { type: "feature", text: "Aktivitaetslog fuer Finanzierungen: alle Aenderungen am Dossier werden automatisch protokolliert und im Tab 'Aktivitaet' angezeigt" },
+      { type: "improvement", text: "Finanzierungs-Detailseite aufgeraeumt: Quick-Check-Tab entfernt, Vorpruefung/Detailrechnung/Szenarien direkt in der Uebersicht, alle Aktionen (Bericht ansehen, PDF, Neu berechnen, An Kunde senden) im Header" },
+      { type: "improvement", text: "Neuer Tab-Look 'Architectural Precision' (glasige Pillen, farbige Akzentlinie, Aktivitaets-Puls) fuer Finanzierung und Kunden-Modal — Sub-Tabs im Underline-Stil mit Icons und Zaehlern" },
+      { type: "improvement", text: "Bericht-Vorschau als echte A4-Seite mit skaliertem Inhalt und Print-Styles" },
+      { type: "improvement", text: "Kunden-Modal: Header und Haupttabs sind fixiert, nur der Inhalt scrollt — Applikanten-Liste kompakt mit Inline-Detail-Dialog (kein Seitenwechsel)" },
+      { type: "improvement", text: "Kunden-Modal KPIs zeigen echte Werte: Finanzierungsstatus (Realistisch / Kritisch …) statt 0 %/100 %, Budget-Fallback aus letztem Dossier, Match-Vorschlaege basierend auf Budgetbereich" },
+      { type: "improvement", text: "Refinanzierungs-Resultat: Eigenmittelquote und harte Eigenmittel werden als 'Nicht benoetigt' angezeigt statt 0 %, Tragbarkeit farbig (gruen/amber/rot), beide Hypothekentranchen durchgehend sichtbar" },
+      { type: "improvement", text: "Exposé-PDFs: Titelbild verwendet automatisch das als Cover markierte Foto, fehlende Bilder werden durch 'FOTO FOLGT'-Platzhalter ersetzt, Storage-Bilder korrekt in PDFs eingebettet" },
+      { type: "improvement", text: "Aufgaben-Karten mit besserem Kontrast, Prio 'Hoch' rot, Faelligkeitsdatum prominenter, Kunden-Badge in Amber/Beige, Uhrzeit optional" },
+      { type: "fix", text: "Manager-Rolle konnte keine Objektfotos hochladen — user_roles wird jetzt automatisch mit profiles.role synchronisiert" },
+      { type: "fix", text: "Refinanzierungs-Wizard Schritt 4: 'Weiter' war trotz vollstaendig ausgefuellter Felder blockiert (Eigennutzungsanteil-Validierung)" },
+      { type: "fix", text: "Kundenname wird bei Speicherung der Selbstauskunft korrekt uebernommen (z. B. 'Neshyt Cuculi' statt 'N Cuculi')" },
+      { type: "fix", text: "Dokumente in der Finanzierung oeffnen jetzt eine Inline-Vorschau (Signed URL) statt einer neuen Browser-Tab-Route" },
+      { type: "fix", text: "Finanzierungs-Uebersicht zeigt 'Realistisch' fuer Refinanzierungen statt faelschlich 'Nicht finanzierbar'" },
+    ],
+  },
+  {
     version: "1.14.0",
     date: "17.06.2026",
     changes: [
