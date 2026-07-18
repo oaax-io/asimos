@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import { ArrowLeft, User, Building2, Banknote, RotateCcw, ArrowUp, ArrowDown, Trash2, FileText } from "lucide-react";
+import { ArrowLeft, User, Building2, Banknote, RotateCcw, ArrowUp, ArrowDown, Trash2, FileText, ChevronRight } from "lucide-react";
+import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { formatCurrency } from "@/lib/format";
 import { expenseFields, expenseLabels } from "@/lib/self-disclosure";
 import {
