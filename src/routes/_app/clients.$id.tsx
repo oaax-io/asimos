@@ -155,8 +155,34 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       return data as any[];
     },
     retry: false,
-    enabled: canLoadProtectedData && visitedTabs.includes("matching"),
+    enabled: canLoadProtectedData && (visitedTabs.includes("overview") || visitedTabs.includes("matching")),
   });
+
+  // Budget-Quelle: expliziter Kundenbudget, sonst aus zuletzt berechneter Finanzierung
+  const dossierForBudget: any = dossier;
+  const dossierBudget = dossierForBudget
+    ? (Number(dossierForBudget.purchase_price ?? dossierForBudget.property_value ?? 0) || null)
+    : null;
+  const effectiveBudget = Number((client as any)?.budget_max ?? 0) || dossierBudget || null;
+
+  // Vorgeschlagene Objekte, falls noch keine echten Matches existieren
+  const { data: suggestedMatchesCount = 0 } = useQuery({
+    queryKey: ["client_suggested_matches_count", id, effectiveBudget],
+    queryFn: async () => {
+      if (!effectiveBudget) return 0;
+      const { count } = await supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("listing_type", "sale")
+        .eq("status", "active")
+        .lte("price", effectiveBudget * 1.05)
+        .gte("price", effectiveBudget * 0.6);
+      return count ?? 0;
+    },
+    retry: false,
+    enabled: canLoadProtectedData && !!effectiveBudget && (client as any)?.client_type !== "seller" && (client as any)?.client_type !== "landlord" && visitedTabs.includes("overview"),
+  });
+  const matchCountDisplay = matches.length > 0 ? matches.length : suggestedMatchesCount;
 
   const { data: documentsCount = 0 } = useQuery({
     queryKey: ["client_documents_count", id],
@@ -442,17 +468,29 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
 
           {/* KPIs */}
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <Stat icon={<Target className="h-3.5 w-3.5" />} label="Matches" value={matches.length} />
+            <Stat icon={<Target className="h-3.5 w-3.5" />} label="Matches" value={matchCountDisplay} />
             <Stat icon={<Calendar className="h-3.5 w-3.5" />} label="Termine" value={appointments.length} />
             <Stat
               icon={<FileSignature className="h-3.5 w-3.5" />}
               label="Finanzierung"
-              value={dossier ? `${dossier.completion_percent}%` : "—"}
+              value={
+                dossier?.quick_check_status
+                  ? (QUICK_CHECK_LABELS[dossier.quick_check_status as QuickCheckStatus] ?? dossier.quick_check_status)
+                  : dossier
+                    ? `${dossier.completion_percent}%`
+                    : "—"
+              }
             />
             <Stat
               icon={<Home className="h-3.5 w-3.5" />}
               label={isSeller ? "Eigene Objekte" : "Budget"}
-              value={isSeller ? ownProperties.length : (client.budget_max ? formatCurrency(Number(client.budget_max)) : "—")}
+              value={
+                isSeller
+                  ? ownProperties.length
+                  : effectiveBudget
+                    ? formatCurrency(effectiveBudget)
+                    : "—"
+              }
             />
           </div>
 
@@ -483,7 +521,24 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
               <FileSignature className="h-4 w-4" />Finanzierung
-              {dossier && (
+              {dossier?.quick_check_status && (
+                <Badge
+                  variant="secondary"
+                  className={
+                    "ml-1 h-5 px-1.5 text-[10px] font-medium " +
+                    (dossier.quick_check_status === "realistic"
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                      : dossier.quick_check_status === "critical"
+                        ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                        : dossier.quick_check_status === "not_financeable"
+                          ? "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30"
+                          : "")
+                  }
+                >
+                  {QUICK_CHECK_LABELS[dossier.quick_check_status as QuickCheckStatus] ?? dossier.quick_check_status}
+                </Badge>
+              )}
+              {!dossier?.quick_check_status && dossier && (
                 <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{dossier.completion_percent}%</Badge>
               )}
             </TabsTrigger>
@@ -502,8 +557,8 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
                 className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
               >
                 <Target className="h-4 w-4" />Matching
-                {matches.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{matches.length}</Badge>
+                {matchCountDisplay > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{matchCountDisplay}</Badge>
                 )}
               </TabsTrigger>
             )}
