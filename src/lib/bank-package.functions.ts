@@ -325,7 +325,7 @@ export const buildBankPackage = createServerFn({ method: "POST" })
         }
         return { folder: "01_Kunde", label: "Kunde" };
       }
-      if (d.related_type === "property") return { folder: "03_Objekt", label: "Objekt" };
+      if (d.related_type === "property") return { folder: "03_Immobilie", label: "Immobilie" };
       if (d.related_type === "financing") return { folder: "04_Finanzierung", label: "Finanzierung" };
       return { folder: "05_Sonstige", label: "Sonstige" };
     };
