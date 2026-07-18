@@ -63,7 +63,7 @@ function FinancingDetailPage() {
         (data as any).co_applicant_client_id,
         ...additionalApplicants.map((a: any) => a?.client_id),
       ].filter(Boolean))) as string[];
-      const [clientRes, propRes, coRes, applicantClientsRes, disclosuresRes] = await Promise.all([
+      const [clientRes, propRes, coRes, applicantClientsRes, disclosuresRes, relationshipsRes] = await Promise.all([
         data.client_id
           ? supabase.from("clients").select("id, full_name, email, phone").eq("id", data.client_id).maybeSingle()
           : Promise.resolve({ data: null }),
@@ -79,8 +79,18 @@ function FinancingDetailPage() {
         applicantIds.length > 0
           ? supabase.from("client_self_disclosures").select(`client_id, ${expenseFields.join(", ")}`).in("client_id", applicantIds)
           : Promise.resolve({ data: [] }),
+        data.client_id
+          ? supabase.from("client_relationships")
+              .select("id, client_id, related_client_id, relationship_type, notes, related:clients!client_relationships_related_client_id_fkey(id, full_name)")
+              .or(`client_id.eq.${data.client_id},related_client_id.eq.${data.client_id}`)
+          : Promise.resolve({ data: [] }),
       ]);
-      return { ...data, clients: clientRes.data, properties: propRes.data, co_applicant: coRes.data, applicant_clients: applicantClientsRes.data ?? [], applicant_disclosures: disclosuresRes.data ?? [] } as any;
+      const normalizedRelationships = ((relationshipsRes.data ?? []) as any[]).map((row) => {
+        const isOwner = row.client_id === data.client_id;
+        const other = isOwner ? row.related : { id: row.client_id };
+        return { ...row, related_client_id: other?.id ?? row.related_client_id };
+      });
+      return { ...data, clients: clientRes.data, properties: propRes.data, co_applicant: coRes.data, applicant_clients: applicantClientsRes.data ?? [], applicant_disclosures: disclosuresRes.data ?? [], relationships: normalizedRelationships } as any;
     },
   });
 
@@ -164,15 +174,36 @@ function FinancingDetailPage() {
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
             <Card>
-              <CardContent className="p-4 space-y-2">
+              <CardContent className="p-4 space-y-3">
                 <h3 className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{t("financing.detail.overview.client")}</h3>
-                {dossier.clients ? (
-                  <Link to="/clients/$id" params={{ id: dossier.clients.id }} className="text-sm text-primary hover:underline">
-                    {dossier.clients.full_name}
-                  </Link>
-                ) : <p className="text-sm text-muted-foreground">—</p>}
-                {dossier.clients?.email && <p className="text-xs text-muted-foreground">{dossier.clients.email}</p>}
-                {dossier.clients?.phone && <p className="text-xs text-muted-foreground">{dossier.clients.phone}</p>}
+                <ApplicantRow
+                  label={t("financing.wizard.summary.mainApplicant")}
+                  client={dossier.clients}
+                  showEmail
+                  showPhone
+                />
+                {spouses(dossier).map((r) => (
+                  <ApplicantRow
+                    key={r.id}
+                    label={t("financing.wizard.summary.spouse")}
+                    client={r.related}
+                  />
+                ))}
+                {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id === dossier.co_applicant_client_id && !spouseIds(dossier).has(c.id)).map((c: { id: string; full_name: string }) => (
+                  <ApplicantRow
+                    key={c.id}
+                    label={t("financing.wizard.summary.coApplicant")}
+                    client={c}
+                  />
+                ))}
+                {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id !== dossier.client_id && c.id !== dossier.co_applicant_client_id && !spouseIds(dossier).has(c.id)).map((c: { id: string; full_name: string }) => (
+                  <ApplicantRow
+                    key={c.id}
+                    label={t("financing.wizard.summary.additionalApplicant")}
+                    client={c}
+                  />
+                ))}
+                {!dossier.clients && <p className="text-sm text-muted-foreground">—</p>}
               </CardContent>
             </Card>
             <Card>
@@ -351,6 +382,33 @@ function KV({ label, value }: { label: string; value: string }) {
   );
 }
 
+function ApplicantRow({ label, client, showEmail, showPhone }: { label: string; client?: { id: string; full_name: string; email?: string | null; phone?: string | null } | null; showEmail?: boolean; showPhone?: boolean }) {
+  if (!client) return null;
+  return (
+    <div className="rounded-lg border p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <Link to="/clients/$id" params={{ id: client.id }} className="text-sm font-medium text-primary hover:underline">
+        {client.full_name}
+      </Link>
+      {showEmail && client.email && <p className="text-xs text-muted-foreground">{client.email}</p>}
+      {showPhone && client.phone && <p className="text-xs text-muted-foreground">{client.phone}</p>}
+    </div>
+  );
+}
+
+function spouses(dossier: Dossier) {
+  return (dossier.relationships ?? []).filter((r) => r.relationship_type === "spouse");
+}
+
+function spouseIds(dossier: Dossier) {
+  return new Set(spouses(dossier).map((r) => r.related_client_id));
+}
+
+function coApplicants(dossier: Dossier) {
+  const mainId = dossier.clients?.id;
+  return (dossier.applicant_clients ?? []).filter((c) => c.id !== mainId && !spouseIds(dossier).has(c.id));
+}
+
 // ───────── Quick Check Sub-Tabs ─────────
 
 type Dossier = Record<string, unknown> & {
@@ -377,6 +435,7 @@ type Dossier = Record<string, unknown> & {
   applicant_clients?: { id: string; full_name: string }[] | null;
   applicant_disclosures?: Record<string, unknown>[] | null;
   additional_co_applicants?: unknown;
+  relationships?: { id: string; client_id: string; related_client_id: string; relationship_type: string; notes: string | null; related?: { id: string; full_name: string } | null }[] | null;
   monthly_obligations?: number | string | null;
   existing_mortgage?: number | string | null;
   existing_mortgage_2?: number | string | null;
