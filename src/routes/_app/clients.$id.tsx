@@ -530,7 +530,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         </section>
         </div>
 
-        <div className={inDialog ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6" : "contents"}>
+        <div className={inDialog ? "max-h-[calc(92dvh-22rem)] min-h-[16rem] overflow-y-auto overscroll-contain px-6 pb-6" : "contents"}>
 
         {/* 1. Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
