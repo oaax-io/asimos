@@ -346,6 +346,12 @@ function FinancingDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ClientDetailDialog
+        clientId={openClientId}
+        open={!!openClientId}
+        onOpenChange={(o) => { if (!o) setOpenClientId(null); }}
+      />
     </div>
   );
 }
