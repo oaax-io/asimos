@@ -178,12 +178,43 @@ function FinancingDetailPage() {
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList className="flex-wrap h-auto gap-1 bg-muted/60 p-1 rounded-xl">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.overview")}</TabsTrigger>
-          <TabsTrigger value="ubs" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.ubs")}</TabsTrigger>
-          <TabsTrigger value="documents" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.documents")}</TabsTrigger>
-          <TabsTrigger value="bank" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.bank")}</TabsTrigger>
-          <TabsTrigger value="activity" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.activity")}</TabsTrigger>
+        <TabsList className="inline-flex flex-wrap h-auto items-center gap-0 bg-muted/50 p-1.5 rounded-xl border border-border shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]">
+          <TabsTrigger
+            value="overview"
+            className="relative flex items-center gap-2.5 px-5 py-2 text-sm font-medium text-muted-foreground rounded-lg transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border data-[state=active]:border-border/60 hover:text-foreground"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-primary opacity-0 data-[state=active]:opacity-100 transition-opacity" data-state="inactive" />
+            {t("financing.detail.tabs.overview")}
+          </TabsTrigger>
+          <TabsTrigger
+            value="ubs"
+            className="relative flex items-center gap-2 px-5 py-2 text-sm font-medium text-muted-foreground rounded-lg transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border data-[state=active]:border-border/60 hover:text-foreground"
+          >
+            {t("financing.detail.tabs.ubs")}
+          </TabsTrigger>
+          <TabsTrigger
+            value="documents"
+            className="relative flex items-center gap-2 px-5 py-2 text-sm font-medium text-muted-foreground rounded-lg transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border data-[state=active]:border-border/60 hover:text-foreground"
+          >
+            {t("financing.detail.tabs.documents")}
+          </TabsTrigger>
+          <div className="mx-1 h-4 w-px bg-border" aria-hidden />
+          <TabsTrigger
+            value="bank"
+            className="relative flex items-center gap-2 px-5 py-2 text-sm font-medium text-muted-foreground rounded-lg transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border data-[state=active]:border-border/60 hover:text-foreground"
+          >
+            {t("financing.detail.tabs.bank")}
+          </TabsTrigger>
+          <TabsTrigger
+            value="activity"
+            className="relative flex items-center gap-2 px-5 py-2 text-sm font-medium text-muted-foreground rounded-lg transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:font-semibold data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border data-[state=active]:border-border/60 hover:text-foreground"
+          >
+            {t("financing.detail.tabs.activity")}
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            </span>
+          </TabsTrigger>
         </TabsList>
 
 
