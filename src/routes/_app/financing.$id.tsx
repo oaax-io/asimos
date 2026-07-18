@@ -143,10 +143,22 @@ function FinancingDetailPage() {
           ].filter(Boolean).join(" · ")
         }
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge>{DOSSIER_STATUS_LABELS[dossier.dossier_status as DossierStatus] ?? t("financing.dossierStatus.draft")}</Badge>
             {dossier.quick_check_status && (
               <Badge variant="outline">{t(`financing.quickCheckStatus.${qcStatus}`, { defaultValue: QUICK_CHECK_LABELS[qcStatus] })}</Badge>
+            )}
+            {!isIncomplete && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setResetOpen(true)}>
+                  <RotateCcw className="mr-1 h-4 w-4" />{t("financing.detail.quickcheck.recalculate")}
+                </Button>
+                <FinancingQuickCheckActions
+                  dossierId={dossier.id}
+                  dossier={dossier}
+                  showWorkflowButtons={false}
+                />
+              </>
             )}
           </div>
         }
