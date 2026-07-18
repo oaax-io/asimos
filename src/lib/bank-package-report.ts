@@ -888,6 +888,8 @@ export function buildBankPackageHtml(input: BankPackageInput): string {
     ${disclosureCompareTable(input.applicant, input.coApplicant ?? null)}
   </div>
 
+  ${additionalApplicantsHtml ? `<div class="section"><h2>Weitere Mitantragsteller</h2>${additionalApplicantsHtml}</div>` : ""}
+
   <div class="section">
     <h2>${escapeHtml(t(locale, "section_property"))}</h2>
     ${propertyHtml}
