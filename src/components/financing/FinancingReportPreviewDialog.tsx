@@ -201,7 +201,14 @@ export function FinancingReportPreviewDialog({ open, onOpenChange, dossierId, do
                 title="Finanzierungsbericht Vorschau"
                 srcDoc={liveHtml}
                 className="w-full bg-white border-0 block"
-                style={{ height: "297mm", minHeight: "297mm" }}
+                style={{ height: "297mm" }}
+                onLoad={(e) => {
+                  const f = e.currentTarget;
+                  try {
+                    const h = f.contentDocument?.documentElement?.scrollHeight;
+                    if (h && h > 0) f.style.height = `${h}px`;
+                  } catch { /* ignore */ }
+                }}
               />
             </div>
           </div>
