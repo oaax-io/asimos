@@ -167,17 +167,21 @@ function FinancingDetailPage() {
         <Stat icon={Banknote} label={isRefi ? "Immobilienwert" : t("financing.detail.stats.totalInvestment")} value={fmt(dossier.total_investment)} />
         <Stat icon={Banknote} label={isRefi ? "Neue Hypothek" : t("financing.detail.stats.mortgage")} value={fmt(dossier.requested_mortgage)} />
         <Stat icon={Banknote} label={isRefi ? "Aufstockungswunsch" : t("financing.detail.stats.ownFunds")} value={isRefi ? fmt(dossier.requested_increase) : fmt(dossier.own_funds_total)} />
-        <Stat icon={Banknote} label={t("financing.detail.stats.affordability")} value={refiInputs ? pct(refiInputs.affordability) : dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"} />
+        <Stat
+          icon={Banknote}
+          label={t("financing.detail.stats.affordability")}
+          value={refiInputs ? pct(refiInputs.affordability) : dossier.affordability_ratio != null ? `${Number(dossier.affordability_ratio).toFixed(1)}%` : "—"}
+          tone={affordabilityTone(refiInputs?.affordability ?? (dossier.affordability_ratio != null ? Number(dossier.affordability_ratio) : null))}
+        />
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="overview">{t("financing.detail.tabs.overview")}</TabsTrigger>
-          
-          <TabsTrigger value="ubs">{t("financing.detail.tabs.ubs")}</TabsTrigger>
-          <TabsTrigger value="documents">{t("financing.detail.tabs.documents")}</TabsTrigger>
-          <TabsTrigger value="bank">{t("financing.detail.tabs.bank")}</TabsTrigger>
-          <TabsTrigger value="activity">{t("financing.detail.tabs.activity")}</TabsTrigger>
+        <TabsList className="flex-wrap h-auto gap-1 bg-muted/60 p-1 rounded-xl">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.overview")}</TabsTrigger>
+          <TabsTrigger value="ubs" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.ubs")}</TabsTrigger>
+          <TabsTrigger value="documents" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.documents")}</TabsTrigger>
+          <TabsTrigger value="bank" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.bank")}</TabsTrigger>
+          <TabsTrigger value="activity" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.tabs.activity")}</TabsTrigger>
         </TabsList>
 
 
