@@ -372,7 +372,7 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       await addToZip(d as DocSource, true);
     }
 
-    // Objekt-Bilder (Cover zuerst) als eigenständige Anhänge unter 03_Objekt/Bilder
+    // Objekt-Bilder (Cover zuerst) als eigenständige Anhänge unter 03_Immobilie/Bilder
     for (let i = 0; i < propertyMedia.length; i++) {
       if (totalBytes >= MAX_TOTAL_ATTACHMENT_BYTES) break;
       const m = propertyMedia[i];
@@ -389,8 +389,37 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       const name = m.is_cover
         ? `Cover${ext}`
         : (m.file_name ? safeFileName(m.file_name, `Bild_${idx}${ext}`) : `Bild_${idx}${ext}`);
-      addToZipBytes("03_Objekt/Bilder", name, fetched.bytes, "Objekt-Bild");
+      addToZipBytes("03_Immobilie/Bilder", name, fetched.bytes, "Immobilie-Bild");
     }
+
+    // Immobilie-Zusammenfassung als Textdatei — sorgt dafür, dass der Ordner
+    // "03_Immobilie" immer im ZIP existiert, wenn Objektdaten vorliegen
+    if (property) {
+      const lines: string[] = ["Immobilie", ""];
+      const push = (k: string, v: unknown) => {
+        if (v === null || v === undefined || v === "") return;
+        lines.push(`${k}: ${String(v)}`);
+      };
+      push("Titel", property.title);
+      push("Objektart", property.property_type);
+      push("Adresse", property.address);
+      push("PLZ", property.postal_code);
+      push("Ort", property.city);
+      push("Land", property.country);
+      push("Preis (CHF)", property.price);
+      push("Wohnfläche (m²)", property.living_area);
+      push("Grundstück (m²)", property.plot_area);
+      push("Fläche (m²)", property.area);
+      push("Zimmer", property.rooms);
+      push("Badezimmer", property.bathrooms);
+      push("Stockwerk", property.floor);
+      push("Baujahr", property.year_built);
+      push("Energieklasse", property.energy_class);
+      push("Heizung", property.heating_type);
+      push("Zustand", property.condition);
+      addToZipBytes("03_Immobilie", "Immobilie.txt", strToU8(lines.join("\n")), "Immobilie-Zusammenfassung");
+    }
+
 
 
 
