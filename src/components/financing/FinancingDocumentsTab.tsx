@@ -56,12 +56,22 @@ export function FinancingDocumentsTab({ dossierId, clientId, propertyId }: Props
   return (
     <div className="space-y-4">
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="all">Alle ({docs.length + generated.length})</TabsTrigger>
-          <TabsTrigger value="client">Kunde ({groups.client.length})</TabsTrigger>
-          <TabsTrigger value="property">Objekt ({groups.property.length})</TabsTrigger>
-          <TabsTrigger value="financing">Finanzierung ({groups.financing.length})</TabsTrigger>
-          <TabsTrigger value="generated">Generiert ({generated.length})</TabsTrigger>
+        <TabsList className="w-full flex justify-start gap-0 bg-transparent border-b border-border rounded-none p-0 h-auto">
+          <SubTabTrigger value="all" active={tab === "all"} icon={<Files className="h-4 w-4" />} count={docs.length + generated.length}>
+            Alle
+          </SubTabTrigger>
+          <SubTabTrigger value="client" active={tab === "client"} icon={<User className="h-4 w-4" />} count={groups.client.length}>
+            Kunde
+          </SubTabTrigger>
+          <SubTabTrigger value="property" active={tab === "property"} icon={<Building2 className="h-4 w-4" />} count={groups.property.length}>
+            Objekt
+          </SubTabTrigger>
+          <SubTabTrigger value="financing" active={tab === "financing"} icon={<Banknote className="h-4 w-4" />} count={groups.financing.length}>
+            Finanzierung
+          </SubTabTrigger>
+          <SubTabTrigger value="generated" active={tab === "generated"} icon={<Sparkles className="h-4 w-4" />} count={generated.length}>
+            Generiert
+          </SubTabTrigger>
         </TabsList>
 
         <TabsContent value="all"><DocList items={[...docs, ...generated.map((g: any) => ({ ...g, _generated: true }))]} /></TabsContent>
