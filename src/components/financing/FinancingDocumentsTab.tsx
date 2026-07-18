@@ -140,11 +140,24 @@ function DocList({ items, onPreview }: { items: any[]; onPreview: (d: PreviewDoc
   return (
     <div className="space-y-2">
       {items.map((d) => {
-        const url = d.file_url || d.esign_url || null;
         const name = d.file_name || d.title || "Dokument";
         const type = d._generated ? "generiert" : (d.document_type || d.related_type || "");
         const html = d._generated ? (d.html_content ?? null) : null;
-        const handleOpen = () => onPreview({ name, url, html, mime: d.mime_type ?? null });
+        const handleOpen = async () => {
+          let url: string | null = null;
+          if (!html) {
+            const raw = d.file_url || d.esign_url || null;
+            if (raw) {
+              if (/^https?:\/\//i.test(raw)) {
+                url = raw;
+              } else {
+                const { data } = await supabase.storage.from("documents").createSignedUrl(raw, 60 * 10);
+                url = data?.signedUrl ?? null;
+              }
+            }
+          }
+          onPreview({ name, url, html, mime: d.mime_type ?? null });
+        };
         return (
           <Card
             key={d.id}
