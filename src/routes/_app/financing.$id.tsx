@@ -281,13 +281,6 @@ function FinancingDetailPage() {
 
 
 
-        <TabsContent value="disclosure">
-          <FinancingSelfDisclosureTab
-            dossierId={dossier.id}
-            clientId={dossier.client_id}
-            clientEmail={dossier.clients?.email}
-          />
-        </TabsContent>
         <TabsContent value="ubs">
           <UbsChecklistTab dossierId={dossier.id} />
         </TabsContent>
