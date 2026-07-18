@@ -468,17 +468,29 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
 
           {/* KPIs */}
           <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <Stat icon={<Target className="h-3.5 w-3.5" />} label="Matches" value={matches.length} />
+            <Stat icon={<Target className="h-3.5 w-3.5" />} label="Matches" value={matchCountDisplay} />
             <Stat icon={<Calendar className="h-3.5 w-3.5" />} label="Termine" value={appointments.length} />
             <Stat
               icon={<FileSignature className="h-3.5 w-3.5" />}
               label="Finanzierung"
-              value={dossier ? `${dossier.completion_percent}%` : "—"}
+              value={
+                dossier?.quick_check_status
+                  ? (QUICK_CHECK_LABELS[dossier.quick_check_status as QuickCheckStatus] ?? dossier.quick_check_status)
+                  : dossier
+                    ? `${dossier.completion_percent}%`
+                    : "—"
+              }
             />
             <Stat
               icon={<Home className="h-3.5 w-3.5" />}
               label={isSeller ? "Eigene Objekte" : "Budget"}
-              value={isSeller ? ownProperties.length : (client.budget_max ? formatCurrency(Number(client.budget_max)) : "—")}
+              value={
+                isSeller
+                  ? ownProperties.length
+                  : effectiveBudget
+                    ? formatCurrency(effectiveBudget)
+                    : "—"
+              }
             />
           </div>
 
