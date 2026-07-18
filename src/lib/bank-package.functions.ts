@@ -559,7 +559,7 @@ export const buildBankPackage = createServerFn({ method: "POST" })
         ...Array.from(extraFolderByClient.entries()).map(
           ([, folder]) => `- ${folder}/: Unterlagen weiterer Mitantragsteller`,
         ),
-        property ? `- 03_Objekt/: Unterlagen zum Objekt (inkl. Bilder unter 03_Objekt/Bilder/)` : null,
+        property ? `- 03_Immobilie/: Unterlagen zur Immobilie (inkl. Bilder unter 03_Immobilie/Bilder/)` : null,
         `- 04_Finanzierung/: Unterlagen zur Finanzierung`,
         `- 06_Generiert/: Generierte Dokumente (Quick-Check PDF etc.)`,
       ]
