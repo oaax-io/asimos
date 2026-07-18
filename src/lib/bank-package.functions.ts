@@ -261,8 +261,8 @@ export const buildBankPackage = createServerFn({ method: "POST" })
           address: (snap.address as string) ?? null,
           property_type: (snap.object_type as string) ?? null,
           price: (typeof snap.price === "number" ? (snap.price as number) : null)
-            ?? ((dossier as any).purchase_price ?? null)
-            ?? ((dossier as any).property_value ?? null),
+            ?? ((dossier as any).purchase_price as number | null)
+            ?? ((dossier as any).property_value as number | null),
         };
       }
     }
