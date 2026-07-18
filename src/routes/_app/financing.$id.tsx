@@ -365,12 +365,27 @@ function fmt(v: any) {
   return formatCurrency(n);
 }
 
-function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+function affordabilityTone(v: number | null | undefined): "ok" | "warn" | "bad" | null {
+  if (v == null || !Number.isFinite(v)) return null;
+  if (v <= 33) return "ok";
+  if (v <= 38) return "warn";
+  return "bad";
+}
+
+function Stat({ icon: Icon, label, value, tone }: { icon: any; label: string; value: string; tone?: "ok" | "warn" | "bad" | null }) {
+  const toneClass =
+    tone === "ok" ? "text-emerald-600" :
+    tone === "warn" ? "text-amber-600" :
+    tone === "bad" ? "text-red-600" : "";
+  const borderClass =
+    tone === "ok" ? "border-emerald-200" :
+    tone === "warn" ? "border-amber-200" :
+    tone === "bad" ? "border-red-200" : "";
   return (
-    <Card>
+    <Card className={cn(borderClass)}>
       <CardContent className="p-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground"><Icon className="h-4 w-4" />{label}</div>
-        <p className="mt-1 text-lg font-semibold">{value}</p>
+        <p className={cn("mt-1 text-lg font-semibold", toneClass)}>{value}</p>
       </CardContent>
     </Card>
   );
