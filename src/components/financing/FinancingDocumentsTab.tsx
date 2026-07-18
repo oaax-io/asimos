@@ -5,10 +5,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { FileText, ExternalLink, FileBadge, Files, User, Building2, Banknote, Sparkles } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FileText, ExternalLink, FileBadge, Files, User, Building2, Banknote, Sparkles, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Props = { dossierId: string; clientId?: string | null; propertyId?: string | null };
+
+type PreviewDoc = {
+  name: string;
+  url?: string | null;
+  html?: string | null;
+  mime?: string | null;
+};
 
 export function FinancingDocumentsTab({ dossierId, clientId, propertyId }: Props) {
   const docsQuery = useQuery({
@@ -53,6 +61,7 @@ export function FinancingDocumentsTab({ dossierId, clientId, propertyId }: Props
   }), [docs]);
 
   const [tab, setTab] = useState("all");
+  const [preview, setPreview] = useState<PreviewDoc | null>(null);
 
   return (
     <div className="space-y-4">
@@ -75,32 +84,73 @@ export function FinancingDocumentsTab({ dossierId, clientId, propertyId }: Props
           </SubTabTrigger>
         </TabsList>
 
-        <TabsContent value="all"><DocList items={[...docs, ...generated.map((g: any) => ({ ...g, _generated: true }))]} /></TabsContent>
-        <TabsContent value="client"><DocList items={groups.client} /></TabsContent>
-        <TabsContent value="property"><DocList items={groups.property} /></TabsContent>
-        <TabsContent value="financing"><DocList items={groups.financing} /></TabsContent>
-        <TabsContent value="generated"><DocList items={generated.map((g: any) => ({ ...g, _generated: true }))} /></TabsContent>
+        <TabsContent value="all"><DocList items={[...docs, ...generated.map((g: any) => ({ ...g, _generated: true }))]} onPreview={setPreview} /></TabsContent>
+        <TabsContent value="client"><DocList items={groups.client} onPreview={setPreview} /></TabsContent>
+        <TabsContent value="property"><DocList items={groups.property} onPreview={setPreview} /></TabsContent>
+        <TabsContent value="financing"><DocList items={groups.financing} onPreview={setPreview} /></TabsContent>
+        <TabsContent value="generated"><DocList items={generated.map((g: any) => ({ ...g, _generated: true }))} onPreview={setPreview} /></TabsContent>
       </Tabs>
 
       <p className="text-xs text-muted-foreground">
         Dokumente werden über Kunden, Immobilie und Finanzierung verknüpft. Hochladen direkt im jeweiligen Modul.
       </p>
+
+      <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle className="truncate pr-8">{preview?.name ?? "Vorschau"}</DialogTitle>
+          </DialogHeader>
+          {preview?.html ? (
+            <iframe title="Vorschau" srcDoc={preview.html} className="h-[75vh] w-full rounded-md border bg-white" />
+          ) : preview?.url ? (
+            isImage(preview.url, preview.mime) ? (
+              <div className="flex h-[75vh] w-full items-center justify-center rounded-md border bg-muted/40">
+                <img src={preview.url} alt={preview.name} className="max-h-full max-w-full object-contain" />
+              </div>
+            ) : (
+              <iframe title="Vorschau" src={preview.url} className="h-[75vh] w-full rounded-md border bg-white" />
+            )
+          ) : (
+            <div className="flex h-[75vh] items-center justify-center text-sm text-muted-foreground">
+              Keine Vorschau verfügbar.
+            </div>
+          )}
+          {preview?.url && (
+            <div className="flex justify-end">
+              <a href={preview.url} target="_blank" rel="noreferrer">
+                <Button variant="outline" size="sm"><ExternalLink className="h-4 w-4 mr-2" />In neuem Tab öffnen</Button>
+              </a>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function DocList({ items }: { items: any[] }) {
+function isImage(url: string, mime?: string | null) {
+  if (mime?.startsWith("image/")) return true;
+  return /\.(png|jpe?g|gif|webp|svg|bmp)(\?|$)/i.test(url);
+}
+
+function DocList({ items, onPreview }: { items: any[]; onPreview: (d: PreviewDoc) => void }) {
   if (items.length === 0) {
     return <p className="text-sm text-muted-foreground py-6 text-center">Keine Dokumente vorhanden.</p>;
   }
   return (
     <div className="space-y-2">
       {items.map((d) => {
-        const url = d.file_url || d.esign_url;
+        const url = d.file_url || d.esign_url || null;
         const name = d.file_name || d.title || "Dokument";
         const type = d._generated ? "generiert" : (d.document_type || d.related_type || "");
+        const html = d._generated ? (d.html_content ?? null) : null;
+        const handleOpen = () => onPreview({ name, url, html, mime: d.mime_type ?? null });
         return (
-          <Card key={d.id}>
+          <Card
+            key={d.id}
+            onClick={handleOpen}
+            className="cursor-pointer transition-colors hover:bg-muted/50"
+          >
             <CardContent className="flex items-center gap-3 p-3">
               {d._generated ? <FileBadge className="h-4 w-4 text-primary" /> : <FileText className="h-4 w-4 text-muted-foreground" />}
               <div className="flex-1 min-w-0">
@@ -110,11 +160,14 @@ function DocList({ items }: { items: any[] }) {
                   {d.related_type && <span>{d.related_type}</span>}
                 </div>
               </div>
-              {url && (
-                <a href={url} target="_blank" rel="noreferrer">
-                  <Button variant="ghost" size="sm"><ExternalLink className="h-4 w-4" /></Button>
-                </a>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); handleOpen(); }}
+                title="Vorschau"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
             </CardContent>
           </Card>
         );
