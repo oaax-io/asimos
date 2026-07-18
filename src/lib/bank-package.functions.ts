@@ -200,7 +200,7 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       extraFolderByClient.set(c.id, `02b_Mitantragsteller_${idx + 1}_${nameSlug}`);
     });
 
-    // 4) Property optional (mit umfassenden Details + Bildern)
+    // 4) Property: verlinkt oder Snapshot aus Dossier
     let property:
       | {
           title?: string | null;
@@ -246,8 +246,25 @@ export const buildBankPackage = createServerFn({ method: "POST" })
         .eq("property_id", dossier.property_id)
         .order("is_cover", { ascending: false })
         .order("sort_order", { ascending: true })
-        .limit(15);
+        .limit(30);
       propertyMedia = (media ?? []) as typeof propertyMedia;
+    }
+    // Fallback: aus property_snapshot / dossier-Feldern (falls kein Objekt verknüpft)
+    if (!property) {
+      const snap = ((dossier as any).property_snapshot ?? {}) as Record<string, unknown>;
+      const hasAny =
+        snap.title || snap.address || snap.price ||
+        (dossier as any).purchase_price || (dossier as any).property_value;
+      if (hasAny) {
+        property = {
+          title: (snap.title as string) ?? null,
+          address: (snap.address as string) ?? null,
+          property_type: (snap.object_type as string) ?? null,
+          price: (typeof snap.price === "number" ? (snap.price as number) : null)
+            ?? ((dossier as any).purchase_price ?? null)
+            ?? ((dossier as any).property_value ?? null),
+        };
+      }
     }
 
     // 5) Checkliste
