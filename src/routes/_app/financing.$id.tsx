@@ -257,10 +257,10 @@ function FinancingDetailPage() {
                 </p>
               )}
               <Tabs defaultValue="vorpruefung">
-                <TabsList>
-                  <TabsTrigger value="vorpruefung">{t("financing.detail.quickcheck.subtabs.precheck")}</TabsTrigger>
-                  <TabsTrigger value="detail">{t("financing.detail.quickcheck.subtabs.detail")}</TabsTrigger>
-                  <TabsTrigger value="szenarien">{t("financing.detail.quickcheck.subtabs.scenarios")}</TabsTrigger>
+                <TabsList className="gap-1 bg-muted/60 p-1 rounded-xl">
+                  <TabsTrigger value="vorpruefung" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.quickcheck.subtabs.precheck")}</TabsTrigger>
+                  <TabsTrigger value="detail" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.quickcheck.subtabs.detail")}</TabsTrigger>
+                  <TabsTrigger value="szenarien" className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4">{t("financing.detail.quickcheck.subtabs.scenarios")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="vorpruefung" className="space-y-4">
