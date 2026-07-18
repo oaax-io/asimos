@@ -714,55 +714,57 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
           <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["ownerships", "contacts"]} />
         </TabsContent>
 
-        {/* 6. Matching */}
-        <TabsContent value="matching" className="mt-6 space-y-4">
-          <Card><CardContent className="p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h3 className="font-display text-lg font-semibold">Passende Objekte</h3>
-                <p className="text-xs text-muted-foreground">Auf Basis von Budget, Lage und Eckdaten aus Selbstauskunft & Profil.</p>
-              </div>
-              <Button size="sm" variant="outline" asChild>
-                <Link to="/matching" search={{ clientId: id }}>
-                  <Target className="mr-1.5 h-4 w-4" />Matching-Übersicht
-                </Link>
-              </Button>
-            </div>
-            {benchmark && (benchmark.status === "tight" || benchmark.status === "critical") && (
-              <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
-                Hinweis: Finanz-Benchmark ist «{benchmark.status === "tight" ? "knapp" : "kritisch"}». Tragfähigkeit vor Vermittlung prüfen.
-              </div>
-            )}
-            <MatchPanel direction="client-to-property" client={client} />
-          </CardContent></Card>
-
-          {isSeller && (
+        {/* 6. Matching (nicht im Dialog) */}
+        {!inDialog && (
+          <TabsContent value="matching" className="mt-6 space-y-4">
             <Card><CardContent className="p-6">
-              <h3 className="mb-4 font-display text-lg font-semibold">Eigene Objekte</h3>
-              {ownProperties.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Diesem Kunden sind noch keine Objekte zugeordnet.</p>
-              ) : (
-                <div className="grid gap-3 md:grid-cols-2">
-                  {ownProperties.map((p: any) => (
-                    <Link key={p.id} to="/properties/$id" params={{ id: p.id }}
-                      className="rounded-xl border p-4 transition hover:border-primary hover:shadow-glow"
-                    >
-                      <div className="flex items-start justify-between">
-                        <p className="font-medium">{p.title}</p>
-                        <Badge variant="outline">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {p.city ?? "—"} · {p.price ? formatCurrency(Number(p.price)) : "—"}
-                      </p>
-                    </Link>
-                  ))}
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="font-display text-lg font-semibold">Passende Objekte</h3>
+                  <p className="text-xs text-muted-foreground">Auf Basis von Budget, Lage und Eckdaten aus Selbstauskunft & Profil.</p>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to="/matching" search={{ clientId: id }}>
+                    <Target className="mr-1.5 h-4 w-4" />Matching-Übersicht
+                  </Link>
+                </Button>
+              </div>
+              {benchmark && (benchmark.status === "tight" || benchmark.status === "critical") && (
+                <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-400">
+                  Hinweis: Finanz-Benchmark ist «{benchmark.status === "tight" ? "knapp" : "kritisch"}». Tragfähigkeit vor Vermittlung prüfen.
                 </div>
               )}
+              <MatchPanel direction="client-to-property" client={client} />
             </CardContent></Card>
-          )}
 
-          <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["searchProfiles"]} />
-        </TabsContent>
+            {isSeller && (
+              <Card><CardContent className="p-6">
+                <h3 className="mb-4 font-display text-lg font-semibold">Eigene Objekte</h3>
+                {ownProperties.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Diesem Kunden sind noch keine Objekte zugeordnet.</p>
+                ) : (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {ownProperties.map((p: any) => (
+                      <Link key={p.id} to="/properties/$id" params={{ id: p.id }}
+                        className="rounded-xl border p-4 transition hover:border-primary hover:shadow-glow"
+                      >
+                        <div className="flex items-start justify-between">
+                          <p className="font-medium">{p.title}</p>
+                          <Badge variant="outline">{propertyStatusLabels[p.status as keyof typeof propertyStatusLabels]}</Badge>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {p.city ?? "—"} · {p.price ? formatCurrency(Number(p.price)) : "—"}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent></Card>
+            )}
+
+            <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["searchProfiles"]} />
+          </TabsContent>
+        )}
 
         {/* 7. Dokumente */}
         <TabsContent value="documents" className="mt-6">
