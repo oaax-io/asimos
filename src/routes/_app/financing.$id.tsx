@@ -406,17 +406,20 @@ function KV({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ApplicantRow({ label, client, showEmail, showPhone }: { label: string; client?: { id: string; full_name: string; email?: string | null; phone?: string | null } | null; showEmail?: boolean; showPhone?: boolean }) {
+function ApplicantRow({ label, client, onOpen }: { label: string; client?: { id: string; full_name: string; email?: string | null; phone?: string | null } | null; onOpen?: (id: string) => void }) {
   if (!client) return null;
   return (
-    <div className="rounded-lg border p-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <Link to="/clients/$id" params={{ id: client.id }} className="text-sm font-medium text-primary hover:underline">
-        {client.full_name}
-      </Link>
-      {showEmail && client.email && <p className="text-xs text-muted-foreground">{client.email}</p>}
-      {showPhone && client.phone && <p className="text-xs text-muted-foreground">{client.phone}</p>}
-    </div>
+    <button
+      type="button"
+      onClick={() => onOpen?.(client.id)}
+      className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-muted/50 transition-colors"
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium truncate">{client.full_name}</p>
+      </div>
+      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+    </button>
   );
 }
 
