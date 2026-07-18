@@ -1076,6 +1076,7 @@
         "mainApplicant": "Hauptkunde",
         "spouse": "Ehepartner/in",
         "coApplicant": "Mitantragsteller/in",
+        "additionalApplicant": "Weiterer Mitantragsteller",
         "additionalApplicantNumber": "Mitantragsteller {{count}}",
         "grossIncome": "Netto-Jahreseinkommen",
         "ownFundsTotal": "Eigenmittel total",

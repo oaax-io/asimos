@@ -1075,6 +1075,7 @@
         "mainApplicant": "Client principal",
         "spouse": "Conjoint/e",
         "coApplicant": "Co-emprunteur/euse",
+        "additionalApplicant": "Autre co-emprunteur",
         "additionalApplicantNumber": "Co-emprunteur {{count}}",
         "grossIncome": "Revenu annuel net",
         "ownFundsTotal": "Fonds propres totaux",
