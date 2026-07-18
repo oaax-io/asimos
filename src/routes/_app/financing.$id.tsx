@@ -314,6 +314,13 @@ function FinancingDetailPage() {
         }}
       />
 
+      <FinancingReportPreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        dossierId={dossier.id}
+        dossier={dossier}
+      />
+
       <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
