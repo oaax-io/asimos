@@ -122,3 +122,33 @@ function DocList({ items }: { items: any[] }) {
     </div>
   );
 }
+
+function SubTabTrigger({
+  value,
+  active,
+  icon,
+  count,
+  children,
+}: {
+  value: string;
+  active: boolean;
+  icon: React.ReactNode;
+  count: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <TabsTrigger
+      value={value}
+      className={cn(
+        "relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-none border-b-2 border-transparent transition-colors hover:text-foreground data-[state=active]:text-foreground data-[state=active]:border-primary",
+        active && "border-primary"
+      )}
+    >
+      {icon}
+      <span>{children}</span>
+      <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-muted text-[10px] font-semibold tabular-nums">
+        {count}
+      </span>
+    </TabsTrigger>
+  );
+}
