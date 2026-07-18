@@ -177,7 +177,7 @@ function FinancingDetailPage() {
               <CardContent className="p-4 space-y-3">
                 <h3 className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{t("financing.detail.overview.client")}</h3>
                 <ApplicantRow
-                  label={t("financing.quickCheck.wizard.mainApplicant")}
+                  label={t("financing.wizard.summary.mainApplicant")}
                   client={dossier.clients}
                   showEmail
                   showPhone
@@ -185,21 +185,21 @@ function FinancingDetailPage() {
                 {spouses(dossier).map((r) => (
                   <ApplicantRow
                     key={r.id}
-                    label={t("financing.quickCheck.wizard.spouse")}
+                    label={t("financing.wizard.summary.spouse")}
                     client={r.related}
                   />
                 ))}
                 {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id === dossier.co_applicant_client_id).map((c: { id: string; full_name: string }) => (
                   <ApplicantRow
                     key={c.id}
-                    label={t("financing.quickCheck.wizard.coApplicant")}
+                    label={t("financing.wizard.summary.coApplicant")}
                     client={c}
                   />
                 ))}
                 {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id !== dossier.client_id && c.id !== dossier.co_applicant_client_id && !spouseIds(dossier).has(c.id)).map((c: { id: string; full_name: string }) => (
                   <ApplicantRow
                     key={c.id}
-                    label={t("financing.quickCheck.wizard.additionalApplicant")}
+                    label={t("financing.wizard.summary.additionalApplicant")}
                     client={c}
                   />
                 ))}
