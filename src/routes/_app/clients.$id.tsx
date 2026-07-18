@@ -312,14 +312,14 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
   );
 
   return (
-    <div className={inDialog ? "flex flex-col h-full" : ""}>
+    <div className={inDialog ? "flex min-h-0 flex-1 flex-col overflow-hidden" : ""}>
       <ClientSelfDisclosureWizard
         clientId={id}
         open={editOpen}
         onOpenChange={setEditOpen}
       />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className={inDialog ? "flex flex-col h-full" : "space-y-6"}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className={inDialog ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "space-y-6"}>
         <div className={inDialog ? "shrink-0 px-6 pt-6 bg-background" : ""}>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             {inDialog ? (
@@ -382,8 +382,8 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               )}
             </div>
           </div>
-        <section className="relative overflow-hidden rounded-2xl border border-border bg-muted/70 p-6 pb-2 shadow-[var(--shadow-soft)]">
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 via-primary/80 to-primary/40" />
+        <section className={inDialog ? "relative overflow-hidden rounded-2xl bg-muted/70 p-6 pb-2 shadow-[var(--shadow-soft)]" : "relative overflow-hidden rounded-2xl border border-border bg-muted/70 p-6 pb-2 shadow-[var(--shadow-soft)]"}>
+          {!inDialog && <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 via-primary/80 to-primary/40" />}
 
           {/* Hero */}
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -530,7 +530,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         </section>
         </div>
 
-        <div className={inDialog ? "flex-1 overflow-y-auto min-h-0 px-6 pb-6" : "contents"}>
+        <div className={inDialog ? "max-h-[calc(92dvh-22rem)] min-h-[16rem] overflow-y-auto overscroll-contain px-6 pb-6" : "contents"}>
 
         {/* 1. Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
