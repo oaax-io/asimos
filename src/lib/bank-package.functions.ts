@@ -223,9 +223,13 @@ export const buildBankPackage = createServerFn({ method: "POST" })
           condition?: string | null;
         }
       | null = null;
-    let propertyMedia:
-      | Array<{ file_url: string; file_name: string | null; file_type: string | null; is_cover: boolean }>
-      | null = null;
+    let propertyMedia: Array<{
+      file_url: string;
+      file_name: string | null;
+      file_type: string | null;
+      is_cover: boolean;
+      sort_order?: number | null;
+    }> = [];
     if (dossier.property_id) {
       const { data: prop } = await supabaseAdmin
         .from("properties")
