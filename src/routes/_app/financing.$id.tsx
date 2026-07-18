@@ -48,6 +48,7 @@ function FinancingDetailPage() {
   const [resetOpen, setResetOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [openClientId, setOpenClientId] = useState<string | null>(null);
 
   const { data: dossier, isLoading } = useQuery({
     queryKey: ["financing_dossier", id],
