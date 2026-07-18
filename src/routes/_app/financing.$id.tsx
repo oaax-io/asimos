@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import { ArrowLeft, User, Building2, Banknote, RotateCcw, ArrowUp, ArrowDown, Trash2, FileText } from "lucide-react";
+import { ArrowLeft, User, Building2, Banknote, RotateCcw, ArrowUp, ArrowDown, Trash2, FileText, ChevronRight } from "lucide-react";
+import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { formatCurrency } from "@/lib/format";
 import { expenseFields, expenseLabels } from "@/lib/self-disclosure";
 import {
@@ -47,6 +48,7 @@ function FinancingDetailPage() {
   const [resetOpen, setResetOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [openClientId, setOpenClientId] = useState<string | null>(null);
 
   const { data: dossier, isLoading } = useQuery({
     queryKey: ["financing_dossier", id],
@@ -191,35 +193,39 @@ function FinancingDetailPage() {
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
             <Card>
-              <CardContent className="p-4 space-y-3">
+              <CardContent className="p-4 space-y-2">
                 <h3 className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{t("financing.detail.overview.client")}</h3>
-                <ApplicantRow
-                  label={t("financing.wizard.summary.mainApplicant")}
-                  client={dossier.clients}
-                  showEmail
-                  showPhone
-                />
-                {spouses(dossier).map((r) => (
+                <div className="divide-y rounded-lg border">
                   <ApplicantRow
-                    key={r.id}
-                    label={t("financing.wizard.summary.spouse")}
-                    client={r.related}
+                    label={t("financing.wizard.summary.mainApplicant")}
+                    client={dossier.clients}
+                    onOpen={setOpenClientId}
                   />
-                ))}
-                {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id === dossier.co_applicant_client_id && !spouseIds(dossier).has(c.id)).map((c: { id: string; full_name: string }) => (
-                  <ApplicantRow
-                    key={c.id}
-                    label={t("financing.wizard.summary.coApplicant")}
-                    client={c}
-                  />
-                ))}
-                {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id !== dossier.client_id && c.id !== dossier.co_applicant_client_id && !spouseIds(dossier).has(c.id)).map((c: { id: string; full_name: string }) => (
-                  <ApplicantRow
-                    key={c.id}
-                    label={t("financing.wizard.summary.additionalApplicant")}
-                    client={c}
-                  />
-                ))}
+                  {spouses(dossier).map((r) => (
+                    <ApplicantRow
+                      key={r.id}
+                      label={t("financing.wizard.summary.spouse")}
+                      client={r.related}
+                      onOpen={setOpenClientId}
+                    />
+                  ))}
+                  {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id === dossier.co_applicant_client_id && !spouseIds(dossier).has(c.id)).map((c: { id: string; full_name: string }) => (
+                    <ApplicantRow
+                      key={c.id}
+                      label={t("financing.wizard.summary.coApplicant")}
+                      client={c}
+                      onOpen={setOpenClientId}
+                    />
+                  ))}
+                  {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id !== dossier.client_id && c.id !== dossier.co_applicant_client_id && !spouseIds(dossier).has(c.id)).map((c: { id: string; full_name: string }) => (
+                    <ApplicantRow
+                      key={c.id}
+                      label={t("financing.wizard.summary.additionalApplicant")}
+                      client={c}
+                      onOpen={setOpenClientId}
+                    />
+                  ))}
+                </div>
                 {!dossier.clients && <p className="text-sm text-muted-foreground">—</p>}
               </CardContent>
             </Card>
@@ -340,6 +346,12 @@ function FinancingDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ClientDetailDialog
+        clientId={openClientId}
+        open={!!openClientId}
+        onOpenChange={(o) => { if (!o) setOpenClientId(null); }}
+      />
     </div>
   );
 }
@@ -400,17 +412,20 @@ function KV({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ApplicantRow({ label, client, showEmail, showPhone }: { label: string; client?: { id: string; full_name: string; email?: string | null; phone?: string | null } | null; showEmail?: boolean; showPhone?: boolean }) {
+function ApplicantRow({ label, client, onOpen }: { label: string; client?: { id: string; full_name: string; email?: string | null; phone?: string | null } | null; onOpen?: (id: string) => void }) {
   if (!client) return null;
   return (
-    <div className="rounded-lg border p-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <Link to="/clients/$id" params={{ id: client.id }} className="text-sm font-medium text-primary hover:underline">
-        {client.full_name}
-      </Link>
-      {showEmail && client.email && <p className="text-xs text-muted-foreground">{client.email}</p>}
-      {showPhone && client.phone && <p className="text-xs text-muted-foreground">{client.phone}</p>}
-    </div>
+    <button
+      type="button"
+      onClick={() => onOpen?.(client.id)}
+      className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-muted/50 transition-colors"
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium truncate">{client.full_name}</p>
+      </div>
+      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+    </button>
   );
 }
 
