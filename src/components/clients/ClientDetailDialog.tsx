@@ -13,7 +13,7 @@ export function ClientDetailDialog({ clientId, open, onOpenChange, clientIds, on
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="h-[92vh] max-h-[92vh] w-[min(96vw,72rem)] max-w-6xl gap-0 overflow-hidden p-0 sm:rounded-2xl [&>button]:hidden"
+        className="flex h-[92dvh] max-h-[92dvh] min-h-0 w-[min(96vw,72rem)] max-w-6xl flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl [&>button]:hidden"
         style={{ display: "flex", flexDirection: "column" }}
       >
         <DialogTitle className="sr-only">Kundendetails</DialogTitle>
