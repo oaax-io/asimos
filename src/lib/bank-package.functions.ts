@@ -418,12 +418,34 @@ export const buildBankPackage = createServerFn({ method: "POST" })
         }
       : null;
 
+    const additionalApplicantsData = extraClients.map((c) => {
+      const disc = discByClient.get(c.id) ?? null;
+      return {
+        full_name: c.full_name ?? null,
+        email: c.email ?? null,
+        phone: c.phone ?? null,
+        address: [c.address, c.postal_code, c.city].filter(Boolean).join(", ") || null,
+        birth_date: (disc as any)?.birth_date ?? null,
+        nationality: (disc as any)?.nationality ?? null,
+        marital_status: (disc as any)?.marital_status ?? null,
+        employment_status: (disc as any)?.employment_status ?? null,
+        employer_name: (disc as any)?.employer_name ?? null,
+        salary_net_monthly: (disc as any)?.salary_net_monthly ?? null,
+        annual_net_salary: (disc as any)?.annual_net_salary ?? null,
+        total_income_monthly: (disc as any)?.total_income_monthly ?? null,
+        total_expenses_monthly: (disc as any)?.total_expenses_monthly ?? null,
+        reserve_total: (disc as any)?.reserve_total ?? null,
+        disclosure: (disc ?? null) as never,
+      };
+    });
+
     const html = buildBankPackageHtml({
       locale: data.locale,
       brand: brand ?? null,
       dossier: dossier as BankPackageInput["dossier"],
       applicant: applicantData,
       coApplicant: coApplicantData,
+      additionalApplicants: additionalApplicantsData,
       property,
       checklist: (checklistRows ?? []).map((c) => ({
         label: c.label,
