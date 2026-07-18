@@ -193,35 +193,39 @@ function FinancingDetailPage() {
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-3 md:grid-cols-2">
             <Card>
-              <CardContent className="p-4 space-y-3">
+              <CardContent className="p-4 space-y-2">
                 <h3 className="font-semibold flex items-center gap-2"><User className="h-4 w-4" />{t("financing.detail.overview.client")}</h3>
-                <ApplicantRow
-                  label={t("financing.wizard.summary.mainApplicant")}
-                  client={dossier.clients}
-                  showEmail
-                  showPhone
-                />
-                {spouses(dossier).map((r) => (
+                <div className="divide-y rounded-lg border">
                   <ApplicantRow
-                    key={r.id}
-                    label={t("financing.wizard.summary.spouse")}
-                    client={r.related}
+                    label={t("financing.wizard.summary.mainApplicant")}
+                    client={dossier.clients}
+                    onOpen={setOpenClientId}
                   />
-                ))}
-                {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id === dossier.co_applicant_client_id && !spouseIds(dossier).has(c.id)).map((c: { id: string; full_name: string }) => (
-                  <ApplicantRow
-                    key={c.id}
-                    label={t("financing.wizard.summary.coApplicant")}
-                    client={c}
-                  />
-                ))}
-                {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id !== dossier.client_id && c.id !== dossier.co_applicant_client_id && !spouseIds(dossier).has(c.id)).map((c: { id: string; full_name: string }) => (
-                  <ApplicantRow
-                    key={c.id}
-                    label={t("financing.wizard.summary.additionalApplicant")}
-                    client={c}
-                  />
-                ))}
+                  {spouses(dossier).map((r) => (
+                    <ApplicantRow
+                      key={r.id}
+                      label={t("financing.wizard.summary.spouse")}
+                      client={r.related}
+                      onOpen={setOpenClientId}
+                    />
+                  ))}
+                  {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id === dossier.co_applicant_client_id && !spouseIds(dossier).has(c.id)).map((c: { id: string; full_name: string }) => (
+                    <ApplicantRow
+                      key={c.id}
+                      label={t("financing.wizard.summary.coApplicant")}
+                      client={c}
+                      onOpen={setOpenClientId}
+                    />
+                  ))}
+                  {(dossier.applicant_clients ?? []).filter((c: { id: string }) => c.id !== dossier.client_id && c.id !== dossier.co_applicant_client_id && !spouseIds(dossier).has(c.id)).map((c: { id: string; full_name: string }) => (
+                    <ApplicantRow
+                      key={c.id}
+                      label={t("financing.wizard.summary.additionalApplicant")}
+                      client={c}
+                      onOpen={setOpenClientId}
+                    />
+                  ))}
+                </div>
                 {!dossier.clients && <p className="text-sm text-muted-foreground">—</p>}
               </CardContent>
             </Card>
