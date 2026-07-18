@@ -115,10 +115,16 @@ function ResultTabs({ dossier }: { dossier: any }) {
   const [tab, setTab] = useState("vorpruefung");
   return (
     <Tabs value={tab} onValueChange={setTab}>
-      <TabsList>
-        <TabsTrigger value="vorpruefung">Vorprüfung</TabsTrigger>
-        <TabsTrigger value="detail">Detailrechnung</TabsTrigger>
-        <TabsTrigger value="szenarien">Szenarien</TabsTrigger>
+      <TabsList className="w-full flex justify-start gap-0 bg-transparent border-b border-border rounded-none p-0 h-auto">
+        <SubTabTrigger value="vorpruefung" active={tab === "vorpruefung"} icon={<ClipboardCheck className="h-4 w-4" />}>
+          Vorprüfung
+        </SubTabTrigger>
+        <SubTabTrigger value="detail" active={tab === "detail"} icon={<Calculator className="h-4 w-4" />}>
+          Detailrechnung
+        </SubTabTrigger>
+        <SubTabTrigger value="szenarien" active={tab === "szenarien"} icon={<LineChart className="h-4 w-4" />}>
+          Szenarien
+        </SubTabTrigger>
       </TabsList>
 
       <TabsContent value="vorpruefung" className="space-y-4">
@@ -133,6 +139,31 @@ function ResultTabs({ dossier }: { dossier: any }) {
           : <ScenariosTab dossier={dossier} onSaved={() => setTab("vorpruefung")} />}
       </TabsContent>
     </Tabs>
+  );
+}
+
+function SubTabTrigger({
+  value,
+  active,
+  icon,
+  children,
+}: {
+  value: string;
+  active: boolean;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <TabsTrigger
+      value={value}
+      className={cn(
+        "relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-none border-b-2 border-transparent transition-colors hover:text-foreground data-[state=active]:text-foreground data-[state=active]:border-primary",
+        active && "border-primary"
+      )}
+    >
+      {icon}
+      <span>{children}</span>
+    </TabsTrigger>
   );
 }
 
