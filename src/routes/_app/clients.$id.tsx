@@ -312,76 +312,76 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
   );
 
   return (
-    <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        {inDialog ? (
-          <div className="flex flex-wrap items-center gap-3">
-            {clientIds && clientIds.length > 1 && onNavigate && (
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  disabled={clientIds.indexOf(id) <= 0}
-                  onClick={() => {
-                    const idx = clientIds.indexOf(id);
-                    if (idx > 0) onNavigate(clientIds[idx - 1]);
-                  }}
-                  title="Vorheriger Kunde"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="min-w-[44px] text-center text-xs tabular-nums text-muted-foreground">
-                  {clientIds.indexOf(id) + 1} / {clientIds.length}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  disabled={clientIds.indexOf(id) >= clientIds.length - 1}
-                  onClick={() => {
-                    const idx = clientIds.indexOf(id);
-                    if (idx < clientIds.length - 1) onNavigate(clientIds[idx + 1]);
-                  }}
-                  title="Nächster Kunde"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-            {StatusSelect}
-          </div>
-        ) : (
-          <div className="flex flex-wrap items-center gap-3">
-            <Button variant="ghost" asChild>
-              <Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
-            </Button>
-            {StatusSelect}
-          </div>
-        )}
-        <div className="flex gap-2">
-          <ClientQuickActions client={client} />
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-1.5 h-4 w-4" />Kunde bearbeiten
-          </Button>
-          <Button variant="outline" size="icon" onClick={async () => { if (await confirm({ title: "Kunde löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Löschen" })) del.mutate(); }}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          {inDialog && (
-            <Button variant="outline" size="icon" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </div>
-
+    <div className={inDialog ? "flex flex-col h-full" : ""}>
       <ClientSelfDisclosureWizard
         clientId={id}
         open={editOpen}
         onOpenChange={setEditOpen}
       />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className={inDialog ? "flex flex-col h-full" : "space-y-6"}>
+        <div className={inDialog ? "shrink-0 sticky top-0 z-20 px-6 pt-6 bg-background/95 backdrop-blur rounded-t-2xl border-b border-border/50 shadow-sm" : ""}>
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            {inDialog ? (
+              <div className="flex flex-wrap items-center gap-3">
+                {clientIds && clientIds.length > 1 && onNavigate && (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      disabled={clientIds.indexOf(id) <= 0}
+                      onClick={() => {
+                        const idx = clientIds.indexOf(id);
+                        if (idx > 0) onNavigate(clientIds[idx - 1]);
+                      }}
+                      title="Vorheriger Kunde"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="min-w-[44px] text-center text-xs tabular-nums text-muted-foreground">
+                      {clientIds.indexOf(id) + 1} / {clientIds.length}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      disabled={clientIds.indexOf(id) >= clientIds.length - 1}
+                      onClick={() => {
+                        const idx = clientIds.indexOf(id);
+                        if (idx < clientIds.length - 1) onNavigate(clientIds[idx + 1]);
+                      }}
+                      title="Nächster Kunde"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                {StatusSelect}
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <Button variant="ghost" asChild>
+                  <Link to="/clients"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
+                </Button>
+                {StatusSelect}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <ClientQuickActions client={client} />
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                <Pencil className="mr-1.5 h-4 w-4" />Kunde bearbeiten
+              </Button>
+              <Button variant="outline" size="icon" onClick={async () => { if (await confirm({ title: "Kunde löschen?", description: "Diese Aktion kann nicht rückgängig werden.", confirmText: "Löschen" })) del.mutate(); }}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              {inDialog && (
+                <Button variant="outline" size="icon" onClick={onClose}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
         <section className="relative overflow-hidden rounded-2xl border border-border bg-muted/70 p-6 pb-2 shadow-[var(--shadow-soft)]">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 via-primary/80 to-primary/40" />
 
@@ -528,8 +528,9 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             </TabsTrigger>
           </TabsList>
         </section>
+        </div>
 
-
+        <div className={inDialog ? "flex-1 overflow-y-auto min-h-0 px-6 pb-6" : "contents"}>
 
         {/* 1. Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
@@ -776,6 +777,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
           <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["roles"]} />
           <ClientActivityTab clientId={id} userId={user!.id} notes={client.notes} />
         </TabsContent>
+        </div>
       </Tabs>
     </div>
   );
