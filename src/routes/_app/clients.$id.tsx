@@ -383,7 +383,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             </div>
           </div>
         <section className={inDialog ? "relative overflow-hidden rounded-2xl bg-muted/70 p-6 pb-2 shadow-[var(--shadow-soft)]" : "relative overflow-hidden rounded-2xl border border-border bg-muted/70 p-6 pb-2 shadow-[var(--shadow-soft)]"}>
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 via-primary/80 to-primary/40" />
+          {!inDialog && <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 via-primary/80 to-primary/40" />}
 
           {/* Hero */}
           <div className="flex flex-wrap items-start justify-between gap-4">
