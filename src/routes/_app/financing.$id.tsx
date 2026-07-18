@@ -452,7 +452,7 @@ function Stat({ icon: Icon, label, value, tone }: { icon: any; label: string; va
     tone === "warn" ? "border-amber-200" :
     tone === "bad" ? "border-red-200" : "";
   return (
-    <Card className={cn(borderClass)}>
+    <Card className={cn("bg-card/90 shadow-sm backdrop-blur-sm", borderClass)}>
       <CardContent className="p-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground"><Icon className="h-4 w-4" />{label}</div>
         <p className={cn("mt-1 text-lg font-semibold", toneClass)}>{value}</p>
