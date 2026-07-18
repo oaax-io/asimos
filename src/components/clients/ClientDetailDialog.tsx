@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ClientDetail } from "@/routes/_app/clients.$id";
 
 interface Props {
@@ -12,8 +12,13 @@ interface Props {
 export function ClientDetailDialog({ clientId, open, onOpenChange, clientIds, onNavigate }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-6xl max-h-[92vh] overflow-hidden p-0 flex flex-col [&>button]:hidden">
-      {clientId && (
+      <DialogContent
+        className="h-[92vh] max-h-[92vh] w-[min(96vw,72rem)] max-w-6xl gap-0 overflow-hidden p-0 sm:rounded-2xl [&>button]:hidden"
+        style={{ display: "flex", flexDirection: "column" }}
+      >
+        <DialogTitle className="sr-only">Kundendetails</DialogTitle>
+        <DialogDescription className="sr-only">Kundendetails mit fixem Kopfbereich und scrollbarem Inhalt.</DialogDescription>
+        {clientId && (
           <ClientDetail
             id={clientId}
             inDialog
