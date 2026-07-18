@@ -12,7 +12,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, RotateCcw, Save } from "lucide-react";
+import { ArrowLeft, RotateCcw, Save, ClipboardCheck, Calculator, LineChart } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { FinancingQuickCheckActions } from "@/components/financing/FinancingQuickCheckActions";
 import { expenseFields, expenseLabels } from "@/lib/self-disclosure";
