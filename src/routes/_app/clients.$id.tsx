@@ -155,8 +155,34 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
       return data as any[];
     },
     retry: false,
-    enabled: canLoadProtectedData && visitedTabs.includes("matching"),
+    enabled: canLoadProtectedData && (visitedTabs.includes("overview") || visitedTabs.includes("matching")),
   });
+
+  // Budget-Quelle: expliziter Kundenbudget, sonst aus zuletzt berechneter Finanzierung
+  const dossierForBudget: any = dossier;
+  const dossierBudget = dossierForBudget
+    ? (Number(dossierForBudget.purchase_price ?? dossierForBudget.property_value ?? 0) || null)
+    : null;
+  const effectiveBudget = Number((client as any)?.budget_max ?? 0) || dossierBudget || null;
+
+  // Vorgeschlagene Objekte, falls noch keine echten Matches existieren
+  const { data: suggestedMatchesCount = 0 } = useQuery({
+    queryKey: ["client_suggested_matches_count", id, effectiveBudget],
+    queryFn: async () => {
+      if (!effectiveBudget) return 0;
+      const { count } = await supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("listing_type", "sale")
+        .eq("status", "active")
+        .lte("price", effectiveBudget * 1.05)
+        .gte("price", effectiveBudget * 0.6);
+      return count ?? 0;
+    },
+    retry: false,
+    enabled: canLoadProtectedData && !!effectiveBudget && (client as any)?.client_type !== "seller" && (client as any)?.client_type !== "landlord" && visitedTabs.includes("overview"),
+  });
+  const matchCountDisplay = matches.length > 0 ? matches.length : suggestedMatchesCount;
 
   const { data: documentsCount = 0 } = useQuery({
     queryKey: ["client_documents_count", id],
