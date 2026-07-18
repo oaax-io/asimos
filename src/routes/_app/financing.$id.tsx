@@ -174,7 +174,15 @@ function FinancingDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="overview">{t("financing.detail.tabs.overview")}</TabsTrigger>
-          <TabsTrigger value="quickcheck">{t("financing.detail.tabs.quickcheck")}</TabsTrigger>
+          <TabsTrigger value="disclosure">{t("financing.detail.tabs.disclosure")}</TabsTrigger>
+          <TabsTrigger value="ubs">{t("financing.detail.tabs.ubs")}</TabsTrigger>
+          <TabsTrigger value="documents">{t("financing.detail.tabs.documents")}</TabsTrigger>
+          <TabsTrigger value="bank">{t("financing.detail.tabs.bank")}</TabsTrigger>
+          <TabsTrigger value="activity">{t("financing.detail.tabs.activity")}</TabsTrigger>
+        </TabsList>
+
+
+        <TabsContent value="overview" className="space-y-4">
           <TabsTrigger value="disclosure">{t("financing.detail.tabs.disclosure")}</TabsTrigger>
           <TabsTrigger value="ubs">{t("financing.detail.tabs.ubs")}</TabsTrigger>
           <TabsTrigger value="documents">{t("financing.detail.tabs.documents")}</TabsTrigger>
