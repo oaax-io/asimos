@@ -28,7 +28,7 @@ import { UbsChecklistTab } from "@/components/financing/UbsChecklistTab";
 import { FinancingDocumentsTab } from "@/components/financing/FinancingDocumentsTab";
 import { BankSubmissionTab } from "@/components/financing/BankSubmissionTab";
 import { DossierQualityCard } from "@/components/financing/DossierQualityCard";
-import { FinancingQuickCheckActions } from "@/components/financing/FinancingQuickCheckActions";
+import { FinancingReportPreviewDialog } from "@/components/financing/FinancingReportPreviewDialog";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
