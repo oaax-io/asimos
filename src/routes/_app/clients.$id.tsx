@@ -528,6 +528,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             </TabsTrigger>
           </TabsList>
         </section>
+        </div>
 
 
 
