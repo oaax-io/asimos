@@ -173,14 +173,28 @@ export type BankPackageInput = {
 
   applicant: Applicant;
   coApplicant?: Applicant | null;
+  /** Zusätzliche Mitantragsteller (z.B. Geschwister, Eltern, weitere Investoren). */
+  additionalApplicants?: Applicant[] | null;
 
   property?: {
     title?: string | null;
     address?: string | null;
+    postal_code?: string | null;
     city?: string | null;
-    type?: string | null;
+    country?: string | null;
+    property_type?: string | null;
+    listing_type?: string | null;
+    price?: number | null;
+    living_area?: number | null;
+    plot_area?: number | null;
     area?: number | null;
     rooms?: number | null;
+    bathrooms?: number | null;
+    floor?: number | null;
+    year_built?: number | null;
+    energy_class?: string | null;
+    heating_type?: string | null;
+    condition?: string | null;
   } | null;
 
   checklist: ChecklistEntry[];
