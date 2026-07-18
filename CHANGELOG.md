@@ -2,6 +2,39 @@
 
 Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 
+## [1.15.0] – 18.07.2026 – Exposé, Makrolage & Finanzierungs-Detailseite
+
+### Hinzugefügt
+- **Makrolage KI-Analyse** pro Immobilie: strukturierte Auswertung (Lage, Verkehr, Infrastruktur, Bildung, Freizeit) mit Icons und Standortbeschreibung, dauerhaft am Objekt gespeichert (`properties.macro_location` jsonb, Edge Function `property-macro-location`) und in der Objekt-Übersicht sichtbar (`MacroLocationCard`).
+- **Exposé-Zentrale**: Modal über den `Exposé`-Button im Immobilien-Header — Template-Auswahl (Classic / Modern / Luxury), PDF-Generierung und öffentlicher Freigabe-Link (`properties.public_token`, `public_enabled`).
+- **Öffentliche Objekt-Landingpage** `/p/:token` mit Details, Fotos, Einheiten sowie Makrolage/Marktanalyse (falls vorhanden), teilbar ohne Login.
+- **Selbstauskunft-Wizard**: mehrstufig mit optionalem Ehepartner und weiteren Mitantragstellern — alle Personen werden automatisch als verknüpfte Kunden angelegt.
+- **Refinanzierungs-Wizard**: zwei Hypothekentranchen mit eigenen Zinssätzen, neuer Zweck `Renovation`, Ausgaben aller Antragsteller aus der Selbstauskunft.
+- **Aufgaben**: Betreff-Presets (Notartermin, Kundenordner, Objektbesichtigung …), Pflicht-Kommentar-Modal beim Status `Pending`, Kalender-Integration (Monatsansicht als Standard).
+- **Live-Benachrichtigungen**: Toasts unten rechts + farbcodiertes Notification-Center in der Glocke (Blau = Termine, Amber = Aufgaben, Grün = Leads), inkl. DB-Trigger für Zuweisungen.
+- **Bank-Einreichungs-Paket**: enthält jetzt alle Antragsteller (Ehepartner + Mitantragsteller), Objektdaten und Objekt-Medien im Ordner `03_Immobilie`; vollständige Liste Schweizer Banken im Dropdown.
+- **Aktivitätslog Finanzierung**: Trigger `tg_log_financing_dossier_change` protokolliert alle Dossier-Änderungen, Anzeige im Tab `Aktivität`.
+
+### Geändert
+- **Finanzierungs-Detailseite aufgeräumt**: Quick-Check-Tab entfernt, Vorprüfung/Detailrechnung/Szenarien direkt in der Übersicht, alle Aktionen (Bericht ansehen, PDF, Neu berechnen, An Kunde senden) im Header. Selbstauskunft-Tab entfernt, `DossierQualityCard` unter der Vorprüfung.
+- **Neuer Tab-Look "Architectural Precision"** (glasige Pillen, farbige Akzentlinie, Aktivitäts-Puls) für Finanzierung und Kunden-Modal; Sub-Tabs im Underline-Stil mit Icons und Zählern.
+- **Bericht-Vorschau als echte A4-Seite** mit skaliertem Inhalt und `@media screen`-Print-Styles (`FinancingReportPreviewDialog`).
+- **Kunden-Modal**: Header und Haupttabs sind fixiert, nur der Inhalt scrollt (`92dvh`, sticky Header); Applikanten-Liste kompakt mit Inline-`ClientDetailDialog` (kein Seitenwechsel); `Matching`-Tab im Dialog-Modus ausgeblendet.
+- **Kunden-Modal-KPIs**: Finanzierungsstatus als Label (Realistisch / Kritisch …) statt 0 %/100 %, Budget-Fallback aus letztem Dossier (`purchase_price` / `property_value`), Match-Vorschläge basierend auf Budgetbereich (≈ 60–105 %).
+- **Refinanzierungs-Resultat**: Eigenmittelquote und harte Eigenmittel als `Nicht benötigt` statt 0 %, Tragbarkeit farbig (grün/amber/rot), beide Hypothekentranchen durchgehend sichtbar; `displayQuickCheckStatus` überall (inkl. Finanzierungs-Übersicht).
+- **Exposé-PDFs**: Titelbild automatisch aus `is_cover`-Medium, `FOTO FOLGT`-Platzhalter für fehlende Bilder, Storage-URLs werden zu Base64 aufgelöst.
+- **Aufgaben-UI**: besserer Kontrast, Prio `Hoch` rot, Fälligkeitsdatum prominenter, Kunden-Badge in Amber/Beige, Uhrzeit optional (Date-only).
+
+### Behoben
+- Manager-Rolle konnte keine Objektfotos hochladen — `user_roles` wird nun automatisch mit `profiles.role` synchronisiert.
+- Refinanzierungs-Wizard Schritt 4: `Weiter` war trotz vollständig ausgefüllter Felder blockiert (Eigennutzungsanteil-Validierung bei gemischter Nutzung).
+- Ausgaben-Kalkulation im Wizard nutzt jetzt alle Ausgaben-Kategorien aller Antragsteller aus der Selbstauskunft (statt nur Leasing/Kredit).
+- Kundenname wird bei Speicherung der Selbstauskunft in `clients` synchronisiert (z. B. `Neshyt Cuculi` statt `N Cuculi`).
+- Dokumente in der Finanzierung öffnen eine Inline-Vorschau via Signed URL statt einer neuen Browser-Tab-Route.
+- Finanzierungs-Übersicht zeigt `Realistisch` für Refinanzierungen statt fälschlich `Nicht finanzierbar`.
+
+---
+
 ## [1.14.0] – 08.06.2026 – Finanzierungs-Quick-Check Redesign
 
 ### Hinzugefügt
