@@ -530,7 +530,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         </section>
         </div>
 
-
+        <div className={inDialog ? "flex-1 overflow-y-auto min-h-0 px-6 pb-6" : "contents"}>
 
         {/* 1. Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
