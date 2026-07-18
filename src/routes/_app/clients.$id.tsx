@@ -381,119 +381,153 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         onOpenChange={setEditOpen}
       />
 
-      {/* Hero */}
-      <div className="mb-6 rounded-2xl border bg-gradient-to-br from-primary/5 via-background to-background p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">{clientTypeLabels[client.client_type as keyof typeof clientTypeLabels]}</Badge>
-              {clientStatusFlags?.selfDisclosureSubmitted && (
-                <Badge className="bg-emerald-600 hover:bg-emerald-600">Selbstauskunft eingereicht</Badge>
-              )}
-              {clientStatusFlags?.financing && (
-                clientStatusFlags.financing.approval_status === "approved" || clientStatusFlags.financing.profile_status === "complete" ? (
-                  <Badge className="bg-emerald-600 hover:bg-emerald-600">Finanzierung bereit</Badge>
-                ) : (
-                  <Badge className="bg-amber-500 hover:bg-amber-500">Finanzierung in Prüfung</Badge>
-                )
-              )}
-              {clientStatusFlags?.hasActiveReservation && (
-                <Badge className="bg-amber-500 hover:bg-amber-500">Aktive Reservation</Badge>
-              )}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <section className="relative overflow-hidden rounded-2xl border border-border bg-muted/70 p-6 pb-2 shadow-[var(--shadow-soft)]">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 via-primary/80 to-primary/40" />
+
+          {/* Hero */}
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary">{clientTypeLabels[client.client_type as keyof typeof clientTypeLabels]}</Badge>
+                {clientStatusFlags?.selfDisclosureSubmitted && (
+                  <Badge className="bg-emerald-600 hover:bg-emerald-600">Selbstauskunft eingereicht</Badge>
+                )}
+                {clientStatusFlags?.financing && (
+                  clientStatusFlags.financing.approval_status === "approved" || clientStatusFlags.financing.profile_status === "complete" ? (
+                    <Badge className="bg-emerald-600 hover:bg-emerald-600">Finanzierung bereit</Badge>
+                  ) : (
+                    <Badge className="bg-amber-500 hover:bg-amber-500">Finanzierung in Prüfung</Badge>
+                  )
+                )}
+                {clientStatusFlags?.hasActiveReservation && (
+                  <Badge className="bg-amber-500 hover:bg-amber-500">Aktive Reservation</Badge>
+                )}
+              </div>
+              <h1 className="mt-2 font-display text-3xl font-bold">{client.full_name}</h1>
+              <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                {client.email && (
+                  <a href={`mailto:${client.email}`} className="flex items-center gap-1.5 hover:text-primary">
+                    <Mail className="h-4 w-4" />{client.email}
+                  </a>
+                )}
+                {client.phone && (
+                  <a href={`tel:${client.phone}`} className="flex items-center gap-1.5 hover:text-primary">
+                    <Phone className="h-4 w-4" />{client.phone}
+                  </a>
+                )}
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4" />Angelegt {formatDate(client.created_at)}
+                </span>
+                {ownerLabel && (
+                  <span className="flex items-center gap-1.5">
+                    <User className="h-4 w-4" />Ansprechpartner: {ownerLabel}
+                  </span>
+                )}
+              </div>
             </div>
-            <h1 className="mt-2 font-display text-3xl font-bold">{client.full_name}</h1>
-            <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-wrap gap-2">
               {client.email && (
-                <a href={`mailto:${client.email}`} className="flex items-center gap-1.5 hover:text-primary">
-                  <Mail className="h-4 w-4" />{client.email}
-                </a>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`mailto:${client.email}`}><Mail className="mr-1.5 h-4 w-4" />Mail</a>
+                </Button>
               )}
               {client.phone && (
-                <a href={`tel:${client.phone}`} className="flex items-center gap-1.5 hover:text-primary">
-                  <Phone className="h-4 w-4" />{client.phone}
-                </a>
-              )}
-              <span className="flex items-center gap-1.5">
-                <Calendar className="h-4 w-4" />Angelegt {formatDate(client.created_at)}
-              </span>
-              {ownerLabel && (
-                <span className="flex items-center gap-1.5">
-                  <User className="h-4 w-4" />Ansprechpartner: {ownerLabel}
-                </span>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`tel:${client.phone}`}><Phone className="mr-1.5 h-4 w-4" />Anrufen</a>
+                </Button>
               )}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {client.email && (
-              <Button variant="outline" size="sm" asChild>
-                <a href={`mailto:${client.email}`}><Mail className="mr-1.5 h-4 w-4" />Mail</a>
-              </Button>
-            )}
-            {client.phone && (
-              <Button variant="outline" size="sm" asChild>
-                <a href={`tel:${client.phone}`}><Phone className="mr-1.5 h-4 w-4" />Anrufen</a>
-              </Button>
-            )}
+
+          {/* KPIs */}
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Stat icon={<Target className="h-3.5 w-3.5" />} label="Matches" value={matches.length} />
+            <Stat icon={<Calendar className="h-3.5 w-3.5" />} label="Termine" value={appointments.length} />
+            <Stat
+              icon={<FileSignature className="h-3.5 w-3.5" />}
+              label="Finanzierung"
+              value={dossier ? `${dossier.completion_percent}%` : "—"}
+            />
+            <Stat
+              icon={<Home className="h-3.5 w-3.5" />}
+              label={isSeller ? "Eigene Objekte" : "Budget"}
+              value={isSeller ? ownProperties.length : (client.budget_max ? formatCurrency(Number(client.budget_max)) : "—")}
+            />
           </div>
-        </div>
 
-        {/* KPIs */}
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <Stat icon={<Target className="h-3.5 w-3.5" />} label="Matches" value={matches.length} />
-          <Stat icon={<Calendar className="h-3.5 w-3.5" />} label="Termine" value={appointments.length} />
-          <Stat
-            icon={<FileSignature className="h-3.5 w-3.5" />}
-            label="Finanzierung"
-            value={dossier ? `${dossier.completion_percent}%` : "—"}
-          />
-          <Stat
-            icon={<Home className="h-3.5 w-3.5" />}
-            label={isSeller ? "Eigene Objekte" : "Budget"}
-            value={isSeller ? ownProperties.length : (client.budget_max ? formatCurrency(Number(client.budget_max)) : "—")}
-          />
-        </div>
-      </div>
+          <TabsList className="mt-6 flex h-auto w-full flex-wrap items-center gap-1 bg-transparent p-0 shadow-none">
+            <TabsTrigger
+              value="overview"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            >
+              Übersicht
+            </TabsTrigger>
+            <TabsTrigger
+              value="consulting"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            >
+              <MessageSquare className="h-4 w-4" />Beratung
+              {appointments.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{appointments.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="disclosure"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            >
+              <ClipboardList className="h-4 w-4" />Selbstauskunft
+            </TabsTrigger>
+            <TabsTrigger
+              value="financing"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            >
+              <FileSignature className="h-4 w-4" />Finanzierung
+              {dossier && (
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{dossier.completion_percent}%</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="properties"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            >
+              <Building2 className="h-4 w-4" />Immobilien
+              {(ownProperties.length + assignedProperties.length) > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{ownProperties.length + assignedProperties.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="matching"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            >
+              <Target className="h-4 w-4" />Matching
+              {matches.length > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{matches.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="documents"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            >
+              <FileText className="h-4 w-4" />Dokumente
+              {documentsCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{documentsCount}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="activity"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            >
+              <Activity className="h-4 w-4" />Aktivitäten
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+              </span>
+            </TabsTrigger>
+          </TabsList>
+        </section>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="consulting">
-            <MessageSquare className="mr-1.5 h-4 w-4" />Beratung
-            {appointments.length > 0 && (
-              <Badge variant="secondary" className="ml-2">{appointments.length}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="disclosure">
-            <ClipboardList className="mr-1.5 h-4 w-4" />Selbstauskunft
-          </TabsTrigger>
-          <TabsTrigger value="financing">
-            <FileSignature className="mr-1.5 h-4 w-4" />Finanzierung
-            {dossier && (
-              <Badge variant="secondary" className="ml-2">{dossier.completion_percent}%</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="properties">
-            <Building2 className="mr-1.5 h-4 w-4" />Immobilien
-            {(ownProperties.length + assignedProperties.length) > 0 && (
-              <Badge variant="secondary" className="ml-2">{ownProperties.length + assignedProperties.length}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="matching">
-            <Target className="mr-1.5 h-4 w-4" />Matching
-            {matches.length > 0 && (
-              <Badge variant="secondary" className="ml-2">{matches.length}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="documents">
-            <FileText className="mr-1.5 h-4 w-4" />Dokumente
-            {documentsCount > 0 && (
-              <Badge variant="secondary" className="ml-2">{documentsCount}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="activity">
-            <Activity className="mr-1.5 h-4 w-4" />Aktivitäten
-          </TabsTrigger>
-        </TabsList>
+
 
         {/* 1. Übersicht */}
         <TabsContent value="overview" className="mt-6 space-y-4">
