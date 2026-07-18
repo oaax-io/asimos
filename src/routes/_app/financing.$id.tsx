@@ -120,6 +120,22 @@ function FinancingDetailPage() {
     onError: (e: any) => toast.error(e.message ?? t("financing.detail.toast.resetFailed")),
   });
 
+  const docsCountQuery = useQuery({
+    queryKey: ["financing_documents_count", id, dossier?.client_id, dossier?.property_id],
+    enabled: !!dossier,
+    queryFn: async () => {
+      const orParts: string[] = [`and(related_type.eq.financing,related_id.eq.${id})`];
+      if (dossier?.client_id) orParts.push(`and(related_type.eq.client,related_id.eq.${dossier.client_id})`);
+      if (dossier?.property_id) orParts.push(`and(related_type.eq.property,related_id.eq.${dossier.property_id})`);
+      const [d, g] = await Promise.all([
+        supabase.from("documents").select("id", { count: "exact", head: true }).or(orParts.join(",")),
+        supabase.from("generated_documents").select("id", { count: "exact", head: true }).or(orParts.join(",")),
+      ]);
+      return (d.count ?? 0) + (g.count ?? 0);
+    },
+  });
+  const docsCount = docsCountQuery.data ?? 0;
+
   if (isLoading) return <p className="text-sm text-muted-foreground">{t("financing.loading")}</p>;
   if (!dossier) return <p className="text-sm text-muted-foreground">{t("financing.detail.notFound")}</p>;
 
