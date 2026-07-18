@@ -200,32 +200,32 @@ function FinancingDetailPage() {
         <TabsList className="mt-6 flex h-auto w-full items-center justify-between gap-1 bg-transparent p-0 shadow-none">
           <TabsTrigger
             value="overview"
-            className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-white/75 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,1),0_0_24px_-6px_rgba(0,0,0,0.12),0_6px_20px_-4px_rgba(0,0,0,0.1)] hover:border-white/90 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-white/80 hover:backdrop-blur-xl hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_20px_-4px_rgba(0,0,0,0.14)] hover:ring-1 hover:ring-primary/25 hover:ring-offset-1 hover:ring-offset-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
           >
             {t("financing.detail.tabs.overview")}
           </TabsTrigger>
           <TabsTrigger
             value="ubs"
-            className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-white/75 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,1),0_0_24px_-6px_rgba(0,0,0,0.12),0_6px_20px_-4px_rgba(0,0,0,0.1)] hover:border-white/90 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-white/80 hover:backdrop-blur-xl hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_20px_-4px_rgba(0,0,0,0.14)] hover:ring-1 hover:ring-primary/25 hover:ring-offset-1 hover:ring-offset-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
           >
             {t("financing.detail.tabs.ubs")}
           </TabsTrigger>
           <TabsTrigger
             value="documents"
-            className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-white/75 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,1),0_0_24px_-6px_rgba(0,0,0,0.12),0_6px_20px_-4px_rgba(0,0,0,0.1)] hover:border-white/90 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-white/80 hover:backdrop-blur-xl hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_20px_-4px_rgba(0,0,0,0.14)] hover:ring-1 hover:ring-primary/25 hover:ring-offset-1 hover:ring-offset-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
           >
             {t("financing.detail.tabs.documents")}
             <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{docsCount}</Badge>
           </TabsTrigger>
           <TabsTrigger
             value="bank"
-            className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-white/75 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,1),0_0_24px_-6px_rgba(0,0,0,0.12),0_6px_20px_-4px_rgba(0,0,0,0.1)] hover:border-white/90 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-white/80 hover:backdrop-blur-xl hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_20px_-4px_rgba(0,0,0,0.14)] hover:ring-1 hover:ring-primary/25 hover:ring-offset-1 hover:ring-offset-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
           >
             {t("financing.detail.tabs.bank")}
           </TabsTrigger>
           <TabsTrigger
             value="activity"
-            className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-white/75 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,1),0_0_24px_-6px_rgba(0,0,0,0.12),0_6px_20px_-4px_rgba(0,0,0,0.1)] hover:border-white/90 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-white/80 hover:backdrop-blur-xl hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_20px_-4px_rgba(0,0,0,0.14)] hover:ring-1 hover:ring-primary/25 hover:ring-offset-1 hover:ring-offset-transparent hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
           >
             {t("financing.detail.tabs.activity")}
             <span className="relative flex h-2 w-2">
