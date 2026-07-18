@@ -356,9 +356,9 @@ export const buildBankPackage = createServerFn({ method: "POST" })
     }
 
     // Objekt-Bilder (Cover zuerst) als eigenständige Anhänge unter 03_Objekt/Bilder
-    for (let i = 0; i < (propertyMedia?.length ?? 0); i++) {
+    for (let i = 0; i < propertyMedia.length; i++) {
       if (totalBytes >= MAX_TOTAL_ATTACHMENT_BYTES) break;
-      const m = propertyMedia![i];
+      const m = propertyMedia[i];
       if (!m.file_url) continue;
       const fetched = await fetchAttachment(m.file_url, supabaseAdmin);
       if (!fetched) continue;
