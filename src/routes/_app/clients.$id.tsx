@@ -312,7 +312,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
   );
 
   return (
-    <div className={inDialog ? "relative" : ""}>
+    <div className={inDialog ? "flex flex-col h-full" : ""}>
       <ClientSelfDisclosureWizard
         clientId={id}
         open={editOpen}
