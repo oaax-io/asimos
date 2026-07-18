@@ -253,11 +253,11 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       .eq("dossier_id", data.dossierId)
       .order("sort_order", { ascending: true });
 
-    // 6) Dokumente (Kunde, Ehepartner, Objekt, Financing)
+    // 6) Dokumente (Kunde, Ehepartner, weitere Mitantragsteller, Objekt, Financing)
     const orParts: string[] = [`and(related_type.eq.financing,related_id.eq.${data.dossierId})`];
-    if (dossier.client_id) orParts.push(`and(related_type.eq.client,related_id.eq.${dossier.client_id})`);
-    if (dossier.co_applicant_client_id)
-      orParts.push(`and(related_type.eq.client,related_id.eq.${dossier.co_applicant_client_id})`);
+    for (const cid of clientIds) {
+      orParts.push(`and(related_type.eq.client,related_id.eq.${cid})`);
+    }
     if (dossier.property_id) orParts.push(`and(related_type.eq.property,related_id.eq.${dossier.property_id})`);
 
     const { data: documents } = await supabaseAdmin
@@ -299,11 +299,28 @@ export const buildBankPackage = createServerFn({ method: "POST" })
     const sourceLabel = (d: DocSource): { folder: string; label: string } => {
       if (d.related_type === "client") {
         if (d.related_id === dossier.co_applicant_client_id) return { folder: "02_Ehepartner", label: "Ehepartner" };
+        if (d.related_id && extraFolderByClient.has(d.related_id)) {
+          return { folder: extraFolderByClient.get(d.related_id)!, label: "Weiterer Mitantragsteller" };
+        }
         return { folder: "01_Kunde", label: "Kunde" };
       }
       if (d.related_type === "property") return { folder: "03_Objekt", label: "Objekt" };
       if (d.related_type === "financing") return { folder: "04_Finanzierung", label: "Finanzierung" };
       return { folder: "05_Sonstige", label: "Sonstige" };
+    };
+
+    const addToZipBytes = (folder: string, filename: string, bytes: Uint8Array, sourceText: string) => {
+      const cleaned = safeFileName(filename, "datei.bin");
+      const targetFolder = safeFolderName(folder);
+      const fullPath = `${targetFolder}/${dedupeFileName(usedNames, cleaned)}`;
+      zipEntries[fullPath] = bytes;
+      totalBytes += bytes.byteLength;
+      inventory.push({
+        folder: targetFolder,
+        filename: fullPath.split("/").pop() ?? cleaned,
+        source: sourceText,
+        size_bytes: bytes.byteLength,
+      });
     };
 
     const addToZip = async (d: DocSource, isGenerated: boolean) => {
@@ -318,17 +335,13 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       const baseName = isGenerated
         ? (d.title ?? d.file_name ?? `generiert_${d.related_id ?? "datei"}.pdf`)
         : (d.file_name ?? `datei_${d.related_id ?? "x"}`);
-      const cleaned = safeFileName(baseName, "datei.bin");
-      const targetFolder = safeFolderName(isGenerated ? "06_Generiert" : sourceLabel(d).folder);
-      const fullPath = `${targetFolder}/${dedupeFileName(usedNames, cleaned)}`;
-      zipEntries[fullPath] = fetched.bytes;
-      totalBytes += fetched.size;
-      inventory.push({
-        folder: targetFolder,
-        filename: fullPath.split("/").pop() ?? cleaned,
-        source: isGenerated ? "Generiert" : sourceLabel(d).label,
-        size_bytes: fetched.size,
-      });
+      const { folder, label } = sourceLabel(d);
+      addToZipBytes(
+        isGenerated ? "06_Generiert" : folder,
+        baseName,
+        fetched.bytes,
+        isGenerated ? "Generiert" : label,
+      );
     };
 
     for (const d of documents ?? []) await addToZip(d as DocSource, false);
@@ -337,6 +350,28 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       if (d.document_type === "bank_package") continue;
       await addToZip(d as DocSource, true);
     }
+
+    // Objekt-Bilder (Cover zuerst) als eigenständige Anhänge unter 03_Objekt/Bilder
+    for (let i = 0; i < (propertyMedia?.length ?? 0); i++) {
+      if (totalBytes >= MAX_TOTAL_ATTACHMENT_BYTES) break;
+      const m = propertyMedia![i];
+      if (!m.file_url) continue;
+      const fetched = await fetchAttachment(m.file_url, supabaseAdmin);
+      if (!fetched) continue;
+      if (fetched.size > MAX_ATTACHMENT_BYTES) continue;
+      if (totalBytes + fetched.size > MAX_TOTAL_ATTACHMENT_BYTES) break;
+      const ext = (() => {
+        const raw = m.file_url.split("?")[0].split(".").pop();
+        return raw && raw.length <= 5 ? `.${raw.toLowerCase()}` : "";
+      })();
+      const idx = String(i + 1).padStart(2, "0");
+      const name = m.is_cover
+        ? `Cover${ext}`
+        : (m.file_name ? safeFileName(m.file_name, `Bild_${idx}${ext}`) : `Bild_${idx}${ext}`);
+      addToZipBytes("03_Objekt/Bilder", name, fetched.bytes, "Objekt-Bild");
+    }
+
+
 
     // 9) Master-HTML & PDF
     const applicantData = {
