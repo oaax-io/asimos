@@ -120,12 +120,28 @@ function FinancingDetailPage() {
     onError: (e: any) => toast.error(e.message ?? t("financing.detail.toast.resetFailed")),
   });
 
+  const relatedClientIds = useMemo(() => {
+    if (!dossier) return [] as string[];
+    const extras = Array.isArray((dossier as any).additional_co_applicants)
+      ? ((dossier as any).additional_co_applicants as any[]).map((a) => a?.client_id)
+      : [];
+    const rels = ((dossier as any).relationships ?? []).map((r: any) => r?.related_client_id);
+    const applicants = ((dossier as any).applicant_clients ?? []).map((c: any) => c?.id);
+    return Array.from(new Set([
+      dossier.client_id,
+      (dossier as any).co_applicant_client_id,
+      ...extras,
+      ...applicants,
+      ...rels,
+    ].filter(Boolean))) as string[];
+  }, [dossier]);
+
   const docsCountQuery = useQuery({
-    queryKey: ["financing_documents_count", id, dossier?.client_id, dossier?.property_id],
+    queryKey: ["financing_documents_count", id, relatedClientIds.join(","), dossier?.property_id],
     enabled: !!dossier,
     queryFn: async () => {
       const orParts: string[] = [`and(related_type.eq.financing,related_id.eq.${id})`];
-      if (dossier?.client_id) orParts.push(`and(related_type.eq.client,related_id.eq.${dossier.client_id})`);
+      if (relatedClientIds.length > 0) orParts.push(`and(related_type.eq.client,related_id.in.(${relatedClientIds.join(",")}))`);
       if (dossier?.property_id) orParts.push(`and(related_type.eq.property,related_id.eq.${dossier.property_id})`);
       const [d, g] = await Promise.all([
         supabase.from("documents").select("id", { count: "exact", head: true }).or(orParts.join(",")),
@@ -349,6 +365,7 @@ function FinancingDetailPage() {
           <FinancingDocumentsTab
             dossierId={dossier.id}
             clientId={dossier.client_id}
+            clientIds={relatedClientIds}
             propertyId={dossier.property_id}
           />
         </TabsContent>
