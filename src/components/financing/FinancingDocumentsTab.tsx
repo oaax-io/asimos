@@ -9,7 +9,53 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { FileText, ExternalLink, FileBadge, Files, User, Building2, Banknote, Sparkles, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Props = { dossierId: string; clientId?: string | null; propertyId?: string | null };
+type Props = {
+  dossierId: string;
+  clientId?: string | null;
+  clientIds?: string[];
+  propertyId?: string | null;
+};
+
+const DOC_TYPE_LABELS: Record<string, string> = {
+  other: "Sonstiges",
+  client: "Kunde",
+  client_document: "Kundendokument",
+  property: "Objekt",
+  property_document: "Objektdokument",
+  financing: "Finanzierung",
+  financing_document: "Finanzierungsdokument",
+  contract: "Vertrag",
+  identity: "Ausweis",
+  id_document: "Ausweis",
+  salary: "Lohnausweis",
+  salary_statement: "Lohnausweis",
+  payslip: "Lohnabrechnung",
+  tax: "Steuererklärung",
+  tax_return: "Steuererklärung",
+  bank_statement: "Kontoauszug",
+  pension: "Pensionskasse",
+  land_register: "Grundbuchauszug",
+  insurance: "Versicherung",
+  floor_plan: "Grundriss",
+  photo: "Foto",
+  image: "Bild",
+  expose: "Exposé",
+  invoice: "Rechnung",
+  offer: "Offerte",
+  nda: "NDA",
+  mandate: "Mandat",
+  reservation: "Reservation",
+  self_disclosure: "Selbstauskunft",
+  generated: "Generiert",
+  report: "Bericht",
+  lead: "Lead",
+  appointment: "Termin",
+};
+
+function docLabel(value?: string | null) {
+  if (!value) return "";
+  return DOC_TYPE_LABELS[value] ?? value.replace(/_/g, " ");
+}
 
 type PreviewDoc = {
   name: string;
@@ -18,34 +64,45 @@ type PreviewDoc = {
   mime?: string | null;
 };
 
-export function FinancingDocumentsTab({ dossierId, clientId, propertyId }: Props) {
+export function FinancingDocumentsTab({ dossierId, clientId, clientIds, propertyId }: Props) {
+  const allClientIds = useMemo(
+    () => Array.from(new Set([...(clientIds ?? []), clientId].filter(Boolean))) as string[],
+    [clientIds, clientId],
+  );
+  const clientKey = allClientIds.join(",");
+
+  const buildOr = () => {
+    const orParts: string[] = [`and(related_type.eq.financing,related_id.eq.${dossierId})`];
+    if (allClientIds.length > 0) {
+      orParts.push(`and(related_type.eq.client,related_id.in.(${allClientIds.join(",")}))`);
+    }
+    if (propertyId) orParts.push(`and(related_type.eq.property,related_id.eq.${propertyId})`);
+    return orParts.join(",");
+  };
+
   const docsQuery = useQuery({
-    queryKey: ["financing_documents", dossierId, clientId, propertyId],
+    queryKey: ["financing_documents", dossierId, clientKey, propertyId],
     queryFn: async () => {
-      const orParts: string[] = [`and(related_type.eq.financing,related_id.eq.${dossierId})`];
-      if (clientId) orParts.push(`and(related_type.eq.client,related_id.eq.${clientId})`);
-      if (propertyId) orParts.push(`and(related_type.eq.property,related_id.eq.${propertyId})`);
       const { data, error } = await supabase
         .from("documents")
         .select("*")
-        .or(orParts.join(","))
-        .order("created_at", { ascending: false });
+        .or(buildOr())
+        .order("created_at", { ascending: false })
+        .limit(1000);
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const generatedQuery = useQuery({
-    queryKey: ["financing_generated", dossierId, clientId, propertyId],
+    queryKey: ["financing_generated", dossierId, clientKey, propertyId],
     queryFn: async () => {
-      const orParts: string[] = [`and(related_type.eq.financing,related_id.eq.${dossierId})`];
-      if (clientId) orParts.push(`and(related_type.eq.client,related_id.eq.${clientId})`);
-      if (propertyId) orParts.push(`and(related_type.eq.property,related_id.eq.${propertyId})`);
       const { data, error } = await supabase
         .from("generated_documents")
         .select("*")
-        .or(orParts.join(","))
-        .order("created_at", { ascending: false });
+        .or(buildOr())
+        .order("created_at", { ascending: false })
+        .limit(1000);
       if (error) throw error;
       return data ?? [];
     },
@@ -141,7 +198,7 @@ function DocList({ items, onPreview }: { items: any[]; onPreview: (d: PreviewDoc
     <div className="space-y-2">
       {items.map((d) => {
         const name = d.file_name || d.title || "Dokument";
-        const type = d._generated ? "generiert" : (d.document_type || d.related_type || "");
+        const type = d._generated ? "Generiert" : docLabel(d.document_type || d.related_type);
         const html = d._generated ? (d.html_content ?? null) : null;
         const handleOpen = async () => {
           let url: string | null = null;
@@ -170,7 +227,7 @@ function DocList({ items, onPreview }: { items: any[]; onPreview: (d: PreviewDoc
                 <p className="text-sm font-medium truncate">{name}</p>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   {type && <Badge variant="secondary" className="text-[10px]">{type}</Badge>}
-                  {d.related_type && <span>{d.related_type}</span>}
+                  {d.related_type && <span>{docLabel(d.related_type)}</span>}
                 </div>
               </div>
               <Button
