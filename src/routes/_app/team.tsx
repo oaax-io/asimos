@@ -290,21 +290,13 @@ function EditMemberDialog({
   const [resetLink, setResetLink] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(member.avatar_url ?? null);
   const [uploading, setUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
-  const uploadAvatar = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Bitte eine Bilddatei auswählen");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Maximale Dateigrösse: 5 MB");
-      return;
-    }
+  const uploadAvatar = async (blob: Blob, ext: string) => {
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `avatars/${member.id}-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("brand-assets").upload(path, file, { upsert: true, contentType: file.type });
+      const { error: upErr } = await supabase.storage.from("brand-assets").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from("brand-assets").getPublicUrl(path);
       const { error: dbErr } = await supabase.from("profiles").update({ avatar_url: pub.publicUrl }).eq("id", member.id);
@@ -316,7 +308,20 @@ function EditMemberDialog({
       toast.error(e instanceof Error ? e.message : "Upload fehlgeschlagen");
     } finally {
       setUploading(false);
+      setPendingFile(null);
     }
+  };
+
+  const onFileSelected = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Bitte eine Bilddatei auswählen");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Maximale Dateigrösse: 5 MB");
+      return;
+    }
+    setPendingFile(file);
   };
 
   const removeAvatar = async () => {
