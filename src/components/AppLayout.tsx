@@ -27,7 +27,14 @@ import { NotificationCenter } from "@/components/NotificationCenter";
 import { TeamInbox } from "@/components/TeamInbox";
 import { ChatDockProvider } from "@/components/chat/ChatDock";
 import { LanguageBootstrap } from "@/components/LanguageBootstrap";
+import { PresenceSubMenu, useMyPresence } from "@/components/presence/PresenceSubMenu";
+import { PresenceDot } from "@/components/presence/PresenceDot";
 import { useTranslation } from "react-i18next";
+
+function MyPresenceDot() {
+  const { data: status } = useMyPresence();
+  return <PresenceDot status={status} className="absolute -bottom-0.5 -right-0.5" />;
+}
 // touch
 
 const NAV_GROUPS = [
@@ -196,11 +203,14 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 px-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
+                    <span className="relative">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <MyPresenceDot />
+                    </span>
                     <span className="hidden text-sm font-medium md:block">
                       {user.user_metadata?.full_name || user.email}
                     </span>
@@ -214,6 +224,8 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                       {user.email}
                     </div>
                   )}
+                  <DropdownMenuSeparator />
+                  <PresenceSubMenu />
                   {isSuperadmin && (
                     <>
                       <DropdownMenuSeparator />

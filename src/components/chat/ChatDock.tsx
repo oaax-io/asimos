@@ -35,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { PresenceDot, PresenceLabel } from "@/components/presence/PresenceDot";
 
 export type ChatAttachment = {
   path: string;
@@ -57,7 +58,7 @@ type Msg = {
   attachments: ChatAttachment[] | null;
   mentions: ChatMention[] | null;
 };
-type Member = { id: string; full_name: string | null; email: string | null; avatar_url: string | null };
+type Member = { id: string; full_name: string | null; email: string | null; avatar_url: string | null; presence_status?: string | null };
 
 type DockCtx = { openChat: (memberId: string) => void };
 const Ctx = createContext<DockCtx>({ openChat: () => {} });
@@ -167,7 +168,7 @@ function ChatWindow({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email, avatar_url")
+        .select("id, full_name, email, avatar_url, presence_status")
         .eq("id", memberId)
         .maybeSingle();
       if (error) throw error;
@@ -347,11 +348,17 @@ function ChatWindow({
         className="flex shrink-0 items-center gap-2 border-b bg-muted/60 px-3 py-2"
         onDoubleClick={() => setMode(mode === "minimized" ? "normal" : "minimized")}
       >
-        <Avatar className="h-7 w-7">
-          <AvatarImage src={member?.avatar_url ?? undefined} />
-          <AvatarFallback className="text-[10px]">{initials(member?.full_name, member?.email)}</AvatarFallback>
-        </Avatar>
-        <span className="min-w-0 flex-1 truncate text-sm font-semibold">{title}</span>
+        <span className="relative">
+          <Avatar className="h-7 w-7">
+            <AvatarImage src={member?.avatar_url ?? undefined} />
+            <AvatarFallback className="text-[10px]">{initials(member?.full_name, member?.email)}</AvatarFallback>
+          </Avatar>
+          <PresenceDot status={member?.presence_status} className="absolute -bottom-0.5 -right-0.5" />
+        </span>
+        <span className="min-w-0 flex flex-1 flex-col overflow-hidden">
+          <span className="truncate text-sm font-semibold leading-tight">{title}</span>
+          <PresenceLabel status={member?.presence_status} className="text-[10px]" />
+        </span>
         <Button
           variant="ghost"
           size="icon"
