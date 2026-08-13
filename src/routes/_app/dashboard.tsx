@@ -510,36 +510,6 @@ function Dashboard() {
       {/* Tagesübersicht – kompakt unten */}
       <div className="mt-4 grid gap-3 lg:grid-cols-3">
         <CompactList
-          title={t("dashboard.lists.todayAppts")}
-          icon={CalendarDays}
-          count={kpis.data?.todayAppts ?? undefined}
-          loading={today.isLoading}
-          empty={t("dashboard.lists.noAppts")}
-          to="/appointments"
-          items={(today.data?.appts ?? []).slice(0, 4)}
-          render={(a: any) => (
-            <Link key={a.id} to="/appointments" className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-xs hover:bg-accent/40">
-              <span className="truncate">{a.title}</span>
-              <span className="shrink-0 text-[10px] text-muted-foreground">{formatDateTime(a.starts_at).split(",").pop()?.trim()}</span>
-            </Link>
-          )}
-        />
-        <CompactList
-          title={t("dashboard.lists.overdueTasks")}
-          icon={Clock}
-          count={kpis.data?.openTasks ?? undefined}
-          loading={today.isLoading}
-          empty={t("dashboard.lists.noOverdue")}
-          to="/tasks"
-          items={(today.data?.overdue ?? []).slice(0, 4)}
-          render={(t2: any) => (
-            <Link key={t2.id} to="/tasks" className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-xs hover:bg-accent/40">
-              <span className="truncate">{t2.title}</span>
-              {t2.due_date && <span className="shrink-0 text-[10px] text-destructive">{formatDate(t2.due_date)}</span>}
-            </Link>
-          )}
-        />
-        <CompactList
           title={t("dashboard.lists.newLeads")}
           icon={UserPlus}
           count={kpis.data?.newLeads ?? undefined}
