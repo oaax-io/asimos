@@ -1,17 +1,22 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, Check, CheckCheck, Calendar, CheckSquare, UserPlus, Info, Target } from "lucide-react";
+import { Bell, Check, CheckCheck, Calendar, CheckSquare, UserPlus, Info, Target, Settings2, Volume2, VolumeX } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { NotificationPreferencesForm } from "@/components/settings/NotificationPreferencesForm";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+const SOUND_KEY = "notif-sound-enabled";
+
 
 type Notification = {
   id: string;
@@ -68,16 +73,36 @@ export function NotificationCenter() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundRef = useRef(true);
   const [shake, setShake] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
 
+  useEffect(() => {
+    const stored = localStorage.getItem(SOUND_KEY);
+    const val = stored === null ? true : stored === "true";
+    setSoundEnabled(val);
+    soundRef.current = val;
+  }, []);
+
+  const toggleSound = () => {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    soundRef.current = next;
+    localStorage.setItem(SOUND_KEY, String(next));
+    if (next) playDing();
+  };
+
   const playDing = () => {
     try {
+      if (!soundRef.current) return;
       const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!Ctx) return;
       if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
+
       const ctx = audioCtxRef.current;
       if (ctx.state === "suspended") void ctx.resume();
       const now = ctx.currentTime;
@@ -176,6 +201,7 @@ export function NotificationCenter() {
   };
 
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative h-9 w-9">
@@ -193,12 +219,33 @@ export function NotificationCenter() {
             <h3 className="text-sm font-semibold">Benachrichtigungen</h3>
             {unreadCount > 0 && <Badge variant="secondary" className="h-5 text-[10px]">{unreadCount} neu</Badge>}
           </div>
-          {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => markAllRead.mutate()}>
-              <CheckCheck className="h-3.5 w-3.5" /> Alle gelesen
+          <div className="flex items-center gap-0.5">
+            {unreadCount > 0 && (
+              <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => markAllRead.mutate()}>
+                <CheckCheck className="h-3.5 w-3.5" /> Alle gelesen
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              title={soundEnabled ? "Ton ausschalten" : "Ton einschalten"}
+              onClick={toggleSound}
+            >
+              {soundEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5 text-muted-foreground" />}
             </Button>
-          )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              title="Benachrichtigungseinstellungen"
+              onClick={() => { setOpen(false); setSettingsOpen(true); }}
+            >
+              <Settings2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
+
         <ScrollArea className="h-[400px]">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-sm text-muted-foreground">
@@ -261,5 +308,16 @@ export function NotificationCenter() {
         </div>
       </PopoverContent>
     </Popover>
+
+    <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+      <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Benachrichtigungseinstellungen</DialogTitle>
+        </DialogHeader>
+        <NotificationPreferencesForm />
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
+
