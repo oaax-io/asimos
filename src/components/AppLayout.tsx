@@ -54,15 +54,6 @@ const NAV_GROUPS = [
       { to: "/exposes", labelKey: "nav.exposes", icon: FileBadge },
     ],
   },
-  {
-    labelKey: "nav.groups.system",
-    items: [
-      { to: "/team", labelKey: "nav.team", icon: Users2 },
-      { to: "/feedback", labelKey: "nav.feedback", icon: MessageSquarePlus },
-      { to: "/docs", labelKey: "nav.docs", icon: BookOpen },
-      { to: "/settings", labelKey: "nav.settings", icon: Settings },
-    ],
-  },
 ] as const;
 
 
