@@ -239,30 +239,18 @@ function ClientsPage() {
       }
       return true;
     });
-    // Sort: group by leader (neueste zuerst), leader first, then partners directly below
+    // Sortierung: angepinnte zuoberst, danach neueste zuerst
     return list.sort((a: any, b: any) => {
-      const ra = groupInfo.find(a.id);
-      const rb = groupInfo.find(b.id);
-      const la = groupInfo.groupLeader.get(ra);
-      const lb = groupInfo.groupLeader.get(rb);
-      // Angepinnte Gruppen immer zuoberst
-      const pa = pinsMap.has(a.id) || (la ? pinsMap.has(la.id) : false) ? 0 : 1;
-      const pb = pinsMap.has(b.id) || (lb ? pinsMap.has(lb.id) : false) ? 0 : 1;
+      const pa = pinsMap.has(a.id) ? 0 : 1;
+      const pb = pinsMap.has(b.id) ? 0 : 1;
       if (pa !== pb) return pa - pb;
-      // Sort groups by leader created_at descending (neueste zuerst)
-      const ka = la ? `${la.created}|${la.name}|${la.id}` : `${a.created_at ?? ""}|${(a.full_name ?? "").toLowerCase()}|${a.id}`;
-      const kb = lb ? `${lb.created}|${lb.name}|${lb.id}` : `${b.created_at ?? ""}|${(b.full_name ?? "").toLowerCase()}|${b.id}`;
-      if (ka !== kb) return ka > kb ? -1 : 1;
-      // Same group: leader first, others by created_at descending then name
-      const aIsLeader = la?.id === a.id ? 0 : 1;
-      const bIsLeader = lb?.id === b.id ? 0 : 1;
-      if (aIsLeader !== bIsLeader) return aIsLeader - bIsLeader;
       const ca = a.created_at ?? "";
       const cb = b.created_at ?? "";
       if (ca !== cb) return ca > cb ? -1 : 1;
       return (a.full_name ?? "").localeCompare(b.full_name ?? "");
     });
-  }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, groupInfo, assigneesByClient, pinsMap]);
+  }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, assigneesByClient, pinsMap]);
+
 
   // Pagination
   const [pageSize, setPageSize] = useState<number>(20);
