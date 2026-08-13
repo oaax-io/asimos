@@ -262,7 +262,7 @@ function ClientsPage() {
       if (ca !== cb) return ca > cb ? -1 : 1;
       return (a.full_name ?? "").localeCompare(b.full_name ?? "");
     });
-  }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, groupInfo, assigneesByClient]);
+  }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, groupInfo, assigneesByClient, pinsMap]);
 
   // Pagination
   const [pageSize, setPageSize] = useState<number>(20);
