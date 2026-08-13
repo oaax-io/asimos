@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
@@ -57,7 +57,7 @@ function TeamPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email, phone, role, created_at")
+        .select("id, full_name, email, phone, role, avatar_url, created_at")
         .order("created_at", { ascending: true });
       if (error) throw error;
       const { data: roles } = await supabase.from("user_roles").select("user_id, role");
@@ -194,7 +194,10 @@ function TeamPage() {
             <Card key={m.id} className="transition hover:shadow-glow">
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials(m.full_name, m.email)}</AvatarFallback></Avatar>
+                  <Avatar className="h-10 w-10">
+                    {m.avatar_url ? <AvatarImage src={m.avatar_url} alt={m.full_name || m.email || "Profilbild"} /> : null}
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials(m.full_name, m.email)}</AvatarFallback>
+                  </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{m.full_name || m.email}</p>
                     <Badge variant="secondary" className={`mt-1 ${m.isSystemowner ? "bg-purple-500/15 text-purple-700 border-purple-500/20" : ""}`}>
@@ -285,6 +288,44 @@ function EditMemberDialog({
   const [pw, setPw] = useState("");
   const [generatedPw, setGeneratedPw] = useState<string | null>(null);
   const [resetLink, setResetLink] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(member.avatar_url ?? null);
+  const [uploading, setUploading] = useState(false);
+
+  const uploadAvatar = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Bitte eine Bilddatei auswählen");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Maximale Dateigrösse: 5 MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `avatars/${member.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("brand-assets").upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("brand-assets").getPublicUrl(path);
+      const { error: dbErr } = await supabase.from("profiles").update({ avatar_url: pub.publicUrl }).eq("id", member.id);
+      if (dbErr) throw dbErr;
+      setAvatarUrl(pub.publicUrl);
+      toast.success("Profilbild aktualisiert");
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload fehlgeschlagen");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeAvatar = async () => {
+    const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", member.id);
+    if (error) { toast.error(error.message); return; }
+    setAvatarUrl(null);
+    toast.success("Profilbild entfernt");
+    onSaved();
+  };
 
   const allowedRoles: (typeof ROLES)[number][] = isSuperadmin
     ? [...ROLES]
@@ -358,6 +399,34 @@ function EditMemberDialog({
 
         {tab === "profile" ? (
           <div className="space-y-3">
+            <div className="flex items-center gap-4 rounded-lg border bg-muted/30 p-3">
+              <Avatar className="h-16 w-16">
+                {avatarUrl ? <AvatarImage src={avatarUrl} alt={form.full_name || "Profilbild"} /> : null}
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {String(form.full_name || form.email || "?").split(" ").map((s: string) => s[0]).slice(0, 2).join("").toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 space-y-2">
+                <Label className="text-sm">Profilbild</Label>
+                <div className="flex gap-2">
+                  <Button asChild variant="outline" size="sm" disabled={uploading}>
+                    <label className="cursor-pointer">
+                      {uploading ? "Lädt…" : "Bild hochladen"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); e.target.value = ""; }}
+                      />
+                    </label>
+                  </Button>
+                  {avatarUrl && (
+                    <Button variant="ghost" size="sm" onClick={removeAvatar}>Entfernen</Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">JPG oder PNG, max. 5 MB.</p>
+              </div>
+            </div>
             <div><Label>Name</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
