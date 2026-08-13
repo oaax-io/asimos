@@ -293,7 +293,6 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
               ))
             )}
           </div>
-          )}
         </CardContent>
       </Card>
 
