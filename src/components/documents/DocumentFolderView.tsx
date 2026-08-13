@@ -30,7 +30,14 @@ import { formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 import { useTranslation } from "react-i18next";
 
-const CATEGORY_KEYS = ["client","property","lead","mandate","reservation","financing","other"];
+const CATEGORY_KEYS = ["client","property","lead","mandate","reservation","nda","financing","other"];
+
+const normalizeType = (t: string | null | undefined) => {
+  const v = t ?? "other";
+  if (v === "financing_profile" || v === "financing_dossier") return "financing";
+  if (v === "nda_agreement") return "nda";
+  return v;
+};
 
 type AnyDoc = {
   id: string;
