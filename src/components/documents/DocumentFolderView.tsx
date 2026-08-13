@@ -114,7 +114,7 @@ export function DocumentFolderView() {
     const map: Record<string, Set<string>> = {};
     for (const d of all) {
       if (!d.related_type || !d.related_id) continue;
-      const typeKey = d.related_type === "financing_profile" ? "financing" : d.related_type;
+      const typeKey = normalizeType(d.related_type);
       (map[typeKey] ??= new Set()).add(d.related_id);
     }
     return map;
