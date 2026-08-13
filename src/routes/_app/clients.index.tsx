@@ -121,6 +121,10 @@ function ClientsPage() {
     return eff && employeeMap.get(eff) ? [eff] : [];
   };
 
+  const pinsMap = useClientPins();
+
+
+
   const disclosuresQuery = useQuery({
     queryKey: ["clients_disclosures_contact"],
     queryFn: async () => {
