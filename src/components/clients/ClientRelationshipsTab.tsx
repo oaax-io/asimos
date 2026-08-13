@@ -98,19 +98,6 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
     },
   });
 
-  const { data: self } = useQuery({
-    queryKey: ["client_family_head_self", clientId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("id, full_name, email, is_family_head")
-        .eq("id", clientId)
-        .maybeSingle();
-      if (error) throw error;
-      return data as { id: string; full_name: string; email: string | null; is_family_head: boolean } | null;
-    },
-  });
-
   const memberIds = [clientId, ...relationships.map((r) => r.related_client_id)];
 
   const setHead = useMutation({
