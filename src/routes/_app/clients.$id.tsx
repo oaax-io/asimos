@@ -195,6 +195,21 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
     enabled: canLoadProtectedData && visitedTabs.includes("documents"),
   });
 
+  const { data: familyCount = 0 } = useQuery({
+    queryKey: ["client_family_count", id],
+    queryFn: async () => {
+      const [rels, relsRev, children] = await Promise.all([
+        supabase.from("client_relationships").select("id", { count: "exact", head: true }).eq("client_id", id),
+        supabase.from("client_relationships").select("id", { count: "exact", head: true }).eq("related_client_id", id),
+        supabase.from("client_children").select("id", { count: "exact", head: true }).eq("client_id", id),
+      ]);
+      return (rels.count ?? 0) + (relsRev.count ?? 0) + (children.count ?? 0);
+    },
+    enabled: canLoadProtectedData,
+  });
+
+
+
   const { data: ownProperties = [] } = useQuery({
     queryKey: ["client_own_properties", id],
     queryFn: async () => {
