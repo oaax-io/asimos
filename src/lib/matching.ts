@@ -156,7 +156,7 @@ export function scoreMatch(client: Client, property: Property, capacity?: Financ
 }
 
 
-const AVAILABLE_STATUSES = new Set(["available", "active", "draft", "preparation"]);
+const AVAILABLE_STATUSES = new Set(["available", "draft", "preparation"]);
 
 /** Direction 1: client → properties. Filters out non-available properties and weak matches. */
 export function matchClientToProperties(

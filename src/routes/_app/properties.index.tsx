@@ -25,7 +25,7 @@ import { useTranslation } from "react-i18next";
 export const Route = createFileRoute("/_app/properties/")({ component: PropertiesPage });
 
 const PROP_TYPES = ["apartment","house","commercial","land","parking","mixed_use","other"] as const;
-const STATUSES = ["draft","preparation","active","available","reserved","sold","rented","archived"] as const;
+const STATUSES = ["draft","preparation","available","reserved","sold","rented","archived"] as const;
 
 function getMediaPublicUrl(path?: string | null) {
   if (!path) return "";

@@ -52,7 +52,7 @@ export type WizardMedia = {
   library_media_id?: string | null;
 };
 
-const STATUSES = ["draft","preparation","active","available","reserved","sold","rented","archived"] as const;
+const STATUSES = ["draft","preparation","available","reserved","sold","rented","archived"] as const;
 
 export type Unit = {
   unit_number: string;

@@ -32,7 +32,7 @@ import { PublicShareCard } from "@/components/properties/PublicShareCard";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
-const STATUSES = ["draft","preparation","active","available","reserved","sold","rented","archived"] as const;
+const STATUSES = ["draft","preparation","available","reserved","sold","rented","archived"] as const;
 
 function getMediaPublicUrl(path?: string | null) {
   if (!path) return "";
