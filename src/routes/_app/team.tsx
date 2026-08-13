@@ -399,6 +399,34 @@ function EditMemberDialog({
 
         {tab === "profile" ? (
           <div className="space-y-3">
+            <div className="flex items-center gap-4 rounded-lg border bg-muted/30 p-3">
+              <Avatar className="h-16 w-16">
+                {avatarUrl ? <AvatarImage src={avatarUrl} alt={form.full_name || "Profilbild"} /> : null}
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {(form.full_name || form.email || "?").split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 space-y-2">
+                <Label className="text-sm">Profilbild</Label>
+                <div className="flex gap-2">
+                  <Button asChild variant="outline" size="sm" disabled={uploading}>
+                    <label className="cursor-pointer">
+                      {uploading ? "Lädt…" : "Bild hochladen"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); e.target.value = ""; }}
+                      />
+                    </label>
+                  </Button>
+                  {avatarUrl && (
+                    <Button variant="ghost" size="sm" onClick={removeAvatar}>Entfernen</Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">JPG oder PNG, max. 5 MB.</p>
+              </div>
+            </div>
             <div><Label>Name</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
