@@ -476,15 +476,29 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               </div>
               <div className="mt-2 flex items-center gap-2">
                 <h1 className="font-display text-3xl font-bold">{client.full_name}</h1>
-                {(client as any).is_family_head && (
-                  <span
-                    title="Hauptmitglied der Familie"
-                    className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-300"
+                {(client as any).is_family_head ? (
+                  <button
+                    type="button"
+                    title="Als Hauptmitglied entfernen"
+                    onClick={() => toggleFamilyHead.mutate(false)}
+                    disabled={toggleFamilyHead.isPending}
+                    className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-300 transition hover:bg-amber-200"
                   >
                     <Crown className="h-3.5 w-3.5" />Hauptmitglied
-                  </span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    title="Als Hauptmitglied festlegen"
+                    onClick={() => toggleFamilyHead.mutate(true)}
+                    disabled={toggleFamilyHead.isPending}
+                    className="inline-flex items-center gap-1 rounded-full border border-dashed px-2 py-0.5 text-xs font-medium text-muted-foreground transition hover:bg-amber-100 hover:text-amber-700"
+                  >
+                    <Crown className="h-3.5 w-3.5" />Als Hauptmitglied
+                  </button>
                 )}
               </div>
+
               <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 {client.email && (
                   <a href={`mailto:${client.email}`} className="flex items-center gap-1.5 hover:text-primary">
