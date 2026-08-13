@@ -444,25 +444,19 @@ function ClientsPage() {
 
       </div>
 
-      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         {statTiles.map((tile) => (
           <button
             key={tile.key}
             type="button"
             onClick={tile.onClick}
-            className={`group relative overflow-hidden rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${tile.active ? "border-primary/60 ring-2 ring-primary/30" : "border-border/60"} bg-card`}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition hover:shadow-sm ${tile.active ? "border-primary/60 bg-primary/10 text-primary" : "border-border/70 bg-card text-muted-foreground hover:text-foreground hover:border-foreground/30"}`}
           >
-            <span className={`pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-20 blur-xl transition group-hover:opacity-35 ${tile.glow}`} />
-            <div className="flex items-center gap-2">
-              <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${tile.iconClass}`}>
-                <tile.icon className="h-4 w-4" />
-              </span>
-              <span className="text-xs font-medium text-muted-foreground">{tile.label}</span>
-            </div>
-            <div className="mt-3 flex items-end justify-between">
-              <span className="text-2xl font-semibold tabular-nums">{tile.value}</span>
-              {tile.hint ? <span className="text-[11px] text-muted-foreground">{tile.hint}</span> : null}
-            </div>
+            <span className={`flex h-5 w-5 items-center justify-center rounded-full ${tile.iconClass}`}>
+              <tile.icon className="h-3 w-3" />
+            </span>
+            <span>{tile.label}</span>
+            <span className="rounded-full bg-foreground/10 px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-foreground">{tile.value}</span>
           </button>
         ))}
       </div>
