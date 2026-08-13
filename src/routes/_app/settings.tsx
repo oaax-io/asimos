@@ -66,12 +66,8 @@ function SettingsPage() {
           <TabsTrigger value="banks">{t("settings.tabs.banks")}</TabsTrigger>
           <TabsTrigger value="categories">{t("settings.tabs.categories")}</TabsTrigger>
           <TabsTrigger value="esign">{t("settings.tabs.esign")}</TabsTrigger>
-          <TabsTrigger value="subscription">{t("settings.tabs.subscription")}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="subscription">
-          <SubscriptionManager />
-        </TabsContent>
 
         <TabsContent value="notifications">
           <NotificationPreferencesForm />
