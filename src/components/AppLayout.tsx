@@ -62,14 +62,14 @@ function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="h-16 border-b border-sidebar-border p-0">
-        <Link to="/dashboard" className="flex h-16 items-center justify-center px-2 isolate">
+        <Link to="/dashboard" className="flex h-16 items-center justify-start pl-4 isolate">
           {collapsed ? (
             <Building2 className="h-7 w-7 text-[#C4915C]" />
           ) : (
             <img
               src={logoAsimoAsset.url}
               alt="ASIMO"
-              className="h-8 w-auto"
+              className="h-6 w-auto"
             />
           )}
         </Link>
