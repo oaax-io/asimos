@@ -9,7 +9,7 @@ import { propertyStatusLabels, propertyTypeLabels } from "@/lib/format";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 const PROP_TYPES = ["apartment","house","commercial","land","parking","mixed_use","other"] as const;
-const STATUSES = ["draft","preparation","active","available","reserved","sold","rented","archived"] as const;
+const STATUSES = ["draft","preparation","available","reserved","sold","rented","archived"] as const;
 
 export type PropertyFormValues = {
   title: string;

@@ -1,0 +1,1 @@
+UPDATE public.properties SET status = 'available' WHERE status = 'active';

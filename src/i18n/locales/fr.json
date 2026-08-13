@@ -565,7 +565,6 @@
     "status": {
       "draft": "Brouillon",
       "preparation": "Préparation",
-      "active": "Actif",
       "available": "Disponible",
       "reserved": "Réservé",
       "sold": "Vendu",

@@ -8,7 +8,6 @@ type PropertyType = "apartment" | "house" | "commercial" | "land" | "parking" | 
 type PropertyStatus =
   | "draft"
   | "preparation"
-  | "active"
   | "available"
   | "reserved"
   | "sold"
@@ -93,7 +92,7 @@ function mapListingType(v: string | null): ListingType {
 function mapStatus(v: string | null): PropertyStatus {
   if (!v) return "draft";
   const s = v.trim().toLowerCase();
-  if (s.includes("aktiv") || s === "active") return "active";
+  if (s.includes("aktiv") || s === "active" || s.includes("verfügbar") || s === "available") return "available";
   if (s.includes("bearbeit") || s.includes("preparation") || s.includes("entwurf") || s === "draft") return "preparation";
   if (s.includes("reserv")) return "reserved";
   if (s.includes("verkauft") || s === "sold") return "sold";
