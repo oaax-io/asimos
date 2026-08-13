@@ -31,6 +31,7 @@ import {
   ExternalLink,
   Heart,
   Users,
+  Crown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
