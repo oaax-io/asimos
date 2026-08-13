@@ -145,6 +145,10 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
 
+  useAutoPresence();
+
+
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
