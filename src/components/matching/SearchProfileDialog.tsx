@@ -102,6 +102,8 @@ export function SearchProfileDialog({
         area_max: profile.area_max != null ? String(profile.area_max) : "",
         notes: profile.notes ?? "",
         is_active: profile.is_active,
+        duration: "0",
+
       });
     } else {
       setForm({ ...EMPTY, client_id: defaultClientId ?? "" });
