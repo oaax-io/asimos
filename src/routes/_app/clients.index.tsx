@@ -245,6 +245,10 @@ function ClientsPage() {
       const rb = groupInfo.find(b.id);
       const la = groupInfo.groupLeader.get(ra);
       const lb = groupInfo.groupLeader.get(rb);
+      // Angepinnte Gruppen immer zuoberst
+      const pa = pinsMap.has(a.id) || (la ? pinsMap.has(la.id) : false) ? 0 : 1;
+      const pb = pinsMap.has(b.id) || (lb ? pinsMap.has(lb.id) : false) ? 0 : 1;
+      if (pa !== pb) return pa - pb;
       // Sort groups by leader created_at descending (neueste zuerst)
       const ka = la ? `${la.created}|${la.name}|${la.id}` : `${a.created_at ?? ""}|${(a.full_name ?? "").toLowerCase()}|${a.id}`;
       const kb = lb ? `${lb.created}|${lb.name}|${lb.id}` : `${b.created_at ?? ""}|${(b.full_name ?? "").toLowerCase()}|${b.id}`;
