@@ -699,7 +699,13 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               <Heart className="h-4 w-4 text-muted-foreground" />
               <h3 className="font-display text-lg font-semibold">Familie & Verknüpfungen</h3>
             </div>
-            <ClientRelationshipsTab clientId={id} />
+            <ClientRelationshipsTab
+              clientId={id}
+              onOpenClient={(cid) => {
+                if (inDialog && onNavigate) onNavigate(cid);
+                else setFamilyClientId(cid);
+              }}
+            />
           </CardContent></Card>
         </TabsContent>
 
