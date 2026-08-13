@@ -71,7 +71,7 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("client_relationships")
-        .select("id, client_id, related_client_id, relationship_type, notes, created_at, related:clients!client_relationships_related_client_id_fkey(id, full_name, email), owner:clients!client_relationships_client_id_fkey(id, full_name, email)")
+        .select("id, client_id, related_client_id, relationship_type, notes, created_at, related:clients!client_relationships_related_client_id_fkey(id, full_name, email, is_family_head), owner:clients!client_relationships_client_id_fkey(id, full_name, email, is_family_head)")
         .or(`client_id.eq.${clientId},related_client_id.eq.${clientId}`)
         .order("created_at", { ascending: true });
       if (error) throw error;
