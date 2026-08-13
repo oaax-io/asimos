@@ -130,7 +130,7 @@ export function SearchProfileDialog({
         area_max: num(form.area_max),
         notes: form.notes.trim() || null,
         is_active: form.is_active,
-        is_active: form.is_active,
+
         expires_at:
           form.duration === "keep"
             ? (profile?.expires_at ?? null)
