@@ -148,6 +148,24 @@ function Dashboard() {
     },
   });
 
+  const focus = useQuery({
+    queryKey: ["dashboard", "focus"],
+    queryFn: async () => {
+      const nowIso = new Date().toISOString();
+      const [tasks, upcoming] = await Promise.all([
+        supabase.from("tasks").select("id, title, due_date, priority, status")
+          .neq("status", "done").neq("status", "cancelled")
+          .order("due_date", { ascending: true, nullsFirst: false }).limit(8),
+        supabase.from("appointments").select("id, title, starts_at, location, appointment_type")
+          .gte("starts_at", nowIso).order("starts_at").limit(8),
+      ]);
+      return {
+        tasks: unwrap(tasks).data ?? [],
+        upcoming: unwrap(upcoming).data ?? [],
+      };
+    },
+  });
+
   const pipeline = useQuery({
     queryKey: ["dashboard", "pipeline"],
     queryFn: async () => {
