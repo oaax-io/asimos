@@ -1,17 +1,22 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, Check, CheckCheck, Calendar, CheckSquare, UserPlus, Info, Target } from "lucide-react";
+import { Bell, Check, CheckCheck, Calendar, CheckSquare, UserPlus, Info, Target, Settings2, Volume2, VolumeX } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { NotificationPreferencesForm } from "@/components/settings/NotificationPreferencesForm";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+const SOUND_KEY = "notif-sound-enabled";
+
 
 type Notification = {
   id: string;
