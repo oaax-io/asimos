@@ -421,7 +421,7 @@ function EditMemberDialog({
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); e.target.value = ""; }}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFileSelected(f); e.target.value = ""; }}
                       />
                     </label>
                   </Button>
