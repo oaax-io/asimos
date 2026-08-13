@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Sun, Moon, CloudRain, Snowflake, Volume2, VolumeX } from "lucide-react";
-import logo from "@/assets/logo-asimo.png";
+import logoAsset from "@/assets/logo-asimo-2027.png.asset.json";
 import bgNight from "@/assets/login-bg-night.jpg";
 import bgDay from "@/assets/login-bg-day.jpg";
 import bgRain from "@/assets/login-bg-rain.jpg";
@@ -217,7 +217,7 @@ function AuthPage() {
       {/* Login Karte */}
       <div className="relative z-10 w-full max-w-md rounded-3xl border border-primary/40 bg-primary/80 backdrop-blur-md p-8 text-primary-foreground shadow-2xl">
         <div className="mb-8 flex justify-center">
-          <img src={logo} alt="ASIMO" className="h-16 w-auto" />
+          <img src={logoAsset.url} alt="ASIMO" className="h-12 w-auto" />
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">

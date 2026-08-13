@@ -19,7 +19,7 @@ import {
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
   SidebarProvider, SidebarTrigger, SidebarInset, useSidebar,
 } from "@/components/ui/sidebar";
-import logoAsimo from "@/assets/logo-asimo-real-estate.png";
+import logoAsimoAsset from "@/assets/logo-asimo-2027.png.asset.json";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { TeamInbox } from "@/components/TeamInbox";
@@ -67,10 +67,9 @@ function AppSidebar() {
             <Building2 className="h-7 w-7 text-[#C4915C]" />
           ) : (
             <img
-              src={logoAsimo}
+              src={logoAsimoAsset.url}
               alt="ASIMO"
-              className="h-9 w-auto"
-              style={{ mixBlendMode: "lighten" }}
+              className="h-8 w-auto"
             />
           )}
         </Link>
