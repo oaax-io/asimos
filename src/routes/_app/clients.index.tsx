@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Mail, Phone, Target, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Link2, CornerDownRight } from "lucide-react";
+import { Plus, Search, Mail, Phone, Target, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Link2, CornerDownRight, Users, ShoppingBag, Home, Banknote, CheckCircle2, Ban } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
@@ -316,6 +316,53 @@ function ClientsPage() {
 
   const selectionCount = selected.size;
 
+  const baseList = useMemo(
+    () => clients.filter((c: any) => (archivedFilter === "active" ? !c.is_archived : archivedFilter === "archived" ? c.is_archived : true)),
+    [clients, archivedFilter],
+  );
+
+  const statTiles = useMemo(() => {
+    const countType = (v: string) => baseList.filter((c: any) => c.client_type === v).length;
+    const countStatus = (v: string) => baseList.filter((c: any) => c.status === v).length;
+    const toggleType = (v: string) => setTypeFilter((prev) => (prev === v ? ALL : v));
+    const toggleStatus = (v: string) => setStatusFilter((prev) => (prev === v ? ALL : v));
+    return [
+      {
+        key: "total", label: t("clients.stats.total", { defaultValue: "Kunden gesamt" }),
+        value: baseList.length, hint: t("clients.stats.shown", { defaultValue: "{{n}} sichtbar", n: filtered.length }),
+        icon: Users, iconClass: "bg-primary/15 text-primary", glow: "bg-primary",
+        active: typeFilter === ALL && statusFilter === ALL,
+        onClick: () => { setTypeFilter(ALL); setStatusFilter(ALL); },
+      },
+      {
+        key: "buyer", label: clientTypeLabels.buyer, value: countType("buyer"),
+        icon: ShoppingBag, iconClass: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300", glow: "bg-cyan-500",
+        active: typeFilter === "buyer", onClick: () => toggleType("buyer"),
+      },
+      {
+        key: "seller", label: clientTypeLabels.seller, value: countType("seller"),
+        icon: Home, iconClass: "bg-teal-500/15 text-teal-600 dark:text-teal-300", glow: "bg-teal-500",
+        active: typeFilter === "seller", onClick: () => toggleType("seller"),
+      },
+      {
+        key: "finanzierung", label: statusLabel("finanzierung"), value: countStatus("finanzierung"),
+        icon: Banknote, iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300", glow: "bg-violet-500",
+        active: statusFilter === "finanzierung", onClick: () => toggleStatus("finanzierung"),
+      },
+      {
+        key: "abgeschlossen", label: statusLabel("abgeschlossen"), value: countStatus("abgeschlossen"),
+        icon: CheckCircle2, iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300", glow: "bg-emerald-500",
+        active: statusFilter === "abgeschlossen", onClick: () => toggleStatus("abgeschlossen"),
+      },
+      {
+        key: "storniert", label: statusLabel("storniert"), value: countStatus("storniert"),
+        icon: Ban, iconClass: "bg-zinc-500/15 text-zinc-600 dark:text-zinc-300", glow: "bg-zinc-500",
+        active: statusFilter === "storniert", onClick: () => toggleStatus("storniert"),
+      },
+    ];
+  }, [baseList, filtered.length, typeFilter, statusFilter, t]);
+
+
   return (
     <>
       <PageHeader
@@ -395,8 +442,32 @@ function ClientsPage() {
           </Button>
         )}
 
-        <span className="ml-auto text-sm text-muted-foreground">{t("clients.filters.ofTotal", { shown: filtered.length, total: clients.length })}</span>
       </div>
+
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {statTiles.map((tile) => (
+          <button
+            key={tile.key}
+            type="button"
+            onClick={tile.onClick}
+            className={`group relative overflow-hidden rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${tile.active ? "border-primary/60 ring-2 ring-primary/30" : "border-border/60"} bg-card`}
+          >
+            <span className={`pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-20 blur-xl transition group-hover:opacity-35 ${tile.glow}`} />
+            <div className="flex items-center gap-2">
+              <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${tile.iconClass}`}>
+                <tile.icon className="h-4 w-4" />
+              </span>
+              <span className="text-xs font-medium text-muted-foreground">{tile.label}</span>
+            </div>
+            <div className="mt-3 flex items-end justify-between">
+              <span className="text-2xl font-semibold tabular-nums">{tile.value}</span>
+              {tile.hint ? <span className="text-[11px] text-muted-foreground">{tile.hint}</span> : null}
+            </div>
+          </button>
+        ))}
+      </div>
+
+
 
       {selectionCount > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-accent/40 p-3">
