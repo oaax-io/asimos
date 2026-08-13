@@ -220,11 +220,6 @@ export function NotificationCenter() {
             {unreadCount > 0 && <Badge variant="secondary" className="h-5 text-[10px]">{unreadCount} neu</Badge>}
           </div>
           <div className="flex items-center gap-0.5">
-            {unreadCount > 0 && (
-              <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => markAllRead.mutate()}>
-                <CheckCheck className="h-3.5 w-3.5" /> Alle gelesen
-              </Button>
-            )}
             <Button
               variant="ghost"
               size="icon"
