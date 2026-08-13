@@ -743,20 +743,6 @@ function DonutCard({ title, icon: Icon, to, counts, rows, loading, emptyText, fo
   );
 }
 
-function QcChip({ label, value, icon: Icon, tone }: { label: string; value: number; icon: any; tone: "emerald" | "amber" | "rose" }) {
-  const toneCls = {
-    emerald: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-    amber: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
-    rose: "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400",
-  }[tone];
-  return (
-    <div className={`flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 ${toneCls}`}>
-      <Icon className="h-3.5 w-3.5" />
-      <span className="font-display text-lg font-bold leading-none tabular-nums">{value}</span>
-      <span className="text-[10px] opacity-80">{label}</span>
-    </div>
-  );
-}
 
 function CompactList({ title, icon: Icon, items, render, loading, empty, count, countHint, to }: {
   title: string; icon: any; items: any[]; render: (i: any) => React.ReactNode;
