@@ -196,13 +196,12 @@ export function DocumentFolderView() {
       ? all.filter((d) => d.name.toLowerCase().includes(search.toLowerCase()))
       : all;
     for (const d of filtered) {
-      const rawType = d.related_type ?? "other";
-      const type = rawType === "financing_profile" ? "financing" : rawType;
+      const type = normalizeType(d.related_type);
       const folderId = d.related_id ?? "unassigned";
       const names = (nameMap as Record<string, Record<string, string>>)[type] ?? {};
       const folderName = folderId === "unassigned"
         ? t("documents.empty.unassigned")
-        : names[folderId] ?? folderId.slice(0, 8);
+        : names[folderId] ?? `Nicht mehr vorhanden (${folderId.slice(0, 8)})`;
       (out[type] ??= {});
       (out[type][folderId] ??= { name: folderName, docs: [] }).docs.push(d);
     }
