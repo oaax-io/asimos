@@ -201,6 +201,7 @@ export function NotificationCenter() {
   };
 
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative h-9 w-9">
@@ -218,12 +219,33 @@ export function NotificationCenter() {
             <h3 className="text-sm font-semibold">Benachrichtigungen</h3>
             {unreadCount > 0 && <Badge variant="secondary" className="h-5 text-[10px]">{unreadCount} neu</Badge>}
           </div>
-          {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => markAllRead.mutate()}>
-              <CheckCheck className="h-3.5 w-3.5" /> Alle gelesen
+          <div className="flex items-center gap-0.5">
+            {unreadCount > 0 && (
+              <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => markAllRead.mutate()}>
+                <CheckCheck className="h-3.5 w-3.5" /> Alle gelesen
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              title={soundEnabled ? "Ton ausschalten" : "Ton einschalten"}
+              onClick={toggleSound}
+            >
+              {soundEnabled ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5 text-muted-foreground" />}
             </Button>
-          )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              title="Benachrichtigungseinstellungen"
+              onClick={() => { setOpen(false); setSettingsOpen(true); }}
+            >
+              <Settings2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
+
         <ScrollArea className="h-[400px]">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center text-sm text-muted-foreground">
