@@ -45,7 +45,7 @@ type Relationship = {
   related_client_id: string;
   relationship_type: RelationshipType;
   notes: string | null;
-  related?: { id: string; full_name: string; email: string | null } | null;
+  related?: { id: string; full_name: string; email: string | null; is_family_head?: boolean } | null;
 };
 
 type Child = {
@@ -58,11 +58,13 @@ type Child = {
 
 interface Props {
   clientId: string;
+  onOpenClient?: (id: string) => void;
 }
 
-export function ClientRelationshipsTab({ clientId }: Props) {
+export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
   const qc = useQueryClient();
   const confirm = useConfirm();
+
 
   const { data: relationships = [] } = useQuery({
     queryKey: ["client_relationships", clientId],
