@@ -41,6 +41,14 @@ function formatBytes(bytes: number | null | undefined) {
 
 const MAX_STORAGE = 20 * 1024 * 1024 * 1024; // 20 GB
 
+const DOC_CENTER_TILES = [
+  { to: "/checklists", labelKey: "nav.checklists", icon: ListChecks, desc: "Abläufe & Aufgabenlisten" },
+  { to: "/mandates", labelKey: "nav.mandates", icon: FileSignature, desc: "Vermarktungsaufträge" },
+  { to: "/reservations", labelKey: "nav.reservations", icon: FileCheck2, desc: "Reservationsverträge" },
+  { to: "/ndas", labelKey: "nav.ndas", icon: FileLock2, desc: "Vertraulichkeitserklärungen" },
+  { to: "/exposes", labelKey: "nav.exposes", icon: FileBadge, desc: "Objekt-Exposés" },
+] as const;
+
 function DocumentsPage() {
   const { t } = useTranslation();
   const typeLabel = (k: string) => t(`documents.types.${k}`);
