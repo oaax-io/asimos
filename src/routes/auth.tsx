@@ -252,7 +252,7 @@ function AuthPage() {
             <Checkbox
               checked={stayLoggedIn}
               onCheckedChange={(v) => setStayLoggedIn(Boolean(v))}
-              className="border-white/50 data-[state=checked]:bg-black data-[state=checked]:text-primary"
+              className="border-white/50 data-[state=checked]:bg-brand-deep data-[state=checked]:text-brand-deep-foreground"
             />
             Angemeldet bleiben
           </label>
@@ -261,7 +261,7 @@ function AuthPage() {
             type="submit"
             size="lg"
             disabled={loading}
-            className="w-full bg-black text-primary hover:bg-black/90 shadow-lg"
+            className="w-full bg-brand-deep text-brand-deep-foreground hover:bg-brand-deep/90 shadow-lg"
           >
             {loading ? "Bitte warten…" : "Login"}
           </Button>
