@@ -592,12 +592,8 @@ function ClientsPage() {
                   [disc?.postal_code, disc?.city].filter(Boolean).join(" "),
                 ].filter(Boolean).join(", ") || [c.address, [c.postal_code, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
                 const plzOrt = [disc?.postal_code ?? c.postal_code, disc?.city ?? c.city].filter(Boolean).join(" ");
-                const groupRoot = groupInfo.find(c.id);
-                const groupSize = groupInfo.groupSize.get(groupRoot) ?? 1;
-                const leader = groupInfo.groupLeader.get(groupRoot);
-                const isLinked = groupSize > 1;
-                const isLeader = leader?.id === c.id;
-                const isPartner = isLinked && !isLeader;
+                const isPartner = false;
+
                 return (
                   <TableRow
                     key={c.id}
