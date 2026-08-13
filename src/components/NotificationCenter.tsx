@@ -220,11 +220,6 @@ export function NotificationCenter() {
             {unreadCount > 0 && <Badge variant="secondary" className="h-5 text-[10px]">{unreadCount} neu</Badge>}
           </div>
           <div className="flex items-center gap-0.5">
-            {unreadCount > 0 && (
-              <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={() => markAllRead.mutate()}>
-                <CheckCheck className="h-3.5 w-3.5" /> Alle gelesen
-              </Button>
-            )}
             <Button
               variant="ghost"
               size="icon"
@@ -293,11 +288,21 @@ export function NotificationCenter() {
             </ul>
           )}
         </ScrollArea>
-        <div className="border-t p-2">
+        <div className="flex items-center gap-2 border-t p-2">
+          {unreadCount > 0 ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 justify-center gap-1.5 text-xs font-medium"
+              onClick={() => markAllRead.mutate()}
+            >
+              <CheckCheck className="h-3.5 w-3.5" /> Alle gelesen
+            </Button>
+          ) : null}
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-center gap-1.5 text-xs font-medium text-primary hover:text-primary"
+            className="flex-1 justify-center gap-1.5 text-xs font-medium text-primary hover:text-primary"
             onClick={() => {
               setOpen(false);
               navigate({ to: "/notifications" as never });
