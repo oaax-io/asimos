@@ -211,6 +211,32 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
     enabled: canLoadProtectedData,
   });
 
+  const toggleFamilyHead = useMutation({
+    mutationFn: async (makeHead: boolean) => {
+      if (makeHead) {
+        const { data: rels } = await supabase
+          .from("client_relationships")
+          .select("client_id, related_client_id")
+          .or(`client_id.eq.${id},related_client_id.eq.${id}`);
+        const others = Array.from(
+          new Set((rels ?? []).flatMap((r: any) => [r.client_id, r.related_client_id])),
+        ).filter((c) => c && c !== id) as string[];
+        if (others.length > 0) {
+          const { error } = await supabase.from("clients").update({ is_family_head: false }).in("id", others);
+          if (error) throw error;
+        }
+      }
+      const { error } = await supabase.from("clients").update({ is_family_head: makeHead }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, makeHead) => {
+      toast.success(makeHead ? "Als Hauptmitglied festgelegt" : "Hauptmitglied entfernt");
+      qc.invalidateQueries({ queryKey: ["client"] });
+      qc.invalidateQueries({ queryKey: ["clients"] });
+      qc.invalidateQueries({ queryKey: ["client_relationships"] });
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Fehlgeschlagen"),
+  });
 
 
   const { data: ownProperties = [] } = useQuery({
