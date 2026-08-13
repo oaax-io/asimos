@@ -79,12 +79,24 @@ function SettingsPage() {
               <div><Label>{t("settings.profile.email")}</Label><Input value={user?.email ?? ""} disabled /></div>
               <div><Label>{t("settings.profile.name")}</Label><Input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} /></div>
               <div><Label>{t("settings.profile.phone")}</Label><Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} /></div>
+              <div>
+                <Label>{t("common.language", "Sprache")}</Label>
+                <Select value={lang} onValueChange={(v) => setLang(v as SupportedLanguage)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SUPPORTED_LANGUAGES.map((lng) => (
+                      <SelectItem key={lng} value={lng}>{t(`languages.${lng}`)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex justify-end pt-2">
                 <Button onClick={() => save.mutate()} disabled={save.isPending}>{t("common.save")}</Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
+
 
         <TabsContent value="company">
           <div className="max-w-3xl"><CompanyProfileForm /></div>
