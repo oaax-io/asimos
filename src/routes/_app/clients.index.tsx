@@ -24,6 +24,7 @@ import { ClientWizard } from "@/components/clients/ClientWizard";
 import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { useTranslation } from "react-i18next";
+import { AssigneeAvatars, AssigneePicker, useClientAssignees } from "@/components/clients/ClientAssignees";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
@@ -93,14 +94,31 @@ function ClientsPage() {
   const employeesQuery = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("id, full_name, email").eq("is_active", true).order("full_name");
+      const { data } = await supabase.from("profiles").select("id, full_name, email, avatar_url").eq("is_active", true).order("full_name");
       return data ?? [];
     },
   });
 
   const clients = clientsQuery.data ?? [];
   const employees = employeesQuery.data ?? [];
-  const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
+  const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]) as Map<string, any>;
+
+  const assigneesQuery = useClientAssignees();
+  const assigneesByClient = useMemo(() => {
+    const m = new Map<string, string[]>();
+    (assigneesQuery.data ?? []).forEach((r: any) => {
+      const arr = m.get(r.client_id) ?? [];
+      arr.push(r.user_id);
+      m.set(r.client_id, arr);
+    });
+    return m;
+  }, [assigneesQuery.data]);
+  const assigneeIdsFor = (c: any): string[] => {
+    const list = assigneesByClient.get(c.id);
+    if (list && list.length) return list;
+    const eff = c.assigned_to ?? c.owner_id;
+    return eff && employeeMap.get(eff) ? [eff] : [];
+  };
 
   const disclosuresQuery = useQuery({
     queryKey: ["clients_disclosures_contact"],
@@ -199,9 +217,11 @@ function ClientsPage() {
       if (archivedFilter === "archived" && !c.is_archived) return false;
       if (typeFilter !== ALL && c.client_type !== typeFilter) return false;
       if (assignedFilter !== ALL) {
+        const list = assigneesByClient.get(c.id) ?? [];
         const eff = c.assigned_to ?? c.owner_id;
-        if (assignedFilter === UNASSIGNED && eff) return false;
-        if (assignedFilter !== UNASSIGNED && eff !== assignedFilter) return false;
+        const all = list.length ? list : (eff ? [eff] : []);
+        if (assignedFilter === UNASSIGNED && all.length) return false;
+        if (assignedFilter !== UNASSIGNED && !all.includes(assignedFilter)) return false;
       }
       if (financingFilter !== ALL) {
         if (financingFilter === NO_FIN && c.financing_status) return false;
@@ -233,7 +253,7 @@ function ClientsPage() {
       if (ca !== cb) return ca > cb ? -1 : 1;
       return (a.full_name ?? "").localeCompare(b.full_name ?? "");
     });
-  }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, groupInfo]);
+  }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, groupInfo, assigneesByClient]);
 
   // Pagination
   const [pageSize, setPageSize] = useState<number>(20);
@@ -271,10 +291,19 @@ function ClientsPage() {
       if (!ids.length) return;
       const { error } = await supabase.from("clients").update({ assigned_to: assignedTo }).in("id", ids);
       if (error) throw error;
+      if (assignedTo) {
+        await supabase.from("client_assignees").upsert(
+          ids.map((id) => ({ client_id: id, user_id: assignedTo })),
+          { onConflict: "client_id,user_id" },
+        );
+      } else {
+        await supabase.from("client_assignees").delete().in("client_id", ids);
+      }
     },
     onSuccess: () => {
       toast.success(t("clients.toast.assigned"));
       qc.invalidateQueries({ queryKey: ["clients"] });
+      qc.invalidateQueries({ queryKey: ["client_assignees"] });
       clearSelection();
     },
     onError: (e: unknown) => toast.error(getBackendErrorMessage(e)),
@@ -545,10 +574,8 @@ function ClientsPage() {
                           <Badge variant="outline" className={typeBadge(c.client_type)}>{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                           {c.is_archived && <Badge variant="outline">{t("clients.archived")}</Badge>}
 
-                          {(c.assigned_to ?? c.owner_id) && employeeMap.get(c.assigned_to ?? c.owner_id) && (
-                            <Badge variant="outline" className="text-xs">
-                              {(employeeMap.get(c.assigned_to ?? c.owner_id) as any).full_name ?? (employeeMap.get(c.assigned_to ?? c.owner_id) as any).email}
-                            </Badge>
+                          {assigneeIdsFor(c).length > 0 && (
+                            <AssigneeAvatars ids={assigneeIdsFor(c)} employeeMap={employeeMap} size="xs" />
                           )}
                         </div>
                       </button>
@@ -622,8 +649,6 @@ function ClientsPage() {
             </TableHeader>
             <TableBody>
               {paginated.map((c: any) => {
-                const assignedId = c.assigned_to ?? c.owner_id;
-                const emp = assignedId ? (employeeMap.get(assignedId) as any) : null;
                 const disc = disclosureMap.get(c.id);
                 const email = c.email || disc?.email;
                 const phone = c.phone || disc?.mobile || disc?.phone;
@@ -682,7 +707,14 @@ function ClientsPage() {
                     <TableCell className="text-sm">
                       {plzOrt || <span className="text-muted-foreground">—</span>}
                     </TableCell>
-                    <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
+                    <TableCell className="text-sm">
+                      <AssigneePicker
+                        clientId={c.id}
+                        assignedIds={assigneeIdsFor(c)}
+                        employees={employees as any}
+                        employeeMap={employeeMap}
+                      />
+                    </TableCell>
                     <TableCell className="text-sm">
                       {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 ? (
                         <div className="flex flex-wrap gap-1">
