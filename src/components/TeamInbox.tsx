@@ -154,9 +154,9 @@ export function TeamInbox() {
   });
 
   useEffect(() => {
-    if (open && activeId) markRead.mutate(activeId);
+    if ((open || expanded) && activeId) markRead.mutate(activeId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, activeId, messages.length]);
+  }, [open, expanded, activeId, messages.length]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
