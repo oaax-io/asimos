@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Inbox, Send, Search, ArrowLeft, Maximize2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Inbox, Search, Maximize2, Paperclip } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useChatDock } from "@/components/chat/ChatDock";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +22,7 @@ type Message = {
   body: string;
   read_at: string | null;
   created_at: string;
+  attachments?: { path: string; name: string; type: string; size: number }[] | null;
 };
 
 function initialsOf(m?: Member | null) {
@@ -43,12 +44,10 @@ function timeLabel(iso: string) {
 export function TeamInbox() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const { openChat } = useChatDock();
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [activeId, setActiveId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [draft, setDraft] = useState("");
-  const bottomRef = useRef<HTMLDivElement>(null);
 
   const { data: members = [] } = useQuery({
     queryKey: ["inbox-members"],
@@ -75,7 +74,7 @@ export function TeamInbox() {
         .order("created_at", { ascending: true })
         .limit(1000);
       if (error) throw error;
-      return (data ?? []) as Message[];
+      return (data ?? []) as unknown as Message[];
     },
   });
 
@@ -90,14 +89,14 @@ export function TeamInbox() {
         (payload) => {
           const row = payload.new as Message | undefined;
           qc.invalidateQueries({ queryKey: ["direct-messages", user.id] });
-          if (
-            payload.eventType === "INSERT" &&
-            row?.recipient_id === user.id &&
-            row.sender_id !== activeId
-          ) {
+          if (payload.eventType === "INSERT" && row?.recipient_id === user.id) {
             const from = members.find((m) => m.id === row.sender_id);
             toast.message(`Neue Nachricht von ${from?.full_name ?? "Kollege"}`, {
               description: row.body.slice(0, 80),
+              action: {
+                label: "Öffnen",
+                onClick: () => openChat(row.sender_id),
+              },
             });
           }
         },
@@ -106,7 +105,7 @@ export function TeamInbox() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, activeId, members, qc]);
+  }, [user?.id, members, qc, openChat]);
 
   const unreadTotal = useMemo(
     () => messages.filter((m) => m.recipient_id === user?.id && !m.read_at).length,
@@ -127,408 +126,158 @@ export function TeamInbox() {
       .sort((a, b) => (a.last.created_at < b.last.created_at ? 1 : -1));
   }, [messages, members, user?.id]);
 
-  const activeMember = members.find((m) => m.id === activeId) ?? null;
-  const thread = useMemo(
-    () =>
-      messages.filter(
-        (m) =>
-          (m.sender_id === activeId && m.recipient_id === user?.id) ||
-          (m.recipient_id === activeId && m.sender_id === user?.id),
-      ),
-    [messages, activeId, user?.id],
-  );
-
-  const markRead = useMutation({
-    mutationFn: async (otherId: string) => {
-      const ids = messages
-        .filter((m) => m.sender_id === otherId && m.recipient_id === user?.id && !m.read_at)
-        .map((m) => m.id);
-      if (!ids.length) return;
-      const { error } = await supabase
-        .from("direct_messages")
-        .update({ read_at: new Date().toISOString() })
-        .in("id", ids);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["direct-messages", user?.id] }),
-  });
-
-  useEffect(() => {
-    if ((open || expanded) && activeId) markRead.mutate(activeId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, expanded, activeId, messages.length]);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [thread.length, activeId]);
-
-  const send = useMutation({
-    mutationFn: async () => {
-      const body = draft.trim();
-      if (!body || !activeId) return;
-      const { error } = await supabase
-        .from("direct_messages")
-        .insert({ sender_id: user!.id, recipient_id: activeId, body });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      setDraft("");
-      qc.invalidateQueries({ queryKey: ["direct-messages", user?.id] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
   const filteredMembers = members.filter((m) =>
     (m.full_name || m.email || "").toLowerCase().includes(search.toLowerCase()),
   );
 
-  const openExpanded = () => {
+  const select = (id: string) => {
+    openChat(id);
     setOpen(false);
-    setExpanded(true);
+    setExpanded(false);
   };
+
+  const ThreadList = ({ dense }: { dense?: boolean }) => (
+    <div className="p-2">
+      {!search && threads.length > 0 && (
+        <div className="mb-2">
+          <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Unterhaltungen
+          </p>
+          {threads.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => select(t.id)}
+              className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition hover:bg-muted"
+            >
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={t.member?.avatar_url ?? undefined} />
+                <AvatarFallback className="text-xs">{initialsOf(t.member)}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-sm font-medium">
+                    {t.member?.full_name ?? t.member?.email ?? "Unbekannt"}
+                  </span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
+                    {timeLabel(t.last.created_at)}
+                  </span>
+                </div>
+                <p
+                  className={cn(
+                    "flex items-center gap-1 truncate text-xs",
+                    t.unread ? "font-semibold text-foreground" : "text-muted-foreground",
+                  )}
+                >
+                  {(t.last.attachments ?? []).length > 0 && <Paperclip className="h-3 w-3 shrink-0" />}
+                  {t.last.sender_id === user?.id ? "Du: " : ""}
+                  {t.last.body}
+                </p>
+              </div>
+              {t.unread > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                  {t.unread}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+      <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Mitarbeitende
+      </p>
+      {filteredMembers.length === 0 && (
+        <p className="px-2 py-4 text-center text-sm text-muted-foreground">Keine Mitarbeitenden gefunden</p>
+      )}
+      {filteredMembers.map((m) => (
+        <button
+          key={m.id}
+          onClick={() => select(m.id)}
+          className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition hover:bg-muted"
+        >
+          <Avatar className={dense ? "h-8 w-8" : "h-9 w-9"}>
+            <AvatarImage src={m.avatar_url ?? undefined} />
+            <AvatarFallback className="text-xs">{initialsOf(m)}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="truncate text-sm">{m.full_name ?? m.email}</p>
+            {m.full_name && m.email && (
+              <p className="truncate text-[11px] text-muted-foreground">{m.email}</p>
+            )}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+
+  const SearchBox = (
+    <div className="relative">
+      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Mitarbeitende suchen…"
+        className="pl-8"
+      />
+    </div>
+  );
 
   return (
     <>
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative" title="Postfach">
-          <Inbox className="h-5 w-5" />
-          {unreadTotal > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-              {unreadTotal > 9 ? "9+" : unreadTotal}
-            </span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-[380px] p-0">
-        {!activeId ? (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative" title="Postfach">
+            <Inbox className="h-5 w-5" />
+            {unreadTotal > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                {unreadTotal > 9 ? "9+" : unreadTotal}
+              </span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-[380px] p-0">
           <div className="flex h-[460px] flex-col">
             <div className="border-b p-3">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-semibold">Postfach</span>
                 <div className="flex items-center gap-1">
                   {unreadTotal > 0 && <Badge variant="secondary">{unreadTotal} neu</Badge>}
-                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Vergrössern" onClick={openExpanded}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    title="Vergrössern"
+                    onClick={() => {
+                      setOpen(false);
+                      setExpanded(true);
+                    }}
+                  >
                     <Maximize2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Mitarbeitende suchen…"
-                  className="pl-8"
-                />
-              </div>
+              {SearchBox}
             </div>
             <ScrollArea className="flex-1">
-              <div className="p-2">
-                {!search && threads.length > 0 && (
-                  <div className="mb-2">
-                    <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      Unterhaltungen
-                    </p>
-                    {threads.map((t) => (
-                      <button
-                        key={t.id}
-                        onClick={() => setActiveId(t.id)}
-                        className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition hover:bg-muted"
-                      >
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage src={t.member?.avatar_url ?? undefined} />
-                          <AvatarFallback className="text-xs">{initialsOf(t.member)}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="truncate text-sm font-medium">
-                              {t.member?.full_name ?? t.member?.email ?? "Unbekannt"}
-                            </span>
-                            <span className="shrink-0 text-[10px] text-muted-foreground">
-                              {timeLabel(t.last.created_at)}
-                            </span>
-                          </div>
-                          <p className={cn("truncate text-xs", t.unread ? "font-semibold text-foreground" : "text-muted-foreground")}>
-                            {t.last.sender_id === user?.id ? "Du: " : ""}
-                            {t.last.body}
-                          </p>
-                        </div>
-                        {t.unread > 0 && (
-                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                            {t.unread}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Mitarbeitende
-                </p>
-                {filteredMembers.length === 0 && (
-                  <p className="px-2 py-4 text-center text-sm text-muted-foreground">
-                    Keine Mitarbeitenden gefunden
-                  </p>
-                )}
-                {filteredMembers.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => setActiveId(m.id)}
-                    className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition hover:bg-muted"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={m.avatar_url ?? undefined} />
-                      <AvatarFallback className="text-xs">{initialsOf(m)}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm">{m.full_name ?? m.email}</p>
-                      {m.full_name && m.email && (
-                        <p className="truncate text-[11px] text-muted-foreground">{m.email}</p>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+              <ThreadList dense />
             </ScrollArea>
           </div>
-        ) : (
-          <div className="flex h-[460px] flex-col">
-            <div className="flex items-center gap-2 border-b p-3">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setActiveId(null)}>
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={activeMember?.avatar_url ?? undefined} />
-                <AvatarFallback className="text-xs">{initialsOf(activeMember)}</AvatarFallback>
-              </Avatar>
-              <span className="flex-1 truncate text-sm font-semibold">
-                {activeMember?.full_name ?? activeMember?.email ?? "Unterhaltung"}
-              </span>
-              <Button variant="ghost" size="icon" className="h-7 w-7" title="Vergrössern" onClick={openExpanded}>
-                <Maximize2 className="h-4 w-4" />
-              </Button>
-            </div>
-            <ScrollArea className="flex-1">
-              <div className="space-y-2 p-3">
-                {thread.length === 0 && (
-                  <p className="py-8 text-center text-sm text-muted-foreground">
-                    Noch keine Nachrichten — schreib die erste!
-                  </p>
-                )}
-                {thread.map((m) => {
-                  const mine = m.sender_id === user?.id;
-                  return (
-                    <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
-                      <div
-                        className={cn(
-                          "max-w-[80%] rounded-lg px-3 py-2 text-sm",
-                          mine ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
-                        )}
-                      >
-                        <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                        <p className={cn("mt-1 text-[10px]", mine ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                          {timeLabel(m.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={bottomRef} />
-              </div>
-            </ScrollArea>
-            <div className="flex items-end gap-2 border-t p-2">
-              <Textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    send.mutate();
-                  }
-                }}
-                placeholder="Nachricht schreiben…"
-                className="min-h-[40px] max-h-28 resize-none"
-              />
-              <Button
-                size="icon"
-                onClick={() => send.mutate()}
-                disabled={!draft.trim() || send.isPending}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
 
-    <Dialog open={expanded} onOpenChange={setExpanded}>
-      <DialogContent className="flex h-[85dvh] max-w-5xl flex-col gap-0 overflow-hidden p-0">
-        <DialogHeader className="shrink-0 border-b px-5 py-3">
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <Inbox className="h-4 w-4" /> Postfach
-            {unreadTotal > 0 && <Badge variant="secondary">{unreadTotal} neu</Badge>}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="flex min-h-0 flex-1">
-          {/* Left: people */}
-          <div className="flex w-[300px] shrink-0 flex-col border-r">
-            <div className="border-b p-3">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Mitarbeitende suchen…"
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            <ScrollArea className="flex-1">
-              <div className="p-2">
-                {!search && threads.length > 0 && (
-                  <div className="mb-2">
-                    <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      Unterhaltungen
-                    </p>
-                    {threads.map((t) => (
-                      <button
-                        key={t.id}
-                        onClick={() => setActiveId(t.id)}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition hover:bg-muted",
-                          activeId === t.id && "bg-muted",
-                        )}
-                      >
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage src={t.member?.avatar_url ?? undefined} />
-                          <AvatarFallback className="text-xs">{initialsOf(t.member)}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="truncate text-sm font-medium">
-                              {t.member?.full_name ?? t.member?.email ?? "Unbekannt"}
-                            </span>
-                            <span className="shrink-0 text-[10px] text-muted-foreground">
-                              {timeLabel(t.last.created_at)}
-                            </span>
-                          </div>
-                          <p className={cn("truncate text-xs", t.unread ? "font-semibold text-foreground" : "text-muted-foreground")}>
-                            {t.last.sender_id === user?.id ? "Du: " : ""}
-                            {t.last.body}
-                          </p>
-                        </div>
-                        {t.unread > 0 && (
-                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                            {t.unread}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Mitarbeitende
-                </p>
-                {filteredMembers.length === 0 && (
-                  <p className="px-2 py-4 text-center text-sm text-muted-foreground">
-                    Keine Mitarbeitenden gefunden
-                  </p>
-                )}
-                {filteredMembers.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => setActiveId(m.id)}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition hover:bg-muted",
-                      activeId === m.id && "bg-muted",
-                    )}
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={m.avatar_url ?? undefined} />
-                      <AvatarFallback className="text-xs">{initialsOf(m)}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm">{m.full_name ?? m.email}</p>
-                      {m.full_name && m.email && (
-                        <p className="truncate text-[11px] text-muted-foreground">{m.email}</p>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-
-          {/* Right: chat */}
-          <div className="flex min-w-0 flex-1 flex-col">
-            {!activeId ? (
-              <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-muted-foreground">
-                Wähle links eine Person aus, um zu chatten.
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center gap-2 border-b px-4 py-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={activeMember?.avatar_url ?? undefined} />
-                    <AvatarFallback className="text-xs">{initialsOf(activeMember)}</AvatarFallback>
-                  </Avatar>
-                  <span className="truncate text-sm font-semibold">
-                    {activeMember?.full_name ?? activeMember?.email ?? "Unterhaltung"}
-                  </span>
-                </div>
-                <ScrollArea className="flex-1">
-                  <div className="space-y-2 p-4">
-                    {thread.length === 0 && (
-                      <p className="py-8 text-center text-sm text-muted-foreground">
-                        Noch keine Nachrichten — schreib die erste!
-                      </p>
-                    )}
-                    {thread.map((m) => {
-                      const mine = m.sender_id === user?.id;
-                      return (
-                        <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
-                          <div
-                            className={cn(
-                              "max-w-[70%] rounded-lg px-3 py-2 text-sm",
-                              mine ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
-                            )}
-                          >
-                            <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                            <p className={cn("mt-1 text-[10px]", mine ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                              {timeLabel(m.created_at)}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <div ref={bottomRef} />
-                  </div>
-                </ScrollArea>
-                <div className="flex items-end gap-2 border-t p-3">
-                  <Textarea
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        send.mutate();
-                      }
-                    }}
-                    placeholder="Nachricht schreiben…"
-                    className="min-h-[44px] max-h-32 resize-none"
-                  />
-                  <Button size="icon" onClick={() => send.mutate()} disabled={!draft.trim() || send.isPending}>
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <Dialog open={expanded} onOpenChange={setExpanded}>
+        <DialogContent className="flex h-[80dvh] max-w-2xl flex-col gap-0 overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b px-5 py-3">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Inbox className="h-4 w-4" /> Postfach
+              {unreadTotal > 0 && <Badge variant="secondary">{unreadTotal} neu</Badge>}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="shrink-0 border-b p-3">{SearchBox}</div>
+          <ScrollArea className="min-h-0 flex-1">
+            <ThreadList />
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
