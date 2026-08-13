@@ -217,15 +217,19 @@ function MatchingPage() {
   const setView = (v: "all" | "client" | "profile") =>
     navigate({ search: { clientId, view: v, profileId } });
 
-  const activeProfiles = useMemo(
-    () => (searchProfiles as SearchProfile[]).filter((p) => p.is_active),
-    [searchProfiles],
-  );
   const clientNameById = useMemo(() => {
     const m = new Map<string, string>();
     for (const c of clients) m.set(c.id, c.full_name ?? "");
     return m;
   }, [clients]);
+  const activeProfiles = useMemo(
+    () =>
+      (searchProfiles as SearchProfile[]).filter(
+        (p) => p.is_active && clientNameById.has(p.client_id),
+      ),
+    [searchProfiles, clientNameById],
+  );
+
 
   /** Suchprofil → Pseudo-Kunde für den bestehenden Scoring-Algorithmus */
   const profileAsClient = (p: SearchProfile): Client => {
