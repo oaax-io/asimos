@@ -206,7 +206,12 @@ export function TeamInbox() {
             <div className="border-b p-3">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-semibold">Postfach</span>
-                {unreadTotal > 0 && <Badge variant="secondary">{unreadTotal} neu</Badge>}
+                <div className="flex items-center gap-1">
+                  {unreadTotal > 0 && <Badge variant="secondary">{unreadTotal} neu</Badge>}
+                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Vergrössern" onClick={openExpanded}>
+                    <Maximize2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
