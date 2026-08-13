@@ -182,7 +182,13 @@ export function TeamInbox() {
     (m.full_name || m.email || "").toLowerCase().includes(search.toLowerCase()),
   );
 
+  const openExpanded = () => {
+    setOpen(false);
+    setExpanded(true);
+  };
+
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative" title="Postfach">
