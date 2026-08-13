@@ -395,8 +395,32 @@ function ClientsPage() {
           </Button>
         )}
 
-        <span className="ml-auto text-sm text-muted-foreground">{t("clients.filters.ofTotal", { shown: filtered.length, total: clients.length })}</span>
       </div>
+
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {statTiles.map((tile) => (
+          <button
+            key={tile.key}
+            type="button"
+            onClick={tile.onClick}
+            className={`group relative overflow-hidden rounded-2xl border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${tile.active ? "border-primary/60 ring-2 ring-primary/30" : "border-border/60"} bg-card`}
+          >
+            <span className={`pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-20 blur-xl transition group-hover:opacity-35 ${tile.glow}`} />
+            <div className="flex items-center gap-2">
+              <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${tile.iconClass}`}>
+                <tile.icon className="h-4 w-4" />
+              </span>
+              <span className="text-xs font-medium text-muted-foreground">{tile.label}</span>
+            </div>
+            <div className="mt-3 flex items-end justify-between">
+              <span className="text-2xl font-semibold tabular-nums">{tile.value}</span>
+              {tile.hint ? <span className="text-[11px] text-muted-foreground">{tile.hint}</span> : null}
+            </div>
+          </button>
+        ))}
+      </div>
+
+
 
       {selectionCount > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border bg-accent/40 p-3">
