@@ -707,7 +707,17 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               }}
             />
           </CardContent></Card>
+
+          <Dialog open={!!familyClientId} onOpenChange={(o) => !o && setFamilyClientId(null)}>
+            <DialogContent className="flex h-[92dvh] max-h-[92dvh] min-h-0 w-[min(96vw,72rem)] max-w-6xl flex-col gap-0 overflow-hidden p-0 sm:rounded-2xl [&>button]:hidden">
+              <DialogTitle className="sr-only">Kundendetails</DialogTitle>
+              {familyClientId && (
+                <ClientDetail id={familyClientId} inDialog onClose={() => setFamilyClientId(null)} />
+              )}
+            </DialogContent>
+          </Dialog>
         </TabsContent>
+
 
 
         {/* 4. Finanzierung */}
