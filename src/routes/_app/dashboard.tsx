@@ -452,14 +452,26 @@ function Dashboard() {
             { key: "rejected", label: t("dashboard.dossierStatus.rejected"), color: "#f43f5e" },
             { key: "cancelled", label: t("dashboard.dossierStatus.cancelled"), color: "#71717a" },
           ]}
+          footer={
+            <div className="mt-2 grid grid-cols-3 gap-1 border-t border-border/50 pt-2">
+              <div className="flex flex-col items-center gap-0.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1 py-1">
+                <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                <span className="font-display text-sm font-bold leading-none tabular-nums text-emerald-700 dark:text-emerald-400">{stats.data?.qcCounts.pass ?? 0}</span>
+                <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80">{t("dashboard.qc.realistic")}</span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-1 py-1">
+                <AlertTriangle className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                <span className="font-display text-sm font-bold leading-none tabular-nums text-amber-700 dark:text-amber-400">{stats.data?.qcCounts.warn ?? 0}</span>
+                <span className="text-[9px] text-amber-700/80 dark:text-amber-400/80">{t("dashboard.qc.borderline")}</span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5 rounded-md border border-rose-500/30 bg-rose-500/10 px-1 py-1">
+                <XCircle className="h-3 w-3 text-rose-600 dark:text-rose-400" />
+                <span className="font-display text-sm font-bold leading-none tabular-nums text-rose-700 dark:text-rose-400">{stats.data?.qcCounts.fail ?? 0}</span>
+                <span className="text-[9px] text-rose-700/80 dark:text-rose-400/80">{t("dashboard.qc.notFinanceable")}</span>
+              </div>
+            </div>
+          }
         />
-      </div>
-
-      {/* Quick-Check Verteilung */}
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        <QcChip label={t("dashboard.qc.realistic")} value={stats.data?.qcCounts.pass ?? 0} icon={CheckCircle2} tone="emerald" />
-        <QcChip label={t("dashboard.qc.borderline")} value={stats.data?.qcCounts.warn ?? 0} icon={AlertTriangle} tone="amber" />
-        <QcChip label={t("dashboard.qc.notFinanceable")} value={stats.data?.qcCounts.fail ?? 0} icon={XCircle} tone="rose" />
       </div>
 
       {/* Matching suggestions */}
@@ -661,9 +673,10 @@ function StatusStackCard({ title, icon: Icon, to, counts, rows, loading, footer,
   );
 }
 
-function DonutCard({ title, icon: Icon, to, counts, rows, loading, emptyText }: {
+function DonutCard({ title, icon: Icon, to, counts, rows, loading, emptyText, footer }: {
   title: string; icon: any; to: string; counts: Record<string, number>;
   rows: { key: string; label: string; color: string }[]; loading?: boolean; emptyText?: string;
+  footer?: React.ReactNode;
 }) {
   const total = rows.reduce((a, r) => a + (counts[r.key] ?? 0), 0);
   const R = 26, C = 2 * Math.PI * R;
@@ -724,25 +737,12 @@ function DonutCard({ title, icon: Icon, to, counts, rows, loading, emptyText }: 
             </div>
           </div>
         )}
+        {footer}
       </CardContent>
     </Card>
   );
 }
 
-function QcChip({ label, value, icon: Icon, tone }: { label: string; value: number; icon: any; tone: "emerald" | "amber" | "rose" }) {
-  const toneCls = {
-    emerald: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-    amber: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
-    rose: "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400",
-  }[tone];
-  return (
-    <div className={`flex flex-col items-center gap-0.5 rounded-lg border px-2 py-2 ${toneCls}`}>
-      <Icon className="h-3.5 w-3.5" />
-      <span className="font-display text-lg font-bold leading-none tabular-nums">{value}</span>
-      <span className="text-[10px] opacity-80">{label}</span>
-    </div>
-  );
-}
 
 function CompactList({ title, icon: Icon, items, render, loading, empty, count, countHint, to }: {
   title: string; icon: any; items: any[]; render: (i: any) => React.ReactNode;
