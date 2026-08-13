@@ -17,8 +17,9 @@ import {
   ArrowLeft, Mail, Phone, Trash2, RefreshCw, Pencil, FileSignature,
   Calendar, Target, Home, MapPin, Banknote, Ruler, BedDouble, Building2, MessageSquare,
   CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
-  ClipboardList, Heart, X, User, Users, Upload, ChevronLeft, ChevronRight, Circle,
+  ClipboardList, Heart, X, User, Users, Upload, ChevronLeft, ChevronRight, Circle, Crown,
 } from "lucide-react";
+import { AssigneeAvatars, type EmployeeLite } from "@/components/clients/ClientAssignees";
 import {
   clientTypeLabels, formatCurrency, formatDate, formatDateTime,
   propertyTypeLabels, propertyStatusLabels, listingTypeLabels, apptTypeLabels,
