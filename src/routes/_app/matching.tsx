@@ -239,7 +239,7 @@ function MatchingPage() {
       area_max: p.area_max,
       preferred_cities: p.preferred_cities,
       preferred_types: (p.preferred_property_types ?? []) as Client["preferred_types"],
-      preferred_listing: p.preferred_listing ?? p.listing_type,
+      preferred_listing: p.listing_type,
     } as Client;
   };
 
