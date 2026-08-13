@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +31,7 @@ import {
   ExternalLink,
   Heart,
   Users,
+  Crown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -45,7 +46,7 @@ type Relationship = {
   related_client_id: string;
   relationship_type: RelationshipType;
   notes: string | null;
-  related?: { id: string; full_name: string; email: string | null } | null;
+  related?: { id: string; full_name: string; email: string | null; is_family_head?: boolean } | null;
 };
 
 type Child = {
@@ -58,18 +59,20 @@ type Child = {
 
 interface Props {
   clientId: string;
+  onOpenClient?: (id: string) => void;
 }
 
-export function ClientRelationshipsTab({ clientId }: Props) {
+export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
   const qc = useQueryClient();
   const confirm = useConfirm();
+
 
   const { data: relationships = [] } = useQuery({
     queryKey: ["client_relationships", clientId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("client_relationships")
-        .select("id, client_id, related_client_id, relationship_type, notes, created_at, related:clients!client_relationships_related_client_id_fkey(id, full_name, email), owner:clients!client_relationships_client_id_fkey(id, full_name, email)")
+        .select("id, client_id, related_client_id, relationship_type, notes, created_at, related:clients!client_relationships_related_client_id_fkey(id, full_name, email, is_family_head), owner:clients!client_relationships_client_id_fkey(id, full_name, email, is_family_head)")
         .or(`client_id.eq.${clientId},related_client_id.eq.${clientId}`)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -94,6 +97,48 @@ export function ClientRelationshipsTab({ clientId }: Props) {
       return out;
     },
   });
+
+  const { data: self } = useQuery({
+    queryKey: ["client_family_head_self", clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, full_name, email, is_family_head")
+        .eq("id", clientId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { id: string; full_name: string; email: string | null; is_family_head: boolean } | null;
+    },
+  });
+
+  const memberIds = [clientId, ...relationships.map((r) => r.related_client_id)];
+
+  const setHead = useMutation({
+    mutationFn: async (id: string) => {
+      const others = memberIds.filter((m) => m !== id);
+      if (others.length > 0) {
+        const { error } = await supabase
+          .from("clients")
+          .update({ is_family_head: false })
+          .in("id", others);
+        if (error) throw error;
+      }
+      const { error } = await supabase
+        .from("clients")
+        .update({ is_family_head: true })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Hauptmitglied festgelegt");
+      qc.invalidateQueries({ queryKey: ["client_relationships"] });
+      qc.invalidateQueries({ queryKey: ["client_family_head_self"] });
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Konnte Hauptmitglied nicht setzen"),
+  });
+
+
 
   const { data: children = [] } = useQuery({
     queryKey: ["client_children", clientId],
@@ -150,14 +195,39 @@ export function ClientRelationshipsTab({ clientId }: Props) {
             <AddRelationshipDialog clientId={clientId} />
           </div>
 
-          {relationships.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Noch keine verknüpften Personen. Füge Ehepartner, Mitantragsteller
-              oder Mitinvestoren hinzu.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {relationships.map((r) => (
+          <div className="space-y-2">
+            {self && (
+              <div className="flex items-center justify-between rounded-xl border bg-muted/40 p-3">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">Dieser Kunde</Badge>
+                  <span className="font-medium">{self.full_name}</span>
+                  {self.is_family_head && (
+                    <Badge className="gap-1 bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300">
+                      <Crown className="h-3 w-3" />Hauptmitglied
+                    </Badge>
+                  )}
+                </div>
+                {!self.is_family_head && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setHead.mutate(self.id)}
+                    disabled={setHead.isPending}
+                  >
+                    <Crown className="mr-1.5 h-4 w-4" />
+                    Als Hauptmitglied
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {relationships.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Noch keine verknüpften Personen. Füge Ehepartner, Mitantragsteller
+                oder Mitinvestoren hinzu.
+              </p>
+            ) : (
+              relationships.map((r) => (
                 <div
                   key={r.id}
                   className="flex items-center justify-between rounded-xl border p-3"
@@ -168,15 +238,20 @@ export function ClientRelationshipsTab({ clientId }: Props) {
                         {relationshipTypeLabels[r.relationship_type]}
                       </Badge>
                       {r.related ? (
-                        <Link
-                          to="/clients/$id"
-                          params={{ id: r.related.id }}
+                        <button
+                          type="button"
+                          onClick={() => onOpenClient?.(r.related!.id)}
                           className="font-medium hover:text-primary"
                         >
                           {r.related.full_name}
-                        </Link>
+                        </button>
                       ) : (
                         <span className="text-sm text-muted-foreground">Unbekannt</span>
+                      )}
+                      {r.related?.is_family_head && (
+                        <Badge className="gap-1 bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300">
+                          <Crown className="h-3 w-3" />Hauptmitglied
+                        </Badge>
                       )}
                     </div>
                     {r.notes && (
@@ -184,11 +259,25 @@ export function ClientRelationshipsTab({ clientId }: Props) {
                     )}
                   </div>
                   <div className="flex items-center gap-1">
+                    {r.related && !r.related.is_family_head && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Als Hauptmitglied festlegen"
+                        onClick={() => setHead.mutate(r.related!.id)}
+                        disabled={setHead.isPending}
+                      >
+                        <Crown className="h-4 w-4" />
+                      </Button>
+                    )}
                     {r.related && (
-                      <Button asChild variant="ghost" size="icon">
-                        <Link to="/clients/$id" params={{ id: r.related.id }}>
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Kunde öffnen"
+                        onClick={() => onOpenClient?.(r.related!.id)}
+                      >
+                        <ExternalLink className="h-4 w-4" />
                       </Button>
                     )}
                     <Button
@@ -202,9 +291,9 @@ export function ClientRelationshipsTab({ clientId }: Props) {
                     </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </CardContent>
       </Card>
 
