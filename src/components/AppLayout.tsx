@@ -20,6 +20,8 @@ import {
   SidebarProvider, SidebarTrigger, SidebarInset, useSidebar,
 } from "@/components/ui/sidebar";
 import logoAsimoAsset from "@/assets/logo-asimo-2027.png.asset.json";
+import logoAsimoIconAsset from "@/assets/logo-asimo-icon.png.asset.json";
+
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { TeamInbox } from "@/components/TeamInbox";
