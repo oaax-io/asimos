@@ -196,11 +196,14 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 px-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
+                    <span className="relative">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <MyPresenceDot />
+                    </span>
                     <span className="hidden text-sm font-medium md:block">
                       {user.user_metadata?.full_name || user.email}
                     </span>
@@ -214,6 +217,8 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                       {user.email}
                     </div>
                   )}
+                  <DropdownMenuSeparator />
+                  <PresenceSubMenu />
                   {isSuperadmin && (
                     <>
                       <DropdownMenuSeparator />
