@@ -675,6 +675,7 @@ function ClientsPage() {
                         {isPartner && (
                           <CornerDownRight className="h-4 w-4 shrink-0 text-muted-foreground ml-3" aria-hidden />
                         )}
+                        <ClientPinButton clientId={c.id} color={pinsMap.get(c.id)} />
                         <HoverCard openDelay={150} closeDelay={100}>
                           <HoverCardTrigger asChild>
                             <button type="button" onClick={() => setDetailId(c.id)} className="font-medium hover:text-primary text-left">
