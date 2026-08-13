@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PresenceDot } from "@/components/presence/PresenceDot";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,7 +15,7 @@ import { useChatDock } from "@/components/chat/ChatDock";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type Member = { id: string; full_name: string | null; email: string | null; avatar_url: string | null };
+type Member = { id: string; full_name: string | null; email: string | null; avatar_url: string | null; presence_status?: string | null };
 type Message = {
   id: string;
   sender_id: string;
@@ -55,7 +56,7 @@ export function TeamInbox() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email, avatar_url")
+        .select("id, full_name, email, avatar_url, presence_status")
         .eq("is_active", true)
         .order("full_name");
       if (error) throw error;
@@ -149,10 +150,13 @@ export function TeamInbox() {
               onClick={() => select(t.id)}
               className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition hover:bg-muted"
             >
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={t.member?.avatar_url ?? undefined} />
-                <AvatarFallback className="text-xs">{initialsOf(t.member)}</AvatarFallback>
-              </Avatar>
+              <span className="relative">
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={t.member?.avatar_url ?? undefined} />
+                  <AvatarFallback className="text-xs">{initialsOf(t.member)}</AvatarFallback>
+                </Avatar>
+                <PresenceDot status={t.member?.presence_status} className="absolute -bottom-0.5 -right-0.5" />
+              </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-sm font-medium">
@@ -194,10 +198,13 @@ export function TeamInbox() {
           onClick={() => select(m.id)}
           className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition hover:bg-muted"
         >
-          <Avatar className={dense ? "h-8 w-8" : "h-9 w-9"}>
-            <AvatarImage src={m.avatar_url ?? undefined} />
-            <AvatarFallback className="text-xs">{initialsOf(m)}</AvatarFallback>
-          </Avatar>
+          <span className="relative">
+            <Avatar className={dense ? "h-8 w-8" : "h-9 w-9"}>
+              <AvatarImage src={m.avatar_url ?? undefined} />
+              <AvatarFallback className="text-xs">{initialsOf(m)}</AvatarFallback>
+            </Avatar>
+            <PresenceDot status={m.presence_status} className="absolute -bottom-0.5 -right-0.5" />
+          </span>
           <div className="min-w-0">
             <p className="truncate text-sm">{m.full_name ?? m.email}</p>
             {m.full_name && m.email && (
