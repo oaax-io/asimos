@@ -1,0 +1,1 @@
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS is_family_head boolean NOT NULL DEFAULT false;

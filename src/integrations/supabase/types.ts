@@ -902,6 +902,7 @@ export type Database = {
           full_name: string
           id: string
           is_archived: boolean
+          is_family_head: boolean
           notes: string | null
           owner_id: string | null
           phone: string | null
@@ -940,6 +941,7 @@ export type Database = {
           full_name: string
           id?: string
           is_archived?: boolean
+          is_family_head?: boolean
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
@@ -980,6 +982,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_archived?: boolean
+          is_family_head?: boolean
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
