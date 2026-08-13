@@ -14,6 +14,7 @@ import { formatCurrency, clientTypeLabels, propertyTypeLabels } from "@/lib/form
 import { Sparkles, ExternalLink, Users, Search, Target, Plus, Pencil } from "lucide-react";
 import { SearchProfileDialog, type SearchProfile } from "@/components/matching/SearchProfileDialog";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 import { EmptyState } from "@/components/EmptyState";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -41,6 +42,7 @@ function MatchingPage() {
   const { clientId, view, profileId } = Route.useSearch();
   const navigate = Route.useNavigate();
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [minScore, setMinScore] = useState(60);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
