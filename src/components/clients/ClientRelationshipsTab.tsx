@@ -213,9 +213,15 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
                         <span className="text-sm text-muted-foreground">Unbekannt</span>
                       )}
                       {r.related?.is_family_head ? (
-                        <Badge className="gap-1 bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300">
+                        <button
+                          type="button"
+                          title="Als Hauptmitglied entfernen"
+                          onClick={() => unsetHead.mutate(r.related!.id)}
+                          disabled={unsetHead.isPending}
+                          className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-500/30 transition hover:bg-amber-500/25 dark:text-amber-300"
+                        >
                           <Crown className="h-3 w-3" />Hauptmitglied
-                        </Badge>
+                        </button>
                       ) : (
                         r.related && (
                           <Button
@@ -231,6 +237,7 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
                           </Button>
                         )
                       )}
+
                     </div>
                     {r.notes && (
                       <p className="mt-1 text-xs text-muted-foreground">{r.notes}</p>
