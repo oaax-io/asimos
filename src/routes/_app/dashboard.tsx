@@ -482,7 +482,7 @@ function Dashboard() {
             {t("dashboard.matching.title")}
           </CardTitle>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/matching" search={{ clientId: "", view: "all" as const }}>{t("dashboard.matching.all")} <ArrowRight className="ml-1 h-3 w-3" /></Link>
+            <Link to="/matching" search={{ clientId: "", view: "all" as const, profileId: "" }}>{t("dashboard.matching.all")} <ArrowRight className="ml-1 h-3 w-3" /></Link>
           </Button>
         </CardHeader>
         <CardContent>
