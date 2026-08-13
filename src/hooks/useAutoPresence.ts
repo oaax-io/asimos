@@ -11,7 +11,6 @@ const AUTO_AWAY_KEY = "presence:auto-away";
  * - App-Start / Login: "away" oder "offline" wird auf "available" zurückgesetzt
  * - 10 Min Inaktivität: "available" -> "away" (automatisch markiert)
  * - Aktivität danach: automatisches "away" -> "available"
- * - Tab schliessen: "offline" (best effort)
  * Manuell gesetzte Status (Beschäftigt / Im Termin) werden nie überschrieben.
  */
 export function useAutoPresence() {
@@ -89,18 +88,11 @@ export function useAutoPresence() {
     };
     document.addEventListener("visibilitychange", onVisibility);
 
-    const onUnload = () => {
-      localStorage.setItem(AUTO_AWAY_KEY, "1");
-      void write("offline");
-    };
-    window.addEventListener("beforeunload", onUnload);
-
     return () => {
       cancelled = true;
       if (timerRef.current) clearTimeout(timerRef.current);
       events.forEach((e) => window.removeEventListener(e, resetTimer));
       document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("beforeunload", onUnload);
     };
   }, [user?.id, qc]);
 }
