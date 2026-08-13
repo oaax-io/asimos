@@ -526,29 +526,8 @@ function ClientsPage() {
                       {c.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{c.email}</p>}
                       {c.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{c.phone}</p>}
                     </div>
-                    {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 && (
-                    <div className="mt-3 flex flex-wrap items-center gap-1">
-                        <Link2 className="h-3 w-3 text-muted-foreground" />
-                        {relationshipsByClient.get(c.id)!.map((rel) => {
-                          const partner = clientInfoMap.get(rel.id);
-                          return (
-                            <HoverCard key={rel.id + rel.type} openDelay={120} closeDelay={80}>
-                              <HoverCardTrigger asChild>
-                                <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-5 cursor-pointer" onClick={(e) => { e.stopPropagation(); setDetailId(rel.id); }}>
-                                  {relationshipLabels[rel.type] ?? rel.type}
-                                </Badge>
-                              </HoverCardTrigger>
-                              <HoverCardContent className="w-64 text-sm" onClick={(e) => e.stopPropagation()}>
-                                <p className="font-medium">{partner?.full_name ?? t("clients.relationship.unknown")}</p>
-                                <p className="text-xs text-muted-foreground mb-2">{relationshipLabels[rel.type] ?? rel.type}</p>
-                                {partner?.email && <p className="flex items-center gap-2 text-xs"><Mail className="h-3 w-3" />{partner.email}</p>}
-                                {partner?.phone && <p className="flex items-center gap-2 text-xs"><Phone className="h-3 w-3" />{partner.phone}</p>}
-                              </HoverCardContent>
-                            </HoverCard>
-                          );
-                        })}
-                      </div>
-                    )}
+
+
                     {(c.budget_max || c.preferred_cities?.length) && (
                       <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
                         {c.budget_max && <p>{t("clients.card.budgetUpTo", { amount: formatCurrency(Number(c.budget_max)) })}</p>}
