@@ -309,76 +309,157 @@ function Dashboard() {
         <KpiCard icon={Building2} label={t("dashboard.kpis.activeProperties")} value={kpis.data?.activeProps ?? "—"} loading={kpis.isLoading} to="/properties" />
         <KpiCard icon={FileSignature} label={t("dashboard.kpis.activeReservations")} value={kpis.data?.activeRes ?? "—"} loading={kpis.isLoading} to="/reservations" />
       </div>
-      {/* Status-Visualisierungen */}
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <StatusStackCard
+      {/* Fokus: Offene Aufgaben + bevorstehende Termine */}
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+        <Card className="lg:col-span-2 border-primary/30 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CheckSquare className="h-4 w-4 text-primary" />
+              {t("dashboard.lists.openTasks", "Offene Aufgaben")}
+              <Badge variant="secondary" className="ml-1 font-mono tabular-nums">{kpis.data?.openTasks ?? 0}</Badge>
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/tasks">{t("dashboard.pipeline.details")} <ArrowRight className="ml-1 h-3 w-3" /></Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {focus.isLoading ? (
+              <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+            ) : (focus.data?.tasks ?? []).length === 0 ? (
+              <EmptyState icon={CheckSquare} text={t("dashboard.lists.noOverdue")} />
+            ) : (
+              <div className="divide-y">
+                {(focus.data?.tasks ?? []).map((tk: any) => {
+                  const overdue = tk.due_date && new Date(tk.due_date) < new Date();
+                  return (
+                    <Link key={tk.id} to="/tasks" className="flex items-center justify-between gap-3 rounded px-1 py-2.5 first:pt-0 hover:bg-accent/40">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${
+                          tk.priority === "urgent" || tk.priority === "high" ? "bg-rose-500"
+                          : tk.priority === "normal" ? "bg-amber-500" : "bg-slate-400"}`} />
+                        <span className="truncate text-sm font-medium">{tk.title}</span>
+                      </span>
+                      {tk.due_date && (
+                        <span className={`shrink-0 text-xs tabular-nums ${overdue ? "font-semibold text-destructive" : "text-muted-foreground"}`}>
+                          {formatDate(tk.due_date)}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CalendarDays className="h-4 w-4 text-primary" />
+              {t("dashboard.lists.upcomingAppts", "Bevorstehende Termine")}
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/appointments"><ArrowRight className="h-3 w-3" /></Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {focus.isLoading ? (
+              <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+            ) : (focus.data?.upcoming ?? []).length === 0 ? (
+              <EmptyState icon={CalendarDays} text={t("dashboard.lists.noAppts")} />
+            ) : (
+              <div className="divide-y">
+                {(focus.data?.upcoming ?? []).slice(0, 6).map((a: any) => (
+                  <Link key={a.id} to="/appointments" className="block rounded px-1 py-2 first:pt-0 hover:bg-accent/40">
+                    <p className="truncate text-sm font-medium">{a.title}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {formatDateTime(a.starts_at)}{a.location ? ` · ${a.location}` : ""}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Status-Verteilungen als Ringdiagramme */}
+      <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+        <DonutCard
           title={t("dashboard.clientStatus.title")}
           icon={Users}
           to="/clients"
           loading={stats.isLoading}
           counts={stats.data?.clientCounts ?? {}}
           emptyText={t("dashboard.pipeline.noData")}
-          detailsLabel={t("dashboard.pipeline.details")}
           rows={[
-            { key: "entwurf", label: t("dashboard.clientStatus.entwurf"), color: "bg-slate-400" },
-            { key: "pendent", label: t("dashboard.clientStatus.pendent"), color: "bg-amber-500" },
-            { key: "vollstaendig", label: t("dashboard.clientStatus.vollstaendig"), color: "bg-sky-500" },
-            { key: "finanzierung", label: t("dashboard.clientStatus.finanzierung"), color: "bg-violet-500" },
-            { key: "abgeschlossen", label: t("dashboard.clientStatus.abgeschlossen"), color: "bg-emerald-500" },
-            { key: "abgelehnt", label: t("dashboard.clientStatus.abgelehnt"), color: "bg-rose-500" },
-            { key: "storniert", label: t("dashboard.clientStatus.storniert"), color: "bg-zinc-500" },
+            { key: "entwurf", label: t("dashboard.clientStatus.entwurf"), color: "#94a3b8" },
+            { key: "pendent", label: t("dashboard.clientStatus.pendent"), color: "#f59e0b" },
+            { key: "vollstaendig", label: t("dashboard.clientStatus.vollstaendig"), color: "#0ea5e9" },
+            { key: "finanzierung", label: t("dashboard.clientStatus.finanzierung"), color: "#8b5cf6" },
+            { key: "abgeschlossen", label: t("dashboard.clientStatus.abgeschlossen"), color: "#10b981" },
+            { key: "abgelehnt", label: t("dashboard.clientStatus.abgelehnt"), color: "#f43f5e" },
+            { key: "storniert", label: t("dashboard.clientStatus.storniert"), color: "#71717a" },
           ]}
         />
-        <StatusStackCard
+        <DonutCard
+          title={t("dashboard.pipeline.properties")}
+          icon={Building2}
+          to="/properties"
+          loading={pipeline.isLoading}
+          counts={pipeline.data?.propCounts ?? {}}
+          emptyText={t("dashboard.pipeline.noData")}
+          rows={[
+            { key: "draft", label: propertyStatusLabels["draft"] ?? "draft", color: "#94a3b8" },
+            { key: "preparation", label: propertyStatusLabels["preparation"] ?? "preparation", color: "#f59e0b" },
+            { key: "available", label: propertyStatusLabels["available"] ?? "available", color: "#10b981" },
+            { key: "reserved", label: propertyStatusLabels["reserved"] ?? "reserved", color: "#6366f1" },
+            { key: "sold", label: propertyStatusLabels["sold"] ?? "sold", color: "#0ea5e9" },
+            { key: "rented", label: propertyStatusLabels["rented"] ?? "rented", color: "#14b8a6" },
+            { key: "archived", label: propertyStatusLabels["archived"] ?? "archived", color: "#71717a" },
+          ]}
+        />
+        <DonutCard
+          title={t("dashboard.pipeline.leads")}
+          icon={UserPlus}
+          to="/leads"
+          loading={pipeline.isLoading}
+          counts={pipeline.data?.leadCounts ?? {}}
+          emptyText={t("dashboard.pipeline.noData")}
+          rows={[
+            { key: "new", label: leadStatusLabels["new"] ?? "new", color: "#0ea5e9" },
+            { key: "contacted", label: leadStatusLabels["contacted"] ?? "contacted", color: "#6366f1" },
+            { key: "qualified", label: leadStatusLabels["qualified"] ?? "qualified", color: "#8b5cf6" },
+            { key: "viewing_planned", label: leadStatusLabels["viewing_planned"] ?? "viewing_planned", color: "#f59e0b" },
+            { key: "converted", label: leadStatusLabels["converted"] ?? "converted", color: "#10b981" },
+            { key: "lost", label: leadStatusLabels["lost"] ?? "lost", color: "#f43f5e" },
+          ]}
+        />
+        <DonutCard
           title={t("dashboard.dossierStatus.title")}
           icon={Wallet}
           to="/financing"
           loading={stats.isLoading}
           counts={stats.data?.dossierCounts ?? {}}
           emptyText={t("dashboard.pipeline.noData")}
-          detailsLabel={t("dashboard.pipeline.details")}
           rows={[
-            { key: "draft", label: t("dashboard.dossierStatus.draft"), color: "bg-slate-400" },
-            { key: "quick_check", label: t("dashboard.dossierStatus.quick_check"), color: "bg-cyan-500" },
-            { key: "documents_missing", label: t("dashboard.dossierStatus.documents_missing"), color: "bg-amber-500" },
-            { key: "ready_for_bank", label: t("dashboard.dossierStatus.ready_for_bank"), color: "bg-indigo-500" },
-            { key: "submitted_to_bank", label: t("dashboard.dossierStatus.submitted_to_bank"), color: "bg-blue-500" },
-            { key: "approved", label: t("dashboard.dossierStatus.approved"), color: "bg-emerald-500" },
-            { key: "rejected", label: t("dashboard.dossierStatus.rejected"), color: "bg-rose-500" },
-            { key: "cancelled", label: t("dashboard.dossierStatus.cancelled"), color: "bg-zinc-500" },
+            { key: "draft", label: t("dashboard.dossierStatus.draft"), color: "#94a3b8" },
+            { key: "quick_check", label: t("dashboard.dossierStatus.quick_check"), color: "#06b6d4" },
+            { key: "documents_missing", label: t("dashboard.dossierStatus.documents_missing"), color: "#f59e0b" },
+            { key: "ready_for_bank", label: t("dashboard.dossierStatus.ready_for_bank"), color: "#6366f1" },
+            { key: "submitted_to_bank", label: t("dashboard.dossierStatus.submitted_to_bank"), color: "#3b82f6" },
+            { key: "approved", label: t("dashboard.dossierStatus.approved"), color: "#10b981" },
+            { key: "rejected", label: t("dashboard.dossierStatus.rejected"), color: "#f43f5e" },
+            { key: "cancelled", label: t("dashboard.dossierStatus.cancelled"), color: "#71717a" },
           ]}
-          footer={
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-              <QcChip label={t("dashboard.qc.realistic")} value={stats.data?.qcCounts.pass ?? 0} icon={CheckCircle2} tone="emerald" />
-              <QcChip label={t("dashboard.qc.borderline")} value={stats.data?.qcCounts.warn ?? 0} icon={AlertTriangle} tone="amber" />
-              <QcChip label={t("dashboard.qc.notFinanceable")} value={stats.data?.qcCounts.fail ?? 0} icon={XCircle} tone="rose" />
-            </div>
-          }
         />
       </div>
 
-      {/* Pipeline */}
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <PipelineCard
-          title={t("dashboard.pipeline.leads")}
-          to="/leads"
-          loading={pipeline.isLoading}
-          counts={pipeline.data?.leadCounts ?? {}}
-          labels={leadStatusLabels as Record<string, string>}
-          order={["new", "contacted", "qualified", "viewing_planned", "converted", "lost"]}
-          detailsLabel={t("dashboard.pipeline.details")}
-          emptyText={t("dashboard.pipeline.noData")}
-        />
-        <PipelineCard
-          title={t("dashboard.pipeline.properties")}
-          to="/properties"
-          loading={pipeline.isLoading}
-          counts={pipeline.data?.propCounts ?? {}}
-          labels={propertyStatusLabels as Record<string, string>}
-          order={["draft", "preparation", "active", "available", "reserved", "sold", "rented", "archived"]}
-          detailsLabel={t("dashboard.pipeline.details")}
-          emptyText={t("dashboard.pipeline.noData")}
-        />
+      {/* Quick-Check Verteilung */}
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <QcChip label={t("dashboard.qc.realistic")} value={stats.data?.qcCounts.pass ?? 0} icon={CheckCircle2} tone="emerald" />
+        <QcChip label={t("dashboard.qc.borderline")} value={stats.data?.qcCounts.warn ?? 0} icon={AlertTriangle} tone="amber" />
+        <QcChip label={t("dashboard.qc.notFinanceable")} value={stats.data?.qcCounts.fail ?? 0} icon={XCircle} tone="rose" />
       </div>
 
       {/* Matching suggestions */}
