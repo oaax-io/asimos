@@ -23,6 +23,7 @@ import logoAsimo from "@/assets/logo-asimo-real-estate.png";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { TeamInbox } from "@/components/TeamInbox";
+import { ChatDockProvider } from "@/components/chat/ChatDock";
 import { LanguageBootstrap } from "@/components/LanguageBootstrap";
 import { useTranslation } from "react-i18next";
 // touch
@@ -158,6 +159,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
     .split(" ").map((s: string) => s[0]).slice(0, 2).join("").toUpperCase();
 
   return (
+    <ChatDockProvider>
     <SidebarProvider defaultOpen>
       <LanguageBootstrap />
       <div className="flex min-h-screen w-full bg-background">
@@ -248,5 +250,6 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
         </SidebarInset>
       </div>
     </SidebarProvider>
+    </ChatDockProvider>
   );
 }
