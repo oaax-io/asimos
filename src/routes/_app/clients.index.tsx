@@ -488,7 +488,7 @@ function ClientsPage() {
                         </div>
                       </button>
                     </div>
-                    <Link to="/matching" search={{ clientId: c.id }} className="rounded-lg border p-2 text-primary transition hover:bg-accent" title={t("clients.row.matching")}>
+                    <Link to="/matching" search={{ clientId: c.id, view: "client" as const }} className="rounded-lg border p-2 text-primary transition hover:bg-accent" title={t("clients.row.matching")}>
                       <Target className="h-4 w-4" />
                     </Link>
                   </div>
@@ -658,7 +658,7 @@ function ClientsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setDetailId(c.id)}>{t("clients.row.open")}</DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link to="/matching" search={{ clientId: c.id }}>{t("clients.row.matching")}</Link>
+                            <Link to="/matching" search={{ clientId: c.id, view: "client" as const }}>{t("clients.row.matching")}</Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {c.is_archived ? (
