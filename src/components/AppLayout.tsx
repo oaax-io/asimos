@@ -64,9 +64,13 @@ function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="h-16 border-b border-sidebar-border p-0">
-        <Link to="/dashboard" className="flex h-16 items-center justify-start pl-4 isolate">
+        <Link
+          to="/dashboard"
+          className={`flex h-16 items-center isolate ${collapsed ? "justify-center px-0" : "justify-start pl-4"}`}
+        >
           {collapsed ? (
-            <img src={logoAsimoIconAsset.url} alt="ASIMO" className="h-7 w-7 object-contain" />
+            <img src={logoAsimoIconAsset.url} alt="ASIMO" className="h-7 w-7 shrink-0 object-contain" />
+
 
           ) : (
             <img
