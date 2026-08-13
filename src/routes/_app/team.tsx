@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -290,21 +290,13 @@ function EditMemberDialog({
   const [resetLink, setResetLink] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(member.avatar_url ?? null);
   const [uploading, setUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
-  const uploadAvatar = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      toast.error("Bitte eine Bilddatei auswählen");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Maximale Dateigrösse: 5 MB");
-      return;
-    }
+  const uploadAvatar = async (blob: Blob, ext: string) => {
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `avatars/${member.id}-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("brand-assets").upload(path, file, { upsert: true, contentType: file.type });
+      const { error: upErr } = await supabase.storage.from("brand-assets").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from("brand-assets").getPublicUrl(path);
       const { error: dbErr } = await supabase.from("profiles").update({ avatar_url: pub.publicUrl }).eq("id", member.id);
@@ -316,7 +308,20 @@ function EditMemberDialog({
       toast.error(e instanceof Error ? e.message : "Upload fehlgeschlagen");
     } finally {
       setUploading(false);
+      setPendingFile(null);
     }
+  };
+
+  const onFileSelected = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Bitte eine Bilddatei auswählen");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Maximale Dateigrösse: 5 MB");
+      return;
+    }
+    setPendingFile(file);
   };
 
   const removeAvatar = async () => {
@@ -416,7 +421,7 @@ function EditMemberDialog({
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); e.target.value = ""; }}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFileSelected(f); e.target.value = ""; }}
                       />
                     </label>
                   </Button>
@@ -424,9 +429,17 @@ function EditMemberDialog({
                     <Button variant="ghost" size="sm" onClick={removeAvatar}>Entfernen</Button>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">JPG oder PNG, max. 5 MB.</p>
+                <p className="text-xs text-muted-foreground">JPG oder PNG, max. 5 MB. Nach Auswahl kannst du das Bild zuschneiden und skalieren.</p>
               </div>
             </div>
+            {pendingFile && (
+              <AvatarResizeDialog
+                file={pendingFile}
+                uploading={uploading}
+                onCancel={() => setPendingFile(null)}
+                onConfirm={(blob) => uploadAvatar(blob, "jpg")}
+              />
+            )}
             <div><Label>Name</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
@@ -523,6 +536,97 @@ function EditMemberDialog({
             </DialogFooter>
           </div>
         )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AvatarResizeDialog({
+  file,
+  uploading,
+  onCancel,
+  onConfirm,
+}: {
+  file: File;
+  uploading: boolean;
+  onCancel: () => void;
+  onConfirm: (blob: Blob) => void;
+}) {
+  const [zoom, setZoom] = useState(1);
+  const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setImgUrl(url);
+    const img = new Image();
+    img.onload = () => setImgEl(img);
+    img.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const handleConfirm = async () => {
+    if (!imgEl) return;
+    const OUT = 512;
+    const BOX = 240;
+    const coverScale = Math.max(BOX / imgEl.naturalWidth, BOX / imgEl.naturalHeight);
+    const effScale = coverScale * zoom;
+    const sCrop = BOX / effScale;
+    const sx = (imgEl.naturalWidth - sCrop) / 2;
+    const sy = (imgEl.naturalHeight - sCrop) / 2;
+    const canvas = document.createElement("canvas");
+    canvas.width = OUT;
+    canvas.height = OUT;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(imgEl, sx, sy, sCrop, sCrop, 0, 0, OUT, OUT);
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92),
+    );
+    if (blob) onConfirm(blob);
+  };
+
+  return (
+    <Dialog open onOpenChange={(v) => !v && !uploading && onCancel()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Profilbild zuschneiden</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="mx-auto flex h-[240px] w-[240px] items-center justify-center overflow-hidden rounded-xl border bg-muted">
+            {imgUrl ? (
+              <img
+                src={imgUrl}
+                alt="Vorschau"
+                className="h-full w-full object-cover"
+                style={{ transform: `scale(${zoom})` }}
+              />
+            ) : (
+              <span className="text-sm text-muted-foreground">Lädt…</span>
+            )}
+          </div>
+          <div>
+            <Label className="mb-1 block text-sm">Zoom: {zoom.toFixed(1)}×</Label>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.05}
+              value={zoom}
+              onChange={(e) => setZoom(parseFloat(e.target.value))}
+              className="w-full accent-primary"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onCancel} disabled={uploading}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleConfirm} disabled={uploading || !imgEl}>
+              {uploading ? "Lädt…" : "Übernehmen"}
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
