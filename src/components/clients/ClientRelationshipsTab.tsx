@@ -127,6 +127,21 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
       toast.error(e instanceof Error ? e.message : "Konnte Hauptmitglied nicht setzen"),
   });
 
+  const unsetHead = useMutation({
+    mutationFn: async (cid: string) => {
+      const { error } = await supabase.from("clients").update({ is_family_head: false }).eq("id", cid);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Hauptmitglied entfernt");
+      qc.invalidateQueries({ queryKey: ["client_relationships"] });
+      qc.invalidateQueries({ queryKey: ["client"] });
+      qc.invalidateQueries({ queryKey: ["clients"] });
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Fehlgeschlagen"),
+  });
+
+
 
 
   const { data: children = [] } = useQuery({
