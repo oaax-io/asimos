@@ -335,6 +335,25 @@ function DocumentsPage() {
         );
       })()}
 
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {DOC_CENTER_TILES.map((tile) => (
+          <Link
+            key={tile.to}
+            to={tile.to}
+            className="group flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+              <tile.icon className="h-5 w-5" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-foreground">{t(tile.labelKey)}</span>
+              <span className="block text-xs text-muted-foreground">{tile.desc}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+
+
       <Tabs defaultValue="folders" className="space-y-4">
 
         <TabsList>
