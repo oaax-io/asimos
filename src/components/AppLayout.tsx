@@ -65,12 +65,17 @@ function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="h-16 border-b border-sidebar-border p-0">
-        <Link to="/dashboard" className="flex h-16 items-center justify-center px-2">
+      <SidebarHeader className="h-16 border-b border-sidebar-border bg-[#4C487A] p-0">
+        <Link to="/dashboard" className="flex h-16 items-center justify-center px-2 isolate">
           {collapsed ? (
-            <Building2 className="h-7 w-7 text-sidebar-primary" />
+            <Building2 className="h-7 w-7 text-[#C4915C]" />
           ) : (
-            <img src={logoAsimo} alt="ASIMO" className="h-9 w-auto" />
+            <img
+              src={logoAsimo}
+              alt="ASIMO"
+              className="h-9 w-auto"
+              style={{ mixBlendMode: "lighten" }}
+            />
           )}
         </Link>
       </SidebarHeader>
@@ -98,7 +103,7 @@ function AppSidebar() {
                         isActive={active}
                         tooltip={label}
                         size="sm"
-                        className="h-8 text-sm data-[active=true]:bg-sidebar-primary/15 data-[active=true]:text-sidebar-primary"
+                        className="h-8 text-sm text-sidebar-foreground/90 hover:bg-[#4C487A] hover:text-white data-[active=true]:bg-[#4C487A] data-[active=true]:text-white"
                       >
                         <Link to={item.to}>
                           <item.icon className="h-[18px] w-[18px]" />
