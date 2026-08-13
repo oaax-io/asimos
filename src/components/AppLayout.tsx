@@ -64,7 +64,8 @@ function AppSidebar() {
       <SidebarHeader className="h-16 border-b border-sidebar-border p-0">
         <Link to="/dashboard" className="flex h-16 items-center justify-start pl-4 isolate">
           {collapsed ? (
-            <Building2 className="h-7 w-7 text-[#C4915C]" />
+            <img src={logoAsimoIconAsset.url} alt="ASIMO" className="h-7 w-7 object-contain" />
+
           ) : (
             <img
               src={logoAsimoAsset.url}
