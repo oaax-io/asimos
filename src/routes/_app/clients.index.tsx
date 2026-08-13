@@ -699,15 +699,6 @@ function ClientsPage() {
                     </TableCell>
 
                     <TableCell className="text-sm">
-                      {phone ? <a href={`tel:${phone}`} className="hover:text-primary">{phone}</a> : <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {email ? <a href={`mailto:${email}`} className="hover:text-primary">{email}</a> : <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {plzOrt || <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell className="text-sm">
                       <AssigneePicker
                         clientId={c.id}
                         assignedIds={assigneeIdsFor(c)}
