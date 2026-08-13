@@ -308,5 +308,16 @@ export function NotificationCenter() {
         </div>
       </PopoverContent>
     </Popover>
+
+    <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+      <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Benachrichtigungseinstellungen</DialogTitle>
+        </DialogHeader>
+        <NotificationPreferencesForm />
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
+
