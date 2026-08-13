@@ -194,14 +194,39 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
             <AddRelationshipDialog clientId={clientId} />
           </div>
 
-          {relationships.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Noch keine verknüpften Personen. Füge Ehepartner, Mitantragsteller
-              oder Mitinvestoren hinzu.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {relationships.map((r) => (
+          <div className="space-y-2">
+            {self && (
+              <div className="flex items-center justify-between rounded-xl border bg-muted/40 p-3">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">Dieser Kunde</Badge>
+                  <span className="font-medium">{self.full_name}</span>
+                  {self.is_family_head && (
+                    <Badge className="gap-1 bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300">
+                      <Crown className="h-3 w-3" />Hauptmitglied
+                    </Badge>
+                  )}
+                </div>
+                {!self.is_family_head && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setHead.mutate(self.id)}
+                    disabled={setHead.isPending}
+                  >
+                    <Crown className="mr-1.5 h-4 w-4" />
+                    Als Hauptmitglied
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {relationships.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Noch keine verknüpften Personen. Füge Ehepartner, Mitantragsteller
+                oder Mitinvestoren hinzu.
+              </p>
+            ) : (
+              relationships.map((r) => (
                 <div
                   key={r.id}
                   className="flex items-center justify-between rounded-xl border p-3"
@@ -212,15 +237,20 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
                         {relationshipTypeLabels[r.relationship_type]}
                       </Badge>
                       {r.related ? (
-                        <Link
-                          to="/clients/$id"
-                          params={{ id: r.related.id }}
+                        <button
+                          type="button"
+                          onClick={() => onOpenClient?.(r.related!.id)}
                           className="font-medium hover:text-primary"
                         >
                           {r.related.full_name}
-                        </Link>
+                        </button>
                       ) : (
                         <span className="text-sm text-muted-foreground">Unbekannt</span>
+                      )}
+                      {r.related?.is_family_head && (
+                        <Badge className="gap-1 bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300">
+                          <Crown className="h-3 w-3" />Hauptmitglied
+                        </Badge>
                       )}
                     </div>
                     {r.notes && (
@@ -228,11 +258,25 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
                     )}
                   </div>
                   <div className="flex items-center gap-1">
+                    {r.related && !r.related.is_family_head && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Als Hauptmitglied festlegen"
+                        onClick={() => setHead.mutate(r.related!.id)}
+                        disabled={setHead.isPending}
+                      >
+                        <Crown className="h-4 w-4" />
+                      </Button>
+                    )}
                     {r.related && (
-                      <Button asChild variant="ghost" size="icon">
-                        <Link to="/clients/$id" params={{ id: r.related.id }}>
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Kunde öffnen"
+                        onClick={() => onOpenClient?.(r.related!.id)}
+                      >
+                        <ExternalLink className="h-4 w-4" />
                       </Button>
                     )}
                     <Button
@@ -246,8 +290,9 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
                     </Button>
                   </div>
                 </div>
-              ))}
-            </div>
+              ))
+            )}
+          </div>
           )}
         </CardContent>
       </Card>
