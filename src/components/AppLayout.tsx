@@ -47,11 +47,6 @@ const NAV_GROUPS = [
     items: [
       { to: "/documents", labelKey: "nav.documents", icon: FileText },
       { to: "/media", labelKey: "nav.media", icon: ImageIcon },
-      { to: "/checklists", labelKey: "nav.checklists", icon: ListChecks },
-      { to: "/mandates", labelKey: "nav.mandates", icon: FileSignature },
-      { to: "/reservations", labelKey: "nav.reservations", icon: FileCheck2 },
-      { to: "/ndas", labelKey: "nav.ndas", icon: FileLock2 },
-      { to: "/exposes", labelKey: "nav.exposes", icon: FileBadge },
     ],
   },
 ] as const;
