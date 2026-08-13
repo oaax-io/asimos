@@ -73,16 +73,36 @@ export function NotificationCenter() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundRef = useRef(true);
   const [shake, setShake] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
 
+  useEffect(() => {
+    const stored = localStorage.getItem(SOUND_KEY);
+    const val = stored === null ? true : stored === "true";
+    setSoundEnabled(val);
+    soundRef.current = val;
+  }, []);
+
+  const toggleSound = () => {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    soundRef.current = next;
+    localStorage.setItem(SOUND_KEY, String(next));
+    if (next) playDing();
+  };
+
   const playDing = () => {
     try {
+      if (!soundRef.current) return;
       const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!Ctx) return;
       if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
+
       const ctx = audioCtxRef.current;
       if (ctx.state === "suspended") void ctx.resume();
       const now = ctx.currentTime;
