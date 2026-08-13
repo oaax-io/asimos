@@ -540,3 +540,94 @@ function EditMemberDialog({
     </Dialog>
   );
 }
+
+function AvatarResizeDialog({
+  file,
+  uploading,
+  onCancel,
+  onConfirm,
+}: {
+  file: File;
+  uploading: boolean;
+  onCancel: () => void;
+  onConfirm: (blob: Blob) => void;
+}) {
+  const [zoom, setZoom] = useState(1);
+  const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setImgUrl(url);
+    const img = new Image();
+    img.onload = () => setImgEl(img);
+    img.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const handleConfirm = async () => {
+    if (!imgEl) return;
+    const OUT = 512;
+    const BOX = 240;
+    const coverScale = Math.max(BOX / imgEl.naturalWidth, BOX / imgEl.naturalHeight);
+    const effScale = coverScale * zoom;
+    const sCrop = BOX / effScale;
+    const sx = (imgEl.naturalWidth - sCrop) / 2;
+    const sy = (imgEl.naturalHeight - sCrop) / 2;
+    const canvas = document.createElement("canvas");
+    canvas.width = OUT;
+    canvas.height = OUT;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(imgEl, sx, sy, sCrop, sCrop, 0, 0, OUT, OUT);
+    const blob: Blob | null = await new Promise((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92),
+    );
+    if (blob) onConfirm(blob);
+  };
+
+  return (
+    <Dialog open onOpenChange={(v) => !v && !uploading && onCancel()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Profilbild zuschneiden</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="mx-auto flex h-[240px] w-[240px] items-center justify-center overflow-hidden rounded-xl border bg-muted">
+            {imgUrl ? (
+              <img
+                src={imgUrl}
+                alt="Vorschau"
+                className="h-full w-full object-cover"
+                style={{ transform: `scale(${zoom})` }}
+              />
+            ) : (
+              <span className="text-sm text-muted-foreground">Lädt…</span>
+            )}
+          </div>
+          <div>
+            <Label className="mb-1 block text-sm">Zoom: {zoom.toFixed(1)}×</Label>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.05}
+              value={zoom}
+              onChange={(e) => setZoom(parseFloat(e.target.value))}
+              className="w-full accent-primary"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onCancel} disabled={uploading}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleConfirm} disabled={uploading || !imgEl}>
+              {uploading ? "Lädt…" : "Übernehmen"}
+            </Button>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
