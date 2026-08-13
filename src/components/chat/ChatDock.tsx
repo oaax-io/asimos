@@ -470,7 +470,7 @@ function ChatWindow({
               </ScrollArea>
 
               {/* Composer */}
-              <div className="relative shrink-0 border-t p-2">
+              <div className="relative shrink-0 space-y-2 border-t p-2">
                 {mentionOpen && suggestions.length > 0 && (
                   <div className="absolute bottom-full left-2 right-2 mb-1 max-h-56 overflow-y-auto rounded-md border bg-popover p-1 shadow-lg">
                     {suggestions.map((s) => (
@@ -496,7 +496,7 @@ function ChatWindow({
                 )}
 
                 {pending.length > 0 && (
-                  <div className="mb-2 flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1">
                     {pending.map((a) => (
                       <Badge key={a.path} variant="secondary" className="gap-1 text-[10px]">
                         <Paperclip className="h-3 w-3" />
@@ -509,18 +509,32 @@ function ChatWindow({
                   </div>
                 )}
 
-                <div className="flex items-end gap-1">
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={(e) => handleFiles(e.target.files)}
-                  />
+                <input
+                  ref={fileRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleFiles(e.target.files)}
+                />
+                <Textarea
+                  ref={taRef}
+                  value={draft}
+                  onChange={(e) => onDraftChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setMentionOpen(false);
+                    if (e.key === "Enter" && !e.shiftKey && !mentionOpen) {
+                      e.preventDefault();
+                      send.mutate();
+                    }
+                  }}
+                  placeholder="Nachricht schreiben…"
+                  className="min-h-[40px] max-h-28 resize-none"
+                />
+                <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 shrink-0"
+                    className="h-8 w-8 shrink-0"
                     title="Anhang"
                     disabled={uploading}
                     onClick={() => fileRef.current?.click()}
@@ -530,7 +544,7 @@ function ChatWindow({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 shrink-0"
+                    className="h-8 w-8 shrink-0"
                     title="Erwähnen"
                     onClick={() => {
                       setDraft((d) => d + "@");
@@ -541,27 +555,14 @@ function ChatWindow({
                   >
                     <AtSign className="h-4 w-4" />
                   </Button>
-                  <Textarea
-                    ref={taRef}
-                    value={draft}
-                    onChange={(e) => onDraftChange(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") setMentionOpen(false);
-                      if (e.key === "Enter" && !e.shiftKey && !mentionOpen) {
-                        e.preventDefault();
-                        send.mutate();
-                      }
-                    }}
-                    placeholder="Nachricht schreiben… @ für Erwähnungen"
-                    className="min-h-[40px] max-h-28 resize-none"
-                  />
                   <Button
-                    size="icon"
-                    className="h-9 w-9 shrink-0"
+                    size="sm"
+                    className="ml-auto gap-1.5"
                     onClick={() => send.mutate()}
                     disabled={(!draft.trim() && pending.length === 0) || send.isPending}
                   >
                     <Send className="h-4 w-4" />
+                    Senden
                   </Button>
                 </div>
               </div>
