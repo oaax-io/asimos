@@ -98,19 +98,6 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
     },
   });
 
-  const { data: self } = useQuery({
-    queryKey: ["client_family_head_self", clientId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clients")
-        .select("id, full_name, email, is_family_head")
-        .eq("id", clientId)
-        .maybeSingle();
-      if (error) throw error;
-      return data as { id: string; full_name: string; email: string | null; is_family_head: boolean } | null;
-    },
-  });
-
   const memberIds = [clientId, ...relationships.map((r) => r.related_client_id)];
 
   const setHead = useMutation({
@@ -196,31 +183,6 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
           </div>
 
           <div className="space-y-2">
-            {self && (
-              <div className="flex items-center justify-between rounded-xl border bg-muted/40 p-3">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">Dieser Kunde</Badge>
-                  <span className="font-medium">{self.full_name}</span>
-                  {self.is_family_head && (
-                    <Badge className="gap-1 bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300">
-                      <Crown className="h-3 w-3" />Hauptmitglied
-                    </Badge>
-                  )}
-                </div>
-                {!self.is_family_head && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setHead.mutate(self.id)}
-                    disabled={setHead.isPending}
-                  >
-                    <Crown className="mr-1.5 h-4 w-4" />
-                    Als Hauptmitglied
-                  </Button>
-                )}
-              </div>
-            )}
-
             {relationships.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Noch keine verknüpften Personen. Füge Ehepartner, Mitantragsteller
@@ -248,10 +210,24 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
                       ) : (
                         <span className="text-sm text-muted-foreground">Unbekannt</span>
                       )}
-                      {r.related?.is_family_head && (
+                      {r.related?.is_family_head ? (
                         <Badge className="gap-1 bg-amber-500/15 text-amber-700 border-amber-500/30 dark:text-amber-300">
                           <Crown className="h-3 w-3" />Hauptmitglied
                         </Badge>
+                      ) : (
+                        r.related && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 gap-1 px-2 text-xs"
+                            title="Als Hauptmitglied festlegen"
+                            onClick={() => setHead.mutate(r.related!.id)}
+                            disabled={setHead.isPending}
+                          >
+                            <Crown className="h-3.5 w-3.5" />
+                            Als Hauptmitglied
+                          </Button>
+                        )
                       )}
                     </div>
                     {r.notes && (
@@ -259,17 +235,6 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
                     )}
                   </div>
                   <div className="flex items-center gap-1">
-                    {r.related && !r.related.is_family_head && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="Als Hauptmitglied festlegen"
-                        onClick={() => setHead.mutate(r.related!.id)}
-                        disabled={setHead.isPending}
-                      >
-                        <Crown className="h-4 w-4" />
-                      </Button>
-                    )}
                     {r.related && (
                       <Button
                         variant="ghost"
