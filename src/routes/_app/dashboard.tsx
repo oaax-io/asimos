@@ -718,6 +718,7 @@ function DonutCard({ title, icon: Icon, to, counts, rows, loading, emptyText, fo
             </div>
           </div>
         )}
+        {footer}
       </CardContent>
     </Card>
   );
