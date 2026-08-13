@@ -452,6 +452,25 @@ function Dashboard() {
             { key: "rejected", label: t("dashboard.dossierStatus.rejected"), color: "#f43f5e" },
             { key: "cancelled", label: t("dashboard.dossierStatus.cancelled"), color: "#71717a" },
           ]}
+          footer={
+            <div className="mt-2 grid grid-cols-3 gap-1 border-t border-border/50 pt-2">
+              <div className="flex flex-col items-center gap-0.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1 py-1">
+                <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                <span className="font-display text-sm font-bold leading-none tabular-nums text-emerald-700 dark:text-emerald-400">{stats.data?.qcCounts.pass ?? 0}</span>
+                <span className="text-[9px] text-emerald-700/80 dark:text-emerald-400/80">{t("dashboard.qc.realistic")}</span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-1 py-1">
+                <AlertTriangle className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                <span className="font-display text-sm font-bold leading-none tabular-nums text-amber-700 dark:text-amber-400">{stats.data?.qcCounts.warn ?? 0}</span>
+                <span className="text-[9px] text-amber-700/80 dark:text-amber-400/80">{t("dashboard.qc.borderline")}</span>
+              </div>
+              <div className="flex flex-col items-center gap-0.5 rounded-md border border-rose-500/30 bg-rose-500/10 px-1 py-1">
+                <XCircle className="h-3 w-3 text-rose-600 dark:text-rose-400" />
+                <span className="font-display text-sm font-bold leading-none tabular-nums text-rose-700 dark:text-rose-400">{stats.data?.qcCounts.fail ?? 0}</span>
+                <span className="text-[9px] text-rose-700/80 dark:text-rose-400/80">{t("dashboard.qc.notFinanceable")}</span>
+              </div>
+            </div>
+          }
         />
       </div>
 
