@@ -102,7 +102,7 @@ export function SearchProfileDialog({
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean),
-        preferred_property_types: form.preferred_property_types,
+        preferred_property_types: form.preferred_property_types as SearchProfile["preferred_property_types"],
         budget_min: num(form.budget_min),
         budget_max: num(form.budget_max),
         rooms_min: num(form.rooms_min),
@@ -115,7 +115,7 @@ export function SearchProfileDialog({
         const { error } = await supabase.from("client_search_profiles").update(payload).eq("id", profile.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("client_search_profiles").insert(payload);
+        const { error } = await supabase.from("client_search_profiles").insert([payload]);
         if (error) throw error;
       }
     },
