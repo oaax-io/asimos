@@ -657,26 +657,8 @@ function ClientsPage() {
                                 {c.financing_status ? <p className="text-muted-foreground">{c.financing_status}</p> : null}
                               </div>
                             )}
-                            {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 && (
-                              <div className="mt-3 border-t pt-2">
-                                <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-                                  <Link2 className="h-3 w-3" />{t("clients.columns.relations")}
-                                </p>
-                                <div className="space-y-1">
-                                  {relationshipsByClient.get(c.id)!.map((rel) => {
-                                    const partner = clientInfoMap.get(rel.id);
-                                    return (
-                                      <div key={rel.id + rel.type} className="flex items-center justify-between gap-2 text-xs">
-                                        <span className="truncate">{partner?.full_name ?? t("clients.relationship.unknown")}</span>
-                                        <Badge variant="secondary" className="h-5 shrink-0 px-1.5 py-0 text-[10px]">
-                                          {relationshipLabels[rel.type] ?? rel.type}
-                                        </Badge>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
+
+
                           </HoverCardContent>
                         </HoverCard>
                         {c.is_archived && <Badge variant="outline" className="ml-1">{t("clients.archived")}</Badge>}
