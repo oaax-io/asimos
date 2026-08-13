@@ -540,6 +540,7 @@ export type Database = {
           budget_min: number | null
           client_id: string
           created_at: string
+          expires_at: string | null
           id: string
           is_active: boolean
           listing_type: Database["public"]["Enums"]["listing_type"] | null
@@ -561,6 +562,7 @@ export type Database = {
           budget_min?: number | null
           client_id: string
           created_at?: string
+          expires_at?: string | null
           id?: string
           is_active?: boolean
           listing_type?: Database["public"]["Enums"]["listing_type"] | null
@@ -582,6 +584,7 @@ export type Database = {
           budget_min?: number | null
           client_id?: string
           created_at?: string
+          expires_at?: string | null
           id?: string
           is_active?: boolean
           listing_type?: Database["public"]["Enums"]["listing_type"] | null
@@ -3183,6 +3186,7 @@ export type Database = {
         Returns: string
       }
       public_property_view: { Args: { _token: string }; Returns: Json }
+      purge_expired_search_profiles: { Args: never; Returns: number }
       self_disclosure_link_resolve: {
         Args: { _token: string }
         Returns: {

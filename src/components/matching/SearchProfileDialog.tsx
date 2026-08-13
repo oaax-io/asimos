@@ -28,7 +28,22 @@ type FormState = {
   area_max: string;
   notes: string;
   is_active: boolean;
+  duration: string;
 };
+
+const DURATIONS = [
+  { value: "0", label: "Unbegrenzt" },
+  { value: "1", label: "1 Monat" },
+  { value: "3", label: "3 Monate" },
+  { value: "6", label: "6 Monate" },
+  { value: "12", label: "12 Monate" },
+];
+
+function addMonths(months: number) {
+  const d = new Date();
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString();
+}
 
 const EMPTY: FormState = {
   client_id: "",
@@ -42,12 +57,14 @@ const EMPTY: FormState = {
   area_max: "",
   notes: "",
   is_active: true,
+  duration: "0",
 };
 
 function num(v: string) {
   const n = Number(v.replace(/'/g, "").replace(/,/g, "."));
   return v.trim() === "" || Number.isNaN(n) ? null : n;
 }
+
 
 export function SearchProfileDialog({
   open,
@@ -85,6 +102,9 @@ export function SearchProfileDialog({
         area_max: profile.area_max != null ? String(profile.area_max) : "",
         notes: profile.notes ?? "",
         is_active: profile.is_active,
+        duration: profile.expires_at ? "keep" : "0",
+
+
       });
     } else {
       setForm({ ...EMPTY, client_id: defaultClientId ?? "" });
@@ -110,7 +130,15 @@ export function SearchProfileDialog({
         area_max: num(form.area_max),
         notes: form.notes.trim() || null,
         is_active: form.is_active,
+
+        expires_at:
+          form.duration === "keep"
+            ? (profile?.expires_at ?? null)
+            : form.duration === "0"
+              ? null
+              : addMonths(Number(form.duration)),
       };
+
       if (profile) {
         const { error } = await supabase.from("client_search_profiles").update(payload).eq("id", profile.id);
         if (error) throw error;
@@ -225,6 +253,26 @@ export function SearchProfileDialog({
                 <Input inputMode="numeric" value={form.area_max} onChange={(e) => setForm((f) => ({ ...f, area_max: e.target.value }))} />
               </div>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Laufzeit</Label>
+            <Select value={form.duration} onValueChange={(v) => setForm((f) => ({ ...f, duration: v }))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {profile?.expires_at && (
+                  <SelectItem value="keep">
+                    Unverändert (bis {new Date(profile.expires_at).toLocaleDateString("de-CH")})
+                  </SelectItem>
+                )}
+                {DURATIONS.map((d) => (
+                  <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Nach Ablauf der Laufzeit wird das Suchprofil automatisch gelöscht.
+            </p>
           </div>
 
           <div className="space-y-1.5">
