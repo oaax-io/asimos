@@ -455,13 +455,6 @@ function Dashboard() {
         />
       </div>
 
-      {/* Quick-Check Verteilung */}
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        <QcChip label={t("dashboard.qc.realistic")} value={stats.data?.qcCounts.pass ?? 0} icon={CheckCircle2} tone="emerald" />
-        <QcChip label={t("dashboard.qc.borderline")} value={stats.data?.qcCounts.warn ?? 0} icon={AlertTriangle} tone="amber" />
-        <QcChip label={t("dashboard.qc.notFinanceable")} value={stats.data?.qcCounts.fail ?? 0} icon={XCircle} tone="rose" />
-      </div>
-
       {/* Matching suggestions */}
       <Card className="mt-4">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
