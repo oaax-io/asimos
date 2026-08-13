@@ -130,7 +130,15 @@ export function SearchProfileDialog({
         area_max: num(form.area_max),
         notes: form.notes.trim() || null,
         is_active: form.is_active,
+        is_active: form.is_active,
+        expires_at:
+          form.duration === "keep"
+            ? (profile?.expires_at ?? null)
+            : form.duration === "0"
+              ? null
+              : addMonths(Number(form.duration)),
       };
+
       if (profile) {
         const { error } = await supabase.from("client_search_profiles").update(payload).eq("id", profile.id);
         if (error) throw error;
