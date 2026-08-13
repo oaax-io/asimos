@@ -408,7 +408,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               )}
             </div>
           </div>
-        <section className={inDialog ? "relative overflow-hidden rounded-2xl bg-muted/70 p-6 pb-2 shadow-[var(--shadow-soft)]" : "relative overflow-hidden rounded-2xl border border-border bg-muted/70 p-6 pb-2 shadow-[var(--shadow-soft)]"}>
+        <section className={inDialog ? "relative overflow-hidden rounded-2xl bg-sidebar/15 p-6 pb-2 shadow-[var(--shadow-soft)] ring-1 ring-sidebar/20" : "relative overflow-hidden rounded-2xl border border-sidebar/25 bg-sidebar/15 p-6 pb-2 shadow-[var(--shadow-soft)] ring-1 ring-sidebar/20"}>
           {!inDialog && <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 via-primary/80 to-primary/40" />}
 
           {/* Hero */}
@@ -497,13 +497,13 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
           <TabsList className="mt-6 flex h-auto w-full flex-wrap items-center gap-1 bg-transparent p-0 shadow-none">
             <TabsTrigger
               value="overview"
-              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
               Übersicht
             </TabsTrigger>
             <TabsTrigger
               value="consulting"
-              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
               <MessageSquare className="h-4 w-4" />Beratung
               {appointments.length > 0 && (
@@ -512,13 +512,13 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             </TabsTrigger>
             <TabsTrigger
               value="disclosure"
-              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
               <ClipboardList className="h-4 w-4" />Selbstauskunft
             </TabsTrigger>
             <TabsTrigger
               value="financing"
-              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
               <FileSignature className="h-4 w-4" />Finanzierung
               {dossier?.quick_check_status && (
@@ -544,7 +544,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             </TabsTrigger>
             <TabsTrigger
               value="properties"
-              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
               <Building2 className="h-4 w-4" />Immobilien
               {(ownProperties.length + assignedProperties.length) > 0 && (
@@ -554,7 +554,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             {!inDialog && (
               <TabsTrigger
                 value="matching"
-                className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+                className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
               >
                 <Target className="h-4 w-4" />Matching
                 {matchCountDisplay > 0 && (
@@ -564,7 +564,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             )}
             <TabsTrigger
               value="documents"
-              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
               <FileText className="h-4 w-4" />Dokumente
               {documentsCount > 0 && (
@@ -573,7 +573,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             </TabsTrigger>
             <TabsTrigger
               value="activity"
-              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-muted hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:shadow-[0_0_0_1px_rgba(255,255,255,0.9),0_6px_18px_-4px_rgba(0,0,0,0.12)] hover:border-white/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
               <Activity className="h-4 w-4" />Aktivitäten
               <span className="relative flex h-2 w-2">
