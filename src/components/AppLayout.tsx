@@ -22,6 +22,7 @@ import {
 import logoAsimo from "@/assets/logo-asimo-real-estate.png";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { TeamInbox } from "@/components/TeamInbox";
 import { LanguageBootstrap } from "@/components/LanguageBootstrap";
 import { useTranslation } from "react-i18next";
 // touch
@@ -182,6 +183,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                 <MessageSquarePlus className="h-4 w-4" />
                 <span className="hidden sm:inline">{t("common.feedback")}</span>
               </Button>
+              <TeamInbox />
               <NotificationCenter />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
