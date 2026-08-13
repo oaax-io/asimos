@@ -148,6 +148,24 @@ function Dashboard() {
     },
   });
 
+  const focus = useQuery({
+    queryKey: ["dashboard", "focus"],
+    queryFn: async () => {
+      const nowIso = new Date().toISOString();
+      const [tasks, upcoming] = await Promise.all([
+        supabase.from("tasks").select("id, title, due_date, priority, status")
+          .neq("status", "done").neq("status", "cancelled")
+          .order("due_date", { ascending: true, nullsFirst: false }).limit(8),
+        supabase.from("appointments").select("id, title, starts_at, location, appointment_type")
+          .gte("starts_at", nowIso).order("starts_at").limit(8),
+      ]);
+      return {
+        tasks: unwrap(tasks).data ?? [],
+        upcoming: unwrap(upcoming).data ?? [],
+      };
+    },
+  });
+
   const pipeline = useQuery({
     queryKey: ["dashboard", "pipeline"],
     queryFn: async () => {
@@ -291,76 +309,157 @@ function Dashboard() {
         <KpiCard icon={Building2} label={t("dashboard.kpis.activeProperties")} value={kpis.data?.activeProps ?? "—"} loading={kpis.isLoading} to="/properties" />
         <KpiCard icon={FileSignature} label={t("dashboard.kpis.activeReservations")} value={kpis.data?.activeRes ?? "—"} loading={kpis.isLoading} to="/reservations" />
       </div>
-      {/* Status-Visualisierungen */}
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <StatusStackCard
+      {/* Fokus: Offene Aufgaben + bevorstehende Termine */}
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+        <Card className="lg:col-span-2 border-primary/30 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CheckSquare className="h-4 w-4 text-primary" />
+              {t("dashboard.lists.openTasks", "Offene Aufgaben")}
+              <Badge variant="secondary" className="ml-1 font-mono tabular-nums">{kpis.data?.openTasks ?? 0}</Badge>
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/tasks">{t("dashboard.pipeline.details")} <ArrowRight className="ml-1 h-3 w-3" /></Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {focus.isLoading ? (
+              <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+            ) : (focus.data?.tasks ?? []).length === 0 ? (
+              <EmptyState icon={CheckSquare} text={t("dashboard.lists.noOverdue")} />
+            ) : (
+              <div className="divide-y">
+                {(focus.data?.tasks ?? []).map((tk: any) => {
+                  const overdue = tk.due_date && new Date(tk.due_date) < new Date();
+                  return (
+                    <Link key={tk.id} to="/tasks" className="flex items-center justify-between gap-3 rounded px-1 py-2.5 first:pt-0 hover:bg-accent/40">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${
+                          tk.priority === "urgent" || tk.priority === "high" ? "bg-rose-500"
+                          : tk.priority === "normal" ? "bg-amber-500" : "bg-slate-400"}`} />
+                        <span className="truncate text-sm font-medium">{tk.title}</span>
+                      </span>
+                      {tk.due_date && (
+                        <span className={`shrink-0 text-xs tabular-nums ${overdue ? "font-semibold text-destructive" : "text-muted-foreground"}`}>
+                          {formatDate(tk.due_date)}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CalendarDays className="h-4 w-4 text-primary" />
+              {t("dashboard.lists.upcomingAppts", "Bevorstehende Termine")}
+            </CardTitle>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/appointments"><ArrowRight className="h-3 w-3" /></Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {focus.isLoading ? (
+              <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+            ) : (focus.data?.upcoming ?? []).length === 0 ? (
+              <EmptyState icon={CalendarDays} text={t("dashboard.lists.noAppts")} />
+            ) : (
+              <div className="divide-y">
+                {(focus.data?.upcoming ?? []).slice(0, 6).map((a: any) => (
+                  <Link key={a.id} to="/appointments" className="block rounded px-1 py-2 first:pt-0 hover:bg-accent/40">
+                    <p className="truncate text-sm font-medium">{a.title}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {formatDateTime(a.starts_at)}{a.location ? ` · ${a.location}` : ""}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Status-Verteilungen als Ringdiagramme */}
+      <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+        <DonutCard
           title={t("dashboard.clientStatus.title")}
           icon={Users}
           to="/clients"
           loading={stats.isLoading}
           counts={stats.data?.clientCounts ?? {}}
           emptyText={t("dashboard.pipeline.noData")}
-          detailsLabel={t("dashboard.pipeline.details")}
           rows={[
-            { key: "entwurf", label: t("dashboard.clientStatus.entwurf"), color: "bg-slate-400" },
-            { key: "pendent", label: t("dashboard.clientStatus.pendent"), color: "bg-amber-500" },
-            { key: "vollstaendig", label: t("dashboard.clientStatus.vollstaendig"), color: "bg-sky-500" },
-            { key: "finanzierung", label: t("dashboard.clientStatus.finanzierung"), color: "bg-violet-500" },
-            { key: "abgeschlossen", label: t("dashboard.clientStatus.abgeschlossen"), color: "bg-emerald-500" },
-            { key: "abgelehnt", label: t("dashboard.clientStatus.abgelehnt"), color: "bg-rose-500" },
-            { key: "storniert", label: t("dashboard.clientStatus.storniert"), color: "bg-zinc-500" },
+            { key: "entwurf", label: t("dashboard.clientStatus.entwurf"), color: "#94a3b8" },
+            { key: "pendent", label: t("dashboard.clientStatus.pendent"), color: "#f59e0b" },
+            { key: "vollstaendig", label: t("dashboard.clientStatus.vollstaendig"), color: "#0ea5e9" },
+            { key: "finanzierung", label: t("dashboard.clientStatus.finanzierung"), color: "#8b5cf6" },
+            { key: "abgeschlossen", label: t("dashboard.clientStatus.abgeschlossen"), color: "#10b981" },
+            { key: "abgelehnt", label: t("dashboard.clientStatus.abgelehnt"), color: "#f43f5e" },
+            { key: "storniert", label: t("dashboard.clientStatus.storniert"), color: "#71717a" },
           ]}
         />
-        <StatusStackCard
+        <DonutCard
+          title={t("dashboard.pipeline.properties")}
+          icon={Building2}
+          to="/properties"
+          loading={pipeline.isLoading}
+          counts={pipeline.data?.propCounts ?? {}}
+          emptyText={t("dashboard.pipeline.noData")}
+          rows={[
+            { key: "draft", label: (propertyStatusLabels as Record<string,string>)["draft"] ?? "draft", color: "#94a3b8" },
+            { key: "preparation", label: (propertyStatusLabels as Record<string,string>)["preparation"] ?? "preparation", color: "#f59e0b" },
+            { key: "available", label: (propertyStatusLabels as Record<string,string>)["available"] ?? "available", color: "#10b981" },
+            { key: "reserved", label: (propertyStatusLabels as Record<string,string>)["reserved"] ?? "reserved", color: "#6366f1" },
+            { key: "sold", label: (propertyStatusLabels as Record<string,string>)["sold"] ?? "sold", color: "#0ea5e9" },
+            { key: "rented", label: (propertyStatusLabels as Record<string,string>)["rented"] ?? "rented", color: "#14b8a6" },
+            { key: "archived", label: (propertyStatusLabels as Record<string,string>)["archived"] ?? "archived", color: "#71717a" },
+          ]}
+        />
+        <DonutCard
+          title={t("dashboard.pipeline.leads")}
+          icon={UserPlus}
+          to="/leads"
+          loading={pipeline.isLoading}
+          counts={pipeline.data?.leadCounts ?? {}}
+          emptyText={t("dashboard.pipeline.noData")}
+          rows={[
+            { key: "new", label: (leadStatusLabels as Record<string,string>)["new"] ?? "new", color: "#0ea5e9" },
+            { key: "contacted", label: (leadStatusLabels as Record<string,string>)["contacted"] ?? "contacted", color: "#6366f1" },
+            { key: "qualified", label: (leadStatusLabels as Record<string,string>)["qualified"] ?? "qualified", color: "#8b5cf6" },
+            { key: "viewing_planned", label: (leadStatusLabels as Record<string,string>)["viewing_planned"] ?? "viewing_planned", color: "#f59e0b" },
+            { key: "converted", label: (leadStatusLabels as Record<string,string>)["converted"] ?? "converted", color: "#10b981" },
+            { key: "lost", label: (leadStatusLabels as Record<string,string>)["lost"] ?? "lost", color: "#f43f5e" },
+          ]}
+        />
+        <DonutCard
           title={t("dashboard.dossierStatus.title")}
           icon={Wallet}
           to="/financing"
           loading={stats.isLoading}
           counts={stats.data?.dossierCounts ?? {}}
           emptyText={t("dashboard.pipeline.noData")}
-          detailsLabel={t("dashboard.pipeline.details")}
           rows={[
-            { key: "draft", label: t("dashboard.dossierStatus.draft"), color: "bg-slate-400" },
-            { key: "quick_check", label: t("dashboard.dossierStatus.quick_check"), color: "bg-cyan-500" },
-            { key: "documents_missing", label: t("dashboard.dossierStatus.documents_missing"), color: "bg-amber-500" },
-            { key: "ready_for_bank", label: t("dashboard.dossierStatus.ready_for_bank"), color: "bg-indigo-500" },
-            { key: "submitted_to_bank", label: t("dashboard.dossierStatus.submitted_to_bank"), color: "bg-blue-500" },
-            { key: "approved", label: t("dashboard.dossierStatus.approved"), color: "bg-emerald-500" },
-            { key: "rejected", label: t("dashboard.dossierStatus.rejected"), color: "bg-rose-500" },
-            { key: "cancelled", label: t("dashboard.dossierStatus.cancelled"), color: "bg-zinc-500" },
+            { key: "draft", label: t("dashboard.dossierStatus.draft"), color: "#94a3b8" },
+            { key: "quick_check", label: t("dashboard.dossierStatus.quick_check"), color: "#06b6d4" },
+            { key: "documents_missing", label: t("dashboard.dossierStatus.documents_missing"), color: "#f59e0b" },
+            { key: "ready_for_bank", label: t("dashboard.dossierStatus.ready_for_bank"), color: "#6366f1" },
+            { key: "submitted_to_bank", label: t("dashboard.dossierStatus.submitted_to_bank"), color: "#3b82f6" },
+            { key: "approved", label: t("dashboard.dossierStatus.approved"), color: "#10b981" },
+            { key: "rejected", label: t("dashboard.dossierStatus.rejected"), color: "#f43f5e" },
+            { key: "cancelled", label: t("dashboard.dossierStatus.cancelled"), color: "#71717a" },
           ]}
-          footer={
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-              <QcChip label={t("dashboard.qc.realistic")} value={stats.data?.qcCounts.pass ?? 0} icon={CheckCircle2} tone="emerald" />
-              <QcChip label={t("dashboard.qc.borderline")} value={stats.data?.qcCounts.warn ?? 0} icon={AlertTriangle} tone="amber" />
-              <QcChip label={t("dashboard.qc.notFinanceable")} value={stats.data?.qcCounts.fail ?? 0} icon={XCircle} tone="rose" />
-            </div>
-          }
         />
       </div>
 
-      {/* Pipeline */}
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <PipelineCard
-          title={t("dashboard.pipeline.leads")}
-          to="/leads"
-          loading={pipeline.isLoading}
-          counts={pipeline.data?.leadCounts ?? {}}
-          labels={leadStatusLabels as Record<string, string>}
-          order={["new", "contacted", "qualified", "viewing_planned", "converted", "lost"]}
-          detailsLabel={t("dashboard.pipeline.details")}
-          emptyText={t("dashboard.pipeline.noData")}
-        />
-        <PipelineCard
-          title={t("dashboard.pipeline.properties")}
-          to="/properties"
-          loading={pipeline.isLoading}
-          counts={pipeline.data?.propCounts ?? {}}
-          labels={propertyStatusLabels as Record<string, string>}
-          order={["draft", "preparation", "active", "available", "reserved", "sold", "rented", "archived"]}
-          detailsLabel={t("dashboard.pipeline.details")}
-          emptyText={t("dashboard.pipeline.noData")}
-        />
+      {/* Quick-Check Verteilung */}
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <QcChip label={t("dashboard.qc.realistic")} value={stats.data?.qcCounts.pass ?? 0} icon={CheckCircle2} tone="emerald" />
+        <QcChip label={t("dashboard.qc.borderline")} value={stats.data?.qcCounts.warn ?? 0} icon={AlertTriangle} tone="amber" />
+        <QcChip label={t("dashboard.qc.notFinanceable")} value={stats.data?.qcCounts.fail ?? 0} icon={XCircle} tone="rose" />
       </div>
 
       {/* Matching suggestions */}
@@ -410,36 +509,6 @@ function Dashboard() {
 
       {/* Tagesübersicht – kompakt unten */}
       <div className="mt-4 grid gap-3 lg:grid-cols-3">
-        <CompactList
-          title={t("dashboard.lists.todayAppts")}
-          icon={CalendarDays}
-          count={kpis.data?.todayAppts ?? undefined}
-          loading={today.isLoading}
-          empty={t("dashboard.lists.noAppts")}
-          to="/appointments"
-          items={(today.data?.appts ?? []).slice(0, 4)}
-          render={(a: any) => (
-            <Link key={a.id} to="/appointments" className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-xs hover:bg-accent/40">
-              <span className="truncate">{a.title}</span>
-              <span className="shrink-0 text-[10px] text-muted-foreground">{formatDateTime(a.starts_at).split(",").pop()?.trim()}</span>
-            </Link>
-          )}
-        />
-        <CompactList
-          title={t("dashboard.lists.overdueTasks")}
-          icon={Clock}
-          count={kpis.data?.openTasks ?? undefined}
-          loading={today.isLoading}
-          empty={t("dashboard.lists.noOverdue")}
-          to="/tasks"
-          items={(today.data?.overdue ?? []).slice(0, 4)}
-          render={(t2: any) => (
-            <Link key={t2.id} to="/tasks" className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-xs hover:bg-accent/40">
-              <span className="truncate">{t2.title}</span>
-              {t2.due_date && <span className="shrink-0 text-[10px] text-destructive">{formatDate(t2.due_date)}</span>}
-            </Link>
-          )}
-        />
         <CompactList
           title={t("dashboard.lists.newLeads")}
           icon={UserPlus}
@@ -586,6 +655,74 @@ function StatusStackCard({ title, icon: Icon, to, counts, rows, loading, footer,
             </div>
             {footer}
           </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function DonutCard({ title, icon: Icon, to, counts, rows, loading, emptyText }: {
+  title: string; icon: any; to: string; counts: Record<string, number>;
+  rows: { key: string; label: string; color: string }[]; loading?: boolean; emptyText?: string;
+}) {
+  const total = rows.reduce((a, r) => a + (counts[r.key] ?? 0), 0);
+  const R = 26, C = 2 * Math.PI * R;
+  let offset = 0;
+  const segments = rows.map((r) => {
+    const c = counts[r.key] ?? 0;
+    const frac = total > 0 ? c / total : 0;
+    const seg = { ...r, c, dash: frac * C, off: offset };
+    offset += frac * C;
+    return seg;
+  }).filter((s) => s.c > 0);
+  const visible = rows.filter((r) => (counts[r.key] ?? 0) > 0);
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between p-3 pb-1">
+        <CardTitle className="flex items-center gap-1.5 text-xs font-medium">
+          <Icon className="h-3.5 w-3.5 text-primary" />
+          {title}
+        </CardTitle>
+        <Button variant="ghost" size="sm" asChild className="h-6 w-6 p-0">
+          <Link to={to}><ArrowRight className="h-3 w-3" /></Link>
+        </Button>
+      </CardHeader>
+      <CardContent className="p-3 pt-1">
+        {loading ? (
+          <Skeleton className="mx-auto h-[70px] w-[70px] rounded-full" />
+        ) : total === 0 ? (
+          <p className="py-6 text-center text-[11px] text-muted-foreground">{emptyText ?? "Keine Daten"}</p>
+        ) : (
+          <div className="flex items-center gap-3">
+            <svg viewBox="0 0 64 64" className="h-[70px] w-[70px] shrink-0 -rotate-90">
+              <circle cx="32" cy="32" r={R} fill="none" className="stroke-muted" strokeWidth="9" />
+              {segments.map((s) => (
+                <circle key={s.key} cx="32" cy="32" r={R} fill="none" stroke={s.color} strokeWidth="9"
+                  strokeDasharray={`${s.dash} ${C - s.dash}`} strokeDashoffset={-s.off}>
+                  <title>{`${s.label}: ${s.c}`}</title>
+                </circle>
+              ))}
+              <text x="32" y="34" transform="rotate(90 32 32)" textAnchor="middle" dominantBaseline="middle"
+                className="fill-foreground font-semibold" fontSize="14">{total}</text>
+            </svg>
+            <div className="min-w-0 flex-1 space-y-0.5">
+              {visible.slice(0, 5).map((r) => {
+                const c = counts[r.key] ?? 0;
+                return (
+                  <div key={r.key} className="flex items-center justify-between gap-1.5 text-[11px]">
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: r.color }} />
+                      <span className="truncate text-muted-foreground">{r.label}</span>
+                    </span>
+                    <span className="shrink-0 font-medium tabular-nums">{c}</span>
+                  </div>
+                );
+              })}
+              {visible.length > 5 && (
+                <p className="text-[10px] text-muted-foreground">+{visible.length - 5} weitere</p>
+              )}
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
