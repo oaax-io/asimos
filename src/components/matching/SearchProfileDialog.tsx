@@ -256,6 +256,26 @@ export function SearchProfileDialog({
           </div>
 
           <div className="space-y-1.5">
+            <Label>Laufzeit</Label>
+            <Select value={form.duration} onValueChange={(v) => setForm((f) => ({ ...f, duration: v }))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {profile?.expires_at && (
+                  <SelectItem value="keep">
+                    Unverändert (bis {new Date(profile.expires_at).toLocaleDateString("de-CH")})
+                  </SelectItem>
+                )}
+                {DURATIONS.map((d) => (
+                  <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Nach Ablauf der Laufzeit wird das Suchprofil automatisch gelöscht.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
             <Label>Notizen</Label>
             <Textarea
               rows={3}
