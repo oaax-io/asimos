@@ -57,7 +57,7 @@ type Msg = {
   attachments: ChatAttachment[] | null;
   mentions: ChatMention[] | null;
 };
-type Member = { id: string; full_name: string | null; email: string | null; avatar_url: string | null };
+type Member = { id: string; full_name: string | null; email: string | null; avatar_url: string | null; presence_status?: string | null };
 
 type DockCtx = { openChat: (memberId: string) => void };
 const Ctx = createContext<DockCtx>({ openChat: () => {} });

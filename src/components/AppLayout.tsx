@@ -27,7 +27,14 @@ import { NotificationCenter } from "@/components/NotificationCenter";
 import { TeamInbox } from "@/components/TeamInbox";
 import { ChatDockProvider } from "@/components/chat/ChatDock";
 import { LanguageBootstrap } from "@/components/LanguageBootstrap";
+import { PresenceSubMenu, useMyPresence } from "@/components/presence/PresenceSubMenu";
+import { PresenceDot } from "@/components/presence/PresenceDot";
 import { useTranslation } from "react-i18next";
+
+function MyPresenceDot() {
+  const { data: status } = useMyPresence();
+  return <PresenceDot status={status} className="absolute -bottom-0.5 -right-0.5" />;
+}
 // touch
 
 const NAV_GROUPS = [
