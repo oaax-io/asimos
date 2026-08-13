@@ -486,10 +486,73 @@ function MatchingPage() {
             </div>
           ) : view === "profile" ? (
             !selectedProfile ? (
-              <EmptyState
-                title="Kein Suchprofil ausgewählt"
-                description="Wähle ein Suchprofil oder erstelle oben rechts ein neues."
-              />
+              activeProfiles.length === 0 ? (
+                <EmptyState
+                  title="Noch keine Suchprofile"
+                  description="Erstelle oben rechts ein Suchprofil."
+                />
+              ) : (
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {activeProfiles.map((p) => {
+                    const criteria = [
+                      p.listing_type === "rent" ? "Miete" : "Kauf",
+                      p.budget_min ? `ab ${formatCurrency(Number(p.budget_min))}` : null,
+                      p.budget_max ? `bis ${formatCurrency(Number(p.budget_max))}` : null,
+                      p.rooms_min ? `≥ ${p.rooms_min} Zi` : null,
+                      p.area_min ? `≥ ${p.area_min} m²` : null,
+                      ...(p.preferred_cities ?? []),
+                      ...((p.preferred_property_types ?? []) as string[]).map(
+                        (t) => propertyTypeLabels[t as keyof typeof propertyTypeLabels] ?? t,
+                      ),
+                    ].filter(Boolean) as string[];
+                    return (
+                      <Card key={p.id} className="transition hover:shadow-glow">
+                        <CardContent className="space-y-3 p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="truncate font-medium">{clientNameById.get(p.client_id)}</p>
+                              <p className="text-xs text-muted-foreground">Suchprofil</p>
+                            </div>
+                            <Badge variant="secondary" className="shrink-0 font-mono text-[10px]">
+                              {profileMatchCount(p)} Objekte
+                            </Badge>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {criteria.length === 0 ? (
+                              <span className="text-xs text-muted-foreground">Keine Kriterien hinterlegt</span>
+                            ) : (
+                              criteria.map((c) => (
+                                <Badge key={c} variant="outline" className="text-[10px]">{c}</Badge>
+                              ))
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => navigate({ search: { clientId: p.client_id, view: "profile", profileId: p.id } })}
+                            >
+                              <Target className="mr-2 h-3.5 w-3.5" />
+                              Treffer anzeigen
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditProfile(p);
+                                setProfileDialogOpen(true);
+                              }}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )
+
             ) : profileMatches.length === 0 ? (
               <EmptyState
                 title="Keine passenden Immobilien"
