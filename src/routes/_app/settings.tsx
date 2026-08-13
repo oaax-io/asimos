@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { CompanyProfileForm } from "@/components/settings/CompanyProfileForm";
@@ -22,12 +24,15 @@ export const Route = createFileRoute("/_app/settings")({ component: SettingsPage
 
 function SettingsPage() {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const search = useSearch({ strict: false });
   const currentTab = (search as any)?.tab ?? "profile";
   const [profile, setProfile] = useState({ full_name: "", phone: "" });
+  const [lang, setLang] = useState<SupportedLanguage>(
+    ((i18n.language?.slice(0, 2) as SupportedLanguage) ?? "de")
+  );
 
   const { data } = useQuery({
     queryKey: ["me"],
@@ -38,20 +43,28 @@ function SettingsPage() {
   });
 
   useEffect(() => {
-    if (data) setProfile({ full_name: data.full_name ?? "", phone: data.phone ?? "" });
+    if (data) {
+      setProfile({ full_name: data.full_name ?? "", phone: data.phone ?? "" });
+      const l = data.language as SupportedLanguage | null;
+      if (l && SUPPORTED_LANGUAGES.includes(l)) setLang(l);
+    }
   }, [data]);
 
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("profiles").update(profile).eq("id", user!.id);
+      const { error } = await supabase.from("profiles").update({ ...profile, language: lang }).eq("id", user!.id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await i18n.changeLanguage(lang);
+      try { localStorage.setItem("asimo.lang", lang); } catch {}
+      qc.setQueryData(["profile-language", user?.id], { language: lang });
       toast.success(t("settings.profile.saved"));
       qc.invalidateQueries({ queryKey: ["me"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   return (
     <>
@@ -79,12 +92,24 @@ function SettingsPage() {
               <div><Label>{t("settings.profile.email")}</Label><Input value={user?.email ?? ""} disabled /></div>
               <div><Label>{t("settings.profile.name")}</Label><Input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} /></div>
               <div><Label>{t("settings.profile.phone")}</Label><Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} /></div>
+              <div>
+                <Label>{t("common.language", "Sprache")}</Label>
+                <Select value={lang} onValueChange={(v) => setLang(v as SupportedLanguage)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SUPPORTED_LANGUAGES.map((lng) => (
+                      <SelectItem key={lng} value={lng}>{t(`languages.${lng}`)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex justify-end pt-2">
                 <Button onClick={() => save.mutate()} disabled={save.isPending}>{t("common.save")}</Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
+
 
         <TabsContent value="company">
           <div className="max-w-3xl"><CompanyProfileForm /></div>
