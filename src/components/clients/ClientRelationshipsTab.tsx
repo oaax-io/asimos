@@ -97,6 +97,48 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
     },
   });
 
+  const { data: self } = useQuery({
+    queryKey: ["client_family_head_self", clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, full_name, email, is_family_head")
+        .eq("id", clientId)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { id: string; full_name: string; email: string | null; is_family_head: boolean } | null;
+    },
+  });
+
+  const memberIds = [clientId, ...relationships.map((r) => r.related_client_id)];
+
+  const setHead = useMutation({
+    mutationFn: async (id: string) => {
+      const others = memberIds.filter((m) => m !== id);
+      if (others.length > 0) {
+        const { error } = await supabase
+          .from("clients")
+          .update({ is_family_head: false })
+          .in("id", others);
+        if (error) throw error;
+      }
+      const { error } = await supabase
+        .from("clients")
+        .update({ is_family_head: true })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Hauptmitglied festgelegt");
+      qc.invalidateQueries({ queryKey: ["client_relationships"] });
+      qc.invalidateQueries({ queryKey: ["client_family_head_self"] });
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Konnte Hauptmitglied nicht setzen"),
+  });
+
+
+
   const { data: children = [] } = useQuery({
     queryKey: ["client_children", clientId],
     queryFn: async () => {
