@@ -25,6 +25,7 @@ import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { useTranslation } from "react-i18next";
 import { AssigneeAvatars, AssigneePicker, useClientAssignees } from "@/components/clients/ClientAssignees";
+import { ClientPinButton, useClientPins } from "@/components/clients/ClientPin";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
@@ -119,6 +120,10 @@ function ClientsPage() {
     const eff = c.assigned_to ?? c.owner_id;
     return eff && employeeMap.get(eff) ? [eff] : [];
   };
+
+  const pinsMap = useClientPins();
+
+
 
   const disclosuresQuery = useQuery({
     queryKey: ["clients_disclosures_contact"],
@@ -240,6 +245,10 @@ function ClientsPage() {
       const rb = groupInfo.find(b.id);
       const la = groupInfo.groupLeader.get(ra);
       const lb = groupInfo.groupLeader.get(rb);
+      // Angepinnte Gruppen immer zuoberst
+      const pa = pinsMap.has(a.id) || (la ? pinsMap.has(la.id) : false) ? 0 : 1;
+      const pb = pinsMap.has(b.id) || (lb ? pinsMap.has(lb.id) : false) ? 0 : 1;
+      if (pa !== pb) return pa - pb;
       // Sort groups by leader created_at descending (neueste zuerst)
       const ka = la ? `${la.created}|${la.name}|${la.id}` : `${a.created_at ?? ""}|${(a.full_name ?? "").toLowerCase()}|${a.id}`;
       const kb = lb ? `${lb.created}|${lb.name}|${lb.id}` : `${b.created_at ?? ""}|${(b.full_name ?? "").toLowerCase()}|${b.id}`;
@@ -253,7 +262,7 @@ function ClientsPage() {
       if (ca !== cb) return ca > cb ? -1 : 1;
       return (a.full_name ?? "").localeCompare(b.full_name ?? "");
     });
-  }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, groupInfo, assigneesByClient]);
+  }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, groupInfo, assigneesByClient, pinsMap]);
 
   // Pagination
   const [pageSize, setPageSize] = useState<number>(20);
@@ -559,6 +568,7 @@ function ClientsPage() {
                         aria-label={t("clients.row.select")}
                         className="mt-1"
                       />
+                      <ClientPinButton clientId={c.id} color={pinsMap.get(c.id)} size="xs" />
                       <button type="button" onClick={() => setDetailId(c.id)} className="flex-1 min-w-0 text-left">
                         <p className="font-semibold hover:text-primary truncate">{c.full_name}</p>
                         <div className="mt-1 flex flex-wrap gap-1">
@@ -640,7 +650,7 @@ function ClientsPage() {
 
 
                 <TableHead>{t("clients.columns.assignedTo")}</TableHead>
-                <TableHead>{t("clients.columns.relations")}</TableHead>
+                
                 
                 <TableHead className="w-10"></TableHead>
               </TableRow>
@@ -675,6 +685,7 @@ function ClientsPage() {
                         {isPartner && (
                           <CornerDownRight className="h-4 w-4 shrink-0 text-muted-foreground ml-3" aria-hidden />
                         )}
+                        <ClientPinButton clientId={c.id} color={pinsMap.get(c.id)} />
                         <HoverCard openDelay={150} closeDelay={100}>
                           <HoverCardTrigger asChild>
                             <button type="button" onClick={() => setDetailId(c.id)} className="font-medium hover:text-primary text-left">
@@ -766,37 +777,6 @@ function ClientsPage() {
                         employees={employees as any}
                         employeeMap={employeeMap}
                       />
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {relationshipsByClient.get(c.id)!.map((rel) => {
-                            const partner = clientInfoMap.get(rel.id);
-                            return (
-                              <HoverCard key={rel.id + rel.type} openDelay={120} closeDelay={80}>
-                                <HoverCardTrigger asChild>
-                                  <Badge
-                                    variant="secondary"
-                                    className="cursor-pointer text-[10px] py-0 px-1.5 h-5"
-                                    onClick={(e) => { e.stopPropagation(); setDetailId(rel.id); }}
-                                  >
-                                    <Link2 className="mr-0.5 h-2.5 w-2.5" />
-                                    {relationshipLabels[rel.type] ?? rel.type}
-                                  </Badge>
-                                </HoverCardTrigger>
-                                <HoverCardContent className="w-64 text-sm" onClick={(e) => e.stopPropagation()}>
-                                  <p className="font-medium">{partner?.full_name ?? t("clients.relationship.unknown")}</p>
-                                  <p className="text-xs text-muted-foreground mb-2">{relationshipLabels[rel.type] ?? rel.type}</p>
-                                  {partner?.email && <p className="flex items-center gap-2 text-xs"><Mail className="h-3 w-3" />{partner.email}</p>}
-                                  {partner?.phone && <p className="flex items-center gap-2 text-xs"><Phone className="h-3 w-3" />{partner.phone}</p>}
-                                </HoverCardContent>
-                              </HoverCard>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
                     </TableCell>
                     
                     <TableCell>
