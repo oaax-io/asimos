@@ -15,7 +15,6 @@ import { BankAccountsManager } from "@/components/settings/BankAccountsManager";
 import { BrandkitForm } from "@/components/settings/BrandkitForm";
 
 import { NotificationPreferencesForm } from "@/components/settings/NotificationPreferencesForm";
-import { SubscriptionManager } from "@/components/settings/SubscriptionManager";
 import { Tags, FileSignature } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -66,12 +65,8 @@ function SettingsPage() {
           <TabsTrigger value="banks">{t("settings.tabs.banks")}</TabsTrigger>
           <TabsTrigger value="categories">{t("settings.tabs.categories")}</TabsTrigger>
           <TabsTrigger value="esign">{t("settings.tabs.esign")}</TabsTrigger>
-          <TabsTrigger value="subscription">{t("settings.tabs.subscription")}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="subscription">
-          <SubscriptionManager />
-        </TabsContent>
 
         <TabsContent value="notifications">
           <NotificationPreferencesForm />
