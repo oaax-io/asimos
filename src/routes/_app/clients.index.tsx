@@ -316,6 +316,53 @@ function ClientsPage() {
 
   const selectionCount = selected.size;
 
+  const baseList = useMemo(
+    () => clients.filter((c: any) => (archivedFilter === "active" ? !c.is_archived : archivedFilter === "archived" ? c.is_archived : true)),
+    [clients, archivedFilter],
+  );
+
+  const statTiles = useMemo(() => {
+    const countType = (v: string) => baseList.filter((c: any) => c.client_type === v).length;
+    const countStatus = (v: string) => baseList.filter((c: any) => c.status === v).length;
+    const toggleType = (v: string) => setTypeFilter((prev) => (prev === v ? ALL : v));
+    const toggleStatus = (v: string) => setStatusFilter((prev) => (prev === v ? ALL : v));
+    return [
+      {
+        key: "total", label: t("clients.stats.total", { defaultValue: "Kunden gesamt" }),
+        value: baseList.length, hint: t("clients.stats.shown", { defaultValue: "{{n}} sichtbar", n: filtered.length }),
+        icon: Users, iconClass: "bg-primary/15 text-primary", glow: "bg-primary",
+        active: typeFilter === ALL && statusFilter === ALL,
+        onClick: () => { setTypeFilter(ALL); setStatusFilter(ALL); },
+      },
+      {
+        key: "buyer", label: clientTypeLabels.buyer, value: countType("buyer"),
+        icon: ShoppingBag, iconClass: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300", glow: "bg-cyan-500",
+        active: typeFilter === "buyer", onClick: () => toggleType("buyer"),
+      },
+      {
+        key: "seller", label: clientTypeLabels.seller, value: countType("seller"),
+        icon: Home, iconClass: "bg-teal-500/15 text-teal-600 dark:text-teal-300", glow: "bg-teal-500",
+        active: typeFilter === "seller", onClick: () => toggleType("seller"),
+      },
+      {
+        key: "finanzierung", label: statusLabel("finanzierung"), value: countStatus("finanzierung"),
+        icon: Banknote, iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300", glow: "bg-violet-500",
+        active: statusFilter === "finanzierung", onClick: () => toggleStatus("finanzierung"),
+      },
+      {
+        key: "abgeschlossen", label: statusLabel("abgeschlossen"), value: countStatus("abgeschlossen"),
+        icon: CheckCircle2, iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300", glow: "bg-emerald-500",
+        active: statusFilter === "abgeschlossen", onClick: () => toggleStatus("abgeschlossen"),
+      },
+      {
+        key: "storniert", label: statusLabel("storniert"), value: countStatus("storniert"),
+        icon: Ban, iconClass: "bg-zinc-500/15 text-zinc-600 dark:text-zinc-300", glow: "bg-zinc-500",
+        active: statusFilter === "storniert", onClick: () => toggleStatus("storniert"),
+      },
+    ];
+  }, [baseList, filtered.length, typeFilter, statusFilter, t]);
+
+
   return (
     <>
       <PageHeader
