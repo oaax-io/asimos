@@ -70,6 +70,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
   const confirm = useConfirm();
   const [editOpen, setEditOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [familyClientId, setFamilyClientId] = useState<string | null>(null);
   const [visitedTabs, setVisitedTabs] = useState<string[]>(["overview"]);
 
   const qc = useQueryClient();
