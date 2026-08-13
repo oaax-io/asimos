@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
@@ -57,7 +57,7 @@ function TeamPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email, phone, role, created_at")
+        .select("id, full_name, email, phone, role, avatar_url, created_at")
         .order("created_at", { ascending: true });
       if (error) throw error;
       const { data: roles } = await supabase.from("user_roles").select("user_id, role");
@@ -194,7 +194,10 @@ function TeamPage() {
             <Card key={m.id} className="transition hover:shadow-glow">
               <CardContent className="p-5">
                 <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials(m.full_name, m.email)}</AvatarFallback></Avatar>
+                  <Avatar className="h-10 w-10">
+                    {m.avatar_url ? <AvatarImage src={m.avatar_url} alt={m.full_name || m.email || "Profilbild"} /> : null}
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">{initials(m.full_name, m.email)}</AvatarFallback>
+                  </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{m.full_name || m.email}</p>
                     <Badge variant="secondary" className={`mt-1 ${m.isSystemowner ? "bg-purple-500/15 text-purple-700 border-purple-500/20" : ""}`}>
