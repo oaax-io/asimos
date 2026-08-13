@@ -29,6 +29,8 @@ import { ChatDockProvider } from "@/components/chat/ChatDock";
 import { LanguageBootstrap } from "@/components/LanguageBootstrap";
 import { PresenceSubMenu, useMyPresence } from "@/components/presence/PresenceSubMenu";
 import { PresenceDot } from "@/components/presence/PresenceDot";
+import { useAutoPresence } from "@/hooks/useAutoPresence";
+
 import { useTranslation } from "react-i18next";
 
 function MyPresenceDot() {
@@ -144,6 +146,10 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
+
+  useAutoPresence();
+
+
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
