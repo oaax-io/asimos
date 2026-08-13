@@ -302,9 +302,12 @@ export function TeamInbox() {
                 <AvatarImage src={activeMember?.avatar_url ?? undefined} />
                 <AvatarFallback className="text-xs">{initialsOf(activeMember)}</AvatarFallback>
               </Avatar>
-              <span className="truncate text-sm font-semibold">
+              <span className="flex-1 truncate text-sm font-semibold">
                 {activeMember?.full_name ?? activeMember?.email ?? "Unterhaltung"}
               </span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" title="Vergrössern" onClick={openExpanded}>
+                <Maximize2 className="h-4 w-4" />
+              </Button>
             </div>
             <ScrollArea className="flex-1">
               <div className="space-y-2 p-3">
