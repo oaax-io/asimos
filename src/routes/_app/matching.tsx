@@ -63,6 +63,43 @@ function MatchingPage() {
         .order("created_at", { ascending: false })
       ).data ?? [],
   });
+  const { data: subscriptions = [] } = useQuery({
+    queryKey: ["search_profile_subscriptions", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () =>
+      (await supabase
+        .from("search_profile_subscriptions")
+        .select("id,profile_id")
+        .eq("user_id", user!.id)
+      ).data ?? [],
+  });
+  const subscribedIds = useMemo(
+    () => new Set((subscriptions as any[]).map((s) => s.profile_id)),
+    [subscriptions],
+  );
+  const toggleSubscription = useMutation({
+    mutationFn: async (pid: string) => {
+      if (subscribedIds.has(pid)) {
+        const { error } = await supabase
+          .from("search_profile_subscriptions")
+          .delete()
+          .eq("profile_id", pid)
+          .eq("user_id", user!.id);
+        if (error) throw error;
+        return false;
+      }
+      const { error } = await supabase
+        .from("search_profile_subscriptions")
+        .insert({ profile_id: pid, user_id: user!.id });
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: (subscribed) => {
+      qc.invalidateQueries({ queryKey: ["search_profile_subscriptions"] });
+      toast.success(subscribed ? "Suchprofil abonniert" : "Abo entfernt");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Fehler"),
+  });
   const { data: media = [] } = useQuery({
     queryKey: ["property_media_min"],
     queryFn: async () =>
