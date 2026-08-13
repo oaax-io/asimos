@@ -654,9 +654,10 @@ function StatusStackCard({ title, icon: Icon, to, counts, rows, loading, footer,
   );
 }
 
-function DonutCard({ title, icon: Icon, to, counts, rows, loading, emptyText }: {
+function DonutCard({ title, icon: Icon, to, counts, rows, loading, emptyText, footer }: {
   title: string; icon: any; to: string; counts: Record<string, number>;
   rows: { key: string; label: string; color: string }[]; loading?: boolean; emptyText?: string;
+  footer?: React.ReactNode;
 }) {
   const total = rows.reduce((a, r) => a + (counts[r.key] ?? 0), 0);
   const R = 26, C = 2 * Math.PI * R;
