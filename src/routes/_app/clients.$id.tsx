@@ -411,6 +411,9 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             )}
             <div className="flex gap-2">
               <ClientQuickActions client={client} />
+              <Button variant="outline" size="sm" disabled title="Beratung (Demnächst verfügbar)">
+                <FileSignature className="mr-1.5 h-4 w-4" />Beratung
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="mr-1.5 h-4 w-4" />Kunde bearbeiten
               </Button>
