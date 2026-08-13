@@ -403,7 +403,7 @@ function EditMemberDialog({
               <Avatar className="h-16 w-16">
                 {avatarUrl ? <AvatarImage src={avatarUrl} alt={form.full_name || "Profilbild"} /> : null}
                 <AvatarFallback className="bg-primary text-primary-foreground">
-                  {(form.full_name || form.email || "?").split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase()}
+                  {String(form.full_name || form.email || "?").split(" ").map((s: string) => s[0]).slice(0, 2).join("").toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 space-y-2">
