@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard, Users, UserPlus, Building2, Calendar, Target,
   Settings, LogOut, Search, Shield, Users2, CheckSquare, FileText,
-  Image as ImageIcon, ListChecks, FileSignature, FileCheck2, FileBadge, FileLock2,
+  Image as ImageIcon,
   Banknote, BarChart3, MessageSquarePlus, BookOpen,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -47,11 +47,6 @@ const NAV_GROUPS = [
     items: [
       { to: "/documents", labelKey: "nav.documents", icon: FileText },
       { to: "/media", labelKey: "nav.media", icon: ImageIcon },
-      { to: "/checklists", labelKey: "nav.checklists", icon: ListChecks },
-      { to: "/mandates", labelKey: "nav.mandates", icon: FileSignature },
-      { to: "/reservations", labelKey: "nav.reservations", icon: FileCheck2 },
-      { to: "/ndas", labelKey: "nav.ndas", icon: FileLock2 },
-      { to: "/exposes", labelKey: "nav.exposes", icon: FileBadge },
     ],
   },
 ] as const;

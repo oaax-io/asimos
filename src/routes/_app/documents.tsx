@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Search, Trash2, Upload, ExternalLink, HardDrive, LayoutTemplate } from "lucide-react";
+import { FileText, Download, Search, Trash2, Upload, ExternalLink, HardDrive, LayoutTemplate, ListChecks, FileSignature, FileCheck2, FileLock2, FileBadge } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +40,14 @@ function formatBytes(bytes: number | null | undefined) {
 }
 
 const MAX_STORAGE = 20 * 1024 * 1024 * 1024; // 20 GB
+
+const DOC_CENTER_TILES = [
+  { to: "/checklists", labelKey: "nav.checklists", icon: ListChecks, desc: "Abläufe & Aufgabenlisten" },
+  { to: "/mandates", labelKey: "nav.mandates", icon: FileSignature, desc: "Vermarktungsaufträge" },
+  { to: "/reservations", labelKey: "nav.reservations", icon: FileCheck2, desc: "Reservationsverträge" },
+  { to: "/ndas", labelKey: "nav.ndas", icon: FileLock2, desc: "Vertraulichkeitserklärungen" },
+  { to: "/exposes", labelKey: "nav.exposes", icon: FileBadge, desc: "Objekt-Exposés" },
+] as const;
 
 function DocumentsPage() {
   const { t } = useTranslation();
@@ -334,6 +342,25 @@ function DocumentsPage() {
           </div>
         );
       })()}
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {DOC_CENTER_TILES.map((tile) => (
+          <Link
+            key={tile.to}
+            to={tile.to}
+            className="group flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+              <tile.icon className="h-5 w-5" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-foreground">{t(tile.labelKey)}</span>
+              <span className="block text-xs text-muted-foreground">{tile.desc}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+
 
       <Tabs defaultValue="folders" className="space-y-4">
 
