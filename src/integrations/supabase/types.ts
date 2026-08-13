@@ -2429,6 +2429,8 @@ export type Database = {
           is_active: boolean
           language: string
           phone: string | null
+          presence_status: string
+          presence_updated_at: string
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
           user_role: Database["public"]["Enums"]["user_role"]
@@ -2443,6 +2445,8 @@ export type Database = {
           is_active?: boolean
           language?: string
           phone?: string | null
+          presence_status?: string
+          presence_updated_at?: string
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_role?: Database["public"]["Enums"]["user_role"]
@@ -2457,6 +2461,8 @@ export type Database = {
           is_active?: boolean
           language?: string
           phone?: string | null
+          presence_status?: string
+          presence_updated_at?: string
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_role?: Database["public"]["Enums"]["user_role"]
