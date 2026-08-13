@@ -559,7 +559,12 @@ function MatchingPage() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="truncate font-medium">{clientNameById.get(p.client_id)}</p>
-                              <p className="text-xs text-muted-foreground">Suchprofil</p>
+                              <p className="text-xs text-muted-foreground">
+                                {p.expires_at
+                                  ? `Läuft ab am ${new Date(p.expires_at).toLocaleDateString("de-CH")}`
+                                  : "Unbefristet"}
+                              </p>
+
                             </div>
                             <Badge variant="secondary" className="shrink-0 font-mono text-[10px]">
                               {profileMatchCount(p)} Objekte
