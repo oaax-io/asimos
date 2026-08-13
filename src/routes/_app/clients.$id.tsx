@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,9 @@ import {
   ArrowLeft, Mail, Phone, Trash2, RefreshCw, Pencil, FileSignature,
   Calendar, Target, Home, MapPin, Banknote, Ruler, BedDouble, Building2, MessageSquare,
   CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
-  ClipboardList, Heart, X, User, Users, Upload, ChevronLeft, ChevronRight, Circle,
+  ClipboardList, Heart, X, User, Users, Upload, ChevronLeft, ChevronRight, Circle, Crown,
 } from "lucide-react";
+import { AssigneeAvatars, type EmployeeLite } from "@/components/clients/ClientAssignees";
 import {
   clientTypeLabels, formatCurrency, formatDate, formatDateTime,
   propertyTypeLabels, propertyStatusLabels, listingTypeLabels, apptTypeLabels,
@@ -282,6 +283,26 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
   });
   const ownerLabel = ownerProfile?.full_name || ownerProfile?.email || null;
 
+  // Ansprechpartner (Mehrfachzuweisung) mit Profilbild
+  const { data: assigneeData } = useQuery({
+    queryKey: ["client_assignee_profiles", id],
+    enabled: canLoadProtectedData && !!id,
+    retry: false,
+    queryFn: async () => {
+      const { data: rows } = await supabase.from("client_assignees").select("user_id").eq("client_id", id);
+      const ids = Array.from(new Set([...(rows ?? []).map((r: any) => r.user_id), ...(ownerUserId ? [ownerUserId] : [])]));
+      if (!ids.length) return { ids: [] as string[], people: [] as EmployeeLite[] };
+      const { data: profs } = await supabase.from("profiles").select("id,full_name,email,avatar_url").in("id", ids);
+      return { ids, people: (profs ?? []) as EmployeeLite[] };
+    },
+  });
+  const assigneeIds = assigneeData?.ids ?? [];
+  const assigneeMap = useMemo(
+    () => new Map((assigneeData?.people ?? []).map((p) => [p.id, p])),
+    [assigneeData],
+  );
+
+
   const del = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("clients").delete().eq("id", id);
@@ -453,8 +474,18 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
                   <Badge className="bg-amber-500 hover:bg-amber-500">Aktive Reservation</Badge>
                 )}
               </div>
-              <h1 className="mt-2 font-display text-3xl font-bold">{client.full_name}</h1>
-              <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <div className="mt-2 flex items-center gap-2">
+                <h1 className="font-display text-3xl font-bold">{client.full_name}</h1>
+                {(client as any).is_family_head && (
+                  <span
+                    title="Hauptmitglied der Familie"
+                    className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-300"
+                  >
+                    <Crown className="h-3.5 w-3.5" />Hauptmitglied
+                  </span>
+                )}
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 {client.email && (
                   <a href={`mailto:${client.email}`} className="flex items-center gap-1.5 hover:text-primary">
                     <Mail className="h-4 w-4" />{client.email}
@@ -468,11 +499,17 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
                 <span className="flex items-center gap-1.5">
                   <Calendar className="h-4 w-4" />Angelegt {formatDate(client.created_at)}
                 </span>
-                {ownerLabel && (
+                {assigneeIds.length > 0 ? (
+                  <span className="flex items-center gap-2">
+                    <User className="h-4 w-4" />Ansprechpartner:
+                    <AssigneeAvatars ids={assigneeIds} employeeMap={assigneeMap} size="xs" />
+                  </span>
+                ) : ownerLabel ? (
                   <span className="flex items-center gap-1.5">
                     <User className="h-4 w-4" />Ansprechpartner: {ownerLabel}
                   </span>
-                )}
+                ) : null}
+
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
