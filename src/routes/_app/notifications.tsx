@@ -91,8 +91,8 @@ const FILTERS = [
 
 export const Route = createFileRoute("/_app/notifications")({
   head: () => ({
-    titles: ["Benachrichtigungen", "ASIMO CRM"],
     meta: [
+      { title: "Benachrichtigungen – ASIMO CRM" },
       { name: "description", content: "Alle Benachrichtigungen im Überblick – ASIMO CRM." },
     ],
   }),
