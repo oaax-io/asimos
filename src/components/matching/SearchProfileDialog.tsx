@@ -28,7 +28,22 @@ type FormState = {
   area_max: string;
   notes: string;
   is_active: boolean;
+  duration: string;
 };
+
+const DURATIONS = [
+  { value: "0", label: "Unbegrenzt" },
+  { value: "1", label: "1 Monat" },
+  { value: "3", label: "3 Monate" },
+  { value: "6", label: "6 Monate" },
+  { value: "12", label: "12 Monate" },
+];
+
+function addMonths(months: number) {
+  const d = new Date();
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString();
+}
 
 const EMPTY: FormState = {
   client_id: "",
@@ -42,12 +57,14 @@ const EMPTY: FormState = {
   area_max: "",
   notes: "",
   is_active: true,
+  duration: "0",
 };
 
 function num(v: string) {
   const n = Number(v.replace(/'/g, "").replace(/,/g, "."));
   return v.trim() === "" || Number.isNaN(n) ? null : n;
 }
+
 
 export function SearchProfileDialog({
   open,
