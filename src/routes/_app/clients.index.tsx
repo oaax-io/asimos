@@ -140,34 +140,6 @@ function ClientsPage() {
     return m;
   }, [disclosuresQuery.data]);
 
-  const relationshipsQuery = useQuery({
-    queryKey: ["clients_relationships_all"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("client_relationships")
-        .select("client_id, related_client_id, relationship_type");
-      return data ?? [];
-    },
-  });
-  const relationshipLabels: Record<string, string> = {
-    spouse: t("clients.relationship.spouse"),
-    co_applicant: t("clients.relationship.co_applicant"),
-    co_investor: t("clients.relationship.co_investor"),
-    other: t("clients.relationship.other"),
-  };
-  const relationshipsByClient = useMemo(() => {
-    const m = new Map<string, Array<{ id: string; type: string }>>();
-    const push = (key: string, val: { id: string; type: string }) => {
-      if (!m.has(key)) m.set(key, []);
-      const arr = m.get(key)!;
-      if (!arr.some((x) => x.id === val.id)) arr.push(val);
-    };
-    (relationshipsQuery.data ?? []).forEach((r: any) => {
-      push(r.client_id, { id: r.related_client_id, type: r.relationship_type });
-      push(r.related_client_id, { id: r.client_id, type: r.relationship_type });
-    });
-    return m;
-  }, [relationshipsQuery.data]);
   const clientNameMap = useMemo(() => {
     const m = new Map<string, string>();
     clients.forEach((c: any) => m.set(c.id, c.full_name));
@@ -182,39 +154,6 @@ function ClientsPage() {
   const showError = clientsQuery.error && !isBackendUnavailableError(clientsQuery.error);
   const queryErrorMessage = showError ? getBackendErrorMessage(clientsQuery.error) : null;
 
-  // Union-Find: group linked partners so they appear together in the list
-  const groupInfo = useMemo(() => {
-    const parent = new Map<string, string>();
-    const find = (x: string): string => {
-      const p = parent.get(x) ?? x;
-      if (p === x) return x;
-      const r = find(p);
-      parent.set(x, r);
-      return r;
-    };
-    const union = (a: string, b: string) => {
-      const ra = find(a), rb = find(b);
-      if (ra !== rb) parent.set(ra, rb);
-    };
-    clients.forEach((c: any) => { if (!parent.has(c.id)) parent.set(c.id, c.id); });
-    (relationshipsQuery.data ?? []).forEach((r: any) => {
-      if (parent.has(r.client_id) && parent.has(r.related_client_id)) union(r.client_id, r.related_client_id);
-    });
-    const groupSize = new Map<string, number>();
-    const groupLeader = new Map<string, { id: string; created: string; name: string }>();
-    clients.forEach((c: any) => {
-      const root = find(c.id);
-      groupSize.set(root, (groupSize.get(root) ?? 0) + 1);
-      const created = c.created_at ?? "";
-      const name = (c.full_name ?? "").toLowerCase();
-      const cur = groupLeader.get(root);
-      // Leader = latest created_at (neueste zuerst); tie-break by name
-      if (!cur || created > cur.created || (created === cur.created && name < cur.name)) {
-        groupLeader.set(root, { id: c.id, created, name });
-      }
-    });
-    return { find, groupSize, groupLeader };
-  }, [clients, relationshipsQuery.data]);
 
   const filtered = useMemo(() => {
     const list = clients.filter((c: any) => {
