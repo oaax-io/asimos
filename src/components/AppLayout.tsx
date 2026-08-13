@@ -20,6 +20,8 @@ import {
   SidebarProvider, SidebarTrigger, SidebarInset, useSidebar,
 } from "@/components/ui/sidebar";
 import logoAsimoAsset from "@/assets/logo-asimo-2027.png.asset.json";
+import logoAsimoIconAsset from "@/assets/logo-asimo-icon.png.asset.json";
+
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { TeamInbox } from "@/components/TeamInbox";
@@ -64,7 +66,8 @@ function AppSidebar() {
       <SidebarHeader className="h-16 border-b border-sidebar-border p-0">
         <Link to="/dashboard" className="flex h-16 items-center justify-start pl-4 isolate">
           {collapsed ? (
-            <Building2 className="h-7 w-7 text-[#C4915C]" />
+            <img src={logoAsimoIconAsset.url} alt="ASIMO" className="h-7 w-7 object-contain" />
+
           ) : (
             <img
               src={logoAsimoAsset.url}
