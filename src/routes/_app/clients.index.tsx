@@ -638,9 +638,7 @@ function ClientsPage() {
                 <TableHead>{t("clients.columns.status")}</TableHead>
                 <TableHead>{t("clients.columns.type")}</TableHead>
 
-                <TableHead>{t("clients.columns.phone")}</TableHead>
-                <TableHead>{t("clients.columns.email")}</TableHead>
-                <TableHead>{t("clients.columns.city")}</TableHead>
+
                 <TableHead>{t("clients.columns.assignedTo")}</TableHead>
                 <TableHead>{t("clients.columns.relations")}</TableHead>
                 
