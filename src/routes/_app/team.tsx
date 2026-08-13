@@ -429,9 +429,17 @@ function EditMemberDialog({
                     <Button variant="ghost" size="sm" onClick={removeAvatar}>Entfernen</Button>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">JPG oder PNG, max. 5 MB.</p>
+                <p className="text-xs text-muted-foreground">JPG oder PNG, max. 5 MB. Nach Auswahl kannst du das Bild zuschneiden und skalieren.</p>
               </div>
             </div>
+            {pendingFile && (
+              <AvatarResizeDialog
+                file={pendingFile}
+                uploading={uploading}
+                onCancel={() => setPendingFile(null)}
+                onConfirm={(blob) => uploadAvatar(blob, "jpg")}
+              />
+            )}
             <div><Label>Name</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
