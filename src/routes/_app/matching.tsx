@@ -11,9 +11,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { matchClientToProperties, scoreMatch, type ScoreBreakdown, type FinancialCapacity } from "@/lib/matching";
 import { formatCurrency, clientTypeLabels, propertyTypeLabels } from "@/lib/format";
-import { Sparkles, ExternalLink, Users, Search, Target, Plus, Pencil } from "lucide-react";
+import { Sparkles, ExternalLink, Users, Search, Target, Plus, Pencil, Bell, BellRing } from "lucide-react";
 import { SearchProfileDialog, type SearchProfile } from "@/components/matching/SearchProfileDialog";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 import { EmptyState } from "@/components/EmptyState";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -41,6 +42,7 @@ function MatchingPage() {
   const { clientId, view, profileId } = Route.useSearch();
   const navigate = Route.useNavigate();
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [query, setQuery] = useState("");
   const [minScore, setMinScore] = useState(60);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
@@ -62,6 +64,43 @@ function MatchingPage() {
         .select("*")
         .order("created_at", { ascending: false })
       ).data ?? [],
+  });
+  const { data: subscriptions = [] } = useQuery({
+    queryKey: ["search_profile_subscriptions", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () =>
+      (await supabase
+        .from("search_profile_subscriptions")
+        .select("id,profile_id")
+        .eq("user_id", user!.id)
+      ).data ?? [],
+  });
+  const subscribedIds = useMemo(
+    () => new Set((subscriptions as any[]).map((s) => s.profile_id)),
+    [subscriptions],
+  );
+  const toggleSubscription = useMutation({
+    mutationFn: async (pid: string) => {
+      if (subscribedIds.has(pid)) {
+        const { error } = await supabase
+          .from("search_profile_subscriptions")
+          .delete()
+          .eq("profile_id", pid)
+          .eq("user_id", user!.id);
+        if (error) throw error;
+        return false;
+      }
+      const { error } = await supabase
+        .from("search_profile_subscriptions")
+        .insert({ profile_id: pid, user_id: user!.id });
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: (subscribed) => {
+      qc.invalidateQueries({ queryKey: ["search_profile_subscriptions"] });
+      toast.success(subscribed ? "Suchprofil abonniert" : "Abo entfernt");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Fehler"),
   });
   const { data: media = [] } = useQuery({
     queryKey: ["property_media_min"],
@@ -539,6 +578,15 @@ function MatchingPage() {
                             >
                               <Target className="mr-2 h-3.5 w-3.5" />
                               Treffer anzeigen
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={subscribedIds.has(p.id) ? "default" : "outline"}
+                              title={subscribedIds.has(p.id) ? "Abo beenden" : "Treffer abonnieren"}
+                              disabled={!user?.id || toggleSubscription.isPending}
+                              onClick={() => toggleSubscription.mutate(p.id)}
+                            >
+                              {subscribedIds.has(p.id) ? <BellRing className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
                             </Button>
                             <Button
                               size="sm"

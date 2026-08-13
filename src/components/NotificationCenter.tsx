@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, Check, CheckCheck, Calendar, CheckSquare, UserPlus, Info } from "lucide-react";
+import { Bell, Check, CheckCheck, Calendar, CheckSquare, UserPlus, Info, Target } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
   appointment: Calendar,
   task: CheckSquare,
   lead: UserPlus,
+  match: Target,
 };
 
 const TYPE_STYLES: Record<string, { icon: string; iconUnread: string; accent: string; unreadBg: string }> = {
@@ -41,6 +42,12 @@ const TYPE_STYLES: Record<string, { icon: string; iconUnread: string; accent: st
     iconUnread: "bg-amber-500 text-white",
     accent: "border-l-amber-500",
     unreadBg: "bg-amber-50/70 dark:bg-amber-950/20",
+  },
+  match: {
+    icon: "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300",
+    iconUnread: "bg-violet-500 text-white",
+    accent: "border-l-violet-500",
+    unreadBg: "bg-violet-50/70 dark:bg-violet-950/20",
   },
   lead: {
     icon: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
