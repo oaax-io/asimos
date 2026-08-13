@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { matchClientToProperties, scoreMatch, type ScoreBreakdown, type FinancialCapacity } from "@/lib/matching";
 import { formatCurrency, clientTypeLabels, propertyTypeLabels } from "@/lib/format";
-import { Sparkles, ExternalLink, Users, Search, Target, Plus, Pencil } from "lucide-react";
+import { Sparkles, ExternalLink, Users, Search, Target, Plus, Pencil, Bell, BellRing } from "lucide-react";
 import { SearchProfileDialog, type SearchProfile } from "@/components/matching/SearchProfileDialog";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
@@ -578,6 +578,15 @@ function MatchingPage() {
                             >
                               <Target className="mr-2 h-3.5 w-3.5" />
                               Treffer anzeigen
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={subscribedIds.has(p.id) ? "default" : "outline"}
+                              title={subscribedIds.has(p.id) ? "Abo beenden" : "Treffer abonnieren"}
+                              disabled={!user?.id || toggleSubscription.isPending}
+                              onClick={() => toggleSubscription.mutate(p.id)}
+                            >
+                              {subscribedIds.has(p.id) ? <BellRing className="h-3.5 w-3.5" /> : <Bell className="h-3.5 w-3.5" />}
                             </Button>
                             <Button
                               size="sm"
