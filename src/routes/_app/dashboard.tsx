@@ -21,7 +21,7 @@ import {
   propertyStatusLabels, propertyTypeLabels, leadStatusLabels,
 } from "@/lib/format";
 import { isBackendUnavailableError } from "@/lib/backend-errors";
-import { SubscriptionBanner } from "@/components/SubscriptionBanner";
+
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/dashboard")({
@@ -235,7 +235,6 @@ function Dashboard() {
 
   return (
     <>
-      <SubscriptionBanner />
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-bold tracking-tight">
