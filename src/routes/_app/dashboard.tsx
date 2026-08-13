@@ -235,7 +235,7 @@ function Dashboard() {
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+      <div className="mb-4 flex w-full items-center justify-between gap-3 rounded-2xl border border-border/60 bg-muted/50 px-5 py-4 shadow-sm backdrop-blur">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-bold tracking-tight">
             {t(getGreetingKey())}{displayName ? `, ${displayName}` : ""} 👋
@@ -246,7 +246,7 @@ function Dashboard() {
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="sm">
+            <Button size="sm" className="shrink-0">
               <Plus className="mr-1 h-4 w-4" />
               {t("dashboard.quickActions")}
               <ChevronDown className="ml-1 h-4 w-4 opacity-70" />
