@@ -246,6 +246,19 @@ export function NotificationCenter() {
             </ul>
           )}
         </ScrollArea>
+        <div className="border-t p-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-center gap-1.5 text-xs font-medium text-primary hover:text-primary"
+            onClick={() => {
+              setOpen(false);
+              navigate({ to: "/notifications" as never });
+            }}
+          >
+            Alle ansehen
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

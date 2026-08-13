@@ -23,6 +23,7 @@ import { Route as AppTeamRouteImport } from './routes/_app/team'
 import { Route as AppTasksRouteImport } from './routes/_app/tasks'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppReservationsRouteImport } from './routes/_app/reservations'
+import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
 import { Route as AppNdasRouteImport } from './routes/_app/ndas'
 import { Route as AppMediaRouteImport } from './routes/_app/media'
 import { Route as AppMatchingRouteImport } from './routes/_app/matching'
@@ -118,6 +119,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppReservationsRoute = AppReservationsRouteImport.update({
   id: '/reservations',
   path: '/reservations',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
 const AppNdasRoute = AppNdasRouteImport.update({
@@ -278,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/matching': typeof AppMatchingRoute
   '/media': typeof AppMediaRoute
   '/ndas': typeof AppNdasRoute
+  '/notifications': typeof AppNotificationsRoute
   '/reservations': typeof AppReservationsRoute
   '/settings': typeof AppSettingsRoute
   '/tasks': typeof AppTasksRoute
@@ -318,6 +325,7 @@ export interface FileRoutesByTo {
   '/matching': typeof AppMatchingRoute
   '/media': typeof AppMediaRoute
   '/ndas': typeof AppNdasRoute
+  '/notifications': typeof AppNotificationsRoute
   '/reservations': typeof AppReservationsRoute
   '/settings': typeof AppSettingsRoute
   '/tasks': typeof AppTasksRoute
@@ -362,6 +370,7 @@ export interface FileRoutesById {
   '/_app/matching': typeof AppMatchingRoute
   '/_app/media': typeof AppMediaRoute
   '/_app/ndas': typeof AppNdasRoute
+  '/_app/notifications': typeof AppNotificationsRoute
   '/_app/reservations': typeof AppReservationsRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/tasks': typeof AppTasksRoute
@@ -406,6 +415,7 @@ export interface FileRouteTypes {
     | '/matching'
     | '/media'
     | '/ndas'
+    | '/notifications'
     | '/reservations'
     | '/settings'
     | '/tasks'
@@ -446,6 +456,7 @@ export interface FileRouteTypes {
     | '/matching'
     | '/media'
     | '/ndas'
+    | '/notifications'
     | '/reservations'
     | '/settings'
     | '/tasks'
@@ -489,6 +500,7 @@ export interface FileRouteTypes {
     | '/_app/matching'
     | '/_app/media'
     | '/_app/ndas'
+    | '/_app/notifications'
     | '/_app/reservations'
     | '/_app/settings'
     | '/_app/tasks'
@@ -624,6 +636,13 @@ declare module '@tanstack/react-router' {
       path: '/reservations'
       fullPath: '/reservations'
       preLoaderRoute: typeof AppReservationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notifications': {
+      id: '/_app/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/ndas': {
@@ -886,6 +905,7 @@ interface AppRouteChildren {
   AppMatchingRoute: typeof AppMatchingRoute
   AppMediaRoute: typeof AppMediaRoute
   AppNdasRoute: typeof AppNdasRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
   AppReservationsRoute: typeof AppReservationsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTasksRoute: typeof AppTasksRoute
@@ -913,6 +933,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMatchingRoute: AppMatchingRoute,
   AppMediaRoute: AppMediaRoute,
   AppNdasRoute: AppNdasRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
   AppReservationsRoute: AppReservationsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTasksRoute: AppTasksRoute,
