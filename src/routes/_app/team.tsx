@@ -288,6 +288,44 @@ function EditMemberDialog({
   const [pw, setPw] = useState("");
   const [generatedPw, setGeneratedPw] = useState<string | null>(null);
   const [resetLink, setResetLink] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(member.avatar_url ?? null);
+  const [uploading, setUploading] = useState(false);
+
+  const uploadAvatar = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Bitte eine Bilddatei auswählen");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Maximale Dateigrösse: 5 MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `avatars/${member.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("brand-assets").upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("brand-assets").getPublicUrl(path);
+      const { error: dbErr } = await supabase.from("profiles").update({ avatar_url: pub.publicUrl }).eq("id", member.id);
+      if (dbErr) throw dbErr;
+      setAvatarUrl(pub.publicUrl);
+      toast.success("Profilbild aktualisiert");
+      onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload fehlgeschlagen");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeAvatar = async () => {
+    const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", member.id);
+    if (error) { toast.error(error.message); return; }
+    setAvatarUrl(null);
+    toast.success("Profilbild entfernt");
+    onSaved();
+  };
 
   const allowedRoles: (typeof ROLES)[number][] = isSuperadmin
     ? [...ROLES]
