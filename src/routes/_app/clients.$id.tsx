@@ -780,7 +780,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
                   <p className="text-xs text-muted-foreground">Auf Basis von Budget, Lage und Eckdaten aus Selbstauskunft & Profil.</p>
                 </div>
                 <Button size="sm" variant="outline" asChild>
-                  <Link to="/matching" search={{ clientId: id, view: "client" as const }}>
+                  <Link to="/matching" search={{ clientId: id, view: "client" as const, profileId: "" }}>
                     <Target className="mr-1.5 h-4 w-4" />Matching-Übersicht
                   </Link>
                 </Button>
