@@ -640,7 +640,7 @@ function ClientsPage() {
 
 
                 <TableHead>{t("clients.columns.assignedTo")}</TableHead>
-                <TableHead>{t("clients.columns.relations")}</TableHead>
+                
                 
                 <TableHead className="w-10"></TableHead>
               </TableRow>
