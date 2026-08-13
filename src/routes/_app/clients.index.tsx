@@ -25,6 +25,7 @@ import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { useTranslation } from "react-i18next";
 import { AssigneeAvatars, AssigneePicker, useClientAssignees } from "@/components/clients/ClientAssignees";
+import { ClientPinButton, useClientPins } from "@/components/clients/ClientPin";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
