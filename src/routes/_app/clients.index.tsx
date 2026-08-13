@@ -140,34 +140,6 @@ function ClientsPage() {
     return m;
   }, [disclosuresQuery.data]);
 
-  const relationshipsQuery = useQuery({
-    queryKey: ["clients_relationships_all"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("client_relationships")
-        .select("client_id, related_client_id, relationship_type");
-      return data ?? [];
-    },
-  });
-  const relationshipLabels: Record<string, string> = {
-    spouse: t("clients.relationship.spouse"),
-    co_applicant: t("clients.relationship.co_applicant"),
-    co_investor: t("clients.relationship.co_investor"),
-    other: t("clients.relationship.other"),
-  };
-  const relationshipsByClient = useMemo(() => {
-    const m = new Map<string, Array<{ id: string; type: string }>>();
-    const push = (key: string, val: { id: string; type: string }) => {
-      if (!m.has(key)) m.set(key, []);
-      const arr = m.get(key)!;
-      if (!arr.some((x) => x.id === val.id)) arr.push(val);
-    };
-    (relationshipsQuery.data ?? []).forEach((r: any) => {
-      push(r.client_id, { id: r.related_client_id, type: r.relationship_type });
-      push(r.related_client_id, { id: r.client_id, type: r.relationship_type });
-    });
-    return m;
-  }, [relationshipsQuery.data]);
   const clientNameMap = useMemo(() => {
     const m = new Map<string, string>();
     clients.forEach((c: any) => m.set(c.id, c.full_name));
@@ -182,39 +154,6 @@ function ClientsPage() {
   const showError = clientsQuery.error && !isBackendUnavailableError(clientsQuery.error);
   const queryErrorMessage = showError ? getBackendErrorMessage(clientsQuery.error) : null;
 
-  // Union-Find: group linked partners so they appear together in the list
-  const groupInfo = useMemo(() => {
-    const parent = new Map<string, string>();
-    const find = (x: string): string => {
-      const p = parent.get(x) ?? x;
-      if (p === x) return x;
-      const r = find(p);
-      parent.set(x, r);
-      return r;
-    };
-    const union = (a: string, b: string) => {
-      const ra = find(a), rb = find(b);
-      if (ra !== rb) parent.set(ra, rb);
-    };
-    clients.forEach((c: any) => { if (!parent.has(c.id)) parent.set(c.id, c.id); });
-    (relationshipsQuery.data ?? []).forEach((r: any) => {
-      if (parent.has(r.client_id) && parent.has(r.related_client_id)) union(r.client_id, r.related_client_id);
-    });
-    const groupSize = new Map<string, number>();
-    const groupLeader = new Map<string, { id: string; created: string; name: string }>();
-    clients.forEach((c: any) => {
-      const root = find(c.id);
-      groupSize.set(root, (groupSize.get(root) ?? 0) + 1);
-      const created = c.created_at ?? "";
-      const name = (c.full_name ?? "").toLowerCase();
-      const cur = groupLeader.get(root);
-      // Leader = latest created_at (neueste zuerst); tie-break by name
-      if (!cur || created > cur.created || (created === cur.created && name < cur.name)) {
-        groupLeader.set(root, { id: c.id, created, name });
-      }
-    });
-    return { find, groupSize, groupLeader };
-  }, [clients, relationshipsQuery.data]);
 
   const filtered = useMemo(() => {
     const list = clients.filter((c: any) => {
@@ -239,30 +178,18 @@ function ClientsPage() {
       }
       return true;
     });
-    // Sort: group by leader (neueste zuerst), leader first, then partners directly below
+    // Sortierung: angepinnte zuoberst, danach neueste zuerst
     return list.sort((a: any, b: any) => {
-      const ra = groupInfo.find(a.id);
-      const rb = groupInfo.find(b.id);
-      const la = groupInfo.groupLeader.get(ra);
-      const lb = groupInfo.groupLeader.get(rb);
-      // Angepinnte Gruppen immer zuoberst
-      const pa = pinsMap.has(a.id) || (la ? pinsMap.has(la.id) : false) ? 0 : 1;
-      const pb = pinsMap.has(b.id) || (lb ? pinsMap.has(lb.id) : false) ? 0 : 1;
+      const pa = pinsMap.has(a.id) ? 0 : 1;
+      const pb = pinsMap.has(b.id) ? 0 : 1;
       if (pa !== pb) return pa - pb;
-      // Sort groups by leader created_at descending (neueste zuerst)
-      const ka = la ? `${la.created}|${la.name}|${la.id}` : `${a.created_at ?? ""}|${(a.full_name ?? "").toLowerCase()}|${a.id}`;
-      const kb = lb ? `${lb.created}|${lb.name}|${lb.id}` : `${b.created_at ?? ""}|${(b.full_name ?? "").toLowerCase()}|${b.id}`;
-      if (ka !== kb) return ka > kb ? -1 : 1;
-      // Same group: leader first, others by created_at descending then name
-      const aIsLeader = la?.id === a.id ? 0 : 1;
-      const bIsLeader = lb?.id === b.id ? 0 : 1;
-      if (aIsLeader !== bIsLeader) return aIsLeader - bIsLeader;
       const ca = a.created_at ?? "";
       const cb = b.created_at ?? "";
       if (ca !== cb) return ca > cb ? -1 : 1;
       return (a.full_name ?? "").localeCompare(b.full_name ?? "");
     });
-  }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, groupInfo, assigneesByClient, pinsMap]);
+  }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, assigneesByClient, pinsMap]);
+
 
   // Pagination
   const [pageSize, setPageSize] = useState<number>(20);
@@ -599,29 +526,8 @@ function ClientsPage() {
                       {c.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{c.email}</p>}
                       {c.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{c.phone}</p>}
                     </div>
-                    {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 && (
-                    <div className="mt-3 flex flex-wrap items-center gap-1">
-                        <Link2 className="h-3 w-3 text-muted-foreground" />
-                        {relationshipsByClient.get(c.id)!.map((rel) => {
-                          const partner = clientInfoMap.get(rel.id);
-                          return (
-                            <HoverCard key={rel.id + rel.type} openDelay={120} closeDelay={80}>
-                              <HoverCardTrigger asChild>
-                                <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-5 cursor-pointer" onClick={(e) => { e.stopPropagation(); setDetailId(rel.id); }}>
-                                  {relationshipLabels[rel.type] ?? rel.type}
-                                </Badge>
-                              </HoverCardTrigger>
-                              <HoverCardContent className="w-64 text-sm" onClick={(e) => e.stopPropagation()}>
-                                <p className="font-medium">{partner?.full_name ?? t("clients.relationship.unknown")}</p>
-                                <p className="text-xs text-muted-foreground mb-2">{relationshipLabels[rel.type] ?? rel.type}</p>
-                                {partner?.email && <p className="flex items-center gap-2 text-xs"><Mail className="h-3 w-3" />{partner.email}</p>}
-                                {partner?.phone && <p className="flex items-center gap-2 text-xs"><Phone className="h-3 w-3" />{partner.phone}</p>}
-                              </HoverCardContent>
-                            </HoverCard>
-                          );
-                        })}
-                      </div>
-                    )}
+
+
                     {(c.budget_max || c.preferred_cities?.length) && (
                       <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
                         {c.budget_max && <p>{t("clients.card.budgetUpTo", { amount: formatCurrency(Number(c.budget_max)) })}</p>}
@@ -665,12 +571,8 @@ function ClientsPage() {
                   [disc?.postal_code, disc?.city].filter(Boolean).join(" "),
                 ].filter(Boolean).join(", ") || [c.address, [c.postal_code, c.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
                 const plzOrt = [disc?.postal_code ?? c.postal_code, disc?.city ?? c.city].filter(Boolean).join(" ");
-                const groupRoot = groupInfo.find(c.id);
-                const groupSize = groupInfo.groupSize.get(groupRoot) ?? 1;
-                const leader = groupInfo.groupLeader.get(groupRoot);
-                const isLinked = groupSize > 1;
-                const isLeader = leader?.id === c.id;
-                const isPartner = isLinked && !isLeader;
+                const isPartner = false;
+
                 return (
                   <TableRow
                     key={c.id}
@@ -730,26 +632,8 @@ function ClientsPage() {
                                 {c.financing_status ? <p className="text-muted-foreground">{c.financing_status}</p> : null}
                               </div>
                             )}
-                            {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 && (
-                              <div className="mt-3 border-t pt-2">
-                                <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-                                  <Link2 className="h-3 w-3" />{t("clients.columns.relations")}
-                                </p>
-                                <div className="space-y-1">
-                                  {relationshipsByClient.get(c.id)!.map((rel) => {
-                                    const partner = clientInfoMap.get(rel.id);
-                                    return (
-                                      <div key={rel.id + rel.type} className="flex items-center justify-between gap-2 text-xs">
-                                        <span className="truncate">{partner?.full_name ?? t("clients.relationship.unknown")}</span>
-                                        <Badge variant="secondary" className="h-5 shrink-0 px-1.5 py-0 text-[10px]">
-                                          {relationshipLabels[rel.type] ?? rel.type}
-                                        </Badge>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
+
+
                           </HoverCardContent>
                         </HoverCard>
                         {c.is_archived && <Badge variant="outline" className="ml-1">{t("clients.archived")}</Badge>}

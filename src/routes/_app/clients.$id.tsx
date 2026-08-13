@@ -17,7 +17,7 @@ import {
   ArrowLeft, Mail, Phone, Trash2, RefreshCw, Pencil, FileSignature,
   Calendar, Target, Home, MapPin, Banknote, Ruler, BedDouble, Building2, MessageSquare,
   CalendarPlus, ExternalLink, CheckSquare, FileText, Activity, Plus,
-  ClipboardList, Heart, X, User, Upload, ChevronLeft, ChevronRight, Circle,
+  ClipboardList, Heart, X, User, Users, Upload, ChevronLeft, ChevronRight, Circle,
 } from "lucide-react";
 import {
   clientTypeLabels, formatCurrency, formatDate, formatDateTime,
@@ -194,6 +194,21 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
     },
     enabled: canLoadProtectedData && visitedTabs.includes("documents"),
   });
+
+  const { data: familyCount = 0 } = useQuery({
+    queryKey: ["client_family_count", id],
+    queryFn: async () => {
+      const [rels, relsRev, children] = await Promise.all([
+        supabase.from("client_relationships").select("id", { count: "exact", head: true }).eq("client_id", id),
+        supabase.from("client_relationships").select("id", { count: "exact", head: true }).eq("related_client_id", id),
+        supabase.from("client_children").select("id", { count: "exact", head: true }).eq("client_id", id),
+      ]);
+      return (rels.count ?? 0) + (relsRev.count ?? 0) + (children.count ?? 0);
+    },
+    enabled: canLoadProtectedData,
+  });
+
+
 
   const { data: ownProperties = [] } = useQuery({
     queryKey: ["client_own_properties", id],
@@ -517,6 +532,16 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               <ClipboardList className="h-4 w-4" />Selbstauskunft
             </TabsTrigger>
             <TabsTrigger
+              value="family"
+              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
+            >
+              <Users className="h-4 w-4" />Familie
+              {familyCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{familyCount}</Badge>
+              )}
+            </TabsTrigger>
+
+            <TabsTrigger
               value="financing"
               className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
@@ -656,7 +681,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
           </Tabs>
         </TabsContent>
 
-        {/* 3. Selbstauskunft (inkl. Beziehungen) */}
+        {/* 3. Selbstauskunft */}
         <TabsContent value="disclosure" className="mt-6 space-y-4">
           <SelfDisclosureLinkCard
             clientId={id}
@@ -664,14 +689,19 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             userId={user!.id}
           />
           <ClientSelfDisclosureTab clientId={id} />
+        </TabsContent>
+
+        {/* 3b. Familie */}
+        <TabsContent value="family" className="mt-6 space-y-4">
           <Card><CardContent className="p-6">
             <div className="mb-4 flex items-center gap-2">
               <Heart className="h-4 w-4 text-muted-foreground" />
-              <h3 className="font-display text-lg font-semibold">Beziehungen</h3>
+              <h3 className="font-display text-lg font-semibold">Familie & Verknüpfungen</h3>
             </div>
             <ClientRelationshipsTab clientId={id} />
           </CardContent></Card>
         </TabsContent>
+
 
         {/* 4. Finanzierung */}
         <TabsContent value="financing" className="mt-6">
