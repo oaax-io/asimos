@@ -71,6 +71,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
   const [editOpen, setEditOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [familyClientId, setFamilyClientId] = useState<string | null>(null);
+  const [activityOpen, setActivityOpen] = useState(false);
   const [visitedTabs, setVisitedTabs] = useState<string[]>(["overview"]);
 
   const qc = useQueryClient();
@@ -417,6 +418,9 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="mr-1.5 h-4 w-4" />Kunde bearbeiten
               </Button>
+              <Button variant="outline" size="icon" title="Aktivitäten" onClick={() => setActivityOpen(true)}>
+                <Activity className="h-4 w-4" />
+              </Button>
               <Button variant="outline" size="icon" onClick={async () => { if (await confirm({ title: "Kunde löschen?", description: "Diese Aktion kann nicht rückgängig werden.", confirmText: "Löschen" })) del.mutate(); }}>
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -591,16 +595,6 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               {documentsCount > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{documentsCount}</Badge>
               )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="activity"
-              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
-            >
-              <Activity className="h-4 w-4" />Aktivitäten
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/60 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-              </span>
             </TabsTrigger>
           </TabsList>
         </section>
@@ -822,11 +816,20 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
           <ClientDocumentsTab clientId={id} userId={user!.id} />
         </TabsContent>
 
-        {/* 8. Aktivitäten */}
-        <TabsContent value="activity" className="mt-6 space-y-4">
-          <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["roles"]} />
-          <ClientActivityTab clientId={id} userId={user!.id} notes={client.notes} />
-        </TabsContent>
+        {/* 8. Aktivitäten (über Icon-Button im Header erreichbar) */}
+        <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
+          <DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />Aktivitäten – {client.full_name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <ClientProfileSummary clientId={id} entityType={client.entity_type} sections={["roles"]} />
+              <ClientActivityTab clientId={id} userId={user!.id} notes={client.notes} />
+            </div>
+          </DialogContent>
+        </Dialog>
         </div>
       </Tabs>
     </div>
