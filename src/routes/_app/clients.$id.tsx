@@ -656,7 +656,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
           </Tabs>
         </TabsContent>
 
-        {/* 3. Selbstauskunft (inkl. Beziehungen) */}
+        {/* 3. Selbstauskunft */}
         <TabsContent value="disclosure" className="mt-6 space-y-4">
           <SelfDisclosureLinkCard
             clientId={id}
@@ -664,14 +664,19 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             userId={user!.id}
           />
           <ClientSelfDisclosureTab clientId={id} />
+        </TabsContent>
+
+        {/* 3b. Familie */}
+        <TabsContent value="family" className="mt-6 space-y-4">
           <Card><CardContent className="p-6">
             <div className="mb-4 flex items-center gap-2">
               <Heart className="h-4 w-4 text-muted-foreground" />
-              <h3 className="font-display text-lg font-semibold">Beziehungen</h3>
+              <h3 className="font-display text-lg font-semibold">Familie & Verknüpfungen</h3>
             </div>
             <ClientRelationshipsTab clientId={id} />
           </CardContent></Card>
         </TabsContent>
+
 
         {/* 4. Finanzierung */}
         <TabsContent value="financing" className="mt-6">
