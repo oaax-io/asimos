@@ -120,6 +120,8 @@ export function ClientRelationshipsTab({ clientId, onOpenClient }: Props) {
       toast.success("Hauptmitglied festgelegt");
       qc.invalidateQueries({ queryKey: ["client_relationships"] });
       qc.invalidateQueries({ queryKey: ["client_family_head_self"] });
+      qc.invalidateQueries({ queryKey: ["client"] });
+      qc.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: (e: unknown) =>
       toast.error(e instanceof Error ? e.message : "Konnte Hauptmitglied nicht setzen"),

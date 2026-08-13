@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Mail, Phone, Target, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Link2, CornerDownRight, Users, ShoppingBag, Home, Banknote, CheckCircle2, Ban } from "lucide-react";
+import { Plus, Search, Mail, Phone, Target, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Link2, CornerDownRight, Users, ShoppingBag, Home, Banknote, CheckCircle2, Ban, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
@@ -497,7 +497,10 @@ function ClientsPage() {
                       />
                       <ClientPinButton clientId={c.id} color={pinsMap.get(c.id)} size="xs" />
                       <button type="button" onClick={() => setDetailId(c.id)} className="flex-1 min-w-0 text-left">
-                        <p className="font-semibold hover:text-primary truncate">{c.full_name}</p>
+                        <p className="flex items-center gap-1.5 font-semibold hover:text-primary truncate">
+                          <span className="truncate">{c.full_name}</span>
+                          {c.is_family_head && <Crown className="h-4 w-4 shrink-0 text-amber-500" aria-label="Hauptmitglied" />}
+                        </p>
                         <div className="mt-1 flex flex-wrap gap-1">
                           {(() => {
                             const s = statusMap.get(c.status ?? "entwurf") ?? statusMap.get("entwurf")!;
@@ -590,8 +593,9 @@ function ClientsPage() {
                         <ClientPinButton clientId={c.id} color={pinsMap.get(c.id)} />
                         <HoverCard openDelay={150} closeDelay={100}>
                           <HoverCardTrigger asChild>
-                            <button type="button" onClick={() => setDetailId(c.id)} className="font-medium hover:text-primary text-left">
+                            <button type="button" onClick={() => setDetailId(c.id)} className="flex items-center gap-1.5 font-medium hover:text-primary text-left">
                               {c.full_name}
+                              {c.is_family_head && <Crown className="h-4 w-4 shrink-0 text-amber-500" aria-label="Hauptmitglied" />}
                             </button>
                           </HoverCardTrigger>
                           <HoverCardContent className="w-80 text-sm" align="start">
