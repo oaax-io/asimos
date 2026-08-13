@@ -269,10 +269,14 @@ function MatchingPage() {
   const activeProfiles = useMemo(
     () =>
       (searchProfiles as SearchProfile[]).filter(
-        (p) => p.is_active && clientNameById.has(p.client_id),
+        (p) =>
+          p.is_active &&
+          clientNameById.has(p.client_id) &&
+          (!p.expires_at || new Date(p.expires_at) > new Date()),
       ),
     [searchProfiles, clientNameById],
   );
+
 
 
   /** Suchprofil → Pseudo-Kunde für den bestehenden Scoring-Algorithmus */
