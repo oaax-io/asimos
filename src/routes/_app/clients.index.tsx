@@ -568,6 +568,7 @@ function ClientsPage() {
                         aria-label={t("clients.row.select")}
                         className="mt-1"
                       />
+                      <ClientPinButton clientId={c.id} color={pinsMap.get(c.id)} size="xs" />
                       <button type="button" onClick={() => setDetailId(c.id)} className="flex-1 min-w-0 text-left">
                         <p className="font-semibold hover:text-primary truncate">{c.full_name}</p>
                         <div className="mt-1 flex flex-wrap gap-1">
