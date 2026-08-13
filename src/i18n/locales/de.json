@@ -1360,7 +1360,8 @@
       "mandate": "Mandate",
       "reservation": "Reservationen",
       "financing": "Finanzierungen",
-      "other": "Sonstige"
+      "other": "Sonstige",
+      "nda": "NDAs"
     },
     "types": {
       "contract": "Vertrag",
@@ -1787,18 +1788,48 @@
       "summary": "Zusammenfassung"
     },
     "types": {
-      "house": { "label": "Einfamilienhaus", "desc": "Freistehendes Haus für eine Familie" },
-      "mixed_use": { "label": "Mehrfamilienhaus", "desc": "Liegenschaft mit mehreren Wohneinheiten" },
-      "apartment": { "label": "Wohnung", "desc": "Eigentumswohnung oder Mietwohnung" },
-      "commercial": { "label": "Gewerbe", "desc": "Büro-, Verkaufs- oder Lagerflächen" },
-      "land": { "label": "Grundstück", "desc": "Bauland, Landwirtschafts- oder Restland" },
-      "parking": { "label": "Parkplatz / Garage", "desc": "Einzelner Stellplatz oder Garagenbox" },
-      "other": { "label": "Sonstige", "desc": "Sonstige Objektart" }
+      "house": {
+        "label": "Einfamilienhaus",
+        "desc": "Freistehendes Haus für eine Familie"
+      },
+      "mixed_use": {
+        "label": "Mehrfamilienhaus",
+        "desc": "Liegenschaft mit mehreren Wohneinheiten"
+      },
+      "apartment": {
+        "label": "Wohnung",
+        "desc": "Eigentumswohnung oder Mietwohnung"
+      },
+      "commercial": {
+        "label": "Gewerbe",
+        "desc": "Büro-, Verkaufs- oder Lagerflächen"
+      },
+      "land": {
+        "label": "Grundstück",
+        "desc": "Bauland, Landwirtschafts- oder Restland"
+      },
+      "parking": {
+        "label": "Parkplatz / Garage",
+        "desc": "Einzelner Stellplatz oder Garagenbox"
+      },
+      "other": {
+        "label": "Sonstige",
+        "desc": "Sonstige Objektart"
+      }
     },
     "structures": {
-      "single": { "label": "Einzelobjekt", "desc": "Ein eigenständiges Objekt ohne Untereinheiten." },
-      "building": { "label": "Liegenschaft mit mehreren Einheiten", "desc": "Mehrfamilienhaus oder Gebäude mit mehreren Einheiten." },
-      "unit_in_building": { "label": "Einheit innerhalb einer Liegenschaft", "desc": "Diese Einheit gehört zu einem bereits erfassten Gebäude." }
+      "single": {
+        "label": "Einzelobjekt",
+        "desc": "Ein eigenständiges Objekt ohne Untereinheiten."
+      },
+      "building": {
+        "label": "Liegenschaft mit mehreren Einheiten",
+        "desc": "Mehrfamilienhaus oder Gebäude mit mehreren Einheiten."
+      },
+      "unit_in_building": {
+        "label": "Einheit innerhalb einer Liegenschaft",
+        "desc": "Diese Einheit gehört zu einem bereits erfassten Gebäude."
+      }
     },
     "step1": {
       "title": "Welche Objektart erfasst du?",
