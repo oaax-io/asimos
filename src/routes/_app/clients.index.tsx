@@ -638,9 +638,7 @@ function ClientsPage() {
                 <TableHead>{t("clients.columns.status")}</TableHead>
                 <TableHead>{t("clients.columns.type")}</TableHead>
 
-                <TableHead>{t("clients.columns.phone")}</TableHead>
-                <TableHead>{t("clients.columns.email")}</TableHead>
-                <TableHead>{t("clients.columns.city")}</TableHead>
+
                 <TableHead>{t("clients.columns.assignedTo")}</TableHead>
                 <TableHead>{t("clients.columns.relations")}</TableHead>
                 
@@ -677,9 +675,72 @@ function ClientsPage() {
                         {isPartner && (
                           <CornerDownRight className="h-4 w-4 shrink-0 text-muted-foreground ml-3" aria-hidden />
                         )}
-                        <button type="button" onClick={() => setDetailId(c.id)} className="font-medium hover:text-primary text-left">
-                          {c.full_name}
-                        </button>
+                        <HoverCard openDelay={150} closeDelay={100}>
+                          <HoverCardTrigger asChild>
+                            <button type="button" onClick={() => setDetailId(c.id)} className="font-medium hover:text-primary text-left">
+                              {c.full_name}
+                            </button>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="w-80 text-sm" align="start">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="font-semibold truncate">{c.full_name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}
+                                </p>
+                              </div>
+                              {(() => {
+                                const s = statusMap.get(c.status ?? "entwurf") ?? statusMap.get("entwurf")!;
+                                return (
+                                  <Badge variant="outline" className={s.badge}>
+                                    <span className={`mr-1.5 h-2 w-2 rounded-full ${s.dot}`} />
+                                    {statusLabel(s.value)}
+                                  </Badge>
+                                );
+                              })()}
+                            </div>
+                            <div className="mt-3 space-y-1.5 text-xs">
+                              <p className="flex items-center gap-2">
+                                <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                {phone ? <a href={`tel:${phone}`} className="hover:text-primary">{phone}</a> : <span className="text-muted-foreground">—</span>}
+                              </p>
+                              <p className="flex items-center gap-2">
+                                <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                {email ? <a href={`mailto:${email}`} className="hover:text-primary break-all">{email}</a> : <span className="text-muted-foreground">—</span>}
+                              </p>
+                              <p className="flex items-center gap-2">
+                                <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                <span>{addr || plzOrt || <span className="text-muted-foreground">—</span>}</span>
+                              </p>
+                            </div>
+                            {(c.budget_max || c.financing_status) && (
+                              <div className="mt-3 rounded-lg bg-muted/40 p-2 text-xs space-y-0.5">
+                                {c.budget_max ? <p>{t("clients.card.budgetUpTo", { amount: formatCurrency(Number(c.budget_max)) })}</p> : null}
+                                {c.financing_status ? <p className="text-muted-foreground">{c.financing_status}</p> : null}
+                              </div>
+                            )}
+                            {(relationshipsByClient.get(c.id)?.length ?? 0) > 0 && (
+                              <div className="mt-3 border-t pt-2">
+                                <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                                  <Link2 className="h-3 w-3" />{t("clients.columns.relations")}
+                                </p>
+                                <div className="space-y-1">
+                                  {relationshipsByClient.get(c.id)!.map((rel) => {
+                                    const partner = clientInfoMap.get(rel.id);
+                                    return (
+                                      <div key={rel.id + rel.type} className="flex items-center justify-between gap-2 text-xs">
+                                        <span className="truncate">{partner?.full_name ?? t("clients.relationship.unknown")}</span>
+                                        <Badge variant="secondary" className="h-5 shrink-0 px-1.5 py-0 text-[10px]">
+                                          {relationshipLabels[rel.type] ?? rel.type}
+                                        </Badge>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </HoverCardContent>
+                        </HoverCard>
                         {c.is_archived && <Badge variant="outline" className="ml-1">{t("clients.archived")}</Badge>}
                       </div>
                     </TableCell>
@@ -698,15 +759,6 @@ function ClientsPage() {
                       <Badge variant="outline" className={typeBadge(c.client_type)}>{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                     </TableCell>
 
-                    <TableCell className="text-sm">
-                      {phone ? <a href={`tel:${phone}`} className="hover:text-primary">{phone}</a> : <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {email ? <a href={`mailto:${email}`} className="hover:text-primary">{email}</a> : <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {plzOrt || <span className="text-muted-foreground">—</span>}
-                    </TableCell>
                     <TableCell className="text-sm">
                       <AssigneePicker
                         clientId={c.id}
