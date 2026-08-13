@@ -1359,7 +1359,8 @@
       "mandate": "Mandats",
       "reservation": "Réservations",
       "financing": "Financements",
-      "other": "Autres"
+      "other": "Autres",
+      "nda": "NDA"
     },
     "types": {
       "contract": "Contrat",
@@ -1786,18 +1787,48 @@
       "summary": "Récapitulatif"
     },
     "types": {
-      "house": { "label": "Maison individuelle", "desc": "Maison indépendante pour une famille" },
-      "mixed_use": { "label": "Immeuble", "desc": "Bien avec plusieurs unités d'habitation" },
-      "apartment": { "label": "Appartement", "desc": "Appartement en propriété ou en location" },
-      "commercial": { "label": "Commercial", "desc": "Bureaux, surfaces de vente ou de stockage" },
-      "land": { "label": "Terrain", "desc": "Terrain à bâtir, agricole ou résiduel" },
-      "parking": { "label": "Parking / Garage", "desc": "Place de parc ou box de garage" },
-      "other": { "label": "Autre", "desc": "Autre type de bien" }
+      "house": {
+        "label": "Maison individuelle",
+        "desc": "Maison indépendante pour une famille"
+      },
+      "mixed_use": {
+        "label": "Immeuble",
+        "desc": "Bien avec plusieurs unités d'habitation"
+      },
+      "apartment": {
+        "label": "Appartement",
+        "desc": "Appartement en propriété ou en location"
+      },
+      "commercial": {
+        "label": "Commercial",
+        "desc": "Bureaux, surfaces de vente ou de stockage"
+      },
+      "land": {
+        "label": "Terrain",
+        "desc": "Terrain à bâtir, agricole ou résiduel"
+      },
+      "parking": {
+        "label": "Parking / Garage",
+        "desc": "Place de parc ou box de garage"
+      },
+      "other": {
+        "label": "Autre",
+        "desc": "Autre type de bien"
+      }
     },
     "structures": {
-      "single": { "label": "Bien unique", "desc": "Un bien autonome sans sous-unités." },
-      "building": { "label": "Bien avec plusieurs unités", "desc": "Immeuble ou bâtiment avec plusieurs unités." },
-      "unit_in_building": { "label": "Unité dans un bien", "desc": "Cette unité fait partie d'un bâtiment déjà enregistré." }
+      "single": {
+        "label": "Bien unique",
+        "desc": "Un bien autonome sans sous-unités."
+      },
+      "building": {
+        "label": "Bien avec plusieurs unités",
+        "desc": "Immeuble ou bâtiment avec plusieurs unités."
+      },
+      "unit_in_building": {
+        "label": "Unité dans un bien",
+        "desc": "Cette unité fait partie d'un bâtiment déjà enregistré."
+      }
     },
     "step1": {
       "title": "Quel type de bien enregistrez-vous ?",

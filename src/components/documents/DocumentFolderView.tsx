@@ -30,7 +30,14 @@ import { formatDate } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 import { useTranslation } from "react-i18next";
 
-const CATEGORY_KEYS = ["client","property","lead","mandate","reservation","financing","other"];
+const CATEGORY_KEYS = ["client","property","lead","mandate","reservation","nda","financing","other"];
+
+const normalizeType = (t: string | null | undefined) => {
+  const v = t ?? "other";
+  if (v === "financing_profile" || v === "financing_dossier") return "financing";
+  if (v === "nda_agreement") return "nda";
+  return v;
+};
 
 type AnyDoc = {
   id: string;
@@ -107,7 +114,7 @@ export function DocumentFolderView() {
     const map: Record<string, Set<string>> = {};
     for (const d of all) {
       if (!d.related_type || !d.related_id) continue;
-      const typeKey = d.related_type === "financing_profile" ? "financing" : d.related_type;
+      const typeKey = normalizeType(d.related_type);
       (map[typeKey] ??= new Set()).add(d.related_id);
     }
     return map;
@@ -127,8 +134,38 @@ export function DocumentFolderView() {
       tasks.push(fetchSet("client", "clients", "full_name"));
       tasks.push(fetchSet("property", "properties", "title"));
       tasks.push(fetchSet("lead", "leads", "full_name"));
-      tasks.push(fetchSet("mandate", "mandates", "title"));
-      tasks.push(fetchSet("reservation", "reservations", "id"));
+
+      // mandate / reservation / nda -> name from linked property or client
+      const fetchLinked = async (key: string, table: string, prefix: string) => {
+        const ids = [...(idsByType[key] ?? [])];
+        if (ids.length === 0) return;
+        const { data } = await supabase
+          .from(table as any)
+          .select("id, client_id, property_id")
+          .in("id", ids);
+        const rows = (data ?? []) as any[];
+        const clientIds = rows.map((r) => r.client_id).filter(Boolean);
+        const propertyIds = rows.map((r) => r.property_id).filter(Boolean);
+        let clientNames: Record<string, string> = {};
+        let propertyNames: Record<string, string> = {};
+        if (clientIds.length) {
+          const { data: cs } = await supabase.from("clients").select("id, full_name").in("id", clientIds);
+          clientNames = Object.fromEntries((cs ?? []).map((c: any) => [c.id, c.full_name]));
+        }
+        if (propertyIds.length) {
+          const { data: ps } = await supabase.from("properties").select("id, title").in("id", propertyIds);
+          propertyNames = Object.fromEntries((ps ?? []).map((p: any) => [p.id, p.title]));
+        }
+        result[key] = Object.fromEntries(
+          rows.map((r) => {
+            const parts = [propertyNames[r.property_id], clientNames[r.client_id]].filter(Boolean);
+            return [r.id, parts.length ? `${prefix}: ${parts.join(" · ")}` : `${prefix} ${r.id.slice(0, 8)}`];
+          }),
+        );
+      };
+      tasks.push(fetchLinked("mandate", "mandates", "Mandat"));
+      tasks.push(fetchLinked("reservation", "reservations", "Reservation"));
+      tasks.push(fetchLinked("nda", "nda_agreements", "NDA"));
       // financing dossiers - use client name via join would be heavy; just use id snippet
       const fIds = [...(idsByType["financing"] ?? [])];
       if (fIds.length) {
@@ -159,13 +196,12 @@ export function DocumentFolderView() {
       ? all.filter((d) => d.name.toLowerCase().includes(search.toLowerCase()))
       : all;
     for (const d of filtered) {
-      const rawType = d.related_type ?? "other";
-      const type = rawType === "financing_profile" ? "financing" : rawType;
+      const type = normalizeType(d.related_type);
       const folderId = d.related_id ?? "unassigned";
       const names = (nameMap as Record<string, Record<string, string>>)[type] ?? {};
       const folderName = folderId === "unassigned"
         ? t("documents.empty.unassigned")
-        : names[folderId] ?? folderId.slice(0, 8);
+        : names[folderId] ?? `Nicht mehr vorhanden (${folderId.slice(0, 8)})`;
       (out[type] ??= {});
       (out[type][folderId] ??= { name: folderName, docs: [] }).docs.push(d);
     }
