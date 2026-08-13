@@ -283,6 +283,26 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
   });
   const ownerLabel = ownerProfile?.full_name || ownerProfile?.email || null;
 
+  // Ansprechpartner (Mehrfachzuweisung) mit Profilbild
+  const { data: assigneeData } = useQuery({
+    queryKey: ["client_assignee_profiles", id],
+    enabled: canLoadProtectedData && !!id,
+    retry: false,
+    queryFn: async () => {
+      const { data: rows } = await supabase.from("client_assignees").select("user_id").eq("client_id", id);
+      const ids = Array.from(new Set([...(rows ?? []).map((r: any) => r.user_id), ...(ownerUserId ? [ownerUserId] : [])]));
+      if (!ids.length) return { ids: [] as string[], people: [] as EmployeeLite[] };
+      const { data: profs } = await supabase.from("profiles").select("id,full_name,email,avatar_url").in("id", ids);
+      return { ids, people: (profs ?? []) as EmployeeLite[] };
+    },
+  });
+  const assigneeIds = assigneeData?.ids ?? [];
+  const assigneeMap = useMemo(
+    () => new Map((assigneeData?.people ?? []).map((p) => [p.id, p])),
+    [assigneeData],
+  );
+
+
   const del = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("clients").delete().eq("id", id);
