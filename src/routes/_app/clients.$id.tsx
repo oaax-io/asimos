@@ -412,7 +412,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
             <div className="flex gap-2">
               <ClientQuickActions client={client} />
               <Button variant="outline" size="sm" disabled title="Beratung (Demnächst verfügbar)">
-                <FileSignature className="mr-1.5 h-4 w-4" />Beratung
+                <MessageSquare className="mr-1.5 h-4 w-4" />Beratung
               </Button>
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
                 <Pencil className="mr-1.5 h-4 w-4" />Kunde bearbeiten
@@ -530,15 +530,6 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               )}
             </TabsTrigger>
             <TabsTrigger
-              value="consulting"
-              className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
-            >
-              <MessageSquare className="h-4 w-4" />Beratung
-              {appointments.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs tabular-nums">{appointments.length}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger
               value="disclosure"
               className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
@@ -638,53 +629,6 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
         </TabsContent>
 
 
-        {/* 2. Beratung */}
-        <TabsContent value="consulting" className="mt-6">
-          <Tabs defaultValue="appointments">
-            <TabsList>
-              <TabsTrigger value="appointments">
-                <Calendar className="mr-1.5 h-4 w-4" />Termine
-              </TabsTrigger>
-              <TabsTrigger value="tasks">
-                <CheckSquare className="mr-1.5 h-4 w-4" />Aufgaben
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="appointments" className="mt-4 space-y-4">
-              <Card><CardContent className="p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="font-display text-lg font-semibold">Termine</h3>
-                  <NewAppointmentButton clientId={id} userId={user!.id}
-                    onCreated={() => qc.invalidateQueries({ queryKey: ["client_appointments", id] })} />
-                </div>
-                {appointments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Noch keine Termine. Lege den ersten Termin an.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {upcoming.length > 0 && (
-                      <div>
-                        <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Bevorstehend</p>
-                        <div className="space-y-2">
-                          {upcoming.map((a: any) => <AppointmentRow key={a.id} appt={a} />)}
-                        </div>
-                      </div>
-                    )}
-                    {past.length > 0 && (
-                      <div>
-                        <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Vergangen</p>
-                        <div className="space-y-2">
-                          {past.map((a: any) => <AppointmentRow key={a.id} appt={a} />)}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent></Card>
-            </TabsContent>
-            <TabsContent value="tasks" className="mt-4">
-              <ClientTasksTab clientId={id} userId={user!.id} />
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
 
         {/* 3. Selbstauskunft */}
         <TabsContent value="disclosure" className="mt-6 space-y-4">
