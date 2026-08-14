@@ -772,12 +772,14 @@ function Section({
   title,
   right,
   onAdd,
+  onEdit,
   children,
 }: {
   value: string;
   title: string;
   right?: string;
   onAdd?: () => void;
+  onEdit?: () => void;
   children: React.ReactNode;
 }) {
   return (
@@ -792,16 +794,21 @@ function Section({
       </AccordionTrigger>
       <AccordionContent className="pb-4">
         {children}
-        {onAdd && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={onAdd}
-          >
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Position hinzufügen
-          </Button>
+        {(onAdd || onEdit) && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {onAdd && (
+              <Button variant="outline" size="sm" onClick={onAdd}>
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                Position hinzufügen
+              </Button>
+            )}
+            {onEdit && (
+              <Button variant="outline" size="sm" onClick={onEdit}>
+                <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                Bearbeiten
+              </Button>
+            )}
+          </div>
         )}
       </AccordionContent>
     </AccordionItem>
