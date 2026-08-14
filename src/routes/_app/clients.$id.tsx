@@ -27,7 +27,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { MatchPanel } from "@/components/matching/MatchPanel";
-import { ClientSelfDisclosureTab } from "@/components/clients/ClientSelfDisclosureTab";
+import { ClientFinanceTab } from "@/components/clients/ClientFinanceTab";
 import { ClientSelfDisclosureWizard } from "@/components/clients/ClientSelfDisclosureWizard";
 import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { ClientRelationshipsTab } from "@/components/clients/ClientRelationshipsTab";
@@ -36,7 +36,6 @@ import { ClientSmartOverview } from "@/components/clients/ClientSmartOverview";
 import { ClientEditDialog } from "@/components/clients/ClientEditDialog";
 import { ClientQuickActions } from "@/components/clients/ClientQuickActions";
 import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
-import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkCard";
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { ClientDocumentsTab } from "@/components/clients/ClientDocumentsTab";
@@ -614,7 +613,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               value="disclosure"
               className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
-              <ClipboardList className="h-4 w-4" />Selbstauskunft
+              <ClipboardList className="h-4 w-4" />Finanzen
             </TabsTrigger>
 
 
@@ -701,14 +700,13 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
 
 
 
-        {/* 3. Selbstauskunft */}
+        {/* 3. Finanzen */}
         <TabsContent value="disclosure" className="mt-6 space-y-4">
-          <SelfDisclosureLinkCard
+          <ClientFinanceTab
             clientId={id}
             clientEmail={client.email}
-            userId={user!.id}
+            userId={user?.id}
           />
-          <ClientSelfDisclosureTab clientId={id} />
         </TabsContent>
 
         {/* 3b. Familie */}
