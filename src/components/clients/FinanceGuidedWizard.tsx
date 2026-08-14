@@ -29,7 +29,16 @@ import {
   Plus,
   Trash2,
   SkipForward,
+  Wallet,
+  Receipt,
+  PiggyBank,
+  CreditCard,
+  ShieldCheck,
+  Landmark,
+  Lightbulb,
+  AlertTriangle,
 } from "lucide-react";
+
 import {
   areaLabels,
   categoryOptions,
@@ -118,6 +127,13 @@ export function FinanceGuidedWizard({
   const rows = drafts[area] ?? [];
   const setRows = (next: Draft[]) => setDrafts((d) => ({ ...d, [area]: next }));
 
+  // Beim Öffnen eines Schritts immer eine leere Position bereitstellen
+  useEffect(() => {
+    if (!open) return;
+    setDrafts((d) => (d[area]?.length ? d : { ...d, [area]: [newDraft(area)] }));
+  }, [open, area]);
+
+
   const filled = rows.filter((r) => Number(r.amount || 0) > 0);
   const stepTotal = useMemo(
     () => filled.reduce((s, r) => s + Number(r.amount || 0), 0),
@@ -179,7 +195,7 @@ export function FinanceGuidedWizard({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92dvh] max-w-3xl overflow-y-auto">
+      <DialogContent className="max-h-[92dvh] max-w-6xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Finanzdaten Schritt für Schritt</DialogTitle>
           <DialogDescription>{stepHints[area]}</DialogDescription>
@@ -210,7 +226,9 @@ export function FinanceGuidedWizard({
           <Progress value={((step + 1) / steps.length) * 100} className="h-1.5" />
         </div>
 
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-3">
+
           {rows.length === 0 && (
             <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
               Keine Position in diesem Schritt. Du kannst ihn überspringen oder
@@ -457,6 +475,9 @@ export function FinanceGuidedWizard({
             )}
           </div>
         </div>
+        <HelpPanel area={area} />
+        </div>
+
 
         <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
           <Button
@@ -495,6 +516,157 @@ export function FinanceGuidedWizard({
     </Dialog>
   );
 }
+
+const helpContent: Record<
+  FinanceArea,
+  {
+    icon: typeof Wallet;
+    intro: string;
+    examples: string[];
+    tips: string[];
+    warn?: string;
+  }
+> = {
+  income: {
+    icon: Wallet,
+    intro:
+      "Alles, was regelmässig aufs Konto kommt – Basis für Tragbarkeit und Budget.",
+    examples: [
+      "Nettolohn Haupt- und Nebenerwerb",
+      "13. Monatslohn / Bonus (jährlich erfassen)",
+      "Renten, Alimente, Mieteinnahmen",
+    ],
+    tips: [
+      "Beträge netto erfassen, Periodizität korrekt wählen – wird automatisch auf Monat gerechnet.",
+      "Partnereinkommen über «Person» zuordnen, nicht zusammenzählen.",
+    ],
+    warn: "Bonus/Variable Anteile werden von Banken oft nur zu 50–100 % angerechnet.",
+  },
+  expense: {
+    icon: Receipt,
+    intro:
+      "Laufende Haushaltskosten – zeigt dem Kunden, was am Monatsende wirklich frei bleibt.",
+    examples: [
+      "Miete / Nebenkosten",
+      "Steuern, Krankenkasse-Selbstbehalt, Kita",
+      "Mobilität, Lebensmittel, Freizeit",
+    ],
+    tips: [
+      "Versicherungen und Kredite hier NICHT erfassen – dafür gibt es eigene Schritte.",
+      "Jährliche Kosten (z. B. Steuern) mit Periodizität «jährlich» erfassen.",
+    ],
+  },
+  asset: {
+    icon: PiggyBank,
+    intro: "Was vorhanden ist – und wie viel davon wirklich als Eigenmittel dient.",
+    examples: [
+      "Spar- und Lohnkonto, Festgeld",
+      "Wertschriften, Krypto",
+      "Säule 3a, Freizügigkeitsguthaben",
+    ],
+    tips: [
+      "«Davon als Eigenmittel» nur den Teil eintragen, der tatsächlich eingesetzt wird.",
+      "Vorsorgegelder gelten als weiche Eigenmittel (max. 10 % des Kaufpreises).",
+    ],
+    warn: "Reserve von 3–6 Monatslöhnen nicht als Eigenmittel einplanen.",
+  },
+  liability: {
+    icon: CreditCard,
+    intro:
+      "Kredite und Leasing belasten die Tragbarkeit stark – Banken rechnen sie hoch an.",
+    examples: [
+      "Autoleasing, Konsumkredit",
+      "Kreditkarten-Teilzahlung",
+      "Privatdarlehen mit Rückzahlung",
+    ],
+    tips: [
+      "Monatliche Rate + Restschuld erfassen – beides ist für die Bank relevant.",
+      "Bei Ablösung vor Kauf im Gespräch festhalten.",
+    ],
+    warn: "Banken rechnen Kredite oft mit ~10 % der Restschuld pro Jahr an.",
+  },
+  insurance: {
+    icon: ShieldCheck,
+    intro: "Prämien fliessen automatisch ins Budget – wichtig für ein realistisches Bild.",
+    examples: [
+      "Krankenkasse (Grund + Zusatz)",
+      "Hausrat / Privathaftpflicht",
+      "Lebens- und Risikoversicherung (3b)",
+    ],
+    tips: [
+      "Versicherer und Policennummer erfassen – hilft beim Bankdossier.",
+      "Gebundene Lebensversicherungen können als Amortisation dienen.",
+    ],
+  },
+  pension: {
+    icon: Landmark,
+    intro: "Sparverhalten und Vorsorge – zeigt Disziplin und künftige Eigenmittel.",
+    examples: [
+      "3a-Einzahlung pro Jahr",
+      "Sparplan / Fondssparen",
+      "Pensionskassen-Einkauf",
+    ],
+    tips: [
+      "Guthaben, das bereits unter «Vermögen» steht, hier nicht nochmals als Betrag erfassen.",
+      "Sparraten monatlich erfassen – sie zeigen die Sparfähigkeit.",
+    ],
+    warn: "Doppelzählung Vorsorge/Vermögen vermeiden.",
+  },
+};
+
+function HelpPanel({ area }: { area: FinanceArea }) {
+  const h = helpContent[area];
+  const Icon = h.icon;
+  return (
+    <aside className="h-fit space-y-4 rounded-xl border bg-muted/40 p-4 lg:sticky lg:top-2">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Icon className="h-5 w-5" />
+        </span>
+        <div>
+          <p className="text-sm font-semibold">{areaLabels[area]}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{h.intro}</p>
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Typische Positionen
+        </p>
+        <ul className="mt-1.5 space-y-1">
+          {h.examples.map((e) => (
+            <li key={e} className="flex gap-2 text-xs">
+              <Check className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
+              <span>{e}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <Lightbulb className="h-3.5 w-3.5" />
+          Beratungstipps
+        </p>
+        <ul className="mt-1.5 space-y-1.5">
+          {h.tips.map((t) => (
+            <li key={t} className="text-xs text-muted-foreground">
+              {t}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {h.warn && (
+        <div className="flex gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+          <span>{h.warn}</span>
+        </div>
+      )}
+    </aside>
+  );
+}
+
 
 function FieldRow({
   label,
