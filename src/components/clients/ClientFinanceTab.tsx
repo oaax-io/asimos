@@ -325,6 +325,10 @@ export function ClientFinanceTab({
 
   const sectionProps = (area: FinanceArea) => ({
     onAdd: () => openItem(area),
+    onEdit: () => {
+      setGuidedArea(area);
+      setGuidedOpen(true);
+    },
   });
 
   const renderItems = (list: FinanceItem[], area: FinanceArea) =>
