@@ -127,6 +127,13 @@ export function FinanceGuidedWizard({
   const rows = drafts[area] ?? [];
   const setRows = (next: Draft[]) => setDrafts((d) => ({ ...d, [area]: next }));
 
+  // Beim Öffnen eines Schritts immer eine leere Position bereitstellen
+  useEffect(() => {
+    if (!open) return;
+    setDrafts((d) => (d[area]?.length ? d : { ...d, [area]: [newDraft(area)] }));
+  }, [open, area]);
+
+
   const filled = rows.filter((r) => Number(r.amount || 0) > 0);
   const stepTotal = useMemo(
     () => filled.reduce((s, r) => s + Number(r.amount || 0), 0),
