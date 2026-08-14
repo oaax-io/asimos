@@ -523,7 +523,7 @@ export function FinanceGuidedWizard({
                   variant="ghost"
                   size="sm"
                   className="text-destructive"
-                  onClick={() => setRows(rows.filter((_, i) => i !== idx))}
+                  onClick={() => removeRow(r)}
                 >
                   <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                   Entfernen
