@@ -701,14 +701,13 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
 
 
 
-        {/* 3. Selbstauskunft */}
+        {/* 3. Finanzen */}
         <TabsContent value="disclosure" className="mt-6 space-y-4">
-          <SelfDisclosureLinkCard
+          <ClientFinanceTab
             clientId={id}
             clientEmail={client.email}
-            userId={user!.id}
+            userId={user?.id}
           />
-          <ClientSelfDisclosureTab clientId={id} />
         </TabsContent>
 
         {/* 3b. Familie */}
