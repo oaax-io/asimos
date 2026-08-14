@@ -475,6 +475,9 @@ export function FinanceGuidedWizard({
             )}
           </div>
         </div>
+        <HelpPanel area={area} />
+        </div>
+
 
         <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
           <Button
