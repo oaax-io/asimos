@@ -98,6 +98,28 @@ const newDraft = (area: FinanceArea): Draft => ({
 
 const numOrNull = (v: string) => (v.trim() === "" ? null : Number(v));
 
+const draftFromItem = (item: any): Draft => ({
+  key: item.id,
+  id: item.id,
+  category: item.category ?? "",
+  label: item.label ?? "",
+  amount: item.amount != null ? String(item.amount) : "",
+  periodicity: (item.periodicity ?? "monthly") as Periodicity,
+  person_scope: (item.person_scope ?? "main") as PersonScope,
+  person_client_id: item.person_client_id ?? "",
+  available_as_equity:
+    item.available_as_equity != null ? String(item.available_as_equity) : "",
+  provider: item.details?.provider ?? "",
+  remaining_debt:
+    item.details?.remaining_debt != null
+      ? String(item.details.remaining_debt)
+      : "",
+  interest_rate:
+    item.details?.interest_rate != null
+      ? String(item.details.interest_rate)
+      : "",
+});
+
 export function FinanceGuidedWizard({
   open,
   onOpenChange,
@@ -114,15 +136,31 @@ export function FinanceGuidedWizard({
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, Draft[]>>({});
+  const [loadedSteps, setLoadedSteps] = useState<Record<string, boolean>>({});
   const [savedCount, setSavedCount] = useState(0);
 
   const area = steps[step];
+
+  const { data: existing = [] } = useQuery<any[]>({
+    queryKey: ["client_financial_items", clientId],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_financial_items")
+        .select("*")
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   useEffect(() => {
     if (open) {
       const idx = startArea ? steps.indexOf(startArea) : 0;
       setStep(idx >= 0 ? idx : 0);
       setDrafts({});
+      setLoadedSteps({});
       setSavedCount(0);
     }
   }, [open, startArea]);
@@ -130,12 +168,15 @@ export function FinanceGuidedWizard({
   const rows = drafts[area] ?? [];
   const setRows = (next: Draft[]) => setDrafts((d) => ({ ...d, [area]: next }));
 
-  // Beim Öffnen eines Schritts immer eine leere Position bereitstellen
+  // Bestehende Positionen laden, sonst eine leere Position bereitstellen
   useEffect(() => {
-    if (!open) return;
-    setDrafts((d) => (d[area]?.length ? d : { ...d, [area]: [newDraft(area)] }));
-  }, [open, area]);
-
+    if (!open || loadedSteps[area]) return;
+    const mine = existing
+      .filter((i) => i.area === area)
+      .map(draftFromItem);
+    setDrafts((d) => ({ ...d, [area]: mine.length ? mine : [newDraft(area)] }));
+    setLoadedSteps((s) => ({ ...s, [area]: true }));
+  }, [open, area, existing, loadedSteps]);
 
   const filled = rows.filter((r) => Number(r.amount || 0) > 0);
   const stepTotal = useMemo(
@@ -143,10 +184,25 @@ export function FinanceGuidedWizard({
     [filled],
   );
 
+  const removeRow = async (r: Draft) => {
+    setRows(rows.filter((x) => x.key !== r.key));
+    if (!r.id) return;
+    const { error } = await supabase
+      .from("client_financial_items")
+      .delete()
+      .eq("id", r.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["client_financial_items", clientId] });
+    toast.success("Position gelöscht");
+  };
+
   const save = useMutation({
     mutationFn: async (list: Draft[]) => {
       if (!list.length) return 0;
-      const payload = list.map((r) => ({
+      const toPayload = (r: Draft) => ({
         client_id: clientId,
         area,
         category: r.category,
@@ -163,12 +219,25 @@ export function FinanceGuidedWizard({
           interest_rate: numOrNull(r.interest_rate),
         },
         source: "manual" as const,
-      }));
-      const { error } = await supabase
-        .from("client_financial_items")
-        .insert(payload);
-      if (error) throw error;
-      return list.length;
+      });
+
+      const inserts = list.filter((r) => !r.id);
+      const updates = list.filter((r) => r.id);
+
+      if (inserts.length) {
+        const { error } = await supabase
+          .from("client_financial_items")
+          .insert(inserts.map(toPayload));
+        if (error) throw error;
+      }
+      for (const r of updates) {
+        const { error } = await supabase
+          .from("client_financial_items")
+          .update(toPayload(r))
+          .eq("id", r.id!);
+        if (error) throw error;
+      }
+      return inserts.length;
     },
     onSuccess: (n) => {
       qc.invalidateQueries({ queryKey: ["client_financial_items", clientId] });
@@ -180,7 +249,7 @@ export function FinanceGuidedWizard({
   const goNext = async (persist: boolean) => {
     if (persist && filled.length) {
       await save.mutateAsync(filled);
-      setRows([]);
+      setLoadedSteps((s) => ({ ...s, [area]: false }));
     }
     if (step < steps.length - 1) {
       setStep(step + 1);
