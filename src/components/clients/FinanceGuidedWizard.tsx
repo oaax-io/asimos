@@ -29,7 +29,16 @@ import {
   Plus,
   Trash2,
   SkipForward,
+  Wallet,
+  Receipt,
+  PiggyBank,
+  CreditCard,
+  ShieldCheck,
+  Landmark,
+  Lightbulb,
+  AlertTriangle,
 } from "lucide-react";
+
 import {
   areaLabels,
   categoryOptions,
