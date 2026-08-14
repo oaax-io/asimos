@@ -91,6 +91,7 @@ export function ClientFinanceTab({
   const [wizardOpen, setWizardOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [guidedOpen, setGuidedOpen] = useState(false);
+  const [guidedArea, setGuidedArea] = useState<FinanceArea | undefined>(undefined);
   const [itemDialog, setItemDialog] = useState<{
     area: FinanceArea;
     item: FinanceItem | null;
