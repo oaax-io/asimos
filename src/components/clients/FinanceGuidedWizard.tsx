@@ -226,7 +226,9 @@ export function FinanceGuidedWizard({
           <Progress value={((step + 1) / steps.length) * 100} className="h-1.5" />
         </div>
 
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-3">
+
           {rows.length === 0 && (
             <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
               Keine Position in diesem Schritt. Du kannst ihn überspringen oder
