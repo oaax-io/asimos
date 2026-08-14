@@ -40,6 +40,7 @@ import {
   ShieldCheck,
   ChevronDown,
   Home,
+  ListChecks,
 } from "lucide-react";
 import {
   calculateBenchmark,
@@ -71,6 +72,7 @@ import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
 import { ClientSelfDisclosureWizard } from "@/components/clients/ClientSelfDisclosureWizard";
 import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkCard";
 import { FinanceItemDialog } from "@/components/clients/FinanceItemDialog";
+import { FinanceGuidedWizard } from "@/components/clients/FinanceGuidedWizard";
 
 type Row = Record<string, any> | null;
 
@@ -88,6 +90,7 @@ export function ClientFinanceTab({
   const qc = useQueryClient();
   const [wizardOpen, setWizardOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
+  const [guidedOpen, setGuidedOpen] = useState(false);
   const [itemDialog, setItemDialog] = useState<{
     area: FinanceArea;
     item: FinanceItem | null;
@@ -417,6 +420,10 @@ export function ClientFinanceTab({
                 <Pencil className="mr-2 h-4 w-4" />
                 Manuell erfassen
               </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setGuidedOpen(true)}>
+                <ListChecks className="mr-2 h-4 w-4" />
+                Schritt-für-Schritt-Assistent
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setLinkOpen(true)}>
                 <Send className="mr-2 h-4 w-4" />
                 Selbstauskunft senden
@@ -451,6 +458,10 @@ export function ClientFinanceTab({
               <Button onClick={() => setWizardOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Finanzdaten erfassen
+              </Button>
+              <Button variant="outline" onClick={() => setGuidedOpen(true)}>
+                <ListChecks className="mr-2 h-4 w-4" />
+                Schritt für Schritt
               </Button>
               <Button variant="outline" onClick={() => setLinkOpen(true)}>
                 <Send className="mr-2 h-4 w-4" />
@@ -647,6 +658,13 @@ export function ClientFinanceTab({
         open={wizardOpen}
         onOpenChange={setWizardOpen}
         initial={disclosure as any}
+      />
+
+      <FinanceGuidedWizard
+        open={guidedOpen}
+        onOpenChange={setGuidedOpen}
+        clientId={clientId}
+        people={family}
       />
 
       {itemDialog && (
