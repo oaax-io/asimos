@@ -103,11 +103,13 @@ export function FinanceGuidedWizard({
   onOpenChange,
   clientId,
   people = [],
+  startArea,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clientId: string;
   people?: { id: string; name: string }[];
+  startArea?: FinanceArea;
 }) {
   const qc = useQueryClient();
   const [step, setStep] = useState(0);
@@ -118,11 +120,12 @@ export function FinanceGuidedWizard({
 
   useEffect(() => {
     if (open) {
-      setStep(0);
+      const idx = startArea ? steps.indexOf(startArea) : 0;
+      setStep(idx >= 0 ? idx : 0);
       setDrafts({});
       setSavedCount(0);
     }
-  }, [open]);
+  }, [open, startArea]);
 
   const rows = drafts[area] ?? [];
   const setRows = (next: Draft[]) => setDrafts((d) => ({ ...d, [area]: next }));

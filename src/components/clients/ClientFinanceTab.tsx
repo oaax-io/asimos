@@ -91,6 +91,7 @@ export function ClientFinanceTab({
   const [wizardOpen, setWizardOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [guidedOpen, setGuidedOpen] = useState(false);
+  const [guidedArea, setGuidedArea] = useState<FinanceArea | undefined>(undefined);
   const [itemDialog, setItemDialog] = useState<{
     area: FinanceArea;
     item: FinanceItem | null;
@@ -325,6 +326,10 @@ export function ClientFinanceTab({
 
   const sectionProps = (area: FinanceArea) => ({
     onAdd: () => openItem(area),
+    onEdit: () => {
+      setGuidedArea(area);
+      setGuidedOpen(true);
+    },
   });
 
   const renderItems = (list: FinanceItem[], area: FinanceArea) =>
@@ -662,9 +667,13 @@ export function ClientFinanceTab({
 
       <FinanceGuidedWizard
         open={guidedOpen}
-        onOpenChange={setGuidedOpen}
+        onOpenChange={(o) => {
+          setGuidedOpen(o);
+          if (!o) setGuidedArea(undefined);
+        }}
         clientId={clientId}
         people={family}
+        startArea={guidedArea}
       />
 
       {itemDialog && (
@@ -763,12 +772,14 @@ function Section({
   title,
   right,
   onAdd,
+  onEdit,
   children,
 }: {
   value: string;
   title: string;
   right?: string;
   onAdd?: () => void;
+  onEdit?: () => void;
   children: React.ReactNode;
 }) {
   return (
@@ -783,16 +794,21 @@ function Section({
       </AccordionTrigger>
       <AccordionContent className="pb-4">
         {children}
-        {onAdd && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={onAdd}
-          >
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Position hinzufügen
-          </Button>
+        {(onAdd || onEdit) && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {onAdd && (
+              <Button variant="outline" size="sm" onClick={onAdd}>
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                Position hinzufügen
+              </Button>
+            )}
+            {onEdit && (
+              <Button variant="outline" size="sm" onClick={onEdit}>
+                <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                Bearbeiten
+              </Button>
+            )}
+          </div>
         )}
       </AccordionContent>
     </AccordionItem>
