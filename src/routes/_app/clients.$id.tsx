@@ -614,7 +614,7 @@ export function ClientDetail({ id, inDialog, onClose, clientIds, onNavigate }: {
               value="disclosure"
               className="relative flex flex-1 items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-muted-foreground rounded-xl border border-transparent transition-all hover:bg-sidebar/25 hover:backdrop-blur-xl hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.08)] data-[state=active]:border-border/60"
             >
-              <ClipboardList className="h-4 w-4" />Selbstauskunft
+              <ClipboardList className="h-4 w-4" />Finanzen
             </TabsTrigger>
 
 
