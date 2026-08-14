@@ -667,9 +667,13 @@ export function ClientFinanceTab({
 
       <FinanceGuidedWizard
         open={guidedOpen}
-        onOpenChange={setGuidedOpen}
+        onOpenChange={(o) => {
+          setGuidedOpen(o);
+          if (!o) setGuidedArea(undefined);
+        }}
         clientId={clientId}
         people={family}
+        startArea={guidedArea}
       />
 
       {itemDialog && (
