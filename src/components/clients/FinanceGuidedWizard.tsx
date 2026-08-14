@@ -195,7 +195,7 @@ export function FinanceGuidedWizard({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92dvh] max-w-3xl overflow-y-auto">
+      <DialogContent className="max-h-[92dvh] max-w-6xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Finanzdaten Schritt für Schritt</DialogTitle>
           <DialogDescription>{stepHints[area]}</DialogDescription>
