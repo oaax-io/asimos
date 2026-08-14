@@ -36,7 +36,6 @@ import { ClientSmartOverview } from "@/components/clients/ClientSmartOverview";
 import { ClientEditDialog } from "@/components/clients/ClientEditDialog";
 import { ClientQuickActions } from "@/components/clients/ClientQuickActions";
 import { BenchmarkCard } from "@/components/clients/BenchmarkCard";
-import { SelfDisclosureLinkCard } from "@/components/clients/SelfDisclosureLinkCard";
 import { useClientBenchmark } from "@/hooks/useClientBenchmark";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { ClientDocumentsTab } from "@/components/clients/ClientDocumentsTab";
