@@ -476,6 +476,78 @@ export type Database = {
           },
         ]
       }
+      client_financial_items: {
+        Row: {
+          amount: number
+          area: string
+          available_as_equity: number | null
+          category: string
+          client_id: string
+          created_at: string
+          created_by: string | null
+          details: Json
+          id: string
+          label: string | null
+          notes: string | null
+          periodicity: string
+          person_client_id: string | null
+          person_scope: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          area: string
+          available_as_equity?: number | null
+          category?: string
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          details?: Json
+          id?: string
+          label?: string | null
+          notes?: string | null
+          periodicity?: string
+          person_client_id?: string | null
+          person_scope?: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          area?: string
+          available_as_equity?: number | null
+          category?: string
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          details?: Json
+          id?: string
+          label?: string | null
+          notes?: string | null
+          periodicity?: string
+          person_client_id?: string | null
+          person_scope?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_financial_items_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_financial_items_person_client_id_fkey"
+            columns: ["person_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_pins: {
         Row: {
           client_id: string
