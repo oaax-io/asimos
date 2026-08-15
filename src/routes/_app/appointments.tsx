@@ -95,7 +95,7 @@ function AppointmentsPage() {
     queryKey: ["tasks", "with-due"],
     queryFn: async () => (await supabase
       .from("tasks")
-      .select("id, title, due_date, status, priority, related_type, related_id, assigned_to")
+      .select("id, title, description, due_date, status, priority, related_type, related_id, assigned_to")
       .not("due_date", "is", null)).data ?? [],
   });
 
