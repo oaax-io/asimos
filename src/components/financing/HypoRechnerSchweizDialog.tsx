@@ -659,3 +659,35 @@ function Kpi({ title, value, hint, tone }: { title: string; value: string; hint?
     </div>
   );
 }
+
+function ProsConsCard({ title, pro, con }: { title: string; pro: string[]; con: string[] }) {
+  return (
+    <div className="rounded-lg border p-3 space-y-3">
+      <p className="text-sm font-semibold">{title}</p>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <ThumbsUp className="h-3.5 w-3.5" /> Vorteile
+        </div>
+        <ul className="space-y-1">
+          {pro.map((t) => (
+            <li key={t} className="text-xs text-muted-foreground flex gap-1.5">
+              <span className="text-emerald-500">•</span>{t}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+          <ThumbsDown className="h-3.5 w-3.5" /> Nachteile
+        </div>
+        <ul className="space-y-1">
+          {con.map((t) => (
+            <li key={t} className="text-xs text-muted-foreground flex gap-1.5">
+              <span className="text-red-400">•</span>{t}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
