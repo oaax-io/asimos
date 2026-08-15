@@ -235,6 +235,19 @@ export function FinanceGuidedWizard({
 
   const removeRow = async (r: Draft) => {
     setRows(rows.filter((x) => x.key !== r.key));
+    if (r.disclosureField) {
+      const { error } = await supabase
+        .from("client_self_disclosures")
+        .update({ [r.disclosureField]: null } as any)
+        .eq("client_id", clientId);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      qc.invalidateQueries({ queryKey: ["client_self_disclosure", clientId] });
+      toast.success("Position entfernt");
+      return;
+    }
     if (!r.id) return;
     const { error } = await supabase
       .from("client_financial_items")
@@ -270,8 +283,23 @@ export function FinanceGuidedWizard({
         source: "manual" as const,
       });
 
-      const inserts = list.filter((r) => !r.id);
-      const updates = list.filter((r) => r.id);
+      // Selbstauskunfts-Werte direkt in der Selbstauskunft aktualisieren
+      const sdRows = list.filter((r) => r.disclosureField);
+      if (sdRows.length) {
+        const patch: Record<string, number | null> = {};
+        for (const r of sdRows) {
+          patch[r.disclosureField!] = numOrNull(r.amount);
+        }
+        const { error } = await supabase
+          .from("client_self_disclosures")
+          .update(patch as any)
+          .eq("client_id", clientId);
+        if (error) throw error;
+      }
+
+      const items = list.filter((r) => !r.disclosureField);
+      const inserts = items.filter((r) => !r.id);
+      const updates = items.filter((r) => r.id);
 
       if (inserts.length) {
         const { error } = await supabase
@@ -290,10 +318,12 @@ export function FinanceGuidedWizard({
     },
     onSuccess: (n) => {
       qc.invalidateQueries({ queryKey: ["client_financial_items", clientId] });
+      qc.invalidateQueries({ queryKey: ["client_self_disclosure", clientId] });
       if (n) setSavedCount((c) => c + n);
     },
     onError: (e: any) => toast.error(e?.message ?? "Speichern fehlgeschlagen"),
   });
+
 
   const goNext = async (persist: boolean) => {
     if (persist && filled.length) {
