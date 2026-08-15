@@ -25,6 +25,7 @@ import { useTranslation } from "react-i18next";
 import { VideoCallDialog } from "@/components/video/VideoCallDialog";
 import { HolidaySettings } from "@/components/appointments/HolidaySettings";
 import { holidayMap, holidaysForCanton, dateKey, type Holiday } from "@/lib/swiss-holidays";
+import { ApptHover, TaskHover, HolidayHover } from "@/components/appointments/CalendarHover";
 
 export const Route = createFileRoute("/_app/appointments")({ component: AppointmentsPage });
 
