@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/EmptyState";
-import { Plus, Search, Building2, User, Database, PencilLine, Trash2, UserPlus, FileText, X, ArrowRight, Calculator } from "lucide-react";
+import { Plus, Search, Building2, User, Database, PencilLine, Trash2, UserPlus, FileText, X, ArrowRight, Calculator, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
@@ -20,6 +21,7 @@ import {
 } from "@/lib/financing";
 import { FinancingQuickCheckWizard } from "@/components/financing/FinancingQuickCheckWizard";
 import { HypoRechnerKosovoDialog } from "@/components/financing/HypoRechnerKosovoDialog";
+import { HypoRechnerSchweizDialog } from "@/components/financing/HypoRechnerSchweizDialog";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -44,6 +46,7 @@ function FinancingPage() {
   const [sourceFilter, setSourceFilter] = useState<string>(ALL);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [hypoOpen, setHypoOpen] = useState(false);
+  const [hypoChOpen, setHypoChOpen] = useState(false);
   const [hypoCalcId, setHypoCalcId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -145,9 +148,23 @@ function FinancingPage() {
         i18nKey="financing"
         action={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setHypoOpen(true)}>
-              <Calculator className="mr-2 h-4 w-4" /> {t("financing.hypoButton")}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Calculator className="mr-2 h-4 w-4" /> Andere Finanzierung
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Hyporechner</DropdownMenuLabel>
+                <DropdownMenuItem onSelect={() => { setHypoCalcId(null); setHypoOpen(true); }}>
+                  <Calculator className="mr-2 h-4 w-4" /> Hyporechner Kosovo
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setHypoChOpen(true)}>
+                  <Calculator className="mr-2 h-4 w-4" /> Hyporechner Schweiz
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button onClick={() => setWizardOpen(true)}>
               <Plus className="mr-2 h-4 w-4" /> {t("financing.startQuickCheck")}
             </Button>
@@ -322,6 +339,8 @@ function FinancingPage() {
         onOpenChange={(o) => { setHypoOpen(o); if (!o) setHypoCalcId(null); }}
         calculationId={hypoCalcId}
       />
+
+      <HypoRechnerSchweizDialog open={hypoChOpen} onOpenChange={setHypoChOpen} />
 
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <AlertDialogContent>
