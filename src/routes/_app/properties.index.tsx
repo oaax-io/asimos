@@ -303,10 +303,10 @@ function PropertiesPage() {
         action={
           <div className="flex items-center gap-2">
             <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>
-              <TabsList>
-                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />{t("properties.view.grid")}</TabsTrigger>
-                <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />{t("properties.view.list")}</TabsTrigger>
-                <TabsTrigger value="map"><MapIcon className="mr-1 h-4 w-4" />{t("properties.view.map")}</TabsTrigger>
+              <TabsList className="h-9 rounded-lg bg-primary/15 p-1">
+                <TabsTrigger value="grid" className="gap-1.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><LayoutGrid className="h-4 w-4" />{t("properties.view.grid")}</TabsTrigger>
+                <TabsTrigger value="list" className="gap-1.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><ListIcon className="h-4 w-4" />{t("properties.view.list")}</TabsTrigger>
+                <TabsTrigger value="map" className="gap-1.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><MapIcon className="h-4 w-4" />{t("properties.view.map")}</TabsTrigger>
               </TabsList>
             </Tabs>
             <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-1 h-4 w-4" />{t("properties.import")}</Button>
