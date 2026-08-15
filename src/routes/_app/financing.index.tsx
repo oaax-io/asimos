@@ -150,8 +150,8 @@ function FinancingPage() {
           <div className="flex gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <Calculator className="mr-2 h-4 w-4" /> Andere Finanzierung
+                <Button className="bg-orange-500 text-white hover:bg-orange-600 border-orange-500">
+                  <Calculator className="mr-2 h-4 w-4" /> Hyporechner
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
