@@ -37,7 +37,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PresenceDot, PresenceLabel } from "@/components/presence/PresenceDot";
-import { VideoCallDialog } from "@/components/video/VideoCallDialog";
+import { useLivekitToken } from "@/components/video/useLivekitToken";
+import { VideoStage } from "@/components/video/VideoStage";
+import { PhoneOff } from "lucide-react";
 
 export type ChatAttachment = {
   path: string;
@@ -340,21 +342,18 @@ function ChatWindow({
     ? `chat-${[user.id, memberId].sort().join("--")}`
     : `chat-${memberId}`;
 
+  const callState = useLivekitToken(callRoom, callOpen && mode !== "minimized");
+
   const shell =
     mode === "maximized"
       ? "inset-4 md:inset-10"
       : mode === "minimized"
         ? "bottom-4 right-4 w-[300px]"
-        : "bottom-4 right-4 w-[380px] h-[540px] max-h-[80dvh]";
+        : callOpen
+          ? "bottom-4 right-4 w-[380px] h-[560px] max-h-[85dvh] md:w-[860px]"
+          : "bottom-4 right-4 w-[380px] h-[540px] max-h-[80dvh]";
 
   return (
-    <>
-    <VideoCallDialog
-      open={callOpen}
-      onOpenChange={setCallOpen}
-      room={callRoom}
-      title={`Videoanruf mit ${title}`}
-    />
     <div className={cn("fixed z-50 flex flex-col overflow-hidden rounded-xl border bg-background shadow-2xl", shell)}>
       {/* Header */}
       <div
@@ -376,10 +375,10 @@ function ChatWindow({
           variant="ghost"
           size="icon"
           className="h-7 w-7"
-          title="Videoanruf starten"
-          onClick={() => setCallOpen(true)}
+          title={callOpen ? "Anruf beenden" : "Videoanruf starten"}
+          onClick={() => setCallOpen((v) => !v)}
         >
-          <Video className="h-4 w-4" />
+          {callOpen ? <PhoneOff className="h-4 w-4 text-destructive" /> : <Video className="h-4 w-4" />}
         </Button>
         <Button
           variant="ghost"
@@ -405,7 +404,18 @@ function ChatWindow({
       </div>
 
       {mode !== "minimized" && (
-        <>
+        <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+          {callOpen && (
+            <div className="relative min-h-[220px] flex-1 border-b bg-muted/40 md:min-h-0 md:border-b-0 md:border-r">
+              <VideoStage state={callState} onLeave={() => setCallOpen(false)} />
+            </div>
+          )}
+          <div
+            className={cn(
+              "flex min-h-0 flex-col",
+              callOpen ? "flex-1 md:w-[360px] md:flex-none" : "min-h-0 flex-1",
+            )}
+          >
           {/* Tabs */}
           <div className="flex shrink-0 gap-4 border-b px-3">
             {(
