@@ -71,6 +71,7 @@ const stepHints: Record<FinanceArea, string> = {
 type Draft = {
   key: string;
   id?: string;
+  disclosureField?: string;
   category: string;
   label: string;
   amount: string;
