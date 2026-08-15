@@ -328,12 +328,15 @@ function HolidayList({ canton, showUnpaid }: { canton: string; showUnpaid: boole
 /* -------------------- Views -------------------- */
 
 function ListView({
-  appts, employees, onOpen, onStatus,
-}: { appts: any[]; employees: any[]; onOpen: (id: string) => void; onStatus: (id: string, s: string) => void }) {
+  appts, tasks = [], employees, onOpen, onStatus,
+}: { appts: any[]; tasks?: any[]; employees: any[]; onOpen: (id: string) => void; onStatus: (id: string, s: string) => void }) {
   const { t } = useTranslation();
   const now = Date.now();
   const upcoming = appts.filter((a) => new Date(a.starts_at).getTime() >= now);
   const past = appts.filter((a) => new Date(a.starts_at).getTime() < now).reverse();
+  const upcomingTasks = tasks
+    .filter((tk) => tk.status !== "done" && tk.status !== "cancelled")
+    .sort((a, b) => +new Date(a.due_date) - +new Date(b.due_date));
 
   return (
     <>
@@ -344,6 +347,25 @@ function ListView({
         <div className="grid gap-3 md:grid-cols-2">
           {upcoming.map((a) => <ApptCard key={a.id} a={a} employees={employees} onOpen={onOpen} onStatus={onStatus} />)}
         </div>
+      )}
+
+      {upcomingTasks.length > 0 && (
+        <>
+          <h2 className="mb-3 mt-8 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+            <CheckSquare className="h-4 w-4 text-amber-500" /> Aufgaben mit Fälligkeitsdatum
+          </h2>
+          <div className="grid gap-2 md:grid-cols-2">
+            {upcomingTasks.map((tk) => (
+              <TaskHover key={tk.id} task={tk} assignee={employees.find((e: any) => e.id === tk.assigned_to)}>
+                <Link to="/tasks" className="flex items-center gap-2 rounded-xl border border-l-4 border-l-amber-500 bg-amber-50/40 p-3 text-sm transition hover:bg-accent dark:bg-amber-950/20">
+                  <CheckSquare className="h-4 w-4 shrink-0 text-amber-600" />
+                  <span className="min-w-0 flex-1 truncate font-medium">{tk.title}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{formatDateTime(tk.due_date)}</span>
+                </Link>
+              </TaskHover>
+            ))}
+          </div>
+        </>
       )}
 
       {past.length > 0 && (
@@ -357,6 +379,7 @@ function ListView({
     </>
   );
 }
+
 
 function ApptCard({
   a, employees, dim, onOpen, onStatus,
