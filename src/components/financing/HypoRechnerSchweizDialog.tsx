@@ -269,6 +269,63 @@ export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
         15, endY + 18, { maxWidth: pageW - 30 },
       );
 
+      // --- Seite 2: Vergleich direkte vs. indirekte Amortisation ---
+      doc.addPage();
+      let y2 = 20;
+      doc.setFontSize(16);
+      doc.setTextColor(20);
+      doc.text("Direkte vs. indirekte Amortisation", 15, y2);
+      y2 += 6;
+      doc.setFontSize(9);
+      doc.setTextColor(120);
+      doc.text(
+        `Vergleich über ${amort.years} Jahre · Grenzsteuersatz ${taxRatePct}% · Police-Rendite netto ${(policyReturnPct - policyCostPct).toFixed(2)}%`,
+        15, y2,
+      );
+      y2 += 6;
+
+      autoTable(doc, {
+        startY: y2,
+        theme: "grid",
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [111, 107, 148] },
+        head: [["Position", "Direkt", "Indirekt (Versicherung)"]],
+        body: compareRows,
+      });
+
+      let y3 = ((doc as any).lastAutoTable?.finalY ?? y2) + 10;
+      doc.setFontSize(11);
+      doc.setTextColor(20);
+      doc.text(
+        amort.advantage > 0
+          ? `Empfehlung: Indirekte Amortisation ist rechnerisch um ${formatCurrency(Math.abs(amort.advantage))} günstiger.`
+          : `Empfehlung: Direkte Amortisation ist rechnerisch um ${formatCurrency(Math.abs(amort.advantage))} günstiger.`,
+        15, y3, { maxWidth: pageW - 30 },
+      );
+      y3 += 10;
+
+      autoTable(doc, {
+        startY: y3,
+        theme: "striped",
+        styles: { fontSize: 8, cellPadding: 2, valign: "top" },
+        headStyles: { fillColor: [111, 107, 148] },
+        head: [["Direkt – Vorteile", "Direkt – Nachteile", "Indirekt – Vorteile", "Indirekt – Nachteile"]],
+        body: [[
+          prosCons.direct.pro.map((t) => `+ ${t}`).join("\n"),
+          prosCons.direct.con.map((t) => `- ${t}`).join("\n"),
+          prosCons.indirect.pro.map((t) => `+ ${t}`).join("\n"),
+          prosCons.indirect.con.map((t) => `- ${t}`).join("\n"),
+        ]],
+      });
+
+      const y4 = ((doc as any).lastAutoTable?.finalY ?? y3) + 8;
+      doc.setFontSize(8);
+      doc.setTextColor(130);
+      doc.text(
+        "Vereinfachte Modellrechnung ohne Eigenmietwert, Unterhaltsabzüge und individuelle Policenbedingungen. Unverbindlich, keine Steuer- oder Anlageberatung.",
+        15, y4, { maxWidth: pageW - 30 },
+      );
+
       doc.save(`hyporechner-schweiz-${new Date().toISOString().slice(0, 10)}.pdf`);
     } catch (e: any) {
       toast.error(e?.message ?? "PDF-Export fehlgeschlagen");
