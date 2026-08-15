@@ -205,11 +205,12 @@ function AppointmentsPage() {
 
       <Tabs value={view} onValueChange={(v) => setView(v as any)} className="space-y-4">
         <TabsList>
-          <TabsTrigger value="month">{t("appointments.tabs.month", { defaultValue: "Monat" })}</TabsTrigger>
-          <TabsTrigger value="week">{t("appointments.tabs.week")}</TabsTrigger>
-          <TabsTrigger value="day">Tag</TabsTrigger>
-          <TabsTrigger value="list">{t("appointments.tabs.list")}</TabsTrigger>
+          <TabsTrigger value="month" className="gap-1.5"><CalendarDays className="h-4 w-4" />{t("appointments.tabs.month", { defaultValue: "Monat" })}</TabsTrigger>
+          <TabsTrigger value="week" className="gap-1.5"><CalendarRange className="h-4 w-4" />{t("appointments.tabs.week")}</TabsTrigger>
+          <TabsTrigger value="day" className="gap-1.5"><CalendarClock className="h-4 w-4" />Tag</TabsTrigger>
+          <TabsTrigger value="list" className="gap-1.5"><ListIcon className="h-4 w-4" />{t("appointments.tabs.list")}</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="month">
           <MonthView appts={appts} tasks={tasks} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
