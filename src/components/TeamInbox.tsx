@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Inbox, Search, Maximize2, Paperclip } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Inbox, Search, Maximize2, Paperclip, Pin, PinOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,43 @@ export function TeamInbox() {
     },
   });
 
+  const { data: pins = [] } = useQuery({
+    queryKey: ["chat-pins", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chat_pins")
+        .select("member_id")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return (data ?? []).map((r) => r.member_id as string);
+    },
+  });
+
+  const togglePin = useMutation({
+    mutationFn: async (memberId: string) => {
+      if (pins.includes(memberId)) {
+        const { error } = await supabase
+          .from("chat_pins")
+          .delete()
+          .eq("user_id", user!.id)
+          .eq("member_id", memberId);
+        if (error) throw error;
+        return false;
+      }
+      const { error } = await supabase
+        .from("chat_pins")
+        .insert({ user_id: user!.id, member_id: memberId });
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: (pinned) => {
+      qc.invalidateQueries({ queryKey: ["chat-pins", user?.id] });
+      toast.success(pinned ? "Chat angepinnt" : "Pin entfernt");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   // Realtime
   useEffect(() => {
     if (!user?.id) return;
@@ -124,8 +161,12 @@ export function TeamInbox() {
     }
     return Array.from(map.entries())
       .map(([id, v]) => ({ member: members.find((m) => m.id === id), ...v, id }))
-      .sort((a, b) => (a.last.created_at < b.last.created_at ? 1 : -1));
-  }, [messages, members, user?.id]);
+      .map((t) => ({ ...t, pinned: pins.includes(t.id) }))
+      .sort((a, b) => {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        return a.last.created_at < b.last.created_at ? 1 : -1;
+      });
+  }, [messages, members, user?.id, pins]);
 
   const filteredMembers = members.filter((m) =>
     (m.full_name || m.email || "").toLowerCase().includes(search.toLowerCase()),
@@ -145,10 +186,13 @@ export function TeamInbox() {
             Unterhaltungen
           </p>
           {threads.map((t) => (
+            <div key={t.id} className="group relative">
             <button
-              key={t.id}
               onClick={() => select(t.id)}
-              className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition hover:bg-muted"
+              className={cn(
+                "flex w-full items-center gap-3 rounded-md px-2 py-2 pr-9 text-left transition hover:bg-muted",
+                t.pinned && "bg-primary/5",
+              )}
             >
               <span className="relative">
                 <Avatar className="h-9 w-9">
@@ -183,6 +227,21 @@ export function TeamInbox() {
                 </span>
               )}
             </button>
+            <button
+              type="button"
+              title={t.pinned ? "Pin entfernen" : "Chat anpinnen"}
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePin.mutate(t.id);
+              }}
+              className={cn(
+                "absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground",
+                t.pinned ? "text-primary opacity-100" : "opacity-0 group-hover:opacity-100",
+              )}
+            >
+              {t.pinned ? <Pin className="h-3.5 w-3.5 fill-current" /> : <PinOff className="h-3.5 w-3.5" />}
+            </button>
+            </div>
           ))}
         </div>
       )}
