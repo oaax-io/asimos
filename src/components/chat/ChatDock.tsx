@@ -25,6 +25,7 @@ import {
   Home,
   User as UserIcon,
   Users,
+  Video,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -36,6 +37,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { PresenceDot, PresenceLabel } from "@/components/presence/PresenceDot";
+import { VideoCallDialog } from "@/components/video/VideoCallDialog";
 
 export type ChatAttachment = {
   path: string;
@@ -333,6 +335,10 @@ function ChatWindow({
   );
 
   const title = member?.full_name ?? member?.email ?? "Chat";
+  const [callOpen, setCallOpen] = useState(false);
+  const callRoom = user?.id
+    ? `chat-${[user.id, memberId].sort().join("--")}`
+    : `chat-${memberId}`;
 
   const shell =
     mode === "maximized"
@@ -342,6 +348,13 @@ function ChatWindow({
         : "bottom-4 right-4 w-[380px] h-[540px] max-h-[80dvh]";
 
   return (
+    <>
+    <VideoCallDialog
+      open={callOpen}
+      onOpenChange={setCallOpen}
+      room={callRoom}
+      title={`Videoanruf mit ${title}`}
+    />
     <div className={cn("fixed z-50 flex flex-col overflow-hidden rounded-xl border bg-background shadow-2xl", shell)}>
       {/* Header */}
       <div
@@ -359,6 +372,15 @@ function ChatWindow({
           <span className="truncate text-sm font-semibold leading-tight">{title}</span>
           <PresenceLabel status={member?.presence_status} className="text-[10px]" />
         </span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          title="Videoanruf starten"
+          onClick={() => setCallOpen(true)}
+        >
+          <Video className="h-4 w-4" />
+        </Button>
         <Button
           variant="ghost"
           size="icon"
@@ -599,5 +621,6 @@ function ChatWindow({
         </>
       )}
     </div>
+    </>
   );
 }
