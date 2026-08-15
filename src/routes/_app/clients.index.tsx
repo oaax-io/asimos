@@ -335,10 +335,11 @@ function ClientsPage() {
         action={
           <div className="flex items-center gap-2">
             <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>
-              <TabsList>
-                <TabsTrigger value="grid"><LayoutGrid className="mr-1 h-4 w-4" />{t("clients.tabs.grid")}</TabsTrigger>
-                <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />{t("clients.tabs.list")}</TabsTrigger>
+              <TabsList className="h-9 rounded-lg bg-primary/15 p-1">
+                <TabsTrigger value="grid" className="gap-1.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><LayoutGrid className="h-4 w-4" />{t("clients.tabs.grid")}</TabsTrigger>
+                <TabsTrigger value="list" className="gap-1.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><ListIcon className="h-4 w-4" />{t("clients.tabs.list")}</TabsTrigger>
               </TabsList>
+
             </Tabs>
             
             <Button onClick={() => setOpen(true)}>
