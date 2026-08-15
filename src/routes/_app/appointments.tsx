@@ -642,8 +642,8 @@ function MonthView({ appts, tasks, holidays, onOpen, onCreateAt }: { appts: any[
           const paidHol = hol.some((h) => h.paid);
           const items = byDay[d.toDateString()] ?? { appts: [], tasks: [] };
           const all = [
-            ...items.appts.map((a) => ({ kind: "appt" as const, id: a.id, time: a.starts_at, title: a.title, status: a.status, online: a.is_online })),
-            ...items.tasks.map((tk) => ({ kind: "task" as const, id: tk.id, time: tk.due_date, title: tk.title, status: tk.status, online: false })),
+            ...items.appts.map((a) => ({ kind: "appt" as const, id: a.id, time: a.starts_at, title: a.title, status: a.status, online: a.is_online, ref: a })),
+            ...items.tasks.map((tk) => ({ kind: "task" as const, id: tk.id, time: tk.due_date, title: tk.title, status: tk.status, online: false, ref: tk })),
           ].sort((a, b) => +new Date(a.time) - +new Date(b.time));
           return (
             <div
@@ -657,13 +657,14 @@ function MonthView({ appts, tasks, holidays, onOpen, onCreateAt }: { appts: any[
                   title="Termin anlegen"
                 ><Plus className="h-3 w-3" /></button>
                 {hol.length > 0 && (
-                  <span
-                    title={hol.map((h) => `${h.name} (${h.paid ? "bezahlt" : "unbezahlt"})`).join(" · ")}
-                    className={`flex min-w-0 flex-1 items-center gap-1 truncate rounded px-1 py-0.5 text-[10px] font-medium ${hol.some((h) => h.paid) ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-muted text-muted-foreground"}`}
-                  >
-                    <Flag className="h-2.5 w-2.5 shrink-0" />
-                    <span className="truncate">{hol[0].name}{hol.length > 1 ? ` +${hol.length - 1}` : ""}</span>
-                  </span>
+                  <HolidayHover holidays={hol}>
+                    <span
+                      className={`flex min-w-0 flex-1 cursor-default items-center gap-1 truncate rounded px-1 py-0.5 text-[10px] font-medium ${hol.some((h) => h.paid) ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-muted text-muted-foreground"}`}
+                    >
+                      <Flag className="h-2.5 w-2.5 shrink-0" />
+                      <span className="truncate">{hol[0].name}{hol.length > 1 ? ` +${hol.length - 1}` : ""}</span>
+                    </span>
+                  </HolidayHover>
                 )}
                 <span className={`ml-auto text-xs font-semibold ${isToday ? "text-primary" : paidHol ? "text-rose-600 dark:text-rose-300" : ""}`}>{d.getDate()}</span>
               </div>
@@ -671,29 +672,30 @@ function MonthView({ appts, tasks, holidays, onOpen, onCreateAt }: { appts: any[
                 {all.slice(0, hol.length ? 2 : 3).map((it) => (
 
                   it.kind === "appt" ? (
-                    <button
-                      key={`a-${it.id}`}
-                      onClick={() => onOpen(it.id)}
-                      className="flex w-full items-center gap-1 truncate rounded border-l-2 border-l-primary bg-primary/10 px-1.5 py-0.5 text-left text-[11px] font-medium text-primary hover:bg-primary/20"
-                      title={it.title}
-                    >
-                      {it.online && <Video className="h-3 w-3 shrink-0" />}
-                      <span className="truncate">
-                        {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(it.time))} {it.title}
-                      </span>
-                    </button>
+                    <ApptHover key={`a-${it.id}`} appt={it.ref} assignee={employees.find((e: any) => e.id === it.ref.assigned_to)} room={roomOf(it.ref)}>
+                      <button
+                        onClick={() => onOpen(it.id)}
+                        className="flex w-full items-center gap-1 truncate rounded border-l-2 border-l-primary bg-primary/10 px-1.5 py-0.5 text-left text-[11px] font-medium text-primary hover:bg-primary/20"
+                      >
+                        {it.online && <Video className="h-3 w-3 shrink-0" />}
+                        <span className="truncate">
+                          {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(it.time))} {it.title}
+                        </span>
+                      </button>
+                    </ApptHover>
                   ) : (
-                    <Link
-                      key={`t-${it.id}`}
-                      to="/tasks"
-                      className={`flex w-full items-center gap-1 truncate rounded border-l-2 px-1.5 py-0.5 text-left text-[11px] font-medium hover:opacity-80 ${it.status === "done" ? "border-l-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 line-through" : "border-l-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400"}`}
-                      title={it.title}
-                    >
-                      <CheckSquare className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{it.title}</span>
-                    </Link>
+                    <TaskHover key={`t-${it.id}`} task={it.ref} assignee={employees.find((e: any) => e.id === it.ref.assigned_to)}>
+                      <Link
+                        to="/tasks"
+                        className={`flex w-full items-center gap-1 truncate rounded border-l-2 px-1.5 py-0.5 text-left text-[11px] font-medium hover:opacity-80 ${it.status === "done" ? "border-l-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 line-through" : "border-l-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400"}`}
+                      >
+                        <CheckSquare className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{it.title}</span>
+                      </Link>
+                    </TaskHover>
                   )
                 ))}
+
                 {all.length > (hol.length ? 2 : 3) && (
                   <p className="px-1 text-[10px] text-muted-foreground">+{all.length - (hol.length ? 2 : 3)} {t("appointments.month.more", { defaultValue: "weitere" })}</p>
                 )}
