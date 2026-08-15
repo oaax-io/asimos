@@ -424,6 +424,107 @@ export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
             </div>
           </section>
 
+          {/* --- Section: Amortisationsart --- */}
+          <section className="space-y-3">
+            <SectionLabel icon={ArrowDownUp} title="Amortisationsart & Vergleich" />
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setAmortMode("direct")}
+                className={`text-left rounded-lg border p-3 transition ${
+                  amortMode === "direct"
+                    ? "border-[#6F6B94] ring-2 ring-[#6F6B94]/30 bg-[#6F6B94]/5"
+                    : "hover:bg-muted/50"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <ArrowDownUp className="h-4 w-4 text-[#6F6B94]" />
+                  <span className="font-semibold text-sm">Direkte Amortisation</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Rückzahlung direkt an die Bank – Hypothek und Zinskosten sinken laufend.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAmortMode("indirect")}
+                className={`text-left rounded-lg border p-3 transition ${
+                  amortMode === "indirect"
+                    ? "border-[#6F6B94] ring-2 ring-[#6F6B94]/30 bg-[#6F6B94]/5"
+                    : "hover:bg-muted/50"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-[#6F6B94]" />
+                  <span className="font-semibold text-sm">Indirekte Amortisation</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Einzahlung in eine Versicherungspolice (Säule 3a/3b) – Hypothek bleibt konstant.
+                </p>
+              </button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Field label="Grenzsteuersatz (%)" value={taxRatePct} onChange={setTaxRatePct} step={1} />
+              <Field label="Rendite Police (%)" value={policyReturnPct} onChange={setPolicyReturnPct} step={0.1} />
+              <Field label="Kosten Police (%)" value={policyCostPct} onChange={setPolicyCostPct} step={0.1} />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Kpi
+                title="Nettokosten direkt"
+                value={formatCurrency(amort.directNet)}
+                hint={`über ${amort.years} Jahre`}
+                tone={amort.advantage <= 0 ? "good" : "neutral"}
+              />
+              <Kpi
+                title="Nettokosten indirekt"
+                value={formatCurrency(amort.indirectNet)}
+                hint={`inkl. Police ${formatCurrency(amort.policyEnd)}`}
+                tone={amort.advantage > 0 ? "good" : "neutral"}
+              />
+              <Kpi
+                title="Differenz"
+                value={formatCurrency(Math.abs(amort.advantage))}
+                hint={amort.advantage > 0 ? "Vorteil indirekt" : "Vorteil direkt"}
+                tone="warn"
+              />
+            </div>
+
+            <div className="rounded-lg border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/60 border-b">
+                    <th className="text-left font-medium px-3 py-2">Position</th>
+                    <th className={`text-right font-medium px-3 py-2 ${amortMode === "direct" ? "text-[#6F6B94]" : ""}`}>Direkt</th>
+                    <th className={`text-right font-medium px-3 py-2 ${amortMode === "indirect" ? "text-[#6F6B94]" : ""}`}>Indirekt</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {compareRows.map(([k, a, b], i) => (
+                    <tr key={k} className={i % 2 === 0 ? "bg-transparent" : "bg-muted/30"}>
+                      <td className="px-3 py-1.5 text-muted-foreground">{k}</td>
+                      <td className="px-3 py-1.5 text-right font-semibold tabular-nums">{a}</td>
+                      <td className="px-3 py-1.5 text-right font-semibold tabular-nums">{b}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <ProsConsCard title="Direkte Amortisation" pro={prosCons.direct.pro} con={prosCons.direct.con} />
+              <ProsConsCard title="Indirekte Amortisation (Versicherung)" pro={prosCons.indirect.pro} con={prosCons.indirect.con} />
+            </div>
+
+            <p className="text-xs text-muted-foreground px-1">
+              Vereinfachte Modellrechnung ohne Eigenmietwert und individuelle Policenbedingungen. Unverbindlich, keine Steuer- oder Anlageberatung.
+            </p>
+          </section>
+
+
+
           {/* --- KPI Row --- */}
           <section className="space-y-3">
             <SectionLabel icon={TrendingUp} title="Kennzahlen" />
