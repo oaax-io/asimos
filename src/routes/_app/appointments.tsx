@@ -447,14 +447,23 @@ function WeekView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: 
               key={d.toISOString()}
               className={`group rounded-xl border p-3 ${paidHol ? "bg-rose-50/60 dark:bg-rose-950/20" : "bg-card"} ${isToday ? "ring-2 ring-primary/30" : ""}`}
             >
-              <div className="mb-2 flex items-center justify-between">
+              <div className="mb-2 flex items-center gap-1.5">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {new Intl.DateTimeFormat(locale, { weekday: "short" }).format(d)}
                 </p>
-                <p className={`text-lg font-bold ${isToday ? "text-primary" : ""}`}>{d.getDate()}</p>
+                {hol.length > 0 && (
+                  <span
+                    title={hol.map((h) => `${h.name} (${h.paid ? "bezahlt" : "unbezahlt"})`).join(" · ")}
+                    className={`flex min-w-0 flex-1 items-center gap-1 truncate rounded px-1 py-0.5 text-[10px] font-medium ${paidHol ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-muted text-muted-foreground"}`}
+                  >
+                    <Flag className="h-2.5 w-2.5 shrink-0" />
+                    <span className="truncate">{hol[0].name}{hol.length > 1 ? ` +${hol.length - 1}` : ""}</span>
+                  </span>
+                )}
+                <p className={`ml-auto text-lg font-bold ${isToday ? "text-primary" : ""}`}>{d.getDate()}</p>
               </div>
               <div className="space-y-1.5">
-                {hol.map((h) => <HolidayChip key={h.name} h={h} />)}
+
                 {total === 0 && hol.length === 0 && (
                   <button
                     onClick={() => { const dt = new Date(d); dt.setHours(9, 0, 0, 0); onCreateAt(localInput(dt)); }}
