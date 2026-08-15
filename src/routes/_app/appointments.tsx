@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar as CalIcon, MapPin, Clock, ChevronLeft, ChevronRight, Trash2, CheckSquare } from "lucide-react";
+import { Plus, Calendar as CalIcon, MapPin, Clock, ChevronLeft, ChevronRight, Trash2, CheckSquare, Video, Link2, Copy, Flag } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,14 +22,14 @@ import { formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { useTranslation } from "react-i18next";
-
 import { VideoCallDialog } from "@/components/video/VideoCallDialog";
-import { Video } from "lucide-react";
+import { HolidaySettings } from "@/components/appointments/HolidaySettings";
+import { holidayMap, holidaysForCanton, dateKey, type Holiday } from "@/lib/swiss-holidays";
 
 export const Route = createFileRoute("/_app/appointments")({ component: AppointmentsPage });
 
-const TYPES = ["viewing","meeting","call","other"] as const;
-const STATUSES = ["scheduled","completed","cancelled"] as const;
+const TYPES = ["viewing", "meeting", "call", "other"] as const;
+const STATUSES = ["scheduled", "completed", "cancelled"] as const;
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   scheduled: "default", completed: "secondary", cancelled: "outline",
 };
@@ -38,7 +39,12 @@ const emptyForm = {
   starts_at: "", ends_at: "",
   location: "", notes: "",
   client_id: "", property_id: "", assigned_to: "",
+  is_online: false, meeting_url: "",
 };
+
+function roomOf(a: any) {
+  return a?.meeting_url || `termin-${a?.id}`;
+}
 
 function useApptLabels() {
   const { t } = useTranslation();
@@ -57,6 +63,22 @@ function useApptLabels() {
   };
 }
 
+/* -------------------- Holiday hook -------------------- */
+
+function useHolidays() {
+  const [canton, setCanton] = useState<string>(() => (typeof window !== "undefined" && localStorage.getItem("cal.canton")) || "ZH");
+  const [showUnpaid, setShowUnpaid] = useState<boolean>(() => (typeof window !== "undefined" ? localStorage.getItem("cal.unpaid") !== "0" : true));
+
+  useEffect(() => { localStorage.setItem("cal.canton", canton); }, [canton]);
+  useEffect(() => { localStorage.setItem("cal.unpaid", showUnpaid ? "1" : "0"); }, [showUnpaid]);
+
+  const y = new Date().getFullYear();
+  const map = useMemo(() => holidayMap([y - 1, y, y + 1, y + 2], canton, showUnpaid), [canton, showUnpaid, y]);
+  return { canton, setCanton, showUnpaid, setShowUnpaid, map };
+}
+
+/* -------------------- Page -------------------- */
+
 function AppointmentsPage() {
   const { t } = useTranslation();
   const confirm = useConfirm();
@@ -65,7 +87,8 @@ function AppointmentsPage() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
-  const [view, setView] = useState<"month" | "list" | "week">("month");
+  const [view, setView] = useState<"month" | "week" | "day" | "list">("month");
+  const holidays = useHolidays();
 
   const { data: tasks = [] } = useQuery({
     queryKey: ["tasks", "with-due"],
@@ -112,6 +135,8 @@ function AppointmentsPage() {
         client_id: form.client_id || null,
         property_id: form.property_id || null,
         assigned_to: form.assigned_to || user!.id,
+        is_online: form.is_online,
+        meeting_url: form.is_online ? (form.meeting_url || `meet-${Math.random().toString(36).slice(2, 10)}`) : null,
       });
       if (error) throw error;
     },
@@ -137,17 +162,29 @@ function AppointmentsPage() {
 
   const editing = appts.find((a: any) => a.id === editId);
 
+  const startNew = (preset?: Partial<typeof emptyForm>) => {
+    setForm({ ...emptyForm, ...preset });
+    setOpen(true);
+  };
+
   return (
     <>
       <PageHeader
         i18nKey="appointments"
-        action={<Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />{t("appointments.new")}</Button>}
+        action={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => startNew({ is_online: true, appointment_type: "meeting", title: "Online-Meeting" })}>
+              <Video className="mr-1 h-4 w-4" />Online-Meeting
+            </Button>
+            <Button onClick={() => startNew()}><Plus className="mr-1 h-4 w-4" />{t("appointments.new")}</Button>
+          </div>
+        }
       />
 
       <AppointmentDialog
         open={open}
         onOpenChange={setOpen}
-        title={t("appointments.new")}
+        title={form.is_online ? "Online-Meeting planen" : t("appointments.new")}
         form={form}
         setForm={setForm}
         clients={clients}
@@ -157,28 +194,47 @@ function AppointmentsPage() {
         submitting={create.isPending}
       />
 
+      <div className="mb-4">
+        <HolidaySettings
+          canton={holidays.canton}
+          setCanton={holidays.setCanton}
+          showUnpaid={holidays.showUnpaid}
+          setShowUnpaid={holidays.setShowUnpaid}
+        />
+      </div>
+
       <Tabs value={view} onValueChange={(v) => setView(v as any)} className="space-y-4">
         <TabsList>
           <TabsTrigger value="month">{t("appointments.tabs.month", { defaultValue: "Monat" })}</TabsTrigger>
           <TabsTrigger value="week">{t("appointments.tabs.week")}</TabsTrigger>
+          <TabsTrigger value="day">Tag</TabsTrigger>
           <TabsTrigger value="list">{t("appointments.tabs.list")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="month">
-          <MonthView appts={appts} tasks={tasks} onOpen={(id) => setEditId(id)} />
-        </TabsContent>
-
-        <TabsContent value="list">
-          <ListView
-            appts={appts}
-            employees={employees}
-            onOpen={(id) => setEditId(id)}
-            onStatus={(id, status) => update.mutate({ id, patch: { status } })}
-          />
+          <MonthView appts={appts} tasks={tasks} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
         </TabsContent>
 
         <TabsContent value="week">
-          <WeekView appts={appts} tasks={tasks} onOpen={(id) => setEditId(id)} />
+          <WeekView appts={appts} tasks={tasks} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
+        </TabsContent>
+
+        <TabsContent value="day">
+          <DayView appts={appts} tasks={tasks} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
+        </TabsContent>
+
+        <TabsContent value="list">
+          <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+            <div>
+              <ListView
+                appts={appts}
+                employees={employees}
+                onOpen={setEditId}
+                onStatus={(id, status) => update.mutate({ id, patch: { status } })}
+              />
+            </div>
+            <HolidayList canton={holidays.canton} showUnpaid={holidays.showUnpaid} />
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -193,6 +249,63 @@ function AppointmentsPage() {
         onDelete={async () => { if (editing && await confirm({ title: t("appointments.confirmDelete.title"), description: t("appointments.confirmDelete.description"), confirmText: t("appointments.confirmDelete.confirm") })) remove.mutate(editing.id); }}
       />
     </>
+  );
+}
+
+/* -------------------- Shared helpers -------------------- */
+
+function localInput(d: Date) {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function startOfWeek(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  const dow = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - dow);
+  return x;
+}
+
+function HolidayChip({ h }: { h: Holiday }) {
+  return (
+    <span
+      title={`${h.name} – ${h.paid ? "bezahlter Feiertag" : "nicht bezahlt"}`}
+      className={`flex w-full items-center gap-1 truncate rounded px-1.5 py-0.5 text-[11px] font-medium ${
+        h.paid ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-muted text-muted-foreground"
+      }`}
+    >
+      <Flag className="h-3 w-3 shrink-0" />
+      <span className="truncate">{h.name}</span>
+    </span>
+  );
+}
+
+function HolidayList({ canton, showUnpaid }: { canton: string; showUnpaid: boolean }) {
+  const y = new Date().getFullYear();
+  const today = dateKey(new Date());
+  const items = [...holidaysForCanton(y, canton, showUnpaid), ...holidaysForCanton(y + 1, canton, showUnpaid)]
+    .filter((h) => h.date >= today)
+    .slice(0, 14);
+  return (
+    <Card className="h-fit">
+      <CardContent className="p-4">
+        <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold"><Flag className="h-4 w-4 text-rose-500" /> Nächste Feiertage ({canton})</h3>
+        <div className="space-y-2">
+          {items.map((h) => (
+            <div key={h.date + h.name} className="flex items-start justify-between gap-2 border-b pb-2 last:border-0">
+              <div>
+                <p className="text-sm font-medium">{h.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {new Intl.DateTimeFormat("de-CH", { weekday: "short", day: "2-digit", month: "long" }).format(new Date(h.date))}
+                </p>
+              </div>
+              <Badge variant={h.paid ? "default" : "outline"} className="shrink-0 text-[10px]">{h.paid ? "bezahlt" : "unbezahlt"}</Badge>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -212,7 +325,7 @@ function ListView({
       {upcoming.length === 0 ? (
         <EmptyState title={t("appointments.empty.title")} description={t("appointments.empty.description")} />
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2">
           {upcoming.map((a) => <ApptCard key={a.id} a={a} employees={employees} onOpen={onOpen} onStatus={onStatus} />)}
         </div>
       )}
@@ -220,7 +333,7 @@ function ListView({
       {past.length > 0 && (
         <>
           <h2 className="mb-3 mt-8 text-sm font-semibold text-muted-foreground">{t("appointments.sections.past")}</h2>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2">
             {past.slice(0, 12).map((a) => <ApptCard key={a.id} a={a} employees={employees} dim onOpen={onOpen} onStatus={onStatus} />)}
           </div>
         </>
@@ -238,54 +351,66 @@ function ApptCard({
   const [callOpen, setCallOpen] = useState(false);
   return (
     <>
-    <VideoCallDialog
-      open={callOpen}
-      onOpenChange={setCallOpen}
-      room={`termin-${a.id}`}
-      title={a.title}
-    />
-    <Card className={`cursor-pointer transition hover:shadow-soft ${dim ? "opacity-70" : ""}`} onClick={() => onOpen(a.id)}>
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between gap-2">
-          <Badge variant="secondary">{labels.types[a.appointment_type]}</Badge>
-          <Badge variant={STATUS_VARIANTS[a.status]}>{labels.statuses[a.status]}</Badge>
-        </div>
-        <h3 className="mt-2 line-clamp-1 font-semibold">{a.title}</h3>
-        <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-          <p className="flex items-center gap-1"><CalIcon className="h-3 w-3" />{formatDateTime(a.starts_at)}</p>
-          {a.ends_at && <p className="flex items-center gap-1"><Clock className="h-3 w-3" />{t("appointments.card.until")} {formatDateTime(a.ends_at)}</p>}
-          {a.location && <p className="flex items-center gap-1"><MapPin className="h-3 w-3" />{a.location}</p>}
-          {a.clients?.full_name && <p>{t("appointments.card.client")}: {a.clients.full_name}</p>}
-          {a.properties?.title && <p>{t("appointments.card.property")}: {a.properties.title}</p>}
-          {assignee && <p>{t("appointments.card.assignee")}: {assignee.full_name || assignee.email}</p>}
-        </div>
-        <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <Select value={a.status} onValueChange={(v) => onStatus(a.id, v)}>
-            <SelectTrigger className="h-8 flex-1 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {STATUSES.map(s => <SelectItem key={s} value={s}>{labels.statuses[s]}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8"
-            title="Videoanruf starten"
-            onClick={() => setCallOpen(true)}
-          >
-            <Video className="mr-1 h-3.5 w-3.5" /> Video
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <VideoCallDialog open={callOpen} onOpenChange={setCallOpen} room={roomOf(a)} title={a.title} />
+      <Card className={`cursor-pointer transition hover:shadow-soft ${dim ? "opacity-70" : ""} ${a.is_online ? "border-l-4 border-l-primary" : ""}`} onClick={() => onOpen(a.id)}>
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <Badge variant="secondary">{labels.types[a.appointment_type]}</Badge>
+              {a.is_online && <Badge className="gap-1"><Video className="h-3 w-3" />Online</Badge>}
+            </div>
+            <Badge variant={STATUS_VARIANTS[a.status]}>{labels.statuses[a.status]}</Badge>
+          </div>
+          <h3 className="mt-2 line-clamp-1 font-semibold">{a.title}</h3>
+          <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+            <p className="flex items-center gap-1"><CalIcon className="h-3 w-3" />{formatDateTime(a.starts_at)}</p>
+            {a.ends_at && <p className="flex items-center gap-1"><Clock className="h-3 w-3" />{t("appointments.card.until")} {formatDateTime(a.ends_at)}</p>}
+            {a.location && !a.is_online && <p className="flex items-center gap-1"><MapPin className="h-3 w-3" />{a.location}</p>}
+            {a.is_online && <p className="flex items-center gap-1"><Link2 className="h-3 w-3" />Raum: {roomOf(a)}</p>}
+            {a.clients?.full_name && <p>{t("appointments.card.client")}: {a.clients.full_name}</p>}
+            {a.properties?.title && <p>{t("appointments.card.property")}: {a.properties.title}</p>}
+            {assignee && <p>{t("appointments.card.assignee")}: {assignee.full_name || assignee.email}</p>}
+          </div>
+          <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <Select value={a.status} onValueChange={(v) => onStatus(a.id, v)}>
+              <SelectTrigger className="h-8 flex-1 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {STATUSES.map(s => <SelectItem key={s} value={s}>{labels.statuses[s]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {a.is_online && (
+              <Button size="sm" variant="ghost" className="h-8" title="Meeting-Link kopieren"
+                onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/meet/${roomOf(a)}`); toast.success("Link kopiert"); }}>
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <Button size="sm" variant={a.is_online ? "default" : "outline"} className="h-8" onClick={() => setCallOpen(true)}>
+              <Video className="mr-1 h-3.5 w-3.5" /> {a.is_online ? "Beitreten" : "Video"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </>
   );
 }
-void 0; // keep separator
 
-function WeekView({ appts, tasks = [], onOpen }: { appts: any[]; tasks?: any[]; onOpen: (id: string) => void }) {
-  const { t, i18n } = useTranslation();
-  const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-DE";
+function CalendarNav({ label, onPrev, onNext, onToday, right }: any) {
+  return (
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="icon" onClick={onPrev}><ChevronLeft className="h-4 w-4" /></Button>
+        <Button variant="outline" size="sm" onClick={onToday}>Heute</Button>
+        <Button variant="outline" size="icon" onClick={onNext}><ChevronRight className="h-4 w-4" /></Button>
+        <p className="ml-2 text-sm font-semibold">{label}</p>
+      </div>
+      {right}
+    </div>
+  );
+}
+
+function WeekView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: any[]; tasks?: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
+  const { i18n } = useTranslation();
+  const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
   const [anchor, setAnchor] = useState(() => startOfWeek(new Date()));
   const days = Array.from({ length: 7 }, (_, i) => new Date(anchor.getTime() + i * 86400000));
   const byDay = useMemo(() => {
@@ -304,23 +429,24 @@ function WeekView({ appts, tasks = [], onOpen }: { appts: any[]; tasks?: any[]; 
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => setAnchor(new Date(anchor.getTime() - 7 * 86400000))}><ChevronLeft className="h-4 w-4" /></Button>
-          <Button variant="outline" size="sm" onClick={() => setAnchor(startOfWeek(new Date()))}>{t("appointments.week.today")}</Button>
-          <Button variant="outline" size="icon" onClick={() => setAnchor(new Date(anchor.getTime() + 7 * 86400000))}><ChevronRight className="h-4 w-4" /></Button>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          {new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short" }).format(days[0])} – {new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short", year: "numeric" }).format(days[6])}
-        </p>
-      </div>
+      <CalendarNav
+        label={`${new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short" }).format(days[0])} – ${new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short", year: "numeric" }).format(days[6])}`}
+        onPrev={() => setAnchor(new Date(anchor.getTime() - 7 * 86400000))}
+        onNext={() => setAnchor(new Date(anchor.getTime() + 7 * 86400000))}
+        onToday={() => setAnchor(startOfWeek(new Date()))}
+      />
       <div className="grid gap-2 md:grid-cols-7">
         {days.map((d) => {
           const isToday = d.toDateString() === new Date().toDateString();
+          const hol = holidays[dateKey(d)] ?? [];
+          const paidHol = hol.some((h) => h.paid);
           const items = byDay[d.toDateString()] ?? { appts: [], tasks: [] };
           const total = items.appts.length + items.tasks.length;
           return (
-            <div key={d.toISOString()} className={`rounded-xl border bg-card p-3 ${isToday ? "ring-2 ring-primary/30" : ""}`}>
+            <div
+              key={d.toISOString()}
+              className={`group rounded-xl border p-3 ${paidHol ? "bg-rose-50/60 dark:bg-rose-950/20" : "bg-card"} ${isToday ? "ring-2 ring-primary/30" : ""}`}
+            >
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {new Intl.DateTimeFormat(locale, { weekday: "short" }).format(d)}
@@ -328,18 +454,25 @@ function WeekView({ appts, tasks = [], onOpen }: { appts: any[]; tasks?: any[]; 
                 <p className={`text-lg font-bold ${isToday ? "text-primary" : ""}`}>{d.getDate()}</p>
               </div>
               <div className="space-y-1.5">
-                {total === 0 && <p className="text-xs text-muted-foreground">—</p>}
+                {hol.map((h) => <HolidayChip key={h.name} h={h} />)}
+                {total === 0 && hol.length === 0 && (
+                  <button
+                    onClick={() => { const dt = new Date(d); dt.setHours(9, 0, 0, 0); onCreateAt(localInput(dt)); }}
+                    className="w-full rounded-md border border-dashed py-2 text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100"
+                  >+ Termin</button>
+                )}
                 {items.appts.map((a) => (
                   <button
                     key={a.id}
                     onClick={() => onOpen(a.id)}
-                    className="block w-full rounded-md border bg-accent/30 p-2 text-left text-xs transition hover:bg-accent"
+                    className={`block w-full rounded-md border p-2 text-left text-xs transition hover:bg-accent ${a.is_online ? "border-l-4 border-l-primary bg-primary/5" : "bg-accent/30"}`}
                   >
-                    <p className="font-medium text-primary">
+                    <p className="flex items-center gap-1 font-medium text-primary">
+                      {a.is_online && <Video className="h-3 w-3" />}
                       {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}
                     </p>
                     <p className="line-clamp-2 font-medium">{a.title}</p>
-                    {a.location && <p className="line-clamp-1 text-muted-foreground">{a.location}</p>}
+                    {a.location && !a.is_online && <p className="line-clamp-1 text-muted-foreground">{a.location}</p>}
                   </button>
                 ))}
                 {items.tasks.map((tk: any) => (
@@ -364,17 +497,69 @@ function WeekView({ appts, tasks = [], onOpen }: { appts: any[]; tasks?: any[]; 
   );
 }
 
-function startOfWeek(d: Date) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  const dow = (x.getDay() + 6) % 7; // Monday-first
-  x.setDate(x.getDate() - dow);
-  return x;
+const DAY_START = 7;
+const DAY_END = 21;
+
+function DayView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: any[]; tasks?: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
+  const { i18n } = useTranslation();
+  const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
+  const [day, setDay] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
+  const key = day.toDateString();
+  const dayAppts = appts.filter((a) => new Date(a.starts_at).toDateString() === key);
+  const dayTasks = tasks.filter((tk) => new Date(tk.due_date).toDateString() === key);
+  const hol = holidays[dateKey(day)] ?? [];
+  const hours = Array.from({ length: DAY_END - DAY_START + 1 }, (_, i) => DAY_START + i);
+
+  return (
+    <div>
+      <CalendarNav
+        label={new Intl.DateTimeFormat(locale, { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(day)}
+        onPrev={() => setDay(new Date(day.getTime() - 86400000))}
+        onNext={() => setDay(new Date(day.getTime() + 86400000))}
+        onToday={() => { const d = new Date(); d.setHours(0, 0, 0, 0); setDay(d); }}
+      />
+      {hol.length > 0 && (
+        <div className="mb-3 space-y-1">{hol.map((h) => <HolidayChip key={h.name} h={h} />)}</div>
+      )}
+      <div className="overflow-hidden rounded-xl border bg-card">
+        {hours.map((h) => {
+          const slotAppts = dayAppts.filter((a) => new Date(a.starts_at).getHours() === h);
+          const slotTasks = dayTasks.filter((tk) => new Date(tk.due_date).getHours() === h);
+          return (
+            <div key={h} className="group flex gap-3 border-b px-3 py-1.5 last:border-0 hover:bg-muted/40">
+              <div className="w-14 shrink-0 pt-1 text-xs font-medium text-muted-foreground">{String(h).padStart(2, "0")}:00</div>
+              <div className="flex-1 space-y-1 py-0.5">
+                {slotAppts.length === 0 && slotTasks.length === 0 && (
+                  <button
+                    onClick={() => { const dt = new Date(day); dt.setHours(h, 0, 0, 0); onCreateAt(localInput(dt)); }}
+                    className="text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100"
+                  >+ Termin um {String(h).padStart(2, "0")}:00</button>
+                )}
+                {slotAppts.map((a) => (
+                  <button key={a.id} onClick={() => onOpen(a.id)}
+                    className={`flex w-full items-center gap-2 rounded-md border-l-4 px-2 py-1.5 text-left text-sm transition hover:opacity-90 ${a.is_online ? "border-l-primary bg-primary/10" : "border-l-accent-foreground/40 bg-accent/40"}`}>
+                    {a.is_online && <Video className="h-3.5 w-3.5 text-primary" />}
+                    <span className="font-medium">{new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}</span>
+                    <span className="truncate">{a.title}</span>
+                  </button>
+                ))}
+                {slotTasks.map((tk: any) => (
+                  <Link key={tk.id} to="/tasks" className="flex w-full items-center gap-2 rounded-md border-l-4 border-l-amber-500 bg-amber-500/10 px-2 py-1.5 text-sm text-amber-700 dark:text-amber-400">
+                    <CheckSquare className="h-3.5 w-3.5" /> <span className="truncate">{tk.title}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
-function MonthView({ appts, tasks, onOpen }: { appts: any[]; tasks: any[]; onOpen: (id: string) => void }) {
+function MonthView({ appts, tasks, holidays, onOpen, onCreateAt }: { appts: any[]; tasks: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-DE";
+  const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
   const [anchor, setAnchor] = useState(() => {
     const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d;
   });
@@ -416,16 +601,12 @@ function MonthView({ appts, tasks, onOpen }: { appts: any[]; tasks: any[]; onOpe
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => shift(-1)}><ChevronLeft className="h-4 w-4" /></Button>
-          <Button variant="outline" size="sm" onClick={() => { const d = new Date(); d.setDate(1); d.setHours(0,0,0,0); setAnchor(d); }}>{t("appointments.week.today")}</Button>
-          <Button variant="outline" size="icon" onClick={() => shift(1)}><ChevronRight className="h-4 w-4" /></Button>
-        </div>
-        <p className="text-sm font-semibold">
-          {new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(anchor)}
-        </p>
-      </div>
+      <CalendarNav
+        label={new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(anchor)}
+        onPrev={() => shift(-1)}
+        onNext={() => shift(1)}
+        onToday={() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); setAnchor(d); }}
+      />
 
       <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border bg-border">
         {weekdays.map((w) => (
@@ -434,27 +615,41 @@ function MonthView({ appts, tasks, onOpen }: { appts: any[]; tasks: any[]; onOpe
         {gridDays.map((d) => {
           const inMonth = d.getMonth() === monthIdx;
           const isToday = d.toDateString() === todayKey;
+          const isWeekend = [0, 6].includes(d.getDay());
+          const hol = holidays[dateKey(d)] ?? [];
+          const paidHol = hol.some((h) => h.paid);
           const items = byDay[d.toDateString()] ?? { appts: [], tasks: [] };
           const all = [
-            ...items.appts.map((a) => ({ kind: "appt" as const, id: a.id, time: a.starts_at, title: a.title, status: a.status })),
-            ...items.tasks.map((tk) => ({ kind: "task" as const, id: tk.id, time: tk.due_date, title: tk.title, status: tk.status })),
+            ...items.appts.map((a) => ({ kind: "appt" as const, id: a.id, time: a.starts_at, title: a.title, status: a.status, online: a.is_online })),
+            ...items.tasks.map((tk) => ({ kind: "task" as const, id: tk.id, time: tk.due_date, title: tk.title, status: tk.status, online: false })),
           ].sort((a, b) => +new Date(a.time) - +new Date(b.time));
           return (
             <div
               key={d.toISOString()}
-              className={`min-h-[100px] bg-card p-1.5 ${inMonth ? "" : "bg-muted/20 text-muted-foreground"} ${isToday ? "ring-2 ring-inset ring-primary/40" : ""}`}
+              className={`group relative min-h-[110px] p-1.5 ${paidHol ? "bg-rose-50 dark:bg-rose-950/25" : isWeekend ? "bg-muted/30" : "bg-card"} ${inMonth ? "" : "opacity-50"} ${isToday ? "ring-2 ring-inset ring-primary/40" : ""}`}
             >
-              <div className={`mb-1 text-right text-xs font-semibold ${isToday ? "text-primary" : ""}`}>{d.getDate()}</div>
+              <div className="mb-1 flex items-center justify-between">
+                <button
+                  onClick={() => { const dt = new Date(d); dt.setHours(9, 0, 0, 0); onCreateAt(localInput(dt)); }}
+                  className="rounded p-0.5 text-muted-foreground opacity-0 transition hover:bg-accent group-hover:opacity-100"
+                  title="Termin anlegen"
+                ><Plus className="h-3 w-3" /></button>
+                <span className={`text-xs font-semibold ${isToday ? "text-primary" : paidHol ? "text-rose-600 dark:text-rose-300" : ""}`}>{d.getDate()}</span>
+              </div>
               <div className="space-y-1">
-                {all.slice(0, 3).map((it) => (
+                {hol.map((h) => <HolidayChip key={h.name} h={h} />)}
+                {all.slice(0, hol.length ? 2 : 3).map((it) => (
                   it.kind === "appt" ? (
                     <button
                       key={`a-${it.id}`}
                       onClick={() => onOpen(it.id)}
-                      className="block w-full truncate rounded border-l-2 border-l-primary bg-primary/10 px-1.5 py-0.5 text-left text-[11px] font-medium text-primary hover:bg-primary/20"
+                      className="flex w-full items-center gap-1 truncate rounded border-l-2 border-l-primary bg-primary/10 px-1.5 py-0.5 text-left text-[11px] font-medium text-primary hover:bg-primary/20"
                       title={it.title}
                     >
-                      {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(it.time))} {it.title}
+                      {it.online && <Video className="h-3 w-3 shrink-0" />}
+                      <span className="truncate">
+                        {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(it.time))} {it.title}
+                      </span>
                     </button>
                   ) : (
                     <Link
@@ -468,8 +663,8 @@ function MonthView({ appts, tasks, onOpen }: { appts: any[]; tasks: any[]; onOpe
                     </Link>
                   )
                 ))}
-                {all.length > 3 && (
-                  <p className="px-1 text-[10px] text-muted-foreground">+{all.length - 3} {t("appointments.month.more", { defaultValue: "weitere" })}</p>
+                {all.length > (hol.length ? 2 : 3) && (
+                  <p className="px-1 text-[10px] text-muted-foreground">+{all.length - (hol.length ? 2 : 3)} {t("appointments.month.more", { defaultValue: "weitere" })}</p>
                 )}
               </div>
             </div>
@@ -480,6 +675,7 @@ function MonthView({ appts, tasks, onOpen }: { appts: any[]; tasks: any[]; onOpe
   );
 }
 
+/* -------------------- Forms -------------------- */
 
 function AppointmentForm({
   form, setForm, clients, properties, employees,
@@ -488,6 +684,17 @@ function AppointmentForm({
   const labels = useApptLabels();
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between rounded-xl border bg-muted/30 px-3 py-2">
+        <div className="flex items-center gap-2">
+          <Video className="h-4 w-4 text-primary" />
+          <div>
+            <Label className="text-sm">Online-Meeting</Label>
+            <p className="text-xs text-muted-foreground">Videoraum wird automatisch erstellt</p>
+          </div>
+        </div>
+        <Switch checked={!!form.is_online} onCheckedChange={(v) => setForm({ ...form, is_online: v })} />
+      </div>
+
       <div><Label>{t("appointments.form.title")} *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={t("appointments.form.titlePlaceholder")} /></div>
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -506,7 +713,14 @@ function AppointmentForm({
         </div>
         <div><Label>{t("appointments.form.start")} *</Label><Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} /></div>
         <div><Label>{t("appointments.form.end")}</Label><Input type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} /></div>
-        <div className="col-span-2"><Label>{t("appointments.form.location")}</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder={t("appointments.form.locationPlaceholder")} /></div>
+        {form.is_online ? (
+          <div className="col-span-2">
+            <Label>Raumname (optional)</Label>
+            <Input value={form.meeting_url} onChange={(e) => setForm({ ...form, meeting_url: e.target.value.replace(/\s+/g, "-").toLowerCase() })} placeholder="wird automatisch generiert" />
+          </div>
+        ) : (
+          <div className="col-span-2"><Label>{t("appointments.form.location")}</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder={t("appointments.form.locationPlaceholder")} /></div>
+        )}
         <div>
           <Label>{t("appointments.form.client")}</Label>
           <Select value={form.client_id || "none"} onValueChange={(v) => setForm({ ...form, client_id: v === "none" ? "" : v })}>
@@ -569,6 +783,7 @@ function AppointmentEditDrawer({
 }: any) {
   const { t } = useTranslation();
   const [form, setForm] = useState({ ...emptyForm });
+  const [callOpen, setCallOpen] = useState(false);
 
   useEffect(() => {
     if (appt) {
@@ -576,13 +791,15 @@ function AppointmentEditDrawer({
         title: appt.title ?? "",
         appointment_type: appt.appointment_type ?? "viewing",
         status: appt.status ?? "scheduled",
-        starts_at: appt.starts_at ? new Date(appt.starts_at).toISOString().slice(0, 16) : "",
-        ends_at: appt.ends_at ? new Date(appt.ends_at).toISOString().slice(0, 16) : "",
+        starts_at: appt.starts_at ? localInput(new Date(appt.starts_at)) : "",
+        ends_at: appt.ends_at ? localInput(new Date(appt.ends_at)) : "",
         location: appt.location ?? "",
         notes: appt.notes ?? "",
         client_id: appt.client_id ?? "",
         property_id: appt.property_id ?? "",
         assigned_to: appt.assigned_to ?? "",
+        is_online: !!appt.is_online,
+        meeting_url: appt.meeting_url ?? "",
       });
     }
   }, [appt]);
@@ -594,6 +811,17 @@ function AppointmentEditDrawer({
           <SheetTitle>{t("appointments.edit")}</SheetTitle>
           <SheetDescription>{t("appointments.editDescription")}</SheetDescription>
         </SheetHeader>
+        {appt?.is_online && (
+          <>
+            <VideoCallDialog open={callOpen} onOpenChange={setCallOpen} room={roomOf(appt)} title={appt.title} />
+            <div className="mt-4 flex items-center gap-2 rounded-xl border bg-primary/5 p-3">
+              <Button size="sm" onClick={() => setCallOpen(true)}><Video className="mr-1 h-4 w-4" />Meeting beitreten</Button>
+              <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/meet/${roomOf(appt)}`); toast.success("Link kopiert"); }}>
+                <Copy className="mr-1 h-4 w-4" />Link kopieren
+              </Button>
+            </div>
+          </>
+        )}
         <div className="my-4">
           <AppointmentForm form={form} setForm={setForm} clients={clients} properties={properties} employees={employees} />
         </div>
@@ -612,6 +840,8 @@ function AppointmentEditDrawer({
               client_id: form.client_id || null,
               property_id: form.property_id || null,
               assigned_to: form.assigned_to || null,
+              is_online: form.is_online,
+              meeting_url: form.is_online ? (form.meeting_url || `meet-${Math.random().toString(36).slice(2, 10)}`) : null,
             })} disabled={!form.title.trim() || !form.starts_at}>{t("appointments.actions.save")}</Button>
           </div>
         </SheetFooter>
