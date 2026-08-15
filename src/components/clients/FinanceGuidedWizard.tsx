@@ -392,7 +392,17 @@ export function FinanceGuidedWizard({
               key={r.key}
               className="grid gap-3 rounded-xl border bg-card p-3 sm:grid-cols-2"
             >
+              {r.disclosureField && (
+                <div className="sm:col-span-2">
+                  <Badge variant="secondary" className="text-[10px]">
+                    Aus Selbstauskunft
+                  </Badge>
+                </div>
+              )}
               <FieldRow label="Kategorie">
+                {r.disclosureField ? (
+                  <Input value={r.category} disabled />
+                ) : (
                 <Select
                   value={r.category}
                   onValueChange={(v) =>
@@ -410,6 +420,8 @@ export function FinanceGuidedWizard({
                     ))}
                   </SelectContent>
                 </Select>
+                )}
+
               </FieldRow>
 
               <FieldRow label="Bezeichnung (optional)">
