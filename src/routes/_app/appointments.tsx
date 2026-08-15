@@ -194,22 +194,34 @@ function AppointmentsPage() {
         submitting={create.isPending}
       />
 
-      <div className="mb-4">
-        <HolidaySettings
-          canton={holidays.canton}
-          setCanton={holidays.setCanton}
-          showUnpaid={holidays.showUnpaid}
-          setShowUnpaid={holidays.setShowUnpaid}
-        />
-      </div>
-
       <Tabs value={view} onValueChange={(v) => setView(v as any)} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="month" className="gap-1.5"><CalendarDays className="h-4 w-4" />{t("appointments.tabs.month", { defaultValue: "Monat" })}</TabsTrigger>
-          <TabsTrigger value="week" className="gap-1.5"><CalendarRange className="h-4 w-4" />{t("appointments.tabs.week")}</TabsTrigger>
-          <TabsTrigger value="day" className="gap-1.5"><CalendarClock className="h-4 w-4" />Tag</TabsTrigger>
-          <TabsTrigger value="list" className="gap-1.5"><ListIcon className="h-4 w-4" />{t("appointments.tabs.list")}</TabsTrigger>
-        </TabsList>
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 shadow-sm">
+          <TabsList className="h-9 rounded-lg bg-primary/15 p-1">
+            <TabsTrigger value="month" className="gap-1.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
+              <CalendarDays className="h-4 w-4" />{t("appointments.tabs.month", { defaultValue: "Monat" })}
+            </TabsTrigger>
+            <TabsTrigger value="week" className="gap-1.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
+              <CalendarRange className="h-4 w-4" />{t("appointments.tabs.week")}
+            </TabsTrigger>
+            <TabsTrigger value="day" className="gap-1.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
+              <CalendarClock className="h-4 w-4" />Tag
+            </TabsTrigger>
+            <TabsTrigger value="list" className="gap-1.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
+              <ListIcon className="h-4 w-4" />{t("appointments.tabs.list")}
+            </TabsTrigger>
+          </TabsList>
+          <div className="h-5 w-px bg-primary/20" />
+          <HolidaySettings
+            canton={holidays.canton}
+            setCanton={holidays.setCanton}
+            showUnpaid={holidays.showUnpaid}
+            setShowUnpaid={holidays.setShowUnpaid}
+          />
+          <div className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> bezahlt</span>
+            <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-slate-400" /> unbezahlt</span>
+          </div>
+        </div>
 
 
         <TabsContent value="month">
