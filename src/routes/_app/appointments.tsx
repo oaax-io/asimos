@@ -226,15 +226,15 @@ function AppointmentsPage() {
 
 
         <TabsContent value="month">
-          <MonthView appts={appts} tasks={tasks} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
+          <MonthView appts={appts} tasks={tasks} employees={employees} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
         </TabsContent>
 
         <TabsContent value="week">
-          <WeekView appts={appts} tasks={tasks} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
+          <WeekView appts={appts} tasks={tasks} employees={employees} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
         </TabsContent>
 
         <TabsContent value="day">
-          <DayView appts={appts} tasks={tasks} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
+          <DayView appts={appts} tasks={tasks} employees={employees} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
         </TabsContent>
 
         <TabsContent value="list">
@@ -242,11 +242,13 @@ function AppointmentsPage() {
             <div>
               <ListView
                 appts={appts}
+                tasks={tasks}
                 employees={employees}
                 onOpen={setEditId}
                 onStatus={(id, status) => update.mutate({ id, patch: { status } })}
               />
             </div>
+
             <HolidayList canton={holidays.canton} showUnpaid={holidays.showUnpaid} />
           </div>
         </TabsContent>
