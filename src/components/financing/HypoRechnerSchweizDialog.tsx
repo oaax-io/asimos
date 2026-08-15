@@ -76,6 +76,91 @@ export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
     };
   }, [purchasePrice, equity, pkEquity, interestPct, calcInterestPct, maintenancePct, amortYears, grossIncome]);
 
+  // Vergleich direkte vs. indirekte Amortisation über die Amortisationsdauer
+  const amort = useMemo(() => {
+    const years = Math.max(1, Math.round(amortYears || 1));
+    const rate = interestPct / 100;
+    const tax = Math.min(60, Math.max(0, taxRatePct)) / 100;
+    const netReturn = (policyReturnPct - policyCostPct) / 100;
+    const yearly = calc.amortYearly;
+    const loan = calc.loan;
+
+    // Direkt: Hypothek sinkt jährlich
+    let directInterest = 0;
+    for (let i = 0; i < years; i++) directInterest += (loan - yearly * i) * rate;
+    const directTaxSaving = directInterest * tax;
+    const directNet = directInterest - directTaxSaving;
+    const directDebtEnd = loan - yearly * years;
+
+    // Indirekt: Hypothek bleibt konstant, Sparen in Police (Säule 3a / 3b)
+    const indirectInterest = loan * rate * years;
+    const indirectInterestTaxSaving = indirectInterest * tax;
+    const contribTotal = yearly * years;
+    const contribTaxSaving = contribTotal * tax; // nur bei Säule 3a abzugsfähig
+    // Endwert der Police (nachschüssige Rente)
+    const policyEnd = netReturn === 0
+      ? contribTotal
+      : contribTotal > 0 ? yearly * ((Math.pow(1 + netReturn, years) - 1) / netReturn) : 0;
+    const policyGain = policyEnd - contribTotal;
+    const payoutTax = policyEnd * 0.05; // pauschale Kapitalauszahlungssteuer ca. 5%
+    const indirectNet = indirectInterest + contribTotal
+      - indirectInterestTaxSaving - contribTaxSaving - policyEnd + payoutTax;
+    const indirectDebtEnd = loan;
+
+    const advantage = directNet - indirectNet; // > 0 = indirekt günstiger
+    return {
+      years, yearly, directInterest, directTaxSaving, directNet, directDebtEnd,
+      indirectInterest, indirectInterestTaxSaving, contribTotal, contribTaxSaving,
+      policyEnd, policyGain, payoutTax, indirectNet, indirectDebtEnd, advantage,
+      monthlyDirect: (loan * rate + calc.maintenanceYearly + yearly) / 12,
+      monthlyIndirect: (loan * rate + calc.maintenanceYearly + yearly) / 12,
+    };
+  }, [amortYears, interestPct, taxRatePct, policyReturnPct, policyCostPct, calc]);
+
+  const compareRows: [string, string, string][] = [
+    ["Hypothek während Laufzeit", "sinkend", "konstant"],
+    ["Zinskosten total", formatCurrency(amort.directInterest), formatCurrency(amort.indirectInterest)],
+    ["Steuerersparnis Schuldzinsen", formatCurrency(amort.directTaxSaving), formatCurrency(amort.indirectInterestTaxSaving)],
+    ["Steuerersparnis Einzahlungen 3a", formatCurrency(0), formatCurrency(amort.contribTaxSaving)],
+    ["Einzahlungen total", formatCurrency(amort.yearly * amort.years), formatCurrency(amort.contribTotal)],
+    ["Guthaben Police am Ende", "—", formatCurrency(amort.policyEnd)],
+    ["davon Zinsertrag Police", "—", formatCurrency(amort.policyGain)],
+    ["Kapitalauszahlungssteuer (ca. 5%)", "—", `- ${formatCurrency(amort.payoutTax)}`],
+    ["Restschuld nach Laufzeit", formatCurrency(Math.max(0, amort.directDebtEnd)), formatCurrency(amort.indirectDebtEnd)],
+    ["Nettokosten total", formatCurrency(amort.directNet), formatCurrency(amort.indirectNet)],
+  ];
+
+  const prosCons = {
+    direct: {
+      pro: [
+        "Schuld sinkt laufend – tiefere Zinskosten",
+        "Einfach und transparent, keine Zusatzverträge",
+        "Höhere Sicherheit bei steigenden Zinsen",
+        "Keine Bindung an Versicherung oder Bank-Sparkonto",
+      ],
+      con: [
+        "Steuerlich ungünstig: Schuldzinsabzug sinkt jedes Jahr",
+        "Keine Steuerersparnis durch Säule-3a-Abzug",
+        "Kein zusätzliches Vorsorgekapital",
+        "Einbezahltes Geld ist gebunden (nicht flexibel verfügbar)",
+      ],
+    },
+    indirect: {
+      pro: [
+        "Voller Schuldzinsabzug bleibt über die ganze Laufzeit erhalten",
+        "Einzahlungen in Säule 3a sind vom Einkommen abziehbar",
+        "Aufbau von Vorsorgekapital, oft mit Todesfall-/Erwerbsunfähigkeitsschutz",
+        "Kapital kann später flexibel für Amortisation oder Vorsorge genutzt werden",
+      ],
+      con: [
+        "Hypothek und damit Zinskosten bleiben während der Laufzeit hoch",
+        "Vertragsbindung an Versicherung, Rückkaufswerte in den ersten Jahren tief",
+        "Abschluss- und Verwaltungskosten schmälern die Rendite",
+        "Kapitalauszahlungssteuer bei Bezug, 3a-Maximalbetrag begrenzt die Einzahlung",
+      ],
+    },
+  };
+
   const status: "ok" | "tight" | "not_ok" =
     !calc.equityOk || calc.affordabilityPct > 40 ? "not_ok"
       : calc.affordabilityPct > 33 ? "tight" : "ok";
