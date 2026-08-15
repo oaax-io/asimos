@@ -82,7 +82,9 @@ export type Database = {
           created_at: string
           ends_at: string
           id: string
+          is_online: boolean
           location: string | null
+          meeting_url: string | null
           notes: string | null
           owner_id: string | null
           property_id: string | null
@@ -99,7 +101,9 @@ export type Database = {
           created_at?: string
           ends_at: string
           id?: string
+          is_online?: boolean
           location?: string | null
+          meeting_url?: string | null
           notes?: string | null
           owner_id?: string | null
           property_id?: string | null
@@ -116,7 +120,9 @@ export type Database = {
           created_at?: string
           ends_at?: string
           id?: string
+          is_online?: boolean
           location?: string | null
+          meeting_url?: string | null
           notes?: string | null
           owner_id?: string | null
           property_id?: string | null
