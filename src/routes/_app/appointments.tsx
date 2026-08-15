@@ -422,7 +422,7 @@ function CalendarNav({ label, onPrev, onNext, onToday, right }: any) {
   );
 }
 
-function WeekView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: any[]; tasks?: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
+function WeekView({ appts, tasks = [], employees = [], holidays, onOpen, onCreateAt }: { appts: any[]; tasks?: any[]; employees?: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
   const { i18n } = useTranslation();
   const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
   const [anchor, setAnchor] = useState(() => startOfWeek(new Date()));
