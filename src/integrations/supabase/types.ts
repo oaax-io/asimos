@@ -2234,6 +2234,39 @@ export type Database = {
           },
         ]
       }
+      livekit_settings: {
+        Row: {
+          agency_id: string | null
+          api_key: string | null
+          api_secret: string | null
+          created_at: string
+          enabled: boolean
+          id: string
+          updated_at: string
+          ws_url: string | null
+        }
+        Insert: {
+          agency_id?: string | null
+          api_key?: string | null
+          api_secret?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+          ws_url?: string | null
+        }
+        Update: {
+          agency_id?: string | null
+          api_key?: string | null
+          api_secret?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+          ws_url?: string | null
+        }
+        Relationships: []
+      }
       mandates: {
         Row: {
           client_id: string | null
@@ -3230,6 +3263,48 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      video_calls: {
+        Row: {
+          context_id: string | null
+          context_type: string
+          created_at: string
+          created_by: string
+          ended_at: string | null
+          id: string
+          participants: string[]
+          room_name: string
+          started_at: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          context_id?: string | null
+          context_type?: string
+          created_at?: string
+          created_by: string
+          ended_at?: string | null
+          id?: string
+          participants?: string[]
+          room_name: string
+          started_at?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          context_id?: string | null
+          context_type?: string
+          created_at?: string
+          created_by?: string
+          ended_at?: string | null
+          id?: string
+          participants?: string[]
+          room_name?: string
+          started_at?: string
+          title?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
