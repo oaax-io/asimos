@@ -580,7 +580,7 @@ function DayView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: a
   );
 }
 
-function MonthView({ appts, tasks, holidays, onOpen, onCreateAt }: { appts: any[]; tasks: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
+function MonthView({ appts, tasks, employees = [], holidays, onOpen, onCreateAt }: { appts: any[]; tasks: any[]; employees?: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
   const [anchor, setAnchor] = useState(() => {
