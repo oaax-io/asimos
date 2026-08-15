@@ -9,15 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { AlertTriangle, CheckCircle2, Download, Info } from "lucide-react";
+  AlertTriangle, CheckCircle2, Download, Info, Wallet, Percent, TrendingUp, Home, Calculator,
+} from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -187,116 +184,229 @@ export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
     }
   };
 
+  const statusConfig = {
+    ok: {
+      icon: CheckCircle2,
+      color: "text-emerald-600 dark:text-emerald-400",
+      bg: "bg-emerald-50 dark:bg-emerald-950/40",
+      border: "border-emerald-200 dark:border-emerald-800",
+      label: "Tragbar – Richtwerte erfüllt",
+    },
+    tight: {
+      icon: Info,
+      color: "text-amber-600 dark:text-amber-400",
+      bg: "bg-amber-50 dark:bg-amber-950/40",
+      border: "border-amber-200 dark:border-amber-800",
+      label: "Grenzwertig – Tragbarkeit über 33%",
+    },
+    not_ok: {
+      icon: AlertTriangle,
+      color: "text-red-600 dark:text-red-400",
+      bg: "bg-red-50 dark:bg-red-950/40",
+      border: "border-red-200 dark:border-red-800",
+      label: "Nicht tragbar bzw. Eigenmittel ungenügend",
+    },
+  } as const;
+  const sc = statusConfig[status];
+  const StatusIcon = sc.icon;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Hyporechner Schweiz</DialogTitle>
-          <DialogDescription>
-            Belehnung, Amortisation und Tragbarkeit nach Schweizer Bankenstandard.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[92vh] overflow-hidden flex flex-col gap-0 p-0">
+        {/* Header band */}
+        <div className="px-6 pt-6 pb-4 border-b bg-gradient-to-br from-[#6F6B94] to-[#4C487A] text-white shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+              <Calculator className="h-5 w-5" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl text-white">Hyporechner Schweiz</DialogTitle>
+              <DialogDescription className="text-white/70">
+                Belehnung, Amortisation und Tragbarkeit nach Schweizer Bankenstandard
+              </DialogDescription>
+            </div>
+          </div>
+        </div>
 
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label>Kunde (optional)</Label>
-                <Select value={clientId} onValueChange={setClientId}>
-                  <SelectTrigger><SelectValue placeholder="Kunde wählen" /></SelectTrigger>
-                  <SelectContent>
-                    {clients.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          {/* --- Section: Objekt & Kunde --- */}
+          <section className="space-y-3">
+            <SectionLabel icon={Home} title="Objekt & Kunde" />
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Kunde (optional)</Label>
+              <Select value={clientId} onValueChange={setClientId}>
+                <SelectTrigger className="bg-card"><SelectValue placeholder="Kunde wählen" /></SelectTrigger>
+                <SelectContent>
+                  {clients.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Kaufpreis (CHF)" value={purchasePrice} onChange={setPurchasePrice} />
+              <Field label="Bruttoeinkommen p.a. (CHF)" value={grossIncome} onChange={setGrossIncome} />
+            </div>
+          </section>
+
+          {/* --- Section: Eigenmittel --- */}
+          <section className="space-y-3">
+            <SectionLabel icon={Wallet} title="Eigenmittel" />
+            <div className="grid gap-3 sm:grid-cols-3">
               <Field label="Eigenmittel total (CHF)" value={equity} onChange={setEquity} />
               <Field label="davon Pensionskasse (CHF)" value={pkEquity} onChange={setPkEquity} />
-              <Field label="Bruttoeinkommen p.a. (CHF)" value={grossIncome} onChange={setGrossIncome} />
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground">Harte Eigenmittel</Label>
+                <div className="h-9 flex items-center px-3 rounded-md bg-muted/60 font-semibold text-sm">
+                  {formatCurrency(calc.hardEquity)}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* --- Section: Zinsen & Kosten --- */}
+          <section className="space-y-3">
+            <SectionLabel icon={Percent} title="Zinsen & Kosten" />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Zinssatz effektiv (%)" value={interestPct} onChange={setInterestPct} step={0.05} />
               <Field label="Kalkulatorischer Zins (%)" value={calcInterestPct} onChange={setCalcInterestPct} step={0.25} />
               <Field label="Nebenkosten/Unterhalt (%)" value={maintenancePct} onChange={setMaintenancePct} step={0.1} />
-              <Field label="Amortisationsdauer (Jahre)" value={amortYears} onChange={setAmortYears} step={1} />
+              <Field label="Amortisation (Jahre)" value={amortYears} onChange={setAmortYears} step={1} />
             </div>
+          </section>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Kpi title="Belehnung" value={`${calc.ltv.toFixed(1)}%`} hint={calc.ltv <= 80 ? "innerhalb 80%" : "über 80% – nicht finanzierbar"} />
-              <Kpi title="Kosten p.M. (effektiv)" value={formatCurrency(calc.effectiveYearly / 12)} hint={`Amortisation ${formatCurrency(calc.amortYearly / 12)}/Mt.`} />
-              <Kpi title="Tragbarkeit" value={`${calc.affordabilityPct.toFixed(1)}%`} hint="max. 33% des Bruttoeinkommens" />
+          {/* --- KPI Row --- */}
+          <section className="space-y-3">
+            <SectionLabel icon={TrendingUp} title="Kennzahlen" />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Kpi
+                title="Belehnung"
+                value={`${calc.ltv.toFixed(1)}%`}
+                hint={calc.ltv <= 80 ? "innerhalb 80%" : "über 80% – kritisch"}
+                tone={calc.ltv <= 80 ? "good" : "bad"}
+              />
+              <Kpi
+                title="1. Hypothek"
+                value={formatCurrency(calc.firstMortgage)}
+                hint={`max. 66.67% = ${formatCurrency(calc.price * 2 / 3)}`}
+                tone="neutral"
+              />
+              <Kpi
+                title="2. Hypothek"
+                value={formatCurrency(calc.secondMortgage)}
+                hint={`Amortisation ${formatCurrency(calc.amortYearly)}/Jahr`}
+                tone="neutral"
+              />
+              <Kpi
+                title="Tragbarkeit"
+                value={`${calc.affordabilityPct.toFixed(1)}%`}
+                hint="max. 33% des Bruttoeink."
+                tone={calc.affordabilityPct <= 33 ? "good" : calc.affordabilityPct <= 40 ? "warn" : "bad"}
+              />
             </div>
+          </section>
 
-            <Card className={
-              status === "ok" ? "border-emerald-500/40 bg-emerald-500/5"
-                : status === "tight" ? "border-amber-500/40 bg-amber-500/5"
-                  : "border-destructive/40 bg-destructive/5"
-            }>
-              <CardContent className="flex items-start gap-3 p-4 text-sm">
-                {status === "ok" ? <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-                  : status === "tight" ? <Info className="h-5 w-5 text-amber-600 shrink-0" />
-                    : <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />}
-                <div className="space-y-1">
-                  <p className="font-medium">
-                    {status === "ok" ? "Tragbar – Richtwerte erfüllt"
-                      : status === "tight" ? "Grenzwertig – Tragbarkeit über 33%"
-                        : "Nicht tragbar bzw. Eigenmittel ungenügend"}
-                  </p>
-                  <p className="text-muted-foreground">
-                    Benötigtes Bruttoeinkommen: {formatCurrency(calc.requiredIncome)} p.a.
-                    {!calc.equityOk && " · Mind. 20% Eigenmittel, davon 10% hart (ohne PK) erforderlich."}
-                  </p>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <Badge variant="outline">1. Hypothek {formatCurrency(calc.firstMortgage)}</Badge>
-                    <Badge variant="outline">2. Hypothek {formatCurrency(calc.secondMortgage)}</Badge>
-                    <Badge variant="secondary">Harte EM {formatCurrency(calc.hardEquity)}</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Table>
-              <TableHeader>
-                <TableRow><TableHead>Parameter</TableHead><TableHead className="text-right">Wert</TableHead></TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map(([k, v]) => (
-                  <TableRow key={k}>
-                    <TableCell>{k}</TableCell>
-                    <TableCell className="text-right font-medium">{v}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          {/* --- Status Banner --- */}
+          <div className={`flex items-start gap-3 p-4 rounded-lg border ${sc.bg} ${sc.border}`}>
+            <StatusIcon className={`h-5 w-5 shrink-0 mt-0.5 ${sc.color}`} />
+            <div className="space-y-1.5 flex-1">
+              <p className="font-semibold text-sm">{sc.label}</p>
+              <p className="text-sm text-muted-foreground">
+                Benötigtes Bruttoeinkommen: <span className="font-semibold text-foreground">{formatCurrency(calc.requiredIncome)}</span> p.a.
+                {!calc.equityOk && " · Mind. 20% Eigenmittel, davon 10% hart (ohne PK) erforderlich."}
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Badge variant="secondary" className="font-medium">1. Hyp. {formatCurrency(calc.firstMortgage)}</Badge>
+                <Badge variant="secondary" className="font-medium">2. Hyp. {formatCurrency(calc.secondMortgage)}</Badge>
+                <Badge variant="outline" className="font-medium">Harte EM {formatCurrency(calc.hardEquity)}</Badge>
+                <Badge variant="outline" className="font-medium">Hypothek total {formatCurrency(calc.loan)}</Badge>
+              </div>
+            </div>
           </div>
-        </ScrollArea>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Schliessen</Button>
-          <Button onClick={exportPdf}><Download className="mr-2 h-4 w-4" />PDF exportieren</Button>
-        </DialogFooter>
+          {/* --- Detail-Tabelle --- */}
+          <section className="space-y-2">
+            <SectionLabel icon={Calculator} title="Detailberechnung" />
+            <div className="rounded-lg border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/60 border-b">
+                    <th className="text-left font-medium px-3 py-2">Parameter</th>
+                    <th className="text-right font-medium px-3 py-2">Wert</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(([k, v], i) => (
+                    <tr key={k} className={i % 2 === 0 ? "bg-transparent" : "bg-muted/30"}>
+                      <td className="px-3 py-1.5 text-muted-foreground">{k}</td>
+                      <td className="px-3 py-1.5 text-right font-semibold tabular-nums">{v}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-muted-foreground px-1 pt-1">
+              Richtwerte Schweiz: min. 20% Eigenmittel (davon min. 10% hart), Belehnung über 66.67% in 15 Jahren amortisieren,
+              kalk. Zins 5%, Nebenkosten 1%.
+            </p>
+          </section>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t bg-muted/30 flex items-center justify-between gap-2 shrink-0">
+          <p className="text-xs text-muted-foreground hidden sm:block">
+            Kosten p.M. effektiv: <span className="font-semibold text-foreground">{formatCurrency(calc.effectiveYearly / 12)}</span>
+          </p>
+          <div className="flex gap-2 ml-auto">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Schliessen</Button>
+            <Button onClick={exportPdf} className="bg-[#6F6B94] hover:bg-[#5a5790] text-white">
+              <Download className="mr-2 h-4 w-4" />PDF exportieren
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function SectionLabel({ icon: Icon, title }: { icon: React.ComponentType<{ className?: string }>; title: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Icon className="h-4 w-4 text-[#6F6B94]" />
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <div className="h-px flex-1 bg-border" />
+    </div>
   );
 }
 
 function Field({ label, value, onChange, step = 1000 }: { label: string; value: number; onChange: (v: number) => void; step?: number }) {
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <Input type="number" step={step} value={Number.isFinite(value) ? value : 0} onChange={(e) => onChange(Number(e.target.value))} />
+      <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
+      <Input
+        type="number"
+        step={step}
+        value={Number.isFinite(value) ? value : 0}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="bg-card"
+      />
     </div>
   );
 }
 
-function Kpi({ title, value, hint }: { title: string; value: string; hint?: string }) {
+function Kpi({ title, value, hint, tone }: { title: string; value: string; hint?: string; tone: "good" | "warn" | "bad" | "neutral" }) {
+  const toneClass = {
+    good: "border-l-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20",
+    warn: "border-l-amber-500 bg-amber-50/50 dark:bg-amber-950/20",
+    bad: "border-l-red-500 bg-red-50/50 dark:bg-red-950/20",
+    neutral: "border-l-[#6F6B94] bg-muted/40",
+  }[tone];
   return (
-    <Card>
-      <CardContent className="p-4 space-y-1">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground">{title}</p>
-        <p className="text-xl font-semibold">{value}</p>
-        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-      </CardContent>
-    </Card>
+    <div className={`border border-l-4 rounded-lg p-3 space-y-0.5 ${toneClass}`}>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">{title}</p>
+      <p className="text-lg font-bold tabular-nums">{value}</p>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
   );
 }
