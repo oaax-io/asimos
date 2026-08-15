@@ -163,6 +163,21 @@ export function FinanceGuidedWizard({
     },
   });
 
+  // Werte aus der Selbstauskunft (Gehalt, Ausgaben …) mitladen
+  const { data: disclosure } = useQuery<any>({
+    queryKey: ["client_self_disclosure", clientId],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_self_disclosures")
+        .select("*")
+        .eq("client_id", clientId)
+        .maybeSingle();
+      if (error) throw error;
+      return data ?? null;
+    },
+  });
+
   useEffect(() => {
     if (open) {
       const idx = startArea ? steps.indexOf(startArea) : 0;
@@ -179,18 +194,44 @@ export function FinanceGuidedWizard({
   // Bestehende Positionen laden, sonst eine leere Position bereitstellen
   useEffect(() => {
     if (!open || loadedSteps[area]) return;
-    const mine = existing
-      .filter((i) => i.area === area)
-      .map(draftFromItem);
-    setDrafts((d) => ({ ...d, [area]: mine.length ? mine : [newDraft(area)] }));
-    setLoadedSteps((s) => ({ ...s, [area]: true }));
-  }, [open, area, existing, loadedSteps]);
 
-  const filled = rows.filter((r) => Number(r.amount || 0) > 0);
+    const fromDisclosure: Draft[] = [];
+    if (disclosure) {
+      const fields =
+        area === "income"
+          ? incomeFields.map((f) => [f, incomeLabels[f]] as const)
+          : area === "expense"
+            ? expenseFields.map((f) => [f, expenseLabels[f]] as const)
+            : [];
+      for (const [field, label] of fields) {
+        const value = Number(disclosure[field] ?? 0);
+        if (!Number.isFinite(value) || value === 0) continue;
+        fromDisclosure.push({
+          ...newDraft(area),
+          key: `sd:${field}`,
+          disclosureField: field,
+          category: label,
+          label,
+          amount: String(value),
+          periodicity: "monthly",
+        });
+      }
+    }
+
+    const mine = existing.filter((i) => i.area === area).map(draftFromItem);
+    const all = [...fromDisclosure, ...mine];
+    setDrafts((d) => ({ ...d, [area]: all.length ? all : [newDraft(area)] }));
+    setLoadedSteps((s) => ({ ...s, [area]: true }));
+  }, [open, area, existing, disclosure, loadedSteps]);
+
+  const filled = rows.filter(
+    (r) => r.disclosureField || Number(r.amount || 0) > 0,
+  );
   const stepTotal = useMemo(
     () => filled.reduce((s, r) => s + Number(r.amount || 0), 0),
     [filled],
   );
+
 
   const removeRow = async (r: Draft) => {
     setRows(rows.filter((x) => x.key !== r.key));
