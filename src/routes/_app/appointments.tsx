@@ -546,7 +546,11 @@ function DayView({ appts, tasks = [], employees = [], holidays, onOpen, onCreate
         onToday={() => { const d = new Date(); d.setHours(0, 0, 0, 0); setDay(d); }}
       />
       {hol.length > 0 && (
-        <div className="mb-3 space-y-1">{hol.map((h) => <HolidayChip key={h.name} h={h} />)}</div>
+        <div className="mb-3 space-y-1">
+          {hol.map((h) => (
+            <HolidayHover key={h.name} holidays={[h]}><span className="block"><HolidayChip h={h} /></span></HolidayHover>
+          ))}
+        </div>
       )}
       <div className="overflow-hidden rounded-xl border bg-card">
         {hours.map((h) => {
@@ -563,19 +567,24 @@ function DayView({ appts, tasks = [], employees = [], holidays, onOpen, onCreate
                   >+ Termin um {String(h).padStart(2, "0")}:00</button>
                 )}
                 {slotAppts.map((a) => (
-                  <button key={a.id} onClick={() => onOpen(a.id)}
-                    className={`flex w-full items-center gap-2 rounded-md border-l-4 px-2 py-1.5 text-left text-sm transition hover:opacity-90 ${a.is_online ? "border-l-primary bg-primary/10" : "border-l-accent-foreground/40 bg-accent/40"}`}>
-                    {a.is_online && <Video className="h-3.5 w-3.5 text-primary" />}
-                    <span className="font-medium">{new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}</span>
-                    <span className="truncate">{a.title}</span>
-                  </button>
+                  <ApptHover key={a.id} appt={a} assignee={employees.find((e: any) => e.id === a.assigned_to)} room={roomOf(a)}>
+                    <button onClick={() => onOpen(a.id)}
+                      className={`flex w-full items-center gap-2 rounded-md border-l-4 px-2 py-1.5 text-left text-sm transition hover:opacity-90 ${a.is_online ? "border-l-primary bg-primary/10" : "border-l-accent-foreground/40 bg-accent/40"}`}>
+                      {a.is_online && <Video className="h-3.5 w-3.5 text-primary" />}
+                      <span className="font-medium">{new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}</span>
+                      <span className="truncate">{a.title}</span>
+                    </button>
+                  </ApptHover>
                 ))}
                 {slotTasks.map((tk: any) => (
-                  <Link key={tk.id} to="/tasks" className="flex w-full items-center gap-2 rounded-md border-l-4 border-l-amber-500 bg-amber-500/10 px-2 py-1.5 text-sm text-amber-700 dark:text-amber-400">
-                    <CheckSquare className="h-3.5 w-3.5" /> <span className="truncate">{tk.title}</span>
-                  </Link>
+                  <TaskHover key={tk.id} task={tk} assignee={employees.find((e: any) => e.id === tk.assigned_to)}>
+                    <Link to="/tasks" className="flex w-full items-center gap-2 rounded-md border-l-4 border-l-amber-500 bg-amber-500/10 px-2 py-1.5 text-sm text-amber-700 dark:text-amber-400">
+                      <CheckSquare className="h-3.5 w-3.5" /> <span className="truncate">{tk.title}</span>
+                    </Link>
+                  </TaskHover>
                 ))}
               </div>
+
             </div>
           );
         })}
