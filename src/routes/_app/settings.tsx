@@ -18,6 +18,7 @@ import { BrandkitForm } from "@/components/settings/BrandkitForm";
 
 import { NotificationPreferencesForm } from "@/components/settings/NotificationPreferencesForm";
 import { Tags, FileSignature } from "lucide-react";
+import { LivekitSettingsForm } from "@/components/settings/LivekitSettingsForm";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_app/settings")({ component: SettingsPage });
@@ -77,6 +78,7 @@ function SettingsPage() {
           <TabsTrigger value="brandkit">{t("settings.tabs.brand")}</TabsTrigger>
           <TabsTrigger value="banks">{t("settings.tabs.banks")}</TabsTrigger>
           <TabsTrigger value="categories">{t("settings.tabs.categories")}</TabsTrigger>
+          <TabsTrigger value="video">Video</TabsTrigger>
           <TabsTrigger value="esign">{t("settings.tabs.esign")}</TabsTrigger>
         </TabsList>
 
@@ -152,6 +154,10 @@ function SettingsPage() {
               </p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="video">
+          <LivekitSettingsForm />
         </TabsContent>
 
         <TabsContent value="esign">

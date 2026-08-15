@@ -22,6 +22,9 @@ import { EmptyState } from "@/components/EmptyState";
 import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { useTranslation } from "react-i18next";
 
+import { VideoCallDialog } from "@/components/video/VideoCallDialog";
+import { Video } from "lucide-react";
+
 export const Route = createFileRoute("/_app/appointments")({ component: AppointmentsPage });
 
 const TYPES = ["viewing","meeting","call","other"] as const;
@@ -232,7 +235,15 @@ function ApptCard({
   const { t } = useTranslation();
   const labels = useApptLabels();
   const assignee = employees.find((e) => e.id === a.assigned_to);
+  const [callOpen, setCallOpen] = useState(false);
   return (
+    <>
+    <VideoCallDialog
+      open={callOpen}
+      onOpenChange={setCallOpen}
+      room={`termin-${a.id}`}
+      title={a.title}
+    />
     <Card className={`cursor-pointer transition hover:shadow-soft ${dim ? "opacity-70" : ""}`} onClick={() => onOpen(a.id)}>
       <CardContent className="p-5">
         <div className="flex items-center justify-between gap-2">
@@ -248,16 +259,26 @@ function ApptCard({
           {a.properties?.title && <p>{t("appointments.card.property")}: {a.properties.title}</p>}
           {assignee && <p>{t("appointments.card.assignee")}: {assignee.full_name || assignee.email}</p>}
         </div>
-        <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+        <div className="mt-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Select value={a.status} onValueChange={(v) => onStatus(a.id, v)}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-8 flex-1 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               {STATUSES.map(s => <SelectItem key={s} value={s}>{labels.statuses[s]}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8"
+            title="Videoanruf starten"
+            onClick={() => setCallOpen(true)}
+          >
+            <Video className="mr-1 h-3.5 w-3.5" /> Video
+          </Button>
         </div>
       </CardContent>
     </Card>
+    </>
   );
 }
 void 0; // keep separator
