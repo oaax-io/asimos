@@ -48,7 +48,13 @@ import {
   type PersonScope,
   type Periodicity,
 } from "@/lib/client-finance";
-import { formatCHF } from "@/lib/self-disclosure";
+import {
+  expenseFields,
+  expenseLabels,
+  formatCHF,
+  incomeFields,
+  incomeLabels,
+} from "@/lib/self-disclosure";
 
 const steps: FinanceArea[] = [
   "income",
