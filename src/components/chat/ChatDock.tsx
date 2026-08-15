@@ -621,5 +621,6 @@ function ChatWindow({
         </>
       )}
     </div>
+    </>
   );
 }
