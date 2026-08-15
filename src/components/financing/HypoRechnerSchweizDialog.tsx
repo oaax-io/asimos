@@ -175,6 +175,7 @@ export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
     ["1. Hypothek (max. 66.67%)", formatCurrency(calc.firstMortgage)],
     ["2. Hypothek", formatCurrency(calc.secondMortgage)],
     [`Amortisation p.a. (${amortYears} Jahre)`, formatCurrency(calc.amortYearly)],
+    ["Amortisationsart", amortMode === "direct" ? "Direkt (Hypothek sinkt)" : "Indirekt (über Versicherung / Säule 3a)"],
     [`Zins effektiv p.a. (${interestPct}%)`, formatCurrency(calc.interestYearly)],
     [`Kalkulatorischer Zins p.a. (${calcInterestPct}%)`, formatCurrency(calc.calcInterestYearly)],
     [`Nebenkosten/Unterhalt p.a. (${maintenancePct}%)`, formatCurrency(calc.maintenanceYearly)],
