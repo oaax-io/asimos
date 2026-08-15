@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import {
   AlertTriangle, CheckCircle2, Download, Info, Wallet, Percent, TrendingUp, Home, Calculator,
+  ShieldCheck, ArrowDownUp, ThumbsUp, ThumbsDown,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import jsPDF from "jspdf";
