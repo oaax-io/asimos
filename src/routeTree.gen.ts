@@ -44,6 +44,7 @@ import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads.index'
 import { Route as AppFinancingIndexRouteImport } from './routes/_app/financing.index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
+import { Route as AppMeetRoomRouteImport } from './routes/_app/meet.$room'
 import { Route as AppLeadsIdRouteImport } from './routes/_app/leads.$id'
 import { Route as AppFinancingIdRouteImport } from './routes/_app/financing.$id'
 import { Route as AppClientsIdRouteImport } from './routes/_app/clients.$id'
@@ -226,6 +227,11 @@ const AppPropertiesIdRoute = AppPropertiesIdRouteImport.update({
   path: '/properties/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMeetRoomRoute = AppMeetRoomRouteImport.update({
+  id: '/meet/$room',
+  path: '/meet/$room',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppLeadsIdRoute = AppLeadsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -297,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/clients/$id': typeof AppClientsIdRoute
   '/financing/$id': typeof AppFinancingIdRouteWithChildren
   '/leads/$id': typeof AppLeadsIdRoute
+  '/meet/$room': typeof AppMeetRoomRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/clients/': typeof AppClientsIndexRoute
   '/financing/': typeof AppFinancingIndexRoute
@@ -338,6 +345,7 @@ export interface FileRoutesByTo {
   '/clients/$id': typeof AppClientsIdRoute
   '/financing/$id': typeof AppFinancingIdRouteWithChildren
   '/leads/$id': typeof AppLeadsIdRoute
+  '/meet/$room': typeof AppMeetRoomRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/clients': typeof AppClientsIndexRoute
   '/financing': typeof AppFinancingIndexRoute
@@ -383,6 +391,7 @@ export interface FileRoutesById {
   '/_app/clients/$id': typeof AppClientsIdRoute
   '/_app/financing/$id': typeof AppFinancingIdRouteWithChildren
   '/_app/leads/$id': typeof AppLeadsIdRoute
+  '/_app/meet/$room': typeof AppMeetRoomRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
   '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/financing/': typeof AppFinancingIndexRoute
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/financing/$id'
     | '/leads/$id'
+    | '/meet/$room'
     | '/properties/$id'
     | '/clients/'
     | '/financing/'
@@ -469,6 +479,7 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/financing/$id'
     | '/leads/$id'
+    | '/meet/$room'
     | '/properties/$id'
     | '/clients'
     | '/financing'
@@ -513,6 +524,7 @@ export interface FileRouteTypes {
     | '/_app/clients/$id'
     | '/_app/financing/$id'
     | '/_app/leads/$id'
+    | '/_app/meet/$room'
     | '/_app/properties/$id'
     | '/_app/clients/'
     | '/_app/financing/'
@@ -785,6 +797,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPropertiesIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/meet/$room': {
+      id: '/_app/meet/$room'
+      path: '/meet/$room'
+      fullPath: '/meet/$room'
+      preLoaderRoute: typeof AppMeetRoomRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/leads/$id': {
       id: '/_app/leads/$id'
       path: '/$id'
@@ -912,6 +931,7 @@ interface AppRouteChildren {
   AppTeamRoute: typeof AppTeamRoute
   AppTemplatesRoute: typeof AppTemplatesRoute
   AppFinancingIdRoute: typeof AppFinancingIdRouteWithChildren
+  AppMeetRoomRoute: typeof AppMeetRoomRoute
   AppPropertiesIdRoute: typeof AppPropertiesIdRouteWithChildren
   AppFinancingIndexRoute: typeof AppFinancingIndexRoute
   AppPropertiesIndexRoute: typeof AppPropertiesIndexRoute
@@ -940,6 +960,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTeamRoute: AppTeamRoute,
   AppTemplatesRoute: AppTemplatesRoute,
   AppFinancingIdRoute: AppFinancingIdRouteWithChildren,
+  AppMeetRoomRoute: AppMeetRoomRoute,
   AppPropertiesIdRoute: AppPropertiesIdRouteWithChildren,
   AppFinancingIndexRoute: AppFinancingIndexRoute,
   AppPropertiesIndexRoute: AppPropertiesIndexRoute,
