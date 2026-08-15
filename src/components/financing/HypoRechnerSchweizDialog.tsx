@@ -32,6 +32,10 @@ export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
   const [maintenancePct, setMaintenancePct] = useState<number>(1);
   const [amortYears, setAmortYears] = useState<number>(15);
   const [grossIncome, setGrossIncome] = useState<number>(180000);
+  const [amortMode, setAmortMode] = useState<"direct" | "indirect">("direct");
+  const [taxRatePct, setTaxRatePct] = useState<number>(30);
+  const [policyReturnPct, setPolicyReturnPct] = useState<number>(1.5);
+  const [policyCostPct, setPolicyCostPct] = useState<number>(0.4);
 
   const { data: clients = [] } = useQuery({
     queryKey: ["hypo-ch-clients"],
