@@ -145,9 +145,23 @@ function FinancingPage() {
         i18nKey="financing"
         action={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setHypoOpen(true)}>
-              <Calculator className="mr-2 h-4 w-4" /> {t("financing.hypoButton")}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Calculator className="mr-2 h-4 w-4" /> Andere Finanzierung
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Hyporechner</DropdownMenuLabel>
+                <DropdownMenuItem onSelect={() => { setHypoCalcId(null); setHypoOpen(true); }}>
+                  <Calculator className="mr-2 h-4 w-4" /> Hyporechner Kosovo
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setHypoChOpen(true)}>
+                  <Calculator className="mr-2 h-4 w-4" /> Hyporechner Schweiz
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button onClick={() => setWizardOpen(true)}>
               <Plus className="mr-2 h-4 w-4" /> {t("financing.startQuickCheck")}
             </Button>
