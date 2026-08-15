@@ -48,7 +48,13 @@ import {
   type PersonScope,
   type Periodicity,
 } from "@/lib/client-finance";
-import { formatCHF } from "@/lib/self-disclosure";
+import {
+  expenseFields,
+  expenseLabels,
+  formatCHF,
+  incomeFields,
+  incomeLabels,
+} from "@/lib/self-disclosure";
 
 const steps: FinanceArea[] = [
   "income",
@@ -71,6 +77,7 @@ const stepHints: Record<FinanceArea, string> = {
 type Draft = {
   key: string;
   id?: string;
+  disclosureField?: string;
   category: string;
   label: string;
   amount: string;
@@ -156,6 +163,21 @@ export function FinanceGuidedWizard({
     },
   });
 
+  // Werte aus der Selbstauskunft (Gehalt, Ausgaben …) mitladen
+  const { data: disclosure } = useQuery<any>({
+    queryKey: ["client_self_disclosure", clientId],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("client_self_disclosures")
+        .select("*")
+        .eq("client_id", clientId)
+        .maybeSingle();
+      if (error) throw error;
+      return data ?? null;
+    },
+  });
+
   useEffect(() => {
     if (open) {
       const idx = startArea ? steps.indexOf(startArea) : 0;
@@ -172,21 +194,60 @@ export function FinanceGuidedWizard({
   // Bestehende Positionen laden, sonst eine leere Position bereitstellen
   useEffect(() => {
     if (!open || loadedSteps[area]) return;
-    const mine = existing
-      .filter((i) => i.area === area)
-      .map(draftFromItem);
-    setDrafts((d) => ({ ...d, [area]: mine.length ? mine : [newDraft(area)] }));
-    setLoadedSteps((s) => ({ ...s, [area]: true }));
-  }, [open, area, existing, loadedSteps]);
 
-  const filled = rows.filter((r) => Number(r.amount || 0) > 0);
+    const fromDisclosure: Draft[] = [];
+    if (disclosure) {
+      const fields =
+        area === "income"
+          ? incomeFields.map((f) => [f, incomeLabels[f]] as const)
+          : area === "expense"
+            ? expenseFields.map((f) => [f, expenseLabels[f]] as const)
+            : [];
+      for (const [field, label] of fields) {
+        const value = Number(disclosure[field] ?? 0);
+        if (!Number.isFinite(value) || value === 0) continue;
+        fromDisclosure.push({
+          ...newDraft(area),
+          key: `sd:${field}`,
+          disclosureField: field,
+          category: label,
+          label,
+          amount: String(value),
+          periodicity: "monthly",
+        });
+      }
+    }
+
+    const mine = existing.filter((i) => i.area === area).map(draftFromItem);
+    const all = [...fromDisclosure, ...mine];
+    setDrafts((d) => ({ ...d, [area]: all.length ? all : [newDraft(area)] }));
+    setLoadedSteps((s) => ({ ...s, [area]: true }));
+  }, [open, area, existing, disclosure, loadedSteps]);
+
+  const filled = rows.filter(
+    (r) => r.disclosureField || Number(r.amount || 0) > 0,
+  );
   const stepTotal = useMemo(
     () => filled.reduce((s, r) => s + Number(r.amount || 0), 0),
     [filled],
   );
 
+
   const removeRow = async (r: Draft) => {
     setRows(rows.filter((x) => x.key !== r.key));
+    if (r.disclosureField) {
+      const { error } = await supabase
+        .from("client_self_disclosures")
+        .update({ [r.disclosureField]: null } as any)
+        .eq("client_id", clientId);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      qc.invalidateQueries({ queryKey: ["client_self_disclosure", clientId] });
+      toast.success("Position entfernt");
+      return;
+    }
     if (!r.id) return;
     const { error } = await supabase
       .from("client_financial_items")
@@ -222,8 +283,23 @@ export function FinanceGuidedWizard({
         source: "manual" as const,
       });
 
-      const inserts = list.filter((r) => !r.id);
-      const updates = list.filter((r) => r.id);
+      // Selbstauskunfts-Werte direkt in der Selbstauskunft aktualisieren
+      const sdRows = list.filter((r) => r.disclosureField);
+      if (sdRows.length) {
+        const patch: Record<string, number | null> = {};
+        for (const r of sdRows) {
+          patch[r.disclosureField!] = numOrNull(r.amount);
+        }
+        const { error } = await supabase
+          .from("client_self_disclosures")
+          .update(patch as any)
+          .eq("client_id", clientId);
+        if (error) throw error;
+      }
+
+      const items = list.filter((r) => !r.disclosureField);
+      const inserts = items.filter((r) => !r.id);
+      const updates = items.filter((r) => r.id);
 
       if (inserts.length) {
         const { error } = await supabase
@@ -242,10 +318,12 @@ export function FinanceGuidedWizard({
     },
     onSuccess: (n) => {
       qc.invalidateQueries({ queryKey: ["client_financial_items", clientId] });
+      qc.invalidateQueries({ queryKey: ["client_self_disclosure", clientId] });
       if (n) setSavedCount((c) => c + n);
     },
     onError: (e: any) => toast.error(e?.message ?? "Speichern fehlgeschlagen"),
   });
+
 
   const goNext = async (persist: boolean) => {
     if (persist && filled.length) {
@@ -314,7 +392,17 @@ export function FinanceGuidedWizard({
               key={r.key}
               className="grid gap-3 rounded-xl border bg-card p-3 sm:grid-cols-2"
             >
+              {r.disclosureField && (
+                <div className="sm:col-span-2">
+                  <Badge variant="secondary" className="text-[10px]">
+                    Aus Selbstauskunft
+                  </Badge>
+                </div>
+              )}
               <FieldRow label="Kategorie">
+                {r.disclosureField ? (
+                  <Input value={r.category} disabled />
+                ) : (
                 <Select
                   value={r.category}
                   onValueChange={(v) =>
@@ -332,6 +420,8 @@ export function FinanceGuidedWizard({
                     ))}
                   </SelectContent>
                 </Select>
+                )}
+
               </FieldRow>
 
               <FieldRow label="Bezeichnung (optional)">
