@@ -523,7 +523,7 @@ function WeekView({ appts, tasks = [], employees = [], holidays, onOpen, onCreat
 const DAY_START = 7;
 const DAY_END = 21;
 
-function DayView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: any[]; tasks?: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
+function DayView({ appts, tasks = [], employees = [], holidays, onOpen, onCreateAt }: { appts: any[]; tasks?: any[]; employees?: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
   const { i18n } = useTranslation();
   const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
   const [day, setDay] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
