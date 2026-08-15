@@ -628,17 +628,26 @@ function MonthView({ appts, tasks, holidays, onOpen, onCreateAt }: { appts: any[
               key={d.toISOString()}
               className={`group relative min-h-[110px] p-1.5 ${paidHol ? "bg-rose-50 dark:bg-rose-950/25" : isWeekend ? "bg-muted/30" : "bg-card"} ${inMonth ? "" : "opacity-50"} ${isToday ? "ring-2 ring-inset ring-primary/40" : ""}`}
             >
-              <div className="mb-1 flex items-center justify-between">
+              <div className="mb-1 flex items-center gap-1">
                 <button
                   onClick={() => { const dt = new Date(d); dt.setHours(9, 0, 0, 0); onCreateAt(localInput(dt)); }}
                   className="rounded p-0.5 text-muted-foreground opacity-0 transition hover:bg-accent group-hover:opacity-100"
                   title="Termin anlegen"
                 ><Plus className="h-3 w-3" /></button>
-                <span className={`text-xs font-semibold ${isToday ? "text-primary" : paidHol ? "text-rose-600 dark:text-rose-300" : ""}`}>{d.getDate()}</span>
+                {hol.length > 0 && (
+                  <span
+                    title={hol.map((h) => `${h.name} (${h.paid ? "bezahlt" : "unbezahlt"})`).join(" · ")}
+                    className={`flex min-w-0 flex-1 items-center gap-1 truncate rounded px-1 py-0.5 text-[10px] font-medium ${hol.some((h) => h.paid) ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-muted text-muted-foreground"}`}
+                  >
+                    <Flag className="h-2.5 w-2.5 shrink-0" />
+                    <span className="truncate">{hol[0].name}{hol.length > 1 ? ` +${hol.length - 1}` : ""}</span>
+                  </span>
+                )}
+                <span className={`ml-auto text-xs font-semibold ${isToday ? "text-primary" : paidHol ? "text-rose-600 dark:text-rose-300" : ""}`}>{d.getDate()}</span>
               </div>
               <div className="space-y-1">
-                {hol.map((h) => <HolidayChip key={h.name} h={h} />)}
                 {all.slice(0, hol.length ? 2 : 3).map((it) => (
+
                   it.kind === "appt" ? (
                     <button
                       key={`a-${it.id}`}
