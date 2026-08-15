@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import {
   AlertTriangle, CheckCircle2, Download, Info, Wallet, Percent, TrendingUp, Home, Calculator,
+  ShieldCheck, ArrowDownUp, ThumbsUp, ThumbsDown,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import jsPDF from "jspdf";
@@ -31,6 +32,10 @@ export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
   const [maintenancePct, setMaintenancePct] = useState<number>(1);
   const [amortYears, setAmortYears] = useState<number>(15);
   const [grossIncome, setGrossIncome] = useState<number>(180000);
+  const [amortMode, setAmortMode] = useState<"direct" | "indirect">("direct");
+  const [taxRatePct, setTaxRatePct] = useState<number>(30);
+  const [policyReturnPct, setPolicyReturnPct] = useState<number>(1.5);
+  const [policyCostPct, setPolicyCostPct] = useState<number>(0.4);
 
   const { data: clients = [] } = useQuery({
     queryKey: ["hypo-ch-clients"],
@@ -71,6 +76,91 @@ export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
     };
   }, [purchasePrice, equity, pkEquity, interestPct, calcInterestPct, maintenancePct, amortYears, grossIncome]);
 
+  // Vergleich direkte vs. indirekte Amortisation über die Amortisationsdauer
+  const amort = useMemo(() => {
+    const years = Math.max(1, Math.round(amortYears || 1));
+    const rate = interestPct / 100;
+    const tax = Math.min(60, Math.max(0, taxRatePct)) / 100;
+    const netReturn = (policyReturnPct - policyCostPct) / 100;
+    const yearly = calc.amortYearly;
+    const loan = calc.loan;
+
+    // Direkt: Hypothek sinkt jährlich
+    let directInterest = 0;
+    for (let i = 0; i < years; i++) directInterest += (loan - yearly * i) * rate;
+    const directTaxSaving = directInterest * tax;
+    const directNet = directInterest - directTaxSaving;
+    const directDebtEnd = loan - yearly * years;
+
+    // Indirekt: Hypothek bleibt konstant, Sparen in Police (Säule 3a / 3b)
+    const indirectInterest = loan * rate * years;
+    const indirectInterestTaxSaving = indirectInterest * tax;
+    const contribTotal = yearly * years;
+    const contribTaxSaving = contribTotal * tax; // nur bei Säule 3a abzugsfähig
+    // Endwert der Police (nachschüssige Rente)
+    const policyEnd = netReturn === 0
+      ? contribTotal
+      : contribTotal > 0 ? yearly * ((Math.pow(1 + netReturn, years) - 1) / netReturn) : 0;
+    const policyGain = policyEnd - contribTotal;
+    const payoutTax = policyEnd * 0.05; // pauschale Kapitalauszahlungssteuer ca. 5%
+    const indirectNet = indirectInterest + contribTotal
+      - indirectInterestTaxSaving - contribTaxSaving - policyEnd + payoutTax;
+    const indirectDebtEnd = loan;
+
+    const advantage = directNet - indirectNet; // > 0 = indirekt günstiger
+    return {
+      years, yearly, directInterest, directTaxSaving, directNet, directDebtEnd,
+      indirectInterest, indirectInterestTaxSaving, contribTotal, contribTaxSaving,
+      policyEnd, policyGain, payoutTax, indirectNet, indirectDebtEnd, advantage,
+      monthlyDirect: (loan * rate + calc.maintenanceYearly + yearly) / 12,
+      monthlyIndirect: (loan * rate + calc.maintenanceYearly + yearly) / 12,
+    };
+  }, [amortYears, interestPct, taxRatePct, policyReturnPct, policyCostPct, calc]);
+
+  const compareRows: [string, string, string][] = [
+    ["Hypothek während Laufzeit", "sinkend", "konstant"],
+    ["Zinskosten total", formatCurrency(amort.directInterest), formatCurrency(amort.indirectInterest)],
+    ["Steuerersparnis Schuldzinsen", formatCurrency(amort.directTaxSaving), formatCurrency(amort.indirectInterestTaxSaving)],
+    ["Steuerersparnis Einzahlungen 3a", formatCurrency(0), formatCurrency(amort.contribTaxSaving)],
+    ["Einzahlungen total", formatCurrency(amort.yearly * amort.years), formatCurrency(amort.contribTotal)],
+    ["Guthaben Police am Ende", "—", formatCurrency(amort.policyEnd)],
+    ["davon Zinsertrag Police", "—", formatCurrency(amort.policyGain)],
+    ["Kapitalauszahlungssteuer (ca. 5%)", "—", `- ${formatCurrency(amort.payoutTax)}`],
+    ["Restschuld nach Laufzeit", formatCurrency(Math.max(0, amort.directDebtEnd)), formatCurrency(amort.indirectDebtEnd)],
+    ["Nettokosten total", formatCurrency(amort.directNet), formatCurrency(amort.indirectNet)],
+  ];
+
+  const prosCons = {
+    direct: {
+      pro: [
+        "Schuld sinkt laufend – tiefere Zinskosten",
+        "Einfach und transparent, keine Zusatzverträge",
+        "Höhere Sicherheit bei steigenden Zinsen",
+        "Keine Bindung an Versicherung oder Bank-Sparkonto",
+      ],
+      con: [
+        "Steuerlich ungünstig: Schuldzinsabzug sinkt jedes Jahr",
+        "Keine Steuerersparnis durch Säule-3a-Abzug",
+        "Kein zusätzliches Vorsorgekapital",
+        "Einbezahltes Geld ist gebunden (nicht flexibel verfügbar)",
+      ],
+    },
+    indirect: {
+      pro: [
+        "Voller Schuldzinsabzug bleibt über die ganze Laufzeit erhalten",
+        "Einzahlungen in Säule 3a sind vom Einkommen abziehbar",
+        "Aufbau von Vorsorgekapital, oft mit Todesfall-/Erwerbsunfähigkeitsschutz",
+        "Kapital kann später flexibel für Amortisation oder Vorsorge genutzt werden",
+      ],
+      con: [
+        "Hypothek und damit Zinskosten bleiben während der Laufzeit hoch",
+        "Vertragsbindung an Versicherung, Rückkaufswerte in den ersten Jahren tief",
+        "Abschluss- und Verwaltungskosten schmälern die Rendite",
+        "Kapitalauszahlungssteuer bei Bezug, 3a-Maximalbetrag begrenzt die Einzahlung",
+      ],
+    },
+  };
+
   const status: "ok" | "tight" | "not_ok" =
     !calc.equityOk || calc.affordabilityPct > 40 ? "not_ok"
       : calc.affordabilityPct > 33 ? "tight" : "ok";
@@ -85,6 +175,7 @@ export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
     ["1. Hypothek (max. 66.67%)", formatCurrency(calc.firstMortgage)],
     ["2. Hypothek", formatCurrency(calc.secondMortgage)],
     [`Amortisation p.a. (${amortYears} Jahre)`, formatCurrency(calc.amortYearly)],
+    ["Amortisationsart", amortMode === "direct" ? "Direkt (Hypothek sinkt)" : "Indirekt (über Versicherung / Säule 3a)"],
     [`Zins effektiv p.a. (${interestPct}%)`, formatCurrency(calc.interestYearly)],
     [`Kalkulatorischer Zins p.a. (${calcInterestPct}%)`, formatCurrency(calc.calcInterestYearly)],
     [`Nebenkosten/Unterhalt p.a. (${maintenancePct}%)`, formatCurrency(calc.maintenanceYearly)],
@@ -176,6 +267,63 @@ export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
       doc.text(
         "Richtwerte Schweiz: min. 20% Eigenmittel (davon min. 10% hart), Belehnung über 66.67% in 15 Jahren amortisieren, kalk. Zins 5%, Nebenkosten 1%.",
         15, endY + 18, { maxWidth: pageW - 30 },
+      );
+
+      // --- Seite 2: Vergleich direkte vs. indirekte Amortisation ---
+      doc.addPage();
+      let y2 = 20;
+      doc.setFontSize(16);
+      doc.setTextColor(20);
+      doc.text("Direkte vs. indirekte Amortisation", 15, y2);
+      y2 += 6;
+      doc.setFontSize(9);
+      doc.setTextColor(120);
+      doc.text(
+        `Vergleich über ${amort.years} Jahre · Grenzsteuersatz ${taxRatePct}% · Police-Rendite netto ${(policyReturnPct - policyCostPct).toFixed(2)}%`,
+        15, y2,
+      );
+      y2 += 6;
+
+      autoTable(doc, {
+        startY: y2,
+        theme: "grid",
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [111, 107, 148] },
+        head: [["Position", "Direkt", "Indirekt (Versicherung)"]],
+        body: compareRows,
+      });
+
+      let y3 = ((doc as any).lastAutoTable?.finalY ?? y2) + 10;
+      doc.setFontSize(11);
+      doc.setTextColor(20);
+      doc.text(
+        amort.advantage > 0
+          ? `Empfehlung: Indirekte Amortisation ist rechnerisch um ${formatCurrency(Math.abs(amort.advantage))} günstiger.`
+          : `Empfehlung: Direkte Amortisation ist rechnerisch um ${formatCurrency(Math.abs(amort.advantage))} günstiger.`,
+        15, y3, { maxWidth: pageW - 30 },
+      );
+      y3 += 10;
+
+      autoTable(doc, {
+        startY: y3,
+        theme: "striped",
+        styles: { fontSize: 8, cellPadding: 2, valign: "top" },
+        headStyles: { fillColor: [111, 107, 148] },
+        head: [["Direkt – Vorteile", "Direkt – Nachteile", "Indirekt – Vorteile", "Indirekt – Nachteile"]],
+        body: [[
+          prosCons.direct.pro.map((t) => `+ ${t}`).join("\n"),
+          prosCons.direct.con.map((t) => `- ${t}`).join("\n"),
+          prosCons.indirect.pro.map((t) => `+ ${t}`).join("\n"),
+          prosCons.indirect.con.map((t) => `- ${t}`).join("\n"),
+        ]],
+      });
+
+      const y4 = ((doc as any).lastAutoTable?.finalY ?? y3) + 8;
+      doc.setFontSize(8);
+      doc.setTextColor(130);
+      doc.text(
+        "Vereinfachte Modellrechnung ohne Eigenmietwert, Unterhaltsabzüge und individuelle Policenbedingungen. Unverbindlich, keine Steuer- oder Anlageberatung.",
+        15, y4, { maxWidth: pageW - 30 },
       );
 
       doc.save(`hyporechner-schweiz-${new Date().toISOString().slice(0, 10)}.pdf`);
@@ -275,6 +423,107 @@ export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
               <Field label="Amortisation (Jahre)" value={amortYears} onChange={setAmortYears} step={1} />
             </div>
           </section>
+
+          {/* --- Section: Amortisationsart --- */}
+          <section className="space-y-3">
+            <SectionLabel icon={ArrowDownUp} title="Amortisationsart & Vergleich" />
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setAmortMode("direct")}
+                className={`text-left rounded-lg border p-3 transition ${
+                  amortMode === "direct"
+                    ? "border-[#6F6B94] ring-2 ring-[#6F6B94]/30 bg-[#6F6B94]/5"
+                    : "hover:bg-muted/50"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <ArrowDownUp className="h-4 w-4 text-[#6F6B94]" />
+                  <span className="font-semibold text-sm">Direkte Amortisation</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Rückzahlung direkt an die Bank – Hypothek und Zinskosten sinken laufend.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAmortMode("indirect")}
+                className={`text-left rounded-lg border p-3 transition ${
+                  amortMode === "indirect"
+                    ? "border-[#6F6B94] ring-2 ring-[#6F6B94]/30 bg-[#6F6B94]/5"
+                    : "hover:bg-muted/50"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-[#6F6B94]" />
+                  <span className="font-semibold text-sm">Indirekte Amortisation</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Einzahlung in eine Versicherungspolice (Säule 3a/3b) – Hypothek bleibt konstant.
+                </p>
+              </button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Field label="Grenzsteuersatz (%)" value={taxRatePct} onChange={setTaxRatePct} step={1} />
+              <Field label="Rendite Police (%)" value={policyReturnPct} onChange={setPolicyReturnPct} step={0.1} />
+              <Field label="Kosten Police (%)" value={policyCostPct} onChange={setPolicyCostPct} step={0.1} />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Kpi
+                title="Nettokosten direkt"
+                value={formatCurrency(amort.directNet)}
+                hint={`über ${amort.years} Jahre`}
+                tone={amort.advantage <= 0 ? "good" : "neutral"}
+              />
+              <Kpi
+                title="Nettokosten indirekt"
+                value={formatCurrency(amort.indirectNet)}
+                hint={`inkl. Police ${formatCurrency(amort.policyEnd)}`}
+                tone={amort.advantage > 0 ? "good" : "neutral"}
+              />
+              <Kpi
+                title="Differenz"
+                value={formatCurrency(Math.abs(amort.advantage))}
+                hint={amort.advantage > 0 ? "Vorteil indirekt" : "Vorteil direkt"}
+                tone="warn"
+              />
+            </div>
+
+            <div className="rounded-lg border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/60 border-b">
+                    <th className="text-left font-medium px-3 py-2">Position</th>
+                    <th className={`text-right font-medium px-3 py-2 ${amortMode === "direct" ? "text-[#6F6B94]" : ""}`}>Direkt</th>
+                    <th className={`text-right font-medium px-3 py-2 ${amortMode === "indirect" ? "text-[#6F6B94]" : ""}`}>Indirekt</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {compareRows.map(([k, a, b], i) => (
+                    <tr key={k} className={i % 2 === 0 ? "bg-transparent" : "bg-muted/30"}>
+                      <td className="px-3 py-1.5 text-muted-foreground">{k}</td>
+                      <td className="px-3 py-1.5 text-right font-semibold tabular-nums">{a}</td>
+                      <td className="px-3 py-1.5 text-right font-semibold tabular-nums">{b}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <ProsConsCard title="Direkte Amortisation" pro={prosCons.direct.pro} con={prosCons.direct.con} />
+              <ProsConsCard title="Indirekte Amortisation (Versicherung)" pro={prosCons.indirect.pro} con={prosCons.indirect.con} />
+            </div>
+
+            <p className="text-xs text-muted-foreground px-1">
+              Vereinfachte Modellrechnung ohne Eigenmietwert und individuelle Policenbedingungen. Unverbindlich, keine Steuer- oder Anlageberatung.
+            </p>
+          </section>
+
+
 
           {/* --- KPI Row --- */}
           <section className="space-y-3">
@@ -407,6 +656,38 @@ function Kpi({ title, value, hint, tone }: { title: string; value: string; hint?
       <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">{title}</p>
       <p className="text-lg font-bold tabular-nums">{value}</p>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+function ProsConsCard({ title, pro, con }: { title: string; pro: string[]; con: string[] }) {
+  return (
+    <div className="rounded-lg border p-3 space-y-3">
+      <p className="text-sm font-semibold">{title}</p>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          <ThumbsUp className="h-3.5 w-3.5" /> Vorteile
+        </div>
+        <ul className="space-y-1">
+          {pro.map((t) => (
+            <li key={t} className="text-xs text-muted-foreground flex gap-1.5">
+              <span className="text-emerald-500">•</span>{t}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+          <ThumbsDown className="h-3.5 w-3.5" /> Nachteile
+        </div>
+        <ul className="space-y-1">
+          {con.map((t) => (
+            <li key={t} className="text-xs text-muted-foreground flex gap-1.5">
+              <span className="text-red-400">•</span>{t}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
