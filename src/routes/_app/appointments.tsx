@@ -25,6 +25,7 @@ import { useTranslation } from "react-i18next";
 import { VideoCallDialog } from "@/components/video/VideoCallDialog";
 import { HolidaySettings } from "@/components/appointments/HolidaySettings";
 import { holidayMap, holidaysForCanton, dateKey, type Holiday } from "@/lib/swiss-holidays";
+import { ApptHover, TaskHover, HolidayHover } from "@/components/appointments/CalendarHover";
 
 export const Route = createFileRoute("/_app/appointments")({ component: AppointmentsPage });
 
@@ -94,7 +95,7 @@ function AppointmentsPage() {
     queryKey: ["tasks", "with-due"],
     queryFn: async () => (await supabase
       .from("tasks")
-      .select("id, title, due_date, status, priority, related_type, related_id, assigned_to")
+      .select("id, title, description, due_date, status, priority, related_type, related_id, assigned_to")
       .not("due_date", "is", null)).data ?? [],
   });
 
@@ -225,15 +226,15 @@ function AppointmentsPage() {
 
 
         <TabsContent value="month">
-          <MonthView appts={appts} tasks={tasks} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
+          <MonthView appts={appts} tasks={tasks} employees={employees} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
         </TabsContent>
 
         <TabsContent value="week">
-          <WeekView appts={appts} tasks={tasks} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
+          <WeekView appts={appts} tasks={tasks} employees={employees} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
         </TabsContent>
 
         <TabsContent value="day">
-          <DayView appts={appts} tasks={tasks} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
+          <DayView appts={appts} tasks={tasks} employees={employees} holidays={holidays.map} onOpen={setEditId} onCreateAt={(iso) => startNew({ starts_at: iso })} />
         </TabsContent>
 
         <TabsContent value="list">
@@ -241,11 +242,13 @@ function AppointmentsPage() {
             <div>
               <ListView
                 appts={appts}
+                tasks={tasks}
                 employees={employees}
                 onOpen={setEditId}
                 onStatus={(id, status) => update.mutate({ id, patch: { status } })}
               />
             </div>
+
             <HolidayList canton={holidays.canton} showUnpaid={holidays.showUnpaid} />
           </div>
         </TabsContent>
@@ -325,12 +328,15 @@ function HolidayList({ canton, showUnpaid }: { canton: string; showUnpaid: boole
 /* -------------------- Views -------------------- */
 
 function ListView({
-  appts, employees, onOpen, onStatus,
-}: { appts: any[]; employees: any[]; onOpen: (id: string) => void; onStatus: (id: string, s: string) => void }) {
+  appts, tasks = [], employees, onOpen, onStatus,
+}: { appts: any[]; tasks?: any[]; employees: any[]; onOpen: (id: string) => void; onStatus: (id: string, s: string) => void }) {
   const { t } = useTranslation();
   const now = Date.now();
   const upcoming = appts.filter((a) => new Date(a.starts_at).getTime() >= now);
   const past = appts.filter((a) => new Date(a.starts_at).getTime() < now).reverse();
+  const upcomingTasks = tasks
+    .filter((tk) => tk.status !== "done" && tk.status !== "cancelled")
+    .sort((a, b) => +new Date(a.due_date) - +new Date(b.due_date));
 
   return (
     <>
@@ -341,6 +347,25 @@ function ListView({
         <div className="grid gap-3 md:grid-cols-2">
           {upcoming.map((a) => <ApptCard key={a.id} a={a} employees={employees} onOpen={onOpen} onStatus={onStatus} />)}
         </div>
+      )}
+
+      {upcomingTasks.length > 0 && (
+        <>
+          <h2 className="mb-3 mt-8 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+            <CheckSquare className="h-4 w-4 text-amber-500" /> Aufgaben mit Fälligkeitsdatum
+          </h2>
+          <div className="grid gap-2 md:grid-cols-2">
+            {upcomingTasks.map((tk) => (
+              <TaskHover key={tk.id} task={tk} assignee={employees.find((e: any) => e.id === tk.assigned_to)}>
+                <Link to="/tasks" className="flex items-center gap-2 rounded-xl border border-l-4 border-l-amber-500 bg-amber-50/40 p-3 text-sm transition hover:bg-accent dark:bg-amber-950/20">
+                  <CheckSquare className="h-4 w-4 shrink-0 text-amber-600" />
+                  <span className="min-w-0 flex-1 truncate font-medium">{tk.title}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{formatDateTime(tk.due_date)}</span>
+                </Link>
+              </TaskHover>
+            ))}
+          </div>
+        </>
       )}
 
       {past.length > 0 && (
@@ -354,6 +379,7 @@ function ListView({
     </>
   );
 }
+
 
 function ApptCard({
   a, employees, dim, onOpen, onStatus,
@@ -421,7 +447,7 @@ function CalendarNav({ label, onPrev, onNext, onToday, right }: any) {
   );
 }
 
-function WeekView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: any[]; tasks?: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
+function WeekView({ appts, tasks = [], employees = [], holidays, onOpen, onCreateAt }: { appts: any[]; tasks?: any[]; employees?: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
   const { i18n } = useTranslation();
   const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
   const [anchor, setAnchor] = useState(() => startOfWeek(new Date()));
@@ -465,13 +491,14 @@ function WeekView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: 
                   {new Intl.DateTimeFormat(locale, { weekday: "short" }).format(d)}
                 </p>
                 {hol.length > 0 && (
-                  <span
-                    title={hol.map((h) => `${h.name} (${h.paid ? "bezahlt" : "unbezahlt"})`).join(" · ")}
-                    className={`flex min-w-0 flex-1 items-center gap-1 truncate rounded px-1 py-0.5 text-[10px] font-medium ${paidHol ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-muted text-muted-foreground"}`}
-                  >
-                    <Flag className="h-2.5 w-2.5 shrink-0" />
-                    <span className="truncate">{hol[0].name}{hol.length > 1 ? ` +${hol.length - 1}` : ""}</span>
-                  </span>
+                  <HolidayHover holidays={hol}>
+                    <span
+                      className={`flex min-w-0 flex-1 cursor-default items-center gap-1 truncate rounded px-1 py-0.5 text-[10px] font-medium ${paidHol ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-muted text-muted-foreground"}`}
+                    >
+                      <Flag className="h-2.5 w-2.5 shrink-0" />
+                      <span className="truncate">{hol[0].name}{hol.length > 1 ? ` +${hol.length - 1}` : ""}</span>
+                    </span>
+                  </HolidayHover>
                 )}
                 <p className={`ml-auto text-lg font-bold ${isToday ? "text-primary" : ""}`}>{d.getDate()}</p>
               </div>
@@ -484,33 +511,36 @@ function WeekView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: 
                   >+ Termin</button>
                 )}
                 {items.appts.map((a) => (
-                  <button
-                    key={a.id}
-                    onClick={() => onOpen(a.id)}
-                    className={`block w-full rounded-md border p-2 text-left text-xs transition hover:bg-accent ${a.is_online ? "border-l-4 border-l-primary bg-primary/5" : "bg-accent/30"}`}
-                  >
-                    <p className="flex items-center gap-1 font-medium text-primary">
-                      {a.is_online && <Video className="h-3 w-3" />}
-                      {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}
-                    </p>
-                    <p className="line-clamp-2 font-medium">{a.title}</p>
-                    {a.location && !a.is_online && <p className="line-clamp-1 text-muted-foreground">{a.location}</p>}
-                  </button>
+                  <ApptHover key={a.id} appt={a} assignee={employees.find((e: any) => e.id === a.assigned_to)} room={roomOf(a)}>
+                    <button
+                      onClick={() => onOpen(a.id)}
+                      className={`block w-full rounded-md border p-2 text-left text-xs transition hover:bg-accent ${a.is_online ? "border-l-4 border-l-primary bg-primary/5" : "bg-accent/30"}`}
+                    >
+                      <p className="flex items-center gap-1 font-medium text-primary">
+                        {a.is_online && <Video className="h-3 w-3" />}
+                        {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}
+                      </p>
+                      <p className="line-clamp-2 font-medium">{a.title}</p>
+                      {a.location && !a.is_online && <p className="line-clamp-1 text-muted-foreground">{a.location}</p>}
+                    </button>
+                  </ApptHover>
                 ))}
                 {items.tasks.map((tk: any) => (
-                  <Link
-                    key={tk.id}
-                    to="/tasks"
-                    className={`block w-full rounded-md border border-l-4 p-2 text-left text-xs transition hover:bg-accent ${tk.status === "done" ? "border-l-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20" : "border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/20"}`}
-                  >
-                    <p className="flex items-center gap-1 font-medium text-amber-700 dark:text-amber-400">
-                      <CheckSquare className="h-3 w-3" />
-                      {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(tk.due_date))}
-                    </p>
-                    <p className={`line-clamp-2 font-medium ${tk.status === "done" ? "line-through text-muted-foreground" : ""}`}>{tk.title}</p>
-                  </Link>
+                  <TaskHover key={tk.id} task={tk} assignee={employees.find((e: any) => e.id === tk.assigned_to)}>
+                    <Link
+                      to="/tasks"
+                      className={`block w-full rounded-md border border-l-4 p-2 text-left text-xs transition hover:bg-accent ${tk.status === "done" ? "border-l-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20" : "border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/20"}`}
+                    >
+                      <p className="flex items-center gap-1 font-medium text-amber-700 dark:text-amber-400">
+                        <CheckSquare className="h-3 w-3" />
+                        {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(tk.due_date))}
+                      </p>
+                      <p className={`line-clamp-2 font-medium ${tk.status === "done" ? "line-through text-muted-foreground" : ""}`}>{tk.title}</p>
+                    </Link>
+                  </TaskHover>
                 ))}
               </div>
+
             </div>
           );
         })}
@@ -522,7 +552,7 @@ function WeekView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: 
 const DAY_START = 7;
 const DAY_END = 21;
 
-function DayView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: any[]; tasks?: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
+function DayView({ appts, tasks = [], employees = [], holidays, onOpen, onCreateAt }: { appts: any[]; tasks?: any[]; employees?: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
   const { i18n } = useTranslation();
   const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
   const [day, setDay] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
@@ -541,7 +571,11 @@ function DayView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: a
         onToday={() => { const d = new Date(); d.setHours(0, 0, 0, 0); setDay(d); }}
       />
       {hol.length > 0 && (
-        <div className="mb-3 space-y-1">{hol.map((h) => <HolidayChip key={h.name} h={h} />)}</div>
+        <div className="mb-3 space-y-1">
+          {hol.map((h) => (
+            <HolidayHover key={h.name} holidays={[h]}><span className="block"><HolidayChip h={h} /></span></HolidayHover>
+          ))}
+        </div>
       )}
       <div className="overflow-hidden rounded-xl border bg-card">
         {hours.map((h) => {
@@ -558,19 +592,24 @@ function DayView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: a
                   >+ Termin um {String(h).padStart(2, "0")}:00</button>
                 )}
                 {slotAppts.map((a) => (
-                  <button key={a.id} onClick={() => onOpen(a.id)}
-                    className={`flex w-full items-center gap-2 rounded-md border-l-4 px-2 py-1.5 text-left text-sm transition hover:opacity-90 ${a.is_online ? "border-l-primary bg-primary/10" : "border-l-accent-foreground/40 bg-accent/40"}`}>
-                    {a.is_online && <Video className="h-3.5 w-3.5 text-primary" />}
-                    <span className="font-medium">{new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}</span>
-                    <span className="truncate">{a.title}</span>
-                  </button>
+                  <ApptHover key={a.id} appt={a} assignee={employees.find((e: any) => e.id === a.assigned_to)} room={roomOf(a)}>
+                    <button onClick={() => onOpen(a.id)}
+                      className={`flex w-full items-center gap-2 rounded-md border-l-4 px-2 py-1.5 text-left text-sm transition hover:opacity-90 ${a.is_online ? "border-l-primary bg-primary/10" : "border-l-accent-foreground/40 bg-accent/40"}`}>
+                      {a.is_online && <Video className="h-3.5 w-3.5 text-primary" />}
+                      <span className="font-medium">{new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}</span>
+                      <span className="truncate">{a.title}</span>
+                    </button>
+                  </ApptHover>
                 ))}
                 {slotTasks.map((tk: any) => (
-                  <Link key={tk.id} to="/tasks" className="flex w-full items-center gap-2 rounded-md border-l-4 border-l-amber-500 bg-amber-500/10 px-2 py-1.5 text-sm text-amber-700 dark:text-amber-400">
-                    <CheckSquare className="h-3.5 w-3.5" /> <span className="truncate">{tk.title}</span>
-                  </Link>
+                  <TaskHover key={tk.id} task={tk} assignee={employees.find((e: any) => e.id === tk.assigned_to)}>
+                    <Link to="/tasks" className="flex w-full items-center gap-2 rounded-md border-l-4 border-l-amber-500 bg-amber-500/10 px-2 py-1.5 text-sm text-amber-700 dark:text-amber-400">
+                      <CheckSquare className="h-3.5 w-3.5" /> <span className="truncate">{tk.title}</span>
+                    </Link>
+                  </TaskHover>
                 ))}
               </div>
+
             </div>
           );
         })}
@@ -579,7 +618,7 @@ function DayView({ appts, tasks = [], holidays, onOpen, onCreateAt }: { appts: a
   );
 }
 
-function MonthView({ appts, tasks, holidays, onOpen, onCreateAt }: { appts: any[]; tasks: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
+function MonthView({ appts, tasks, employees = [], holidays, onOpen, onCreateAt }: { appts: any[]; tasks: any[]; employees?: any[]; holidays: Record<string, Holiday[]>; onOpen: (id: string) => void; onCreateAt: (iso: string) => void }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith("fr") ? "fr-CH" : "de-CH";
   const [anchor, setAnchor] = useState(() => {
@@ -642,8 +681,8 @@ function MonthView({ appts, tasks, holidays, onOpen, onCreateAt }: { appts: any[
           const paidHol = hol.some((h) => h.paid);
           const items = byDay[d.toDateString()] ?? { appts: [], tasks: [] };
           const all = [
-            ...items.appts.map((a) => ({ kind: "appt" as const, id: a.id, time: a.starts_at, title: a.title, status: a.status, online: a.is_online })),
-            ...items.tasks.map((tk) => ({ kind: "task" as const, id: tk.id, time: tk.due_date, title: tk.title, status: tk.status, online: false })),
+            ...items.appts.map((a) => ({ kind: "appt" as const, id: a.id, time: a.starts_at, title: a.title, status: a.status, online: a.is_online, ref: a })),
+            ...items.tasks.map((tk) => ({ kind: "task" as const, id: tk.id, time: tk.due_date, title: tk.title, status: tk.status, online: false, ref: tk })),
           ].sort((a, b) => +new Date(a.time) - +new Date(b.time));
           return (
             <div
@@ -657,13 +696,14 @@ function MonthView({ appts, tasks, holidays, onOpen, onCreateAt }: { appts: any[
                   title="Termin anlegen"
                 ><Plus className="h-3 w-3" /></button>
                 {hol.length > 0 && (
-                  <span
-                    title={hol.map((h) => `${h.name} (${h.paid ? "bezahlt" : "unbezahlt"})`).join(" · ")}
-                    className={`flex min-w-0 flex-1 items-center gap-1 truncate rounded px-1 py-0.5 text-[10px] font-medium ${hol.some((h) => h.paid) ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-muted text-muted-foreground"}`}
-                  >
-                    <Flag className="h-2.5 w-2.5 shrink-0" />
-                    <span className="truncate">{hol[0].name}{hol.length > 1 ? ` +${hol.length - 1}` : ""}</span>
-                  </span>
+                  <HolidayHover holidays={hol}>
+                    <span
+                      className={`flex min-w-0 flex-1 cursor-default items-center gap-1 truncate rounded px-1 py-0.5 text-[10px] font-medium ${hol.some((h) => h.paid) ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-muted text-muted-foreground"}`}
+                    >
+                      <Flag className="h-2.5 w-2.5 shrink-0" />
+                      <span className="truncate">{hol[0].name}{hol.length > 1 ? ` +${hol.length - 1}` : ""}</span>
+                    </span>
+                  </HolidayHover>
                 )}
                 <span className={`ml-auto text-xs font-semibold ${isToday ? "text-primary" : paidHol ? "text-rose-600 dark:text-rose-300" : ""}`}>{d.getDate()}</span>
               </div>
@@ -671,29 +711,30 @@ function MonthView({ appts, tasks, holidays, onOpen, onCreateAt }: { appts: any[
                 {all.slice(0, hol.length ? 2 : 3).map((it) => (
 
                   it.kind === "appt" ? (
-                    <button
-                      key={`a-${it.id}`}
-                      onClick={() => onOpen(it.id)}
-                      className="flex w-full items-center gap-1 truncate rounded border-l-2 border-l-primary bg-primary/10 px-1.5 py-0.5 text-left text-[11px] font-medium text-primary hover:bg-primary/20"
-                      title={it.title}
-                    >
-                      {it.online && <Video className="h-3 w-3 shrink-0" />}
-                      <span className="truncate">
-                        {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(it.time))} {it.title}
-                      </span>
-                    </button>
+                    <ApptHover key={`a-${it.id}`} appt={it.ref} assignee={employees.find((e: any) => e.id === it.ref.assigned_to)} room={roomOf(it.ref)}>
+                      <button
+                        onClick={() => onOpen(it.id)}
+                        className="flex w-full items-center gap-1 truncate rounded border-l-2 border-l-primary bg-primary/10 px-1.5 py-0.5 text-left text-[11px] font-medium text-primary hover:bg-primary/20"
+                      >
+                        {it.online && <Video className="h-3 w-3 shrink-0" />}
+                        <span className="truncate">
+                          {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(it.time))} {it.title}
+                        </span>
+                      </button>
+                    </ApptHover>
                   ) : (
-                    <Link
-                      key={`t-${it.id}`}
-                      to="/tasks"
-                      className={`flex w-full items-center gap-1 truncate rounded border-l-2 px-1.5 py-0.5 text-left text-[11px] font-medium hover:opacity-80 ${it.status === "done" ? "border-l-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 line-through" : "border-l-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400"}`}
-                      title={it.title}
-                    >
-                      <CheckSquare className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{it.title}</span>
-                    </Link>
+                    <TaskHover key={`t-${it.id}`} task={it.ref} assignee={employees.find((e: any) => e.id === it.ref.assigned_to)}>
+                      <Link
+                        to="/tasks"
+                        className={`flex w-full items-center gap-1 truncate rounded border-l-2 px-1.5 py-0.5 text-left text-[11px] font-medium hover:opacity-80 ${it.status === "done" ? "border-l-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 line-through" : "border-l-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400"}`}
+                      >
+                        <CheckSquare className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{it.title}</span>
+                      </Link>
+                    </TaskHover>
                   )
                 ))}
+
                 {all.length > (hol.length ? 2 : 3) && (
                   <p className="px-1 text-[10px] text-muted-foreground">+{all.length - (hol.length ? 2 : 3)} {t("appointments.month.more", { defaultValue: "weitere" })}</p>
                 )}
