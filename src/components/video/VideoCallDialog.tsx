@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Dialog,
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Copy, Video } from "lucide-react";
 import { toast } from "sonner";
 import { createLivekitToken } from "@/lib/livekit.functions";
-import { VideoRoom } from "@/components/video/VideoRoom";
+const VideoRoom = lazy(() => import("@/components/video/VideoRoom"));
 
 export function VideoCallDialog({
   open,
@@ -96,11 +96,19 @@ export function VideoCallDialog({
             </div>
           )}
           {state.status === "ready" && (
-            <VideoRoom
-              token={state.token}
-              serverUrl={state.wsUrl}
-              onLeave={() => onOpenChange(false)}
-            />
+            <Suspense
+              fallback={
+                <div className="flex h-full items-center justify-center">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              }
+            >
+              <VideoRoom
+                token={state.token}
+                serverUrl={state.wsUrl}
+                onLeave={() => onOpenChange(false)}
+              />
+            </Suspense>
           )}
         </div>
       </DialogContent>
