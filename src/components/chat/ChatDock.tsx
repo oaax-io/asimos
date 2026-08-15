@@ -628,9 +628,9 @@ function ChatWindow({
               </div>
             </ScrollArea>
           )}
-        </>
+          </div>
+        </div>
       )}
     </div>
-    </>
   );
 }
