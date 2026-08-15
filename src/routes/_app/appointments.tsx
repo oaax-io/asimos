@@ -466,13 +466,14 @@ function WeekView({ appts, tasks = [], employees = [], holidays, onOpen, onCreat
                   {new Intl.DateTimeFormat(locale, { weekday: "short" }).format(d)}
                 </p>
                 {hol.length > 0 && (
-                  <span
-                    title={hol.map((h) => `${h.name} (${h.paid ? "bezahlt" : "unbezahlt"})`).join(" · ")}
-                    className={`flex min-w-0 flex-1 items-center gap-1 truncate rounded px-1 py-0.5 text-[10px] font-medium ${paidHol ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-muted text-muted-foreground"}`}
-                  >
-                    <Flag className="h-2.5 w-2.5 shrink-0" />
-                    <span className="truncate">{hol[0].name}{hol.length > 1 ? ` +${hol.length - 1}` : ""}</span>
-                  </span>
+                  <HolidayHover holidays={hol}>
+                    <span
+                      className={`flex min-w-0 flex-1 cursor-default items-center gap-1 truncate rounded px-1 py-0.5 text-[10px] font-medium ${paidHol ? "bg-rose-500/10 text-rose-700 dark:text-rose-300" : "bg-muted text-muted-foreground"}`}
+                    >
+                      <Flag className="h-2.5 w-2.5 shrink-0" />
+                      <span className="truncate">{hol[0].name}{hol.length > 1 ? ` +${hol.length - 1}` : ""}</span>
+                    </span>
+                  </HolidayHover>
                 )}
                 <p className={`ml-auto text-lg font-bold ${isToday ? "text-primary" : ""}`}>{d.getDate()}</p>
               </div>
@@ -485,33 +486,36 @@ function WeekView({ appts, tasks = [], employees = [], holidays, onOpen, onCreat
                   >+ Termin</button>
                 )}
                 {items.appts.map((a) => (
-                  <button
-                    key={a.id}
-                    onClick={() => onOpen(a.id)}
-                    className={`block w-full rounded-md border p-2 text-left text-xs transition hover:bg-accent ${a.is_online ? "border-l-4 border-l-primary bg-primary/5" : "bg-accent/30"}`}
-                  >
-                    <p className="flex items-center gap-1 font-medium text-primary">
-                      {a.is_online && <Video className="h-3 w-3" />}
-                      {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}
-                    </p>
-                    <p className="line-clamp-2 font-medium">{a.title}</p>
-                    {a.location && !a.is_online && <p className="line-clamp-1 text-muted-foreground">{a.location}</p>}
-                  </button>
+                  <ApptHover key={a.id} appt={a} assignee={employees.find((e: any) => e.id === a.assigned_to)} room={roomOf(a)}>
+                    <button
+                      onClick={() => onOpen(a.id)}
+                      className={`block w-full rounded-md border p-2 text-left text-xs transition hover:bg-accent ${a.is_online ? "border-l-4 border-l-primary bg-primary/5" : "bg-accent/30"}`}
+                    >
+                      <p className="flex items-center gap-1 font-medium text-primary">
+                        {a.is_online && <Video className="h-3 w-3" />}
+                        {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(a.starts_at))}
+                      </p>
+                      <p className="line-clamp-2 font-medium">{a.title}</p>
+                      {a.location && !a.is_online && <p className="line-clamp-1 text-muted-foreground">{a.location}</p>}
+                    </button>
+                  </ApptHover>
                 ))}
                 {items.tasks.map((tk: any) => (
-                  <Link
-                    key={tk.id}
-                    to="/tasks"
-                    className={`block w-full rounded-md border border-l-4 p-2 text-left text-xs transition hover:bg-accent ${tk.status === "done" ? "border-l-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20" : "border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/20"}`}
-                  >
-                    <p className="flex items-center gap-1 font-medium text-amber-700 dark:text-amber-400">
-                      <CheckSquare className="h-3 w-3" />
-                      {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(tk.due_date))}
-                    </p>
-                    <p className={`line-clamp-2 font-medium ${tk.status === "done" ? "line-through text-muted-foreground" : ""}`}>{tk.title}</p>
-                  </Link>
+                  <TaskHover key={tk.id} task={tk} assignee={employees.find((e: any) => e.id === tk.assigned_to)}>
+                    <Link
+                      to="/tasks"
+                      className={`block w-full rounded-md border border-l-4 p-2 text-left text-xs transition hover:bg-accent ${tk.status === "done" ? "border-l-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20" : "border-l-amber-500 bg-amber-50/40 dark:bg-amber-950/20"}`}
+                    >
+                      <p className="flex items-center gap-1 font-medium text-amber-700 dark:text-amber-400">
+                        <CheckSquare className="h-3 w-3" />
+                        {new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(tk.due_date))}
+                      </p>
+                      <p className={`line-clamp-2 font-medium ${tk.status === "done" ? "line-through text-muted-foreground" : ""}`}>{tk.title}</p>
+                    </Link>
+                  </TaskHover>
                 ))}
               </div>
+
             </div>
           );
         })}
