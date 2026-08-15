@@ -288,6 +288,27 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_pins: {
+        Row: {
+          created_at: string
+          id: string
+          member_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       checklist_items: {
         Row: {
           assigned_to: string | null
