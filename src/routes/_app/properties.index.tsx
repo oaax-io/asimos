@@ -641,7 +641,18 @@ function PropertiesPage() {
                     </div>
                   </div>
                 </Link>
+                <div className="flex items-center justify-between gap-2 border-t px-4 py-2">
+                  <span className="text-xs text-muted-foreground">{t("properties.columns.assignedTo")}</span>
+                  <PropertyAssigneePicker
+                    propertyId={p.id}
+                    assignedIds={assigneesByProperty.get(p.id) ?? []}
+                    employees={employees as any}
+                    employeeMap={employeeMap as any}
+                    size="xs"
+                  />
+                </div>
               </div>
+
             );
           })}
         </div>
