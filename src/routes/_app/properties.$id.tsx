@@ -1240,7 +1240,14 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
 
   return (
     <div {...dropHandlers} className={`group relative h-full w-full overflow-hidden rounded-2xl border bg-muted transition-all ${dragOver ? "ring-4 ring-primary/40 ring-offset-2" : ""}`}>
-      <img src={getMediaPublicUrl(current!)} alt={title} className="h-full w-full object-cover" />
+      <button
+        type="button"
+        onClick={() => { setZoom(1); setLightboxOpen(true); }}
+        className="absolute inset-0 z-0 h-full w-full cursor-zoom-in"
+        aria-label="Bild vergrössern"
+      >
+        <img src={getMediaPublicUrl(current!)} alt={title} className="h-full w-full object-cover" />
+      </button>
 
       {idx === 0 && (
         <Badge className="absolute left-3 top-3 shadow">Cover</Badge>
