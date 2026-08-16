@@ -43,6 +43,48 @@ const clientTypeBadgeClass: Record<string, string> = {
 function typeBadge(t: string) {
   return clientTypeBadgeClass[t] ?? clientTypeBadgeClass.other;
 }
+function BudgetBar({
+  min,
+  max,
+  compact,
+}: {
+  min?: number | string | null;
+  max?: number | string | null;
+  compact?: boolean;
+}) {
+  const { t } = useTranslation();
+  const nMin = min != null && min !== "" ? Number(min) : 0;
+  const nMax = max != null && max !== "" ? Number(max) : 0;
+  const hasMin = nMin > 0;
+  const hasMax = nMax > 0;
+  if (!hasMin && !hasMax) return <span className="text-muted-foreground">—</span>;
+  const scale = nMax > 0 ? nMax : nMin;
+  const leftPct = hasMin && hasMax ? Math.min(98, Math.max(0, Math.round((nMin / scale) * 100))) : 0;
+  const fillPct = hasMax ? Math.max(2, 100 - leftPct) : 100;
+  const label =
+    hasMin && hasMax
+      ? t("clients.card.budgetRange", { min: formatCurrency(nMin), max: formatCurrency(nMax) })
+      : hasMax
+        ? t("clients.card.budgetUpTo", { amount: formatCurrency(nMax) })
+        : t("clients.card.budgetFrom", { amount: formatCurrency(nMin) });
+  return (
+    <div className={compact ? "w-36" : "w-full"}>
+      <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
+        {hasMin && hasMax ? (
+          <div className="absolute top-0 h-full bg-primary/25" style={{ left: 0, width: `${leftPct}%` }} />
+        ) : null}
+        <div
+          className="absolute top-0 h-full rounded-full bg-primary"
+          style={{ left: `${leftPct}%`, width: `${fillPct}%` }}
+        />
+      </div>
+      <p className={`mt-1 truncate font-medium text-foreground/80 ${compact ? "text-[11px]" : "text-xs"}`}>
+        {label}
+      </p>
+    </div>
+  );
+}
+
 const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
 const FINANCING_OPTIONS = ["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"];
 
