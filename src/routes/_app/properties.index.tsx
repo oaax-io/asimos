@@ -592,6 +592,9 @@ function PropertiesPage() {
                 <div className="absolute left-3 top-3 z-10 rounded-md bg-background/90 p-1 backdrop-blur">
                   <Checkbox checked={isSel} onCheckedChange={() => toggleOne(p.id)} aria-label={t("properties.card.select")} />
                 </div>
+                <div className="absolute right-3 top-3 z-10 rounded-md bg-background/90 p-0.5 backdrop-blur">
+                  <PropertyPinButton propertyId={p.id} color={pins.get(p.id)} />
+                </div>
                 <Link to="/properties/$id" params={{ id: p.id }} className="block">
                   <div className="aspect-[4/3] overflow-hidden bg-muted">
                     {p.images?.[0] ? (
