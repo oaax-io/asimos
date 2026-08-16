@@ -204,13 +204,16 @@ function PropertiesPage() {
       const visibleIds = new Set(filtered.map(p => p.id));
       rows = filtered.filter(p => !(p.is_unit && p.parent_property_id && visibleIds.has(p.parent_property_id)));
     }
-    // Sicherstellen: zuletzt hinzugefügt zuoberst
+    // Angeheftete zuoberst, danach zuletzt hinzugefügt
     return [...rows].sort((a, b) => {
+      const aPin = pins.has(a.id) ? 1 : 0;
+      const bPin = pins.has(b.id) ? 1 : 0;
+      if (aPin !== bPin) return bPin - aPin;
       const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
       const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
       return bTime - aTime;
     });
-  }, [filtered, groupUnits, fStructure]);
+  }, [filtered, groupUnits, fStructure, pins]);
 
   const toggleExpanded = (id: string) => setExpanded(prev => {
     const next = new Set(prev);
