@@ -81,6 +81,17 @@ function PropertiesPage() {
   });
 
   const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
+  const { data: propertyAssignees = [] } = usePropertyAssignees();
+  const assigneesByProperty = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const r of propertyAssignees) {
+      const arr = m.get(r.property_id) ?? [];
+      arr.push(r.user_id);
+      m.set(r.property_id, arr);
+    }
+    return m;
+  }, [propertyAssignees]);
+
   const cities = useMemo(() => Array.from(new Set(properties.map(p => p.city).filter(Boolean))) as string[], [properties]);
 
   const create = useMutation({
