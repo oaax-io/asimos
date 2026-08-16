@@ -166,7 +166,7 @@ function PropertiesPage() {
     if (fStatus !== "all" && p.status !== fStatus) return false;
     if (fType !== "all" && p.property_type !== fType) return false;
     if (fListing !== "all" && p.listing_type !== fListing) return false;
-    if (fCities.length > 0 && !fCities.includes(p.city)) return false;
+    if (fCities.length > 0 && !fCities.includes(p.city as string)) return false;
     if (fAssigned !== "all" && p.assigned_to !== fAssigned) return false;
     if (fStructure === "units" && !p.is_unit) return false;
     if (fStructure === "standalone" && (p.is_unit || (properties as any[]).some(x => x.parent_property_id === p.id))) return false;
@@ -408,6 +408,9 @@ function PropertiesPage() {
                 size="sm"
                 variant={moreOpen ? "default" : "outline"}
                 onClick={() => setMoreOpen(o => !o)}
+                className={moreOpen
+                  ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
+                  : "border-orange-500 text-orange-600 hover:bg-orange-50 hover:text-orange-700 dark:text-orange-400 dark:hover:bg-orange-950/40"}
               >
                 <SlidersHorizontal className="mr-1 h-4 w-4" />
                 {t("properties.filters.more")}
