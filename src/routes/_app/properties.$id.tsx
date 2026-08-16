@@ -904,6 +904,8 @@ function OverviewTab({ p }: { p: any }) {
           propertyId={p.id}
           field="description"
           placeholder="Beschreibung hinzufügen…"
+          aiProperty={p}
+
         />
 
         {p.features?.length ? (
