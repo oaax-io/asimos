@@ -1018,6 +1018,63 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
         </button>
       </div>
 
+      <button
+        type="button"
+        onClick={() => setAllOpen(true)}
+        className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-md bg-background/90 px-3 py-1.5 text-xs font-semibold shadow hover:bg-background"
+      >
+        <ImageIcon className="h-3.5 w-3.5 text-primary" />
+        Alle Bilder ({images.length})
+      </button>
+
+      <Dialog open={allOpen} onOpenChange={setAllOpen}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>Bilder ({images.length})</DialogTitle>
+            <DialogDescription>Bilder ansehen, Cover festlegen, löschen oder neue hochladen.</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[65vh] overflow-y-auto">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              {images.map((path, i) => (
+                <div key={path} className="group/img relative aspect-[4/3] overflow-hidden rounded-lg border bg-muted">
+                  <img
+                    src={getMediaPublicUrl(path)}
+                    alt={`${title} ${i + 1}`}
+                    className="h-full w-full cursor-pointer object-cover"
+                    onClick={() => { setIdx(i); setAllOpen(false); }}
+                  />
+                  {i === 0 && <Badge className="absolute left-2 top-2 text-[10px]">Cover</Badge>}
+                  <div className="absolute inset-x-1 bottom-1 flex justify-between gap-1 opacity-0 transition group-hover/img:opacity-100">
+                    {i !== 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setAsCover(i)}
+                        className="rounded bg-background/90 px-2 py-1 text-[10px] font-medium shadow hover:bg-background"
+                      >
+                        Als Cover
+                      </button>
+                    ) : <span />}
+                    <button
+                      type="button"
+                      onClick={() => setDeleteIdx(i)}
+                      className="rounded bg-destructive/90 p-1 text-destructive-foreground shadow hover:bg-destructive"
+                      aria-label="Bild löschen"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setUploadOpen(true)}>
+              <UploadCloud className="mr-2 h-4 w-4" /> Bilder hochladen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <UploadModal
         open={uploadOpen}
         onOpenChange={setUploadOpen}
