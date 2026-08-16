@@ -21,6 +21,7 @@ import { formatCurrency, formatArea, getPropertyStatusBadgeClass, getPropertySta
 import { EmptyState } from "@/components/EmptyState";
 import { PropertyWizard, type WizardSubmit } from "@/components/properties/PropertyWizard";
 import { useTranslation } from "react-i18next";
+import { PropertyPinButton, usePropertyPins, propertyPinRowClass } from "@/components/properties/PropertyPin";
 
 export const Route = createFileRoute("/_app/properties/")({ component: PropertiesPage });
 
