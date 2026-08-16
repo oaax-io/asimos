@@ -368,7 +368,8 @@
       "phone": "Telefon",
       "email": "E-Mail",
       "city": "PLZ / Ort",
-      "relations": "Verknüpfungen"
+      "relations": "Verknüpfungen",
+      "budget": "Budget"
     },
     "filters": {
       "searchPlaceholder": "Kunden suchen…",
@@ -423,7 +424,9 @@
     "card": {
       "budgetUpTo": "Budget: bis {{amount}}",
       "cities": "Städte: {{list}}",
-      "roomsFrom": "Zimmer ab: {{n}}"
+      "roomsFrom": "Zimmer ab: {{n}}",
+      "budgetFrom": "Budget: ab {{amount}}",
+      "budgetRange": "{{min}} – {{max}}"
     },
     "toast": {
       "assigned": "Zuweisung aktualisiert",
