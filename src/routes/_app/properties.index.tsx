@@ -48,7 +48,7 @@ function PropertiesPage() {
   const [fStatus, setFStatus] = useState<string>("all");
   const [fType, setFType] = useState<string>("all");
   const [fListing, setFListing] = useState<string>("all");
-  const [fCity, setFCity] = useState<string>("all");
+  const [fCities, setFCities] = useState<string[]>([]);
   const [fAssigned, setFAssigned] = useState<string>("all");
   const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
   const [fStructure, setFStructure] = useState<"all" | "buildings" | "units" | "standalone">("all");
@@ -166,7 +166,7 @@ function PropertiesPage() {
     if (fStatus !== "all" && p.status !== fStatus) return false;
     if (fType !== "all" && p.property_type !== fType) return false;
     if (fListing !== "all" && p.listing_type !== fListing) return false;
-    if (fCity !== "all" && p.city !== fCity) return false;
+    if (fCities.length > 0 && !fCities.includes(p.city as string)) return false;
     if (fAssigned !== "all" && p.assigned_to !== fAssigned) return false;
     if (fStructure === "units" && !p.is_unit) return false;
     if (fStructure === "standalone" && (p.is_unit || (properties as any[]).some(x => x.parent_property_id === p.id))) return false;
@@ -219,7 +219,7 @@ function PropertiesPage() {
 
   const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [search, fStatus, fType, fListing, fCity, fAssigned, archivedFilter, fStructure, groupUnits, pageSize, view]);
+  useEffect(() => { setPage(1); }, [search, fStatus, fType, fListing, fCities, fAssigned, archivedFilter, fStructure, groupUnits, pageSize, view]);
   const totalPages = Math.max(1, Math.ceil(displayed.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const paginated = useMemo(
@@ -333,7 +333,7 @@ function PropertiesPage() {
         if (fStatus !== "all") activeChips.push({ key: "status", label: t("properties.chips.status", { value: statusLabel(fStatus) }), clear: () => setFStatus("all") });
         if (fListing !== "all") activeChips.push({ key: "listing", label: t("properties.chips.listing", { value: listingLabel(fListing) }), clear: () => setFListing("all") });
         if (fType !== "all") activeChips.push({ key: "type", label: t("properties.chips.type", { value: typeLabel(fType) }), clear: () => setFType("all") });
-        if (fCity !== "all") activeChips.push({ key: "city", label: t("properties.chips.city", { value: fCity }), clear: () => setFCity("all") });
+        if (fCities.length > 0) activeChips.push({ key: "city", label: t("properties.chips.city", { value: fCities.join(", ") }), clear: () => setFCities([]) });
         if (fAssigned !== "all") {
           const emp = employees.find((e: any) => e.id === fAssigned) as any;
           activeChips.push({ key: "assigned", label: t("properties.chips.assigned", { value: emp?.full_name || emp?.email || "—" }), clear: () => setFAssigned("all") });
@@ -351,7 +351,7 @@ function PropertiesPage() {
         }
         const resetAll = () => {
           setSearch(""); setFStatus("all"); setFType("all"); setFListing("all");
-          setFCity("all"); setFAssigned("all"); setFStructure("all"); setArchivedFilter("active");
+          setFCities([]); setFAssigned("all"); setFStructure("all"); setArchivedFilter("active");
         };
         const hasActive = activeChips.length > 0 || search.length > 0;
 
@@ -408,6 +408,9 @@ function PropertiesPage() {
                 size="sm"
                 variant={moreOpen ? "default" : "outline"}
                 onClick={() => setMoreOpen(o => !o)}
+                className={moreOpen
+                  ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
+                  : "border-orange-500 text-orange-600 hover:bg-orange-50 hover:text-orange-700 dark:text-orange-400 dark:hover:bg-orange-950/40"}
               >
                 <SlidersHorizontal className="mr-1 h-4 w-4" />
                 {t("properties.filters.more")}
@@ -451,13 +454,48 @@ function PropertiesPage() {
                   </SelectContent>
                 </Select>
                 {cities.length > 1 && (
-                  <Select value={fCity} onValueChange={setFCity}>
-                    <SelectTrigger className="h-9"><SelectValue placeholder={t("properties.filters.city")} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("properties.filters.allCities")}</SelectItem>
-                      {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-9 justify-start font-normal">
+                        <MapPin className="mr-1 h-4 w-4 text-muted-foreground" />
+                        {fCities.length === 0
+                          ? t("properties.filters.allCities")
+                          : fCities.length === 1
+                            ? fCities[0]
+                            : t("properties.chips.city", { value: `${fCities.length} ${t("properties.filters.cities", { defaultValue: "Städte" })}` })}
+                        {fCities.length > 0 && (
+                          <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{fCities.length}</Badge>
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="max-h-[320px] w-[240px] overflow-y-auto">
+                      <DropdownMenuLabel>{t("properties.filters.city", { defaultValue: "Stadt" })}</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={() => setFCities([])}
+                        className="gap-2"
+                      >
+                        <Checkbox checked={fCities.length === 0} />
+                        {t("properties.filters.allCities")}
+                      </DropdownMenuItem>
+                      {cities.map(c => {
+                        const checked = fCities.includes(c);
+                        return (
+                          <DropdownMenuItem
+                            key={c}
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setFCities(prev => checked ? prev.filter(x => x !== c) : [...prev, c]);
+                            }}
+                            className="gap-2"
+                          >
+                            <Checkbox checked={checked} />
+                            {c}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             )}
