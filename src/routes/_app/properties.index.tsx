@@ -48,7 +48,7 @@ function PropertiesPage() {
   const [fStatus, setFStatus] = useState<string>("all");
   const [fType, setFType] = useState<string>("all");
   const [fListing, setFListing] = useState<string>("all");
-  const [fCity, setFCity] = useState<string>("all");
+  const [fCities, setFCities] = useState<string[]>([]);
   const [fAssigned, setFAssigned] = useState<string>("all");
   const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
   const [fStructure, setFStructure] = useState<"all" | "buildings" | "units" | "standalone">("all");
