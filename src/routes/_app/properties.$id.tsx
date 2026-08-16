@@ -471,24 +471,32 @@ function PropertyDetail() {
               />
             </div>
           </CardContent></Card>
-          <button
-            type="button"
-            onClick={() => setTab("owner")}
-            className="block w-full text-left"
-          >
-            <Card className="transition hover:border-primary/50 hover:bg-primary/5">
-              <CardContent className="p-4 text-sm">
+          <Card>
+            <CardContent className="p-4 text-sm">
+              <div className="flex items-center justify-between gap-2">
                 <p className="flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4" />Eigentümer</p>
-                {currentOwners.length === 0 ? (
-                  <p className="mt-1 italic text-muted-foreground">Noch kein Eigentümer hinterlegt</p>
-                ) : currentOwners.length === 1 ? (
-                  <p className="mt-1 font-medium">{currentOwners[0].client?.full_name ?? "—"}</p>
-                ) : (
-                  <p className="mt-1 font-medium">Mehrere Eigentümer ({currentOwners.length})</p>
-                )}
-              </CardContent>
-            </Card>
-          </button>
+                <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setOwnersOpen(true)}>
+                  <Plus className="mr-1 h-3.5 w-3.5" />Verwalten
+                </Button>
+              </div>
+              {currentOwners.length === 0 ? (
+                <p className="mt-1 italic text-muted-foreground">Noch kein Eigentümer hinterlegt</p>
+              ) : (
+                <ul className="mt-1 space-y-0.5">
+                  {currentOwners.map((o) => (
+                    <li key={o.client_id} className="font-medium">{o.client?.full_name ?? "—"}</li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+          <Dialog open={ownersOpen} onOpenChange={setOwnersOpen}>
+            <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+              <DialogHeader><DialogTitle>Eigentümer</DialogTitle></DialogHeader>
+              <PropertyOwnersTab propertyId={id} legacyOwnerClientId={p.owner_client_id ?? p.seller_client_id} />
+            </DialogContent>
+          </Dialog>
+
           <div className="grid grid-cols-3 gap-2">
             <button type="button" onClick={() => setTab("marketing")} className="text-left">
               <Card className="transition hover:border-primary/50 hover:bg-primary/5">
