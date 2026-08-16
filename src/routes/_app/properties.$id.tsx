@@ -1036,6 +1036,8 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
   const [allOpen, setAllOpen] = useState(false);
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
   const [modalDragOver, setModalDragOver] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [zoom, setZoom] = useState(1);
 
   const { data: mediaRows } = useQuery({
     queryKey: ["property_media", propertyId],
@@ -1238,7 +1240,14 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
 
   return (
     <div {...dropHandlers} className={`group relative h-full w-full overflow-hidden rounded-2xl border bg-muted transition-all ${dragOver ? "ring-4 ring-primary/40 ring-offset-2" : ""}`}>
-      <img src={getMediaPublicUrl(current!)} alt={title} className="h-full w-full object-cover" />
+      <button
+        type="button"
+        onClick={() => { setZoom(1); setLightboxOpen(true); }}
+        className="absolute inset-0 z-0 h-full w-full cursor-zoom-in"
+        aria-label="Bild vergrössern"
+      >
+        <img src={getMediaPublicUrl(current!)} alt={title} className="h-full w-full object-cover" />
+      </button>
 
       {idx === 0 && (
         <Badge className="absolute left-3 top-3 shadow">Cover</Badge>
@@ -1356,6 +1365,93 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
               <UploadCloud className="mr-2 h-4 w-4" /> Bilder hochladen
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={lightboxOpen} onOpenChange={(o) => { setLightboxOpen(o); if (!o) setZoom(1); }}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] gap-0 border-none bg-black/95 p-0 sm:rounded-2xl [&>button]:text-white/70 [&>button:hover]:text-white">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>Bild {Math.min(idx, images.length - 1) + 1} von {images.length}</DialogDescription>
+          </DialogHeader>
+          <div className="relative flex h-[88vh] w-full items-center justify-center overflow-hidden">
+            <img
+              src={getMediaPublicUrl(current!)}
+              alt={title}
+              className="max-h-full max-w-full select-none object-contain transition-transform duration-200"
+              style={{ transform: `scale(${zoom})`, cursor: zoom > 1 ? "grab" : "default" }}
+              draggable={false}
+            />
+
+            {/* Top bar */}
+            <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between px-4 py-3 text-white">
+              <span className="rounded-md bg-white/10 px-2.5 py-1 text-xs font-medium backdrop-blur">
+                {Math.min(idx, images.length - 1) + 1} / {images.length}
+              </span>
+              <div className="pointer-events-auto flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setZoom((z) => Math.max(1, +(z - 0.25).toFixed(2)))}
+                  disabled={zoom <= 1}
+                  className="rounded-md bg-white/10 p-2 text-white backdrop-blur transition hover:bg-white/20 disabled:opacity-40"
+                  aria-label="Verkleinern"
+                >
+                  <span className="block h-4 w-4 text-lg leading-none">−</span>
+                </button>
+                <span className="rounded-md bg-white/10 px-2 py-1 text-xs font-medium backdrop-blur">{Math.round(zoom * 100)}%</span>
+                <button
+                  type="button"
+                  onClick={() => setZoom((z) => Math.min(4, +(z + 0.25).toFixed(2)))}
+                  disabled={zoom >= 4}
+                  className="rounded-md bg-white/10 p-2 text-white backdrop-blur transition hover:bg-white/20 disabled:opacity-40"
+                  aria-label="Vergrössern"
+                >
+                  <Maximize className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoom(1)}
+                  disabled={zoom === 1}
+                  className="rounded-md bg-white/10 p-2 text-white backdrop-blur transition hover:bg-white/20 disabled:opacity-40"
+                  aria-label="Zoom zurücksetzen"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => { setZoom(1); setIdx((i) => (i - 1 + images.length) % images.length); }}
+                  className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2.5 text-white shadow backdrop-blur transition hover:bg-white/25"
+                  aria-label="Vorheriges Bild"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setZoom(1); setIdx((i) => (i + 1) % images.length); }}
+                  className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2.5 text-white shadow backdrop-blur transition hover:bg-white/25"
+                  aria-label="Nächstes Bild"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+                <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+                  {images.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => { setZoom(1); setIdx(i); }}
+                      className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/80"}`}
+                      aria-label={`Bild ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
