@@ -1454,6 +1454,8 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
           </div>
         </DialogContent>
       </Dialog>
+
+      <UploadModal
         open={uploadOpen}
         onOpenChange={setUploadOpen}
         uploading={uploading}
