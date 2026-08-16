@@ -599,6 +599,7 @@ function ClientsPage() {
                 <TableHead>{t("clients.columns.name")}</TableHead>
                 <TableHead>{t("clients.columns.status")}</TableHead>
                 <TableHead>{t("clients.columns.type")}</TableHead>
+                <TableHead className="w-44">{t("clients.columns.budget")}</TableHead>
 
 
                 <TableHead>{t("clients.columns.assignedTo")}</TableHead>
