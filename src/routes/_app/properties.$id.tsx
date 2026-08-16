@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity, TrendingUp, Sparkles, RefreshCw, ChevronLeft, ChevronRight, UploadCloud } from "lucide-react";
+import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity, TrendingUp, Sparkles, RefreshCw, ChevronLeft, ChevronRight, UploadCloud, Download } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -1326,16 +1326,30 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const openDoc = async (d: any) => {
+  const resolveDocUrl = async (d: any): Promise<string | null> => {
     const path: string = d.file_url;
-    if (!path) { toast.error("Keine Datei vorhanden"); return; }
-    if (path.startsWith("http")) {
-      setPreview({ name: d.file_name ?? "Dokument", url: path, mime: d.mime_type ?? null });
-      return;
-    }
+    if (!path) { toast.error("Keine Datei vorhanden"); return null; }
+    if (path.startsWith("http")) return path;
     const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 300);
-    if (error || !data?.signedUrl) { toast.error(error?.message ?? "Konnte Datei nicht öffnen"); return; }
-    setPreview({ name: d.file_name ?? "Dokument", url: data.signedUrl, mime: d.mime_type ?? null });
+    if (error || !data?.signedUrl) { toast.error(error?.message ?? "Konnte Datei nicht öffnen"); return null; }
+    return data.signedUrl;
+  };
+
+  const openDoc = async (d: any) => {
+    const url = await resolveDocUrl(d);
+    if (!url) return;
+    setPreview({ name: d.file_name ?? "Dokument", url, mime: d.mime_type ?? null });
+  };
+
+  const downloadDoc = async (d: any) => {
+    const url = await resolveDocUrl(d);
+    if (!url) return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = d.file_name ?? "Dokument";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
 
@@ -1414,6 +1428,9 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
                     <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); openDoc(d); }}>
                       <ExternalLink className="mr-1 h-3 w-3" />Öffnen
                     </Button>
+                    <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); downloadDoc(d); }}>
+                      <Download className="h-3 w-3" />
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); removeDoc.mutate(d); }} disabled={removeDoc.isPending}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -1438,9 +1455,12 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
             )
           )}
           {preview && (
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between gap-2">
               <a href={preview.url} target="_blank" rel="noreferrer">
                 <Button variant="outline" size="sm"><ExternalLink className="mr-2 h-4 w-4" />In neuem Tab öffnen</Button>
+              </a>
+              <a href={preview.url} download={preview.name}>
+                <Button size="sm"><Download className="mr-2 h-4 w-4" />Herunterladen</Button>
               </a>
             </div>
           )}
