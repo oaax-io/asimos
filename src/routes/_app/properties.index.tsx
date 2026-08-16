@@ -620,7 +620,9 @@ function PropertiesPage() {
                       )}
                       <span className="ml-auto text-xs text-muted-foreground">{listingLabel(p.listing_type)}</span>
                     </div>
-                    <h3 className="mt-2 line-clamp-1 font-semibold">{p.title}</h3>
+                    <PropertyHoverCard property={p} assignee={p.assigned_to ? (employeeMap.get(p.assigned_to) as any) : null}>
+                      <h3 className="mt-2 line-clamp-1 font-semibold">{p.title}</h3>
+                    </PropertyHoverCard>
                     {parentProp && (
                       <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{t("properties.card.inParent", { title: parentProp.title })}</p>
                     )}
