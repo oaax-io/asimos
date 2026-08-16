@@ -1324,12 +1324,18 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const openDoc = async (path: string) => {
-    if (path.startsWith("http")) { window.open(path, "_blank"); return; }
+  const openDoc = async (d: any) => {
+    const path: string = d.file_url;
+    if (!path) { toast.error("Keine Datei vorhanden"); return; }
+    if (path.startsWith("http")) {
+      setPreview({ name: d.file_name ?? "Dokument", url: path, mime: d.mime_type ?? null });
+      return;
+    }
     const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 300);
     if (error || !data?.signedUrl) { toast.error(error?.message ?? "Konnte Datei nicht öffnen"); return; }
-    window.open(data.signedUrl, "_blank");
+    setPreview({ name: d.file_name ?? "Dokument", url: data.signedUrl, mime: d.mime_type ?? null });
   };
+
 
   const removeDoc = useMutation({
     mutationFn: async (d: any) => {
