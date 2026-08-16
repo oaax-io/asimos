@@ -1278,6 +1278,8 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
   const [name, setName] = useState("");
   const [docType, setDocType] = useState<string>("property_document");
   const [notes, setNotes] = useState("");
+  const [preview, setPreview] = useState<{ name: string; url: string; mime: string | null } | null>(null);
+
 
   const resetForm = () => {
     setFile(null); setName(""); setDocType("property_document"); setNotes("");
@@ -1324,12 +1326,18 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const openDoc = async (path: string) => {
-    if (path.startsWith("http")) { window.open(path, "_blank"); return; }
+  const openDoc = async (d: any) => {
+    const path: string = d.file_url;
+    if (!path) { toast.error("Keine Datei vorhanden"); return; }
+    if (path.startsWith("http")) {
+      setPreview({ name: d.file_name ?? "Dokument", url: path, mime: d.mime_type ?? null });
+      return;
+    }
     const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 300);
     if (error || !data?.signedUrl) { toast.error(error?.message ?? "Konnte Datei nicht öffnen"); return; }
-    window.open(data.signedUrl, "_blank");
+    setPreview({ name: d.file_name ?? "Dokument", url: data.signedUrl, mime: d.mime_type ?? null });
   };
+
 
   const removeDoc = useMutation({
     mutationFn: async (d: any) => {
@@ -1394,7 +1402,7 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
             {docs.map((d: any) => {
               const typeLabel = PROPERTY_DOC_TYPES.find((t) => t.value === d.document_type)?.label ?? d.document_type;
               return (
-                <li key={d.id} className="flex items-center justify-between gap-3 px-6 py-3">
+                <li key={d.id} className="flex cursor-pointer items-center justify-between gap-3 px-6 py-3 hover:bg-muted/40" onClick={() => openDoc(d)}>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{d.file_name}</p>
                     <p className="text-xs text-muted-foreground">
@@ -1403,10 +1411,10 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <Button variant="outline" size="sm" onClick={() => openDoc(d.file_url)}>
+                    <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); openDoc(d); }}>
                       <ExternalLink className="mr-1 h-3 w-3" />Öffnen
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => removeDoc.mutate(d)} disabled={removeDoc.isPending}>
+                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); removeDoc.mutate(d); }} disabled={removeDoc.isPending}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
@@ -1416,6 +1424,29 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
           </ul>
         </CardContent></Card>
       )}
+
+      <Dialog open={!!preview} onOpenChange={(o) => { if (!o) setPreview(null); }}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader><DialogTitle className="truncate pr-8">{preview?.name ?? "Vorschau"}</DialogTitle></DialogHeader>
+          {preview && (
+            preview.mime?.startsWith("image/") || /\.(png|jpe?g|gif|webp|svg|bmp)(\?|$)/i.test(preview.url) ? (
+              <div className="flex h-[75vh] w-full items-center justify-center rounded-md border bg-muted/40">
+                <img src={preview.url} alt={preview.name} className="max-h-full max-w-full object-contain" />
+              </div>
+            ) : (
+              <iframe title="Vorschau" src={preview.url} className="h-[75vh] w-full rounded-md border bg-white" />
+            )
+          )}
+          {preview && (
+            <div className="flex justify-end">
+              <a href={preview.url} target="_blank" rel="noreferrer">
+                <Button variant="outline" size="sm"><ExternalLink className="mr-2 h-4 w-4" />In neuem Tab öffnen</Button>
+              </a>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
 
       <div className="pt-4">
         <h3 className="mb-3 font-display text-lg font-semibold">Generierte Dokumente</h3>
