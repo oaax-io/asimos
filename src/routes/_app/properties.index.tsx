@@ -632,9 +632,13 @@ function PropertiesPage() {
                       )}
                       <span className="ml-auto text-xs text-muted-foreground">{listingLabel(p.listing_type)}</span>
                     </div>
+                    {p.reference_no && (
+                      <span className="mt-2 block font-mono text-[10px] font-semibold text-primary">{p.reference_no}</span>
+                    )}
                     <PropertyHoverCard property={p} assignee={p.assigned_to ? (employeeMap.get(p.assigned_to) as any) : null}>
-                      <h3 className="mt-2 line-clamp-1 font-semibold">{p.title}</h3>
+                      <h3 className="line-clamp-1 font-semibold">{p.title}</h3>
                     </PropertyHoverCard>
+
                     {parentProp && (
                       <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{t("properties.card.inParent", { title: parentProp.title })}</p>
                     )}
@@ -722,11 +726,15 @@ function PropertiesPage() {
                             <span className="text-muted-foreground">↳</span>
                           ) : null}
                           <div className="min-w-0">
+                            {row.reference_no && (
+                              <span className="block font-mono text-[10px] font-semibold text-primary">{row.reference_no}</span>
+                            )}
                             <PropertyHoverCard property={row} assignee={emp}>
                               <Link to="/properties/$id" params={{ id: row.id }} className="font-medium hover:text-primary">
                                 {row.title}
                               </Link>
                             </PropertyHoverCard>
+
                             <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                               {isParent && (
                                 <Badge className="bg-primary/10 text-primary hover:bg-primary/15 text-[10px] px-1.5 py-0">

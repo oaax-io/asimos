@@ -2731,6 +2731,7 @@ export type Database = {
           public_enabled: boolean
           public_token: string | null
           raw_import: Json | null
+          reference_no: string | null
           renovated_at: number | null
           rent: number | null
           reservation_amount_default: number | null
@@ -2792,6 +2793,7 @@ export type Database = {
           public_enabled?: boolean
           public_token?: string | null
           raw_import?: Json | null
+          reference_no?: string | null
           renovated_at?: number | null
           rent?: number | null
           reservation_amount_default?: number | null
@@ -2853,6 +2855,7 @@ export type Database = {
           public_enabled?: boolean
           public_token?: string | null
           raw_import?: Json | null
+          reference_no?: string | null
           renovated_at?: number | null
           rent?: number | null
           reservation_amount_default?: number | null
@@ -3477,6 +3480,7 @@ export type Database = {
         Returns: undefined
       }
       financing_link_submit: { Args: { _token: string }; Returns: undefined }
+      format_property_reference: { Args: { _n: number }; Returns: string }
       has_active_subscription: {
         Args: { agency_uuid: string; check_env?: string }
         Returns: boolean
