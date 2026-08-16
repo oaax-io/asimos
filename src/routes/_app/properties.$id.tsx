@@ -350,8 +350,6 @@ function PropertyDetail() {
 
   if (isLoading || !p) return <div className="text-sm text-muted-foreground">Lädt…</div>;
 
-  const assignedEmp = employees.find((e: any) => e.id === p.assigned_to);
-
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
