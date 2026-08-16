@@ -668,13 +668,19 @@ function PropertiesPage() {
                   const showExpander = isParent && groupUnits && fStructure !== "units";
                   const isExpanded = expanded.has(row.id);
                   const parentProp = row.parent_property_id ? propertyById.get(row.parent_property_id) : null;
+                  const pinColor = pins.get(row.id);
                   return (
-                    <TableRow key={row.id} data-state={selected.has(row.id) ? "selected" : undefined} className={opts.indent ? "bg-muted/20" : undefined}>
+                    <TableRow
+                      key={row.id}
+                      data-state={selected.has(row.id) ? "selected" : undefined}
+                      className={pinColor ? propertyPinRowClass(pinColor) : (opts.indent ? "bg-muted/20" : undefined)}
+                    >
                       <TableCell>
                         <Checkbox checked={selected.has(row.id)} onCheckedChange={() => toggleOne(row.id)} aria-label={t("properties.card.select")} />
                       </TableCell>
                       <TableCell>
                         <div className={`flex items-center gap-2 ${opts.indent ? "pl-6" : ""}`}>
+                          <PropertyPinButton propertyId={row.id} color={pinColor} size="xs" />
                           {showExpander ? (
                             <Button
                               variant="ghost"
