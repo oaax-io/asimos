@@ -722,11 +722,15 @@ function PropertiesPage() {
                             <span className="text-muted-foreground">↳</span>
                           ) : null}
                           <div className="min-w-0">
+                            {row.reference_no && (
+                              <span className="block font-mono text-[10px] font-semibold text-primary">{row.reference_no}</span>
+                            )}
                             <PropertyHoverCard property={row} assignee={emp}>
                               <Link to="/properties/$id" params={{ id: row.id }} className="font-medium hover:text-primary">
                                 {row.title}
                               </Link>
                             </PropertyHoverCard>
+
                             <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                               {isParent && (
                                 <Badge className="bg-primary/10 text-primary hover:bg-primary/15 text-[10px] px-1.5 py-0">
