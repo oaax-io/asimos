@@ -1438,9 +1438,12 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
             )
           )}
           {preview && (
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between gap-2">
               <a href={preview.url} target="_blank" rel="noreferrer">
                 <Button variant="outline" size="sm"><ExternalLink className="mr-2 h-4 w-4" />In neuem Tab öffnen</Button>
+              </a>
+              <a href={preview.url} download={preview.name}>
+                <Button size="sm"><Download className="mr-2 h-4 w-4" />Herunterladen</Button>
               </a>
             </div>
           )}
