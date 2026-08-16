@@ -309,7 +309,7 @@ function PropertiesPage() {
                 <TabsTrigger value="map" className="gap-1.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><MapIcon className="h-4 w-4" />{t("properties.view.map")}</TabsTrigger>
               </TabsList>
             </Tabs>
-            <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="mr-1 h-4 w-4" />{t("properties.import")}</Button>
+            <Button variant="outline" size="icon" onClick={() => setImportOpen(true)} title={t("properties.import")}><Upload className="h-4 w-4" /></Button>
             <Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />{t("properties.new")}</Button>
           </div>
         }
