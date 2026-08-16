@@ -43,6 +43,48 @@ const clientTypeBadgeClass: Record<string, string> = {
 function typeBadge(t: string) {
   return clientTypeBadgeClass[t] ?? clientTypeBadgeClass.other;
 }
+function BudgetBar({
+  min,
+  max,
+  compact,
+}: {
+  min?: number | string | null;
+  max?: number | string | null;
+  compact?: boolean;
+}) {
+  const { t } = useTranslation();
+  const nMin = min != null && min !== "" ? Number(min) : 0;
+  const nMax = max != null && max !== "" ? Number(max) : 0;
+  const hasMin = nMin > 0;
+  const hasMax = nMax > 0;
+  if (!hasMin && !hasMax) return <span className="text-muted-foreground">—</span>;
+  const scale = nMax > 0 ? nMax : nMin;
+  const leftPct = hasMin && hasMax ? Math.min(98, Math.max(0, Math.round((nMin / scale) * 100))) : 0;
+  const fillPct = hasMax ? Math.max(2, 100 - leftPct) : 100;
+  const label =
+    hasMin && hasMax
+      ? t("clients.card.budgetRange", { min: formatCurrency(nMin), max: formatCurrency(nMax) })
+      : hasMax
+        ? t("clients.card.budgetUpTo", { amount: formatCurrency(nMax) })
+        : t("clients.card.budgetFrom", { amount: formatCurrency(nMin) });
+  return (
+    <div className={compact ? "w-36" : "w-full"}>
+      <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
+        {hasMin && hasMax ? (
+          <div className="absolute top-0 h-full bg-primary/25" style={{ left: 0, width: `${leftPct}%` }} />
+        ) : null}
+        <div
+          className="absolute top-0 h-full rounded-full bg-primary"
+          style={{ left: `${leftPct}%`, width: `${fillPct}%` }}
+        />
+      </div>
+      <p className={`mt-1 truncate font-medium text-foreground/80 ${compact ? "text-[11px]" : "text-xs"}`}>
+        {label}
+      </p>
+    </div>
+  );
+}
+
 const PROP_TYPES = ["apartment","house","commercial","land","other"] as const;
 const FINANCING_OPTIONS = ["unklar", "in Prüfung", "Vorabbestätigung", "bestätigt", "abgelehnt"];
 
@@ -532,9 +574,9 @@ function ClientsPage() {
                     </div>
 
 
-                    {(c.budget_max || c.preferred_cities?.length) && (
-                      <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
-                        {c.budget_max && <p>{t("clients.card.budgetUpTo", { amount: formatCurrency(Number(c.budget_max)) })}</p>}
+                    {(c.budget_min || c.budget_max || c.preferred_cities?.length || c.rooms_min) && (
+                      <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs space-y-2">
+                        {(c.budget_min || c.budget_max) && <BudgetBar min={c.budget_min} max={c.budget_max} />}
                         {c.preferred_cities?.length ? <p>{t("clients.card.cities", { list: c.preferred_cities.join(", ") })}</p> : null}
                         {c.rooms_min ? <p>{t("clients.card.roomsFrom", { n: c.rooms_min })}</p> : null}
                       </div>
@@ -557,6 +599,7 @@ function ClientsPage() {
                 <TableHead>{t("clients.columns.name")}</TableHead>
                 <TableHead>{t("clients.columns.status")}</TableHead>
                 <TableHead>{t("clients.columns.type")}</TableHead>
+                <TableHead className="w-44">{t("clients.columns.budget")}</TableHead>
 
 
                 <TableHead>{t("clients.columns.assignedTo")}</TableHead>
@@ -631,9 +674,9 @@ function ClientsPage() {
                                 <span>{addr || plzOrt || <span className="text-muted-foreground">—</span>}</span>
                               </p>
                             </div>
-                            {(c.budget_max || c.financing_status) && (
-                              <div className="mt-3 rounded-lg bg-muted/40 p-2 text-xs space-y-0.5">
-                                {c.budget_max ? <p>{t("clients.card.budgetUpTo", { amount: formatCurrency(Number(c.budget_max)) })}</p> : null}
+                            {(c.budget_min || c.budget_max || c.financing_status) && (
+                              <div className="mt-3 rounded-lg bg-muted/40 p-2 text-xs space-y-1.5">
+                                {(c.budget_min || c.budget_max) && <BudgetBar min={c.budget_min} max={c.budget_max} />}
                                 {c.financing_status ? <p className="text-muted-foreground">{c.financing_status}</p> : null}
                               </div>
                             )}
@@ -657,6 +700,9 @@ function ClientsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={typeBadge(c.client_type)}>{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <BudgetBar min={c.budget_min} max={c.budget_max} compact />
                     </TableCell>
 
                     <TableCell className="text-sm">

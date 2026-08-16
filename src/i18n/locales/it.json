@@ -7,5 +7,14 @@
   },
   "nav": {},
   "pages": {},
-  "settings": {}
+  "settings": {},
+  "clients": {
+    "columns": {
+      "budget": "Budget"
+    },
+    "card": {
+      "budgetFrom": "Budget: da {{amount}}",
+      "budgetRange": "{{min}} – {{max}}"
+    }
+  }
 }

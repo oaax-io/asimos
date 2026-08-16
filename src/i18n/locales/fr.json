@@ -368,7 +368,8 @@
       "phone": "Téléphone",
       "email": "E-mail",
       "city": "NPA / Localité",
-      "relations": "Relations"
+      "relations": "Relations",
+      "budget": "Budget"
     },
     "filters": {
       "searchPlaceholder": "Rechercher des clients…",
@@ -423,7 +424,9 @@
     "card": {
       "budgetUpTo": "Budget : jusqu'à {{amount}}",
       "cities": "Villes : {{list}}",
-      "roomsFrom": "Pièces dès : {{n}}"
+      "roomsFrom": "Pièces dès : {{n}}",
+      "budgetFrom": "Budget : dès {{amount}}",
+      "budgetRange": "{{min}} – {{max}}"
     },
     "toast": {
       "assigned": "Attribution mise à jour",
