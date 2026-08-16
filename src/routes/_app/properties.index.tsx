@@ -21,6 +21,7 @@ import { formatCurrency, formatArea, getPropertyStatusBadgeClass, getPropertySta
 import { EmptyState } from "@/components/EmptyState";
 import { PropertyWizard, type WizardSubmit } from "@/components/properties/PropertyWizard";
 import { useTranslation } from "react-i18next";
+import { PropertyPinButton, usePropertyPins, propertyPinRowClass } from "@/components/properties/PropertyPin";
 
 export const Route = createFileRoute("/_app/properties/")({ component: PropertiesPage });
 
@@ -194,6 +195,7 @@ function PropertiesPage() {
     return m;
   }, [properties]);
   const propertyById = useMemo(() => new Map((properties as any[]).map(p => [p.id, p])), [properties]);
+  const pins = usePropertyPins();
 
   // Build display rows: when grouping, hide units whose parent is also visible (they show inside parent)
   const displayed = useMemo(() => {
@@ -203,13 +205,16 @@ function PropertiesPage() {
       const visibleIds = new Set(filtered.map(p => p.id));
       rows = filtered.filter(p => !(p.is_unit && p.parent_property_id && visibleIds.has(p.parent_property_id)));
     }
-    // Sicherstellen: zuletzt hinzugefügt zuoberst
+    // Angeheftete zuoberst, danach zuletzt hinzugefügt
     return [...rows].sort((a, b) => {
+      const aPin = pins.has(a.id) ? 1 : 0;
+      const bPin = pins.has(b.id) ? 1 : 0;
+      if (aPin !== bPin) return bPin - aPin;
       const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
       const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
       return bTime - aTime;
     });
-  }, [filtered, groupUnits, fStructure]);
+  }, [filtered, groupUnits, fStructure, pins]);
 
   const toggleExpanded = (id: string) => setExpanded(prev => {
     const next = new Set(prev);
@@ -587,6 +592,9 @@ function PropertiesPage() {
                 <div className="absolute left-3 top-3 z-10 rounded-md bg-background/90 p-1 backdrop-blur">
                   <Checkbox checked={isSel} onCheckedChange={() => toggleOne(p.id)} aria-label={t("properties.card.select")} />
                 </div>
+                <div className="absolute right-3 top-3 z-10 rounded-md bg-background/90 p-0.5 backdrop-blur">
+                  <PropertyPinButton propertyId={p.id} color={pins.get(p.id)} />
+                </div>
                 <Link to="/properties/$id" params={{ id: p.id }} className="block">
                   <div className="aspect-[4/3] overflow-hidden bg-muted">
                     {p.images?.[0] ? (
@@ -660,13 +668,19 @@ function PropertiesPage() {
                   const showExpander = isParent && groupUnits && fStructure !== "units";
                   const isExpanded = expanded.has(row.id);
                   const parentProp = row.parent_property_id ? propertyById.get(row.parent_property_id) : null;
+                  const pinColor = pins.get(row.id);
                   return (
-                    <TableRow key={row.id} data-state={selected.has(row.id) ? "selected" : undefined} className={opts.indent ? "bg-muted/20" : undefined}>
+                    <TableRow
+                      key={row.id}
+                      data-state={selected.has(row.id) ? "selected" : undefined}
+                      className={pinColor ? propertyPinRowClass(pinColor) : (opts.indent ? "bg-muted/20" : undefined)}
+                    >
                       <TableCell>
                         <Checkbox checked={selected.has(row.id)} onCheckedChange={() => toggleOne(row.id)} aria-label={t("properties.card.select")} />
                       </TableCell>
                       <TableCell>
                         <div className={`flex items-center gap-2 ${opts.indent ? "pl-6" : ""}`}>
+                          <PropertyPinButton propertyId={row.id} color={pinColor} size="xs" />
                           {showExpander ? (
                             <Button
                               variant="ghost"
