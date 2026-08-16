@@ -616,15 +616,41 @@ function PropertyDetail() {
 /* ----------------- Tabs ----------------- */
 
 function InlineEditCard({
-  title, value, propertyId, field, placeholder, tone = "default", rows = 6,
+  title, value, propertyId, field, placeholder, tone = "default", rows = 6, aiProperty,
 }: {
   title: string; value: string | null; propertyId: string; field: "description" | "internal_notes";
-  placeholder?: string; tone?: "default" | "amber"; rows?: number;
+  placeholder?: string; tone?: "default" | "amber"; rows?: number; aiProperty?: any;
 }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? "");
+  const [askAi, setAskAi] = useState(false);
+  const [aiTone, setAiTone] = useState<"sachlich" | "emotional" | "premium">("sachlich");
+  const [aiExtra, setAiExtra] = useState("");
   useEffect(() => { setDraft(value ?? ""); }, [value]);
+
+  const startEdit = () => { if (aiProperty) setAskAi(true); else setEditing(true); };
+
+  const generate = useMutation({
+    mutationFn: async () => {
+      const { generatePropertyDescription } = await import("@/lib/property-ai.functions");
+      const payload = {
+        titel: aiProperty?.title, typ: aiProperty?.property_type, status: aiProperty?.status,
+        vermarktung: aiProperty?.listing_type, strasse: aiProperty?.street, plz: aiProperty?.postal_code,
+        ort: aiProperty?.city, kanton: aiProperty?.region, land: aiProperty?.country,
+        zimmer: aiProperty?.rooms, schlafzimmer: aiProperty?.bedrooms, badezimmer: aiProperty?.bathrooms,
+        wohnflaeche_m2: aiProperty?.living_area, grundstueck_m2: aiProperty?.plot_area,
+        baujahr: aiProperty?.construction_year, etage: aiProperty?.floor,
+        kaufpreis: aiProperty?.price, miete: aiProperty?.rent_price, nebenkosten: aiProperty?.extra_costs,
+        ausstattung: aiProperty?.features, energie: aiProperty?.energy_class,
+        bisherige_beschreibung: aiProperty?.description,
+      };
+      const res = await generatePropertyDescription({ data: { property: payload as any, tone: aiTone, extra: aiExtra || undefined } });
+      return res.text;
+    },
+    onSuccess: (text) => { setDraft(text); setAskAi(false); setEditing(true); toast.success("Text generiert"); },
+    onError: (e: any) => toast.error(e?.message ?? "Generierung fehlgeschlagen"),
+  });
 
   const save = useMutation({
     mutationFn: async () => {
@@ -641,7 +667,7 @@ function InlineEditCard({
         <div className="mb-3 flex items-center justify-between">
           <h2 className={`font-semibold ${tone === "amber" ? "text-sm text-amber-700 dark:text-amber-400" : ""}`}>{title}</h2>
           {!editing && (
-            <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
+            <Button size="sm" variant="ghost" onClick={startEdit}>
               <Pencil className="mr-1 h-3.5 w-3.5" />Bearbeiten
             </Button>
           )}
@@ -650,6 +676,11 @@ function InlineEditCard({
           <div className="space-y-2">
             <Textarea rows={rows} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={placeholder} />
             <div className="flex justify-end gap-2">
+              {aiProperty && (
+                <Button size="sm" variant="outline" onClick={() => setAskAi(true)} disabled={generate.isPending}>
+                  <Sparkles className="mr-1 h-3.5 w-3.5" />Mit KI neu generieren
+                </Button>
+              )}
               <Button size="sm" variant="ghost" onClick={() => { setDraft(value ?? ""); setEditing(false); }}>Abbrechen</Button>
               <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>Speichern</Button>
             </div>
@@ -657,14 +688,53 @@ function InlineEditCard({
         ) : value ? (
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{value}</p>
         ) : (
-          <button type="button" onClick={() => setEditing(true)} className="w-full rounded-md border border-dashed p-4 text-sm text-muted-foreground hover:bg-muted/40">
+          <button type="button" onClick={startEdit} className="w-full rounded-md border border-dashed p-4 text-sm text-muted-foreground hover:bg-muted/40">
             {placeholder ?? "Klicken zum Hinzufügen"}
           </button>
         )}
       </CardContent>
+
+      {aiProperty && (
+        <Dialog open={askAi} onOpenChange={(o) => { if (!generate.isPending) setAskAi(o); }}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" />Mit KI generieren?</DialogTitle>
+              <DialogDescription>
+                Die KI erstellt aus den Objektangaben einen Beschreibungstext. Du kannst den Text danach frei anpassen – oder direkt selbst schreiben.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>Tonalität</Label>
+                <Select value={aiTone} onValueChange={(v) => setAiTone(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sachlich">Sachlich & informativ</SelectItem>
+                    <SelectItem value="emotional">Emotional & einladend</SelectItem>
+                    <SelectItem value="premium">Premium & exklusiv</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Zusätzliche Hinweise (optional)</Label>
+                <Textarea rows={3} value={aiExtra} onChange={(e) => setAiExtra(e.target.value)} placeholder="z.B. Highlights, Zielgruppe, Besonderheiten…" />
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:justify-between">
+              <Button variant="ghost" onClick={() => { setAskAi(false); setEditing(true); }} disabled={generate.isPending}>
+                Selbst schreiben
+              </Button>
+              <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
+                {generate.isPending ? <><RefreshCw className="mr-1 h-3.5 w-3.5 animate-spin" />Generiere…</> : <><Sparkles className="mr-1 h-3.5 w-3.5" />Text generieren</>}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
   );
 }
+
 
 function OverviewMandatesCard({ propertyId }: { propertyId: string }) {
   const { data: mandates = [] } = useQuery({
