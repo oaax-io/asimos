@@ -463,7 +463,15 @@ function PropertyDetail() {
           </CardContent></Card>
           <Card><CardContent className="p-4 text-sm">
             <p className="flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4" />Zuständig</p>
-            <p className="mt-1 font-medium">{assignedEmp ? (assignedEmp as any).full_name || (assignedEmp as any).email : "Niemand zugewiesen"}</p>
+            <div className="mt-1">
+              <PropertyAssigneePicker
+                propertyId={id}
+                assignedIds={assignedIds}
+                employees={employees as EmployeeLite[]}
+                employeeMap={employeeMap as Map<string, EmployeeLite>}
+                size="sm"
+              />
+            </div>
           </CardContent></Card>
           <button
             type="button"
