@@ -1036,6 +1036,8 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
   const [allOpen, setAllOpen] = useState(false);
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
   const [modalDragOver, setModalDragOver] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [zoom, setZoom] = useState(1);
 
   const { data: mediaRows } = useQuery({
     queryKey: ["property_media", propertyId],
