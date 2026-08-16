@@ -166,7 +166,7 @@ function PropertiesPage() {
     if (fStatus !== "all" && p.status !== fStatus) return false;
     if (fType !== "all" && p.property_type !== fType) return false;
     if (fListing !== "all" && p.listing_type !== fListing) return false;
-    if (fCity !== "all" && p.city !== fCity) return false;
+    if (fCities.length > 0 && !fCities.includes(p.city)) return false;
     if (fAssigned !== "all" && p.assigned_to !== fAssigned) return false;
     if (fStructure === "units" && !p.is_unit) return false;
     if (fStructure === "standalone" && (p.is_unit || (properties as any[]).some(x => x.parent_property_id === p.id))) return false;
@@ -219,7 +219,7 @@ function PropertiesPage() {
 
   const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [search, fStatus, fType, fListing, fCity, fAssigned, archivedFilter, fStructure, groupUnits, pageSize, view]);
+  useEffect(() => { setPage(1); }, [search, fStatus, fType, fListing, fCities, fAssigned, archivedFilter, fStructure, groupUnits, pageSize, view]);
   const totalPages = Math.max(1, Math.ceil(displayed.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const paginated = useMemo(
@@ -333,7 +333,7 @@ function PropertiesPage() {
         if (fStatus !== "all") activeChips.push({ key: "status", label: t("properties.chips.status", { value: statusLabel(fStatus) }), clear: () => setFStatus("all") });
         if (fListing !== "all") activeChips.push({ key: "listing", label: t("properties.chips.listing", { value: listingLabel(fListing) }), clear: () => setFListing("all") });
         if (fType !== "all") activeChips.push({ key: "type", label: t("properties.chips.type", { value: typeLabel(fType) }), clear: () => setFType("all") });
-        if (fCity !== "all") activeChips.push({ key: "city", label: t("properties.chips.city", { value: fCity }), clear: () => setFCity("all") });
+        if (fCities.length > 0) activeChips.push({ key: "city", label: t("properties.chips.city", { value: fCities.join(", ") }), clear: () => setFCities([]) });
         if (fAssigned !== "all") {
           const emp = employees.find((e: any) => e.id === fAssigned) as any;
           activeChips.push({ key: "assigned", label: t("properties.chips.assigned", { value: emp?.full_name || emp?.email || "—" }), clear: () => setFAssigned("all") });
@@ -351,7 +351,7 @@ function PropertiesPage() {
         }
         const resetAll = () => {
           setSearch(""); setFStatus("all"); setFType("all"); setFListing("all");
-          setFCity("all"); setFAssigned("all"); setFStructure("all"); setArchivedFilter("active");
+          setFCities([]); setFAssigned("all"); setFStructure("all"); setArchivedFilter("active");
         };
         const hasActive = activeChips.length > 0 || search.length > 0;
 
