@@ -743,14 +743,31 @@ function OwnerTab({ p }: { p: any }) {
   );
 }
 
-function PropertyImageGallery({ propertyId, images, title }: { propertyId: string; images: string[]; title: string }) {
+function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { propertyId: string; images: string[]; title: string }) {
   const qc = useQueryClient();
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [idx, setIdx] = useState(0);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [allOpen, setAllOpen] = useState(false);
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null);
   const [modalDragOver, setModalDragOver] = useState(false);
+
+  const { data: mediaRows } = useQuery({
+    queryKey: ["property_media", propertyId],
+    queryFn: async () => {
+      const { data } = await supabase.from("property_media").select("*").eq("property_id", propertyId).order("sort_order");
+      return data ?? [];
+    },
+  });
+
+  const images = useMemo(() => {
+    const fromMedia = extractPropertyImagePaths((mediaRows ?? []) as any[]);
+    const merged = [...fromMedia];
+    for (const p of fallbackImages) if (p && !merged.includes(p)) merged.push(p);
+    return merged;
+  }, [mediaRows, fallbackImages]);
+
   const hasImages = images.length > 0;
   const current = hasImages ? images[Math.min(idx, images.length - 1)] : null;
 
