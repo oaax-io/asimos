@@ -80,10 +80,13 @@ function PropertyDetail() {
   const { data: employees = [] } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("id, full_name, email").eq("is_active", true);
+      const { data } = await supabase.from("profiles").select("id, full_name, email, avatar_url").eq("is_active", true);
       return data ?? [];
     },
   });
+  const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
+  const { data: propertyAssignees = [] } = usePropertyAssignees();
+  const assignedIds = useMemo(() => propertyAssignees.filter((r: any) => r.property_id === id).map((r: any) => r.user_id), [propertyAssignees, id]);
 
   const { data: statusFlags } = useQuery({
     queryKey: ["property_status_flags", id],
