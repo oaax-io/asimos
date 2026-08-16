@@ -1428,6 +1428,9 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
                     <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); openDoc(d); }}>
                       <ExternalLink className="mr-1 h-3 w-3" />Öffnen
                     </Button>
+                    <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); downloadDoc(d); }}>
+                      <Download className="h-3 w-3" />
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); removeDoc.mutate(d); }} disabled={removeDoc.isPending}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
