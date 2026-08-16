@@ -1369,25 +1369,44 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
       </Dialog>
 
       <Dialog open={lightboxOpen} onOpenChange={(o) => { setLightboxOpen(o); if (!o) setZoom(1); }}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] gap-0 border-none bg-black/95 p-0 sm:rounded-2xl [&>button]:text-white/70 [&>button:hover]:text-white">
+        <DialogContent className="max-w-[95vw] max-h-[95vh] gap-0 overflow-hidden border-none bg-black/95 p-0 sm:rounded-2xl [&>button]:hidden">
           <DialogHeader className="sr-only">
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>Bild {Math.min(idx, images.length - 1) + 1} von {images.length}</DialogDescription>
           </DialogHeader>
           <div className="relative flex h-[88vh] w-full items-center justify-center overflow-hidden">
             <img
+              key={idx}
               src={getMediaPublicUrl(current!)}
               alt={title}
-              className="max-h-full max-w-full select-none object-contain transition-transform duration-200"
-              style={{ transform: `scale(${zoom})`, cursor: zoom > 1 ? "grab" : "default" }}
+              className="max-h-full max-w-full select-none object-contain"
+              style={{ transform: `scale(${zoom})`, transition: zoom === 1 ? "none" : "transform 150ms ease-out", cursor: zoom > 1 ? "grab" : "default" }}
               draggable={false}
             />
 
+            {/* Preload adjacent images for instant navigation */}
+            {images.length > 1 && (
+              <div className="hidden" aria-hidden>
+                <img src={getMediaPublicUrl(images[(idx + 1) % images.length])} alt="" />
+                <img src={getMediaPublicUrl(images[(idx - 1 + images.length) % images.length])} alt="" />
+              </div>
+            )}
+
             {/* Top bar */}
             <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between px-4 py-3 text-white">
-              <span className="rounded-md bg-white/10 px-2.5 py-1 text-xs font-medium backdrop-blur">
-                {Math.min(idx, images.length - 1) + 1} / {images.length}
-              </span>
+              <div className="pointer-events-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setLightboxOpen(false); setZoom(1); }}
+                  className="rounded-md bg-white/10 p-2 text-white backdrop-blur transition hover:bg-white/20"
+                  aria-label="Schliessen"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <span className="rounded-md bg-white/10 px-2.5 py-1 text-xs font-medium backdrop-blur">
+                  {Math.min(idx, images.length - 1) + 1} / {images.length}
+                </span>
+              </div>
               <div className="pointer-events-auto flex items-center gap-1.5">
                 <button
                   type="button"
