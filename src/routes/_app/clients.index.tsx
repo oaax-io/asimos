@@ -674,9 +674,9 @@ function ClientsPage() {
                                 <span>{addr || plzOrt || <span className="text-muted-foreground">—</span>}</span>
                               </p>
                             </div>
-                            {(c.budget_max || c.financing_status) && (
-                              <div className="mt-3 rounded-lg bg-muted/40 p-2 text-xs space-y-0.5">
-                                {c.budget_max ? <p>{t("clients.card.budgetUpTo", { amount: formatCurrency(Number(c.budget_max)) })}</p> : null}
+                            {(c.budget_min || c.budget_max || c.financing_status) && (
+                              <div className="mt-3 rounded-lg bg-muted/40 p-2 text-xs space-y-1.5">
+                                {(c.budget_min || c.budget_max) && <BudgetBar min={c.budget_min} max={c.budget_max} />}
                                 {c.financing_status ? <p className="text-muted-foreground">{c.financing_status}</p> : null}
                               </div>
                             )}
