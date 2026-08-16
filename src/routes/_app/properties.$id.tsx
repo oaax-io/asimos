@@ -535,7 +535,7 @@ function PropertyDetail() {
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="details">Details & Medien</TabsTrigger>
+          <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="marketing">
             Vermarktung{counts?.matches ? ` (${counts.matches})` : ""}
           </TabsTrigger>
@@ -561,10 +561,6 @@ function PropertyDetail() {
               <AccordionItem value="facts" className="rounded-xl border px-4">
                 <AccordionTrigger className="font-display text-base">Eckdaten</AccordionTrigger>
                 <AccordionContent><FactsTab p={p} /></AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="media" className="rounded-xl border px-4">
-                <AccordionTrigger className="font-display text-base">Medien</AccordionTrigger>
-                <AccordionContent><MediaTab propertyId={id} cover={getMediaPublicUrl(p.images?.[0])} /></AccordionContent>
               </AccordionItem>
             </Accordion>
           </TabsContent>
