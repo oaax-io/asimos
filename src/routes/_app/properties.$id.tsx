@@ -1326,16 +1326,30 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const openDoc = async (d: any) => {
+  const resolveDocUrl = async (d: any): Promise<string | null> => {
     const path: string = d.file_url;
-    if (!path) { toast.error("Keine Datei vorhanden"); return; }
-    if (path.startsWith("http")) {
-      setPreview({ name: d.file_name ?? "Dokument", url: path, mime: d.mime_type ?? null });
-      return;
-    }
+    if (!path) { toast.error("Keine Datei vorhanden"); return null; }
+    if (path.startsWith("http")) return path;
     const { data, error } = await supabase.storage.from("documents").createSignedUrl(path, 300);
-    if (error || !data?.signedUrl) { toast.error(error?.message ?? "Konnte Datei nicht öffnen"); return; }
-    setPreview({ name: d.file_name ?? "Dokument", url: data.signedUrl, mime: d.mime_type ?? null });
+    if (error || !data?.signedUrl) { toast.error(error?.message ?? "Konnte Datei nicht öffnen"); return null; }
+    return data.signedUrl;
+  };
+
+  const openDoc = async (d: any) => {
+    const url = await resolveDocUrl(d);
+    if (!url) return;
+    setPreview({ name: d.file_name ?? "Dokument", url, mime: d.mime_type ?? null });
+  };
+
+  const downloadDoc = async (d: any) => {
+    const url = await resolveDocUrl(d);
+    if (!url) return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = d.file_name ?? "Dokument";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
 
