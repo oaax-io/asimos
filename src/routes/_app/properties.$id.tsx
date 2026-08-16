@@ -1278,6 +1278,8 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
   const [name, setName] = useState("");
   const [docType, setDocType] = useState<string>("property_document");
   const [notes, setNotes] = useState("");
+  const [preview, setPreview] = useState<{ name: string; url: string; mime: string | null } | null>(null);
+
 
   const resetForm = () => {
     setFile(null); setName(""); setDocType("property_document"); setNotes("");
