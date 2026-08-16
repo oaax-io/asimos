@@ -21,6 +21,7 @@ import { formatCurrency, formatArea, getPropertyStatusBadgeClass, getPropertySta
 import { EmptyState } from "@/components/EmptyState";
 import { PropertyWizard, type WizardSubmit } from "@/components/properties/PropertyWizard";
 import { useTranslation } from "react-i18next";
+import { AssigneeAvatars } from "@/components/clients/ClientAssignees";
 import { PropertyPinButton, usePropertyPins, propertyPinRowClass } from "@/components/properties/PropertyPin";
 
 export const Route = createFileRoute("/_app/properties/")({ component: PropertiesPage });
@@ -72,7 +73,7 @@ function PropertiesPage() {
   const { data: employees = [] } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id, full_name, email").eq("is_active", true);
+      const { data, error } = await supabase.from("profiles").select("id, full_name, email, avatar_url").eq("is_active", true);
       if (error) throw error;
       return data;
     },
@@ -725,7 +726,7 @@ function PropertiesPage() {
                         {formatCurrency(row.listing_type === "rent" ? (row.rent ? Number(row.rent) : null) : (row.price ? Number(row.price) : null))}
                         {row.listing_type === "rent" && row.rent ? <span className="text-xs text-muted-foreground"> {t("properties.perMonth")}</span> : null}
                       </TableCell>
-                      <TableCell className="text-sm">{emp ? (emp.full_name ?? emp.email) : <span className="text-muted-foreground">—</span>}</TableCell>
+                      <TableCell className="text-sm"><AssigneeAvatars ids={row.assigned_to ? [row.assigned_to] : []} employeeMap={employeeMap as any} size="xs" /></TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
