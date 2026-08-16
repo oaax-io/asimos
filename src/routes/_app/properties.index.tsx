@@ -657,7 +657,7 @@ function PropertiesPage() {
                   <span className="text-xs text-muted-foreground">{t("properties.columns.assignedTo")}</span>
                   <PropertyAssigneePicker
                     propertyId={p.id}
-                    assignedIds={assigneesByProperty.get(p.id) ?? []}
+                    assignedIds={assigneesByProperty.get(p.id) ?? (p.assigned_to ? [p.assigned_to] : [])}
                     employees={employees as any}
                     employeeMap={employeeMap as any}
                     size="xs"
