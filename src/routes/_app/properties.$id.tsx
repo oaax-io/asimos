@@ -29,6 +29,8 @@ import { useAuth } from "@/lib/auth";
 import { extractPropertyImagePaths } from "@/lib/property-media";
 import { MacroLocationCard } from "@/components/properties/MacroLocationCard";
 import { PublicShareCard } from "@/components/properties/PublicShareCard";
+import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/properties/PropertyAssignees";
+import type { EmployeeLite } from "@/components/clients/ClientAssignees";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
