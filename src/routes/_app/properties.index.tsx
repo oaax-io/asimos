@@ -454,13 +454,48 @@ function PropertiesPage() {
                   </SelectContent>
                 </Select>
                 {cities.length > 1 && (
-                  <Select value={fCity} onValueChange={setFCity}>
-                    <SelectTrigger className="h-9"><SelectValue placeholder={t("properties.filters.city")} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("properties.filters.allCities")}</SelectItem>
-                      {cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-9 justify-start font-normal">
+                        <MapPin className="mr-1 h-4 w-4 text-muted-foreground" />
+                        {fCities.length === 0
+                          ? t("properties.filters.allCities")
+                          : fCities.length === 1
+                            ? fCities[0]
+                            : t("properties.chips.city", { value: `${fCities.length} ${t("properties.filters.cities", { defaultValue: "Städte" })}` })}
+                        {fCities.length > 0 && (
+                          <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{fCities.length}</Badge>
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="max-h-[320px] w-[240px] overflow-y-auto">
+                      <DropdownMenuLabel>{t("properties.filters.city", { defaultValue: "Stadt" })}</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={() => setFCities([])}
+                        className="gap-2"
+                      >
+                        <Checkbox checked={fCities.length === 0} />
+                        {t("properties.filters.allCities")}
+                      </DropdownMenuItem>
+                      {cities.map(c => {
+                        const checked = fCities.includes(c);
+                        return (
+                          <DropdownMenuItem
+                            key={c}
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setFCities(prev => checked ? prev.filter(x => x !== c) : [...prev, c]);
+                            }}
+                            className="gap-2"
+                          >
+                            <Checkbox checked={checked} />
+                            {c}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             )}
