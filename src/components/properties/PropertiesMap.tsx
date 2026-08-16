@@ -132,6 +132,8 @@ export function PropertiesMap({ properties }: Props) {
 
     const bounds = new mapboxgl.LngLatBounds();
     for (const pt of points) {
+      // Keep map focused on Switzerland — skip foreign geocode results
+      if (!inSwitzerland(pt.latitude, pt.longitude)) continue;
       const prop = propertyById.get(pt.id);
       if (!prop) continue;
 
@@ -156,6 +158,9 @@ export function PropertiesMap({ properties }: Props) {
 
     if (!bounds.isEmpty()) {
       map.fitBounds(bounds, { padding: 60, maxZoom: 13, duration: 600 });
+    } else {
+      // No Swiss points — reset to Switzerland overview
+      map.flyTo({ center: CH_CENTER, zoom: 7.2, duration: 600 });
     }
   }, [points, propertyById]);
 
