@@ -615,19 +615,226 @@ function PropertyDetail() {
 
 /* ----------------- Tabs ----------------- */
 
+function InlineEditCard({
+  title, value, propertyId, field, placeholder, tone = "default", rows = 6,
+}: {
+  title: string; value: string | null; propertyId: string; field: "description" | "internal_notes";
+  placeholder?: string; tone?: "default" | "amber"; rows?: number;
+}) {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value ?? "");
+  useEffect(() => { setDraft(value ?? ""); }, [value]);
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("properties").update({ [field]: draft || null } as any).eq("id", propertyId);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Gespeichert"); setEditing(false); qc.invalidateQueries({ queryKey: ["property", propertyId] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Card className={tone === "amber" ? "border-amber-500/30 bg-amber-500/5" : undefined}>
+      <CardContent className="p-6">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className={`font-semibold ${tone === "amber" ? "text-sm text-amber-700 dark:text-amber-400" : ""}`}>{title}</h2>
+          {!editing && (
+            <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>
+              <Pencil className="mr-1 h-3.5 w-3.5" />Bearbeiten
+            </Button>
+          )}
+        </div>
+        {editing ? (
+          <div className="space-y-2">
+            <Textarea rows={rows} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={placeholder} />
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="ghost" onClick={() => { setDraft(value ?? ""); setEditing(false); }}>Abbrechen</Button>
+              <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>Speichern</Button>
+            </div>
+          </div>
+        ) : value ? (
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{value}</p>
+        ) : (
+          <button type="button" onClick={() => setEditing(true)} className="w-full rounded-md border border-dashed p-4 text-sm text-muted-foreground hover:bg-muted/40">
+            {placeholder ?? "Klicken zum Hinzufügen"}
+          </button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function OverviewMandatesCard({ propertyId }: { propertyId: string }) {
+  const { data: mandates = [] } = useQuery({
+    queryKey: ["property_overview_mandates", propertyId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("mandates")
+        .select("id,mandate_type,status,valid_from,valid_until,commission_value,commission_model")
+        .eq("property_id", propertyId)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return data ?? [];
+    },
+  });
+
+  return (
+    <Card><CardContent className="p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="flex items-center gap-2 text-sm font-semibold"><FileText className="h-4 w-4 text-primary" />Mandate</h3>
+        <Button size="sm" variant="ghost" asChild><Link to="/mandates">Alle</Link></Button>
+      </div>
+      {mandates.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Kein Mandat hinterlegt.</p>
+      ) : (
+        <ul className="space-y-2">
+          {mandates.map((m: any) => (
+            <li key={m.id} className="rounded-md border p-3 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium capitalize">{m.mandate_type || "Mandat"}</span>
+                <Badge variant="secondary" className="capitalize">{m.status}</Badge>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {m.valid_from ? formatDate(m.valid_from) : "—"} – {m.valid_until ? formatDate(m.valid_until) : "offen"}
+                {m.commission_value ? ` · ${m.commission_value}${m.commission_model === "percent" ? "%" : ""}` : ""}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </CardContent></Card>
+  );
+}
+
+function OverviewTasksCard({ propertyId }: { propertyId: string }) {
+  const qc = useQueryClient();
+  const [title, setTitle] = useState("");
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["property_overview_tasks", propertyId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tasks")
+        .select("id,title,status,priority,due_date")
+        .eq("related_type", "property")
+        .eq("related_id", propertyId)
+        .neq("status", "done")
+        .order("due_date", { ascending: true, nullsFirst: false })
+        .limit(6);
+      return data ?? [];
+    },
+  });
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["property_overview_tasks", propertyId] });
+
+  const add = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("tasks").insert({ title, related_type: "property", related_id: propertyId } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => { setTitle(""); invalidate(); toast.success("Aufgabe erstellt"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const complete = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("tasks").update({ status: "done" } as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidate(); toast.success("Aufgabe erledigt"); },
+  });
+
+  return (
+    <Card><CardContent className="p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="flex items-center gap-2 text-sm font-semibold"><CheckCircle2 className="h-4 w-4 text-primary" />Offene Aufgaben</h3>
+        <Button size="sm" variant="ghost" asChild><Link to="/tasks">Alle</Link></Button>
+      </div>
+      {tasks.length === 0 ? (
+        <p className="mb-3 text-sm text-muted-foreground">Keine offenen Aufgaben.</p>
+      ) : (
+        <ul className="mb-3 space-y-2">
+          {tasks.map((t: any) => (
+            <li key={t.id} className="flex items-start gap-2 rounded-md border p-2 text-sm">
+              <button type="button" onClick={() => complete.mutate(t.id)} title="Als erledigt markieren" className="mt-0.5 text-muted-foreground hover:text-primary">
+                <Circle className="h-4 w-4" />
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium">{t.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t.due_date ? formatDate(t.due_date) : "ohne Datum"}
+                  {t.priority === "high" || t.priority === "urgent" ? " · Priorität hoch" : ""}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex gap-2">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && title.trim()) add.mutate(); }}
+          placeholder="Neue Aufgabe…"
+        />
+        <Button size="icon" onClick={() => add.mutate()} disabled={!title.trim() || add.isPending}><Plus className="h-4 w-4" /></Button>
+      </div>
+    </CardContent></Card>
+  );
+}
+
+function OverviewAppointmentsCard({ propertyId }: { propertyId: string }) {
+  const { data: items = [] } = useQuery({
+    queryKey: ["property_overview_appointments", propertyId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("appointments")
+        .select("id,title,start_time,appointment_type,status")
+        .eq("property_id", propertyId)
+        .gte("start_time", new Date().toISOString())
+        .order("start_time", { ascending: true })
+        .limit(4);
+      return data ?? [];
+    },
+  });
+
+  return (
+    <Card><CardContent className="p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="flex items-center gap-2 text-sm font-semibold"><Calendar className="h-4 w-4 text-primary" />Nächste Termine</h3>
+        <Button size="sm" variant="ghost" asChild><Link to="/appointments">Alle</Link></Button>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Keine anstehenden Termine.</p>
+      ) : (
+        <ul className="space-y-2">
+          {items.map((a: any) => (
+            <li key={a.id} className="rounded-md border p-2 text-sm">
+              <p className="truncate font-medium">{a.title}</p>
+              <p className="text-xs text-muted-foreground">{formatDateTime(a.start_time)}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </CardContent></Card>
+  );
+}
+
 function OverviewTab({ p }: { p: any }) {
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-6">
         <MacroLocationCard property={p} />
-        {p.description ? (
-          <Card><CardContent className="p-6">
-            <h2 className="mb-2 font-semibold">Beschreibung</h2>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{p.description}</p>
-          </CardContent></Card>
-        ) : (
-          <EmptyState title="Keine Beschreibung" description="Bearbeite das Objekt, um eine Beschreibung hinzuzufügen." />
-        )}
+
+        <InlineEditCard
+          title="Beschreibung"
+          value={p.description}
+          propertyId={p.id}
+          field="description"
+          placeholder="Beschreibung hinzufügen…"
+        />
 
         {p.features?.length ? (
           <Card><CardContent className="p-6">
@@ -638,12 +845,15 @@ function OverviewTab({ p }: { p: any }) {
           </CardContent></Card>
         ) : null}
 
-        {p.internal_notes && (
-          <Card className="border-amber-500/30 bg-amber-500/5"><CardContent className="p-6">
-            <h2 className="mb-2 text-sm font-semibold text-amber-700 dark:text-amber-400">Interne Notizen</h2>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{p.internal_notes}</p>
-          </CardContent></Card>
-        )}
+        <InlineEditCard
+          title="Interne Notizen"
+          value={p.internal_notes}
+          propertyId={p.id}
+          field="internal_notes"
+          tone="amber"
+          rows={4}
+          placeholder="Nur intern sichtbar – Notiz hinzufügen…"
+        />
       </div>
 
       <div className="space-y-4">
@@ -656,14 +866,20 @@ function OverviewTab({ p }: { p: any }) {
           <Stat icon={Calendar} label="Renoviert" value={p.renovated_at ? String(p.renovated_at) : "—"} />
           <Stat icon={Zap} label="Energie" value={p.energy_class ?? "—"} />
         </CardContent></Card>
-        <Card><CardContent className="p-6 text-sm">
-          <h3 className="mb-2 font-semibold">Erfasst</h3>
+
+        <OverviewTasksCard propertyId={p.id} />
+        <OverviewMandatesCard propertyId={p.id} />
+        <OverviewAppointmentsCard propertyId={p.id} />
+
+        <Card><CardContent className="p-5 text-sm">
+          <h3 className="mb-1 font-semibold">Erfasst</h3>
           <p className="text-muted-foreground">{formatDateTime(p.created_at)}</p>
         </CardContent></Card>
       </div>
     </div>
   );
 }
+
 
 function FactsTab({ p }: { p: any }) {
   const rows: [string, any][] = [
