@@ -105,9 +105,10 @@ export function PropertiesMap({ properties }: Props) {
       style: "mapbox://styles/mapbox/light-v11",
       center: CH_CENTER,
       zoom: 7.2,
+      minZoom: 7,
       maxBounds: [
-        [3.5, 44.5],
-        [13.5, 49.5],
+        [4.5, 44.5],
+        [12.5, 49.0],
       ],
     });
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
