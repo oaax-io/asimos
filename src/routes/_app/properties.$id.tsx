@@ -532,7 +532,6 @@ function PropertyDetail() {
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="details">Details & Medien</TabsTrigger>
-          <TabsTrigger value="owner">Eigentümer</TabsTrigger>
           <TabsTrigger value="marketing">
             Vermarktung{counts?.matches ? ` (${counts.matches})` : ""}
           </TabsTrigger>
@@ -564,10 +563,6 @@ function PropertyDetail() {
                 <AccordionContent><MediaTab propertyId={id} cover={getMediaPublicUrl(p.images?.[0])} /></AccordionContent>
               </AccordionItem>
             </Accordion>
-          </TabsContent>
-
-          <TabsContent value="owner" className="mt-0">
-            <PropertyOwnersTab propertyId={id} legacyOwnerClientId={p.owner_client_id ?? p.seller_client_id} />
           </TabsContent>
 
           <TabsContent value="marketing" className="mt-0">
