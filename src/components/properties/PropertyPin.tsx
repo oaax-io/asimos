@@ -90,14 +90,14 @@ export function PropertyPinButton({
       <PopoverTrigger asChild>
         <button
           type="button"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onClick={(e) => { e.stopPropagation(); }}
           title={pinned ? "Pin ändern" : "Immobilie anheften"}
           className={`rounded-md p-1 transition hover:bg-accent ${pinned ? propertyPinTextClass(color) : "text-muted-foreground/50 hover:text-muted-foreground"}`}
         >
           <Pin className={`${iconSize} ${pinned ? "fill-current" : ""}`} />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto p-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+      <PopoverContent align="start" className="w-auto p-2" onClick={(e) => { e.stopPropagation(); }}>
         <div className="flex items-center gap-1.5">
           {PROPERTY_PIN_COLORS.map((c) => (
             <button
