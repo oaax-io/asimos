@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity, TrendingUp, Sparkles, RefreshCw, ChevronLeft, ChevronRight, UploadCloud, Download } from "lucide-react";
@@ -29,6 +29,8 @@ import { useAuth } from "@/lib/auth";
 import { extractPropertyImagePaths } from "@/lib/property-media";
 import { MacroLocationCard } from "@/components/properties/MacroLocationCard";
 import { PublicShareCard } from "@/components/properties/PublicShareCard";
+import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/properties/PropertyAssignees";
+import type { EmployeeLite } from "@/components/clients/ClientAssignees";
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
@@ -78,10 +80,13 @@ function PropertyDetail() {
   const { data: employees = [] } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("id, full_name, email").eq("is_active", true);
+      const { data } = await supabase.from("profiles").select("id, full_name, email, avatar_url").eq("is_active", true);
       return data ?? [];
     },
   });
+  const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
+  const { data: propertyAssignees = [] } = usePropertyAssignees();
+  const assignedIds = useMemo(() => propertyAssignees.filter((r: any) => r.property_id === id).map((r: any) => r.user_id), [propertyAssignees, id]);
 
   const { data: statusFlags } = useQuery({
     queryKey: ["property_status_flags", id],
@@ -345,8 +350,6 @@ function PropertyDetail() {
 
   if (isLoading || !p) return <div className="text-sm text-muted-foreground">Lädt…</div>;
 
-  const assignedEmp = employees.find((e: any) => e.id === p.assigned_to);
-
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -458,7 +461,15 @@ function PropertyDetail() {
           </CardContent></Card>
           <Card><CardContent className="p-4 text-sm">
             <p className="flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4" />Zuständig</p>
-            <p className="mt-1 font-medium">{assignedEmp ? (assignedEmp as any).full_name || (assignedEmp as any).email : "Niemand zugewiesen"}</p>
+            <div className="mt-1">
+              <PropertyAssigneePicker
+                propertyId={id}
+                assignedIds={assignedIds}
+                employees={employees as EmployeeLite[]}
+                employeeMap={employeeMap as Map<string, EmployeeLite>}
+                size="sm"
+              />
+            </div>
           </CardContent></Card>
           <button
             type="button"
