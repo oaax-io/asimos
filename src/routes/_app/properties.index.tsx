@@ -23,6 +23,7 @@ import { PropertyWizard, type WizardSubmit } from "@/components/properties/Prope
 import { useTranslation } from "react-i18next";
 import { PropertyHoverCard } from "@/components/properties/PropertyHoverCard";
 import { AssigneeAvatars } from "@/components/clients/ClientAssignees";
+import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/properties/PropertyAssignees";
 import { PropertyPinButton, usePropertyPins, propertyPinRowClass } from "@/components/properties/PropertyPin";
 
 export const Route = createFileRoute("/_app/properties/")({ component: PropertiesPage });
@@ -81,6 +82,17 @@ function PropertiesPage() {
   });
 
   const employeeMap = useMemo(() => new Map(employees.map((e: any) => [e.id, e])), [employees]);
+  const { data: propertyAssignees = [] } = usePropertyAssignees();
+  const assigneesByProperty = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const r of propertyAssignees) {
+      const arr = m.get(r.property_id) ?? [];
+      arr.push(r.user_id);
+      m.set(r.property_id, arr);
+    }
+    return m;
+  }, [propertyAssignees]);
+
   const cities = useMemo(() => Array.from(new Set(properties.map(p => p.city).filter(Boolean))) as string[], [properties]);
 
   const create = useMutation({
@@ -641,7 +653,18 @@ function PropertiesPage() {
                     </div>
                   </div>
                 </Link>
+                <div className="flex items-center justify-between gap-2 border-t px-4 py-2">
+                  <span className="text-xs text-muted-foreground">{t("properties.columns.assignedTo")}</span>
+                  <PropertyAssigneePicker
+                    propertyId={p.id}
+                    assignedIds={assigneesByProperty.get(p.id) ?? (p.assigned_to ? [p.assigned_to] : [])}
+                    employees={employees as any}
+                    employeeMap={employeeMap as any}
+                    size="xs"
+                  />
+                </div>
               </div>
+
             );
           })}
         </div>
@@ -731,7 +754,7 @@ function PropertiesPage() {
                         {formatCurrency(row.listing_type === "rent" ? (row.rent ? Number(row.rent) : null) : (row.price ? Number(row.price) : null))}
                         {row.listing_type === "rent" && row.rent ? <span className="text-xs text-muted-foreground"> {t("properties.perMonth")}</span> : null}
                       </TableCell>
-                      <TableCell className="text-sm"><AssigneeAvatars ids={row.assigned_to ? [row.assigned_to] : []} employeeMap={employeeMap as any} size="xs" /></TableCell>
+                      <TableCell className="text-sm"><PropertyAssigneePicker propertyId={row.id} assignedIds={assigneesByProperty.get(row.id) ?? (row.assigned_to ? [row.assigned_to] : [])} employees={employees as any} employeeMap={employeeMap as any} size="xs" /></TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
