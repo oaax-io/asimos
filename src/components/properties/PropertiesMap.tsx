@@ -27,6 +27,19 @@ function getMediaPublicUrl(path?: string | null) {
 
 // Switzerland bounding box / center
 const CH_CENTER: [number, number] = [8.2275, 46.8182];
+const CH_BOUNDS: [[number, number], [number, number]] = [
+  [5.9559, 45.8180],
+  [10.4914, 47.8084],
+];
+
+function inSwitzerland(lat: number, lng: number) {
+  return (
+    lng >= CH_BOUNDS[0][0] &&
+    lng <= CH_BOUNDS[1][0] &&
+    lat >= CH_BOUNDS[0][1] &&
+    lat <= CH_BOUNDS[1][1]
+  );
+}
 
 export function PropertiesMap({ properties }: Props) {
   const tokenFn = useServerFn(getMapboxToken);
@@ -92,9 +105,10 @@ export function PropertiesMap({ properties }: Props) {
       style: "mapbox://styles/mapbox/light-v11",
       center: CH_CENTER,
       zoom: 7.2,
+      minZoom: 7,
       maxBounds: [
-        [3.5, 44.5],
-        [13.5, 49.5],
+        [4.5, 44.5],
+        [12.5, 49.0],
       ],
     });
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
@@ -118,6 +132,8 @@ export function PropertiesMap({ properties }: Props) {
 
     const bounds = new mapboxgl.LngLatBounds();
     for (const pt of points) {
+      // Keep map focused on Switzerland — skip foreign geocode results
+      if (!inSwitzerland(pt.latitude, pt.longitude)) continue;
       const prop = propertyById.get(pt.id);
       if (!prop) continue;
 
@@ -142,6 +158,9 @@ export function PropertiesMap({ properties }: Props) {
 
     if (!bounds.isEmpty()) {
       map.fitBounds(bounds, { padding: 60, maxZoom: 13, duration: 600 });
+    } else {
+      // No Swiss points — reset to Switzerland overview
+      map.flyTo({ center: CH_CENTER, zoom: 7.2, duration: 600 });
     }
   }, [points, propertyById]);
 
