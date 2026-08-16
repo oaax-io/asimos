@@ -67,6 +67,8 @@ function PropertyDetail() {
   const [financingOpen, setFinancingOpen] = useState(false);
   const [exposeOpen, setExposeOpen] = useState(false);
   const [tab, setTab] = useState("overview");
+  const [ownersOpen, setOwnersOpen] = useState(false);
+
 
   const { data: p, isLoading } = useQuery({
     queryKey: ["property", id],
