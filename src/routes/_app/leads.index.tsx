@@ -256,9 +256,9 @@ function LeadsPage() {
         i18nKey="leads"
         action={
           <>
-            <TabsList>
-              <TabsTrigger value="list"><ListIcon className="mr-1 h-4 w-4" />{t("leads.tabs.list")}</TabsTrigger>
-              <TabsTrigger value="kanban"><LayoutGrid className="mr-1 h-4 w-4" />{t("leads.tabs.kanban")}</TabsTrigger>
+            <TabsList className="h-9 rounded-lg bg-primary/15 p-1">
+              <TabsTrigger value="list" className="gap-1.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><ListIcon className="h-4 w-4" />{t("leads.tabs.list")}</TabsTrigger>
+              <TabsTrigger value="kanban" className="gap-1.5 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"><LayoutGrid className="h-4 w-4" />{t("leads.tabs.kanban")}</TabsTrigger>
             </TabsList>
           <Button variant="outline" onClick={() => setImportSourceOpen(true)}>
             <Upload className="mr-1 h-4 w-4" />
