@@ -701,6 +701,9 @@ function ClientsPage() {
                     <TableCell>
                       <Badge variant="outline" className={typeBadge(c.client_type)}>{clientTypeLabels[c.client_type as keyof typeof clientTypeLabels]}</Badge>
                     </TableCell>
+                    <TableCell>
+                      <BudgetBar min={c.budget_min} max={c.budget_max} compact />
+                    </TableCell>
 
                     <TableCell className="text-sm">
                       <AssigneePicker
