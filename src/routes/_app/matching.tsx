@@ -342,11 +342,26 @@ function MatchingPage() {
       ) : (
         <>
           <div className="mb-4 flex flex-wrap items-center gap-3">
-            <Tabs value={view} onValueChange={(v) => setView(v as "all" | "client")}>
-              <TabsList>
-                <TabsTrigger value="all">Alle Matches</TabsTrigger>
-                <TabsTrigger value="client">Pro Kunde</TabsTrigger>
-                <TabsTrigger value="profile">Suchprofile</TabsTrigger>
+            <Tabs value={view} onValueChange={(v) => setView(v as "all" | "client" | "profile")}>
+              <TabsList className="bg-primary/15">
+                <TabsTrigger
+                  value="all"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                >
+                  Alle Matches
+                </TabsTrigger>
+                <TabsTrigger
+                  value="client"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                >
+                  Pro Kunde
+                </TabsTrigger>
+                <TabsTrigger
+                  value="profile"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                >
+                  Suchprofile
+                </TabsTrigger>
               </TabsList>
             </Tabs>
 
