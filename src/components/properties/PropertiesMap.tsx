@@ -27,6 +27,19 @@ function getMediaPublicUrl(path?: string | null) {
 
 // Switzerland bounding box / center
 const CH_CENTER: [number, number] = [8.2275, 46.8182];
+const CH_BOUNDS: [[number, number], [number, number]] = [
+  [5.9559, 45.8180],
+  [10.4914, 47.8084],
+];
+
+function inSwitzerland(lat: number, lng: number) {
+  return (
+    lng >= CH_BOUNDS[0][0] &&
+    lng <= CH_BOUNDS[1][0] &&
+    lat >= CH_BOUNDS[0][1] &&
+    lat <= CH_BOUNDS[1][1]
+  );
+}
 
 export function PropertiesMap({ properties }: Props) {
   const tokenFn = useServerFn(getMapboxToken);
