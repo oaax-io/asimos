@@ -448,7 +448,11 @@ function PropertyDetail() {
             {statusFlags?.hasActiveMandate && <Badge className="bg-emerald-600 hover:bg-emerald-600">Aktives Mandat</Badge>}
             {statusFlags?.hasNda && <Badge variant="outline" className="border-primary/50 text-primary">NDA vorhanden</Badge>}
           </div>
+          {p.reference_no && (
+            <p className="font-mono text-xs font-semibold tracking-wide text-primary">{p.reference_no}</p>
+          )}
           <h1 className="font-display text-2xl font-bold leading-tight">{p.title}</h1>
+
           <p className="flex items-center gap-1 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4" />{[p.address, p.postal_code, p.city].filter(Boolean).join(", ") || "—"}
           </p>
