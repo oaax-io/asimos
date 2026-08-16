@@ -195,6 +195,7 @@ function PropertiesPage() {
     return m;
   }, [properties]);
   const propertyById = useMemo(() => new Map((properties as any[]).map(p => [p.id, p])), [properties]);
+  const pins = usePropertyPins();
 
   // Build display rows: when grouping, hide units whose parent is also visible (they show inside parent)
   const displayed = useMemo(() => {
