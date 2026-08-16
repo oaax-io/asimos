@@ -574,9 +574,9 @@ function ClientsPage() {
                     </div>
 
 
-                    {(c.budget_max || c.preferred_cities?.length) && (
-                      <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs">
-                        {c.budget_max && <p>{t("clients.card.budgetUpTo", { amount: formatCurrency(Number(c.budget_max)) })}</p>}
+                    {(c.budget_min || c.budget_max || c.preferred_cities?.length || c.rooms_min) && (
+                      <div className="mt-3 rounded-lg bg-muted/40 p-3 text-xs space-y-2">
+                        {(c.budget_min || c.budget_max) && <BudgetBar min={c.budget_min} max={c.budget_max} />}
                         {c.preferred_cities?.length ? <p>{t("clients.card.cities", { list: c.preferred_cities.join(", ") })}</p> : null}
                         {c.rooms_min ? <p>{t("clients.card.roomsFrom", { n: c.rooms_min })}</p> : null}
                       </div>
