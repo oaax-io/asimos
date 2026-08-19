@@ -412,7 +412,7 @@ function PropertyDetail() {
       <Dialog open={exposeOpen} onOpenChange={setExposeOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Exposé</DialogTitle>
+            <DialogTitle>Veröffentlichen</DialogTitle>
           </DialogHeader>
           <ExposeTab propertyId={id} property={p} />
         </DialogContent>
