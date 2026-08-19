@@ -117,7 +117,11 @@ export const publishPropertyToPortal = createServerFn({ method: "POST" })
     let portalId: string | null = null;
     try {
       const json = JSON.parse(text);
-      portalId = json?.id ?? json?.property_id ?? json?.data?.id ?? null;
+      const candidate = json?.id ?? json?.property_id ?? json?.data?.id ?? null;
+      portalId =
+        typeof candidate === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)
+          ? candidate
+          : null;
     } catch {
       portalId = null;
     }
