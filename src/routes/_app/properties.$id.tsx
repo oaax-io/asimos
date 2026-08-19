@@ -29,6 +29,8 @@ import { useAuth } from "@/lib/auth";
 import { extractPropertyImagePaths } from "@/lib/property-media";
 import { MacroLocationCard } from "@/components/properties/MacroLocationCard";
 import { PublicShareCard } from "@/components/properties/PublicShareCard";
+import { PortalPublishCard } from "@/components/properties/PortalPublishCard";
+import { publishPropertyToPortal } from "@/lib/portal.functions";
 import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/properties/PropertyAssignees";
 import type { EmployeeLite } from "@/components/clients/ClientAssignees";
 
@@ -308,6 +310,15 @@ function PropertyDetail() {
           related_id: id,
           metadata: { changes, owner_changed: ownerChanged },
         });
+      }
+
+      // Bereits veröffentlichte Objekte automatisch mit dem ASIMO Portal synchronisieren
+      if (p?.portal_published) {
+        try {
+          await publishPropertyToPortal({ data: { propertyId: id } });
+        } catch (e: any) {
+          toast.error(`Portal-Sync fehlgeschlagen: ${e?.message ?? "Unbekannter Fehler"}`);
+        }
       }
     },
     onSuccess: () => {
@@ -2266,6 +2277,7 @@ function ExposeTab({ propertyId, property }: { propertyId: string; property: any
   return (
     <div className="space-y-4">
       <PublicShareCard property={property} />
+      <PortalPublishCard property={property} />
       <Card><CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
         <div>
           <h3 className="font-display text-lg font-semibold">Exposé erstellen</h3>

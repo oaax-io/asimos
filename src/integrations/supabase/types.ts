@@ -83,6 +83,7 @@ export type Database = {
           ends_at: string
           id: string
           is_online: boolean
+          lead_id: string | null
           location: string | null
           meeting_url: string | null
           notes: string | null
@@ -102,6 +103,7 @@ export type Database = {
           ends_at: string
           id?: string
           is_online?: boolean
+          lead_id?: string | null
           location?: string | null
           meeting_url?: string | null
           notes?: string | null
@@ -121,6 +123,7 @@ export type Database = {
           ends_at?: string
           id?: string
           is_online?: boolean
+          lead_id?: string | null
           location?: string | null
           meeting_url?: string | null
           notes?: string | null
@@ -151,6 +154,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
           {
@@ -2150,6 +2160,7 @@ export type Database = {
           owner_id: string | null
           phone: string | null
           phone_direct: string | null
+          portal_self_disclosure: Json | null
           postal_code: string | null
           preferred_location: string | null
           secondary_email: string | null
@@ -2189,6 +2200,7 @@ export type Database = {
           owner_id?: string | null
           phone?: string | null
           phone_direct?: string | null
+          portal_self_disclosure?: Json | null
           postal_code?: string | null
           preferred_location?: string | null
           secondary_email?: string | null
@@ -2228,6 +2240,7 @@ export type Database = {
           owner_id?: string | null
           phone?: string | null
           phone_direct?: string | null
+          portal_self_disclosure?: Json | null
           postal_code?: string | null
           preferred_location?: string | null
           secondary_email?: string | null
@@ -2627,6 +2640,48 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_event_log: {
+        Row: {
+          action: string | null
+          created_appointment_id: string | null
+          created_lead_id: string | null
+          entity: string
+          portal_event_id: string
+          processed_at: string
+        }
+        Insert: {
+          action?: string | null
+          created_appointment_id?: string | null
+          created_lead_id?: string | null
+          entity: string
+          portal_event_id: string
+          processed_at?: string
+        }
+        Update: {
+          action?: string | null
+          created_appointment_id?: string | null
+          created_lead_id?: string | null
+          entity?: string
+          portal_event_id?: string
+          processed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_event_log_created_appointment_id_fkey"
+            columns: ["created_appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_event_log_created_lead_id_fkey"
+            columns: ["created_lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           agency_id: string | null
@@ -2725,6 +2780,9 @@ export type Database = {
           parent_property_id: string | null
           parking_spaces: number | null
           plot_area: number | null
+          portal_property_id: string | null
+          portal_published: boolean
+          portal_published_at: string | null
           postal_code: string | null
           price: number | null
           property_type: Database["public"]["Enums"]["property_type"]
@@ -2787,6 +2845,9 @@ export type Database = {
           parent_property_id?: string | null
           parking_spaces?: number | null
           plot_area?: number | null
+          portal_property_id?: string | null
+          portal_published?: boolean
+          portal_published_at?: string | null
           postal_code?: string | null
           price?: number | null
           property_type?: Database["public"]["Enums"]["property_type"]
@@ -2849,6 +2910,9 @@ export type Database = {
           parent_property_id?: string | null
           parking_spaces?: number | null
           plot_area?: number | null
+          portal_property_id?: string | null
+          portal_published?: boolean
+          portal_published_at?: string | null
           postal_code?: string | null
           price?: number | null
           property_type?: Database["public"]["Enums"]["property_type"]

@@ -43,6 +43,7 @@ import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties
 import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads.index'
 import { Route as AppFinancingIndexRouteImport } from './routes/_app/financing.index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
+import { Route as ApiPublicPortalWebhookRouteImport } from './routes/api/public/portal-webhook'
 import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
 import { Route as AppMeetRoomRouteImport } from './routes/_app/meet.$room'
 import { Route as AppLeadsIdRouteImport } from './routes/_app/leads.$id'
@@ -222,6 +223,11 @@ const AppClientsIndexRoute = AppClientsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppClientsRoute,
 } as any)
+const ApiPublicPortalWebhookRoute = ApiPublicPortalWebhookRouteImport.update({
+  id: '/api/public/portal-webhook',
+  path: '/api/public/portal-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppPropertiesIdRoute = AppPropertiesIdRouteImport.update({
   id: '/properties/$id',
   path: '/properties/$id',
@@ -305,6 +311,7 @@ export interface FileRoutesByFullPath {
   '/leads/$id': typeof AppLeadsIdRoute
   '/meet/$room': typeof AppMeetRoomRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
   '/clients/': typeof AppClientsIndexRoute
   '/financing/': typeof AppFinancingIndexRoute
   '/leads/': typeof AppLeadsIndexRoute
@@ -347,6 +354,7 @@ export interface FileRoutesByTo {
   '/leads/$id': typeof AppLeadsIdRoute
   '/meet/$room': typeof AppMeetRoomRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
   '/clients': typeof AppClientsIndexRoute
   '/financing': typeof AppFinancingIndexRoute
   '/leads': typeof AppLeadsIndexRoute
@@ -393,6 +401,7 @@ export interface FileRoutesById {
   '/_app/leads/$id': typeof AppLeadsIdRoute
   '/_app/meet/$room': typeof AppMeetRoomRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
   '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/financing/': typeof AppFinancingIndexRoute
   '/_app/leads/': typeof AppLeadsIndexRoute
@@ -439,6 +448,7 @@ export interface FileRouteTypes {
     | '/leads/$id'
     | '/meet/$room'
     | '/properties/$id'
+    | '/api/public/portal-webhook'
     | '/clients/'
     | '/financing/'
     | '/leads/'
@@ -481,6 +491,7 @@ export interface FileRouteTypes {
     | '/leads/$id'
     | '/meet/$room'
     | '/properties/$id'
+    | '/api/public/portal-webhook'
     | '/clients'
     | '/financing'
     | '/leads'
@@ -526,6 +537,7 @@ export interface FileRouteTypes {
     | '/_app/leads/$id'
     | '/_app/meet/$room'
     | '/_app/properties/$id'
+    | '/api/public/portal-webhook'
     | '/_app/clients/'
     | '/_app/financing/'
     | '/_app/leads/'
@@ -546,6 +558,7 @@ export interface RootRouteChildren {
   FinanzierungTokenRoute: typeof FinanzierungTokenRoute
   PTokenRoute: typeof PTokenRoute
   SelbstauskunftTokenRoute: typeof SelbstauskunftTokenRoute
+  ApiPublicPortalWebhookRoute: typeof ApiPublicPortalWebhookRoute
   ApiPublicBankPaketTokenRoute: typeof ApiPublicBankPaketTokenRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
@@ -790,6 +803,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClientsIndexRouteImport
       parentRoute: typeof AppClientsRoute
     }
+    '/api/public/portal-webhook': {
+      id: '/api/public/portal-webhook'
+      path: '/api/public/portal-webhook'
+      fullPath: '/api/public/portal-webhook'
+      preLoaderRoute: typeof ApiPublicPortalWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/properties/$id': {
       id: '/_app/properties/$id'
       path: '/properties/$id'
@@ -978,6 +998,7 @@ const rootRouteChildren: RootRouteChildren = {
   FinanzierungTokenRoute: FinanzierungTokenRoute,
   PTokenRoute: PTokenRoute,
   SelbstauskunftTokenRoute: SelbstauskunftTokenRoute,
+  ApiPublicPortalWebhookRoute: ApiPublicPortalWebhookRoute,
   ApiPublicBankPaketTokenRoute: ApiPublicBankPaketTokenRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }

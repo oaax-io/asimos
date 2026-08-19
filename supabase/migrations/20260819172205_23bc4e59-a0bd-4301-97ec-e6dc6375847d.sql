@@ -1,0 +1,3 @@
+delete from public.appointments where lead_id in (select id from public.leads where source='ASIMO Portal' and email in ('t@example.com','a@b.ch','s@b.ch'));
+delete from public.portal_event_log where created_lead_id in (select id from public.leads where source='ASIMO Portal' and email in ('t@example.com','a@b.ch','s@b.ch'));
+delete from public.leads where source='ASIMO Portal' and email in ('t@example.com','a@b.ch','s@b.ch');
