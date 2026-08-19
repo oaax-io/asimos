@@ -311,6 +311,15 @@ function PropertyDetail() {
           metadata: { changes, owner_changed: ownerChanged },
         });
       }
+
+      // Bereits veröffentlichte Objekte automatisch mit dem ASIMO Portal synchronisieren
+      if (p?.portal_published) {
+        try {
+          await publishPropertyToPortal({ data: { propertyId: id } });
+        } catch (e: any) {
+          toast.error(`Portal-Sync fehlgeschlagen: ${e?.message ?? "Unbekannter Fehler"}`);
+        }
+      }
     },
     onSuccess: () => {
       toast.success("Gespeichert");
