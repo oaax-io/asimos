@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity, TrendingUp, Sparkles, RefreshCw, ChevronLeft, ChevronRight, UploadCloud, Download, X } from "lucide-react";
+import { ArrowLeft, MapPin, Bed, Bath, Maximize, Calendar, Zap, FileText, Trash2, Pencil, Plus, ExternalLink, CheckCircle2, Circle, Image as ImageIcon, User, Building2, Layers3, Banknote, Activity, TrendingUp, Sparkles, RefreshCw, ChevronLeft, ChevronRight, UploadCloud, Download, X, Share2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
