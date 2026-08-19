@@ -29,6 +29,8 @@ import { useAuth } from "@/lib/auth";
 import { extractPropertyImagePaths } from "@/lib/property-media";
 import { MacroLocationCard } from "@/components/properties/MacroLocationCard";
 import { PublicShareCard } from "@/components/properties/PublicShareCard";
+import { PortalPublishCard } from "@/components/properties/PortalPublishCard";
+import { publishPropertyToPortal } from "@/lib/portal.functions";
 import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/properties/PropertyAssignees";
 import type { EmployeeLite } from "@/components/clients/ClientAssignees";
 
@@ -2266,6 +2268,7 @@ function ExposeTab({ propertyId, property }: { propertyId: string; property: any
   return (
     <div className="space-y-4">
       <PublicShareCard property={property} />
+      <PortalPublishCard property={property} />
       <Card><CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
         <div>
           <h3 className="font-display text-lg font-semibold">Exposé erstellen</h3>
