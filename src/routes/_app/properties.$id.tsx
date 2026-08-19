@@ -369,7 +369,7 @@ function PropertyDetail() {
         <Button variant="ghost" asChild><Link to="/properties"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link></Button>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setExposeOpen(true)}>
-            <FileText className="mr-1 h-4 w-4" />Exposé
+            <Share2 className="mr-1 h-4 w-4" />Veröffentlichen
           </Button>
           <Button variant="outline" onClick={() => setFinancingOpen(true)}>
             <Banknote className="mr-1 h-4 w-4" />Finanzierung starten
