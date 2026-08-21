@@ -344,7 +344,9 @@ export function LeadDetail({ id, inDialog, onClose, leadIds, onNavigate }: {
           </CardContent></Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
+
   );
 }
 
