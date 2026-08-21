@@ -562,3 +562,96 @@ function useIsOwnerOrAdmin(): boolean {
   }, []);
   return allowed;
 }
+
+function BankMultiSelect({
+  banks,
+  selected,
+  onChange,
+  placeholder,
+}: {
+  banks: string[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+  placeholder: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const { t } = useTranslation();
+
+  const toggle = (bank: string) => {
+    onChange(selected.includes(bank)
+      ? selected.filter((b) => b !== bank)
+      : [...selected, bank]);
+  };
+
+  const filtered = banks.filter((b) =>
+    b.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+
+  const label = selected.length === 0
+    ? placeholder
+    : selected.length === 1
+      ? selected[0]
+      : `${selected.length} ${t("financing.filters.banksSelected", { defaultValue: "Banken" })}`;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-[200px] justify-between font-normal"
+        >
+          <span className="inline-flex items-center gap-2 truncate">
+            <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="truncate">{label}</span>
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[220px] p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder={t("financing.filters.searchBank", { defaultValue: "Bank suchen…" })}
+            value={query}
+            onValueChange={setQuery}
+          />
+          <CommandList>
+            <CommandEmpty>{t("financing.filters.noBankFound", { defaultValue: "Keine Bank gefunden." })}</CommandEmpty>
+            <CommandGroup>
+              {filtered.map((bank) => {
+                const active = selected.includes(bank);
+                return (
+                  <CommandItem
+                    key={bank}
+                    value={bank}
+                    onSelect={() => toggle(bank)}
+                  >
+                    <span className={cn("flex h-4 w-4 items-center justify-center rounded-sm border", active ? "bg-primary border-primary" : "opacity-50")}>
+                      {active && <Check className="h-3 w-3 text-primary-foreground" />}
+                    </span>
+                    <span className="truncate">{bank}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+        {selected.length > 0 && (
+          <div className="border-t p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-center text-xs"
+              onClick={() => { onChange([]); }}
+            >
+              <X className="mr-1 h-3 w-3" />
+              {t("financing.filters.clearBanks", { defaultValue: "Zurücksetzen" })}
+            </Button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
