@@ -22,16 +22,27 @@ import { ConvertLeadDialog } from "@/components/leads/ConvertLeadDialog";
 import { useConfirm } from "@/components/confirm/ConfirmProvider";
 import { deleteToTrash } from "@/lib/trash";
 
-export const Route = createFileRoute("/_app/leads/$id")({ component: LeadDetail });
+export const Route = createFileRoute("/_app/leads/$id")({ component: LeadDetailRoute });
 
 const UNASSIGNED = "__unassigned__";
 
-function LeadDetail() {
+function LeadDetailRoute() {
   const { id } = Route.useParams();
+  return <LeadDetail id={id} />;
+}
+
+export function LeadDetail({ id, inDialog, onClose, leadIds, onNavigate }: {
+  id: string;
+  inDialog?: boolean;
+  onClose?: () => void;
+  leadIds?: string[];
+  onNavigate?: (id: string) => void;
+}) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const confirm = useConfirm();
   const { user } = useAuth();
+
 
   const leadQuery = useQuery({
     queryKey: ["lead", id],
