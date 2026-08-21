@@ -107,7 +107,7 @@ function FinancingDetailPage() {
       await logActivity({
         relatedType: "financing_dossier",
         relatedId: id,
-        action: "Quick Check zurückgesetzt",
+        action: "Finanzierung zurückgesetzt",
       });
     },
     onSuccess: () => {

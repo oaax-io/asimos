@@ -171,7 +171,7 @@ export function SampleClientDialog({ trigger }: Props) {
 
           <TabsContent value="financing" className="mt-4 space-y-3">
             <Card><CardContent className="p-5">
-              <h3 className="mb-3 font-display text-lg font-semibold">Quick-Check Tragbarkeit</h3>
+              <h3 className="mb-3 font-display text-lg font-semibold">Tragbarkeit</h3>
               <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                 <Field label="Kaufpreis" value="CHF 1'290'000" />
                 <Field label="Eigenmittel" value="CHF 320'000" />

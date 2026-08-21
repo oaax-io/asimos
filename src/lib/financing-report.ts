@@ -1,4 +1,4 @@
-// Empfehlungen + HTML-Bericht für den Finanzierungs Quick-Check
+// Empfehlungen + HTML-Bericht für den Finanzierung
 // Schweizer Rechtschreibung, kein ß.
 import {
   FINANCING_TYPE_LABELS, QUICK_CHECK_LABELS,
@@ -132,7 +132,7 @@ export function buildRecommendations(input: ReportInput): Recommendation[] {
       title: "Nächste Schritte",
       items: [
         "Fehlende Pflichtangaben ergänzen (Kaufpreis, Hypothek, Einkommen)",
-        "Quick Check anschliessend wiederholen",
+        "Prüfung anschliessend wiederholen",
       ],
     });
   }
@@ -214,7 +214,7 @@ export function buildReportHtml(input: ReportInput, recs: Recommendation[]): str
 
   return `<!doctype html>
 <html lang="de-CH"><head><meta charset="utf-8"/>
-<title>${escapeHtml(companyName)} – Finanzierungs Quick-Check</title>
+<title>${escapeHtml(companyName)} – Finanzierung</title>
 <style>
   @page { size: A4; margin: 20mm 16mm 28mm; }
   * { box-sizing: border-box; }
@@ -266,7 +266,7 @@ export function buildReportHtml(input: ReportInput, recs: Recommendation[]): str
     <div class="header-left">
       ${logoUrl ? `<img class="logo" src="${escapeHtml(logoUrl)}" alt="${escapeHtml(companyName)}"/>` : `<div class="brand-text">${escapeHtml(companyName)}</div>`}
       <div>
-        <h1>Finanzierungs Quick-Check</h1>
+        <h1>Finanzierung</h1>
         <div class="muted">Unverbindliche Vorprüfung gemäss Schweizer Bankstandards</div>
       </div>
     </div>
@@ -288,7 +288,7 @@ export function buildReportHtml(input: ReportInput, recs: Recommendation[]): str
       <tr><td class="l">Kunde</td><td>${escapeHtml(input.client_name ?? "—")}</td></tr>
       <tr><td class="l">Finanzierungsart</td><td>${escapeHtml(FINANCING_TYPE_LABELS[input.financing_type])}</td></tr>
       <tr><td class="l">Objekt</td><td>${escapeHtml(input.property_label ?? "—")}</td></tr>
-      <tr><td class="l">Datenbasis</td><td>${escapeHtml(input.data_source === "quick_entry" ? "Quick-Check (manuelle Eingaben)" : "Bestehende Immobilie aus CRM")}</td></tr>
+      <tr><td class="l">Datenbasis</td><td>${escapeHtml(input.data_source === "quick_entry" ? "Finanzierung (manuelle Eingaben)" : "Bestehende Immobilie aus CRM")}</td></tr>
       <tr><td class="l">Berichtsdatum</td><td>${today}</td></tr>
     </table>
   </div>
@@ -338,7 +338,7 @@ export function buildReportHtml(input: ReportInput, recs: Recommendation[]): str
 
   <div class="section">
     <h2>Methodik</h2>
-    <p>Der Quick-Check basiert auf den marktüblichen Richtlinien Schweizer Hypothekarbanken und der FINMA-Selbstregulierung der Schweizerischen Bankiervereinigung (SBVg). Geprüft werden insbesondere die Belehnung (LTV), die Tragbarkeit auf Basis kalkulatorischer Werte sowie der Anteil harter Eigenmittel.</p>
+    <p>Die Finanzierungsprüfung basiert auf den marktüblichen Richtlinien Schweizer Hypothekarbanken und der FINMA-Selbstregulierung der Schweizerischen Bankiervereinigung (SBVg). Geprüft werden insbesondere die Belehnung (LTV), die Tragbarkeit auf Basis kalkulatorischer Werte sowie der Anteil harter Eigenmittel.</p>
     <p>Die Berechnung berücksichtigt einen kalkulatorischen Hypothekarzinssatz von 5 % p.a., Unterhalts- und Nebenkosten von 1 % des Liegenschaftswerts pro Jahr sowie die obligatorische Amortisation der zweiten Hypothek (Anteil über 66.67 % LTV) innerhalb von 15 Jahren bzw. bis zur Pensionierung. Die Eigenmittel werden in harte Eigenmittel (eigene Ersparnisse, Säule 3a, Schenkungen, Erbvorbezug) und Pensionskassenmittel unterteilt; mindestens 10 % der Belehnungsbasis müssen aus harten Eigenmitteln stammen.</p>
     <p>Diese Vorprüfung ersetzt keine vollständige Bonitätsprüfung. Eine verbindliche Finanzierungszusage kann ausschliesslich durch einen Bankpartner nach Einreichung sämtlicher Unterlagen (Lohnausweise, Steuererklärungen, Vorsorgeausweise, Objektunterlagen) erfolgen.</p>
   </div>
@@ -397,7 +397,7 @@ function buildSummaryNarrative(
   if (status === "realistic") verdict = " Die Finanzierung ist auf Basis der vorliegenden Daten realistisch und entspricht den üblichen Bankrichtlinien. Wir empfehlen, mit der vollständigen Selbstauskunft und der Bankeinreichung fortzufahren.";
   else if (status === "critical") verdict = " Die Finanzierung weist einzelne Schwachstellen auf, ist aber nicht ausgeschlossen. Mit gezielten Optimierungen (siehe Empfehlungen) kann die Bankfähigkeit deutlich verbessert werden.";
   else if (status === "not_financeable") verdict = " Die Finanzierung ist in der aktuellen Struktur nicht bankfähig. Eine grundlegende Anpassung der Eigenmittel-, Tragbarkeits- oder Objektsituation ist erforderlich.";
-  else verdict = " Für eine abschliessende Beurteilung fehlen noch Pflichtangaben. Bitte vervollständigen Sie die Eingaben und wiederholen Sie den Quick-Check.";
+  else verdict = " Für eine abschliessende Beurteilung fehlen noch Pflichtangaben. Bitte vervollständigen Sie die Eingaben und wiederholen Sie die Prüfung.";
   return base + verdict;
 }
 

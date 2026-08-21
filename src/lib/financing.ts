@@ -48,7 +48,7 @@ export const QUICK_CHECK_LABELS: Record<QuickCheckStatus, string> = {
 
 export const DOSSIER_STATUS_LABELS: Record<DossierStatus, string> = {
   draft: "Entwurf",
-  quick_check: "Quick Check",
+  quick_check: "In Prüfung",
   documents_missing: "Unterlagen fehlen",
   ready_for_bank: "Bereit für Bank",
   submitted_to_bank: "Bei Bank eingereicht",

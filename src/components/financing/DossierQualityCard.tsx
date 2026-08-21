@@ -47,8 +47,8 @@ export function DossierQualityCard({ dossierId, dossier }: Props) {
   const risks: string[] = [];
   if (!equityOk && ltv > 0) risks.push(`Belehnung ${ltv.toFixed(1)}% (über 80%)`);
   if (!affordabilityOk && affordability > 0) risks.push(`Tragbarkeit ${affordability.toFixed(1)}% (über 33%)`);
-  if (qcStatus === "not_financeable") risks.push(isRefi ? "Quick Check: nicht finanzierbar (Tragbarkeit/Belehnung)" : "Quick Check: nicht finanzierbar");
-  if (qcStatus === "critical") risks.push("Quick Check: kritisch");
+  if (qcStatus === "not_financeable") risks.push(isRefi ? "Finanzierung: nicht finanzierbar (Tragbarkeit/Belehnung)" : "Finanzierung: nicht finanzierbar");
+  if (qcStatus === "critical") risks.push("Finanzierung: kritisch");
   if (!hasMandatoryFinancials) risks.push("Pflichtdaten unvollständig (Hypothek, Investition, Einkommen)");
 
   const verdict: Verdict = computeVerdict(stats.requiredPercent, qcStatus, equityOk, affordabilityOk);

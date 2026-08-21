@@ -808,7 +808,7 @@ function ScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => void 
           <AlertDialogHeader>
             <AlertDialogTitle>Dossier mit neuen Werten aktualisieren?</AlertDialogTitle>
             <AlertDialogDescription>
-              Die Originalwerte werden überschrieben und der Quick Check neu berechnet.
+              Die Originalwerte werden überschrieben und die Finanzierung neu berechnet.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1091,7 +1091,7 @@ function RefiScenariosTab({ dossier, onSaved }: { dossier: any; onSaved: () => v
           <AlertDialogHeader>
             <AlertDialogTitle>Refinanzierung mit neuen Werten aktualisieren?</AlertDialogTitle>
             <AlertDialogDescription>
-              Die Originalwerte werden überschrieben und der Quick Check neu berechnet.
+              Die Originalwerte werden überschrieben und die Finanzierung neu berechnet.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -200,7 +200,7 @@
     "dossierStatus": {
       "title": "Finanzierungs-Dossiers nach Status",
       "draft": "Entwurf",
-      "quick_check": "Quick-Check",
+      "quick_check": "In Prüfung",
       "documents_missing": "Dokumente fehlen",
       "ready_for_bank": "Bereit für Bank",
       "submitted_to_bank": "Bei Bank eingereicht",
@@ -590,13 +590,13 @@
   },
   "financing": {
     "hypoButton": "Hyporechner Kosovo",
-    "startQuickCheck": "Quick-Check starten",
+    "startQuickCheck": "Finanzierung starten",
     "searchPlaceholder": "Suchen…",
     "filters": {
       "type": "Art",
       "allTypes": "Alle Arten",
-      "quickCheck": "Quick-Check",
-      "allQuickCheck": "Quick-Check (alle)",
+      "quickCheck": "Finanzierung",
+      "allQuickCheck": "Finanzierung (alle)",
       "dossierStatus": "Dossier-Status",
       "allStatus": "Status (alle)",
       "bankType": "Banktyp",
@@ -621,7 +621,7 @@
     "loading": "Laden…",
     "empty": {
       "title": "Noch keine Finanzierung",
-      "description": "Starte mit einer Quick-Check für einen Kunden."
+      "description": "Starte mit einer Finanzierung für einen Kunden."
     },
     "savedHypo": "Gespeicherte Hyporechner Kosovo",
     "hypo": {
@@ -651,7 +651,7 @@
       "bankType": "Banktyp: {{type}}",
       "updatedAt": "Aktualisiert {{date}}",
       "select": "Auswählen",
-      "quickCheckPrefix": "Quick-Check:",
+      "quickCheckPrefix": "Finanzierung:",
       "notYetDone": "Noch nicht durchgeführt",
       "existingProperty": "Bestehende Immobilie",
       "quickEntry": "Quick-Erfassung",
@@ -682,7 +682,7 @@
     },
     "dossierStatus": {
       "draft": "Entwurf",
-      "quick_check": "Quick-Check",
+      "quick_check": "In Prüfung",
       "documents_missing": "Unterlagen fehlen",
       "ready_for_bank": "Bereit für Bank",
       "submitted_to_bank": "Bei Bank eingereicht",
@@ -702,7 +702,7 @@
       },
       "tabs": {
         "overview": "Übersicht",
-        "quickcheck": "Quick-Check",
+        "quickcheck": "Finanzierung",
         "disclosure": "Selbstauskunft",
         "ubs": "Bank Checkliste",
         "documents": "Dokumente",
@@ -715,9 +715,9 @@
         "noProperty": "Keine Immobilie verknüpft"
       },
       "quickcheck": {
-        "start": "Quick-Check starten",
+        "start": "Finanzierung starten",
         "startDescription": "Erfasse die Eckdaten der Finanzierung im Wizard. Nach Abschluss erscheint hier das Ergebnis.",
-        "lastCheck": "Letzte Quick-Check: {{date}}",
+        "lastCheck": "Letzte Prüfung: {{date}}",
         "recalculate": "Neu berechnen",
         "subtabs": {
           "precheck": "Vorprüfung",
@@ -829,18 +829,18 @@
         }
       },
       "resetDialog": {
-        "title": "Quick-Check zurücksetzen und neu starten?",
+        "title": "Finanzierung zurücksetzen und neu starten?",
         "description": "Die gespeicherten Werte bleiben erhalten.",
         "cancel": "Abbrechen",
         "confirm": "Zurücksetzen"
       },
       "toast": {
-        "reset": "Quick-Check zurückgesetzt",
+        "reset": "Finanzierung zurückgesetzt",
         "resetFailed": "Zurücksetzen fehlgeschlagen"
       }
     },
     "wizard": {
-      "headerTitle": "Quick-Check Finanzierung – Schritt {{step}} / {{total}}",
+      "headerTitle": "Finanzierung – Schritt {{step}} / {{total}}",
       "stepLabels": {
         "modules": "Module",
         "property": "Objekt",
@@ -852,10 +852,10 @@
       "stepCounter": "Schritt {{step}} von {{total}}",
       "back": "Zurück",
       "next": "Weiter",
-      "submit": "Quick-Check starten",
+      "submit": "Finanzierung starten",
       "submitting": "Speichern…",
       "toast": {
-        "created": "Quick-Check erstellt",
+        "created": "Finanzierung erstellt",
         "saveError": "Fehler beim Speichern"
       },
       "modules": {
@@ -910,14 +910,14 @@
         "crmEmpty": "Wählen Sie links ein Objekt aus dem CRM aus.",
         "address": "Adresse",
         "purchasePrice": "Kaufpreis (CHF)",
-        "crmFilled": "Werte aus CRM vorausgefüllt. Anpassungen gelten nur für diese Quick-Check."
+        "crmFilled": "Werte aus CRM vorausgefüllt. Anpassungen gelten nur für diese Finanzierung."
       },
       "client": {
         "sourceCrm": "Kunde aus CRM wählen",
         "sourceCrmDescRefi": "Einkommen wird aus dem Kundenprofil vorausgefüllt.",
         "sourceCrmDesc": "Selbstauskunft & Eigenkapital werden vorausgefüllt.",
         "sourceManual": "Ohne Kunde / manuell",
-        "sourceManualDesc": "Quick-Check ohne Verknüpfung zu einem Kunden.",
+        "sourceManualDesc": "Finanzierung ohne Verknüpfung zu einem Kunden.",
         "main": "Hauptkunde",
         "client": "Kunde",
         "searchClient": "Kunde suchen…",
@@ -936,7 +936,7 @@
           "totalYearly": "Total / Jahr",
           "monthlyHint": "{{amount}} / Monat"
         },
-        "manualHint": "Quick-Check wird ohne Kundenverknüpfung erstellt. Die Finanzdaten erfassen Sie in Schritt 4."
+        "manualHint": "Finanzierung wird ohne Kundenverknüpfung erstellt. Die Finanzdaten erfassen Sie in Schritt 4."
       },
       "coApplicant": {
         "title": "Mitantragsteller / Ehepartner hinzufügen",
@@ -1136,8 +1136,8 @@
       "sendToClient": "An Kunde senden",
       "continueDossier": "Dossier weiterbearbeiten",
       "discard": "Nicht weiterverfolgen",
-      "reportTitle": "Finanzierungs Quick-Check – {{name}}",
-      "activity": "Quick-Check-Bericht generiert (Status: {{status}})",
+      "reportTitle": "Finanzierung – {{name}}",
+      "activity": "Finanzierungs-Bericht generiert (Status: {{status}})",
       "toast": {
         "generated": "Bericht generiert",
         "generateError": "Fehler beim Generieren",
