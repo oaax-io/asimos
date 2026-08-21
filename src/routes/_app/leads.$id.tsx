@@ -148,19 +148,38 @@ export function LeadDetail({ id, inDialog, onClose, leadIds, onNavigate }: {
   const appts = apptsQuery.data ?? [];
   const activity = activityQuery.data ?? [];
 
+  const idx = leadIds ? leadIds.indexOf(id) : -1;
+
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <Button variant="ghost" asChild>
-          <Link to="/leads"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
-        </Button>
+    <div className={inDialog ? "flex min-h-0 flex-1 flex-col overflow-hidden" : ""}>
+      <div className={inDialog ? "flex shrink-0 items-center justify-between gap-2 border-b bg-sidebar/10 px-6 py-3" : "mb-6 flex items-center justify-between"}>
+        {inDialog ? (
+          <div className="flex items-center gap-1">
+            {leadIds && leadIds.length > 1 && onNavigate && (
+              <>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={idx <= 0} onClick={() => idx > 0 && onNavigate(leadIds[idx - 1])}>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <span className="px-1 text-xs text-muted-foreground">{idx + 1} / {leadIds.length}</span>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={idx >= leadIds.length - 1} onClick={() => idx < leadIds.length - 1 && onNavigate(leadIds[idx + 1])}>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
+        ) : (
+          <Button variant="ghost" asChild>
+            <Link to="/leads"><ArrowLeft className="mr-1 h-4 w-4" />Zurück</Link>
+          </Button>
+        )}
         <div className="flex gap-2">
           <EditLeadDialog lead={lead} employees={employees} onSaved={() => {
             qc.invalidateQueries({ queryKey: ["lead", id] });
             qc.invalidateQueries({ queryKey: ["lead_activity", id] });
+            qc.invalidateQueries({ queryKey: ["leads"] });
           }} />
           {lead.status !== "converted" && (
-            <Button onClick={() => setConvertOpen(true)}>
+            <Button size={inDialog ? "sm" : "default"} onClick={() => setConvertOpen(true)}>
               <ArrowRight className="mr-1.5 h-4 w-4" />Zu Kunde konvertieren
             </Button>
           )}
@@ -168,14 +187,22 @@ export function LeadDetail({ id, inDialog, onClose, leadIds, onNavigate }: {
             lead={lead}
             open={convertOpen}
             onOpenChange={setConvertOpen}
-            onConverted={(clientId) => navigate({ to: "/clients/$id", params: { id: clientId } })}
+            onConverted={(clientId) => { onClose?.(); navigate({ to: "/clients/$id", params: { id: clientId } }); }}
           />
 
-          <Button variant="outline" size="icon" onClick={async () => { if (await confirm({ title: "Lead löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Löschen" })) del.mutate(); }}>
+          <Button variant="outline" size="icon" className={inDialog ? "h-8 w-8" : ""} onClick={async () => { if (await confirm({ title: "Lead löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Löschen" })) del.mutate(); }}>
             <Trash2 className="h-4 w-4" />
           </Button>
+          {inDialog && (
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
+
+      <div className={inDialog ? "min-h-0 flex-1 overflow-y-auto overscroll-contain p-6" : ""}>
+
 
       {/* Hero */}
       <div className="mb-6 rounded-2xl border bg-gradient-to-br from-primary/5 via-background to-background p-6">
