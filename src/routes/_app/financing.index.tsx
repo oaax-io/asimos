@@ -201,11 +201,21 @@ function FinancingPage() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.dossierStatus")} /></SelectTrigger>
+          <SelectTrigger className="w-[180px]">
+            <span className="inline-flex items-center gap-2">
+              {statusFilter !== ALL && <span className={cn("h-2.5 w-2.5 rounded-full", dossierDot(statusFilter))} />}
+              <SelectValue placeholder={t("financing.filters.dossierStatus")} />
+            </span>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>{t("financing.filters.allStatus")}</SelectItem>
             {Object.keys(DOSSIER_STATUS_LABELS).map((k) => (
-              <SelectItem key={k} value={k}>{dossierLabel(k)}</SelectItem>
+              <SelectItem key={k} value={k}>
+                <span className="inline-flex items-center gap-2">
+                  <span className={cn("h-2.5 w-2.5 rounded-full", dossierDot(k))} />
+                  {dossierLabel(k)}
+                </span>
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -216,14 +226,6 @@ function FinancingPage() {
             <SelectItem value="ubs">UBS</SelectItem>
             <SelectItem value="other">{t("financing.filters.otherBank")}</SelectItem>
             <SelectItem value="none">{t("financing.filters.noBank")}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.dataSource")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("financing.filters.allDataSources")}</SelectItem>
-            <SelectItem value="existing_property">{t("financing.filters.existingProperty")}</SelectItem>
-            <SelectItem value="quick_entry">{t("financing.filters.quickEntry")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -506,6 +508,20 @@ function qcTone(s: string) {
   if (s === "critical") return "border-amber-500 text-amber-600";
   if (s === "not_financeable") return "border-red-500 text-red-600";
   return "border-muted text-muted-foreground";
+}
+
+function dossierDot(s: string | null | undefined): string {
+  switch (s) {
+    case "approved": return "bg-emerald-600";
+    case "ready_for_bank": return "bg-emerald-500";
+    case "submitted_to_bank": return "bg-blue-600";
+    case "documents_missing": return "bg-amber-500";
+    case "rejected": return "bg-red-600";
+    case "cancelled": return "bg-muted-foreground";
+    case "quick_check": return "bg-violet-600";
+    case "draft": return "bg-slate-400";
+    default: return "bg-secondary";
+  }
 }
 
 function dossierTone(s: string | null | undefined): string {
