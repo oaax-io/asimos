@@ -62,6 +62,11 @@ export async function resolveDocumentContext(input: ResolveInput): Promise<Templ
   // Company (singleton)
   const { data: company } = await supabase.from("company").select("*").maybeSingle();
   if (company) {
+    // Company logo is the stable source; brand kit logo only wins if explicitly set.
+    const companyLogo = (company as any).logo_url ?? null;
+    if (companyLogo) {
+      ctx.brand = { ...(ctx.brand ?? {}), logo_url: ctx.brand?.logo_url || companyLogo } as typeof ctx.brand;
+    }
     ctx.company = {
       name: company.name,
       legal_name: (company as any).legal_name,

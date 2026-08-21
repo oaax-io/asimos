@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Image as ImageIcon, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 type CompanyForm = {
@@ -82,6 +83,50 @@ export function CompanyProfileForm() {
 
   const set = <K extends keyof CompanyForm>(k: K, v: CompanyForm[K]) => setForm((f) => ({ ...f, [k]: v }));
 
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const persistLogo = async (url: string) => {
+    setForm((f) => ({ ...f, logo_url: url }));
+    const { error } = await supabase.from("company").update({ logo_url: url || null } as any).eq("id", true);
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    qc.invalidateQueries({ queryKey: ["company-full"] });
+    qc.invalidateQueries({ queryKey: ["company"] });
+    qc.invalidateQueries({ queryKey: ["doc-ctx"] });
+    toast.success(url ? "Logo gespeichert" : "Logo entfernt");
+    return true;
+  };
+
+  const uploadLogo = async (file: File) => {
+    const allowed = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+    if (!allowed.includes(file.type)) {
+      toast.error("Nur PNG, JPG, WEBP oder SVG erlaubt.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Datei ist grösser als 5 MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `company/logo-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("brand-assets")
+        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("brand-assets").getPublicUrl(path);
+      await persistLogo(pub.publicUrl);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <Card>
       <CardContent className="space-y-6 p-6">
@@ -135,10 +180,55 @@ export function CompanyProfileForm() {
 
         <section className="space-y-4">
           <h3 className="text-sm font-medium">Logo</h3>
-          <div><Label>Logo-URL</Label><Input value={form.logo_url} onChange={(e) => set("logo_url", e.target.value)} placeholder="https://..." /></div>
-          {form.logo_url ? (
-            <img src={form.logo_url} alt="Firmenlogo" className="h-16 rounded border bg-muted/30 object-contain p-2" />
-          ) : null}
+          <p className="text-sm text-muted-foreground">
+            Wird automatisch in Exposés, Verträgen und weiteren Dokumenten verwendet. PNG, JPG, WEBP oder SVG, max. 5 MB.
+          </p>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex h-24 w-40 items-center justify-center rounded-lg border bg-muted/30 p-2">
+              {form.logo_url ? (
+                <img src={form.logo_url} alt="Firmenlogo" className="max-h-full max-w-full object-contain" />
+              ) : (
+                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+              )}
+            </div>
+            <div className="space-y-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) uploadLogo(f);
+                }}
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" disabled={uploading} onClick={() => fileRef.current?.click()}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  {uploading ? "Wird hochgeladen…" : form.logo_url ? "Logo ersetzen" : "Logo hochladen"}
+                </Button>
+                {form.logo_url && (
+                  <Button type="button" variant="ghost" disabled={uploading} onClick={() => persistLogo("")}>
+                    <Trash2 className="mr-2 h-4 w-4" />Entfernen
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">Das Logo wird sofort gespeichert.</p>
+            </div>
+          </div>
+          <div>
+            <Label>Logo-URL (optional manuell)</Label>
+            <Input
+              value={form.logo_url}
+              onChange={(e) => set("logo_url", e.target.value)}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v !== ((data as any)?.logo_url ?? "")) persistLogo(v);
+              }}
+              placeholder="https://..."
+            />
+          </div>
         </section>
 
         <div className="flex justify-end pt-2">
