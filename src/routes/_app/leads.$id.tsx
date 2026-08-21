@@ -120,7 +120,11 @@ export function LeadDetail({ id, inDialog, onClose, leadIds, onNavigate }: {
     mutationFn: async () => {
       await deleteToTrash("leads", id);
     },
-    onSuccess: () => { toast.success("Lead gelöscht"); navigate({ to: "/leads" }); },
+    onSuccess: () => {
+      toast.success("Lead gelöscht");
+      qc.invalidateQueries({ queryKey: ["leads"] });
+      if (inDialog) onClose?.(); else navigate({ to: "/leads" });
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
