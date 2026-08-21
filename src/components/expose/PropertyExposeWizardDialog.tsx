@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Check, ChevronLeft, ChevronRight, FileDown, Image as ImageIcon, LayoutTemplate,
-  Loader2, ListChecks, Eye, Star, Sparkles,
+  Loader2, ListChecks, Eye, Star, Sparkles, UserRound,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
