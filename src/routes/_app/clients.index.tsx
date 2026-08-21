@@ -373,7 +373,12 @@ function ClientsPage() {
   return (
     <>
       <PageHeader
-        i18nKey="clients"
+        title={
+          <span className="inline-flex items-center gap-2.5">
+            <Users className="h-8 w-8 text-[#6F6B94]" />
+            {t("pages.clients.title")}
+          </span>
+        }
         action={
           <div className="flex items-center gap-2">
             <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>

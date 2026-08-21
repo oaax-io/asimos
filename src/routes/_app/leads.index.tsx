@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Mail, Phone, ArrowRight, Search, Pencil, ExternalLink, LayoutGrid, List as ListIcon, Trash2, UserCog, MoreHorizontal, X, Upload } from "lucide-react";
+import { Plus, Mail, Phone, ArrowRight, Search, Pencil, ExternalLink, LayoutGrid, List as ListIcon, Trash2, UserCog, MoreHorizontal, X, Upload, UserPlus} from "lucide-react";
 import { LeadImportSourceDialog } from "@/components/leads/LeadImportSourceDialog";
 import { LeadImportWizard } from "@/components/leads/LeadImportWizard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -253,7 +253,12 @@ function LeadsPage() {
     <Tabs defaultValue="list" className="w-full">
 
       <PageHeader
-        i18nKey="leads"
+        title={
+          <span className="inline-flex items-center gap-2.5">
+            <UserPlus className="h-8 w-8 text-[#6F6B94]" />
+            {t("pages.leads.title")}
+          </span>
+        }
         action={
           <>
             <TabsList className="h-9 rounded-lg bg-primary/15 p-1">

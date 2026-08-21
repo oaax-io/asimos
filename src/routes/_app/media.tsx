@@ -511,7 +511,12 @@ function MediaPage() {
   return (
     <>
       <PageHeader
-        i18nKey="media"
+        title={
+          <span className="inline-flex items-center gap-2.5">
+            <ImageIcon className="h-8 w-8 text-[#6F6B94]" />
+            {t("pages.media.title")}
+          </span>
+        }
         action={
           <div className="flex items-center gap-2">
             <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "folder" | "grid")}>

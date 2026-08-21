@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, CheckCircle2, Circle, Clock, AlertCircle, Search, Trash2, ExternalLink } from "lucide-react";
+import { Plus, CheckCircle2, Circle, Clock, AlertCircle, Search, Trash2, ExternalLink, CheckSquare} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -264,7 +264,12 @@ function TasksPage() {
   return (
     <>
       <PageHeader
-        i18nKey="tasks"
+        title={
+          <span className="inline-flex items-center gap-2.5">
+            <CheckSquare className="h-8 w-8 text-[#6F6B94]" />
+            {t("pages.tasks.title")}
+          </span>
+        }
         action={<Button onClick={() => setOpen(true)}><Plus className="mr-1 h-4 w-4" />{t("tasks.new")}</Button>}
       />
 

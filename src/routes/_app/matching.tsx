@@ -313,7 +313,12 @@ function MatchingPage() {
   return (
     <>
       <PageHeader
-        i18nKey="matching"
+        title={
+          <span className="inline-flex items-center gap-2.5">
+            <Target className="h-8 w-8 text-[#6F6B94]" />
+            {t("pages.matching.title")}
+          </span>
+        }
         action={
           <Button
             onClick={() => {
