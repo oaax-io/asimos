@@ -28,6 +28,9 @@ import { AssigneeAvatars, AssigneePicker, initials, useClientAssignees } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ClientPinButton, useClientPins } from "@/components/clients/ClientPin";
 import { deleteToTrash } from "@/lib/trash";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
