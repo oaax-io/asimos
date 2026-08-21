@@ -201,11 +201,21 @@ function FinancingPage() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.dossierStatus")} /></SelectTrigger>
+          <SelectTrigger className="w-[180px]">
+            <span className="inline-flex items-center gap-2">
+              {statusFilter !== ALL && <span className={cn("h-2.5 w-2.5 rounded-full", dossierDot(statusFilter))} />}
+              <SelectValue placeholder={t("financing.filters.dossierStatus")} />
+            </span>
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>{t("financing.filters.allStatus")}</SelectItem>
             {Object.keys(DOSSIER_STATUS_LABELS).map((k) => (
-              <SelectItem key={k} value={k}>{dossierLabel(k)}</SelectItem>
+              <SelectItem key={k} value={k}>
+                <span className="inline-flex items-center gap-2">
+                  <span className={cn("h-2.5 w-2.5 rounded-full", dossierDot(k))} />
+                  {dossierLabel(k)}
+                </span>
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
