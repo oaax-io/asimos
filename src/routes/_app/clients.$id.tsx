@@ -1149,7 +1149,7 @@ function FinancingTab({
                   <div className={`rounded-lg border p-3 ${qcTone}`}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="text-xs font-semibold uppercase tracking-wide">
-                        Quick Check: {qcStatus ? (QUICK_CHECK_LABELS[qcStatus] ?? qcStatus) : "Noch nicht durchgeführt"}
+                        Finanzierung: {qcStatus ? (QUICK_CHECK_LABELS[qcStatus] ?? qcStatus) : "Noch nicht durchgeführt"}
                       </div>
                     </div>
                     <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
