@@ -717,7 +717,7 @@
       "quickcheck": {
         "start": "Démarrer le financement",
         "startDescription": "Saisissez les données clés du financement dans l'assistant. Le résultat s'affichera ici à la fin.",
-        "lastCheck": "Dernière Financement : {{date}}",
+        "lastCheck": "Dernier examen : {{date}}",
         "recalculate": "Recalculer",
         "subtabs": {
           "precheck": "Pré-examen",

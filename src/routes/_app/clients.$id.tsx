@@ -1068,7 +1068,7 @@ function FinancingTab({
             <h3 className="font-display text-lg font-semibold">Finanzierungs-Dossiers</h3>
             <p className="text-sm text-muted-foreground">
               Zentrale Finanzierungen für diesen Kunden. Jedes Dossier kann
-              Quick Check, Selbstauskunft, Dokumente und Bank-Einreichung enthalten.
+              Finanzierung, Selbstauskunft, Dokumente und Bank-Einreichung enthalten.
             </p>
           </div>
           <div className="flex gap-2">
@@ -1085,11 +1085,11 @@ function FinancingTab({
             <FileSignature className="mx-auto h-10 w-10 text-muted-foreground" />
             <h3 className="mt-4 font-display text-lg font-semibold">Noch kein Finanzierungsdossier</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Starte einen Quick Check, um die Finanzierbarkeit für diesen Kunden zu prüfen.
+              Starte eine Finanzierung, um die Finanzierbarkeit für diesen Kunden zu prüfen.
             </p>
             <div className="mt-6">
               <Button onClick={() => setWizardOpen(true)}>
-                <Plus className="mr-1.5 h-4 w-4" />Quick Check starten
+                <Plus className="mr-1.5 h-4 w-4" />Finanzierung starten
               </Button>
             </div>
           </CardContent>
