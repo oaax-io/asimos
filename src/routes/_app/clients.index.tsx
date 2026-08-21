@@ -471,8 +471,8 @@ function ClientsPage() {
             <SelectItem value="all">{t("clients.filters.all")}</SelectItem>
           </SelectContent>
         </Select>
-        {(typeFilter !== ALL || assignedFilter !== ALL || financingFilter !== ALL || statusFilter !== ALL || search) && (
-          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilter(ALL); setAssignedFilter(ALL); setFinancingFilter(ALL); setStatusFilter(ALL); }}>
+        {(typeFilters.length > 0 || assignedFilters.length > 0 || financingFilter !== ALL || statusFilter !== ALL || search) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilters([]); setAssignedFilters([]); setFinancingFilter(ALL); setStatusFilter(ALL); }}>
             {t("clients.filters.reset")}
           </Button>
         )}
