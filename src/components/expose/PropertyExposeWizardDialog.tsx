@@ -134,10 +134,39 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return null;
-      const { data } = await supabase.from("profiles").select("full_name,email,phone").eq("id", u.user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("id,full_name,email,phone,avatar_url").eq("id", u.user.id).maybeSingle();
       return data;
     },
   });
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ["expose-wizard-employees"],
+    enabled: open,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id,full_name,email,phone,avatar_url")
+        .order("full_name", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const contact = useMemo(() => {
+    if (!withContact) return { name: null, email: null, phone: null };
+    if (contactMode === "custom") {
+      return {
+        name: [customContact.name, customContact.role].filter(Boolean).join(" · ") || null,
+        email: customContact.email || null,
+        phone: customContact.phone || null,
+      };
+    }
+    const emp = (employees as any[]).find((e) => e.id === contactUserId) ?? (profile as any);
+    return {
+      name: emp?.full_name ?? null,
+      email: emp?.email ?? null,
+      phone: emp?.phone ?? null,
+    };
+  }, [withContact, contactMode, customContact, employees, contactUserId, profile]);
 
   const imagePool = useMemo(() => {
     const fromMedia = (media as any[])
