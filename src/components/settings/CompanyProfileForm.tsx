@@ -83,6 +83,50 @@ export function CompanyProfileForm() {
 
   const set = <K extends keyof CompanyForm>(k: K, v: CompanyForm[K]) => setForm((f) => ({ ...f, [k]: v }));
 
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const persistLogo = async (url: string) => {
+    setForm((f) => ({ ...f, logo_url: url }));
+    const { error } = await supabase.from("company").update({ logo_url: url || null } as any).eq("id", true);
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    qc.invalidateQueries({ queryKey: ["company-full"] });
+    qc.invalidateQueries({ queryKey: ["company"] });
+    qc.invalidateQueries({ queryKey: ["doc-ctx"] });
+    toast.success(url ? "Logo gespeichert" : "Logo entfernt");
+    return true;
+  };
+
+  const uploadLogo = async (file: File) => {
+    const allowed = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+    if (!allowed.includes(file.type)) {
+      toast.error("Nur PNG, JPG, WEBP oder SVG erlaubt.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Datei ist grösser als 5 MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `company/logo-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("brand-assets")
+        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "3600" });
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("brand-assets").getPublicUrl(path);
+      await persistLogo(pub.publicUrl);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <Card>
       <CardContent className="space-y-6 p-6">
