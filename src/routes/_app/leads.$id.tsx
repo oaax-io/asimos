@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   ArrowLeft, Mail, Phone, Calendar, MessageSquare, CheckSquare, Activity,
-  ArrowRight, Pencil, Trash2, Plus, RefreshCw, User as UserIcon,
+  ArrowRight, Pencil, Trash2, Plus, RefreshCw, User as UserIcon, X,
 } from "lucide-react";
 import { leadStatusLabels, leadStatuses, type LeadStatus, formatDate, formatDateTime, apptTypeLabels } from "@/lib/format";
 import { toast } from "sonner";
