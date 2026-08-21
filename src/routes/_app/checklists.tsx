@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
+import { deleteToTrash } from "@/lib/trash";
 
 export const Route = createFileRoute("/_app/checklists")({ component: ChecklistsPage });
 
@@ -131,8 +132,7 @@ function ChecklistsPage() {
   const removeList = useMutation({
     mutationFn: async (id: string) => {
       await supabase.from("checklist_items").delete().eq("checklist_id", id);
-      const { error } = await supabase.from("checklists").delete().eq("id", id);
-      if (error) throw error;
+      await deleteToTrash("checklists", id);
     },
     onSuccess: () => { toast.success("Checkliste gelöscht"); qc.invalidateQueries({ queryKey: ["checklists"] }); setOpenId(null); },
   });

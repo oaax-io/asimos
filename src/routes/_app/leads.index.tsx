@@ -28,6 +28,7 @@ import { addLead, getLeads } from "@/lib/crm.functions";
 import { ConvertLeadDialog } from "@/components/leads/ConvertLeadDialog";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { deleteToTrash } from "@/lib/trash";
 
 export const Route = createFileRoute("/_app/leads/")({ component: LeadsPage });
 
@@ -217,8 +218,7 @@ function LeadsPage() {
 
   const bulkDelete = useMutation({
     mutationFn: async (ids: string[]) => {
-      const { error } = await supabase.from("leads").delete().in("id", ids);
-      if (error) throw error;
+      await deleteToTrash("leads", ids);
     },
     onSuccess: (_d, ids) => {
       toast.success(t("leads.bulk.deletedToast", { count: ids.length }));

@@ -21,6 +21,7 @@ import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumen
 import { DocumentTemplatesManager } from "@/components/settings/DocumentTemplatesManager";
 import { DocumentFolderView } from "@/components/documents/DocumentFolderView";
 import { useTranslation } from "react-i18next";
+import { deleteToTrash } from "@/lib/trash";
 
 export const Route = createFileRoute("/_app/documents")({ component: DocumentsPage });
 
@@ -168,8 +169,7 @@ function DocumentsPage() {
       if (doc.file_url && !doc.file_url.startsWith("http")) {
         await supabase.storage.from("documents").remove([doc.file_url]);
       }
-      const { error } = await supabase.from("documents").delete().eq("id", doc.id);
-      if (error) throw error;
+      await deleteToTrash("documents", doc.id);
     },
     onSuccess: () => {
       toast.success(t("documents.toasts.deleted"));

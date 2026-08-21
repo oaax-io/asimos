@@ -35,6 +35,7 @@ import { publishPropertyToPortal } from "@/lib/portal.functions";
 import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/properties/PropertyAssignees";
 import type { EmployeeLite } from "@/components/clients/ClientAssignees";
 import { PropertyQuickActions } from "@/components/properties/PropertyQuickActions";
+import { deleteToTrash } from "@/lib/trash";
 
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
@@ -358,8 +359,7 @@ function PropertyDetail() {
 
   const del = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("properties").delete().eq("id", id);
-      if (error) throw error;
+      await deleteToTrash("properties", id);
     },
     onSuccess: () => { toast.success("Gelöscht"); navigate({ to: "/properties" }); },
   });
@@ -1829,8 +1829,7 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
       if (d.file_url && !d.file_url.startsWith("http")) {
         await supabase.storage.from("documents").remove([d.file_url]);
       }
-      const { error } = await supabase.from("documents").delete().eq("id", d.id);
-      if (error) throw error;
+      await deleteToTrash("documents", d.id);
     },
     onSuccess: () => {
       toast.success("Dokument gelöscht");

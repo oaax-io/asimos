@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { ConvertLeadDialog } from "@/components/leads/ConvertLeadDialog";
 import { useConfirm } from "@/components/confirm/ConfirmProvider";
+import { deleteToTrash } from "@/lib/trash";
 
 export const Route = createFileRoute("/_app/leads/$id")({ component: LeadDetail });
 
@@ -106,8 +107,7 @@ function LeadDetail() {
 
   const del = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("leads").delete().eq("id", id);
-      if (error) throw error;
+      await deleteToTrash("leads", id);
     },
     onSuccess: () => { toast.success("Lead gelöscht"); navigate({ to: "/leads" }); },
     onError: (e: any) => toast.error(e.message),

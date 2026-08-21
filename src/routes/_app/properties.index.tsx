@@ -25,6 +25,7 @@ import { PropertyHoverCard } from "@/components/properties/PropertyHoverCard";
 import { AssigneeAvatars } from "@/components/clients/ClientAssignees";
 import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/properties/PropertyAssignees";
 import { PropertyPinButton, usePropertyPins, propertyPinRowClass } from "@/components/properties/PropertyPin";
+import { deleteToTrash } from "@/lib/trash";
 
 export const Route = createFileRoute("/_app/properties/")({ component: PropertiesPage });
 
@@ -301,8 +302,7 @@ function PropertiesPage() {
     mutationFn: async () => {
       const ids = Array.from(selected);
       if (!ids.length) return;
-      const { error } = await supabase.from("properties").delete().in("id", ids);
-      if (error) throw error;
+      await deleteToTrash("properties", ids);
     },
     onSuccess: () => {
       toast.success(t("properties.toasts.deleted"));
