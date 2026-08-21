@@ -500,6 +500,20 @@ function qcTone(s: string) {
   return "border-muted text-muted-foreground";
 }
 
+function dossierDot(s: string | null | undefined): string {
+  switch (s) {
+    case "approved": return "bg-emerald-600";
+    case "ready_for_bank": return "bg-emerald-500";
+    case "submitted_to_bank": return "bg-blue-600";
+    case "documents_missing": return "bg-amber-500";
+    case "rejected": return "bg-red-600";
+    case "cancelled": return "bg-muted-foreground";
+    case "quick_check": return "bg-violet-600";
+    case "draft": return "bg-slate-400";
+    default: return "bg-secondary";
+  }
+}
+
 function dossierTone(s: string | null | undefined): string {
   switch (s) {
     case "approved": return "bg-emerald-600 hover:bg-emerald-600";
