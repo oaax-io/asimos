@@ -238,9 +238,9 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
         gallery_urls: gallery.filter((u) => u !== cover),
         gallery_cols: cols,
         agency_name: company?.name ?? "ASIMO",
-        contact_name: withContact ? profile?.full_name ?? null : null,
-        contact_email: withContact ? profile?.email ?? null : null,
-        contact_phone: withContact ? profile?.phone ?? null : null,
+        contact_name: contact.name,
+        contact_email: contact.email,
+        contact_phone: contact.phone,
         generated_on: new Date().toLocaleDateString("de-CH"),
       } as any,
       {
