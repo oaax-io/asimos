@@ -223,13 +223,14 @@ function ClientsPage() {
     const list = clients.filter((c: any) => {
       if (archivedFilter === "active" && c.is_archived) return false;
       if (archivedFilter === "archived" && !c.is_archived) return false;
-      if (typeFilter !== ALL && c.client_type !== typeFilter) return false;
-      if (assignedFilter !== ALL) {
+      if (typeFilters.length && !typeFilters.includes(c.client_type)) return false;
+      if (assignedFilters.length) {
         const list = assigneesByClient.get(c.id) ?? [];
         const eff = c.assigned_to ?? c.owner_id;
         const all = list.length ? list : (eff ? [eff] : []);
-        if (assignedFilter === UNASSIGNED && all.length) return false;
-        if (assignedFilter !== UNASSIGNED && !all.includes(assignedFilter)) return false;
+        if (assignedFilters.includes(UNASSIGNED) && assignedFilters.length === 1 && all.length) return false;
+        if (!assignedFilters.includes(UNASSIGNED) && !assignedFilters.some((f) => all.includes(f))) return false;
+        if (assignedFilters.includes(UNASSIGNED) && assignedFilters.length > 1 && !assignedFilters.some((f) => f !== UNASSIGNED && all.includes(f))) return false;
       }
       if (financingFilter !== ALL) {
         if (financingFilter === NO_FIN && c.financing_status) return false;
