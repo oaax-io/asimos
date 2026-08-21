@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
@@ -437,10 +438,6 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
                   <label className="flex items-center gap-2 text-sm">
                     <Checkbox checked={withFeatures} onCheckedChange={() => setWithFeatures((v) => !v)} />
                     Ausstattung anzeigen
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <Checkbox checked={withContact} onCheckedChange={() => setWithContact((v) => !v)} />
-                    Kontaktangaben anzeigen
                   </label>
                 </div>
               </div>
