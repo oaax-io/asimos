@@ -24,7 +24,8 @@ import { ClientWizard } from "@/components/clients/ClientWizard";
 import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { useTranslation } from "react-i18next";
-import { AssigneeAvatars, AssigneePicker, useClientAssignees } from "@/components/clients/ClientAssignees";
+import { AssigneeAvatars, AssigneePicker, initials, useClientAssignees } from "@/components/clients/ClientAssignees";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ClientPinButton, useClientPins } from "@/components/clients/ClientPin";
 import { deleteToTrash } from "@/lib/trash";
 
@@ -411,11 +412,21 @@ function ClientsPage() {
           </SelectContent>
         </Select>
         <Select value={assignedFilter} onValueChange={setAssignedFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("clients.filters.assigned")} /></SelectTrigger>
+          <SelectTrigger className="w-[200px]"><SelectValue placeholder={t("clients.filters.assigned")} /></SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>{t("clients.filters.allEmployees")}</SelectItem>
             <SelectItem value={UNASSIGNED}>{t("clients.filters.unassigned")}</SelectItem>
-            {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email}</SelectItem>)}
+            {employees.map((e: any) => (
+              <SelectItem key={e.id} value={e.id}>
+                <span className="flex items-center gap-2">
+                  <Avatar className="h-5 w-5 text-[9px]">
+                    {e.avatar_url ? <AvatarImage src={e.avatar_url} alt={e.full_name ?? ""} /> : null}
+                    <AvatarFallback className="bg-primary/10 text-primary">{initials(e)}</AvatarFallback>
+                  </Avatar>
+                  <span className="truncate">{e.full_name ?? e.email}</span>
+                </span>
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -492,7 +503,11 @@ function ClientsPage() {
                 <DropdownMenuSeparator />
                 {employees.map((e: any) => (
                   <DropdownMenuItem key={e.id} onClick={() => assign.mutate(e.id)}>
-                    {e.full_name ?? e.email}
+                    <Avatar className="mr-2 h-5 w-5 text-[9px]">
+                      {e.avatar_url ? <AvatarImage src={e.avatar_url} alt={e.full_name ?? ""} /> : null}
+                      <AvatarFallback className="bg-primary/10 text-primary">{initials(e)}</AvatarFallback>
+                    </Avatar>
+                    <span className="truncate">{e.full_name ?? e.email}</span>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
