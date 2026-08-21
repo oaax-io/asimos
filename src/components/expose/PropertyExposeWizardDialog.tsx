@@ -61,6 +61,7 @@ const STEPS = [
   { label: "Vorlage", icon: LayoutTemplate },
   { label: "Inhalte", icon: ListChecks },
   { label: "Galerie", icon: ImageIcon },
+  { label: "Ansprechperson", icon: UserRound },
   { label: "Vorschau", icon: Eye },
   { label: "Generieren", icon: FileDown },
 ] as const;
