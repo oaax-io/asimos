@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Check, ChevronLeft, ChevronRight, FileDown, Image as ImageIcon, LayoutTemplate,
-  Loader2, ListChecks, Eye, Star, Sparkles,
+  Loader2, ListChecks, Eye, Star, Sparkles, UserRound,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +62,7 @@ const STEPS = [
   { label: "Vorlage", icon: LayoutTemplate },
   { label: "Inhalte", icon: ListChecks },
   { label: "Galerie", icon: ImageIcon },
+  { label: "Ansprechperson", icon: UserRound },
   { label: "Vorschau", icon: Eye },
   { label: "Generieren", icon: FileDown },
 ] as const;
@@ -101,6 +103,9 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [galleryLayout, setGalleryLayout] = useState<GalerieLayout>("grid2");
   const [generating, setGenerating] = useState(false);
+  const [contactMode, setContactMode] = useState<"employee" | "custom">("employee");
+  const [contactUserId, setContactUserId] = useState<string | null>(null);
+  const [customContact, setCustomContact] = useState({ name: "", email: "", phone: "", role: "" });
 
   const renderPdf = useServerFn(renderDocumentPdf);
   const fetchBytes = useServerFn(fetchDocumentPdfBytes);
@@ -130,10 +135,39 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return null;
-      const { data } = await supabase.from("profiles").select("full_name,email,phone").eq("id", u.user.id).maybeSingle();
+      const { data } = await supabase.from("profiles").select("id,full_name,email,phone,avatar_url").eq("id", u.user.id).maybeSingle();
       return data;
     },
   });
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ["expose-wizard-employees"],
+    enabled: open,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id,full_name,email,phone,avatar_url")
+        .order("full_name", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const contact = useMemo(() => {
+    if (!withContact) return { name: null, email: null, phone: null };
+    if (contactMode === "custom") {
+      return {
+        name: [customContact.name, customContact.role].filter(Boolean).join(" · ") || null,
+        email: customContact.email || null,
+        phone: customContact.phone || null,
+      };
+    }
+    const emp = (employees as any[]).find((e) => e.id === contactUserId) ?? (profile as any);
+    return {
+      name: emp?.full_name ?? null,
+      email: emp?.email ?? null,
+      phone: emp?.phone ?? null,
+    };
+  }, [withContact, contactMode, customContact, employees, contactUserId, profile]);
 
   const imagePool = useMemo(() => {
     const fromMedia = (media as any[])
@@ -205,9 +239,9 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
         gallery_urls: gallery.filter((u) => u !== cover),
         gallery_cols: cols,
         agency_name: company?.name ?? "ASIMO",
-        contact_name: withContact ? profile?.full_name ?? null : null,
-        contact_email: withContact ? profile?.email ?? null : null,
-        contact_phone: withContact ? profile?.phone ?? null : null,
+        contact_name: contact.name,
+        contact_email: contact.email,
+        contact_phone: contact.phone,
         generated_on: new Date().toLocaleDateString("de-CH"),
       } as any,
       {
@@ -224,9 +258,9 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   };
 
   const previewHtml = useMemo(
-    () => (step === 3 ? buildHtml(coverUrl, galleryUrls) : ""),
+    () => (step === 4 ? buildHtml(coverUrl, galleryUrls) : ""),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [step, coverUrl, galleryUrls, galleryLayout, template, title, description, withDescription, withFeatures, withContact, facts, company, profile],
+    [step, coverUrl, galleryUrls, galleryLayout, template, title, description, withDescription, withFeatures, withContact, contact, facts, company, profile],
   );
 
   async function handleGenerate() {
@@ -405,10 +439,6 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
                     <Checkbox checked={withFeatures} onCheckedChange={() => setWithFeatures((v) => !v)} />
                     Ausstattung anzeigen
                   </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <Checkbox checked={withContact} onCheckedChange={() => setWithContact((v) => !v)} />
-                    Kontaktangaben anzeigen
-                  </label>
                 </div>
               </div>
             )}
@@ -488,15 +518,103 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
             )}
 
             {step === 3 && (
+              <div className="space-y-4">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={withContact} onCheckedChange={() => setWithContact((v) => !v)} />
+                  Ansprechperson im Exposé anzeigen
+                </label>
+
+                <div className={cn("space-y-4", !withContact && "pointer-events-none opacity-50")}>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setContactMode("employee")}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                        contactMode === "employee" ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/40",
+                      )}
+                    >
+                      Mitarbeitende
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setContactMode("custom")}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                        contactMode === "custom" ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/40",
+                      )}
+                    >
+                      Zusätzliche Person
+                    </button>
+                  </div>
+
+                  {contactMode === "employee" ? (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {(employees as any[]).length === 0 && (
+                        <p className="text-sm text-muted-foreground">Keine Mitarbeitenden gefunden.</p>
+                      )}
+                      {(employees as any[]).map((e) => {
+                        const active = (contactUserId ?? (profile as any)?.id) === e.id;
+                        return (
+                          <button
+                            key={e.id}
+                            type="button"
+                            onClick={() => setContactUserId(e.id)}
+                            className={cn(
+                              "flex items-center gap-3 rounded-xl border p-3 text-left transition",
+                              active ? "border-primary bg-primary/5 ring-1 ring-primary/25" : "hover:border-primary/40",
+                            )}
+                          >
+                            <Avatar className="h-9 w-9">
+                              {e.avatar_url ? <AvatarImage src={e.avatar_url} alt={e.full_name ?? ""} /> : null}
+                              <AvatarFallback className="bg-primary/10 text-xs text-primary">
+                                {(e.full_name ?? e.email ?? "?").slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium">{e.full_name ?? e.email}</p>
+                              <p className="truncate text-xs text-muted-foreground">{e.email}{e.phone ? ` · ${e.phone}` : ""}</p>
+                            </div>
+                            {active && <Check className="ml-auto h-4 w-4 text-primary" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label>Name</Label>
+                        <Input value={customContact.name} onChange={(e) => setCustomContact((c) => ({ ...c, name: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Funktion (optional)</Label>
+                        <Input value={customContact.role} onChange={(e) => setCustomContact((c) => ({ ...c, role: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>E-Mail</Label>
+                        <Input type="email" value={customContact.email} onChange={(e) => setCustomContact((c) => ({ ...c, email: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Telefon</Label>
+                        <Input value={customContact.phone} onChange={(e) => setCustomContact((c) => ({ ...c, phone: e.target.value }))} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
                   Vorschau · Vorlage {template.label} · {galleryUrls.filter((u) => u !== coverUrl).length} Galeriebilder
+                  {contact.name ? ` · Ansprechperson ${contact.name}` : ""}
                 </p>
                 <iframe title="Exposé-Vorschau" srcDoc={previewHtml} className="h-[60vh] w-full rounded-lg border bg-white" />
               </div>
             )}
 
-            {step === 4 && (
+            {step === 5 && (
               <div className="space-y-4 py-6 text-center">
                 <FileDown className="mx-auto h-10 w-10 text-primary" />
                 <div>
