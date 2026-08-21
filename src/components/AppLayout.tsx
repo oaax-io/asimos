@@ -9,7 +9,8 @@ import {
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useMyProfile } from "@/hooks/useMyProfile";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger,
@@ -180,8 +181,6 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
     );
   }
 
-  const initials = (user.user_metadata?.full_name || user.email || "U")
-    .split(" ").map((s: string) => s[0]).slice(0, 2).join("").toUpperCase();
 
   return (
     <ChatDockProvider>
@@ -217,6 +216,9 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                   <Button variant="ghost" className="gap-2 px-2">
                     <span className="relative">
                       <Avatar className="h-8 w-8">
+                        {avatarUrl ? (
+                          <AvatarImage src={avatarUrl} alt={fullName || "Profilbild"} />
+                        ) : null}
                         <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                           {initials}
                         </AvatarFallback>
@@ -224,7 +226,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                       <MyPresenceDot />
                     </span>
                     <span className="hidden text-sm font-medium md:block">
-                      {user.user_metadata?.full_name || user.email}
+                      {fullName}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
