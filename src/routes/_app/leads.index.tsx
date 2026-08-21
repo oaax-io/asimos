@@ -37,7 +37,6 @@ export const Route = createFileRoute("/_app/leads/")({ component: LeadsPage });
 type Lead = Tables<"leads">;
 type Profile = { id: string; full_name: string | null; email: string | null; avatar_url?: string | null };
 
-const ALL = "__all__";
 const UNASSIGNED = "__unassigned__";
 const LEAD_SOURCES = ["Eigenlead", "Website", "Empfehlung", "Tiktok", "Instagram", "Facebook"] as const;
 
