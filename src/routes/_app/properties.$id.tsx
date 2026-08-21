@@ -34,6 +34,8 @@ import { PropertyExposeWizardDialog } from "@/components/expose/PropertyExposeWi
 import { publishPropertyToPortal } from "@/lib/portal.functions";
 import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/properties/PropertyAssignees";
 import type { EmployeeLite } from "@/components/clients/ClientAssignees";
+import { PropertyQuickActions } from "@/components/properties/PropertyQuickActions";
+
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
 
