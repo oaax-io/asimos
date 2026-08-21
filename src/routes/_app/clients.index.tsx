@@ -425,31 +425,21 @@ function ClientsPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder={t("clients.filters.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder={t("clients.filters.type")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("clients.filters.allTypes")}</SelectItem>
-            {TYPES.map((tt) => <SelectItem key={tt} value={tt}>{clientTypeLabels[tt]}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={assignedFilter} onValueChange={setAssignedFilter}>
-          <SelectTrigger className="w-[200px]"><SelectValue placeholder={t("clients.filters.assigned")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("clients.filters.allEmployees")}</SelectItem>
-            <SelectItem value={UNASSIGNED}>{t("clients.filters.unassigned")}</SelectItem>
-            {employees.map((e: any) => (
-              <SelectItem key={e.id} value={e.id}>
-                <span className="flex items-center gap-2">
-                  <Avatar className="h-5 w-5 text-[9px]">
-                    {e.avatar_url ? <AvatarImage src={e.avatar_url} alt={e.full_name ?? ""} /> : null}
-                    <AvatarFallback className="bg-primary/10 text-primary">{initials(e)}</AvatarFallback>
-                  </Avatar>
-                  <span className="truncate">{e.full_name ?? e.email}</span>
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <FilterMultiSelect
+          options={TYPES.map((tt) => ({ value: tt, label: clientTypeLabels[tt] }))}
+          selected={typeFilters}
+          onChange={setTypeFilters}
+          placeholder={t("clients.filters.type")}
+        />
+        <FilterMultiSelect
+          options={[
+            { value: UNASSIGNED, label: t("clients.filters.unassigned") },
+            ...employees.map((e: any) => ({ value: e.id, label: e.full_name ?? e.email, avatar_url: e.avatar_url })),
+          ]}
+          selected={assignedFilters}
+          onChange={setAssignedFilters}
+          placeholder={t("clients.filters.allEmployees")}
+        />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[170px]">
             <SelectValue placeholder={t("clients.filters.status")}>
