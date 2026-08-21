@@ -2273,6 +2273,7 @@ function ExposeTab({ propertyId, property }: { propertyId: string; property: any
     },
   });
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -2281,14 +2282,19 @@ function ExposeTab({ propertyId, property }: { propertyId: string; property: any
       <Card><CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
         <div>
           <h3 className="font-display text-lg font-semibold">Exposé erstellen</h3>
-          <p className="text-sm text-muted-foreground">Geführter Wizard mit Cover, Galerie, Eckdaten und Vorschau.</p>
+          <p className="text-sm text-muted-foreground">Geführter Wizard: Vorlage, Inhalte, Galerie, Vorschau und PDF-Download.</p>
         </div>
-        <Button asChild>
-          <Link to="/properties/$id/expose" params={{ id: propertyId }}>
-            <FileText className="mr-1 h-4 w-4" />Exposé erstellen
-          </Link>
+        <Button onClick={() => setWizardOpen(true)}>
+          <FileText className="mr-1 h-4 w-4" />Exposé erstellen
         </Button>
       </CardContent></Card>
+
+      <PropertyExposeWizardDialog
+        propertyId={propertyId}
+        property={property}
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+      />
 
       <Card><CardContent className="p-6">
         <h4 className="mb-3 font-semibold">Bisher erstellte Exposés</h4>
