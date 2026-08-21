@@ -147,9 +147,7 @@ function FinancingPage() {
       <PageHeader
         title={
           <span className="inline-flex items-center gap-2.5">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#6F6B94]/10 text-[#6F6B94]">
-              <Banknote className="h-5 w-5" />
-            </span>
+            <Banknote className="h-8 w-8 text-[#6F6B94]" />
             {t("pages.financing.title")}
           </span>
         }
