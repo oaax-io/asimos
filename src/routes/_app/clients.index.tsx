@@ -132,14 +132,14 @@ function ClientsPage() {
   const { t } = useTranslation();
   const statusLabel = (v: string) => t(`clients.status.${v}`, { defaultValue: v });
   const qc = useQueryClient();
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>(ALL);
-  const [assignedFilter, setAssignedFilter] = useState<string>(ALL);
-  const [financingFilter, setFinancingFilter] = useState<string>(ALL);
-  const [statusFilter, setStatusFilter] = useState<string>(ALL);
-  const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
+  const [search, setSearch] = usePersistedState("clients:filter:search", "");
+  const [typeFilters, setTypeFilters] = usePersistedState<string[]>("clients:filter:types", []);
+  const [assignedFilters, setAssignedFilters] = usePersistedState<string[]>("clients:filter:assigned", []);
+  const [financingFilter, setFinancingFilter] = usePersistedState("clients:filter:financing", ALL);
+  const [statusFilter, setStatusFilter] = usePersistedState("clients:filter:status", ALL);
+  const [archivedFilter, setArchivedFilter] = usePersistedState<"active" | "archived" | "all">("clients:filter:archived", "active");
 
-  const [view, setView] = useState<ViewMode>("list");
+  const [view, setView] = usePersistedState<ViewMode>("clients:filter:view", "list");
   const [open, setOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
