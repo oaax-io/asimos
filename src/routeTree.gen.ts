@@ -39,11 +39,20 @@ import { Route as AppClientsRouteImport } from './routes/_app/clients'
 import { Route as AppChecklistsRouteImport } from './routes/_app/checklists'
 import { Route as AppAppointmentsRouteImport } from './routes/_app/appointments'
 import { Route as AppAnalyticsRouteImport } from './routes/_app/analytics'
+import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings.index'
 import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties.index'
 import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads.index'
 import { Route as AppFinancingIndexRouteImport } from './routes/_app/financing.index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as ApiPublicPortalWebhookRouteImport } from './routes/api/public/portal-webhook'
+import { Route as AppSettingsVideoRouteImport } from './routes/_app/settings.video'
+import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings.profile'
+import { Route as AppSettingsNotificationsRouteImport } from './routes/_app/settings.notifications'
+import { Route as AppSettingsEsignRouteImport } from './routes/_app/settings.esign'
+import { Route as AppSettingsCompanyRouteImport } from './routes/_app/settings.company'
+import { Route as AppSettingsCategoriesRouteImport } from './routes/_app/settings.categories'
+import { Route as AppSettingsBrandkitRouteImport } from './routes/_app/settings.brandkit'
+import { Route as AppSettingsBanksRouteImport } from './routes/_app/settings.banks'
 import { Route as AppPropertiesIdRouteImport } from './routes/_app/properties.$id'
 import { Route as AppMeetRoomRouteImport } from './routes/_app/meet.$room'
 import { Route as AppLeadsIdRouteImport } from './routes/_app/leads.$id'
@@ -203,6 +212,11 @@ const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppPropertiesIndexRoute = AppPropertiesIndexRouteImport.update({
   id: '/properties/',
   path: '/properties/',
@@ -227,6 +241,47 @@ const ApiPublicPortalWebhookRoute = ApiPublicPortalWebhookRouteImport.update({
   id: '/api/public/portal-webhook',
   path: '/api/public/portal-webhook',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSettingsVideoRoute = AppSettingsVideoRouteImport.update({
+  id: '/video',
+  path: '/video',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsProfileRoute = AppSettingsProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsNotificationsRoute =
+  AppSettingsNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
+const AppSettingsEsignRoute = AppSettingsEsignRouteImport.update({
+  id: '/esign',
+  path: '/esign',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsCompanyRoute = AppSettingsCompanyRouteImport.update({
+  id: '/company',
+  path: '/company',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsCategoriesRoute = AppSettingsCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsBrandkitRoute = AppSettingsBrandkitRouteImport.update({
+  id: '/brandkit',
+  path: '/brandkit',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsBanksRoute = AppSettingsBanksRouteImport.update({
+  id: '/banks',
+  path: '/banks',
+  getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppPropertiesIdRoute = AppPropertiesIdRouteImport.update({
   id: '/properties/$id',
@@ -298,7 +353,7 @@ export interface FileRoutesByFullPath {
   '/ndas': typeof AppNdasRoute
   '/notifications': typeof AppNotificationsRoute
   '/reservations': typeof AppReservationsRoute
-  '/settings': typeof AppSettingsRoute
+  '/settings': typeof AppSettingsRouteWithChildren
   '/tasks': typeof AppTasksRoute
   '/team': typeof AppTeamRoute
   '/templates': typeof AppTemplatesRoute
@@ -311,11 +366,20 @@ export interface FileRoutesByFullPath {
   '/leads/$id': typeof AppLeadsIdRoute
   '/meet/$room': typeof AppMeetRoomRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/settings/banks': typeof AppSettingsBanksRoute
+  '/settings/brandkit': typeof AppSettingsBrandkitRoute
+  '/settings/categories': typeof AppSettingsCategoriesRoute
+  '/settings/company': typeof AppSettingsCompanyRoute
+  '/settings/esign': typeof AppSettingsEsignRoute
+  '/settings/notifications': typeof AppSettingsNotificationsRoute
+  '/settings/profile': typeof AppSettingsProfileRoute
+  '/settings/video': typeof AppSettingsVideoRoute
   '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
   '/clients/': typeof AppClientsIndexRoute
   '/financing/': typeof AppFinancingIndexRoute
   '/leads/': typeof AppLeadsIndexRoute
   '/properties/': typeof AppPropertiesIndexRoute
+  '/settings/': typeof AppSettingsIndexRoute
   '/financing/$id/quick-check-result': typeof AppFinancingIdQuickCheckResultRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
   '/api/public/bank-paket/$token': typeof ApiPublicBankPaketTokenRoute
@@ -341,7 +405,6 @@ export interface FileRoutesByTo {
   '/ndas': typeof AppNdasRoute
   '/notifications': typeof AppNotificationsRoute
   '/reservations': typeof AppReservationsRoute
-  '/settings': typeof AppSettingsRoute
   '/tasks': typeof AppTasksRoute
   '/team': typeof AppTeamRoute
   '/templates': typeof AppTemplatesRoute
@@ -354,11 +417,20 @@ export interface FileRoutesByTo {
   '/leads/$id': typeof AppLeadsIdRoute
   '/meet/$room': typeof AppMeetRoomRoute
   '/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/settings/banks': typeof AppSettingsBanksRoute
+  '/settings/brandkit': typeof AppSettingsBrandkitRoute
+  '/settings/categories': typeof AppSettingsCategoriesRoute
+  '/settings/company': typeof AppSettingsCompanyRoute
+  '/settings/esign': typeof AppSettingsEsignRoute
+  '/settings/notifications': typeof AppSettingsNotificationsRoute
+  '/settings/profile': typeof AppSettingsProfileRoute
+  '/settings/video': typeof AppSettingsVideoRoute
   '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
   '/clients': typeof AppClientsIndexRoute
   '/financing': typeof AppFinancingIndexRoute
   '/leads': typeof AppLeadsIndexRoute
   '/properties': typeof AppPropertiesIndexRoute
+  '/settings': typeof AppSettingsIndexRoute
   '/financing/$id/quick-check-result': typeof AppFinancingIdQuickCheckResultRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
   '/api/public/bank-paket/$token': typeof ApiPublicBankPaketTokenRoute
@@ -388,7 +460,7 @@ export interface FileRoutesById {
   '/_app/ndas': typeof AppNdasRoute
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/reservations': typeof AppReservationsRoute
-  '/_app/settings': typeof AppSettingsRoute
+  '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/tasks': typeof AppTasksRoute
   '/_app/team': typeof AppTeamRoute
   '/_app/templates': typeof AppTemplatesRoute
@@ -401,11 +473,20 @@ export interface FileRoutesById {
   '/_app/leads/$id': typeof AppLeadsIdRoute
   '/_app/meet/$room': typeof AppMeetRoomRoute
   '/_app/properties/$id': typeof AppPropertiesIdRouteWithChildren
+  '/_app/settings/banks': typeof AppSettingsBanksRoute
+  '/_app/settings/brandkit': typeof AppSettingsBrandkitRoute
+  '/_app/settings/categories': typeof AppSettingsCategoriesRoute
+  '/_app/settings/company': typeof AppSettingsCompanyRoute
+  '/_app/settings/esign': typeof AppSettingsEsignRoute
+  '/_app/settings/notifications': typeof AppSettingsNotificationsRoute
+  '/_app/settings/profile': typeof AppSettingsProfileRoute
+  '/_app/settings/video': typeof AppSettingsVideoRoute
   '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
   '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/financing/': typeof AppFinancingIndexRoute
   '/_app/leads/': typeof AppLeadsIndexRoute
   '/_app/properties/': typeof AppPropertiesIndexRoute
+  '/_app/settings/': typeof AppSettingsIndexRoute
   '/_app/financing/$id/quick-check-result': typeof AppFinancingIdQuickCheckResultRoute
   '/_app/properties/$id/expose': typeof AppPropertiesIdExposeRoute
   '/api/public/bank-paket/$token': typeof ApiPublicBankPaketTokenRoute
@@ -448,11 +529,20 @@ export interface FileRouteTypes {
     | '/leads/$id'
     | '/meet/$room'
     | '/properties/$id'
+    | '/settings/banks'
+    | '/settings/brandkit'
+    | '/settings/categories'
+    | '/settings/company'
+    | '/settings/esign'
+    | '/settings/notifications'
+    | '/settings/profile'
+    | '/settings/video'
     | '/api/public/portal-webhook'
     | '/clients/'
     | '/financing/'
     | '/leads/'
     | '/properties/'
+    | '/settings/'
     | '/financing/$id/quick-check-result'
     | '/properties/$id/expose'
     | '/api/public/bank-paket/$token'
@@ -478,7 +568,6 @@ export interface FileRouteTypes {
     | '/ndas'
     | '/notifications'
     | '/reservations'
-    | '/settings'
     | '/tasks'
     | '/team'
     | '/templates'
@@ -491,11 +580,20 @@ export interface FileRouteTypes {
     | '/leads/$id'
     | '/meet/$room'
     | '/properties/$id'
+    | '/settings/banks'
+    | '/settings/brandkit'
+    | '/settings/categories'
+    | '/settings/company'
+    | '/settings/esign'
+    | '/settings/notifications'
+    | '/settings/profile'
+    | '/settings/video'
     | '/api/public/portal-webhook'
     | '/clients'
     | '/financing'
     | '/leads'
     | '/properties'
+    | '/settings'
     | '/financing/$id/quick-check-result'
     | '/properties/$id/expose'
     | '/api/public/bank-paket/$token'
@@ -537,11 +635,20 @@ export interface FileRouteTypes {
     | '/_app/leads/$id'
     | '/_app/meet/$room'
     | '/_app/properties/$id'
+    | '/_app/settings/banks'
+    | '/_app/settings/brandkit'
+    | '/_app/settings/categories'
+    | '/_app/settings/company'
+    | '/_app/settings/esign'
+    | '/_app/settings/notifications'
+    | '/_app/settings/profile'
+    | '/_app/settings/video'
     | '/api/public/portal-webhook'
     | '/_app/clients/'
     | '/_app/financing/'
     | '/_app/leads/'
     | '/_app/properties/'
+    | '/_app/settings/'
     | '/_app/financing/$id/quick-check-result'
     | '/_app/properties/$id/expose'
     | '/api/public/bank-paket/$token'
@@ -775,6 +882,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAnalyticsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/': {
+      id: '/_app/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AppSettingsIndexRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/properties/': {
       id: '/_app/properties/'
       path: '/properties'
@@ -809,6 +923,62 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/portal-webhook'
       preLoaderRoute: typeof ApiPublicPortalWebhookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/settings/video': {
+      id: '/_app/settings/video'
+      path: '/video'
+      fullPath: '/settings/video'
+      preLoaderRoute: typeof AppSettingsVideoRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/profile': {
+      id: '/_app/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AppSettingsProfileRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/notifications': {
+      id: '/_app/settings/notifications'
+      path: '/notifications'
+      fullPath: '/settings/notifications'
+      preLoaderRoute: typeof AppSettingsNotificationsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/esign': {
+      id: '/_app/settings/esign'
+      path: '/esign'
+      fullPath: '/settings/esign'
+      preLoaderRoute: typeof AppSettingsEsignRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/company': {
+      id: '/_app/settings/company'
+      path: '/company'
+      fullPath: '/settings/company'
+      preLoaderRoute: typeof AppSettingsCompanyRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/categories': {
+      id: '/_app/settings/categories'
+      path: '/categories'
+      fullPath: '/settings/categories'
+      preLoaderRoute: typeof AppSettingsCategoriesRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/brandkit': {
+      id: '/_app/settings/brandkit'
+      path: '/brandkit'
+      fullPath: '/settings/brandkit'
+      preLoaderRoute: typeof AppSettingsBrandkitRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/banks': {
+      id: '/_app/settings/banks'
+      path: '/banks'
+      fullPath: '/settings/banks'
+      preLoaderRoute: typeof AppSettingsBanksRouteImport
+      parentRoute: typeof AppSettingsRoute
     }
     '/_app/properties/$id': {
       id: '/_app/properties/$id'
@@ -904,6 +1074,34 @@ const AppLeadsRouteWithChildren = AppLeadsRoute._addFileChildren(
   AppLeadsRouteChildren,
 )
 
+interface AppSettingsRouteChildren {
+  AppSettingsBanksRoute: typeof AppSettingsBanksRoute
+  AppSettingsBrandkitRoute: typeof AppSettingsBrandkitRoute
+  AppSettingsCategoriesRoute: typeof AppSettingsCategoriesRoute
+  AppSettingsCompanyRoute: typeof AppSettingsCompanyRoute
+  AppSettingsEsignRoute: typeof AppSettingsEsignRoute
+  AppSettingsNotificationsRoute: typeof AppSettingsNotificationsRoute
+  AppSettingsProfileRoute: typeof AppSettingsProfileRoute
+  AppSettingsVideoRoute: typeof AppSettingsVideoRoute
+  AppSettingsIndexRoute: typeof AppSettingsIndexRoute
+}
+
+const AppSettingsRouteChildren: AppSettingsRouteChildren = {
+  AppSettingsBanksRoute: AppSettingsBanksRoute,
+  AppSettingsBrandkitRoute: AppSettingsBrandkitRoute,
+  AppSettingsCategoriesRoute: AppSettingsCategoriesRoute,
+  AppSettingsCompanyRoute: AppSettingsCompanyRoute,
+  AppSettingsEsignRoute: AppSettingsEsignRoute,
+  AppSettingsNotificationsRoute: AppSettingsNotificationsRoute,
+  AppSettingsProfileRoute: AppSettingsProfileRoute,
+  AppSettingsVideoRoute: AppSettingsVideoRoute,
+  AppSettingsIndexRoute: AppSettingsIndexRoute,
+}
+
+const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
+  AppSettingsRouteChildren,
+)
+
 interface AppFinancingIdRouteChildren {
   AppFinancingIdQuickCheckResultRoute: typeof AppFinancingIdQuickCheckResultRoute
 }
@@ -946,7 +1144,7 @@ interface AppRouteChildren {
   AppNdasRoute: typeof AppNdasRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppReservationsRoute: typeof AppReservationsRoute
-  AppSettingsRoute: typeof AppSettingsRoute
+  AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppTasksRoute: typeof AppTasksRoute
   AppTeamRoute: typeof AppTeamRoute
   AppTemplatesRoute: typeof AppTemplatesRoute
@@ -975,7 +1173,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNdasRoute: AppNdasRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppReservationsRoute: AppReservationsRoute,
-  AppSettingsRoute: AppSettingsRoute,
+  AppSettingsRoute: AppSettingsRouteWithChildren,
   AppTasksRoute: AppTasksRoute,
   AppTeamRoute: AppTeamRoute,
   AppTemplatesRoute: AppTemplatesRoute,
