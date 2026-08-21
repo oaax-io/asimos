@@ -102,6 +102,9 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [galleryLayout, setGalleryLayout] = useState<GalerieLayout>("grid2");
   const [generating, setGenerating] = useState(false);
+  const [contactMode, setContactMode] = useState<"employee" | "custom">("employee");
+  const [contactUserId, setContactUserId] = useState<string | null>(null);
+  const [customContact, setCustomContact] = useState({ name: "", email: "", phone: "", role: "" });
 
   const renderPdf = useServerFn(renderDocumentPdf);
   const fetchBytes = useServerFn(fetchDocumentPdfBytes);
