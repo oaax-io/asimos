@@ -34,8 +34,14 @@ import { useAutoPresence } from "@/hooks/useAutoPresence";
 import { useTranslation } from "react-i18next";
 
 function MyPresenceDot() {
-  const { data: status } = useMyPresence();
-  return <PresenceDot status={status} className="absolute -bottom-0.5 -right-0.5" />;
+  const { data: presence } = useMyPresence();
+  return (
+    <PresenceDot
+      status={presence?.status}
+      updatedAt={presence?.updatedAt}
+      className="absolute -bottom-0.5 -right-0.5"
+    />
+  );
 }
 // touch
 
