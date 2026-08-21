@@ -353,25 +353,25 @@ function ClientsPage() {
   const statTiles = useMemo(() => {
     const countType = (v: string) => baseList.filter((c: any) => c.client_type === v).length;
     const countStatus = (v: string) => baseList.filter((c: any) => c.status === v).length;
-    const toggleType = (v: string) => setTypeFilter((prev) => (prev === v ? ALL : v));
-    const toggleStatus = (v: string) => setStatusFilter((prev) => (prev === v ? ALL : v));
+    const toggleType = (v: string) => setTypeFilters((prev: string[]) => prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]);
+    const toggleStatus = (v: string) => setStatusFilter((prev: string) => (prev === v ? ALL : v));
     return [
       {
         key: "total", label: t("clients.stats.total", { defaultValue: "Kunden gesamt" }),
         value: baseList.length, hint: t("clients.stats.shown", { defaultValue: "{{n}} sichtbar", n: filtered.length }),
         icon: Users, iconClass: "bg-primary/15 text-primary", glow: "bg-primary",
-        active: typeFilter === ALL && statusFilter === ALL,
-        onClick: () => { setTypeFilter(ALL); setStatusFilter(ALL); },
+        active: typeFilters.length === 0 && statusFilter === ALL,
+        onClick: () => { setTypeFilters([]); setStatusFilter(ALL); },
       },
       {
         key: "buyer", label: clientTypeLabels.buyer, value: countType("buyer"),
         icon: ShoppingBag, iconClass: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300", glow: "bg-cyan-500",
-        active: typeFilter === "buyer", onClick: () => toggleType("buyer"),
+        active: typeFilters.includes("buyer"), onClick: () => toggleType("buyer"),
       },
       {
         key: "seller", label: clientTypeLabels.seller, value: countType("seller"),
         icon: Home, iconClass: "bg-teal-500/15 text-teal-600 dark:text-teal-300", glow: "bg-teal-500",
-        active: typeFilter === "seller", onClick: () => toggleType("seller"),
+        active: typeFilters.includes("seller"), onClick: () => toggleType("seller"),
       },
       {
         key: "finanzierung", label: statusLabel("finanzierung"), value: countStatus("finanzierung"),
@@ -389,7 +389,7 @@ function ClientsPage() {
         active: statusFilter === "storniert", onClick: () => toggleStatus("storniert"),
       },
     ];
-  }, [baseList, filtered.length, typeFilter, statusFilter, t]);
+  }, [baseList, filtered.length, typeFilters, statusFilter, t]);
 
 
   return (
