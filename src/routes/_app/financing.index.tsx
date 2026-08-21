@@ -44,7 +44,7 @@ function FinancingPage() {
   const [statusFilter, setStatusFilter] = useState<string>(ALL);
   const [typeFilter, setTypeFilter] = useState<string>(ALL);
   const [qcFilter, setQcFilter] = useState<string>(ALL);
-  const [bankFilter, setBankFilter] = useState<string>(ALL);
+  const [bankFilter, setBankFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState<string>(ALL);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [hypoOpen, setHypoOpen] = useState(false);
