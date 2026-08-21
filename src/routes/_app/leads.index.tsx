@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { LeadDetailDialog } from "@/components/leads/LeadDetailDialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -190,6 +191,8 @@ function LeadsPage() {
 
   const navigate = useNavigate();
   const [convertLead, setConvertLead] = useState<Lead | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
+
 
 
   // ----- Bulk-Aktionen -----
@@ -464,7 +467,7 @@ function LeadsPage() {
                         />
                       </TableCell>
                       <TableCell className="font-medium">
-                        <Link to="/leads/$id" params={{ id: l.id }} className="hover:text-primary">{l.full_name}</Link>
+                        <button type="button" onClick={() => setDetailId(l.id)} className="text-left hover:text-primary hover:underline">{l.full_name}</button>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {l.email && <div className="flex items-center gap-1"><Mail className="h-3 w-3" />{l.email}</div>}
@@ -487,8 +490,8 @@ function LeadsPage() {
                               <ArrowRight className="mr-1 h-3 w-3" />{t("leads.table.toClient")}
                             </Button>
                           )}
-                          <Button asChild size="sm" variant="ghost" className="h-8 w-8 p-0">
-                            <Link to="/leads/$id" params={{ id: l.id }}><ExternalLink className="h-3.5 w-3.5" /></Link>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setDetailId(l.id)}>
+                            <ExternalLink className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </TableCell>
@@ -566,7 +569,7 @@ function LeadsPage() {
                               className="mt-0.5"
                             />
                             <div className="min-w-0 flex-1">
-                              <Link to="/leads/$id" params={{ id: l.id }} className="font-medium hover:text-primary">{l.full_name}</Link>
+                              <button type="button" onClick={() => setDetailId(l.id)} className="text-left font-medium hover:text-primary hover:underline">{l.full_name}</button>
                               <div className="mt-1 flex flex-col gap-0.5 text-xs text-muted-foreground">
                                 {l.email && <span className="flex items-center gap-1 truncate"><Mail className="h-3 w-3" />{l.email}</span>}
                                 {l.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{l.phone}</span>}
@@ -633,7 +636,15 @@ function LeadsPage() {
         }}
       />
     )}
+    <LeadDetailDialog
+      leadId={detailId}
+      open={!!detailId}
+      onOpenChange={(v) => { if (!v) setDetailId(null); }}
+      leadIds={filtered.map((l: any) => l.id)}
+      onNavigate={(nextId) => setDetailId(nextId)}
+    />
     </div>
+
   );
 }
 
