@@ -218,14 +218,6 @@ function FinancingPage() {
             <SelectItem value="none">{t("financing.filters.noBank")}</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.dataSource")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("financing.filters.allDataSources")}</SelectItem>
-            <SelectItem value="existing_property">{t("financing.filters.existingProperty")}</SelectItem>
-            <SelectItem value="quick_entry">{t("financing.filters.quickEntry")}</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {filtered.length > 0 && (
