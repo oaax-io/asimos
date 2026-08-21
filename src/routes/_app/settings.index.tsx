@@ -17,6 +17,7 @@ const TILES = [
   { to: "/settings/categories", icon: Tags, labelKey: "settings.tabs.categories", desc: "Kategorien im Dokumentencenter" },
   { to: "/settings/video", icon: Video, labelKey: "", label: "Video", desc: "LiveKit für Video-Meetings" },
   { to: "/settings/esign", icon: FileSignature, labelKey: "settings.tabs.esign", desc: "PDF-Export und Signatur" },
+  { to: "/settings/trash", icon: Trash2, labelKey: "", label: "Papierkorb", desc: "Gelöschtes ansehen und wiederherstellen" },
 ] as const;
 
 function SettingsHome() {
