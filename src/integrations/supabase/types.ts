@@ -3403,6 +3403,45 @@ export type Database = {
           },
         ]
       }
+      trash_items: {
+        Row: {
+          agency_id: string | null
+          deleted_at: string
+          deleted_by: string | null
+          id: string
+          label: string | null
+          payload: Json
+          record_id: string
+          restored_at: string | null
+          subtitle: string | null
+          table_name: string
+        }
+        Insert: {
+          agency_id?: string | null
+          deleted_at?: string
+          deleted_by?: string | null
+          id?: string
+          label?: string | null
+          payload: Json
+          record_id: string
+          restored_at?: string | null
+          subtitle?: string | null
+          table_name: string
+        }
+        Update: {
+          agency_id?: string | null
+          deleted_at?: string
+          deleted_by?: string | null
+          id?: string
+          label?: string | null
+          payload?: Json
+          record_id?: string
+          restored_at?: string | null
+          subtitle?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -3593,6 +3632,7 @@ export type Database = {
         Args: { _template_id: string }
         Returns: undefined
       }
+      trash_restore: { Args: { _id: string }; Returns: undefined }
       user_can: { Args: { _action: string; _module: string }; Returns: boolean }
     }
     Enums: {
