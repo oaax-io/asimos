@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/EmptyState";
-import { Plus, Search, Building2, User, Database, PencilLine, Trash2, UserPlus, FileText, X, ArrowRight, Calculator, ChevronDown } from "lucide-react";
+import { Plus, Search, Building2, User, Database, PencilLine, Trash2, UserPlus, FileText, X, ArrowRight, Calculator, ChevronDown, Banknote } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -145,7 +145,14 @@ function FinancingPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        i18nKey="financing"
+        title={
+          <span className="inline-flex items-center gap-2.5">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#6F6B94]/10 text-[#6F6B94]">
+              <Banknote className="h-5 w-5" />
+            </span>
+            {t("pages.financing.title")}
+          </span>
+        }
         action={
           <div className="flex gap-2">
             <DropdownMenu>
