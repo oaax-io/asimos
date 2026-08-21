@@ -24,7 +24,8 @@ import { ClientWizard } from "@/components/clients/ClientWizard";
 import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { useTranslation } from "react-i18next";
-import { AssigneeAvatars, AssigneePicker, useClientAssignees } from "@/components/clients/ClientAssignees";
+import { AssigneeAvatars, AssigneePicker, initials, useClientAssignees } from "@/components/clients/ClientAssignees";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ClientPinButton, useClientPins } from "@/components/clients/ClientPin";
 import { deleteToTrash } from "@/lib/trash";
 
