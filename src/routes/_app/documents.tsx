@@ -205,7 +205,12 @@ function DocumentsPage() {
   return (
     <>
       <PageHeader
-        i18nKey="documents"
+        title={
+          <span className="inline-flex items-center gap-2.5">
+            <FileText className="h-8 w-8 text-[#6F6B94]" />
+            {t("pages.documents.title")}
+          </span>
+        }
         action={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setTemplatesOpen(true)}>

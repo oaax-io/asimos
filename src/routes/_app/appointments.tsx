@@ -171,7 +171,12 @@ function AppointmentsPage() {
   return (
     <>
       <PageHeader
-        i18nKey="appointments"
+        title={
+          <span className="inline-flex items-center gap-2.5">
+            <CalIcon className="h-8 w-8 text-[#6F6B94]" />
+            {t("pages.appointments.title")}
+          </span>
+        }
         action={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => startNew({ is_online: true, appointment_type: "meeting", title: "Online-Meeting" })}>
