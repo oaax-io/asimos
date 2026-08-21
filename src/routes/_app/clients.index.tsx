@@ -503,7 +503,11 @@ function ClientsPage() {
                 <DropdownMenuSeparator />
                 {employees.map((e: any) => (
                   <DropdownMenuItem key={e.id} onClick={() => assign.mutate(e.id)}>
-                    {e.full_name ?? e.email}
+                    <Avatar className="mr-2 h-5 w-5 text-[9px]">
+                      {e.avatar_url ? <AvatarImage src={e.avatar_url} alt={e.full_name ?? ""} /> : null}
+                      <AvatarFallback className="bg-primary/10 text-primary">{initials(e)}</AvatarFallback>
+                    </Avatar>
+                    <span className="truncate">{e.full_name ?? e.email}</span>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
