@@ -10,9 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/EmptyState";
-import { Plus, Search, Building2, User, Database, PencilLine, Trash2, UserPlus, FileText, X, ArrowRight, Calculator, ChevronDown, Banknote } from "lucide-react";
+import { Plus, Search, Building2, User, Database, PencilLine, Trash2, UserPlus, FileText, X, ArrowRight, Calculator, ChevronDown, Banknote, Check } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   FINANCING_TYPE_LABELS, DOSSIER_STATUS_LABELS, QUICK_CHECK_LABELS,
@@ -42,7 +44,7 @@ function FinancingPage() {
   const [statusFilter, setStatusFilter] = useState<string>(ALL);
   const [typeFilter, setTypeFilter] = useState<string>(ALL);
   const [qcFilter, setQcFilter] = useState<string>(ALL);
-  const [bankFilter, setBankFilter] = useState<string>(ALL);
+  const [bankFilter, setBankFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState<string>(ALL);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [hypoOpen, setHypoOpen] = useState(false);
@@ -107,13 +109,28 @@ function FinancingPage() {
     },
   });
 
+  const NO_BANK = "(keine Bank)";
+
+  // Collect all banks referenced across dossiers (by bank_name or current_bank).
+  const banks = useMemo(() => {
+    const set = new Set<string>();
+    dossiers.forEach((d: any) => {
+      const name = (d.bank_name || d.current_bank || "").trim();
+      set.add(name ? name : NO_BANK);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "de"));
+  }, [dossiers]);
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
     return dossiers.filter((d: any) => {
       if (statusFilter !== ALL && d.dossier_status !== statusFilter) return false;
       if (typeFilter !== ALL && d.financing_type !== typeFilter) return false;
       if (qcFilter !== ALL && displayQuickCheckStatus(d) !== qcFilter) return false;
-      if (bankFilter !== ALL && (d.bank_type ?? "none") !== bankFilter) return false;
+      if (bankFilter.length > 0) {
+        const name = (d.bank_name || d.current_bank || "").trim() || NO_BANK;
+        if (!bankFilter.includes(name)) return false;
+      }
       if (sourceFilter !== ALL && (d.data_source ?? "existing_property") !== sourceFilter) return false;
       if (!s) return true;
       const hay = [
@@ -219,15 +236,12 @@ function FinancingPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={bankFilter} onValueChange={setBankFilter}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder={t("financing.filters.bankType")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("financing.filters.allBankTypes")}</SelectItem>
-            <SelectItem value="ubs">UBS</SelectItem>
-            <SelectItem value="other">{t("financing.filters.otherBank")}</SelectItem>
-            <SelectItem value="none">{t("financing.filters.noBank")}</SelectItem>
-          </SelectContent>
-        </Select>
+        <BankMultiSelect
+          banks={banks}
+          selected={bankFilter}
+          onChange={setBankFilter}
+          placeholder={t("financing.filters.bankType", { defaultValue: "Banken" })}
+        />
       </div>
 
       {filtered.length > 0 && (
@@ -547,4 +561,97 @@ function useIsOwnerOrAdmin(): boolean {
     return () => { active = false; };
   }, []);
   return allowed;
+}
+
+function BankMultiSelect({
+  banks,
+  selected,
+  onChange,
+  placeholder,
+}: {
+  banks: string[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+  placeholder: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const { t } = useTranslation();
+
+  const toggle = (bank: string) => {
+    onChange(selected.includes(bank)
+      ? selected.filter((b) => b !== bank)
+      : [...selected, bank]);
+  };
+
+  const filtered = banks.filter((b) =>
+    b.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+
+  const label = selected.length === 0
+    ? placeholder
+    : selected.length === 1
+      ? selected[0]
+      : `${selected.length} ${t("financing.filters.banksSelected", { defaultValue: "Banken" })}`;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-[200px] justify-between font-normal"
+        >
+          <span className="inline-flex items-center gap-2 truncate">
+            <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="truncate">{label}</span>
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[220px] p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder={t("financing.filters.searchBank", { defaultValue: "Bank suchen…" })}
+            value={query}
+            onValueChange={setQuery}
+          />
+          <CommandList>
+            <CommandEmpty>{t("financing.filters.noBankFound", { defaultValue: "Keine Bank gefunden." })}</CommandEmpty>
+            <CommandGroup>
+              {filtered.map((bank) => {
+                const active = selected.includes(bank);
+                return (
+                  <CommandItem
+                    key={bank}
+                    value={bank}
+                    onSelect={() => toggle(bank)}
+                  >
+                    <span className={cn("flex h-4 w-4 items-center justify-center rounded-sm border", active ? "bg-primary border-primary" : "opacity-50")}>
+                      {active && <Check className="h-3 w-3 text-primary-foreground" />}
+                    </span>
+                    <span className="truncate">{bank}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+        {selected.length > 0 && (
+          <div className="border-t p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-center text-xs"
+              onClick={() => { onChange([]); }}
+            >
+              <X className="mr-1 h-3 w-3" />
+              {t("financing.filters.clearBanks", { defaultValue: "Zurücksetzen" })}
+            </Button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
 }
