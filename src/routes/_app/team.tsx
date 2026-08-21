@@ -232,7 +232,10 @@ function TeamPage() {
           member={editing}
           isSuperadmin={effectiveIsSuperadmin}
           onClose={() => setEditing(null)}
-          onSaved={() => qc.invalidateQueries({ queryKey: ["team"] })}
+          onSaved={() => {
+            qc.invalidateQueries({ queryKey: ["team"] });
+            qc.invalidateQueries({ queryKey: ["my-profile"] });
+          }}
         />
       )}
 
