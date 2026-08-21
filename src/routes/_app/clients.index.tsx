@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Mail, Phone, Target, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Link2, CornerDownRight, Users, ShoppingBag, Home, Banknote, CheckCircle2, Ban, Crown } from "lucide-react";
+import { Plus, Search, Mail, Phone, Target, LayoutGrid, List as ListIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Link2, CornerDownRight, Users, ShoppingBag, Home, Banknote, CheckCircle2, Ban, Crown, Check, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +28,9 @@ import { AssigneeAvatars, AssigneePicker, initials, useClientAssignees } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ClientPinButton, useClientPins } from "@/components/clients/ClientPin";
 import { deleteToTrash } from "@/lib/trash";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
@@ -105,6 +108,23 @@ const ALL = "__all__";
 const UNASSIGNED = "__unassigned__";
 const NO_FIN = "__none__";
 
+function usePersistedState<T>(key: string, initial: T) {
+  const [state, setState] = useState<T>(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      return stored !== null ? (JSON.parse(stored) as T) : initial;
+    } catch {
+      return initial;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(key, JSON.stringify(state));
+    } catch { /* ignore */ }
+  }, [key, state]);
+  return [state, setState] as const;
+}
+
 
 type ViewMode = "grid" | "list";
 
@@ -112,14 +132,14 @@ function ClientsPage() {
   const { t } = useTranslation();
   const statusLabel = (v: string) => t(`clients.status.${v}`, { defaultValue: v });
   const qc = useQueryClient();
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>(ALL);
-  const [assignedFilter, setAssignedFilter] = useState<string>(ALL);
-  const [financingFilter, setFinancingFilter] = useState<string>(ALL);
-  const [statusFilter, setStatusFilter] = useState<string>(ALL);
-  const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
+  const [search, setSearch] = usePersistedState("clients:filter:search", "");
+  const [typeFilters, setTypeFilters] = usePersistedState<string[]>("clients:filter:types", []);
+  const [assignedFilters, setAssignedFilters] = usePersistedState<string[]>("clients:filter:assigned", []);
+  const [financingFilter, setFinancingFilter] = usePersistedState("clients:filter:financing", ALL);
+  const [statusFilter, setStatusFilter] = usePersistedState("clients:filter:status", ALL);
+  const [archivedFilter, setArchivedFilter] = usePersistedState<"active" | "archived" | "all">("clients:filter:archived", "active");
 
-  const [view, setView] = useState<ViewMode>("list");
+  const [view, setView] = usePersistedState<ViewMode>("clients:filter:view", "list");
   const [open, setOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -203,13 +223,14 @@ function ClientsPage() {
     const list = clients.filter((c: any) => {
       if (archivedFilter === "active" && c.is_archived) return false;
       if (archivedFilter === "archived" && !c.is_archived) return false;
-      if (typeFilter !== ALL && c.client_type !== typeFilter) return false;
-      if (assignedFilter !== ALL) {
+      if (typeFilters.length && !typeFilters.includes(c.client_type)) return false;
+      if (assignedFilters.length) {
         const list = assigneesByClient.get(c.id) ?? [];
         const eff = c.assigned_to ?? c.owner_id;
         const all = list.length ? list : (eff ? [eff] : []);
-        if (assignedFilter === UNASSIGNED && all.length) return false;
-        if (assignedFilter !== UNASSIGNED && !all.includes(assignedFilter)) return false;
+        if (assignedFilters.includes(UNASSIGNED) && assignedFilters.length === 1 && all.length) return false;
+        if (!assignedFilters.includes(UNASSIGNED) && !assignedFilters.some((f) => all.includes(f))) return false;
+        if (assignedFilters.includes(UNASSIGNED) && assignedFilters.length > 1 && !assignedFilters.some((f) => f !== UNASSIGNED && all.includes(f))) return false;
       }
       if (financingFilter !== ALL) {
         if (financingFilter === NO_FIN && c.financing_status) return false;
@@ -232,13 +253,13 @@ function ClientsPage() {
       if (ca !== cb) return ca > cb ? -1 : 1;
       return (a.full_name ?? "").localeCompare(b.full_name ?? "");
     });
-  }, [clients, archivedFilter, typeFilter, assignedFilter, financingFilter, statusFilter, search, assigneesByClient, pinsMap]);
+  }, [clients, archivedFilter, typeFilters, assignedFilters, financingFilter, statusFilter, search, assigneesByClient, pinsMap]);
 
 
   // Pagination
   const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [search, typeFilter, assignedFilter, financingFilter, statusFilter, archivedFilter, pageSize, view]);
+  useEffect(() => { setPage(1); }, [search, typeFilters, assignedFilters, financingFilter, statusFilter, archivedFilter, pageSize, view]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -332,25 +353,25 @@ function ClientsPage() {
   const statTiles = useMemo(() => {
     const countType = (v: string) => baseList.filter((c: any) => c.client_type === v).length;
     const countStatus = (v: string) => baseList.filter((c: any) => c.status === v).length;
-    const toggleType = (v: string) => setTypeFilter((prev) => (prev === v ? ALL : v));
-    const toggleStatus = (v: string) => setStatusFilter((prev) => (prev === v ? ALL : v));
+    const toggleType = (v: string) => setTypeFilters((prev: string[]) => prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]);
+    const toggleStatus = (v: string) => setStatusFilter((prev: string) => (prev === v ? ALL : v));
     return [
       {
         key: "total", label: t("clients.stats.total", { defaultValue: "Kunden gesamt" }),
         value: baseList.length, hint: t("clients.stats.shown", { defaultValue: "{{n}} sichtbar", n: filtered.length }),
         icon: Users, iconClass: "bg-primary/15 text-primary", glow: "bg-primary",
-        active: typeFilter === ALL && statusFilter === ALL,
-        onClick: () => { setTypeFilter(ALL); setStatusFilter(ALL); },
+        active: typeFilters.length === 0 && statusFilter === ALL,
+        onClick: () => { setTypeFilters([]); setStatusFilter(ALL); },
       },
       {
         key: "buyer", label: clientTypeLabels.buyer, value: countType("buyer"),
         icon: ShoppingBag, iconClass: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300", glow: "bg-cyan-500",
-        active: typeFilter === "buyer", onClick: () => toggleType("buyer"),
+        active: typeFilters.includes("buyer"), onClick: () => toggleType("buyer"),
       },
       {
         key: "seller", label: clientTypeLabels.seller, value: countType("seller"),
         icon: Home, iconClass: "bg-teal-500/15 text-teal-600 dark:text-teal-300", glow: "bg-teal-500",
-        active: typeFilter === "seller", onClick: () => toggleType("seller"),
+        active: typeFilters.includes("seller"), onClick: () => toggleType("seller"),
       },
       {
         key: "finanzierung", label: statusLabel("finanzierung"), value: countStatus("finanzierung"),
@@ -368,7 +389,7 @@ function ClientsPage() {
         active: statusFilter === "storniert", onClick: () => toggleStatus("storniert"),
       },
     ];
-  }, [baseList, filtered.length, typeFilter, statusFilter, t]);
+  }, [baseList, filtered.length, typeFilters, statusFilter, t]);
 
 
   return (
@@ -404,31 +425,21 @@ function ClientsPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder={t("clients.filters.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder={t("clients.filters.type")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("clients.filters.allTypes")}</SelectItem>
-            {TYPES.map((tt) => <SelectItem key={tt} value={tt}>{clientTypeLabels[tt]}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={assignedFilter} onValueChange={setAssignedFilter}>
-          <SelectTrigger className="w-[200px]"><SelectValue placeholder={t("clients.filters.assigned")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("clients.filters.allEmployees")}</SelectItem>
-            <SelectItem value={UNASSIGNED}>{t("clients.filters.unassigned")}</SelectItem>
-            {employees.map((e: any) => (
-              <SelectItem key={e.id} value={e.id}>
-                <span className="flex items-center gap-2">
-                  <Avatar className="h-5 w-5 text-[9px]">
-                    {e.avatar_url ? <AvatarImage src={e.avatar_url} alt={e.full_name ?? ""} /> : null}
-                    <AvatarFallback className="bg-primary/10 text-primary">{initials(e)}</AvatarFallback>
-                  </Avatar>
-                  <span className="truncate">{e.full_name ?? e.email}</span>
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <FilterMultiSelect
+          options={TYPES.map((tt) => ({ value: tt, label: clientTypeLabels[tt] }))}
+          selected={typeFilters}
+          onChange={setTypeFilters}
+          placeholder={t("clients.filters.type")}
+        />
+        <FilterMultiSelect
+          options={[
+            { value: UNASSIGNED, label: t("clients.filters.unassigned") },
+            ...employees.map((e: any) => ({ value: e.id, label: e.full_name ?? e.email, avatar_url: e.avatar_url })),
+          ]}
+          selected={assignedFilters}
+          onChange={setAssignedFilters}
+          placeholder={t("clients.filters.allEmployees")}
+        />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[170px]">
             <SelectValue placeholder={t("clients.filters.status")}>
@@ -460,8 +471,8 @@ function ClientsPage() {
             <SelectItem value="all">{t("clients.filters.all")}</SelectItem>
           </SelectContent>
         </Select>
-        {(typeFilter !== ALL || assignedFilter !== ALL || financingFilter !== ALL || statusFilter !== ALL || search) && (
-          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilter(ALL); setAssignedFilter(ALL); setFinancingFilter(ALL); setStatusFilter(ALL); }}>
+        {(typeFilters.length > 0 || assignedFilters.length > 0 || financingFilter !== ALL || statusFilter !== ALL || search) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setTypeFilters([]); setAssignedFilters([]); setFinancingFilter(ALL); setStatusFilter(ALL); }}>
             {t("clients.filters.reset")}
           </Button>
         )}
@@ -819,5 +830,99 @@ function ClientsPage() {
         onNavigate={(nextId) => setDetailId(nextId)}
       />
     </>
+  );
+}
+
+type FilterOption = { value: string; label: string; avatar_url?: string | null };
+
+function FilterMultiSelect({
+  options,
+  selected,
+  onChange,
+  placeholder,
+}: {
+  options: FilterOption[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+  placeholder: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const { t } = useTranslation();
+
+  const toggle = (v: string) => {
+    onChange(selected.includes(v) ? selected.filter((x) => x !== v) : [...selected, v]);
+  };
+
+  const filtered = options.filter((o) =>
+    o.label.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+
+  const label = selected.length === 0
+    ? placeholder
+    : selected.length === 1
+      ? options.find((o) => o.value === selected[0])?.label ?? selected[0]
+      : `${selected.length} ${t("common.selected", { defaultValue: "ausgewählt" })}`;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-[200px] justify-between font-normal"
+        >
+          <span className="inline-flex items-center gap-2 truncate">
+            <span className="truncate">{label}</span>
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[240px] p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder={t("common.search", { defaultValue: "Suchen…" })}
+            value={query}
+            onValueChange={setQuery}
+          />
+          <CommandList>
+            <CommandEmpty>{t("common.noResults", { defaultValue: "Keine Treffer" })}</CommandEmpty>
+            <CommandGroup>
+              {filtered.map((o) => {
+                const active = selected.includes(o.value);
+                return (
+                  <CommandItem key={o.value} value={o.value} onSelect={() => toggle(o.value)}>
+                    <span className={cn("flex h-4 w-4 items-center justify-center rounded-sm border", active ? "bg-primary border-primary" : "opacity-50")}>
+                      {active && <Check className="h-3 w-3 text-primary-foreground" />}
+                    </span>
+                    {o.avatar_url !== undefined && (
+                      <Avatar className="h-5 w-5 text-[9px]">
+                        {o.avatar_url ? <AvatarImage src={o.avatar_url} alt={o.label} /> : null}
+                        <AvatarFallback className="bg-primary/10 text-primary">{initials({ full_name: o.label } as any)}</AvatarFallback>
+                      </Avatar>
+                    )}
+                    <span className="truncate">{o.label}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+        {selected.length > 0 && (
+          <div className="border-t p-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-center text-xs"
+              onClick={() => onChange([])}
+            >
+              <X className="mr-1 h-3 w-3" />
+              {t("common.clear", { defaultValue: "Leeren" })}
+            </Button>
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
