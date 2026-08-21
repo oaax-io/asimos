@@ -30,6 +30,7 @@ import { extractPropertyImagePaths } from "@/lib/property-media";
 import { MacroLocationCard } from "@/components/properties/MacroLocationCard";
 import { PublicShareCard } from "@/components/properties/PublicShareCard";
 import { PortalPublishCard } from "@/components/properties/PortalPublishCard";
+import { PropertyExposeWizardDialog } from "@/components/expose/PropertyExposeWizardDialog";
 import { publishPropertyToPortal } from "@/lib/portal.functions";
 import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/properties/PropertyAssignees";
 import type { EmployeeLite } from "@/components/clients/ClientAssignees";
