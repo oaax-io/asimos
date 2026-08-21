@@ -634,7 +634,15 @@ function LeadsPage() {
         }}
       />
     )}
+    <LeadDetailDialog
+      leadId={detailId}
+      open={!!detailId}
+      onOpenChange={(v) => { if (!v) setDetailId(null); }}
+      leadIds={filtered.map((l: any) => l.id)}
+      onNavigate={(nextId) => setDetailId(nextId)}
+    />
     </div>
+
   );
 }
 
