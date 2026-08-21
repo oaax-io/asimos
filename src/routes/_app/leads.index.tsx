@@ -191,6 +191,8 @@ function LeadsPage() {
 
   const navigate = useNavigate();
   const [convertLead, setConvertLead] = useState<Lead | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
+
 
 
   // ----- Bulk-Aktionen -----
