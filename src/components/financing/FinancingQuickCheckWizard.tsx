@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { SWISS_BANKS } from "@/lib/swiss-banks";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -2437,58 +2438,6 @@ function SearchableSelect({
 }
 
 /* ==================== Swiss Bank Combobox ==================== */
-const SWISS_BANKS: string[] = [
-  "UBS",
-  "Credit Suisse",
-  "Raiffeisen Schweiz",
-  "PostFinance",
-  "Zürcher Kantonalbank (ZKB)",
-  "Berner Kantonalbank (BEKB)",
-  "Basler Kantonalbank (BKB)",
-  "Basellandschaftliche Kantonalbank (BLKB)",
-  "Luzerner Kantonalbank (LUKB)",
-  "St. Galler Kantonalbank (SGKB)",
-  "Aargauische Kantonalbank (AKB)",
-  "Thurgauer Kantonalbank (TKB)",
-  "Graubündner Kantonalbank (GKB)",
-  "Banque Cantonale Vaudoise (BCV)",
-  "Banque Cantonale de Genève (BCGE)",
-  "Banque Cantonale du Jura (BCJ)",
-  "Banque Cantonale Neuchâteloise (BCN)",
-  "Banque Cantonale du Valais (BCVs / WKB)",
-  "Banque Cantonale de Fribourg (BCF / FKB)",
-  "Schwyzer Kantonalbank (SZKB)",
-  "Obwaldner Kantonalbank (OWKB)",
-  "Nidwaldner Kantonalbank (NWKB)",
-  "Urner Kantonalbank (URKB)",
-  "Zuger Kantonalbank (ZGKB)",
-  "Glarner Kantonalbank (GLKB)",
-  "Schaffhauser Kantonalbank (SHKB)",
-  "Appenzeller Kantonalbank (APPKB)",
-  "Migros Bank",
-  "Bank Cler",
-  "Bank WIR",
-  "Hypothekarbank Lenzburg",
-  "Valiant Bank",
-  "Clientis",
-  "Cembra Money Bank",
-  "Julius Bär",
-  "Pictet & Cie",
-  "Lombard Odier",
-  "Vontobel",
-  "EFG International",
-  "J. Safra Sarasin",
-  "VP Bank",
-  "Bank Linth",
-  "Aargauische Hypothekenbank",
-  "Acrevis Bank",
-  "Baloise Bank",
-  "Helvetia Versicherungen (Hypothek)",
-  "AXA Hypothek",
-  "Swiss Life Hypothek",
-  "Zurich Versicherungen (Hypothek)",
-];
-
 function SwissBankSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);

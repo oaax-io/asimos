@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { SWISS_BANKS } from "@/lib/swiss-banks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -111,9 +112,9 @@ function FinancingPage() {
 
   const NO_BANK = "(keine Bank)";
 
-  // Collect all banks referenced across dossiers (by bank_name or current_bank).
+  // Alle Schweizer Banken + zusätzlich in Dossiers vorkommende Namen.
   const banks = useMemo(() => {
-    const set = new Set<string>();
+    const set = new Set<string>(SWISS_BANKS);
     dossiers.forEach((d: any) => {
       const name = (d.bank_name || d.current_bank || "").trim();
       set.add(name ? name : NO_BANK);
