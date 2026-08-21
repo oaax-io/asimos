@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { usePersistedState } from "@/hooks/usePersistedState";
+import { FilterMultiSelect } from "@/components/filters/FilterMultiSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -49,17 +51,17 @@ function PropertiesPage() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [fStatus, setFStatus] = useState<string>("all");
-  const [fType, setFType] = useState<string>("all");
-  const [fListing, setFListing] = useState<string>("all");
-  const [fCities, setFCities] = useState<string[]>([]);
-  const [fAssigned, setFAssigned] = useState<string>("all");
-  const [archivedFilter, setArchivedFilter] = useState<"active" | "archived" | "all">("active");
-  const [fStructure, setFStructure] = useState<"all" | "buildings" | "units" | "standalone">("all");
-  const [groupUnits, setGroupUnits] = useState<boolean>(true);
+  const [search, setSearch] = usePersistedState("properties:filter:search", "");
+  const [fStatuses, setFStatuses] = usePersistedState<string[]>("properties:filter:status", []);
+  const [fTypes, setFTypes] = usePersistedState<string[]>("properties:filter:type", []);
+  const [fListing, setFListing] = usePersistedState<string>("properties:filter:listing", "all");
+  const [fCities, setFCities] = usePersistedState<string[]>("properties:filter:cities", []);
+  const [fAssignees, setFAssignees] = usePersistedState<string[]>("properties:filter:assigned", []);
+  const [archivedFilter, setArchivedFilter] = usePersistedState<"active" | "archived" | "all">("properties:filter:archived", "active");
+  const [fStructure, setFStructure] = usePersistedState<"all" | "buildings" | "units" | "standalone">("properties:filter:structure", "all");
+  const [groupUnits, setGroupUnits] = usePersistedState<boolean>("properties:filter:groupUnits", true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [view, setView] = useState<ViewMode>("list");
+  const [view, setView] = usePersistedState<ViewMode>("properties:filter:view", "list");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -179,11 +181,11 @@ function PropertiesPage() {
     if (archivedFilter === "active" && p.status === "archived") return false;
     if (archivedFilter === "archived" && p.status !== "archived") return false;
     if (search && !(`${p.title} ${p.city ?? ""} ${p.address ?? ""}`.toLowerCase().includes(search.toLowerCase()))) return false;
-    if (fStatus !== "all" && p.status !== fStatus) return false;
-    if (fType !== "all" && p.property_type !== fType) return false;
+    if (fStatuses.length && !fStatuses.includes(p.status as string)) return false;
+    if (fTypes.length && !fTypes.includes(p.property_type as string)) return false;
     if (fListing !== "all" && p.listing_type !== fListing) return false;
     if (fCities.length > 0 && !fCities.includes(p.city as string)) return false;
-    if (fAssigned !== "all" && p.assigned_to !== fAssigned) return false;
+    if (fAssignees.length && !(p.assigned_to && fAssignees.includes(p.assigned_to))) return false;
     if (fStructure === "units" && !p.is_unit) return false;
     if (fStructure === "standalone" && (p.is_unit || (properties as any[]).some(x => x.parent_property_id === p.id))) return false;
     if (fStructure === "buildings" && !(properties as any[]).some(x => x.parent_property_id === p.id)) return false;
@@ -237,9 +239,9 @@ function PropertiesPage() {
     return next;
   });
 
-  const [pageSize, setPageSize] = useState<number>(20);
+  const [pageSize, setPageSize] = usePersistedState<number>("properties:filter:pageSize", 20);
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [search, fStatus, fType, fListing, fCities, fAssigned, archivedFilter, fStructure, groupUnits, pageSize, view]);
+  useEffect(() => { setPage(1); }, [search, fStatuses, fTypes, fListing, fCities, fAssignees, archivedFilter, fStructure, groupUnits, pageSize, view]);
   const totalPages = Math.max(1, Math.ceil(displayed.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const paginated = useMemo(
@@ -354,13 +356,16 @@ function PropertiesPage() {
 
       {(() => {
         const activeChips: Array<{ key: string; label: string; clear: () => void }> = [];
-        if (fStatus !== "all") activeChips.push({ key: "status", label: t("properties.chips.status", { value: statusLabel(fStatus) }), clear: () => setFStatus("all") });
+        if (fStatuses.length) activeChips.push({ key: "status", label: t("properties.chips.status", { value: fStatuses.map(statusLabel).join(", ") }), clear: () => setFStatuses([]) });
         if (fListing !== "all") activeChips.push({ key: "listing", label: t("properties.chips.listing", { value: listingLabel(fListing) }), clear: () => setFListing("all") });
-        if (fType !== "all") activeChips.push({ key: "type", label: t("properties.chips.type", { value: typeLabel(fType) }), clear: () => setFType("all") });
+        if (fTypes.length) activeChips.push({ key: "type", label: t("properties.chips.type", { value: fTypes.map(typeLabel).join(", ") }), clear: () => setFTypes([]) });
         if (fCities.length > 0) activeChips.push({ key: "city", label: t("properties.chips.city", { value: fCities.join(", ") }), clear: () => setFCities([]) });
-        if (fAssigned !== "all") {
-          const emp = employees.find((e: any) => e.id === fAssigned) as any;
-          activeChips.push({ key: "assigned", label: t("properties.chips.assigned", { value: emp?.full_name || emp?.email || "—" }), clear: () => setFAssigned("all") });
+        if (fAssignees.length) {
+          const names = fAssignees.map((id) => {
+            const emp = employees.find((e: any) => e.id === id) as any;
+            return emp?.full_name || emp?.email || "—";
+          });
+          activeChips.push({ key: "assigned", label: t("properties.chips.assigned", { value: names.join(", ") }), clear: () => setFAssignees([]) });
         }
         if (fStructure !== "all") {
           const labels: Record<string, string> = {
@@ -374,8 +379,8 @@ function PropertiesPage() {
           activeChips.push({ key: "arch", label: archivedFilter === "archived" ? t("properties.chips.onlyArchived") : t("properties.chips.activeAndArchived"), clear: () => setArchivedFilter("active") });
         }
         const resetAll = () => {
-          setSearch(""); setFStatus("all"); setFType("all"); setFListing("all");
-          setFCities([]); setFAssigned("all"); setFStructure("all"); setArchivedFilter("active");
+          setSearch(""); setFStatuses([]); setFTypes([]); setFListing("all");
+          setFCities([]); setFAssignees([]); setFStructure("all"); setArchivedFilter("active");
         };
         const hasActive = activeChips.length > 0 || search.length > 0;
 
@@ -387,20 +392,13 @@ function PropertiesPage() {
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input className="pl-9" placeholder={t("properties.search")} value={search} onChange={(e) => setSearch(e.target.value)} />
               </div>
-              <Select value={fStatus} onValueChange={setFStatus}>
-                <SelectTrigger className="h-9 w-[150px]"><SelectValue placeholder={t("properties.filters.status")} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("properties.filters.allStatuses")}</SelectItem>
-                  {STATUSES.map(s => (
-                    <SelectItem key={s} value={s}>
-                      <span className="flex items-center gap-2">
-                        <span className={`inline-block h-2.5 w-2.5 rounded-full ${getPropertyStatusDotClass(s)}`} />
-                        {statusLabel(s)}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FilterMultiSelect
+                className="h-9 w-[150px]"
+                options={STATUSES.map((st) => ({ value: st, label: statusLabel(st), dot: getPropertyStatusDotClass(st) }))}
+                selected={fStatuses}
+                onChange={setFStatuses}
+                placeholder={t("properties.filters.allStatuses")}
+              />
               <Select value={fListing} onValueChange={setFListing}>
                 <SelectTrigger className="h-9 w-[140px]"><SelectValue placeholder={t("properties.filters.listing")} /></SelectTrigger>
                 <SelectContent>
@@ -454,13 +452,13 @@ function PropertiesPage() {
             {/* Expandable advanced filters */}
             {moreOpen && (
               <div className="grid gap-2 rounded-xl border bg-muted/20 p-3 sm:grid-cols-2 lg:grid-cols-4">
-                <Select value={fType} onValueChange={setFType}>
-                  <SelectTrigger className="h-9"><SelectValue placeholder={t("properties.filters.type")} /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("properties.filters.allTypes")}</SelectItem>
-                    {PROP_TYPES.map(tp => <SelectItem key={tp} value={tp}>{typeLabel(tp)}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <FilterMultiSelect
+                  className="h-9 w-full"
+                  options={PROP_TYPES.map((tp) => ({ value: tp, label: typeLabel(tp) }))}
+                  selected={fTypes}
+                  onChange={setFTypes}
+                  placeholder={t("properties.filters.allTypes")}
+                />
                 <Select value={fStructure} onValueChange={(v) => setFStructure(v as typeof fStructure)}>
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -470,13 +468,13 @@ function PropertiesPage() {
                     <SelectItem value="standalone">{t("properties.filters.standaloneOnly")}</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={fAssigned} onValueChange={setFAssigned}>
-                  <SelectTrigger className="h-9"><SelectValue placeholder={t("properties.filters.assigned")} /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("properties.filters.allEmployees")}</SelectItem>
-                    {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <FilterMultiSelect
+                  className="h-9 w-full"
+                  options={employees.map((e: any) => ({ value: e.id, label: e.full_name || e.email, avatar_url: e.avatar_url ?? null }))}
+                  selected={fAssignees}
+                  onChange={setFAssignees}
+                  placeholder={t("properties.filters.allEmployees")}
+                />
                 {cities.length > 1 && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

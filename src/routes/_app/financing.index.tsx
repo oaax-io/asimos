@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SWISS_BANKS } from "@/lib/swiss-banks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { usePersistedState } from "@/hooks/usePersistedState";
+import { FilterMultiSelect } from "@/components/filters/FilterMultiSelect";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
@@ -42,12 +44,11 @@ function FinancingPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>(ALL);
-  const [typeFilter, setTypeFilter] = useState<string>(ALL);
-  const [qcFilter, setQcFilter] = useState<string>(ALL);
-  const [bankFilter, setBankFilter] = useState<string[]>([]);
-  const [sourceFilter, setSourceFilter] = useState<string>(ALL);
+  const [search, setSearch] = usePersistedState("financing:filter:search", "");
+  const [statusFilters, setStatusFilters] = usePersistedState<string[]>("financing:filter:status", []);
+  const [typeFilters, setTypeFilters] = usePersistedState<string[]>("financing:filter:type", []);
+  const [qcFilters, setQcFilters] = usePersistedState<string[]>("financing:filter:qc", []);
+  const [bankFilter, setBankFilter] = usePersistedState<string[]>("financing:filter:banks", []);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [hypoOpen, setHypoOpen] = useState(false);
   const [hypoChOpen, setHypoChOpen] = useState(false);
@@ -125,14 +126,13 @@ function FinancingPage() {
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
     return dossiers.filter((d: any) => {
-      if (statusFilter !== ALL && d.dossier_status !== statusFilter) return false;
-      if (typeFilter !== ALL && d.financing_type !== typeFilter) return false;
-      if (qcFilter !== ALL && displayQuickCheckStatus(d) !== qcFilter) return false;
+      if (statusFilters.length && !statusFilters.includes(d.dossier_status)) return false;
+      if (typeFilters.length && !typeFilters.includes(d.financing_type)) return false;
+      if (qcFilters.length && !qcFilters.includes(displayQuickCheckStatus(d))) return false;
       if (bankFilter.length > 0) {
         const name = (d.bank_name || d.current_bank || "").trim() || NO_BANK;
         if (!bankFilter.includes(name)) return false;
       }
-      if (sourceFilter !== ALL && (d.data_source ?? "existing_property") !== sourceFilter) return false;
       if (!s) return true;
       const hay = [
         d.title, d.clients?.full_name, d.properties?.title, d.bank_name,
@@ -140,7 +140,7 @@ function FinancingPage() {
       ].filter(Boolean).join(" ").toLowerCase();
       return hay.includes(s);
     });
-  }, [dossiers, search, statusFilter, typeFilter, qcFilter, bankFilter, sourceFilter]);
+  }, [dossiers, search, statusFilters, typeFilters, qcFilters, bankFilter]);
 
   const toggleOne = (id: string) =>
     setSelected((prev) => {
@@ -200,49 +200,35 @@ function FinancingPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder={t("financing.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.type")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("financing.filters.allTypes")}</SelectItem>
-            {Object.keys(FINANCING_TYPE_LABELS).map((k) => (
-              <SelectItem key={k} value={k}>{typeLabel(k)}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={qcFilter} onValueChange={setQcFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("financing.filters.quickCheck")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("financing.filters.allQuickCheck")}</SelectItem>
-            {Object.keys(QUICK_CHECK_LABELS).map((k) => (
-              <SelectItem key={k} value={k}>{qcLabel(k)}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <span className="inline-flex items-center gap-2">
-              {statusFilter !== ALL && <span className={cn("h-2.5 w-2.5 rounded-full", dossierDot(statusFilter))} />}
-              <SelectValue placeholder={t("financing.filters.dossierStatus")} />
-            </span>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("financing.filters.allStatus")}</SelectItem>
-            {Object.keys(DOSSIER_STATUS_LABELS).map((k) => (
-              <SelectItem key={k} value={k}>
-                <span className="inline-flex items-center gap-2">
-                  <span className={cn("h-2.5 w-2.5 rounded-full", dossierDot(k))} />
-                  {dossierLabel(k)}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <FilterMultiSelect
+          options={Object.keys(FINANCING_TYPE_LABELS).map((k) => ({ value: k, label: typeLabel(k) }))}
+          selected={typeFilters}
+          onChange={setTypeFilters}
+          placeholder={t("financing.filters.allTypes")}
+        />
+        <FilterMultiSelect
+          options={Object.keys(QUICK_CHECK_LABELS).map((k) => ({ value: k, label: qcLabel(k) }))}
+          selected={qcFilters}
+          onChange={setQcFilters}
+          placeholder={t("financing.filters.allQuickCheck")}
+        />
+        <FilterMultiSelect
+          options={Object.keys(DOSSIER_STATUS_LABELS).map((k) => ({ value: k, label: dossierLabel(k), dot: dossierDot(k) }))}
+          selected={statusFilters}
+          onChange={setStatusFilters}
+          placeholder={t("financing.filters.allStatus")}
+        />
         <BankMultiSelect
           banks={banks}
           selected={bankFilter}
           onChange={setBankFilter}
           placeholder={t("financing.filters.bankType", { defaultValue: "Banken" })}
         />
+        {(search || statusFilters.length > 0 || typeFilters.length > 0 || qcFilters.length > 0 || bankFilter.length > 0) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setStatusFilters([]); setTypeFilters([]); setQcFilters([]); setBankFilter([]); }}>
+            {t("common.reset", { defaultValue: "Zurücksetzen" })}
+          </Button>
+        )}
       </div>
 
       {filtered.length > 0 && (
