@@ -259,7 +259,7 @@ function ClientsPage() {
   // Pagination
   const [pageSize, setPageSize] = useState<number>(20);
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [search, typeFilter, assignedFilter, financingFilter, statusFilter, archivedFilter, pageSize, view]);
+  useEffect(() => { setPage(1); }, [search, typeFilters, assignedFilters, financingFilter, statusFilter, archivedFilter, pageSize, view]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
