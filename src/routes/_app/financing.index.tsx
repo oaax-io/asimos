@@ -236,15 +236,12 @@ function FinancingPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={bankFilter} onValueChange={setBankFilter}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder={t("financing.filters.bankType")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("financing.filters.allBankTypes")}</SelectItem>
-            <SelectItem value="ubs">UBS</SelectItem>
-            <SelectItem value="other">{t("financing.filters.otherBank")}</SelectItem>
-            <SelectItem value="none">{t("financing.filters.noBank")}</SelectItem>
-          </SelectContent>
-        </Select>
+        <BankMultiSelect
+          banks={banks}
+          selected={bankFilter}
+          onChange={setBankFilter}
+          placeholder={t("financing.filters.bankType", { defaultValue: "Banken" })}
+        />
       </div>
 
       {filtered.length > 0 && (
