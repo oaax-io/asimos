@@ -26,6 +26,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { useTranslation } from "react-i18next";
 import { AssigneeAvatars, AssigneePicker, useClientAssignees } from "@/components/clients/ClientAssignees";
 import { ClientPinButton, useClientPins } from "@/components/clients/ClientPin";
+import { deleteToTrash } from "@/lib/trash";
 
 export const Route = createFileRoute("/_app/clients/")({ component: ClientsPage });
 
@@ -309,8 +310,7 @@ function ClientsPage() {
     mutationFn: async () => {
       const ids = Array.from(selected);
       if (!ids.length) return;
-      const { error } = await supabase.from("clients").delete().in("id", ids);
-      if (error) throw error;
+      await deleteToTrash("clients", ids);
     },
     onSuccess: () => {
       toast.success(t("clients.toast.deleted"));

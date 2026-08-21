@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { useTranslation } from "react-i18next";
+import { deleteToTrash } from "@/lib/trash";
 
 export const Route = createFileRoute("/_app/tasks")({ component: TasksPage });
 
@@ -196,8 +197,7 @@ function TasksPage() {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("tasks").delete().eq("id", id);
-      if (error) throw error;
+      await deleteToTrash("tasks", id);
     },
     onSuccess: () => {
       toast.success(t("tasks.toasts.deleted"));

@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { formatDate } from "@/lib/format";
 import { GeneratedDocumentsTable } from "@/components/documents/GeneratedDocumentsTable";
 import { useConfirm } from "@/components/confirm/ConfirmProvider";
+import { deleteToTrash } from "@/lib/trash";
 
 const DOC_TYPES = [
   "client_document", "property_document", "contract", "mandate", "mandate_partial",
@@ -140,8 +141,7 @@ export function ClientDocumentsTab({ clientId, userId }: { clientId: string; use
       if (!/^https?:\/\//i.test(d.file_url)) {
         await supabase.storage.from("documents").remove([d.file_url]);
       }
-      const { error } = await supabase.from("documents").delete().eq("id", d.id);
-      if (error) throw error;
+      await deleteToTrash("documents", d.id);
       toast.success("Dokument gelöscht");
       qc.invalidateQueries({ queryKey: ["client_documents", clientId] });
       qc.invalidateQueries({ queryKey: ["client_documents_count", clientId] });

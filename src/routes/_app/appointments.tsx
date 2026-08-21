@@ -26,6 +26,7 @@ import { VideoCallDialog } from "@/components/video/VideoCallDialog";
 import { HolidaySettings } from "@/components/appointments/HolidaySettings";
 import { holidayMap, holidaysForCanton, dateKey, type Holiday } from "@/lib/swiss-holidays";
 import { ApptHover, TaskHover, HolidayHover } from "@/components/appointments/CalendarHover";
+import { deleteToTrash } from "@/lib/trash";
 
 export const Route = createFileRoute("/_app/appointments")({ component: AppointmentsPage });
 
@@ -155,8 +156,7 @@ function AppointmentsPage() {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("appointments").delete().eq("id", id);
-      if (error) throw error;
+      await deleteToTrash("appointments", id);
     },
     onSuccess: () => { toast.success(t("appointments.toasts.deleted")); qc.invalidateQueries({ queryKey: ["appointments"] }); setEditId(null); },
   });

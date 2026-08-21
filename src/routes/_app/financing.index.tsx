@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { deleteToTrash } from "@/lib/trash";
 
 export const Route = createFileRoute("/_app/financing/")({ component: FinancingPage });
 
@@ -61,8 +62,7 @@ function FinancingPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
-      const { error } = await supabase.from("financing_dossiers").delete().in("id", ids);
-      if (error) throw error;
+      await deleteToTrash("financing_dossiers", ids);
     },
     onSuccess: (_data, ids) => {
       toast.success(t("financing.toast.deleted", { count: ids.length }));
