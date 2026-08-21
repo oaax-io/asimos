@@ -310,7 +310,7 @@ function AnalyticsPage() {
         title={
           <span className="inline-flex items-center gap-2.5">
             <BarChart3 className="h-8 w-8 text-[#6F6B94]" />
-            {t("pages.analytics.title")}
+            Analytics
           </span>
         }
       />
