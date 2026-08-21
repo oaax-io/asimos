@@ -46,6 +46,7 @@ import { Route as AppFinancingIndexRouteImport } from './routes/_app/financing.i
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as ApiPublicPortalWebhookRouteImport } from './routes/api/public/portal-webhook'
 import { Route as AppSettingsVideoRouteImport } from './routes/_app/settings.video'
+import { Route as AppSettingsTrashRouteImport } from './routes/_app/settings.trash'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings.profile'
 import { Route as AppSettingsNotificationsRouteImport } from './routes/_app/settings.notifications'
 import { Route as AppSettingsEsignRouteImport } from './routes/_app/settings.esign'
@@ -247,6 +248,11 @@ const AppSettingsVideoRoute = AppSettingsVideoRouteImport.update({
   path: '/video',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsTrashRoute = AppSettingsTrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsProfileRoute = AppSettingsProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -373,6 +379,7 @@ export interface FileRoutesByFullPath {
   '/settings/esign': typeof AppSettingsEsignRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/profile': typeof AppSettingsProfileRoute
+  '/settings/trash': typeof AppSettingsTrashRoute
   '/settings/video': typeof AppSettingsVideoRoute
   '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
   '/clients/': typeof AppClientsIndexRoute
@@ -424,6 +431,7 @@ export interface FileRoutesByTo {
   '/settings/esign': typeof AppSettingsEsignRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/profile': typeof AppSettingsProfileRoute
+  '/settings/trash': typeof AppSettingsTrashRoute
   '/settings/video': typeof AppSettingsVideoRoute
   '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
   '/clients': typeof AppClientsIndexRoute
@@ -480,6 +488,7 @@ export interface FileRoutesById {
   '/_app/settings/esign': typeof AppSettingsEsignRoute
   '/_app/settings/notifications': typeof AppSettingsNotificationsRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
+  '/_app/settings/trash': typeof AppSettingsTrashRoute
   '/_app/settings/video': typeof AppSettingsVideoRoute
   '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
   '/_app/clients/': typeof AppClientsIndexRoute
@@ -536,6 +545,7 @@ export interface FileRouteTypes {
     | '/settings/esign'
     | '/settings/notifications'
     | '/settings/profile'
+    | '/settings/trash'
     | '/settings/video'
     | '/api/public/portal-webhook'
     | '/clients/'
@@ -587,6 +597,7 @@ export interface FileRouteTypes {
     | '/settings/esign'
     | '/settings/notifications'
     | '/settings/profile'
+    | '/settings/trash'
     | '/settings/video'
     | '/api/public/portal-webhook'
     | '/clients'
@@ -642,6 +653,7 @@ export interface FileRouteTypes {
     | '/_app/settings/esign'
     | '/_app/settings/notifications'
     | '/_app/settings/profile'
+    | '/_app/settings/trash'
     | '/_app/settings/video'
     | '/api/public/portal-webhook'
     | '/_app/clients/'
@@ -931,6 +943,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsVideoRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/trash': {
+      id: '/_app/settings/trash'
+      path: '/trash'
+      fullPath: '/settings/trash'
+      preLoaderRoute: typeof AppSettingsTrashRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/profile': {
       id: '/_app/settings/profile'
       path: '/profile'
@@ -1082,6 +1101,7 @@ interface AppSettingsRouteChildren {
   AppSettingsEsignRoute: typeof AppSettingsEsignRoute
   AppSettingsNotificationsRoute: typeof AppSettingsNotificationsRoute
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
+  AppSettingsTrashRoute: typeof AppSettingsTrashRoute
   AppSettingsVideoRoute: typeof AppSettingsVideoRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
@@ -1094,6 +1114,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsEsignRoute: AppSettingsEsignRoute,
   AppSettingsNotificationsRoute: AppSettingsNotificationsRoute,
   AppSettingsProfileRoute: AppSettingsProfileRoute,
+  AppSettingsTrashRoute: AppSettingsTrashRoute,
   AppSettingsVideoRoute: AppSettingsVideoRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }

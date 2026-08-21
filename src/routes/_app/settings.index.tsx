@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
-  User, Bell, Building2, Palette, Banknote, Tags, Video, FileSignature, ChevronRight,
+  User, Bell, Building2, Palette, Banknote, Tags, Video, FileSignature, ChevronRight, Trash2,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
