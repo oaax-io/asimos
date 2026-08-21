@@ -153,6 +153,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
+  const { avatarUrl, fullName, initials } = useMyProfile();
 
   useAutoPresence();
 
