@@ -390,6 +390,8 @@ function PropertyDetail() {
           <Button variant="outline" size="icon" onClick={async () => { if (await confirm({ title: "Immobilie löschen?", description: "Diese Aktion kann nicht rückgängig gemacht werden.", confirmText: "Löschen" })) del.mutate(); }}>
             <Trash2 className="h-4 w-4" />
           </Button>
+          <PropertyQuickActions propertyId={id} marketAnalysisSlot={<MarketAnalysisTab property={p} />} />
+
         </div>
       </div>
 
