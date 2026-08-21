@@ -521,15 +521,103 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
             )}
 
             {step === 3 && (
+              <div className="space-y-4">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={withContact} onCheckedChange={() => setWithContact((v) => !v)} />
+                  Ansprechperson im Exposé anzeigen
+                </label>
+
+                <div className={cn("space-y-4", !withContact && "pointer-events-none opacity-50")}>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setContactMode("employee")}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                        contactMode === "employee" ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/40",
+                      )}
+                    >
+                      Mitarbeitende
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setContactMode("custom")}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                        contactMode === "custom" ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/40",
+                      )}
+                    >
+                      Zusätzliche Person
+                    </button>
+                  </div>
+
+                  {contactMode === "employee" ? (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {(employees as any[]).length === 0 && (
+                        <p className="text-sm text-muted-foreground">Keine Mitarbeitenden gefunden.</p>
+                      )}
+                      {(employees as any[]).map((e) => {
+                        const active = (contactUserId ?? (profile as any)?.id) === e.id;
+                        return (
+                          <button
+                            key={e.id}
+                            type="button"
+                            onClick={() => setContactUserId(e.id)}
+                            className={cn(
+                              "flex items-center gap-3 rounded-xl border p-3 text-left transition",
+                              active ? "border-primary bg-primary/5 ring-1 ring-primary/25" : "hover:border-primary/40",
+                            )}
+                          >
+                            <Avatar className="h-9 w-9">
+                              {e.avatar_url ? <AvatarImage src={e.avatar_url} alt={e.full_name ?? ""} /> : null}
+                              <AvatarFallback className="bg-primary/10 text-xs text-primary">
+                                {(e.full_name ?? e.email ?? "?").slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium">{e.full_name ?? e.email}</p>
+                              <p className="truncate text-xs text-muted-foreground">{e.email}{e.phone ? ` · ${e.phone}` : ""}</p>
+                            </div>
+                            {active && <Check className="ml-auto h-4 w-4 text-primary" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label>Name</Label>
+                        <Input value={customContact.name} onChange={(e) => setCustomContact((c) => ({ ...c, name: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Funktion (optional)</Label>
+                        <Input value={customContact.role} onChange={(e) => setCustomContact((c) => ({ ...c, role: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>E-Mail</Label>
+                        <Input type="email" value={customContact.email} onChange={(e) => setCustomContact((c) => ({ ...c, email: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Telefon</Label>
+                        <Input value={customContact.phone} onChange={(e) => setCustomContact((c) => ({ ...c, phone: e.target.value }))} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
                   Vorschau · Vorlage {template.label} · {galleryUrls.filter((u) => u !== coverUrl).length} Galeriebilder
+                  {contact.name ? ` · Ansprechperson ${contact.name}` : ""}
                 </p>
                 <iframe title="Exposé-Vorschau" srcDoc={previewHtml} className="h-[60vh] w-full rounded-lg border bg-white" />
               </div>
             )}
 
-            {step === 4 && (
+            {step === 5 && (
               <div className="space-y-4 py-6 text-center">
                 <FileDown className="mx-auto h-10 w-10 text-primary" />
                 <div>
