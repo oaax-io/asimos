@@ -62,7 +62,7 @@ type Msg = {
   attachments: ChatAttachment[] | null;
   mentions: ChatMention[] | null;
 };
-type Member = { id: string; full_name: string | null; email: string | null; avatar_url: string | null; presence_status?: string | null };
+type Member = { id: string; full_name: string | null; email: string | null; avatar_url: string | null; presence_status?: string | null; presence_updated_at?: string | null };
 
 type DockCtx = { openChat: (memberId: string) => void };
 const Ctx = createContext<DockCtx>({ openChat: () => {} });
@@ -172,7 +172,7 @@ function ChatWindow({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email, avatar_url, presence_status")
+        .select("id, full_name, email, avatar_url, presence_status, presence_updated_at")
         .eq("id", memberId)
         .maybeSingle();
       if (error) throw error;
@@ -365,11 +365,11 @@ function ChatWindow({
             <AvatarImage src={member?.avatar_url ?? undefined} />
             <AvatarFallback className="text-[10px]">{initials(member?.full_name, member?.email)}</AvatarFallback>
           </Avatar>
-          <PresenceDot status={member?.presence_status} className="absolute -bottom-0.5 -right-0.5" />
+          <PresenceDot status={member?.presence_status} updatedAt={member?.presence_updated_at} className="absolute -bottom-0.5 -right-0.5" />
         </span>
         <span className="min-w-0 flex flex-1 flex-col overflow-hidden">
           <span className="truncate text-sm font-semibold leading-tight">{title}</span>
-          <PresenceLabel status={member?.presence_status} className="text-[10px]" />
+          <PresenceLabel status={member?.presence_status} updatedAt={member?.presence_updated_at} className="text-[10px]" />
         </span>
         <Button
           variant="ghost"

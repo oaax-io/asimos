@@ -15,7 +15,7 @@ import { useChatDock } from "@/components/chat/ChatDock";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type Member = { id: string; full_name: string | null; email: string | null; avatar_url: string | null; presence_status?: string | null };
+type Member = { id: string; full_name: string | null; email: string | null; avatar_url: string | null; presence_status?: string | null; presence_updated_at?: string | null };
 type Message = {
   id: string;
   sender_id: string;
@@ -56,7 +56,7 @@ export function TeamInbox() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email, avatar_url, presence_status")
+        .select("id, full_name, email, avatar_url, presence_status, presence_updated_at")
         .eq("is_active", true)
         .order("full_name");
       if (error) throw error;
@@ -199,7 +199,7 @@ export function TeamInbox() {
                   <AvatarImage src={t.member?.avatar_url ?? undefined} />
                   <AvatarFallback className="text-xs">{initialsOf(t.member)}</AvatarFallback>
                 </Avatar>
-                <PresenceDot status={t.member?.presence_status} className="absolute -bottom-0.5 -right-0.5" />
+                <PresenceDot status={t.member?.presence_status} updatedAt={t.member?.presence_updated_at} className="absolute -bottom-0.5 -right-0.5" />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
@@ -262,7 +262,7 @@ export function TeamInbox() {
               <AvatarImage src={m.avatar_url ?? undefined} />
               <AvatarFallback className="text-xs">{initialsOf(m)}</AvatarFallback>
             </Avatar>
-            <PresenceDot status={m.presence_status} className="absolute -bottom-0.5 -right-0.5" />
+            <PresenceDot status={m.presence_status} updatedAt={m.presence_updated_at} className="absolute -bottom-0.5 -right-0.5" />
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm">{m.full_name ?? m.email}</p>

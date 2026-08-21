@@ -2,15 +2,18 @@ import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { PRESENCE_HEARTBEAT_MS } from "@/lib/presence";
 
 const IDLE_MS = 10 * 60 * 1000; // 10 Minuten Inaktivität -> Abwesend
 const AUTO_AWAY_KEY = "presence:auto-away";
 
 /**
- * Automatische Status-Pflege:
+ * Echtzeit-Präsenz:
+ * - Heartbeat alle 45s (presence_updated_at) — ohne Heartbeat gilt ein User als offline
  * - App-Start / Login: "away" oder "offline" wird auf "available" zurückgesetzt
  * - 10 Min Inaktivität: "available" -> "away" (automatisch markiert)
- * - Aktivität danach: automatisches "away" -> "available"
+ * - Beim Schliessen des Tabs: "offline"
+ * - Realtime-Subscription auf profiles: Statusänderungen anderer User erscheinen sofort
  * Manuell gesetzte Status (Beschäftigt / Im Termin) werden nie überschrieben.
  */
 export function useAutoPresence() {
@@ -23,15 +26,19 @@ export function useAutoPresence() {
     const userId = user.id;
     let cancelled = false;
 
+    const invalidate = () => {
+      qc.invalidateQueries({ queryKey: ["my-presence"] });
+      qc.invalidateQueries({ queryKey: ["team-members"] });
+      qc.invalidateQueries({ queryKey: ["chat-member"] });
+    };
+
     const write = async (value: string) => {
       const { error } = await supabase
         .from("profiles")
         .update({ presence_status: value, presence_updated_at: new Date().toISOString() })
         .eq("id", userId);
       if (error) return;
-      qc.invalidateQueries({ queryKey: ["my-presence"] });
-      qc.invalidateQueries({ queryKey: ["team-members"] });
-      qc.invalidateQueries({ queryKey: ["chat-member"] });
+      invalidate();
     };
 
     const currentStatus = async () => {
@@ -41,6 +48,13 @@ export function useAutoPresence() {
         .eq("id", userId)
         .maybeSingle();
       return (data?.presence_status ?? "available") as string;
+    };
+
+    const heartbeat = async () => {
+      await supabase
+        .from("profiles")
+        .update({ presence_updated_at: new Date().toISOString() })
+        .eq("id", userId);
     };
 
     const goAway = async () => {
@@ -69,9 +83,15 @@ export function useAutoPresence() {
       if (status === "away" || status === "offline") {
         localStorage.removeItem(AUTO_AWAY_KEY);
         await write("available");
+      } else {
+        await heartbeat();
       }
       resetTimer();
     })();
+
+    const heartbeatId = setInterval(() => {
+      if (document.visibilityState === "visible") void heartbeat();
+    }, PRESENCE_HEARTBEAT_MS);
 
     const events: (keyof WindowEventMap)[] = [
       "mousemove",
@@ -84,15 +104,54 @@ export function useAutoPresence() {
     events.forEach((e) => window.addEventListener(e, resetTimer, { passive: true }));
 
     const onVisibility = () => {
-      if (document.visibilityState === "visible") resetTimer();
+      if (document.visibilityState === "visible") {
+        void heartbeat();
+        resetTimer();
+      }
     };
     document.addEventListener("visibilitychange", onVisibility);
+
+    // Tab wird geschlossen -> sofort offline melden
+    const onLeave = () => {
+      const url = `${import.meta.env['VITE_SUPABASE_URL']}/rest/v1/profiles?id=eq.${userId}`;
+      const key = import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] as string | undefined;
+      void supabase.auth.getSession().then(({ data }) => {
+        const token = data.session?.access_token;
+        if (!key || !token) return;
+        void fetch(url, {
+          method: "PATCH",
+          keepalive: true,
+          headers: {
+            apikey: key,
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({
+            presence_status: "offline",
+            presence_updated_at: new Date().toISOString(),
+          }),
+        });
+      });
+    };
+    window.addEventListener("pagehide", onLeave);
+
+    // Realtime: Statusänderungen aller Profile sofort übernehmen
+    const channel = supabase
+      .channel("presence-profiles")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles" }, () => {
+        invalidate();
+      })
+      .subscribe();
 
     return () => {
       cancelled = true;
       if (timerRef.current) clearTimeout(timerRef.current);
+      clearInterval(heartbeatId);
       events.forEach((e) => window.removeEventListener(e, resetTimer));
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onLeave);
+      supabase.removeChannel(channel);
     };
   }, [user?.id, qc]);
 }

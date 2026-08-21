@@ -1,5 +1,10 @@
 export type PresenceStatus = "available" | "busy" | "away" | "meeting" | "offline";
 
+/** Ohne Heartbeat innerhalb dieser Zeit gilt ein User als offline. */
+export const PRESENCE_STALE_MS = 2 * 60 * 1000;
+/** Intervall, in dem der eigene Heartbeat geschrieben wird. */
+export const PRESENCE_HEARTBEAT_MS = 45 * 1000;
+
 export const PRESENCE_OPTIONS: {
   value: PresenceStatus;
   label: string;
@@ -14,6 +19,22 @@ export const PRESENCE_OPTIONS: {
   { value: "offline", label: "Offline", dot: "bg-slate-400", text: "text-slate-600", bg: "bg-slate-100" },
 ];
 
+/**
+ * Effektiver Status: veraltete Heartbeats (User hat App geschlossen)
+ * werden als "offline" dargestellt, egal was in der DB steht.
+ */
+export function effectivePresence(
+  status?: string | null,
+  updatedAt?: string | null,
+): PresenceStatus {
+  if (!status) return "offline";
+  if (status === "offline") return "offline";
+  if (!updatedAt) return "offline";
+  const ts = new Date(updatedAt).getTime();
+  if (!Number.isFinite(ts) || Date.now() - ts > PRESENCE_STALE_MS) return "offline";
+  return status as PresenceStatus;
+}
+
 export function presenceMeta(status?: string | null) {
-  return PRESENCE_OPTIONS.find((o) => o.value === status) ?? PRESENCE_OPTIONS[0];
+  return PRESENCE_OPTIONS.find((o) => o.value === status) ?? PRESENCE_OPTIONS[4];
 }

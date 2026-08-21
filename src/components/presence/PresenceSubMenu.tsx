@@ -20,11 +20,14 @@ export function useMyPresence() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("presence_status")
+        .select("presence_status, presence_updated_at")
         .eq("id", user!.id)
         .maybeSingle();
       if (error) throw error;
-      return (data?.presence_status ?? "available") as string;
+      return {
+        status: (data?.presence_status ?? "offline") as string,
+        updatedAt: (data?.presence_updated_at ?? null) as string | null,
+      };
     },
   });
 }
@@ -32,7 +35,8 @@ export function useMyPresence() {
 export function PresenceSubMenu() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const { data: status } = useMyPresence();
+  const { data: presence } = useMyPresence();
+  const status = presence?.status;
   const meta = presenceMeta(status);
 
   const setStatus = async (value: string) => {
@@ -54,7 +58,7 @@ export function PresenceSubMenu() {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
-        <PresenceDot status={status} ring={false} className="mr-2" />
+        <PresenceDot status={status} updatedAt={presence?.updatedAt} ring={false} className="mr-2" />
         <span className="flex-1">Status</span>
         <span className="ml-2 text-xs text-muted-foreground">{meta.label}</span>
       </DropdownMenuSubTrigger>
