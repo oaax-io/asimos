@@ -257,9 +257,9 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   };
 
   const previewHtml = useMemo(
-    () => (step === 3 ? buildHtml(coverUrl, galleryUrls) : ""),
+    () => (step === 4 ? buildHtml(coverUrl, galleryUrls) : ""),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [step, coverUrl, galleryUrls, galleryLayout, template, title, description, withDescription, withFeatures, withContact, facts, company, profile],
+    [step, coverUrl, galleryUrls, galleryLayout, template, title, description, withDescription, withFeatures, withContact, contact, facts, company, profile],
   );
 
   async function handleGenerate() {
