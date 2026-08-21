@@ -29,11 +29,13 @@ import { ConvertLeadDialog } from "@/components/leads/ConvertLeadDialog";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { deleteToTrash } from "@/lib/trash";
+import { usePersistedState } from "@/hooks/usePersistedState";
+import { FilterMultiSelect } from "@/components/filters/FilterMultiSelect";
 
 export const Route = createFileRoute("/_app/leads/")({ component: LeadsPage });
 
 type Lead = Tables<"leads">;
-type Profile = { id: string; full_name: string | null; email: string | null };
+type Profile = { id: string; full_name: string | null; email: string | null; avatar_url?: string | null };
 
 const ALL = "__all__";
 const UNASSIGNED = "__unassigned__";
@@ -50,10 +52,10 @@ function LeadsPage() {
   const [importWizardVariant, setImportWizardVariant] = useState<"csv" | "casaone" | null>(null);
 
   // Filters
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>(ALL);
-  const [sourceFilter, setSourceFilter] = useState<string>(ALL);
-  const [assignedFilter, setAssignedFilter] = useState<string>(ALL);
+  const [search, setSearch] = usePersistedState("leads:filter:search", "");
+  const [statusFilters, setStatusFilters] = usePersistedState<string[]>("leads:filter:status", []);
+  const [sourceFilters, setSourceFilters] = usePersistedState<string[]>("leads:filter:source", []);
+  const [assignedFilters, setAssignedFilters] = usePersistedState<string[]>("leads:filter:assigned", []);
 
   // Bulk-Selection
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -84,7 +86,7 @@ function LeadsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email")
+        .select("id, full_name, email, avatar_url")
         .eq("is_active", true)
         .order("full_name");
       throwIfError(error);
@@ -104,11 +106,13 @@ function LeadsPage() {
 
   const filtered = useMemo(() => {
     return leads.filter((l: Lead) => {
-      if (statusFilter !== ALL && l.status !== statusFilter) return false;
-      if (sourceFilter !== ALL && l.source !== sourceFilter) return false;
-      if (assignedFilter !== ALL) {
-        if (assignedFilter === UNASSIGNED && l.assigned_to) return false;
-        if (assignedFilter !== UNASSIGNED && l.assigned_to !== assignedFilter) return false;
+      if (statusFilters.length && !statusFilters.includes(l.status as string)) return false;
+      if (sourceFilters.length && !(l.source && sourceFilters.includes(l.source))) return false;
+      if (assignedFilters.length) {
+        const matches = l.assigned_to
+          ? assignedFilters.includes(l.assigned_to)
+          : assignedFilters.includes(UNASSIGNED);
+        if (!matches) return false;
       }
       if (search) {
         const q = search.toLowerCase();
@@ -120,12 +124,12 @@ function LeadsPage() {
       }
       return true;
     });
-  }, [leads, statusFilter, sourceFilter, assignedFilter, search]);
+  }, [leads, statusFilters, sourceFilters, assignedFilters, search]);
 
   // Pagination (Liste)
-  const [pageSize, setPageSize] = useState<number>(20);
+  const [pageSize, setPageSize] = usePersistedState<number>("leads:filter:pageSize", 20);
   const [page, setPage] = useState(1);
-  useEffect(() => { setPage(1); }, [search, statusFilter, sourceFilter, assignedFilter, pageSize]);
+  useEffect(() => { setPage(1); }, [search, statusFilters, sourceFilters, assignedFilters, pageSize]);
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const paginated = useMemo(
@@ -319,30 +323,29 @@ function LeadsPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder={t("leads.filters.searchPlaceholder")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[170px]"><SelectValue placeholder={t("common.status")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("leads.filters.allStatus")}</SelectItem>
-            {leadStatuses.map((s) => <SelectItem key={s} value={s}>{leadStatusLabels[s]}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-[170px]"><SelectValue placeholder={t("leads.form.source")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("leads.filters.allSources")}</SelectItem>
-            {sources.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={assignedFilter} onValueChange={setAssignedFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("leads.columns.assignedTo")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>{t("leads.filters.allEmployees")}</SelectItem>
-            <SelectItem value={UNASSIGNED}>{t("leads.filters.unassigned")}</SelectItem>
-            {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email ?? e.id}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        {(statusFilter !== ALL || sourceFilter !== ALL || assignedFilter !== ALL || search) && (
-          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setStatusFilter(ALL); setSourceFilter(ALL); setAssignedFilter(ALL); }}>
+        <FilterMultiSelect
+          options={leadStatuses.map((s) => ({ value: s, label: leadStatusLabels[s] }))}
+          selected={statusFilters}
+          onChange={setStatusFilters}
+          placeholder={t("leads.filters.allStatus")}
+        />
+        <FilterMultiSelect
+          options={sources.map((s) => ({ value: s, label: s }))}
+          selected={sourceFilters}
+          onChange={setSourceFilters}
+          placeholder={t("leads.filters.allSources")}
+        />
+        <FilterMultiSelect
+          options={[
+            { value: UNASSIGNED, label: t("leads.filters.unassigned") },
+            ...employees.map((e) => ({ value: e.id, label: e.full_name ?? e.email ?? e.id, avatar_url: e.avatar_url ?? null })),
+          ]}
+          selected={assignedFilters}
+          onChange={setAssignedFilters}
+          placeholder={t("leads.filters.allEmployees")}
+        />
+        {(statusFilters.length > 0 || sourceFilters.length > 0 || assignedFilters.length > 0 || search) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setStatusFilters([]); setSourceFilters([]); setAssignedFilters([]); }}>
             {t("leads.filters.reset")}
           </Button>
         )}
