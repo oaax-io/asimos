@@ -109,13 +109,28 @@ function FinancingPage() {
     },
   });
 
+  const NO_BANK = "(keine Bank)";
+
+  // Collect all banks referenced across dossiers (by bank_name or current_bank).
+  const banks = useMemo(() => {
+    const set = new Set<string>();
+    dossiers.forEach((d: any) => {
+      const name = (d.bank_name || d.current_bank || "").trim();
+      set.add(name ? name : NO_BANK);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "de"));
+  }, [dossiers]);
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
     return dossiers.filter((d: any) => {
       if (statusFilter !== ALL && d.dossier_status !== statusFilter) return false;
       if (typeFilter !== ALL && d.financing_type !== typeFilter) return false;
       if (qcFilter !== ALL && displayQuickCheckStatus(d) !== qcFilter) return false;
-      if (bankFilter !== ALL && (d.bank_type ?? "none") !== bankFilter) return false;
+      if (bankFilter.length > 0) {
+        const name = (d.bank_name || d.current_bank || "").trim() || NO_BANK;
+        if (!bankFilter.includes(name)) return false;
+      }
       if (sourceFilter !== ALL && (d.data_source ?? "existing_property") !== sourceFilter) return false;
       if (!s) return true;
       const hay = [
