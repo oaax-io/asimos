@@ -717,7 +717,7 @@
       "quickcheck": {
         "start": "Finanzierung starten",
         "startDescription": "Erfasse die Eckdaten der Finanzierung im Wizard. Nach Abschluss erscheint hier das Ergebnis.",
-        "lastCheck": "Letzte Finanzierung: {{date}}",
+        "lastCheck": "Letzte Prüfung: {{date}}",
         "recalculate": "Neu berechnen",
         "subtabs": {
           "precheck": "Vorprüfung",
