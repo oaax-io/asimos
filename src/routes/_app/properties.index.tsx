@@ -318,7 +318,12 @@ function PropertiesPage() {
   return (
     <>
       <PageHeader
-        i18nKey="properties"
+        title={
+          <span className="inline-flex items-center gap-2.5">
+            <Building2 className="h-8 w-8 text-[#6F6B94]" />
+            {t("pages.properties.title")}
+          </span>
+        }
         action={
           <div className="flex items-center gap-2">
             <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>
