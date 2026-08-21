@@ -412,11 +412,21 @@ function ClientsPage() {
           </SelectContent>
         </Select>
         <Select value={assignedFilter} onValueChange={setAssignedFilter}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder={t("clients.filters.assigned")} /></SelectTrigger>
+          <SelectTrigger className="w-[200px]"><SelectValue placeholder={t("clients.filters.assigned")} /></SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>{t("clients.filters.allEmployees")}</SelectItem>
             <SelectItem value={UNASSIGNED}>{t("clients.filters.unassigned")}</SelectItem>
-            {employees.map((e: any) => <SelectItem key={e.id} value={e.id}>{e.full_name ?? e.email}</SelectItem>)}
+            {employees.map((e: any) => (
+              <SelectItem key={e.id} value={e.id}>
+                <span className="flex items-center gap-2">
+                  <Avatar className="h-5 w-5 text-[9px]">
+                    {e.avatar_url ? <AvatarImage src={e.avatar_url} alt={e.full_name ?? ""} /> : null}
+                    <AvatarFallback className="bg-primary/10 text-primary">{initials(e)}</AvatarFallback>
+                  </Avatar>
+                  <span className="truncate">{e.full_name ?? e.email}</span>
+                </span>
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
