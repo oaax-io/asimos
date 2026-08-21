@@ -549,25 +549,23 @@ function PropertyDetail() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
-          <TabsTrigger value="overview">Übersicht</TabsTrigger>
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="marketing">
-            Vermarktung{counts?.matches ? ` (${counts.matches})` : ""}
-          </TabsTrigger>
-          <TabsTrigger value="organisation">Organisation</TabsTrigger>
-          <TabsTrigger value="documents">
-            Dokumente{counts?.documents ? ` (${counts.documents})` : ""}
-          </TabsTrigger>
-          {!p.is_unit && (
-            <TabsTrigger value="units">
-              Einheiten{units.length ? ` (${units.length})` : ""}
+        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 rounded-xl border border-primary/15 bg-primary/5 p-1">
+          {[
+            { v: "overview", label: "Übersicht" },
+            { v: "details", label: "Details" },
+            { v: "documents", label: `Dokumente${counts?.documents ? ` (${counts.documents})` : ""}` },
+            ...(!p.is_unit ? [{ v: "units", label: `Einheiten${units.length ? ` (${units.length})` : ""}` }] : []),
+            { v: "activity", label: "Aktivitäten" },
+          ].map((t) => (
+            <TabsTrigger
+              key={t.v}
+              value={t.v}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-soft"
+            >
+              {t.label}
             </TabsTrigger>
-          )}
-          <TabsTrigger value="market"><TrendingUp className="mr-1 h-3.5 w-3.5" />Marktanalyse</TabsTrigger>
-          <TabsTrigger value="activity">Aktivitäten</TabsTrigger>
+          ))}
         </TabsList>
-
 
         <div className="min-w-0">
           <TabsContent value="overview" className="mt-0"><OverviewTab p={p} /></TabsContent>
@@ -581,50 +579,14 @@ function PropertyDetail() {
             </Accordion>
           </TabsContent>
 
-          <TabsContent value="marketing" className="mt-0">
-            <Accordion type="multiple" defaultValue={["mandate"]} className="space-y-2">
-              <AccordionItem value="mandate" className="rounded-xl border px-4">
-                <AccordionTrigger className="font-display text-base">Mandat</AccordionTrigger>
-                <AccordionContent><MandateTab propertyId={id} /></AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="reservation" className="rounded-xl border px-4">
-                <AccordionTrigger className="font-display text-base">Reservation</AccordionTrigger>
-                <AccordionContent><ReservationTab propertyId={id} /></AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="matching" className="rounded-xl border px-4">
-                <AccordionTrigger className="font-display text-base">Matching</AccordionTrigger>
-                <AccordionContent><MatchPanel direction="property-to-client" property={p} /></AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </TabsContent>
-
-          <TabsContent value="organisation" className="mt-0">
-            <Accordion type="multiple" defaultValue={["tasks"]} className="space-y-2">
-              <AccordionItem value="tasks" className="rounded-xl border px-4">
-                <AccordionTrigger className="font-display text-base">Aufgaben</AccordionTrigger>
-                <AccordionContent><TasksTab propertyId={id} /></AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="appointments" className="rounded-xl border px-4">
-                <AccordionTrigger className="font-display text-base">Termine</AccordionTrigger>
-                <AccordionContent><AppointmentsTab propertyId={id} /></AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="checklists" className="rounded-xl border px-4">
-                <AccordionTrigger className="font-display text-base">Checklisten</AccordionTrigger>
-                <AccordionContent><ChecklistsTab propertyId={id} /></AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </TabsContent>
-
           <TabsContent value="documents" className="mt-0"><DocumentsTab propertyId={id} /></TabsContent>
           {!p.is_unit && <TabsContent value="units" className="mt-0"><UnitsTab parentId={id} units={units} /></TabsContent>}
-          <TabsContent value="market" className="mt-0">
-            <MarketAnalysisTab property={p} />
-          </TabsContent>
           <TabsContent value="activity" className="mt-0">
             <ActivityTab activities={activities} employees={employees} />
           </TabsContent>
         </div>
       </Tabs>
+
     </div>
   );
 }
