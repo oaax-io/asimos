@@ -430,7 +430,9 @@ function AnalyticsPage() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
           <KpiCard icon={Coins} label="Gesamtwert Verkauf" value={formatCurrency(kpis?.totalValue ?? 0)} loading={isLoading} />
           <KpiCard icon={Banknote} label="Mietvolumen / Monat" value={formatCurrency(kpis?.monthlyRent ?? 0)} loading={isLoading} />
-          <KpiCard icon={TrendingUp} label="Provisionspotenzial" value={formatCurrency(kpis?.commissionTotal ?? 0)} loading={isLoading} />
+          <KpiCard icon={TrendingUp} label="Provisionspotenzial" value={formatCurrency(kpis?.commissionTotal ?? 0)} hint="Prognose für aktive Objekte, noch nicht gebucht" loading={isLoading} />
+          <KpiCard icon={Coins} label="Gebuchte Provision" value={formatCurrency(booked.total)} hint="real verbucht im Zeitraum" loading={isLoading} />
+
           <KpiCard icon={Building2} label="Immobilien total" value={kpis?.countTotal ?? 0} loading={isLoading} />
           <KpiCard icon={Building2} label="Aktive Immobilien" value={kpis?.countActive ?? 0} loading={isLoading} />
           <KpiCard icon={FileCheck2} label="Reserviert" value={kpis?.countReserved ?? 0} loading={isLoading} />
