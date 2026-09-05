@@ -32,6 +32,7 @@ import { PublicShareCard } from "@/components/properties/PublicShareCard";
 import { PortalPublishCard } from "@/components/properties/PortalPublishCard";
 import { PropertyExposeWizardDialog } from "@/components/expose/PropertyExposeWizardDialog";
 import { publishPropertyToPortal } from "@/lib/portal.functions";
+import { BookClosingCommissionDialog } from "@/components/commission/BookClosingCommissionDialog";
 import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/properties/PropertyAssignees";
 import type { EmployeeLite } from "@/components/clients/ClientAssignees";
 import { PropertyQuickActions } from "@/components/properties/PropertyQuickActions";
@@ -350,10 +351,22 @@ function PropertyDetail() {
         metadata: { from: prevStatus, to: status },
       });
     },
-    onSuccess: () => {
+    onSuccess: async (_data, status) => {
       toast.success("Status aktualisiert");
       qc.invalidateQueries({ queryKey: ["property", id] });
       qc.invalidateQueries({ queryKey: ["property_activities", id] });
+      // Bei Abschluss (Verkauf/Vermietung) Provisionsbuchung anbieten,
+      // sofern für dieses Objekt noch keine gebucht wurde.
+      if (status === "sold" || status === "rented") {
+        const { data: existing } = await supabase
+          .from("commission_records")
+          .select("id")
+          .eq("property_id", id)
+          .eq("record_type", "commission")
+          .neq("status", "void")
+          .maybeSingle();
+        if (!existing) setClosingOpen(true);
+      }
     },
   });
 
@@ -396,6 +409,12 @@ function PropertyDetail() {
 
         </div>
       </div>
+
+      <BookClosingCommissionDialog
+        open={closingOpen}
+        onOpenChange={setClosingOpen}
+        propertyId={id}
+      />
 
       <PropertyWizard
         open={editOpen}
