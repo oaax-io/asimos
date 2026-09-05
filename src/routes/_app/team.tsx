@@ -281,12 +281,17 @@ function EditMemberDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [tab, setTab] = useState<"profile" | "password">("profile");
+  const [tab, setTab] = useState<"profile" | "password" | "commission">("profile");
   const [form, setForm] = useState({
     full_name: member.full_name ?? "",
     email: member.email ?? "",
     phone: member.phone ?? "",
     role: member.role as (typeof ROLES)[number],
+  });
+  const [commission, setCommission] = useState({
+    commission_tier: member.commission_tier ?? "",
+    commission_payout_rate:
+      member.commission_payout_rate == null ? "50" : String(member.commission_payout_rate),
   });
   const [pw, setPw] = useState("");
   const [generatedPw, setGeneratedPw] = useState<string | null>(null);
@@ -294,6 +299,26 @@ function EditMemberDialog({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(member.avatar_url ?? null);
   const [uploading, setUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  // Provisionsangaben werden direkt auf `profiles` geschrieben.
+  const saveCommission = useMutation({
+    mutationFn: async () => {
+      const rate = Number(commission.commission_payout_rate);
+      if (Number.isNaN(rate) || rate < 0 || rate > 100)
+        throw new Error("Auszahlungssatz muss zwischen 0 und 100 liegen");
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          commission_tier: commission.commission_tier.trim() || null,
+          commission_payout_rate: rate,
+        } as any)
+        .eq("id", member.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Provisionsangaben gespeichert"); onSaved(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   const uploadAvatar = async (blob: Blob, ext: string) => {
     setUploading(true);
