@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Mail, Phone, Shield, KeyRound, Pencil, Copy, RefreshCw, ShieldCheck } from "lucide-react";
+import { Plus, Mail, Phone, Shield, KeyRound, Pencil, Copy, RefreshCw, ShieldCheck, Target } from "lucide-react";
+import { CommissionTargetsDialog } from "@/components/commission/CommissionTargetsDialog";
 import { RolePermissionsDialog } from "@/components/team/RolePermissionsDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_app/team")({ component: TeamPage });
 
 const ROLES = ["owner", "admin", "manager", "agent", "assistant"] as const;
+const COMMISSION_TIERS = ["Junior", "Senior", "Partner", "Inhaber"];
 const ROLE_LABELS: Record<(typeof ROLES)[number], string> = {
   owner: "Inhaber",
   admin: "Administrator",
@@ -26,6 +28,7 @@ const ROLE_LABELS: Record<(typeof ROLES)[number], string> = {
   agent: "Makler",
   assistant: "Assistenz",
 };
+
 
 function TeamPage() {
   const qc = useQueryClient();
@@ -57,8 +60,9 @@ function TeamPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email, phone, role, avatar_url, created_at")
+        .select("id, full_name, email, phone, role, avatar_url, created_at, commission_tier, commission_payout_rate")
         .order("created_at", { ascending: true });
+
       if (error) throw error;
       const { data: roles } = await supabase.from("user_roles").select("user_id, role");
       const superadminIds = new Set((roles ?? []).filter((r) => r.role === "superadmin").map((r) => r.user_id));
@@ -110,6 +114,7 @@ function TeamPage() {
   });
 
   const [editing, setEditing] = useState<any | null>(null);
+  const [targetsFor, setTargetsFor] = useState<any | null>(null);
 
   const initials = (name?: string | null, email?: string | null) =>
     (name || email || "?").split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
@@ -208,14 +213,25 @@ function TeamPage() {
                 <div className="mt-3 space-y-1 text-sm text-muted-foreground">
                   {m.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{m.email}</p>}
                   {m.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{m.phone}</p>}
+                  {(m as any).commission_tier && (
+                    <p className="flex items-center gap-2">
+                      <Target className="h-3.5 w-3.5" />
+                      {(m as any).commission_tier} · {(m as any).commission_payout_rate ?? 50} % Auszahlung
+                    </p>
+                  )}
                 </div>
-                {canManage && !(m.isSystemowner && !effectiveIsSuperadmin) && (
-                  <div className="mt-3 flex justify-end">
+                <div className="mt-3 flex justify-end gap-2">
+                  {(canManage || m.id === user?.id) && (
+                    <Button variant="ghost" size="sm" onClick={() => setTargetsFor(m)}>
+                      <Target className="mr-1 h-3 w-3" /> Ziele
+                    </Button>
+                  )}
+                  {canManage && !(m.isSystemowner && !effectiveIsSuperadmin) && (
                     <Button variant="outline" size="sm" onClick={() => setEditing(m)}>
                       <Pencil className="mr-1 h-3 w-3" /> Bearbeiten
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -238,6 +254,17 @@ function TeamPage() {
           }}
         />
       )}
+
+      {targetsFor && (
+        <CommissionTargetsDialog
+          open
+          onOpenChange={(o) => !o && setTargetsFor(null)}
+          userId={targetsFor.id}
+          userName={targetsFor.full_name || targetsFor.email || "Mitarbeiter"}
+          canManage={canManage || targetsFor.id === user?.id}
+        />
+      )}
+
 
       <RolePermissionsDialog open={permsOpen} onOpenChange={setPermsOpen} />
 
@@ -281,12 +308,17 @@ function EditMemberDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [tab, setTab] = useState<"profile" | "password">("profile");
+  const [tab, setTab] = useState<"profile" | "password" | "commission">("profile");
   const [form, setForm] = useState({
     full_name: member.full_name ?? "",
     email: member.email ?? "",
     phone: member.phone ?? "",
     role: member.role as (typeof ROLES)[number],
+  });
+  const [commission, setCommission] = useState({
+    commission_tier: member.commission_tier ?? "",
+    commission_payout_rate:
+      member.commission_payout_rate == null ? "50" : String(member.commission_payout_rate),
   });
   const [pw, setPw] = useState("");
   const [generatedPw, setGeneratedPw] = useState<string | null>(null);
@@ -294,6 +326,26 @@ function EditMemberDialog({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(member.avatar_url ?? null);
   const [uploading, setUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  // Provisionsangaben werden direkt auf `profiles` geschrieben.
+  const saveCommission = useMutation({
+    mutationFn: async () => {
+      const rate = Number(commission.commission_payout_rate);
+      if (Number.isNaN(rate) || rate < 0 || rate > 100)
+        throw new Error("Auszahlungssatz muss zwischen 0 und 100 liegen");
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          commission_tier: commission.commission_tier.trim() || null,
+          commission_payout_rate: rate,
+        } as any)
+        .eq("id", member.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Provisionsangaben gespeichert"); onSaved(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   const uploadAvatar = async (blob: Blob, ext: string) => {
     setUploading(true);
@@ -403,9 +455,59 @@ function EditMemberDialog({
             onClick={() => setTab("password")}
             className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${tab === "password" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
           >Passwort</button>
+          <button
+            onClick={() => setTab("commission")}
+            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${tab === "commission" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+          >Provision</button>
         </div>
 
-        {tab === "profile" ? (
+        {tab === "commission" ? (
+          <div className="space-y-4">
+            <div>
+              <Label>Stufe</Label>
+              <Select
+                value={COMMISSION_TIERS.includes(commission.commission_tier) ? commission.commission_tier : "custom"}
+                onValueChange={(v) =>
+                  setCommission({ ...commission, commission_tier: v === "custom" ? "" : v })
+                }
+              >
+                <SelectTrigger><SelectValue placeholder="Stufe wählen" /></SelectTrigger>
+                <SelectContent>
+                  {COMMISSION_TIERS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  <SelectItem value="custom">Eigener Wert…</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                className="mt-2"
+                placeholder="Eigene Bezeichnung (optional)"
+                value={commission.commission_tier}
+                onChange={(e) => setCommission({ ...commission, commission_tier: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Persönlicher Auszahlungssatz (%)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step="1"
+                value={commission.commission_payout_rate}
+                onChange={(e) => setCommission({ ...commission, commission_payout_rate: e.target.value })}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Anteil vom zugeteilten Provisions-Split, den diese Person tatsächlich ausbezahlt bekommt.
+                Der Rest verbleibt bei der Agentur.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={onClose}>Schliessen</Button>
+              <Button onClick={() => saveCommission.mutate()} disabled={saveCommission.isPending}>
+                {saveCommission.isPending ? "Speichern…" : "Speichern"}
+              </Button>
+            </DialogFooter>
+          </div>
+        ) : tab === "profile" ? (
+
           <div className="space-y-3">
             <div className="flex items-center gap-4 rounded-lg border bg-muted/30 p-3">
               <Avatar className="h-16 w-16">

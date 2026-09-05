@@ -4,7 +4,12 @@ import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, FileCheck2, FileText, Eye } from "lucide-react";
+import { Plus, Search, FileCheck2, FileText, Eye, Coins } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
+import { bookReservationFee } from "@/lib/commission.functions";
+import { toastBooked } from "@/components/commission/commission-toast";
+import { useTeamProfiles } from "@/components/commission/CommissionSplitEditor";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,6 +73,34 @@ function ReservationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [genFor, setGenFor] = useState<ReservationRow | null>(null);
   const [previewFor, setPreviewFor] = useState<ReservationRow | null>(null);
+  const confirm = useConfirm();
+  const bookFee = useServerFn(bookReservationFee);
+  const { data: teamProfiles = [] } = useTeamProfiles();
+  const names = new Map(teamProfiles.map((p) => [p.id, p.full_name || p.email || "Unbekannt"]));
+
+  // Bereits verbuchte Reservationsgebühren (reservation_id -> Buchungsdatum).
+  const { data: bookedFees = {} } = useQuery<Record<string, string>>({
+    queryKey: ["commission-records", "reservation_fee"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("commission_records")
+        .select("reservation_id, booked_at")
+        .eq("record_type", "reservation_fee")
+        .neq("status", "void");
+      const map: Record<string, string> = {};
+      (data ?? []).forEach((r: any) => { if (r.reservation_id) map[r.reservation_id] = r.booked_at; });
+      return map;
+    },
+  });
+
+  const bookFeeMut = useMutation({
+    mutationFn: async (r: ReservationRow) => bookFee({ data: { reservationId: r.id } }),
+    onSuccess: (record) => {
+      toastBooked(record as any, names, "Reservationsgebühr");
+      qc.invalidateQueries({ queryKey: ["commission-records", "reservation_fee"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const [form, setForm] = useState({
     client_id: "",
     property_id: "",
@@ -312,10 +345,36 @@ function ReservationsPage() {
                     </Select>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => setGenFor(r)}>
-                      <FileText className="mr-1 h-3.5 w-3.5" />
-                      Dokument
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      {r.reservation_fee != null && Number(r.reservation_fee) > 0 &&
+                        (bookedFees[r.id] ? (
+                          <Badge variant="secondary">Gebühr verbucht am {formatDate(bookedFees[r.id])}</Badge>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={bookFeeMut.isPending}
+                            onClick={async () => {
+                              const ok = await confirm({
+                                title: "Gebühr verbuchen",
+                                description: `Reservationsgebühr von ${formatCurrency(
+                                  Number(r.reservation_fee),
+                                )} für ${r.clients?.full_name ?? "diesen Kunden"} verbuchen?`,
+                                confirmText: "Verbuchen",
+                                variant: "default",
+                              });
+                              if (ok) bookFeeMut.mutate(r);
+                            }}
+                          >
+                            <Coins className="mr-1 h-3.5 w-3.5" />
+                            Gebühr verbuchen
+                          </Button>
+                        ))}
+                      <Button variant="outline" size="sm" onClick={() => setGenFor(r)}>
+                        <FileText className="mr-1 h-3.5 w-3.5" />
+                        Dokument
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

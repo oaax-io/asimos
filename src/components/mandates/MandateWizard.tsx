@@ -38,6 +38,13 @@ import {
 } from "@/lib/document-templates";
 import { resolveDocumentContext } from "@/lib/document-context";
 import { formatCurrency } from "@/lib/format";
+import {
+  CommissionSplitEditor,
+  saveMandateSplits,
+  useTeamProfiles,
+  SPLIT_ROLE_LABELS,
+  type SplitRow,
+} from "@/components/commission/CommissionSplitEditor";
 
 type MandateType = "exclusive" | "partial";
 
@@ -71,6 +78,10 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
   const [validFrom, setValidFrom] = useState<string>("");
   const [validUntil, setValidUntil] = useState<string>("");
   const [createdDocumentId, setCreatedDocumentId] = useState<string | null>(null);
+  // Provisions-Erweiterungen (Etappe 2)
+  const [cancellationFee, setCancellationFee] = useState<string>("");
+  const [cancellationNotes, setCancellationNotes] = useState<string>("");
+  const [splits, setSplits] = useState<SplitRow[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -83,8 +94,12 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
       setValidFrom("");
       setValidUntil("");
       setCreatedDocumentId(null);
+      setCancellationFee("");
+      setCancellationNotes("");
+      // Vorbelegung: aktuell eingeloggter Nutzer, Listing-Agent, 100 %
+      setSplits(user?.id ? [{ user_id: user.id, role: "listing_agent", split_percent: 100 }] : []);
     }
-  }, [open]);
+  }, [open, user?.id]);
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients-for-mandate-wizard"],
@@ -111,6 +126,9 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
       return data ?? [];
     },
   });
+
+  const { data: teamProfiles = [] } = useTeamProfiles();
+  const splitNames = new Map(teamProfiles.map((p) => [p.id, p.full_name || p.email || "Mitarbeiter"]));
 
   const selectedClient = clients.find((c) => c.id === clientId);
   const selectedProperty = properties.find((p) => p.id === propertyId);
@@ -190,10 +208,15 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
           valid_until: validUntil || null,
           status: "draft",
           mandate_type: mandateType,
+          cancellation_fee: cancellationFee ? Number(cancellationFee) : null,
+          cancellation_fee_notes: cancellationNotes.trim() || null,
         } as any)
         .select("id")
         .single();
       if (mErr) throw mErr;
+
+      // 1b. Geplante Provisions-Aufteilung speichern
+      await saveMandateSplits(propertyId, mandate.id as string, splits);
 
       // 2. Insert generated document
       const { data: doc, error: dErr } = await supabase
@@ -453,6 +476,29 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
                   />
                 </div>
               </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div>
+                  <Label>Rücktritts-/Kündigungsentschädigung (CHF, fix)</Label>
+                  <Input
+                    type="number"
+                    step="100"
+                    placeholder="z. B. 5000"
+                    value={cancellationFee}
+                    onChange={(e) => setCancellationFee(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Notiz zur Entschädigung (optional)</Label>
+                  <Input
+                    value={cancellationNotes}
+                    onChange={(e) => setCancellationNotes(e.target.value)}
+                    placeholder="z. B. bei Rücktritt vor Ablauf"
+                  />
+                </div>
+              </div>
+
+              <CommissionSplitEditor rows={splits} onChange={setSplits} />
             </div>
           )}
 
@@ -517,6 +563,26 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
                   <li>
                     Gültig: <span className="text-foreground">{validFrom || "—"} bis {validUntil || "offen"}</span>
                   </li>
+                  <li>
+                    Rücktrittsentschädigung:{" "}
+                    <span className="text-foreground">
+                      {cancellationFee ? (formatCurrency(Number(cancellationFee)) ?? `${cancellationFee} CHF`) : "—"}
+                    </span>
+                  </li>
+                </ul>
+                <p className="mt-3 font-medium">Aufteilung</p>
+                <ul className="mt-1 grid gap-1 text-muted-foreground sm:grid-cols-2">
+                  {splits.filter((s) => s.user_id).length === 0 && <li>—</li>}
+                  {splits
+                    .filter((s) => s.user_id)
+                    .map((s, i) => (
+                      <li key={i}>
+                        {splitNames.get(s.user_id) ?? "Mitarbeiter"} –{" "}
+                        <span className="text-foreground">
+                          {SPLIT_ROLE_LABELS[s.role] ?? s.role}, {s.split_percent} %
+                        </span>
+                      </li>
+                    ))}
                 </ul>
               </div>
 
