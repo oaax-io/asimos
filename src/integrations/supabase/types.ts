@@ -1181,51 +1181,63 @@ export type Database = {
         Row: {
           booked_at: string
           client_id: string | null
+          closed_by: string | null
           created_at: string
           created_by: string | null
           credited_reservation_record_id: string | null
           currency: string
           description: string | null
+          financing_amount: number | null
+          financing_dossier_id: string | null
           gross_amount: number
           id: string
           mandate_id: string | null
           property_id: string
           record_type: string
           reservation_id: string | null
+          sale_price: number | null
           status: string
           updated_at: string
         }
         Insert: {
           booked_at?: string
           client_id?: string | null
+          closed_by?: string | null
           created_at?: string
           created_by?: string | null
           credited_reservation_record_id?: string | null
           currency?: string
           description?: string | null
+          financing_amount?: number | null
+          financing_dossier_id?: string | null
           gross_amount: number
           id?: string
           mandate_id?: string | null
           property_id: string
           record_type: string
           reservation_id?: string | null
+          sale_price?: number | null
           status?: string
           updated_at?: string
         }
         Update: {
           booked_at?: string
           client_id?: string | null
+          closed_by?: string | null
           created_at?: string
           created_by?: string | null
           credited_reservation_record_id?: string | null
           currency?: string
           description?: string | null
+          financing_amount?: number | null
+          financing_dossier_id?: string | null
           gross_amount?: number
           id?: string
           mandate_id?: string | null
           property_id?: string
           record_type?: string
           reservation_id?: string | null
+          sale_price?: number | null
           status?: string
           updated_at?: string
         }
@@ -1235,6 +1247,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_records_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1249,6 +1268,13 @@ export type Database = {
             columns: ["credited_reservation_record_id"]
             isOneToOne: false
             referencedRelation: "commission_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_records_financing_dossier_id_fkey"
+            columns: ["financing_dossier_id"]
+            isOneToOne: false
+            referencedRelation: "financing_dossiers"
             referencedColumns: ["id"]
           },
           {
