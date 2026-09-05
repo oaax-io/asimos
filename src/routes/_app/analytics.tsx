@@ -547,8 +547,9 @@ function AnalyticsPage() {
                     <TableCell className="font-medium">{r.name}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.properties}</TableCell>
                     <TableCell className="text-right tabular-nums">{formatCurrency(r.value)}</TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">{formatCurrency(r.commission)}</TableCell>
-                    <TableCell className="text-right tabular-nums font-semibold">{formatCurrency(booked.perUser.get(r.id) || 0)}</TableCell>
+                    {isCommissionAdmin && <TableCell className="text-right tabular-nums text-muted-foreground">{formatCurrency(r.commission)}</TableCell>}
+                    {isCommissionAdmin && <TableCell className="text-right tabular-nums font-semibold">{formatCurrency(booked.perUser.get(r.id) || 0)}</TableCell>}
+
 
                     <TableCell className="text-right tabular-nums">{r.mandates}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.reservations}</TableCell>
