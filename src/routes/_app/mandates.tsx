@@ -4,7 +4,15 @@ import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, FileSignature, FileText, Eye } from "lucide-react";
+import { Plus, Search, FileSignature, FileText, Eye, Users, Ban } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { useConfirm } from "@/components/confirm/ConfirmProvider";
+import { formatCurrency } from "@/lib/format";
+import { bookCancellationFee } from "@/lib/commission.functions";
+import { toastBooked } from "@/components/commission/commission-toast";
+import { useTeamProfiles } from "@/components/commission/CommissionSplitEditor";
+import { MandateSplitDialog } from "@/components/commission/MandateSplitDialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +49,8 @@ type MandateRow = {
   property_id: string | null;
   commission_model: string | null;
   commission_value: number | null;
+  cancellation_fee: number | null;
+  cancellation_fee_notes: string | null;
   valid_from: string | null;
   valid_until: string | null;
   notes: string | null;
@@ -62,6 +72,44 @@ function MandatesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [genFor, setGenFor] = useState<MandateRow | null>(null);
   const [previewFor, setPreviewFor] = useState<MandateRow | null>(null);
+  const [splitFor, setSplitFor] = useState<MandateRow | null>(null);
+  const confirm = useConfirm();
+  const bookCancellation = useServerFn(bookCancellationFee);
+  const { data: teamProfiles = [] } = useTeamProfiles();
+  const names = new Map(teamProfiles.map((p) => [p.id, p.full_name || p.email || "Unbekannt"]));
+
+  // Bereits gebuchte Rücktrittsentschädigungen (für Button-Sichtbarkeit).
+  const { data: bookedCancellations = [] } = useQuery<string[]>({
+    queryKey: ["commission-records", "cancellation"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("commission_records")
+        .select("mandate_id")
+        .eq("record_type", "cancellation_fee")
+        .neq("status", "void");
+      return (data ?? []).map((r: any) => r.mandate_id).filter(Boolean);
+    },
+  });
+
+  const bookCancellationMut = useMutation({
+    mutationFn: async (m: MandateRow) => bookCancellation({ data: { mandateId: m.id } }),
+    onSuccess: async (record, m) => {
+      toastBooked(record as any, names, "Rücktrittsentschädigung");
+      qc.invalidateQueries({ queryKey: ["commission-records", "cancellation"] });
+      if (
+        m.status !== "cancelled" &&
+        (await confirm({
+          title: "Mandat stornieren?",
+          description: "Soll das Mandat jetzt auf den Status \"Storniert\" gesetzt werden?",
+          confirmText: "Ja, stornieren",
+          variant: "default",
+        }))
+      ) {
+        updateStatus.mutate({ id: m.id, status: "cancelled" });
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const { data: mandates = [], isLoading } = useQuery<MandateRow[]>({
     queryKey: ["mandates"],
@@ -207,16 +255,57 @@ function MandatesPage() {
                     </Select>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => setGenFor(m)}>
-                      <FileText className="mr-1 h-3.5 w-3.5" />
-                      Dokument
-                    </Button>
+                    <div className="flex justify-end gap-1">
+                      {m.property_id && (
+                        <Button variant="ghost" size="sm" onClick={() => setSplitFor(m)}>
+                          <Users className="mr-1 h-3.5 w-3.5" />
+                          Split
+                        </Button>
+                      )}
+                      {m.cancellation_fee != null &&
+                        Number(m.cancellation_fee) > 0 &&
+                        !bookedCancellations.includes(m.id) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={bookCancellationMut.isPending}
+                            onClick={async () => {
+                              const ok = await confirm({
+                                title: "Rücktritt / Kündigung abrechnen",
+                                description: `Rücktrittsentschädigung von ${formatCurrency(
+                                  Number(m.cancellation_fee),
+                                )} für ${m.clients?.full_name ?? "diesen Kunden"} verbuchen?`,
+                                confirmText: "Verbuchen",
+                                variant: "default",
+                              });
+                              if (ok) bookCancellationMut.mutate(m);
+                            }}
+                          >
+                            <Ban className="mr-1 h-3.5 w-3.5" />
+                            Rücktritt abrechnen
+                          </Button>
+                        )}
+                      <Button variant="outline" size="sm" onClick={() => setGenFor(m)}>
+                        <FileText className="mr-1 h-3.5 w-3.5" />
+                        Dokument
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {splitFor?.property_id && (
+        <MandateSplitDialog
+          open
+          onOpenChange={(o) => !o && setSplitFor(null)}
+          propertyId={splitFor.property_id}
+          mandateId={splitFor.id}
+          title={splitFor.properties?.title ?? undefined}
+        />
       )}
 
       {genFor && (
