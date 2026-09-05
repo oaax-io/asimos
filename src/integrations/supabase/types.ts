@@ -1126,6 +1126,201 @@ export type Database = {
           },
         ]
       }
+      commission_record_splits: {
+        Row: {
+          commission_record_id: string
+          created_at: string
+          gross_share: number
+          id: string
+          payout_amount: number
+          payout_rate: number
+          role: string
+          split_percent: number
+          user_id: string
+        }
+        Insert: {
+          commission_record_id: string
+          created_at?: string
+          gross_share: number
+          id?: string
+          payout_amount: number
+          payout_rate: number
+          role: string
+          split_percent: number
+          user_id: string
+        }
+        Update: {
+          commission_record_id?: string
+          created_at?: string
+          gross_share?: number
+          id?: string
+          payout_amount?: number
+          payout_rate?: number
+          role?: string
+          split_percent?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_record_splits_commission_record_id_fkey"
+            columns: ["commission_record_id"]
+            isOneToOne: false
+            referencedRelation: "commission_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_record_splits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_records: {
+        Row: {
+          booked_at: string
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          credited_reservation_record_id: string | null
+          currency: string
+          description: string | null
+          gross_amount: number
+          id: string
+          mandate_id: string | null
+          property_id: string
+          record_type: string
+          reservation_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          booked_at?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          credited_reservation_record_id?: string | null
+          currency?: string
+          description?: string | null
+          gross_amount: number
+          id?: string
+          mandate_id?: string | null
+          property_id: string
+          record_type: string
+          reservation_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          booked_at?: string
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          credited_reservation_record_id?: string | null
+          currency?: string
+          description?: string | null
+          gross_amount?: number
+          id?: string
+          mandate_id?: string | null
+          property_id?: string
+          record_type?: string
+          reservation_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_records_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_records_credited_reservation_record_id_fkey"
+            columns: ["credited_reservation_record_id"]
+            isOneToOne: false
+            referencedRelation: "commission_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_records_mandate_id_fkey"
+            columns: ["mandate_id"]
+            isOneToOne: false
+            referencedRelation: "mandates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_records_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_records_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_targets: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          period_end: string
+          period_start: string
+          period_type: string
+          target_amount: number | null
+          target_deals: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          period_end: string
+          period_start: string
+          period_type: string
+          target_amount?: number | null
+          target_deals?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          target_amount?: number | null
+          target_deals?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_targets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company: {
         Row: {
           address: string | null
@@ -2307,8 +2502,68 @@ export type Database = {
         }
         Relationships: []
       }
+      mandate_commission_splits: {
+        Row: {
+          created_at: string
+          id: string
+          mandate_id: string | null
+          notes: string | null
+          property_id: string
+          role: string
+          split_percent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mandate_id?: string | null
+          notes?: string | null
+          property_id: string
+          role?: string
+          split_percent: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mandate_id?: string | null
+          notes?: string | null
+          property_id?: string
+          role?: string
+          split_percent?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mandate_commission_splits_mandate_id_fkey"
+            columns: ["mandate_id"]
+            isOneToOne: false
+            referencedRelation: "mandates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mandate_commission_splits_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mandate_commission_splits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mandates: {
         Row: {
+          cancellation_fee: number | null
+          cancellation_fee_notes: string | null
           client_id: string | null
           commission_model: string | null
           commission_value: number | null
@@ -2325,6 +2580,8 @@ export type Database = {
           valid_until: string | null
         }
         Insert: {
+          cancellation_fee?: number | null
+          cancellation_fee_notes?: string | null
           client_id?: string | null
           commission_model?: string | null
           commission_value?: number | null
@@ -2341,6 +2598,8 @@ export type Database = {
           valid_until?: string | null
         }
         Update: {
+          cancellation_fee?: number | null
+          cancellation_fee_notes?: string | null
           client_id?: string | null
           commission_model?: string | null
           commission_value?: number | null
@@ -2686,6 +2945,8 @@ export type Database = {
         Row: {
           agency_id: string | null
           avatar_url: string | null
+          commission_payout_rate: number | null
+          commission_tier: string | null
           created_at: string
           email: string | null
           full_name: string | null
@@ -2702,6 +2963,8 @@ export type Database = {
         Insert: {
           agency_id?: string | null
           avatar_url?: string | null
+          commission_payout_rate?: number | null
+          commission_tier?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -2718,6 +2981,8 @@ export type Database = {
         Update: {
           agency_id?: string | null
           avatar_url?: string | null
+          commission_payout_rate?: number | null
+          commission_tier?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
