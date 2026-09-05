@@ -585,6 +585,8 @@ function AnalyticsPage() {
           <IssueCard title="Mandate ohne Dokument" count={issues?.mandatesNoDoc.length ?? 0} to="/mandates" />
           <IssueCard title="Kritische Finanzierungen" count={issues?.criticalFinancing.length ?? 0} to="/financing" />
           <IssueCard title="Überfällige Aufgaben" count={issues?.overdueTasks.length ?? 0} to="/tasks" />
+          <IssueCard title="Verkauft/vermietet ohne gebuchte Provision" count={booked.missing.length} to="/commissions" />
+
         </div>
       </section>
     </div>
