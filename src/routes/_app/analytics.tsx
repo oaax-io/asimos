@@ -526,7 +526,9 @@ function AnalyticsPage() {
                   <TableHead>Mitarbeiter</TableHead>
                   <TableHead className="text-right">Immobilien</TableHead>
                   <TableHead className="text-right">Wert</TableHead>
-                  <TableHead className="text-right">Provision</TableHead>
+                  <TableHead className="text-right">Potenzial</TableHead>
+                  <TableHead className="text-right">Gebucht</TableHead>
+
                   <TableHead className="text-right">Mandate</TableHead>
                   <TableHead className="text-right">Reservationen</TableHead>
                   <TableHead className="text-right">Leads</TableHead>
