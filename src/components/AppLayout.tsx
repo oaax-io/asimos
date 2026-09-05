@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, UserPlus, Building2, Calendar, Target,
   Settings, LogOut, Search, Shield, Users2, CheckSquare, FileText,
   Image as ImageIcon,
-  Banknote, BarChart3, MessageSquarePlus, BookOpen,
+  Banknote, BarChart3, MessageSquarePlus, BookOpen, Percent,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
