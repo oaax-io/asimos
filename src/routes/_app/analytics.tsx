@@ -148,6 +148,37 @@ function AnalyticsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const { data, isLoading } = useAnalyticsData();
+  const { data: bookedData } = useBookedCommissions();
+
+  // Gebuchte Provision im gewählten Zeitraum (nach booked_at)
+  const booked = useMemo(() => {
+    const since = periodStart(period);
+    const recs = (bookedData?.records ?? []).filter(
+      (r: any) =>
+        r.status !== "void" && (!since || (r.booked_at && new Date(r.booked_at) >= since)),
+    );
+    const ids = new Set(recs.filter((r: any) => r.record_type === "commission").map((r: any) => r.id));
+    const total = recs
+      .filter((r: any) => r.record_type === "commission")
+      .reduce((s: number, r: any) => s + (Number(r.gross_amount) || 0), 0);
+    const perUser = new Map<string, number>();
+    (bookedData?.splits ?? []).forEach((s: any) => {
+      if (!ids.has(s.commission_record_id)) return;
+      perUser.set(s.user_id, (perUser.get(s.user_id) || 0) + (Number(s.gross_share) || 0));
+    });
+    // Objekte mit Abschluss-Status, für die noch keine Provision gebucht wurde
+    const bookedPropIds = new Set(
+      (bookedData?.records ?? [])
+        .filter((r: any) => r.record_type === "commission" && r.status !== "void")
+        .map((r: any) => r.property_id),
+    );
+    const missing = (data?.properties ?? []).filter(
+      (p: any) => ["sold", "rented"].includes(p.status) && !bookedPropIds.has(p.id),
+    );
+    return { total, perUser, missing };
+  }, [bookedData, period, data]);
+
+
 
   const filtered = useMemo(() => {
     if (!data) return null;
