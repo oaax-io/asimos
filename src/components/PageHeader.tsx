@@ -36,7 +36,3 @@ export function PageHeader({ title, description, i18nKey, icon, action }: Props)
     </div>
   );
 }
-
-    </div>
-  );
-}
