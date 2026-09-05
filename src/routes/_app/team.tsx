@@ -19,6 +19,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_app/team")({ component: TeamPage });
 
 const ROLES = ["owner", "admin", "manager", "agent", "assistant"] as const;
+const COMMISSION_TIERS = ["Junior", "Senior", "Partner", "Inhaber"];
 const ROLE_LABELS: Record<(typeof ROLES)[number], string> = {
   owner: "Inhaber",
   admin: "Administrator",
@@ -26,6 +27,7 @@ const ROLE_LABELS: Record<(typeof ROLES)[number], string> = {
   agent: "Makler",
   assistant: "Assistenz",
 };
+
 
 function TeamPage() {
   const qc = useQueryClient();
@@ -57,8 +59,9 @@ function TeamPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email, phone, role, avatar_url, created_at")
+        .select("id, full_name, email, phone, role, avatar_url, created_at, commission_tier, commission_payout_rate")
         .order("created_at", { ascending: true });
+
       if (error) throw error;
       const { data: roles } = await supabase.from("user_roles").select("user_id, role");
       const superadminIds = new Set((roles ?? []).filter((r) => r.role === "superadmin").map((r) => r.user_id));
