@@ -73,11 +73,18 @@ function mediaUrl(path?: string | null) {
   return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
 }
 
-async function urlToDataUri(url: string): Promise<string | null> {
+async function urlToDataUri(url: string, maxSide = 1600, quality = 0.82): Promise<string | null> {
   try {
-    const res = await fetch(url, { credentials: "include" });
+    // Kein `credentials: "include"` — Storage antwortet mit `Access-Control-Allow-Origin: *`,
+    // was mit Credentials einen CORS-Fehler auslöst und die Bilder im PDF fehlen liess.
+    const res = await fetch(url, { mode: "cors", cache: "force-cache" });
     if (!res.ok) return null;
     const blob = await res.blob();
+
+    // Bilder verkleinern, damit das HTML-Payload unter dem Server-Limit bleibt.
+    const downscaled = await downscaleBlob(blob, maxSide, quality);
+    if (downscaled) return downscaled;
+
     const bytes = new Uint8Array(await blob.arrayBuffer());
     let binary = "";
     const chunk = 0x8000;
@@ -87,6 +94,28 @@ async function urlToDataUri(url: string): Promise<string | null> {
     return null;
   }
 }
+
+async function downscaleBlob(blob: Blob, maxSide: number, quality: number): Promise<string | null> {
+  try {
+    if (typeof createImageBitmap !== "function") return null;
+    const bitmap = await createImageBitmap(blob);
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(1, Math.round(bitmap.width * scale));
+    const h = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close?.();
+    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+    return dataUrl.startsWith("data:image/jpeg") ? dataUrl : null;
+  } catch {
+    return null;
+  }
+}
+
 
 export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenChange }: Props) {
   const [step, setStep] = useState(0);
@@ -266,12 +295,24 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   async function handleGenerate() {
     setGenerating(true);
     try {
-      const coverData = coverUrl ? await urlToDataUri(coverUrl) : null;
-      const galleryData = (
-        await Promise.all(galleryUrls.filter((u) => u !== coverUrl).map((u) => urlToDataUri(u)))
-      ).filter((u): u is string => !!u);
+      const gallerySources = galleryUrls.filter((u) => u !== coverUrl);
+      const embed = async (maxSide: number, quality: number) => {
+        const cover = coverUrl ? await urlToDataUri(coverUrl, maxSide, quality) : null;
+        const gallery = (
+          await Promise.all(gallerySources.map((u) => urlToDataUri(u, maxSide, quality)))
+        ).filter((u): u is string => !!u);
+        return buildHtml(cover, gallery);
+      };
 
-      const html = buildHtml(coverData, galleryData);
+      let html = await embed(1600, 0.82);
+      // Server-Limit: 5 MB HTML — bei vielen Bildern stärker komprimieren.
+      if (html.length > 4_600_000) html = await embed(1100, 0.7);
+      if (html.length > 4_600_000) html = await embed(800, 0.6);
+      if (html.length > 4_900_000) {
+        toast.error("Zu viele Bilder für ein PDF", { description: "Bitte weniger Bilder in der Galerie auswählen." });
+        return;
+      }
+
       const safeTitle = title || property?.title || "Expose";
       const fileName = `Expose-${safeTitle.replace(/[^\w\s-]/g, "").trim() || "Objekt"}-${template.label}.pdf`;
 
