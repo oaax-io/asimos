@@ -77,6 +77,29 @@ function useAnalyticsData() {
   });
 }
 
+// Reale, gebuchte Provisionen (Provisions-Modul). Bewusst getrennt vom
+// live berechneten Pipeline-Potenzial, damit beides nie vermischt wird.
+function useBookedCommissions() {
+  return useQuery({
+    queryKey: ["analytics", "booked-commissions"],
+    queryFn: async () => {
+      const [records, splits] = await Promise.all([
+        supabase
+          .from("commission_records")
+          .select("id,property_id,record_type,status,gross_amount,booked_at")
+          .limit(5000),
+        supabase
+          .from("commission_record_splits")
+          .select("commission_record_id,user_id,gross_share")
+          .limit(20000),
+      ]);
+      return { records: (records.data ?? []) as any[], splits: (splits.data ?? []) as any[] };
+    },
+  });
+}
+
+
+
 // ----- Helpers -----
 function isArchived(p: any): boolean {
   return p.status === "archived";
