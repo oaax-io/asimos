@@ -6,7 +6,7 @@ import { FilterMultiSelect } from "@/components/filters/FilterMultiSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, MapPin, Bed, Maximize, Search, LayoutGrid, List as ListIcon, Map as MapIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Upload, Building2, Layers3, ChevronRight, ChevronDown, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { Plus, MapPin, Bed, Maximize, Search, LayoutGrid, List as ListIcon, Map as MapIcon, Archive, ArchiveRestore, Trash2, UserCog, MoreHorizontal, X, Upload, Building2, Layers3, ChevronRight, ChevronDown, SlidersHorizontal, RotateCcw, CircleDollarSign } from "lucide-react";
 import { PropertiesMap } from "@/components/properties/PropertiesMap";
 import { PropertyImportDialog } from "@/components/properties/PropertyImportDialog";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ import { AssigneeAvatars } from "@/components/clients/ClientAssignees";
 import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/properties/PropertyAssignees";
 import { PropertyPinButton, usePropertyPins, propertyPinRowClass } from "@/components/properties/PropertyPin";
 import { deleteToTrash } from "@/lib/trash";
+import { DealDialog } from "@/components/commission/DealDialog";
 
 export const Route = createFileRoute("/_app/properties/")({ component: PropertiesPage });
 
@@ -65,6 +66,7 @@ function PropertiesPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [dealPropertyId, setDealPropertyId] = useState<string | null>(null);
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ["properties"],
@@ -774,6 +776,9 @@ function PropertiesPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
                               <Link to="/properties/$id" params={{ id: row.id }}>{t("properties.table.open")}</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setDealPropertyId(row.id)}>
+                              <CircleDollarSign className="mr-2 h-4 w-4" />Deal
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {isArchived ? (
