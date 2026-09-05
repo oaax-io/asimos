@@ -295,12 +295,24 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   async function handleGenerate() {
     setGenerating(true);
     try {
-      const coverData = coverUrl ? await urlToDataUri(coverUrl) : null;
-      const galleryData = (
-        await Promise.all(galleryUrls.filter((u) => u !== coverUrl).map((u) => urlToDataUri(u)))
-      ).filter((u): u is string => !!u);
+      const gallerySources = galleryUrls.filter((u) => u !== coverUrl);
+      const embed = async (maxSide: number, quality: number) => {
+        const cover = coverUrl ? await urlToDataUri(coverUrl, maxSide, quality) : null;
+        const gallery = (
+          await Promise.all(gallerySources.map((u) => urlToDataUri(u, maxSide, quality)))
+        ).filter((u): u is string => !!u);
+        return buildHtml(cover, gallery);
+      };
 
-      const html = buildHtml(coverData, galleryData);
+      let html = await embed(1600, 0.82);
+      // Server-Limit: 5 MB HTML — bei vielen Bildern stärker komprimieren.
+      if (html.length > 4_600_000) html = await embed(1100, 0.7);
+      if (html.length > 4_600_000) html = await embed(800, 0.6);
+      if (html.length > 4_900_000) {
+        toast.error("Zu viele Bilder für ein PDF", { description: "Bitte weniger Bilder in der Galerie auswählen." });
+        return;
+      }
+
       const safeTitle = title || property?.title || "Expose";
       const fileName = `Expose-${safeTitle.replace(/[^\w\s-]/g, "").trim() || "Objekt"}-${template.label}.pdf`;
 
