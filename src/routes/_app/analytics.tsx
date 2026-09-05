@@ -537,13 +537,15 @@ function AnalyticsPage() {
               </TableHeader>
               <TableBody>
                 {employeeRows.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">Keine Daten</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">Keine Daten</TableCell></TableRow>
                 ) : employeeRows.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.name}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.properties}</TableCell>
                     <TableCell className="text-right tabular-nums">{formatCurrency(r.value)}</TableCell>
-                    <TableCell className="text-right tabular-nums font-semibold">{formatCurrency(r.commission)}</TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">{formatCurrency(r.commission)}</TableCell>
+                    <TableCell className="text-right tabular-nums font-semibold">{formatCurrency(booked.perUser.get(r.id) || 0)}</TableCell>
+
                     <TableCell className="text-right tabular-nums">{r.mandates}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.reservations}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.leads}</TableCell>
