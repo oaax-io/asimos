@@ -857,6 +857,13 @@ function PropertiesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DealDialog
+        open={!!dealPropertyId}
+        onOpenChange={(o) => !o && setDealPropertyId(null)}
+        propertyId={dealPropertyId ?? ""}
+      />
     </>
+
   );
 }
