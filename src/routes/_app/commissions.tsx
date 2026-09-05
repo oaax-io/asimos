@@ -24,6 +24,7 @@ import { Percent, Coins, FileCheck2, Ban, TrendingUp, AlertTriangle } from "luci
 import { formatCurrency, formatDate, propertyStatusLabels } from "@/lib/format";
 import { SPLIT_ROLE_LABELS } from "@/components/commission/CommissionSplitEditor";
 import { useIsCommissionAdmin } from "@/hooks/useIsCommissionAdmin";
+import { CommissionStatementDialog } from "@/components/commission/CommissionStatementDialog";
 
 export const Route = createFileRoute("/_app/commissions")({ component: CommissionsPage });
 
@@ -365,7 +366,7 @@ function CommissionsPage() {
       </Card>
 
       {/* KPIs */}
-      <div className={`grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 ${isCommissionAdmin ? "xl:grid-cols-5" : "xl:grid-cols-4"}`}>
+      <div className={`grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 ${isCommissionAdmin ? "xl:grid-cols-5" : "xl:grid-cols-4"}`}>
         <KpiCard tone="primary" icon={Coins} label="Gebuchte Provision" value={formatCurrency(kpis?.commission ?? 0)} hint="real verbucht" loading={isLoading} />
         <KpiCard tone="emerald" icon={FileCheck2} label="Reservationsgebühren" value={formatCurrency(kpis?.reservation ?? 0)} hint="gebucht" loading={isLoading} />
         <KpiCard tone="rose" icon={Ban} label="Rücktrittsentschädigungen" value={formatCurrency(kpis?.cancellation ?? 0)} hint="gebucht" loading={isLoading} />
