@@ -319,9 +319,12 @@ function CommissionsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        i18nKey="commissions"
-        title="Provisionen"
-        icon={<Percent className="h-5 w-5" />}
+        title={
+          <span className="inline-flex items-center gap-2.5">
+            <Percent className="h-8 w-8 text-[#6F6B94]" />
+            Provisionen
+          </span>
+        }
         action={
           <CommissionStatementDialog data={data} isCommissionAdmin={isCommissionAdmin} myUserId={myUserId ?? null} />
         }
