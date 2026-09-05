@@ -41,6 +41,7 @@ import { formatCurrency } from "@/lib/format";
 import {
   CommissionSplitEditor,
   saveMandateSplits,
+  useTeamProfiles,
   SPLIT_ROLE_LABELS,
   type SplitRow,
 } from "@/components/commission/CommissionSplitEditor";
@@ -125,6 +126,9 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
       return data ?? [];
     },
   });
+
+  const { data: teamProfiles = [] } = useTeamProfiles();
+  const splitNames = new Map(teamProfiles.map((p) => [p.id, p.full_name || p.email || "Mitarbeiter"]));
 
   const selectedClient = clients.find((c) => c.id === clientId);
   const selectedProperty = properties.find((p) => p.id === propertyId);
