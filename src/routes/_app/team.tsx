@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Plus, Mail, Phone, Shield, KeyRound, Pencil, Copy, RefreshCw, ShieldCheck } from "lucide-react";
+import { Plus, Mail, Phone, Shield, KeyRound, Pencil, Copy, RefreshCw, ShieldCheck, Target } from "lucide-react";
+import { CommissionTargetsDialog } from "@/components/commission/CommissionTargetsDialog";
 import { RolePermissionsDialog } from "@/components/team/RolePermissionsDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -113,6 +114,7 @@ function TeamPage() {
   });
 
   const [editing, setEditing] = useState<any | null>(null);
+  const [targetsFor, setTargetsFor] = useState<any | null>(null);
 
   const initials = (name?: string | null, email?: string | null) =>
     (name || email || "?").split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
