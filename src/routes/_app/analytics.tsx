@@ -77,6 +77,29 @@ function useAnalyticsData() {
   });
 }
 
+// Reale, gebuchte Provisionen (Provisions-Modul). Bewusst getrennt vom
+// live berechneten Pipeline-Potenzial, damit beides nie vermischt wird.
+function useBookedCommissions() {
+  return useQuery({
+    queryKey: ["analytics", "booked-commissions"],
+    queryFn: async () => {
+      const [records, splits] = await Promise.all([
+        supabase
+          .from("commission_records")
+          .select("id,property_id,record_type,status,gross_amount,booked_at")
+          .limit(5000),
+        supabase
+          .from("commission_record_splits")
+          .select("commission_record_id,user_id,gross_share")
+          .limit(20000),
+      ]);
+      return { records: (records.data ?? []) as any[], splits: (splits.data ?? []) as any[] };
+    },
+  });
+}
+
+
+
 // ----- Helpers -----
 function isArchived(p: any): boolean {
   return p.status === "archived";
@@ -125,6 +148,37 @@ function AnalyticsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const { data, isLoading } = useAnalyticsData();
+  const { data: bookedData } = useBookedCommissions();
+
+  // Gebuchte Provision im gewählten Zeitraum (nach booked_at)
+  const booked = useMemo(() => {
+    const since = periodStart(period);
+    const recs = (bookedData?.records ?? []).filter(
+      (r: any) =>
+        r.status !== "void" && (!since || (r.booked_at && new Date(r.booked_at) >= since)),
+    );
+    const ids = new Set(recs.filter((r: any) => r.record_type === "commission").map((r: any) => r.id));
+    const total = recs
+      .filter((r: any) => r.record_type === "commission")
+      .reduce((s: number, r: any) => s + (Number(r.gross_amount) || 0), 0);
+    const perUser = new Map<string, number>();
+    (bookedData?.splits ?? []).forEach((s: any) => {
+      if (!ids.has(s.commission_record_id)) return;
+      perUser.set(s.user_id, (perUser.get(s.user_id) || 0) + (Number(s.gross_share) || 0));
+    });
+    // Objekte mit Abschluss-Status, für die noch keine Provision gebucht wurde
+    const bookedPropIds = new Set(
+      (bookedData?.records ?? [])
+        .filter((r: any) => r.record_type === "commission" && r.status !== "void")
+        .map((r: any) => r.property_id),
+    );
+    const missing = (data?.properties ?? []).filter(
+      (p: any) => ["sold", "rented"].includes(p.status) && !bookedPropIds.has(p.id),
+    );
+    return { total, perUser, missing };
+  }, [bookedData, period, data]);
+
+
 
   const filtered = useMemo(() => {
     if (!data) return null;
@@ -376,7 +430,9 @@ function AnalyticsPage() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
           <KpiCard icon={Coins} label="Gesamtwert Verkauf" value={formatCurrency(kpis?.totalValue ?? 0)} loading={isLoading} />
           <KpiCard icon={Banknote} label="Mietvolumen / Monat" value={formatCurrency(kpis?.monthlyRent ?? 0)} loading={isLoading} />
-          <KpiCard icon={TrendingUp} label="Provisionspotenzial" value={formatCurrency(kpis?.commissionTotal ?? 0)} loading={isLoading} />
+          <KpiCard icon={TrendingUp} label="Provisionspotenzial" value={formatCurrency(kpis?.commissionTotal ?? 0)} hint="Prognose für aktive Objekte, noch nicht gebucht" loading={isLoading} />
+          <KpiCard icon={Coins} label="Gebuchte Provision" value={formatCurrency(booked.total)} hint="real verbucht im Zeitraum" loading={isLoading} />
+
           <KpiCard icon={Building2} label="Immobilien total" value={kpis?.countTotal ?? 0} loading={isLoading} />
           <KpiCard icon={Building2} label="Aktive Immobilien" value={kpis?.countActive ?? 0} loading={isLoading} />
           <KpiCard icon={FileCheck2} label="Reserviert" value={kpis?.countReserved ?? 0} loading={isLoading} />
@@ -470,7 +526,9 @@ function AnalyticsPage() {
                   <TableHead>Mitarbeiter</TableHead>
                   <TableHead className="text-right">Immobilien</TableHead>
                   <TableHead className="text-right">Wert</TableHead>
-                  <TableHead className="text-right">Provision</TableHead>
+                  <TableHead className="text-right">Potenzial</TableHead>
+                  <TableHead className="text-right">Gebucht</TableHead>
+
                   <TableHead className="text-right">Mandate</TableHead>
                   <TableHead className="text-right">Reservationen</TableHead>
                   <TableHead className="text-right">Leads</TableHead>
@@ -479,13 +537,15 @@ function AnalyticsPage() {
               </TableHeader>
               <TableBody>
                 {employeeRows.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="py-8 text-center text-sm text-muted-foreground">Keine Daten</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">Keine Daten</TableCell></TableRow>
                 ) : employeeRows.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.name}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.properties}</TableCell>
                     <TableCell className="text-right tabular-nums">{formatCurrency(r.value)}</TableCell>
-                    <TableCell className="text-right tabular-nums font-semibold">{formatCurrency(r.commission)}</TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">{formatCurrency(r.commission)}</TableCell>
+                    <TableCell className="text-right tabular-nums font-semibold">{formatCurrency(booked.perUser.get(r.id) || 0)}</TableCell>
+
                     <TableCell className="text-right tabular-nums">{r.mandates}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.reservations}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.leads}</TableCell>
@@ -525,6 +585,8 @@ function AnalyticsPage() {
           <IssueCard title="Mandate ohne Dokument" count={issues?.mandatesNoDoc.length ?? 0} to="/mandates" />
           <IssueCard title="Kritische Finanzierungen" count={issues?.criticalFinancing.length ?? 0} to="/financing" />
           <IssueCard title="Überfällige Aufgaben" count={issues?.overdueTasks.length ?? 0} to="/tasks" />
+          <IssueCard title="Verkauft/vermietet ohne gebuchte Provision" count={booked.missing.length} to="/commissions" />
+
         </div>
       </section>
     </div>

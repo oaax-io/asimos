@@ -69,6 +69,7 @@
     "appointments": "Termine",
     "tasks": "Aufgaben",
     "analytics": "Analytics",
+    "commissions": "Provisionen",
     "documents": "Dokumente",
     "media": "Mediathek",
     "checklists": "Checklisten",
@@ -133,6 +134,10 @@
     "mandates": {
       "title": "Mandate",
       "description": "Maklerverträge mit Eigentümern und Käufern"
+    },
+    "commissions": {
+      "title": "Provisionen",
+      "description": "Gebuchte Provisionen, Auszahlungen und Pipeline im Überblick"
     },
     "reservations": {
       "title": "Reservationen",
