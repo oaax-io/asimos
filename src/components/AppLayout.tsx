@@ -59,6 +59,8 @@ const NAV_GROUPS = [
       { to: "/appointments", labelKey: "nav.appointments", icon: Calendar },
       { to: "/tasks", labelKey: "nav.tasks", icon: CheckSquare },
       { to: "/analytics", labelKey: "nav.analytics", icon: BarChart3 },
+      { to: "/commissions", labelKey: "nav.commissions", icon: Percent },
+
     ],
   },
   {
