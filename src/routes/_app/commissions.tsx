@@ -131,7 +131,9 @@ function KpiCard({ icon: Icon, label, value, hint, loading, tone }: {
 function CommissionsPage() {
   const [period, setPeriod] = useState<Period>("all");
   const [employee, setEmployee] = useState<string>("all");
+  const { isCommissionAdmin, userId: myUserId } = useIsCommissionAdmin();
   const { data, isLoading } = useCommissionData();
+
 
   const since = periodStart(period);
   const nameOf = (id: string | null) =>
