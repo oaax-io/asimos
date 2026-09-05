@@ -23,6 +23,7 @@ import {
 import { Percent, Coins, FileCheck2, Ban, TrendingUp, AlertTriangle } from "lucide-react";
 import { formatCurrency, formatDate, propertyStatusLabels } from "@/lib/format";
 import { SPLIT_ROLE_LABELS } from "@/components/commission/CommissionSplitEditor";
+import { useIsCommissionAdmin } from "@/hooks/useIsCommissionAdmin";
 
 export const Route = createFileRoute("/_app/commissions")({ component: CommissionsPage });
 
@@ -252,9 +253,11 @@ function CommissionsPage() {
     });
 
     let rows = Array.from(map.values());
-    if (employee !== "all") rows = rows.filter((r) => r.id === employee);
+    // Nicht-Admins sehen ausschliesslich ihre eigene Zeile.
+    if (!isCommissionAdmin) rows = rows.filter((r) => r.id === myUserId);
+    else if (employee !== "all") rows = rows.filter((r) => r.id === employee);
     return rows.sort((a, b) => b.commission - a.commission);
-  }, [data, splitsInPeriod, recById, employee]);
+  }, [data, splitsInPeriod, recById, employee, isCommissionAdmin, myUserId]);
 
   // ---- Tab: Pro Objekt ----
   const propertyRows = useMemo(() => {
@@ -326,6 +329,7 @@ function CommissionsPage() {
               </SelectContent>
             </Select>
           </div>
+          {isCommissionAdmin && (
           <div className="min-w-[200px]">
             <label className="mb-1 block text-xs font-medium text-muted-foreground">Mitarbeiter</label>
             <Select value={employee} onValueChange={setEmployee}>
@@ -338,30 +342,33 @@ function CommissionsPage() {
               </SelectContent>
             </Select>
           </div>
+          )}
         </CardContent>
       </Card>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+      <div className={`grid grid-cols-2 gap-3 md:grid-cols-3 ${isCommissionAdmin ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
         <KpiCard icon={Coins} label="Gebuchte Provision" value={formatCurrency(kpis?.commission ?? 0)} hint="real verbucht" loading={isLoading} />
         <KpiCard icon={FileCheck2} label="Reservationsgebühren" value={formatCurrency(kpis?.reservation ?? 0)} hint="gebucht" loading={isLoading} />
         <KpiCard icon={Ban} label="Rücktrittsentschädigungen" value={formatCurrency(kpis?.cancellation ?? 0)} hint="gebucht" loading={isLoading} />
         <KpiCard icon={TrendingUp} label="Provisionspotenzial" value={formatCurrency(kpis?.potential ?? 0)} hint="Potenzial, noch nicht gebucht" loading={isLoading} />
-        <KpiCard
-          icon={AlertTriangle}
-          label="Ohne gebuchte Provision"
-          value={kpis?.missing.length ?? 0}
-          hint="verkauft / vermietet"
-          loading={isLoading}
-          tone={(kpis?.missing.length ?? 0) > 0 ? "warn" : undefined}
-        />
+        {isCommissionAdmin && (
+          <KpiCard
+            icon={AlertTriangle}
+            label="Ohne gebuchte Provision"
+            value={kpis?.missing.length ?? 0}
+            hint="verkauft / vermietet"
+            loading={isLoading}
+            tone={(kpis?.missing.length ?? 0) > 0 ? "warn" : undefined}
+          />
+        )}
       </div>
 
       <Tabs defaultValue="employees">
         <TabsList>
-          <TabsTrigger value="employees">Pro Mitarbeiter</TabsTrigger>
-          <TabsTrigger value="properties">Pro Objekt</TabsTrigger>
-          <TabsTrigger value="cancellations">Rücktritte &amp; Stornierungen</TabsTrigger>
+          <TabsTrigger value="employees">{isCommissionAdmin ? "Pro Mitarbeiter" : "Meine Provision"}</TabsTrigger>
+          <TabsTrigger value="properties">{isCommissionAdmin ? "Pro Objekt" : "Meine Objekte"}</TabsTrigger>
+          <TabsTrigger value="cancellations">{isCommissionAdmin ? "Rücktritte & Stornierungen" : "Meine Rücktrittsfälle"}</TabsTrigger>
         </TabsList>
 
         {/* ---- Pro Mitarbeiter ---- */}
@@ -371,7 +378,7 @@ function CommissionsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Mitarbeiter</TableHead>
+                    <TableHead>{isCommissionAdmin ? "Mitarbeiter" : "Meine Provision"}</TableHead>
                     <TableHead>Stufe</TableHead>
                     <TableHead className="text-right">Provision generiert</TableHead>
                     <TableHead className="text-right">davon Reservation</TableHead>
