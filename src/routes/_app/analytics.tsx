@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
+import { useIsCommissionAdmin } from "@/hooks/useIsCommissionAdmin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -148,6 +149,7 @@ function AnalyticsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const { data, isLoading } = useAnalyticsData();
+  const { isCommissionAdmin } = useIsCommissionAdmin();
   const { data: bookedData } = useBookedCommissions();
 
   // Gebuchte Provision im gewählten Zeitraum (nach booked_at)
@@ -431,7 +433,9 @@ function AnalyticsPage() {
           <KpiCard icon={Coins} label="Gesamtwert Verkauf" value={formatCurrency(kpis?.totalValue ?? 0)} loading={isLoading} />
           <KpiCard icon={Banknote} label="Mietvolumen / Monat" value={formatCurrency(kpis?.monthlyRent ?? 0)} loading={isLoading} />
           <KpiCard icon={TrendingUp} label="Provisionspotenzial" value={formatCurrency(kpis?.commissionTotal ?? 0)} hint="Prognose für aktive Objekte, noch nicht gebucht" loading={isLoading} />
-          <KpiCard icon={Coins} label="Gebuchte Provision" value={formatCurrency(booked.total)} hint="real verbucht im Zeitraum" loading={isLoading} />
+          {isCommissionAdmin && (
+            <KpiCard icon={Coins} label="Gebuchte Provision" value={formatCurrency(booked.total)} hint="real verbucht im Zeitraum" loading={isLoading} />
+          )}
 
           <KpiCard icon={Building2} label="Immobilien total" value={kpis?.countTotal ?? 0} loading={isLoading} />
           <KpiCard icon={Building2} label="Aktive Immobilien" value={kpis?.countActive ?? 0} loading={isLoading} />
@@ -526,8 +530,8 @@ function AnalyticsPage() {
                   <TableHead>Mitarbeiter</TableHead>
                   <TableHead className="text-right">Immobilien</TableHead>
                   <TableHead className="text-right">Wert</TableHead>
-                  <TableHead className="text-right">Potenzial</TableHead>
-                  <TableHead className="text-right">Gebucht</TableHead>
+                  {isCommissionAdmin && <TableHead className="text-right">Potenzial</TableHead>}
+                  {isCommissionAdmin && <TableHead className="text-right">Gebucht</TableHead>}
 
                   <TableHead className="text-right">Mandate</TableHead>
                   <TableHead className="text-right">Reservationen</TableHead>
@@ -537,14 +541,15 @@ function AnalyticsPage() {
               </TableHeader>
               <TableBody>
                 {employeeRows.length === 0 ? (
-                  <TableRow><TableCell colSpan={9} className="py-8 text-center text-sm text-muted-foreground">Keine Daten</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={isCommissionAdmin ? 9 : 7} className="py-8 text-center text-sm text-muted-foreground">Keine Daten</TableCell></TableRow>
                 ) : employeeRows.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.name}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.properties}</TableCell>
                     <TableCell className="text-right tabular-nums">{formatCurrency(r.value)}</TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">{formatCurrency(r.commission)}</TableCell>
-                    <TableCell className="text-right tabular-nums font-semibold">{formatCurrency(booked.perUser.get(r.id) || 0)}</TableCell>
+                    {isCommissionAdmin && <TableCell className="text-right tabular-nums text-muted-foreground">{formatCurrency(r.commission)}</TableCell>}
+                    {isCommissionAdmin && <TableCell className="text-right tabular-nums font-semibold">{formatCurrency(booked.perUser.get(r.id) || 0)}</TableCell>}
+
 
                     <TableCell className="text-right tabular-nums">{r.mandates}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.reservations}</TableCell>
@@ -585,7 +590,9 @@ function AnalyticsPage() {
           <IssueCard title="Mandate ohne Dokument" count={issues?.mandatesNoDoc.length ?? 0} to="/mandates" />
           <IssueCard title="Kritische Finanzierungen" count={issues?.criticalFinancing.length ?? 0} to="/financing" />
           <IssueCard title="Überfällige Aufgaben" count={issues?.overdueTasks.length ?? 0} to="/tasks" />
-          <IssueCard title="Verkauft/vermietet ohne gebuchte Provision" count={booked.missing.length} to="/commissions" />
+          {isCommissionAdmin && (
+            <IssueCard title="Verkauft/vermietet ohne gebuchte Provision" count={booked.missing.length} to="/commissions" />
+          )}
 
         </div>
       </section>

@@ -3862,6 +3862,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_agent: { Args: never; Returns: boolean }
+      is_commission_admin: { Args: never; Returns: boolean }
       is_manager_or_above: { Args: never; Returns: boolean }
       is_owner_or_admin: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
