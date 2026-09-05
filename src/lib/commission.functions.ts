@@ -228,19 +228,38 @@ export const bookReservationFee = createServerFn({ method: "POST" })
   });
 
 // ---------------------------------------------------------------------------
-// 2) Abschlussprovision buchen (Verkauf / Vermietung)
+// 2) Deal erfassen oder bearbeiten (Verkauf / Vermietung)
+//
+// Ersetzt die frühere Funktion `bookClosingCommission`: statt nur eines
+// Betrags wird der komplette Abschluss erfasst (Verkaufspreis, Käufer,
+// Finanzierung, abschliessende Person, Aufteilung, Abschlussdatum).
+// Existiert bereits eine Abschlussbuchung für das Objekt, wird sie
+// aktualisiert – rückwirkende Korrekturen sind ausdrücklich erwünscht.
 // ---------------------------------------------------------------------------
 
-export const bookClosingCommission = createServerFn({ method: "POST" })
+const splitSchema = z.object({
+  user_id: z.string().uuid(),
+  role: z.string().min(1),
+  split_percent: z.number(),
+});
+
+export const saveDeal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
       .object({
         propertyId: z.string().uuid(),
-        // Optional: manuell verhandelter Endbetrag. Ohne diesen Wert wird die
-        // Provision aus dem Mandat (commission_model/commission_value) und
-        // dem Objektpreis berechnet.
+        clientId: z.string().uuid().nullable().optional(),
+        salePrice: z.number(),
+        commissionModel: z.enum(["percent", "fixed"]),
+        commissionValue: z.number(),
         finalCommissionAmount: z.number().positive().optional(),
+        financingAmount: z.number().nullable().optional(),
+        financingDossierId: z.string().uuid().nullable().optional(),
+        closedBy: z.string().uuid().nullable().optional(),
+        splits: z.array(splitSchema).default([]),
+        bookedAt: z.string().optional(),
+        notes: z.string().optional(),
       })
       .parse(data),
   )
@@ -254,41 +273,29 @@ export const bookClosingCommission = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error || !property) throw new Error("Immobilie nicht gefunden.");
 
-    // Idempotenz: ein Abschluss wird pro Objekt nur einmal gebucht.
-    const { data: existing } = await sb
-      .from("commission_records")
-      .select("id")
-      .eq("property_id", property.id)
-      .eq("record_type", "commission")
-      .maybeSingle();
-    if (existing) throw new Error("Für dieses Objekt wurde die Abschlussprovision bereits gebucht.");
+    // 1) Bruttoprovision bestimmen.
+    let gross = data.finalCommissionAmount ?? 0;
+    if (!gross) {
+      gross =
+        data.commissionModel === "percent"
+          ? (data.salePrice * data.commissionValue) / 100
+          : data.commissionValue;
+    }
+    gross = round2(gross);
+    if (gross <= 0) throw new Error("Die Provision konnte nicht ermittelt werden (Betrag ist 0).");
 
-    // Aktives Mandat suchen (für Provisionsmodell und Verknüpfung).
+    // Aktives Mandat für die Verknüpfung suchen.
     const { data: mandates } = await sb
       .from("mandates")
-      .select("id, status, commission_model, commission_value, client_id")
+      .select("id, status, client_id")
       .eq("property_id", property.id)
       .order("created_at", { ascending: false });
-
     const mandate =
       (mandates ?? []).find((m: any) => ACTIVE_MANDATE_STATUS.includes(String(m.status))) ??
       (mandates ?? [])[0] ??
       null;
 
-    // Bruttoprovision bestimmen.
-    let gross = data.finalCommissionAmount ?? 0;
-    if (!gross) {
-      if (!mandate) throw new Error("Kein Mandat vorhanden – bitte Provisionsbetrag manuell angeben.");
-      const value = Number(mandate.commission_value) || 0;
-      const price = Number(property.price) || 0;
-      if (mandate.commission_model === "percent") gross = (price * value) / 100;
-      else gross = value; // 'fixed' oder unbekannt -> Wert direkt
-    }
-    gross = round2(gross);
-    if (gross <= 0) throw new Error("Die Provision konnte nicht ermittelt werden (Betrag ist 0).");
-
-    // Bereits gebuchte Reservationsgebühr desselben Objekts verlinken, damit die
-    // UI später "davon X CHF bereits als Reservationsgebühr vereinnahmt" zeigen kann.
+    // Bereits gebuchte Reservationsgebühr desselben Objekts verlinken.
     const { data: reservationFeeRecord } = await sb
       .from("commission_records")
       .select("id")
@@ -299,25 +306,67 @@ export const bookClosingCommission = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
-    const template = await resolveSplitTemplate(sb, property.id, property.assigned_to ?? null);
+    // Vom Aufrufer gelieferte Aufteilung (UI ist die Quelle der Wahrheit);
+    // ohne Angabe greift der bisherige Fallback.
+    let template = data.splits
+      .filter((s) => s.user_id)
+      .map((s) => ({ user_id: s.user_id, role: s.role || "other", split_percent: Number(s.split_percent) || 0 }));
+    if (!template.length) {
+      template = await resolveSplitTemplate(sb, property.id, property.assigned_to ?? null);
+    }
 
-    return insertRecord(
-      sb,
-      {
-        property_id: property.id,
-        mandate_id: mandate?.id ?? null,
-        client_id: mandate?.client_id ?? null,
-        record_type: "commission",
-        status: "booked",
-        gross_amount: gross,
-        currency: "CHF",
-        credited_reservation_record_id: reservationFeeRecord?.id ?? null,
-        description: "Abschlussprovision",
-        created_by: context.userId,
-      },
-      template,
-    );
+    const bookedAt = data.bookedAt ? new Date(data.bookedAt).toISOString() : new Date().toISOString();
+
+    const payload: Record<string, unknown> = {
+      property_id: property.id,
+      mandate_id: mandate?.id ?? null,
+      client_id: data.clientId ?? mandate?.client_id ?? null,
+      record_type: "commission",
+      status: "booked",
+      gross_amount: gross,
+      currency: "CHF",
+      sale_price: data.salePrice ? round2(data.salePrice) : null,
+      financing_amount: data.financingAmount != null ? round2(data.financingAmount) : null,
+      financing_dossier_id: data.financingDossierId ?? null,
+      closed_by: data.closedBy ?? null,
+      credited_reservation_record_id: reservationFeeRecord?.id ?? null,
+      booked_at: bookedAt,
+      description: data.notes?.trim() || "Abschlussprovision",
+    };
+
+    // 2) Existierende Abschlussbuchung? -> aktualisieren, sonst neu anlegen.
+    const { data: existing } = await sb
+      .from("commission_records")
+      .select("id")
+      .eq("property_id", property.id)
+      .eq("record_type", "commission")
+      .neq("status", "void")
+      .maybeSingle();
+
+    if (!existing) {
+      return insertRecord(sb, { ...payload, created_by: context.userId }, template);
+    }
+
+    const { data: record, error: updErr } = await sb
+      .from("commission_records")
+      .update(payload)
+      .eq("id", existing.id)
+      .select("*")
+      .single();
+    if (updErr || !record) {
+      throw new Error(`Deal konnte nicht aktualisiert werden: ${updErr?.message ?? "unbekannter Fehler"}`);
+    }
+
+    const { error: delErr } = await sb
+      .from("commission_record_splits")
+      .delete()
+      .eq("commission_record_id", existing.id);
+    if (delErr) throw new Error(`Alte Aufteilung konnte nicht entfernt werden: ${delErr.message}`);
+
+    const splits = await createRecordSplits(sb, existing.id as string, gross, template);
+    return { ...(record as any), gross_amount: Number(record.gross_amount), splits };
   });
+
 
 // ---------------------------------------------------------------------------
 // 3) Rücktritts-/Kündigungsentschädigung buchen (fixer CHF-Betrag am Mandat)

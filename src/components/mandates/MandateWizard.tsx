@@ -650,7 +650,7 @@ export function MandateWizard({ open, onOpenChange, onCreated }: Props) {
   );
 }
 
-function TypeCard({
+export function TypeCard({
   icon,
   title,
   description,

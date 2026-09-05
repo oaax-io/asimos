@@ -32,7 +32,7 @@ import { PublicShareCard } from "@/components/properties/PublicShareCard";
 import { PortalPublishCard } from "@/components/properties/PortalPublishCard";
 import { PropertyExposeWizardDialog } from "@/components/expose/PropertyExposeWizardDialog";
 import { publishPropertyToPortal } from "@/lib/portal.functions";
-import { BookClosingCommissionDialog } from "@/components/commission/BookClosingCommissionDialog";
+import { DealDialog } from "@/components/commission/DealDialog";
 import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/properties/PropertyAssignees";
 import type { EmployeeLite } from "@/components/clients/ClientAssignees";
 import { PropertyQuickActions } from "@/components/properties/PropertyQuickActions";
@@ -73,7 +73,7 @@ function PropertyDetail() {
   const [editOpen, setEditOpen] = useState(false);
   const [financingOpen, setFinancingOpen] = useState(false);
   const [exposeOpen, setExposeOpen] = useState(false);
-  const [closingOpen, setClosingOpen] = useState(false);
+  const [dealOpen, setDealOpen] = useState(false);
 
   const [tab, setTab] = useState("overview");
   const [ownersOpen, setOwnersOpen] = useState(false);
@@ -367,7 +367,7 @@ function PropertyDetail() {
           .eq("record_type", "commission")
           .neq("status", "void")
           .maybeSingle();
-        if (!existing) setClosingOpen(true);
+        if (!existing) setDealOpen(true);
       }
     },
   });
@@ -412,9 +412,9 @@ function PropertyDetail() {
         </div>
       </div>
 
-      <BookClosingCommissionDialog
-        open={closingOpen}
-        onOpenChange={setClosingOpen}
+      <DealDialog
+        open={dealOpen}
+        onOpenChange={setDealOpen}
         propertyId={id}
       />
 

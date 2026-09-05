@@ -14,12 +14,13 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Plus, ChevronDown, CalendarPlus, CheckSquare, ListChecks, TrendingUp, Handshake, FileSignature,
+  Plus, ChevronDown, CalendarPlus, CheckSquare, ListChecks, TrendingUp, Handshake, FileSignature, CircleDollarSign,
 } from "lucide-react";
 import { apptTypeLabels } from "@/lib/format";
 import { MandateWizard } from "@/components/mandates/MandateWizard";
+import { DealDialog } from "@/components/commission/DealDialog";
 
-type QuickAction = null | "task" | "appointment" | "checklist" | "market" | "mandate" | "reservation";
+type QuickAction = null | "task" | "appointment" | "checklist" | "market" | "mandate" | "reservation" | "deal";
 
 export function PropertyQuickActions({
   propertyId,
@@ -64,8 +65,17 @@ export function PropertyQuickActions({
           <DropdownMenuItem onSelect={() => setAction("reservation")}>
             <FileSignature className="mr-2 h-4 w-4" />Neue Reservation
           </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setAction("deal")}>
+            <CircleDollarSign className="mr-2 h-4 w-4" />Deal
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <DealDialog
+        open={action === "deal"}
+        onOpenChange={(o) => !o && close()}
+        propertyId={propertyId}
+      />
 
       {user && (
         <NewTaskDialog
