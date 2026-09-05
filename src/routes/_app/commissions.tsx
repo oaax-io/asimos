@@ -24,6 +24,7 @@ import { Percent, Coins, FileCheck2, Ban, TrendingUp, AlertTriangle } from "luci
 import { formatCurrency, formatDate, propertyStatusLabels } from "@/lib/format";
 import { SPLIT_ROLE_LABELS } from "@/components/commission/CommissionSplitEditor";
 import { useIsCommissionAdmin } from "@/hooks/useIsCommissionAdmin";
+import { CommissionStatementDialog } from "@/components/commission/CommissionStatementDialog";
 
 export const Route = createFileRoute("/_app/commissions")({ component: CommissionsPage });
 
@@ -103,30 +104,41 @@ function potentialForProperty(p: any, mandates: any[]): number {
   return Number(p.price) * 0.03;
 }
 
-function KpiCard({ icon: Icon, label, value, hint, loading, tone }: {
-  icon: any; label: string; value: string | number; hint?: string; loading?: boolean; tone?: "warn";
+const KPI_TONES: Record<string, { card: string; icon: string; value: string }> = {
+  primary: { card: "border-primary/30 bg-primary/5", icon: "bg-primary/15 text-primary", value: "text-primary" },
+  emerald: { card: "border-emerald-500/30 bg-emerald-500/5", icon: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400", value: "text-emerald-600 dark:text-emerald-400" },
+  rose: { card: "border-rose-500/30 bg-rose-500/5", icon: "bg-rose-500/15 text-rose-600 dark:text-rose-400", value: "text-rose-600 dark:text-rose-400" },
+  sky: { card: "border-sky-500/30 bg-sky-500/5", icon: "bg-sky-500/15 text-sky-600 dark:text-sky-400", value: "text-sky-600 dark:text-sky-400" },
+  amber: { card: "border-amber-500/40 bg-amber-500/10", icon: "bg-amber-500/15 text-amber-600 dark:text-amber-400", value: "text-amber-600 dark:text-amber-400" },
+};
+
+function KpiCard({ icon: Icon, label, value, hint, loading, tone = "primary" }: {
+  icon: any; label: string; value: string | number; hint?: string; loading?: boolean;
+  tone?: keyof typeof KPI_TONES;
 }) {
+  const t = KPI_TONES[tone] ?? KPI_TONES.primary;
   return (
-    <Card className={tone === "warn" ? "border-amber-500/40 bg-amber-500/5" : ""}>
-      <CardContent className="p-4">
+    <Card className={`overflow-hidden shadow-sm transition-shadow hover:shadow-md ${t.card}`}>
+      <CardContent className="p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-            {loading ? (
-              <Skeleton className="mt-2 h-7 w-24" />
-            ) : (
-              <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
-            )}
-            {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-          </div>
-          <div className="rounded-lg bg-primary/10 p-2 text-primary">
+          <div className={`shrink-0 rounded-lg p-2 ${t.icon}`}>
             <Icon className="h-4 w-4" />
           </div>
         </div>
+        <p className="mt-2 text-[11px] font-semibold uppercase leading-tight tracking-wider text-muted-foreground sm:text-xs">
+          {label}
+        </p>
+        {loading ? (
+          <Skeleton className="mt-2 h-7 w-24" />
+        ) : (
+          <p className={`mt-1 break-words text-xl font-bold tabular-nums sm:text-2xl ${t.value}`}>{value}</p>
+        )}
+        {hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>}
       </CardContent>
     </Card>
   );
 }
+
 
 function CommissionsPage() {
   const [period, setPeriod] = useState<Period>("all");
@@ -309,20 +321,25 @@ function CommissionsPage() {
       <PageHeader
         i18nKey="commissions"
         title={
-          <span className="inline-flex items-center gap-2.5">
-            <Percent className="h-8 w-8 text-[#6F6B94]" />
+          <span className="inline-flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              <Percent className="h-5 w-5" />
+            </span>
             Provisionen
           </span>
+        }
+        action={
+          <CommissionStatementDialog data={data} isCommissionAdmin={isCommissionAdmin} myUserId={myUserId ?? null} />
         }
       />
 
       {/* Filter */}
       <Card>
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
-          <div className="min-w-[160px]">
+          <div className="w-full min-w-[160px] sm:w-auto">
             <label className="mb-1 block text-xs font-medium text-muted-foreground">Zeitraum</label>
             <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle</SelectItem>
                 <SelectItem value="year">Dieses Jahr</SelectItem>
@@ -332,10 +349,10 @@ function CommissionsPage() {
             </Select>
           </div>
           {isCommissionAdmin && (
-          <div className="min-w-[200px]">
+          <div className="w-full min-w-[200px] sm:w-auto">
             <label className="mb-1 block text-xs font-medium text-muted-foreground">Mitarbeiter</label>
             <Select value={employee} onValueChange={setEmployee}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-[220px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle</SelectItem>
                 {(data?.profiles ?? []).map((p: any) => (
@@ -349,11 +366,11 @@ function CommissionsPage() {
       </Card>
 
       {/* KPIs */}
-      <div className={`grid grid-cols-2 gap-3 md:grid-cols-3 ${isCommissionAdmin ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
-        <KpiCard icon={Coins} label="Gebuchte Provision" value={formatCurrency(kpis?.commission ?? 0)} hint="real verbucht" loading={isLoading} />
-        <KpiCard icon={FileCheck2} label="Reservationsgebühren" value={formatCurrency(kpis?.reservation ?? 0)} hint="gebucht" loading={isLoading} />
-        <KpiCard icon={Ban} label="Rücktrittsentschädigungen" value={formatCurrency(kpis?.cancellation ?? 0)} hint="gebucht" loading={isLoading} />
-        <KpiCard icon={TrendingUp} label="Provisionspotenzial" value={formatCurrency(kpis?.potential ?? 0)} hint="Potenzial, noch nicht gebucht" loading={isLoading} />
+      <div className={`grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 ${isCommissionAdmin ? "xl:grid-cols-5" : "xl:grid-cols-4"}`}>
+        <KpiCard tone="primary" icon={Coins} label="Gebuchte Provision" value={formatCurrency(kpis?.commission ?? 0)} hint="real verbucht" loading={isLoading} />
+        <KpiCard tone="emerald" icon={FileCheck2} label="Reservationsgebühren" value={formatCurrency(kpis?.reservation ?? 0)} hint="gebucht" loading={isLoading} />
+        <KpiCard tone="rose" icon={Ban} label="Rücktrittsentschädigungen" value={formatCurrency(kpis?.cancellation ?? 0)} hint="gebucht" loading={isLoading} />
+        <KpiCard tone="sky" icon={TrendingUp} label="Provisionspotenzial" value={formatCurrency(kpis?.potential ?? 0)} hint="Prognose, noch nicht gebucht" loading={isLoading} />
         {isCommissionAdmin && (
           <KpiCard
             icon={AlertTriangle}
@@ -361,10 +378,11 @@ function CommissionsPage() {
             value={kpis?.missing.length ?? 0}
             hint="verkauft / vermietet"
             loading={isLoading}
-            tone={(kpis?.missing.length ?? 0) > 0 ? "warn" : undefined}
+            tone="amber"
           />
         )}
       </div>
+
 
       <Tabs defaultValue="employees">
         <TabsList>
