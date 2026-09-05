@@ -211,14 +211,25 @@ function TeamPage() {
                 <div className="mt-3 space-y-1 text-sm text-muted-foreground">
                   {m.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{m.email}</p>}
                   {m.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{m.phone}</p>}
+                  {(m as any).commission_tier && (
+                    <p className="flex items-center gap-2">
+                      <Target className="h-3.5 w-3.5" />
+                      {(m as any).commission_tier} · {(m as any).commission_payout_rate ?? 50} % Auszahlung
+                    </p>
+                  )}
                 </div>
-                {canManage && !(m.isSystemowner && !effectiveIsSuperadmin) && (
-                  <div className="mt-3 flex justify-end">
+                <div className="mt-3 flex justify-end gap-2">
+                  {(canManage || m.id === user?.id) && (
+                    <Button variant="ghost" size="sm" onClick={() => setTargetsFor(m)}>
+                      <Target className="mr-1 h-3 w-3" /> Ziele
+                    </Button>
+                  )}
+                  {canManage && !(m.isSystemowner && !effectiveIsSuperadmin) && (
                     <Button variant="outline" size="sm" onClick={() => setEditing(m)}>
                       <Pencil className="mr-1 h-3 w-3" /> Bearbeiten
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -241,6 +252,17 @@ function TeamPage() {
           }}
         />
       )}
+
+      {targetsFor && (
+        <CommissionTargetsDialog
+          open
+          onOpenChange={(o) => !o && setTargetsFor(null)}
+          userId={targetsFor.id}
+          userName={targetsFor.full_name || targetsFor.email || "Mitarbeiter"}
+          canManage={canManage || targetsFor.id === user?.id}
+        />
+      )}
+
 
       <RolePermissionsDialog open={permsOpen} onOpenChange={setPermsOpen} />
 
