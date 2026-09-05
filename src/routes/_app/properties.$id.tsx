@@ -73,6 +73,8 @@ function PropertyDetail() {
   const [editOpen, setEditOpen] = useState(false);
   const [financingOpen, setFinancingOpen] = useState(false);
   const [exposeOpen, setExposeOpen] = useState(false);
+  const [closingOpen, setClosingOpen] = useState(false);
+
   const [tab, setTab] = useState("overview");
   const [ownersOpen, setOwnersOpen] = useState(false);
 
