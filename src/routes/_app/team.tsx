@@ -428,9 +428,59 @@ function EditMemberDialog({
             onClick={() => setTab("password")}
             className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${tab === "password" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
           >Passwort</button>
+          <button
+            onClick={() => setTab("commission")}
+            className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${tab === "commission" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+          >Provision</button>
         </div>
 
-        {tab === "profile" ? (
+        {tab === "commission" ? (
+          <div className="space-y-4">
+            <div>
+              <Label>Stufe</Label>
+              <Select
+                value={COMMISSION_TIERS.includes(commission.commission_tier) ? commission.commission_tier : "custom"}
+                onValueChange={(v) =>
+                  setCommission({ ...commission, commission_tier: v === "custom" ? "" : v })
+                }
+              >
+                <SelectTrigger><SelectValue placeholder="Stufe wählen" /></SelectTrigger>
+                <SelectContent>
+                  {COMMISSION_TIERS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  <SelectItem value="custom">Eigener Wert…</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                className="mt-2"
+                placeholder="Eigene Bezeichnung (optional)"
+                value={commission.commission_tier}
+                onChange={(e) => setCommission({ ...commission, commission_tier: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Persönlicher Auszahlungssatz (%)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step="1"
+                value={commission.commission_payout_rate}
+                onChange={(e) => setCommission({ ...commission, commission_payout_rate: e.target.value })}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Anteil vom zugeteilten Provisions-Split, den diese Person tatsächlich ausbezahlt bekommt.
+                Der Rest verbleibt bei der Agentur.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={onClose}>Schliessen</Button>
+              <Button onClick={() => saveCommission.mutate()} disabled={saveCommission.isPending}>
+                {saveCommission.isPending ? "Speichern…" : "Speichern"}
+              </Button>
+            </DialogFooter>
+          </div>
+        ) : tab === "profile" ? (
+
           <div className="space-y-3">
             <div className="flex items-center gap-4 rounded-lg border bg-muted/30 p-3">
               <Avatar className="h-16 w-16">
