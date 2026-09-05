@@ -5,8 +5,15 @@
     "fr": "Francese",
     "it": "Italiano"
   },
-  "nav": {},
-  "pages": {},
+  "nav": {
+    "commissions": "Provvigioni"
+  },
+  "pages": {
+    "commissions": {
+      "title": "Provvigioni",
+      "description": "Provvigioni contabilizzate, pagamenti e pipeline in sintesi"
+    }
+  },
   "settings": {},
   "clients": {
     "columns": {

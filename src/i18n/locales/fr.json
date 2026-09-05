@@ -69,6 +69,7 @@
     "appointments": "Rendez-vous",
     "tasks": "Tâches",
     "analytics": "Analyses",
+    "commissions": "Commissions",
     "documents": "Documents",
     "media": "Médiathèque",
     "checklists": "Listes de contrôle",
@@ -133,6 +134,10 @@
     "mandates": {
       "title": "Mandats",
       "description": "Contrats de courtage avec propriétaires et acheteurs"
+    },
+    "commissions": {
+      "title": "Commissions",
+      "description": "Commissions comptabilisées, versements et pipeline en un coup d'œil"
     },
     "reservations": {
       "title": "Réservations",
