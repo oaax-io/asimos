@@ -352,11 +352,78 @@ function ChatWindow({
 
   const title = member?.full_name ?? member?.email ?? "Chat";
   const [callOpen, setCallOpen] = useState(false);
-  const callRoom = user?.id
-    ? `chat-${[user.id, memberId].sort().join("--")}`
-    : `chat-${memberId}`;
+  const [calling, setCalling] = useState(false);
+  const callIdRef = useRef<string | null>(null);
+  const callRoom = user?.id ? chatRoomName(user.id, memberId) : `chat-${memberId}`;
 
-  const callState = useLivekitToken(callRoom, callOpen && mode !== "minimized");
+  const callState = useLivekitToken(callRoom, callOpen);
+
+  const endCall = useCallback(async () => {
+    setCallOpen(false);
+    setCalling(false);
+    const id = callIdRef.current;
+    callIdRef.current = null;
+    if (id) await setCallStatus(id, "ended").catch(() => {});
+  }, []);
+
+  const beginCall = useCallback(async () => {
+    if (!user?.id) return;
+    setCallOpen(true);
+    setCalling(true);
+    try {
+      const row = await startCall({
+        room: callRoom,
+        callerId: user.id,
+        calleeId: memberId,
+        title: member?.full_name ?? member?.email ?? null,
+      });
+      callIdRef.current = row?.id ?? null;
+      toast.message(`${title} wird angerufen…`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }, [user?.id, callRoom, memberId, member?.full_name, member?.email, title]);
+
+  // Angenommener eingehender Anruf: direkt verbinden
+  useEffect(() => {
+    if (!autoCall) return;
+    callIdRef.current = autoCall.callId ?? null;
+    setCallOpen(true);
+    setCalling(false);
+  }, [autoCall]);
+
+  // Antwort der Gegenseite verfolgen (angenommen / abgelehnt / beendet)
+  useEffect(() => {
+    if (!callOpen) return;
+    const ch = supabase
+      .channel(`call-watch-${callRoom}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "video_calls" },
+        (payload) => {
+          const row = payload.new as CallRow;
+          if (row.id !== callIdRef.current) return;
+          if (row.status === "accepted") setCalling(false);
+          if (row.status === "declined") {
+            toast.error(`${title} hat den Anruf abgelehnt`);
+            callIdRef.current = null;
+            setCallOpen(false);
+            setCalling(false);
+          }
+          if (row.status === "missed" || row.status === "ended") {
+            callIdRef.current = null;
+            setCallOpen(false);
+            setCalling(false);
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [callOpen, callRoom, title]);
+
+
 
   const shell =
     mode === "maximized"
