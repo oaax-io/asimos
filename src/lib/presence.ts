@@ -1,7 +1,7 @@
 export type PresenceStatus = "available" | "busy" | "away" | "meeting" | "offline";
 
 /** Ohne Heartbeat innerhalb dieser Zeit gilt ein User als offline. */
-export const PRESENCE_STALE_MS = 2 * 60 * 1000;
+export const PRESENCE_STALE_MS = 6 * 60 * 1000;
 /** Intervall, in dem der eigene Heartbeat geschrieben wird. */
 export const PRESENCE_HEARTBEAT_MS = 45 * 1000;
 

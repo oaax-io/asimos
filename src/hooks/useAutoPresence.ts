@@ -89,8 +89,10 @@ export function useAutoPresence() {
       resetTimer();
     })();
 
+    // Heartbeat läuft auch im Hintergrund-Tab weiter – sonst gelten
+    // angemeldete Kolleginnen und Kollegen fälschlich als offline.
     const heartbeatId = setInterval(() => {
-      if (document.visibilityState === "visible") void heartbeat();
+      void heartbeat();
     }, PRESENCE_HEARTBEAT_MS);
 
     const events: (keyof WindowEventMap)[] = [
