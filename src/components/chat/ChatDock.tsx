@@ -64,9 +64,11 @@ type Msg = {
 };
 type Member = { id: string; full_name: string | null; email: string | null; avatar_url: string | null; presence_status?: string | null; presence_updated_at?: string | null };
 
-type DockCtx = { openChat: (memberId: string) => void };
+export type OpenChatOptions = { call?: boolean; callId?: string };
+type DockCtx = { openChat: (memberId: string, opts?: OpenChatOptions) => void };
 const Ctx = createContext<DockCtx>({ openChat: () => {} });
 export const useChatDock = () => useContext(Ctx);
+
 
 function initials(name?: string | null, fallback?: string | null) {
   const src = name || fallback || "?";
