@@ -40,6 +40,9 @@ import { PresenceDot, PresenceLabel } from "@/components/presence/PresenceDot";
 import { useLivekitToken } from "@/components/video/useLivekitToken";
 import { VideoStage } from "@/components/video/VideoStage";
 import { PhoneOff } from "lucide-react";
+import { IncomingCallListener } from "@/components/video/IncomingCallListener";
+import { chatRoomName, setCallStatus, startCall, type CallRow } from "@/lib/calls";
+
 
 export type ChatAttachment = {
   path: string;
@@ -64,9 +67,11 @@ type Msg = {
 };
 type Member = { id: string; full_name: string | null; email: string | null; avatar_url: string | null; presence_status?: string | null; presence_updated_at?: string | null };
 
-type DockCtx = { openChat: (memberId: string) => void };
+export type OpenChatOptions = { call?: boolean; callId?: string };
+type DockCtx = { openChat: (memberId: string, opts?: OpenChatOptions) => void };
 const Ctx = createContext<DockCtx>({ openChat: () => {} });
 export const useChatDock = () => useContext(Ctx);
+
 
 function initials(name?: string | null, fallback?: string | null) {
   const src = name || fallback || "?";
@@ -86,26 +91,38 @@ const isImage = (a: ChatAttachment) => (a.type || "").startsWith("image/");
 export function ChatDockProvider({ children }: { children: ReactNode }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mode, setMode] = useState<"normal" | "minimized" | "maximized">("normal");
+  const [autoCall, setAutoCall] = useState<{ callId?: string; key: number } | null>(null);
 
-  const openChat = useCallback((memberId: string) => {
+  const openChat = useCallback((memberId: string, opts?: OpenChatOptions) => {
     setActiveId(memberId);
     setMode("normal");
+    setAutoCall(opts?.call ? { callId: opts.callId, key: Date.now() } : null);
   }, []);
 
   return (
     <Ctx.Provider value={{ openChat }}>
       {children}
+      <IncomingCallListener
+        onAccept={(callerId, callId) => openChat(callerId, { call: true, callId })}
+      />
+
       {activeId && (
         <ChatWindow
+          key={activeId}
           memberId={activeId}
           mode={mode}
           setMode={setMode}
-          onClose={() => setActiveId(null)}
+          autoCall={autoCall}
+          onClose={() => {
+            setActiveId(null);
+            setAutoCall(null);
+          }}
         />
       )}
     </Ctx.Provider>
   );
 }
+
 
 function AttachmentView({ att }: { att: ChatAttachment }) {
   const { data: url } = useQuery({
@@ -148,12 +165,15 @@ function ChatWindow({
   mode,
   setMode,
   onClose,
+  autoCall,
 }: {
   memberId: string;
   mode: "normal" | "minimized" | "maximized";
   setMode: (m: "normal" | "minimized" | "maximized") => void;
   onClose: () => void;
+  autoCall?: { callId?: string; key: number } | null;
 }) {
+
   const { user } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"chat" | "media">("chat");
@@ -338,11 +358,78 @@ function ChatWindow({
 
   const title = member?.full_name ?? member?.email ?? "Chat";
   const [callOpen, setCallOpen] = useState(false);
-  const callRoom = user?.id
-    ? `chat-${[user.id, memberId].sort().join("--")}`
-    : `chat-${memberId}`;
+  const [calling, setCalling] = useState(false);
+  const callIdRef = useRef<string | null>(null);
+  const callRoom = user?.id ? chatRoomName(user.id, memberId) : `chat-${memberId}`;
 
-  const callState = useLivekitToken(callRoom, callOpen && mode !== "minimized");
+  const callState = useLivekitToken(callRoom, callOpen);
+
+  const endCall = useCallback(async () => {
+    setCallOpen(false);
+    setCalling(false);
+    const id = callIdRef.current;
+    callIdRef.current = null;
+    if (id) await setCallStatus(id, "ended").catch(() => {});
+  }, []);
+
+  const beginCall = useCallback(async () => {
+    if (!user?.id) return;
+    setCallOpen(true);
+    setCalling(true);
+    try {
+      const row = await startCall({
+        room: callRoom,
+        callerId: user.id,
+        calleeId: memberId,
+        title: member?.full_name ?? member?.email ?? null,
+      });
+      callIdRef.current = row?.id ?? null;
+      toast.message(`${title} wird angerufen…`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }, [user?.id, callRoom, memberId, member?.full_name, member?.email, title]);
+
+  // Angenommener eingehender Anruf: direkt verbinden
+  useEffect(() => {
+    if (!autoCall) return;
+    callIdRef.current = autoCall.callId ?? null;
+    setCallOpen(true);
+    setCalling(false);
+  }, [autoCall]);
+
+  // Antwort der Gegenseite verfolgen (angenommen / abgelehnt / beendet)
+  useEffect(() => {
+    if (!callOpen) return;
+    const ch = supabase
+      .channel(`call-watch-${callRoom}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "video_calls" },
+        (payload) => {
+          const row = payload.new as CallRow;
+          if (row.id !== callIdRef.current) return;
+          if (row.status === "accepted") setCalling(false);
+          if (row.status === "declined") {
+            toast.error(`${title} hat den Anruf abgelehnt`);
+            callIdRef.current = null;
+            setCallOpen(false);
+            setCalling(false);
+          }
+          if (row.status === "missed" || row.status === "ended") {
+            callIdRef.current = null;
+            setCallOpen(false);
+            setCalling(false);
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [callOpen, callRoom, title]);
+
+
 
   const shell =
     mode === "maximized"
@@ -371,15 +458,22 @@ function ChatWindow({
           <span className="truncate text-sm font-semibold leading-tight">{title}</span>
           <PresenceLabel status={member?.presence_status} updatedAt={member?.presence_updated_at} className="text-[10px]" />
         </span>
+        {callOpen && calling && (
+          <span className="mr-1 animate-pulse text-[10px] font-medium text-primary">klingelt…</span>
+        )}
         <Button
           variant="ghost"
           size="icon"
           className="h-7 w-7"
           title={callOpen ? "Anruf beenden" : "Videoanruf starten"}
-          onClick={() => setCallOpen((v) => !v)}
+          onClick={() => {
+            if (callOpen) void endCall();
+            else void beginCall();
+          }}
         >
           {callOpen ? <PhoneOff className="h-4 w-4 text-destructive" /> : <Video className="h-4 w-4" />}
         </Button>
+
         <Button
           variant="ghost"
           size="icon"
@@ -403,11 +497,16 @@ function ChatWindow({
         </Button>
       </div>
 
-      {mode !== "minimized" && (
-        <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col md:flex-row",
+          mode === "minimized" && "hidden",
+        )}
+      >
+
           {callOpen && (
             <div className="relative min-h-[220px] flex-1 border-b bg-muted/40 md:min-h-0 md:border-b-0 md:border-r">
-              <VideoStage state={callState} onLeave={() => setCallOpen(false)} />
+              <VideoStage state={callState} onLeave={() => void endCall()} />
             </div>
           )}
           <div
@@ -630,7 +729,7 @@ function ChatWindow({
           )}
           </div>
         </div>
-      )}
+
     </div>
   );
 }

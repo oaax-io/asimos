@@ -3765,6 +3765,7 @@ export type Database = {
           participants: string[]
           room_name: string
           started_at: string
+          status: string
           title: string | null
           updated_at: string
         }
@@ -3778,6 +3779,7 @@ export type Database = {
           participants?: string[]
           room_name: string
           started_at?: string
+          status?: string
           title?: string | null
           updated_at?: string
         }
@@ -3791,6 +3793,7 @@ export type Database = {
           participants?: string[]
           room_name?: string
           started_at?: string
+          status?: string
           title?: string | null
           updated_at?: string
         }
