@@ -500,7 +500,7 @@ function ChatWindow({
 
           {callOpen && (
             <div className="relative min-h-[220px] flex-1 border-b bg-muted/40 md:min-h-0 md:border-b-0 md:border-r">
-              <VideoStage state={callState} onLeave={() => setCallOpen(false)} />
+              <VideoStage state={callState} onLeave={() => void endCall()} />
             </div>
           )}
           <div
