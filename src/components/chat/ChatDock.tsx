@@ -452,15 +452,22 @@ function ChatWindow({
           <span className="truncate text-sm font-semibold leading-tight">{title}</span>
           <PresenceLabel status={member?.presence_status} updatedAt={member?.presence_updated_at} className="text-[10px]" />
         </span>
+        {callOpen && calling && (
+          <span className="mr-1 animate-pulse text-[10px] font-medium text-primary">klingelt…</span>
+        )}
         <Button
           variant="ghost"
           size="icon"
           className="h-7 w-7"
           title={callOpen ? "Anruf beenden" : "Videoanruf starten"}
-          onClick={() => setCallOpen((v) => !v)}
+          onClick={() => {
+            if (callOpen) void endCall();
+            else void beginCall();
+          }}
         >
           {callOpen ? <PhoneOff className="h-4 w-4 text-destructive" /> : <Video className="h-4 w-4" />}
         </Button>
+
         <Button
           variant="ghost"
           size="icon"
