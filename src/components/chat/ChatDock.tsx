@@ -102,7 +102,10 @@ export function ChatDockProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{ openChat }}>
       {children}
-      <IncomingCallListener />
+      <IncomingCallListener
+        onAccept={(callerId, callId) => openChat(callerId, { call: true, callId })}
+      />
+
       {activeId && (
         <ChatWindow
           key={activeId}
