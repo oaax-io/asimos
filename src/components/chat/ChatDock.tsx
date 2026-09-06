@@ -88,26 +88,35 @@ const isImage = (a: ChatAttachment) => (a.type || "").startsWith("image/");
 export function ChatDockProvider({ children }: { children: ReactNode }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mode, setMode] = useState<"normal" | "minimized" | "maximized">("normal");
+  const [autoCall, setAutoCall] = useState<{ callId?: string; key: number } | null>(null);
 
-  const openChat = useCallback((memberId: string) => {
+  const openChat = useCallback((memberId: string, opts?: OpenChatOptions) => {
     setActiveId(memberId);
     setMode("normal");
+    setAutoCall(opts?.call ? { callId: opts.callId, key: Date.now() } : null);
   }, []);
 
   return (
     <Ctx.Provider value={{ openChat }}>
       {children}
+      <IncomingCallListener />
       {activeId && (
         <ChatWindow
+          key={activeId}
           memberId={activeId}
           mode={mode}
           setMode={setMode}
-          onClose={() => setActiveId(null)}
+          autoCall={autoCall}
+          onClose={() => {
+            setActiveId(null);
+            setAutoCall(null);
+          }}
         />
       )}
     </Ctx.Provider>
   );
 }
+
 
 function AttachmentView({ att }: { att: ChatAttachment }) {
   const { data: url } = useQuery({
