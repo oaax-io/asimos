@@ -403,8 +403,13 @@ function ChatWindow({
         </Button>
       </div>
 
-      {mode !== "minimized" && (
-        <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col md:flex-row",
+          mode === "minimized" && "hidden",
+        )}
+      >
+
           {callOpen && (
             <div className="relative min-h-[220px] flex-1 border-b bg-muted/40 md:min-h-0 md:border-b-0 md:border-r">
               <VideoStage state={callState} onLeave={() => setCallOpen(false)} />
