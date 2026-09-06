@@ -159,12 +159,15 @@ function ChatWindow({
   mode,
   setMode,
   onClose,
+  autoCall,
 }: {
   memberId: string;
   mode: "normal" | "minimized" | "maximized";
   setMode: (m: "normal" | "minimized" | "maximized") => void;
   onClose: () => void;
+  autoCall?: { callId?: string; key: number } | null;
 }) {
+
   const { user } = useAuth();
   const qc = useQueryClient();
   const [tab, setTab] = useState<"chat" | "media">("chat");
