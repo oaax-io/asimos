@@ -470,8 +470,11 @@ export function PropertyWizard({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[95vh] w-[95vw] max-w-5xl overflow-hidden p-0">
-        <DialogHeader className="border-b p-6 pb-4">
+      <DialogContent
+        className="flex max-h-[95dvh] w-[95vw] max-w-5xl flex-col gap-0 overflow-hidden p-0"
+        style={{ display: "flex", flexDirection: "column" }}
+      >
+        <DialogHeader className="shrink-0 border-b p-6 pb-4">
           <DialogTitle className="font-display text-xl">{mode === "edit" ? t("propertyWizard.titleEdit") : t("propertyWizard.titleNew")}</DialogTitle>
           <DialogDescription>
             {t("propertyWizard.stepProgress", {
@@ -493,7 +496,7 @@ export function PropertyWizard({
           </div>
         </DialogHeader>
 
-        <div className="max-h-[68vh] overflow-y-auto p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">
           {step === 0 && <Step1Type d={d} update={update} />}
           {step === 1 && <Step2Structure d={d} update={update} buildings={buildings.data ?? []} />}
           {step === 2 && <Step3Basics d={d} update={update} owners={owners.data ?? []} employees={employees.data ?? []} />}
@@ -506,13 +509,14 @@ export function PropertyWizard({
           {step === 9 && <Step10Summary d={d} owners={owners.data ?? []} employees={employees.data ?? []} />}
         </div>
 
-        <div className="flex items-center justify-between border-t p-4">
+        <div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-between gap-2 border-t bg-background p-4">
           <Button variant="ghost" onClick={goBack} disabled={step === 0 || submitting}>
             <ArrowLeft className="mr-1 h-4 w-4" /> {t("propertyWizard.nav.back")}
           </Button>
-          <div className="text-xs text-muted-foreground">
+          <div className="hidden text-xs text-muted-foreground md:block">
             {t("propertyWizard.mandatoryHint")}
           </div>
+
           {step < 9 ? (
             <Button onClick={goNext} disabled={!canProceed || submitting}>
               {t("propertyWizard.nav.next")} <ArrowRight className="ml-1 h-4 w-4" />
