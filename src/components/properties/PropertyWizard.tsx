@@ -509,13 +509,14 @@ export function PropertyWizard({
           {step === 9 && <Step10Summary d={d} owners={owners.data ?? []} employees={employees.data ?? []} />}
         </div>
 
-        <div className="flex items-center justify-between border-t p-4">
+        <div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-between gap-2 border-t bg-background p-4">
           <Button variant="ghost" onClick={goBack} disabled={step === 0 || submitting}>
             <ArrowLeft className="mr-1 h-4 w-4" /> {t("propertyWizard.nav.back")}
           </Button>
-          <div className="text-xs text-muted-foreground">
+          <div className="hidden text-xs text-muted-foreground md:block">
             {t("propertyWizard.mandatoryHint")}
           </div>
+
           {step < 9 ? (
             <Button onClick={goNext} disabled={!canProceed || submitting}>
               {t("propertyWizard.nav.next")} <ArrowRight className="ml-1 h-4 w-4" />
