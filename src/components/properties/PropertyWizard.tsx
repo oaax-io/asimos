@@ -496,7 +496,7 @@ export function PropertyWizard({
           </div>
         </DialogHeader>
 
-        <div className="max-h-[68vh] overflow-y-auto p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">
           {step === 0 && <Step1Type d={d} update={update} />}
           {step === 1 && <Step2Structure d={d} update={update} buildings={buildings.data ?? []} />}
           {step === 2 && <Step3Basics d={d} update={update} owners={owners.data ?? []} employees={employees.data ?? []} />}
