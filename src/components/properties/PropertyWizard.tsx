@@ -470,8 +470,11 @@ export function PropertyWizard({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[95vh] w-[95vw] max-w-5xl overflow-hidden p-0">
-        <DialogHeader className="border-b p-6 pb-4">
+      <DialogContent
+        className="flex max-h-[95dvh] w-[95vw] max-w-5xl flex-col gap-0 overflow-hidden p-0"
+        style={{ display: "flex", flexDirection: "column" }}
+      >
+        <DialogHeader className="shrink-0 border-b p-6 pb-4">
           <DialogTitle className="font-display text-xl">{mode === "edit" ? t("propertyWizard.titleEdit") : t("propertyWizard.titleNew")}</DialogTitle>
           <DialogDescription>
             {t("propertyWizard.stepProgress", {
