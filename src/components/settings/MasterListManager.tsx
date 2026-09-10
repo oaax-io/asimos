@@ -117,8 +117,8 @@ export function MasterListManager({
                 }}
                 onBlur={(e) => {
                   const label = e.target.value.trim();
-                  if (label && label !== row.label_de) return;
                   if (label) update.mutate({ id: row.id, patch: { label_de: label } });
+                  else invalidate();
                 }}
               />
               <Input
