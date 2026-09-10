@@ -2672,6 +2672,39 @@ export type Database = {
           },
         ]
       }
+      master_list_values: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          label_de: string
+          list_key: string
+          sort_order: number
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label_de: string
+          list_key: string
+          sort_order?: number
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label_de?: string
+          list_key?: string
+          sort_order?: number
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           agency_id: string | null
