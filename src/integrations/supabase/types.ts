@@ -3036,23 +3036,43 @@ export type Database = {
         Row: {
           address: string | null
           agency_id: string | null
+          ancillary_costs_monthly: number | null
           area: number | null
           assigned_to: string | null
           availability_date: string | null
           balcony_area: number | null
           bathrooms: number | null
+          building_count: number | null
+          building_insurance_value: number | null
           building_type: string | null
+          building_volume: number | null
+          building_volume_ratio: number | null
+          cellar_area: number | null
           cellar_available: boolean | null
           city: string | null
           condition: string | null
           country: string | null
           created_at: string
+          deal_type: string | null
+          deposit_amount: number | null
+          deposit_date: string | null
           description: string | null
+          development_status: string | null
+          e_grid: string | null
+          egid: string | null
           energy_class: string | null
+          energy_efficiency_envelope: string | null
+          energy_efficiency_overall: string | null
           energy_source: string | null
+          ewid: string | null
+          exterior_construction_area: number | null
           features: string[] | null
           floor: number | null
           garden_area: number | null
+          gross_floor_area: number | null
+          gross_living_area: number | null
+          gross_yield: number | null
+          hall_height: number | null
           heating_type: string | null
           id: string
           images: string[] | null
@@ -3061,13 +3081,23 @@ export type Database = {
           internal_minimum_price: number | null
           internal_notes: string | null
           is_unit: boolean
+          land_price: number | null
+          land_register_no: string | null
           listing_type: Database["public"]["Enums"]["listing_type"]
           living_area: number | null
+          loggia_area: number | null
           macro_location: Json | null
           marketing_type: string | null
+          minergie_standard: string | null
+          net_yield: number | null
+          occupancy_rate: number | null
+          occupancy_rate_date: string | null
+          official_tax_value: number | null
           old_crm_id: string | null
           owner_client_id: string | null
+          owner_costs_yearly: number | null
           owner_id: string | null
+          parcel_no: string | null
           parent_property_id: string | null
           parking_spaces: number | null
           plot_area: number | null
@@ -3076,48 +3106,87 @@ export type Database = {
           portal_published_at: string | null
           postal_code: string | null
           price: number | null
+          price_from: number | null
+          price_to: number | null
           property_type: Database["public"]["Enums"]["property_type"]
           public_enabled: boolean
           public_token: string | null
           raw_import: Json | null
           reference_no: string | null
           renovated_at: number | null
+          renovation_fund: number | null
           rent: number | null
+          rent_actual: number | null
+          rent_target: number | null
           reservation_amount_default: number | null
+          room_height: number | null
           rooms: number | null
+          s_number: string | null
+          sale_procedure: string | null
+          sale_process_end: string | null
+          sale_process_start: string | null
           seller_client_id: string | null
+          separate_wc_count: number | null
+          sia_416_area: number | null
           status: Database["public"]["Enums"]["property_status"]
           terrace_area: number | null
           title: string
           total_floors: number | null
+          unit_count_commercial: number | null
+          unit_count_residential: number | null
           unit_floor: string | null
           unit_number: string | null
           unit_status: string | null
           unit_type: string | null
           updated_at: string
           usable_area: number | null
+          usage_types: string[] | null
+          utilization_ratio: number | null
+          value_quota: number | null
+          vat_status: string | null
           year_built: number | null
+          zone: string | null
         }
         Insert: {
           address?: string | null
           agency_id?: string | null
+          ancillary_costs_monthly?: number | null
           area?: number | null
           assigned_to?: string | null
           availability_date?: string | null
           balcony_area?: number | null
           bathrooms?: number | null
+          building_count?: number | null
+          building_insurance_value?: number | null
           building_type?: string | null
+          building_volume?: number | null
+          building_volume_ratio?: number | null
+          cellar_area?: number | null
           cellar_available?: boolean | null
           city?: string | null
           condition?: string | null
           country?: string | null
           created_at?: string
+          deal_type?: string | null
+          deposit_amount?: number | null
+          deposit_date?: string | null
           description?: string | null
+          development_status?: string | null
+          e_grid?: string | null
+          egid?: string | null
           energy_class?: string | null
+          energy_efficiency_envelope?: string | null
+          energy_efficiency_overall?: string | null
           energy_source?: string | null
+          ewid?: string | null
+          exterior_construction_area?: number | null
           features?: string[] | null
           floor?: number | null
           garden_area?: number | null
+          gross_floor_area?: number | null
+          gross_living_area?: number | null
+          gross_yield?: number | null
+          hall_height?: number | null
           heating_type?: string | null
           id?: string
           images?: string[] | null
@@ -3126,13 +3195,23 @@ export type Database = {
           internal_minimum_price?: number | null
           internal_notes?: string | null
           is_unit?: boolean
+          land_price?: number | null
+          land_register_no?: string | null
           listing_type?: Database["public"]["Enums"]["listing_type"]
           living_area?: number | null
+          loggia_area?: number | null
           macro_location?: Json | null
           marketing_type?: string | null
+          minergie_standard?: string | null
+          net_yield?: number | null
+          occupancy_rate?: number | null
+          occupancy_rate_date?: string | null
+          official_tax_value?: number | null
           old_crm_id?: string | null
           owner_client_id?: string | null
+          owner_costs_yearly?: number | null
           owner_id?: string | null
+          parcel_no?: string | null
           parent_property_id?: string | null
           parking_spaces?: number | null
           plot_area?: number | null
@@ -3141,48 +3220,87 @@ export type Database = {
           portal_published_at?: string | null
           postal_code?: string | null
           price?: number | null
+          price_from?: number | null
+          price_to?: number | null
           property_type?: Database["public"]["Enums"]["property_type"]
           public_enabled?: boolean
           public_token?: string | null
           raw_import?: Json | null
           reference_no?: string | null
           renovated_at?: number | null
+          renovation_fund?: number | null
           rent?: number | null
+          rent_actual?: number | null
+          rent_target?: number | null
           reservation_amount_default?: number | null
+          room_height?: number | null
           rooms?: number | null
+          s_number?: string | null
+          sale_procedure?: string | null
+          sale_process_end?: string | null
+          sale_process_start?: string | null
           seller_client_id?: string | null
+          separate_wc_count?: number | null
+          sia_416_area?: number | null
           status?: Database["public"]["Enums"]["property_status"]
           terrace_area?: number | null
           title: string
           total_floors?: number | null
+          unit_count_commercial?: number | null
+          unit_count_residential?: number | null
           unit_floor?: string | null
           unit_number?: string | null
           unit_status?: string | null
           unit_type?: string | null
           updated_at?: string
           usable_area?: number | null
+          usage_types?: string[] | null
+          utilization_ratio?: number | null
+          value_quota?: number | null
+          vat_status?: string | null
           year_built?: number | null
+          zone?: string | null
         }
         Update: {
           address?: string | null
           agency_id?: string | null
+          ancillary_costs_monthly?: number | null
           area?: number | null
           assigned_to?: string | null
           availability_date?: string | null
           balcony_area?: number | null
           bathrooms?: number | null
+          building_count?: number | null
+          building_insurance_value?: number | null
           building_type?: string | null
+          building_volume?: number | null
+          building_volume_ratio?: number | null
+          cellar_area?: number | null
           cellar_available?: boolean | null
           city?: string | null
           condition?: string | null
           country?: string | null
           created_at?: string
+          deal_type?: string | null
+          deposit_amount?: number | null
+          deposit_date?: string | null
           description?: string | null
+          development_status?: string | null
+          e_grid?: string | null
+          egid?: string | null
           energy_class?: string | null
+          energy_efficiency_envelope?: string | null
+          energy_efficiency_overall?: string | null
           energy_source?: string | null
+          ewid?: string | null
+          exterior_construction_area?: number | null
           features?: string[] | null
           floor?: number | null
           garden_area?: number | null
+          gross_floor_area?: number | null
+          gross_living_area?: number | null
+          gross_yield?: number | null
+          hall_height?: number | null
           heating_type?: string | null
           id?: string
           images?: string[] | null
@@ -3191,13 +3309,23 @@ export type Database = {
           internal_minimum_price?: number | null
           internal_notes?: string | null
           is_unit?: boolean
+          land_price?: number | null
+          land_register_no?: string | null
           listing_type?: Database["public"]["Enums"]["listing_type"]
           living_area?: number | null
+          loggia_area?: number | null
           macro_location?: Json | null
           marketing_type?: string | null
+          minergie_standard?: string | null
+          net_yield?: number | null
+          occupancy_rate?: number | null
+          occupancy_rate_date?: string | null
+          official_tax_value?: number | null
           old_crm_id?: string | null
           owner_client_id?: string | null
+          owner_costs_yearly?: number | null
           owner_id?: string | null
+          parcel_no?: string | null
           parent_property_id?: string | null
           parking_spaces?: number | null
           plot_area?: number | null
@@ -3206,27 +3334,46 @@ export type Database = {
           portal_published_at?: string | null
           postal_code?: string | null
           price?: number | null
+          price_from?: number | null
+          price_to?: number | null
           property_type?: Database["public"]["Enums"]["property_type"]
           public_enabled?: boolean
           public_token?: string | null
           raw_import?: Json | null
           reference_no?: string | null
           renovated_at?: number | null
+          renovation_fund?: number | null
           rent?: number | null
+          rent_actual?: number | null
+          rent_target?: number | null
           reservation_amount_default?: number | null
+          room_height?: number | null
           rooms?: number | null
+          s_number?: string | null
+          sale_procedure?: string | null
+          sale_process_end?: string | null
+          sale_process_start?: string | null
           seller_client_id?: string | null
+          separate_wc_count?: number | null
+          sia_416_area?: number | null
           status?: Database["public"]["Enums"]["property_status"]
           terrace_area?: number | null
           title?: string
           total_floors?: number | null
+          unit_count_commercial?: number | null
+          unit_count_residential?: number | null
           unit_floor?: string | null
           unit_number?: string | null
           unit_status?: string | null
           unit_type?: string | null
           updated_at?: string
           usable_area?: number | null
+          usage_types?: string[] | null
+          utilization_ratio?: number | null
+          value_quota?: number | null
+          vat_status?: string | null
           year_built?: number | null
+          zone?: string | null
         }
         Relationships: [
           {
@@ -3294,6 +3441,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      property_feature_options: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          key: string
+          label_de: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key: string
+          label_de: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key?: string
+          label_de?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       property_market_analyses: {
         Row: {
