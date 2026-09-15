@@ -1406,61 +1406,117 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
           </DialogHeader>
           <div className="max-h-[65vh] overflow-y-auto">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {orderList.map((path, i) => {
-                const realIdx = images.indexOf(path);
-                const isDragging = dragPath === path;
-                const isDropTarget = dragOverPath === path && dragPath && dragPath !== path;
-                return (
-                  <div
-                    key={path}
-                    draggable
-                    onDragStart={(e) => { e.stopPropagation(); setDragPath(path); }}
-                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverPath(path); }}
-                    onDrop={(e) => { e.preventDefault(); e.stopPropagation(); dropOnPath(path); }}
-                    onDragEnd={() => { setDragPath(null); setDragOverPath(null); }}
-                    className={`group/img relative aspect-[4/3] overflow-hidden rounded-lg border bg-muted transition-all ${isDragging ? "cursor-grabbing opacity-40 grayscale ring-2 ring-primary/60 scale-[0.96] shadow-lg" : "cursor-grab hover:ring-2 hover:ring-primary/40 hover:scale-[1.02]"} ${isDropTarget ? "ring-4 ring-primary scale-[1.03] shadow-xl z-10" : ""}`}
-                  >
-                    <img
-                      src={getMediaPublicUrl(path)}
-                      alt={`${title} ${i + 1}`}
-                      className="h-full w-full object-cover"
-                      draggable={false}
-                      onClick={() => { if (!orderDraft) { setIdx(realIdx); setAllOpen(false); } }}
-                    />
-                    {isDropTarget && (
-                      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-primary/20 p-2 text-center backdrop-blur-sm animate-in fade-in zoom-in duration-200">
-                        <div className="rounded-full bg-background/90 p-2 shadow">
+              {(() => {
+                const displayItems: Array<
+                  | { type: "item"; path: string; i: number }
+                  | { type: "placeholder"; key: string }
+                  | { type: "ghost"; path: string; i: number }
+                > = [];
+                orderList.forEach((path, i) => {
+                  const active = dragPath && dragPath !== path;
+                  if (active && dragOverPath === path && dropSide === "before") {
+                    displayItems.push({ type: "placeholder", key: `${path}-before` });
+                  }
+                  if (path === dragPath) {
+                    displayItems.push({ type: "ghost", path, i });
+                  } else {
+                    displayItems.push({ type: "item", path, i });
+                  }
+                  if (active && dragOverPath === path && dropSide === "after") {
+                    displayItems.push({ type: "placeholder", key: `${path}-after` });
+                  }
+                });
+                return displayItems.map((entry) => {
+                  if (entry.type === "placeholder") {
+                    return (
+                      <div
+                        key={entry.key}
+                        className="relative aspect-[4/3] overflow-hidden rounded-lg border-2 border-dashed border-primary bg-primary/5 p-2 flex flex-col items-center justify-center gap-2 animate-in fade-in zoom-in duration-200"
+                      >
+                        <div className="rounded-full bg-primary/10 p-2 shadow-sm">
                           <ArrowLeft className="h-5 w-5 rotate-90 text-primary" />
                         </div>
-                        <span className="rounded-md bg-background/90 px-2 py-1 text-[10px] font-semibold shadow text-primary">Hier einfügen</span>
+                        <span className="text-center text-[10px] font-semibold text-primary">Hier einfügen</span>
                       </div>
-                    )}
-                    <div className="absolute left-2 top-2 flex items-center gap-1">
-                      <span className="rounded bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold shadow">{i + 1}</span>
-                      {i === 0 && <Badge className="text-[10px]">Cover</Badge>}
-                    </div>
-                    <div className="absolute inset-x-1 bottom-1 flex justify-between gap-1 opacity-0 transition group-hover/img:opacity-100">
-                      {i !== 0 ? (
+                    );
+                  }
+                  if (entry.type === "ghost") {
+                    const { path, i } = entry;
+                    return (
+                      <div
+                        key={path}
+                        className="relative aspect-[4/3] overflow-hidden rounded-lg border-2 border-dashed border-primary/30 bg-muted/40"
+                      >
+                        <img
+                          src={getMediaPublicUrl(path)}
+                          alt={`${title} ${i + 1}`}
+                          className="h-full w-full object-cover opacity-30 grayscale"
+                          draggable={false}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="rounded-md bg-background/80 px-2 py-1 text-[10px] font-medium text-muted-foreground shadow">Wird verschoben…</span>
+                        </div>
+                        <div className="absolute left-2 top-2">
+                          <span className="rounded bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold shadow text-muted-foreground">{i + 1}</span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  const { path, i } = entry;
+                  const realIdx = images.indexOf(path);
+                  const isDropTarget = dragOverPath === path && dragPath && dragPath !== path;
+                  return (
+                    <div
+                      key={path}
+                      draggable
+                      onDragStart={(e) => { e.stopPropagation(); setDragPath(path); }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!dragPath || dragPath === path) return;
+                        const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                        const isAfter = e.clientX - rect.left > rect.width / 2;
+                        setDropSide(isAfter ? "after" : "before");
+                        setDragOverPath(path);
+                      }}
+                      onDrop={(e) => { e.preventDefault(); e.stopPropagation(); dropOnPath(path); }}
+                      onDragEnd={() => { setDragPath(null); setDragOverPath(null); setDropSide(null); }}
+                      className={`group/img relative aspect-[4/3] overflow-hidden rounded-lg border bg-muted transition-all ${isDropTarget ? "ring-4 ring-primary scale-[1.03] shadow-xl z-10" : "cursor-grab hover:ring-2 hover:ring-primary/40 hover:scale-[1.02]"}`}
+                    >
+                      <img
+                        src={getMediaPublicUrl(path)}
+                        alt={`${title} ${i + 1}`}
+                        className="h-full w-full object-cover"
+                        draggable={false}
+                        onClick={() => { if (!orderDraft) { setIdx(realIdx); setAllOpen(false); } }}
+                      />
+                      <div className="absolute left-2 top-2 flex items-center gap-1">
+                        <span className="rounded bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold shadow">{i + 1}</span>
+                        {i === 0 && <Badge className="text-[10px]">Cover</Badge>}
+                      </div>
+                      <div className="absolute inset-x-1 bottom-1 flex justify-between gap-1 opacity-0 transition group-hover/img:opacity-100">
+                        {i !== 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setAsCover(realIdx)}
+                            className="rounded bg-background/90 px-2 py-1 text-[10px] font-medium shadow hover:bg-background"
+                          >
+                            Als Cover
+                          </button>
+                        ) : <span />}
                         <button
                           type="button"
-                          onClick={() => setAsCover(realIdx)}
-                          className="rounded bg-background/90 px-2 py-1 text-[10px] font-medium shadow hover:bg-background"
+                          onClick={() => setDeleteIdx(realIdx)}
+                          className="rounded bg-destructive/90 p-1 text-destructive-foreground shadow hover:bg-destructive"
+                          aria-label="Bild löschen"
                         >
-                          Als Cover
+                          <Trash2 className="h-3 w-3" />
                         </button>
-                      ) : <span />}
-                      <button
-                        type="button"
-                        onClick={() => setDeleteIdx(realIdx)}
-                        className="rounded bg-destructive/90 p-1 text-destructive-foreground shadow hover:bg-destructive"
-                        aria-label="Bild löschen"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           </div>
           <DialogFooter className="gap-2 sm:justify-between">
