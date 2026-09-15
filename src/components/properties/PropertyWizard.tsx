@@ -545,7 +545,7 @@ export function PropertyWizard({
         style={{ display: "flex", flexDirection: "column" }}
       >
         <DialogHeader className="shrink-0 border-b p-6 pb-4">
-          <DialogTitle className="font-display text-xl">{mode === "edit" ? t("propertyWizard.titleEdit") : t("propertyWizard.titleNew")}</DialogTitle>
+          <DialogTitle className="font-display text-xl">{t("propertyWizard.titleNew")}</DialogTitle>
           <DialogDescription>
             {t("propertyWizard.stepProgress", {
               current: visibleSteps.findIndex(s => s.idx === step) + 1,
