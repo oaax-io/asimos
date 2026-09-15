@@ -25,7 +25,7 @@ import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { useServerFn } from "@tanstack/react-start";
 import { lookupSwissParcel } from "@/lib/property-location.functions";
 import { generateLocationDescription } from "@/lib/property-ai.functions";
-import { FeaturePickerDialog } from "@/components/properties/FeaturePickerDialog";
+import { FeaturePickerDialog, useFeatureOptions } from "@/components/properties/FeaturePickerDialog";
 import { featureIcon } from "@/components/properties/feature-icons";
 
 /* -------------------- Typen -------------------- */
@@ -1072,6 +1072,13 @@ function Step7Equipment({ d, update }: { d: WizardData; update: (p: Partial<Wiza
   ];
   const extras = (d.features_extra || "").split(",").map((s) => s.trim()).filter(Boolean);
   const setExtras = (list: string[]) => update({ features_extra: list.join(", ") });
+  const { data: featureOptions = [] } = useFeatureOptions();
+  const optionByLabel = new Map(featureOptions.map((o) => [o.label_de.toLowerCase(), o]));
+  // Katalog-Merkmale erscheinen als Icon-Kacheln neben den Basis-Merkmalen,
+  // eigene Einträge bleiben unten bei "Weitere Ausstattungen".
+  const catalogExtras = extras.filter((l) => optionByLabel.has(l.toLowerCase()));
+  const customExtras = extras.filter((l) => !optionByLabel.has(l.toLowerCase()));
+  const removeExtra = (label: string) => setExtras(extras.filter((l) => l.toLowerCase() !== label.toLowerCase()));
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -1095,6 +1102,27 @@ function Step7Equipment({ d, update }: { d: WizardData; update: (p: Partial<Wiza
             </label>
           );
         })}
+        {catalogExtras.map((label) => {
+          const opt = optionByLabel.get(label.toLowerCase());
+          const Icon = featureIcon(opt?.key ?? null, label);
+          return (
+            <div
+              key={label}
+              className="group relative flex items-center gap-2 rounded-lg border border-primary bg-primary/5 p-3"
+            >
+              <Icon className="h-4 w-4 shrink-0 text-primary" />
+              <span className="truncate text-sm font-medium">{label}</span>
+              <button
+                type="button"
+                className="ml-auto rounded-full p-0.5 text-muted-foreground hover:bg-background/60 hover:text-foreground"
+                onClick={() => removeExtra(label)}
+                aria-label={`${label} entfernen`}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       <div className="rounded-lg border p-3">
@@ -1104,11 +1132,11 @@ function Step7Equipment({ d, update }: { d: WizardData; update: (p: Partial<Wiza
             <Plus className="mr-1 h-4 w-4" />Weitere Ausstattungen
           </Button>
         </div>
-        {extras.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Noch keine weiteren Ausstattungen gewählt.</p>
+        {customExtras.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">Keine eigenen Ausstattungen erfasst.</p>
         ) : (
           <div className="mt-3 flex flex-wrap gap-2">
-            {extras.map((label) => {
+            {customExtras.map((label) => {
               const Icon = featureIcon(null, label);
               return (
                 <Badge key={label} variant="secondary" className="gap-1.5 py-1 pl-2 pr-1.5">
@@ -1117,7 +1145,7 @@ function Step7Equipment({ d, update }: { d: WizardData; update: (p: Partial<Wiza
                   <button
                     type="button"
                     className="rounded-full p-0.5 hover:bg-background/60"
-                    onClick={() => setExtras(extras.filter((l) => l !== label))}
+                    onClick={() => removeExtra(label)}
                     aria-label={`${label} entfernen`}
                   >
                     <X className="h-3 w-3" />
