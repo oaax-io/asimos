@@ -868,6 +868,8 @@ function Step3Basics({ d, update, owners, employees }: { d: WizardData; update: 
   );
 }
 
+const FLOOR_OPTIONS = ["2. Untergeschoss", "1. Untergeschoss", "Erdgeschoss", "Hochparterre", "1. Obergeschoss", "2. Obergeschoss", "3. Obergeschoss", "4. Obergeschoss", "5. Obergeschoss", "6. Obergeschoss", "7. Obergeschoss", "8. Obergeschoss", "9. Obergeschoss", "10. Obergeschoss", "Attika", "Dachgeschoss"];
+
 function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
   const { t } = useTranslation();
   const lookupParcel = useServerFn(lookupSwissParcel);
