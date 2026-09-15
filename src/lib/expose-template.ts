@@ -115,12 +115,21 @@ function pageWrapStart(t: ExposeTheme): string {
           background: ${t.pageBg}; padding: 14mm 16mm; page-break-after: always;
           position: relative; overflow: hidden; }
   .page:last-child { page-break-after: auto; }
+  @media screen {
+    html, body { background: #e9e9ee; }
+    body { padding: 16px 0 28px; }
+    .page { margin: 0 auto 28px; box-shadow: 0 6px 24px rgba(0,0,0,0.18); border: 1px solid rgba(0,0,0,0.10); position: relative; }
+    .page::after { content: ""; position: absolute; left: 0; right: 0; bottom: -15px; height: 1px;
+      background: repeating-linear-gradient(90deg, rgba(0,0,0,0.28) 0 6px, transparent 6px 12px); }
+    .page:last-child::after { display: none; }
+  }
   h1, h2, h3 { font-family: ${t.titleFont}; color: ${t.primary}; font-weight: 700; }
   .muted { opacity: 0.65; }
   .footer { position: absolute; left: 16mm; right: 16mm; bottom: 8mm;
             display: flex; justify-content: space-between; font-size: 9px;
             opacity: 0.55; letter-spacing: 0.12em; text-transform: uppercase; }
   `;
+
 }
 
 function footer(d: ExposeData, t: ExposeTheme, page: number, total: number): string {
