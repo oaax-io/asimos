@@ -332,10 +332,10 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
   const galleryUrls = d.gallery_urls;
 
 
-  const pages: string[] = [];
+  const G = newGroups();
 
   // Page 1: cover
-  pages.push(`
+  G.cover.push(`
   <div class="page cover">
     <div class="cover-hero">
       ${d.cover_url ? `<img src="${esc(d.cover_url)}" alt="" />` : `<div class="hero-fallback"></div>`}
@@ -358,7 +358,7 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
   </div>`);
 
   // Page 2: facts + description
-  pages.push(`
+  G.facts.push(`
   <div class="page">
     <header class="ph">
       <div class="ph-l">${esc(d.title)}</div>
@@ -380,7 +380,7 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
     const perPage = galleryCols * (galleryCols >= 3 ? 3 : 2);
     for (let i = 0; i < galleryUrls.length; i += perPage) {
       const slice = galleryUrls.slice(i, i + perPage);
-      pages.push(`
+      G.gallery.push(`
       <div class="page">
         <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Galerie</div></header>
         <h2 class="section-title">Bilder</h2>
@@ -395,7 +395,7 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
   // Location
   const locHtml = locationBlockHtml(d, t);
   if (locHtml) {
-    pages.push(`
+    G.location.push(`
     <div class="page">
       <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Lage</div></header>
       <h2 class="section-title">Lage</h2>${locHtml}
@@ -403,17 +403,15 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
     </div>`);
   }
 
-  // Attachments
-  const attachPages = attachmentsPages(
-    d, t,
-    (label: string) => `<header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">${esc(label)}</div></header><h2 class="section-title">${esc(label)}</h2>`,
-    pages.length + 1,
-  );
-  pages.push(...attachPages);
+  // Extras + attachments
+  const classicHeader = (label: string) =>
+    `<header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">${esc(label)}</div></header><h2 class="section-title">${esc(label)}</h2>`;
+  G.extras.push(...extraSectionsPages(d, t, classicHeader, 0));
+  G.attachments.push(...attachmentsPages(d, t, classicHeader, 0));
 
-  // Contact — always the last page
+  // Contact
   if (d.contact_name || d.contact_email || d.contact_phone || d.agency_name) {
-    pages.push(`
+    G.contact.push(`
     <div class="page">
       <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Kontakt</div></header>
       <h2 class="section-title">Kontakt</h2>
