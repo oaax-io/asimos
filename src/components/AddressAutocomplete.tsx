@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { MapPin, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { resolveGoogleAddress, searchGoogleAddress, type AddressSuggestion } from "@/lib/property-location.functions";
+import { searchAddress } from "@/lib/mapbox.functions";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
   country?: string; // ISO-2, lowercased; e.g. "ch,de,at"
   className?: string;
   id?: string;
+  provider?: "mapbox" | "google";
 }
 
 export function AddressAutocomplete({
@@ -23,8 +25,10 @@ export function AddressAutocomplete({
   country = "ch,de,at,li",
   className,
   id,
+  provider = "mapbox",
 }: Props) {
-  const search = useServerFn(searchGoogleAddress);
+  const searchGoogle = useServerFn(searchGoogleAddress);
+  const searchMapbox = useServerFn(searchAddress);
   const resolve = useServerFn(resolveGoogleAddress);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,7 +51,9 @@ export function AddressAutocomplete({
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await search({ data: { q: value, country, sessionToken: sessionToken.current } });
+        const res = provider === "google"
+          ? await searchGoogle({ data: { q: value, country, sessionToken: sessionToken.current } })
+          : await searchMapbox({ data: { q: value, country } });
         setItems(res);
         setOpen(res.length > 0);
         setHi(0);
@@ -56,7 +62,7 @@ export function AddressAutocomplete({
       }
     }, 250);
     return () => clearTimeout(t);
-  }, [value, country, search]);
+  }, [value, country, provider, searchGoogle, searchMapbox]);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -71,7 +77,9 @@ export function AddressAutocomplete({
     setOpen(false);
     setLoading(true);
     try {
-      const detailed = await resolve({ data: { placeId: s.id, sessionToken: sessionToken.current } });
+      const detailed = provider === "google"
+        ? await resolve({ data: { placeId: s.id, sessionToken: sessionToken.current } })
+        : s;
       onChange(detailed.street || detailed.label);
       onSelect?.(detailed);
       sessionToken.current = crypto.randomUUID();
@@ -134,7 +142,7 @@ export function AddressAutocomplete({
             ))}
           </ul>
           <div className="border-t px-3 py-1 text-[10px] text-muted-foreground">
-            Powered by Google
+            Powered by {provider === "google" ? "Google" : "Mapbox"}
           </div>
         </div>
       )}
