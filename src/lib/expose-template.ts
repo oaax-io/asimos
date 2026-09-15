@@ -335,24 +335,13 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
     }
   }
 
-  // Location + contact
+  // Location
   const locHtml = locationBlockHtml(d, t);
-  if (locHtml || d.contact_name || d.contact_email || d.contact_phone) {
+  if (locHtml) {
     pages.push(`
     <div class="page">
-      <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Lage & Kontakt</div></header>
-      ${locHtml ? `<h2 class="section-title">Lage</h2>${locHtml}` : ""}
-      ${(d.contact_name || d.contact_email || d.contact_phone)
-        ? `<h2 class="section-title mt">Kontakt</h2>
-           <div class="contact-card">
-             ${d.agency_name ? `<div class="c-agency">${esc(d.agency_name)}</div>` : ""}
-             ${d.contact_name ? `<div class="c-name">${esc(d.contact_name)}</div>` : ""}
-             <div class="c-meta">
-               ${d.contact_email ? `<span>✉ ${esc(d.contact_email)}</span>` : ""}
-               ${d.contact_phone ? `<span>☎ ${esc(d.contact_phone)}</span>` : ""}
-             </div>
-           </div>`
-        : ""}
+      <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Lage</div></header>
+      <h2 class="section-title">Lage</h2>${locHtml}
       ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
@@ -364,6 +353,25 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
     pages.length + 1,
   );
   pages.push(...attachPages);
+
+  // Contact — always the last page
+  if (d.contact_name || d.contact_email || d.contact_phone || d.agency_name) {
+    pages.push(`
+    <div class="page">
+      <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Kontakt</div></header>
+      <h2 class="section-title">Kontakt</h2>
+      <div class="contact-card">
+        ${d.agency_name ? `<div class="c-agency">${esc(d.agency_name)}</div>` : ""}
+        ${d.contact_name ? `<div class="c-name">${esc(d.contact_name)}</div>` : ""}
+        <div class="c-meta">
+          ${d.contact_email ? `<span>✉ ${esc(d.contact_email)}</span>` : ""}
+          ${d.contact_phone ? `<span>☎ ${esc(d.contact_phone)}</span>` : ""}
+        </div>
+      </div>
+      ${footer(d, t, pages.length + 1, 0)}
+    </div>`);
+  }
+
 
   
 
