@@ -133,6 +133,7 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [galleryLayout, setGalleryLayout] = useState<GalerieLayout>("grid2");
   const [generating, setGenerating] = useState(false);
+  const [attachmentIds, setAttachmentIds] = useState<string[]>([]);
   const [contactMode, setContactMode] = useState<"employee" | "custom">("employee");
   const [contactUserId, setContactUserId] = useState<string | null>(null);
   const [customContact, setCustomContact] = useState({ name: "", email: "", phone: "", role: "" });
@@ -149,6 +150,20 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
         .select("id,file_url,file_type,is_cover,sort_order")
         .eq("property_id", propertyId)
         .order("sort_order", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const { data: documents = [] } = useQuery({
+    queryKey: ["expose-wizard-documents", propertyId],
+    enabled: open && !!propertyId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("documents")
+        .select("id,file_name,document_type,mime_type,created_at")
+        .eq("related_type", "property")
+        .eq("related_id", propertyId)
+        .order("created_at", { ascending: false });
       return data ?? [];
     },
   });
