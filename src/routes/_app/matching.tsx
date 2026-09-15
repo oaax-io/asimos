@@ -18,6 +18,14 @@ import { useAuth } from "@/lib/auth";
 import { EmptyState } from "@/components/EmptyState";
 import type { Tables } from "@/integrations/supabase/types";
 
+/** Wandelt einen Storage-Pfad in eine öffentliche URL um (URLs bleiben unverändert). */
+function toPublicUrl(path?: string | null): string | undefined {
+  if (!path) return undefined;
+  if (/^https?:\/\//i.test(path) || path.startsWith("data:") || path.startsWith("blob:")) return path;
+  return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+}
+
+
 type Client = Tables<"clients">;
 type Property = Tables<"properties">;
 
