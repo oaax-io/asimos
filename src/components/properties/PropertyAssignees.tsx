@@ -76,8 +76,11 @@ export function PropertyAssigneePicker({
           </span>
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-64 p-0" onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+      <PopoverContent align="start" className="w-64 p-0" onClick={(e) => { e.stopPropagation(); }}>
         <div className="max-h-72 overflow-auto p-1">
+          {employees.length === 0 && (
+            <p className="px-2 py-3 text-sm text-muted-foreground">Keine Mitarbeitenden gefunden</p>
+          )}
           {employees.map((emp) => (
             <button
               key={emp.id}
