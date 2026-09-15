@@ -392,6 +392,7 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
         attachment_doc_names: (documents as any[])
           .filter((d) => attachmentIds.includes(d.id))
           .map((d) => d.file_name as string),
+        extra_sections: extraSections,
         gallery_cols: cols,
         agency_name: company?.name ?? "ASIMO",
         contact_name: contact.name,
@@ -415,7 +416,7 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   const previewHtml = useMemo(
     () => (step === 2 || step === 3 || step === 5 ? buildHtml(coverUrl, galleryUrls) : ""),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [step, coverUrl, galleryUrls, galleryLayout, template, title, description, withDescription, withFeatures, withContact, contact, facts, company, profile, attachmentIds, documents],
+    [step, coverUrl, galleryUrls, galleryLayout, template, title, description, withDescription, withFeatures, withContact, contact, facts, company, profile, attachmentIds, documents, extraSections],
   );
 
   async function handleGenerate() {
