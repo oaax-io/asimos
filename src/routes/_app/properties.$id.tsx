@@ -37,6 +37,7 @@ import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/prope
 import type { EmployeeLite } from "@/components/clients/ClientAssignees";
 import { PropertyQuickActions } from "@/components/properties/PropertyQuickActions";
 import { deleteToTrash } from "@/lib/trash";
+import { PropertyImageSorter } from "@/components/properties/PropertyImageSorter";
 
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
@@ -1061,31 +1062,8 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
   const current = hasImages && !isMoreSlide ? images[Math.min(idx, images.length - 1)] : null;
 
   const [orderDraft, setOrderDraft] = useState<string[] | null>(null);
-  const [dragPath, setDragPath] = useState<string | null>(null);
-  const [dragOverPath, setDragOverPath] = useState<string | null>(null);
-  const [dropSide, setDropSide] = useState<"before" | "after" | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
   const orderList = orderDraft ?? images;
-
-  const resetDrag = () => {
-    setDragPath(null);
-    setDragOverPath(null);
-    setDropSide(null);
-  };
-
-  const dropOnPath = (target: string, side = dropSide) => {
-    setOrderDraft((prev) => {
-      const base = prev ?? images;
-      if (!dragPath || dragPath === target) return base;
-      const next = base.filter((p) => p !== dragPath);
-      const targetIdx = next.indexOf(target);
-      if (targetIdx < 0) return base;
-      const insertIdx = side === "after" ? targetIdx + 1 : targetIdx;
-      next.splice(insertIdx, 0, dragPath);
-      return next;
-    });
-    resetDrag();
-  };
 
   const saveOrder = async () => {
     if (!orderDraft) return;
@@ -1402,7 +1380,7 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
         Alle Bilder ({images.length})
       </button>
 
-      <Dialog open={allOpen} onOpenChange={(o) => { setAllOpen(o); if (!o) { setOrderDraft(null); resetDrag(); } }}>
+      <Dialog open={allOpen} onOpenChange={(o) => { setAllOpen(o); if (!o) setOrderDraft(null); }}>
         <DialogContent className="flex max-h-[90vh] max-w-5xl flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>Bilder ({images.length})</DialogTitle>
@@ -1411,138 +1389,15 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
             </DialogDescription>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {(() => {
-                const displayItems: Array<
-                  | { type: "item"; path: string; i: number }
-                  | { type: "placeholder"; key: string }
-                  | { type: "ghost"; path: string; i: number }
-                > = [];
-                orderList.forEach((path, i) => {
-                  const active = dragPath && dragPath !== path;
-                  if (active && dragOverPath === path && dropSide === "before") {
-                    displayItems.push({ type: "placeholder", key: `${path}-before` });
-                  }
-                  if (path === dragPath) {
-                    displayItems.push({ type: "ghost", path, i });
-                  } else {
-                    displayItems.push({ type: "item", path, i });
-                  }
-                  if (active && dragOverPath === path && dropSide === "after") {
-                    displayItems.push({ type: "placeholder", key: `${path}-after` });
-                  }
-                });
-                return displayItems.map((entry) => {
-                  if (entry.type === "placeholder") {
-                    return (
-                      <div
-                        key={entry.key}
-                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          const [target, side] = entry.key.endsWith("-before")
-                            ? [entry.key.slice(0, -7), "before" as const]
-                            : [entry.key.slice(0, -6), "after" as const];
-                          dropOnPath(target, side);
-                        }}
-                        className="relative aspect-[4/3] overflow-hidden rounded-lg border-2 border-dashed border-primary bg-primary/5 p-2 flex flex-col items-center justify-center gap-2 animate-in fade-in zoom-in duration-200"
-                      >
-                        <div className="rounded-full bg-primary/10 p-2 shadow-sm">
-                          <ArrowLeft className="h-5 w-5 rotate-90 text-primary" />
-                        </div>
-                        <span className="text-center text-[10px] font-semibold text-primary">Hier einfügen</span>
-                      </div>
-                    );
-                  }
-                  if (entry.type === "ghost") {
-                    const { path, i } = entry;
-                    return (
-                      <div
-                        key={path}
-                        className="relative aspect-[4/3] overflow-hidden rounded-lg border-2 border-dashed border-primary/30 bg-muted/40"
-                      >
-                        <img
-                          src={getMediaPublicUrl(path)}
-                          alt={`${title} ${i + 1}`}
-                          className="h-full w-full object-cover opacity-30 grayscale"
-                          draggable={false}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="rounded-md bg-background/80 px-2 py-1 text-[10px] font-medium text-muted-foreground shadow">Wird verschoben…</span>
-                        </div>
-                        <div className="absolute left-2 top-2">
-                          <span className="rounded bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold shadow text-muted-foreground">{i + 1}</span>
-                        </div>
-                      </div>
-                    );
-                  }
-                  const { path, i } = entry;
-                  const realIdx = images.indexOf(path);
-                  const isDropTarget = dragOverPath === path && dragPath && dragPath !== path;
-                  return (
-                    <div
-                      key={path}
-                      draggable
-                      onDragStart={(e) => {
-                        e.stopPropagation();
-                        e.dataTransfer.effectAllowed = "move";
-                        e.dataTransfer.setData("text/plain", path);
-                        setDragPath(path);
-                      }}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (!dragPath || dragPath === path) return;
-                        const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                        const isAfter = e.clientX - rect.left > rect.width / 2;
-                        setDropSide(isAfter ? "after" : "before");
-                        setDragOverPath(path);
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                        dropOnPath(path, e.clientX - rect.left > rect.width / 2 ? "after" : "before");
-                      }}
-                      onDragEnd={resetDrag}
-                      className={`group/img relative aspect-[4/3] overflow-hidden rounded-lg border bg-muted transition-all ${isDropTarget ? "ring-4 ring-primary scale-[1.03] shadow-xl z-10" : "cursor-grab hover:ring-2 hover:ring-primary/40 hover:scale-[1.02]"}`}
-                    >
-                      <img
-                        src={getMediaPublicUrl(path)}
-                        alt={`${title} ${i + 1}`}
-                        className="h-full w-full object-cover"
-                        draggable={false}
-                        onClick={() => { if (!orderDraft) { setIdx(realIdx); setAllOpen(false); } }}
-                      />
-                      <div className="absolute left-2 top-2 flex items-center gap-1">
-                        <span className="rounded bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold shadow">{i + 1}</span>
-                        {i === 0 && <Badge className="text-[10px]">Cover</Badge>}
-                      </div>
-                      <div className="absolute inset-x-1 bottom-1 flex justify-between gap-1 opacity-0 transition group-hover/img:opacity-100">
-                        {i !== 0 ? (
-                          <button
-                            type="button"
-                            onClick={() => setAsCover(realIdx)}
-                            className="rounded bg-background/90 px-2 py-1 text-[10px] font-medium shadow hover:bg-background"
-                          >
-                            Als Cover
-                          </button>
-                        ) : <span />}
-                        <button
-                          type="button"
-                          onClick={() => setDeleteIdx(realIdx)}
-                          className="rounded bg-destructive/90 p-1 text-destructive-foreground shadow hover:bg-destructive"
-                          aria-label="Bild löschen"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
+            <PropertyImageSorter
+              items={orderList}
+              getUrl={getMediaPublicUrl}
+              title={title}
+              onReorder={(next) => setOrderDraft(next)}
+              onOpen={(path) => { if (!orderDraft) { setIdx(images.indexOf(path)); setAllOpen(false); } }}
+              onSetCover={(path) => setAsCover(images.indexOf(path))}
+              onDelete={(path) => setDeleteIdx(images.indexOf(path))}
+            />
           </div>
           <DialogFooter className="shrink-0 gap-2 border-t bg-background pt-4 sm:justify-between">
             <Button variant="outline" onClick={() => setUploadOpen(true)}>
