@@ -1047,7 +1047,7 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
   });
 
   const images = useMemo(() => {
-    const fromMedia = extractPropertyImagePaths((mediaRows ?? []) as any[]);
+    const fromMedia = [...new Set(extractPropertyImagePaths((mediaRows ?? []) as any[]))];
     const merged = [...fromMedia];
     for (const p of fallbackImages) if (p && !merged.includes(p)) merged.push(p);
     return merged;
@@ -1067,33 +1067,39 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
   const [savingOrder, setSavingOrder] = useState(false);
   const orderList = orderDraft ?? images;
 
-  const dropOnPath = (target: string) => {
+  const resetDrag = () => {
+    setDragPath(null);
+    setDragOverPath(null);
+    setDropSide(null);
+  };
+
+  const dropOnPath = (target: string, side = dropSide) => {
     setOrderDraft((prev) => {
       const base = prev ?? images;
       if (!dragPath || dragPath === target) return base;
       const next = base.filter((p) => p !== dragPath);
       const targetIdx = next.indexOf(target);
-      const insertIdx = dropSide === "after" ? targetIdx + 1 : targetIdx;
+      if (targetIdx < 0) return base;
+      const insertIdx = side === "after" ? targetIdx + 1 : targetIdx;
       next.splice(insertIdx, 0, dragPath);
       return next;
     });
-    setDragPath(null);
-    setDragOverPath(null);
-    setDropSide(null);
+    resetDrag();
   };
 
   const saveOrder = async () => {
     if (!orderDraft) return;
     setSavingOrder(true);
     try {
-      for (let i = 0; i < orderDraft.length; i++) {
-        const { error } = await supabase
+      const updates = await Promise.all(orderDraft.map((fileUrl, i) =>
+        supabase
           .from("property_media")
           .update({ sort_order: i + 1, is_cover: i === 0 })
           .eq("property_id", propertyId)
-          .eq("file_url", orderDraft[i]);
-        if (error) throw error;
-      }
+          .eq("file_url", fileUrl),
+      ));
+      const failed = updates.find(({ error }) => error);
+      if (failed?.error) throw failed.error;
       await syncPropertyImagesFromMedia(propertyId);
       setOrderDraft(null);
       setIdx(0);
@@ -1396,15 +1402,15 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
         Alle Bilder ({images.length})
       </button>
 
-      <Dialog open={allOpen} onOpenChange={(o) => { setAllOpen(o); if (!o) setOrderDraft(null); }}>
-        <DialogContent className="max-w-5xl">
+      <Dialog open={allOpen} onOpenChange={(o) => { setAllOpen(o); if (!o) { setOrderDraft(null); resetDrag(); } }}>
+        <DialogContent className="flex max-h-[90vh] max-w-5xl flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>Bilder ({images.length})</DialogTitle>
             <DialogDescription>
               Bilder per Drag &amp; Drop sortieren, ansehen, Cover festlegen, löschen oder neue hochladen. Das erste Bild ist das Cover.
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-[65vh] overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
               {(() => {
                 const displayItems: Array<
@@ -1431,6 +1437,15 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
                     return (
                       <div
                         key={entry.key}
+                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const [target, side] = entry.key.endsWith("-before")
+                            ? [entry.key.slice(0, -7), "before" as const]
+                            : [entry.key.slice(0, -6), "after" as const];
+                          dropOnPath(target, side);
+                        }}
                         className="relative aspect-[4/3] overflow-hidden rounded-lg border-2 border-dashed border-primary bg-primary/5 p-2 flex flex-col items-center justify-center gap-2 animate-in fade-in zoom-in duration-200"
                       >
                         <div className="rounded-full bg-primary/10 p-2 shadow-sm">
@@ -1469,7 +1484,12 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
                     <div
                       key={path}
                       draggable
-                      onDragStart={(e) => { e.stopPropagation(); setDragPath(path); }}
+                      onDragStart={(e) => {
+                        e.stopPropagation();
+                        e.dataTransfer.effectAllowed = "move";
+                        e.dataTransfer.setData("text/plain", path);
+                        setDragPath(path);
+                      }}
                       onDragOver={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1479,8 +1499,13 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
                         setDropSide(isAfter ? "after" : "before");
                         setDragOverPath(path);
                       }}
-                      onDrop={(e) => { e.preventDefault(); e.stopPropagation(); dropOnPath(path); }}
-                      onDragEnd={() => { setDragPath(null); setDragOverPath(null); setDropSide(null); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                        dropOnPath(path, e.clientX - rect.left > rect.width / 2 ? "after" : "before");
+                      }}
+                      onDragEnd={resetDrag}
                       className={`group/img relative aspect-[4/3] overflow-hidden rounded-lg border bg-muted transition-all ${isDropTarget ? "ring-4 ring-primary scale-[1.03] shadow-xl z-10" : "cursor-grab hover:ring-2 hover:ring-primary/40 hover:scale-[1.02]"}`}
                     >
                       <img
@@ -1519,20 +1544,18 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
               })()}
             </div>
           </div>
-          <DialogFooter className="gap-2 sm:justify-between">
+          <DialogFooter className="shrink-0 gap-2 border-t bg-background pt-4 sm:justify-between">
             <Button variant="outline" onClick={() => setUploadOpen(true)}>
               <UploadCloud className="mr-2 h-4 w-4" /> Bilder hochladen
             </Button>
-            {orderDraft && (
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => setOrderDraft(null)} disabled={savingOrder}>
-                  Verwerfen
-                </Button>
-                <Button onClick={saveOrder} disabled={savingOrder}>
-                  {savingOrder ? "Speichert…" : "Reihenfolge speichern"}
-                </Button>
-              </div>
-            )}
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => setOrderDraft(null)} disabled={!orderDraft || savingOrder}>
+                Verwerfen
+              </Button>
+              <Button onClick={saveOrder} disabled={!orderDraft || savingOrder}>
+                {savingOrder ? "Speichert…" : "Reihenfolge speichern"}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
 
