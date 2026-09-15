@@ -1002,8 +1002,6 @@ function Step5Areas({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
       <div className="grid grid-cols-4 gap-3">
         <div><Label>{t("propertyWizard.step5.rooms")}</Label><Input type="number" step="0.5" value={d.rooms} onChange={(e) => update({ rooms: e.target.value })} /></div>
         <div><Label>{t("propertyWizard.step5.bathrooms")}</Label><Input type="number" step="0.5" value={d.bathrooms} onChange={(e) => update({ bathrooms: e.target.value })} /></div>
-        <div><Label>{t("propertyWizard.step5.floor")}</Label><Input value={d.floor} onChange={(e) => update({ floor: e.target.value })} /></div>
-        <div><Label>{t("propertyWizard.step5.totalFloors")}</Label><Input type="number" value={d.total_floors} onChange={(e) => update({ total_floors: e.target.value })} /></div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div><Label>{t("propertyWizard.step5.yearBuilt")}</Label><Input type="number" value={d.year_built} onChange={(e) => update({ year_built: e.target.value })} /></div>
