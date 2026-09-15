@@ -593,7 +593,7 @@ export function PropertyWizard({
             </Button>
           ) : (
             <Button onClick={finish} disabled={!canProceed || submitting}>
-              <Check className="mr-1 h-4 w-4" /> {mode === "edit" ? t("propertyWizard.nav.saveEdit") : t("propertyWizard.nav.save")}
+              <Check className="mr-1 h-4 w-4" /> {t("propertyWizard.nav.save")}
             </Button>
           )}
         </div>
