@@ -115,12 +115,21 @@ function pageWrapStart(t: ExposeTheme): string {
           background: ${t.pageBg}; padding: 14mm 16mm; page-break-after: always;
           position: relative; overflow: hidden; }
   .page:last-child { page-break-after: auto; }
+  @media screen {
+    html, body { background: #e9e9ee; }
+    body { padding: 16px 0 28px; }
+    .page { margin: 0 auto 28px; box-shadow: 0 6px 24px rgba(0,0,0,0.18); border: 1px solid rgba(0,0,0,0.10); position: relative; }
+    .page::after { content: ""; position: absolute; left: 0; right: 0; bottom: -15px; height: 1px;
+      background: repeating-linear-gradient(90deg, rgba(0,0,0,0.28) 0 6px, transparent 6px 12px); }
+    .page:last-child::after { display: none; }
+  }
   h1, h2, h3 { font-family: ${t.titleFont}; color: ${t.primary}; font-weight: 700; }
   .muted { opacity: 0.65; }
   .footer { position: absolute; left: 16mm; right: 16mm; bottom: 8mm;
             display: flex; justify-content: space-between; font-size: 9px;
             opacity: 0.55; letter-spacing: 0.12em; text-transform: uppercase; }
   `;
+
 }
 
 function footer(d: ExposeData, t: ExposeTheme, page: number, total: number): string {
@@ -335,24 +344,13 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
     }
   }
 
-  // Location + contact
+  // Location
   const locHtml = locationBlockHtml(d, t);
-  if (locHtml || d.contact_name || d.contact_email || d.contact_phone) {
+  if (locHtml) {
     pages.push(`
     <div class="page">
-      <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Lage & Kontakt</div></header>
-      ${locHtml ? `<h2 class="section-title">Lage</h2>${locHtml}` : ""}
-      ${(d.contact_name || d.contact_email || d.contact_phone)
-        ? `<h2 class="section-title mt">Kontakt</h2>
-           <div class="contact-card">
-             ${d.agency_name ? `<div class="c-agency">${esc(d.agency_name)}</div>` : ""}
-             ${d.contact_name ? `<div class="c-name">${esc(d.contact_name)}</div>` : ""}
-             <div class="c-meta">
-               ${d.contact_email ? `<span>✉ ${esc(d.contact_email)}</span>` : ""}
-               ${d.contact_phone ? `<span>☎ ${esc(d.contact_phone)}</span>` : ""}
-             </div>
-           </div>`
-        : ""}
+      <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Lage</div></header>
+      <h2 class="section-title">Lage</h2>${locHtml}
       ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
@@ -364,6 +362,25 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
     pages.length + 1,
   );
   pages.push(...attachPages);
+
+  // Contact — always the last page
+  if (d.contact_name || d.contact_email || d.contact_phone || d.agency_name) {
+    pages.push(`
+    <div class="page">
+      <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Kontakt</div></header>
+      <h2 class="section-title">Kontakt</h2>
+      <div class="contact-card">
+        ${d.agency_name ? `<div class="c-agency">${esc(d.agency_name)}</div>` : ""}
+        ${d.contact_name ? `<div class="c-name">${esc(d.contact_name)}</div>` : ""}
+        <div class="c-meta">
+          ${d.contact_email ? `<span>✉ ${esc(d.contact_email)}</span>` : ""}
+          ${d.contact_phone ? `<span>☎ ${esc(d.contact_phone)}</span>` : ""}
+        </div>
+      </div>
+      ${footer(d, t, pages.length + 1, 0)}
+    </div>`);
+  }
+
 
   
 
@@ -478,24 +495,11 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
   }
 
   const locHtml = locationBlockHtml(d, t);
-  if (locHtml || d.contact_name || d.contact_email || d.contact_phone) {
+  if (locHtml) {
     pages.push(`
     <div class="page">
-      <header class="ph"><div>${esc(d.title)}</div><div class="muted">Lage & Kontakt</div></header>
-      ${locHtml ? `<h2 class="sec">Lage</h2>${locHtml}` : ""}
-      ${(d.contact_name || d.contact_email || d.contact_phone)
-        ? `<h2 class="sec">Ihr Ansprechpartner</h2>
-           <div class="m-contact">
-             <div class="m-contact-l">
-               ${d.contact_name ? `<div class="m-contact-name">${esc(d.contact_name)}</div>` : ""}
-               ${d.agency_name ? `<div class="m-contact-ag">${esc(d.agency_name)}</div>` : ""}
-             </div>
-             <div class="m-contact-r">
-               ${d.contact_email ? `<div>${esc(d.contact_email)}</div>` : ""}
-               ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
-             </div>
-           </div>`
-        : ""}
+      <header class="ph"><div>${esc(d.title)}</div><div class="muted">Lage</div></header>
+      <h2 class="sec">Lage</h2>${locHtml}
       ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
@@ -505,6 +509,26 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
     (label: string) => `<header class="ph"><div>${esc(d.title)}</div><div class="muted">${esc(label)}</div></header><h2 class="sec">${esc(label)}</h2>`,
     pages.length + 1,
   ));
+
+  if (d.contact_name || d.contact_email || d.contact_phone || d.agency_name) {
+    pages.push(`
+    <div class="page">
+      <header class="ph"><div>${esc(d.title)}</div><div class="muted">Kontakt</div></header>
+      <h2 class="sec">Ihr Ansprechpartner</h2>
+      <div class="m-contact">
+        <div class="m-contact-l">
+          ${d.contact_name ? `<div class="m-contact-name">${esc(d.contact_name)}</div>` : ""}
+          ${d.agency_name ? `<div class="m-contact-ag">${esc(d.agency_name)}</div>` : ""}
+        </div>
+        <div class="m-contact-r">
+          ${d.contact_email ? `<div>${esc(d.contact_email)}</div>` : ""}
+          ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
+        </div>
+      </div>
+      ${footer(d, t, pages.length + 1, 0)}
+    </div>`);
+  }
+
 
 
   const total = pages.length;
@@ -629,22 +653,12 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
   }
 
   const locHtml = locationBlockHtml(d, t);
-  if (locHtml || d.contact_name || d.contact_email || d.contact_phone) {
+  if (locHtml) {
     pages.push(`
     <div class="page">
       <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
       <div class="lx-rule double"></div>
-      ${locHtml ? `<h2 class="lx-h2">Lage</h2>${locHtml}` : ""}
-      ${(d.contact_name || d.contact_email || d.contact_phone)
-        ? `<h2 class="lx-h2 mt">Kontakt</h2>
-           <div class="lx-contact">
-             ${d.agency_name ? `<div class="lx-c-ag">${esc(d.agency_name)}</div>` : ""}
-             ${d.contact_name ? `<div class="lx-c-name">${esc(d.contact_name)}</div>` : ""}
-             <div class="lx-c-meta">
-               ${d.contact_email ? `<div>${esc(d.contact_email)}</div>` : ""}
-               ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
-             </div>
-           </div>` : ""}
+      <h2 class="lx-h2">Lage</h2>${locHtml}
       ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
@@ -654,6 +668,25 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
     (label: string) => `<div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div><div class="lx-rule double"></div><h2 class="lx-h2">${esc(label)}</h2>`,
     pages.length + 1,
   ));
+
+  if (d.contact_name || d.contact_email || d.contact_phone || d.agency_name) {
+    pages.push(`
+    <div class="page">
+      <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
+      <div class="lx-rule double"></div>
+      <h2 class="lx-h2">Kontakt</h2>
+      <div class="lx-contact">
+        ${d.agency_name ? `<div class="lx-c-ag">${esc(d.agency_name)}</div>` : ""}
+        ${d.contact_name ? `<div class="lx-c-name">${esc(d.contact_name)}</div>` : ""}
+        <div class="lx-c-meta">
+          ${d.contact_email ? `<div>${esc(d.contact_email)}</div>` : ""}
+          ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
+        </div>
+      </div>
+      ${footer(d, t, pages.length + 1, 0)}
+    </div>`);
+  }
+
 
 
   const total = pages.length;
