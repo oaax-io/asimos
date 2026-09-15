@@ -620,10 +620,6 @@ function EditBasics({
   employees: any[];
 }) {
   const { t } = useTranslation();
-  const selectedType = PROP_TYPES.find((item) => item.v === d.property_type) ?? PROP_TYPES[0];
-  const selectedStructure = STRUCTURES.find((item) => item.v === d.structure) ?? STRUCTURES[0];
-  const TypeIcon = selectedType.icon;
-  const StructureIcon = selectedStructure.icon;
 
   return (
     <div className="space-y-6">
@@ -632,10 +628,7 @@ function EditBasics({
           <Label>{t("propertyWizard.steps.type")}</Label>
           <Select value={d.property_type} onValueChange={(value) => update({ property_type: value })}>
             <SelectTrigger className="h-11">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <TypeIcon className="h-4 w-4 shrink-0 text-primary" />
-                <SelectValue />
-              </div>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {PROP_TYPES.map(({ v, icon: Icon }) => (
@@ -654,10 +647,7 @@ function EditBasics({
           <Label>{t("propertyWizard.steps.structure")}</Label>
           <Select value={d.structure} onValueChange={(value: Structure) => update({ structure: value })}>
             <SelectTrigger className="h-11">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <StructureIcon className="h-4 w-4 shrink-0 text-primary" />
-                <SelectValue />
-              </div>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {STRUCTURES.map(({ v, icon: Icon }) => (
