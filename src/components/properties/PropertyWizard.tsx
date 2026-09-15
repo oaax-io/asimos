@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ArrowLeft, ArrowRight, Check, Plus, Trash2,
   Home, Building2, Building, Briefcase, TreePine, Car, Layers,
-  Box, Boxes, Layers3, Upload, ImageIcon, Star, X, Library,
+  Box, Boxes, Layers3, Upload, ImageIcon, Star, X, Library, MapPin, Sparkles, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { propertyStatusLabels } from "@/lib/format";
@@ -21,6 +21,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { convertUnsupportedImages } from "@/lib/image-convert";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { useServerFn } from "@tanstack/react-start";
+import { lookupSwissParcel } from "@/lib/property-location.functions";
+import { generateLocationDescription } from "@/lib/property-ai.functions";
 
 /* -------------------- Typen -------------------- */
 
@@ -83,6 +87,10 @@ export type WizardData = {
   country: string;
   floor: string;
   location_description: string;
+  latitude: number | null;
+  longitude: number | null;
+  parcel_no: string;
+  e_grid: string;
   living_area: string;
   usable_area: string;
   plot_area: string;
@@ -132,6 +140,10 @@ const empty: WizardData = {
   country: "CH",
   floor: "",
   location_description: "",
+  latitude: null,
+  longitude: null,
+  parcel_no: "",
+  e_grid: "",
   living_area: "",
   usable_area: "",
   plot_area: "",
@@ -219,6 +231,11 @@ export function buildSubmitPayload(d: WizardData): WizardSubmit {
     city: d.city || null,
     country: d.country || null,
     floor: num(d.floor),
+    location_description: d.location_description || null,
+    latitude: d.latitude,
+    longitude: d.longitude,
+    parcel_no: d.parcel_no || null,
+    e_grid: d.e_grid || null,
     living_area: num(d.living_area),
     area: num(d.living_area),
     usable_area: num(d.usable_area),
@@ -235,7 +252,7 @@ export function buildSubmitPayload(d: WizardData): WizardSubmit {
     heating_type: d.heating_type || null,
     energy_source: d.energy_source || null,
     energy_class: d.energy_class || null,
-    description: [d.description, d.location_description ? `\n\nLage: ${d.location_description}` : ""].filter(Boolean).join("") || null,
+    description: d.description || null,
     internal_notes: d.internal_notes || null,
     features: buildFeatures(d),
     images: (() => {
@@ -314,7 +331,11 @@ function hydrateFromProperty(p: any): WizardData {
     city: p.city ?? "",
     country: p.country ?? "CH",
     floor: str(p.floor),
-    location_description: "",
+    location_description: p.location_description ?? "",
+    latitude: p.latitude ?? null,
+    longitude: p.longitude ?? null,
+    parcel_no: p.parcel_no ?? "",
+    e_grid: p.e_grid ?? "",
     living_area: str(p.living_area ?? p.area),
     usable_area: str(p.usable_area),
     plot_area: str(p.plot_area),
@@ -849,19 +870,74 @@ function Step3Basics({ d, update, owners, employees }: { d: WizardData; update: 
 
 function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
   const { t } = useTranslation();
+  const lookupParcel = useServerFn(lookupSwissParcel);
+  const generateLocation = useServerFn(generateLocationDescription);
+  const [parcelLoading, setParcelLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleParcelLookup = async () => {
+    if (d.latitude == null || d.longitude == null) return toast.error("Bitte zuerst eine Adresse aus der Vorschlagsliste auswählen.");
+    setParcelLoading(true);
+    try {
+      const result = await lookupParcel({ data: { latitude: d.latitude, longitude: d.longitude } });
+      update({ parcel_no: result.parcel_no, e_grid: result.e_grid });
+      toast.success("Amtliche Parzellendaten übernommen.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Parzelle konnte nicht ermittelt werden.");
+    } finally {
+      setParcelLoading(false);
+    }
+  };
+
+  const handleGenerateLocation = async () => {
+    if (!d.city && !d.address) return toast.error("Bitte zuerst eine Adresse erfassen.");
+    setAiLoading(true);
+    try {
+      const result = await generateLocation({ data: { address: d.address, postal_code: d.postal_code, city: d.city, country: d.country, property_type: d.property_type } });
+      update({ location_description: result.text });
+      toast.success("Lagebeschreibung erstellt.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Lagebeschreibung konnte nicht erstellt werden.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
-        <div className="col-span-2"><Label>{t("propertyWizard.step4.street")}</Label><Input value={d.address} onChange={(e) => update({ address: e.target.value })} /></div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="sm:col-span-2"><Label>{t("propertyWizard.step4.street")}</Label><AddressAutocomplete value={d.address} onChange={(address) => update({ address, latitude: null, longitude: null })} onSelect={(address) => update({ address: address.street || address.label, postal_code: address.postal_code, city: address.city, country: address.country_code || d.country, latitude: address.latitude, longitude: address.longitude, parcel_no: "", e_grid: "" })} country="ch,li,de,at" /></div>
         <div><Label>{t("propertyWizard.step4.floor")}</Label><Input value={d.floor} onChange={(e) => update({ floor: e.target.value })} placeholder={t("propertyWizard.step4.floorPlaceholder")} /></div>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div><Label>{t("propertyWizard.step4.postalCode")}</Label><Input value={d.postal_code} onChange={(e) => update({ postal_code: e.target.value })} /></div>
-        <div className="col-span-2"><Label>{t("propertyWizard.step4.city")}</Label><Input value={d.city} onChange={(e) => update({ city: e.target.value })} /></div>
+        <div className="sm:col-span-2"><Label>{t("propertyWizard.step4.city")}</Label><Input value={d.city} onChange={(e) => update({ city: e.target.value })} /></div>
       </div>
       <div><Label>{t("propertyWizard.step4.country")}</Label><Input value={d.country} onChange={(e) => update({ country: e.target.value })} /></div>
+      {d.country.toUpperCase() === "CH" && (
+        <div className="rounded-lg border bg-muted/20 p-4">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div>
+              <div className="flex items-center gap-2 font-medium"><MapPin className="h-4 w-4 text-primary" /> Amtliche Parzellendaten</div>
+              <p className="mt-1 text-xs text-muted-foreground">Grundstücknummer und EGRID aus dem Schweizer Kataster.</p>
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={handleParcelLookup} disabled={parcelLoading || d.latitude == null}>
+              {parcelLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4" />} Parzelle abrufen
+            </Button>
+          </div>
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div><Label>Parzellennummer</Label><Input value={d.parcel_no} onChange={(e) => update({ parcel_no: e.target.value })} /></div>
+            <div><Label>EGRID</Label><Input value={d.e_grid} onChange={(e) => update({ e_grid: e.target.value })} /></div>
+          </div>
+        </div>
+      )}
       <div>
-        <Label>{t("propertyWizard.step4.locationDesc")}</Label>
+        <div className="mb-1.5 flex items-center justify-between gap-2">
+          <Label>{t("propertyWizard.step4.locationDesc")}</Label>
+          <Button type="button" variant="outline" size="sm" onClick={handleGenerateLocation} disabled={aiLoading}>
+            {aiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />} Mit KI generieren
+          </Button>
+        </div>
         <Textarea rows={3} value={d.location_description} onChange={(e) => update({ location_description: e.target.value })} placeholder={t("propertyWizard.step4.locationPlaceholder")} />
       </div>
     </div>

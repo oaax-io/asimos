@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MapPin, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { searchAddress, type AddressSuggestion } from "@/lib/mapbox.functions";
+import { resolveGoogleAddress, searchGoogleAddress, type AddressSuggestion } from "@/lib/property-location.functions";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -24,13 +24,15 @@ export function AddressAutocomplete({
   className,
   id,
 }: Props) {
-  const search = useServerFn(searchAddress);
+  const search = useServerFn(searchGoogleAddress);
+  const resolve = useServerFn(resolveGoogleAddress);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<AddressSuggestion[]>([]);
   const [hi, setHi] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
   const skipNext = useRef(false);
+  const sessionToken = useRef(crypto.randomUUID());
 
   useEffect(() => {
     if (skipNext.current) {
@@ -45,7 +47,7 @@ export function AddressAutocomplete({
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await search({ data: { q: value, country } });
+        const res = await search({ data: { q: value, country, sessionToken: sessionToken.current } });
         setItems(res);
         setOpen(res.length > 0);
         setHi(0);
@@ -64,11 +66,18 @@ export function AddressAutocomplete({
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
-  const pick = (s: AddressSuggestion) => {
+  const pick = async (s: AddressSuggestion) => {
     skipNext.current = true;
-    onChange(s.street || s.label);
-    onSelect?.(s);
     setOpen(false);
+    setLoading(true);
+    try {
+      const detailed = await resolve({ data: { placeId: s.id, sessionToken: sessionToken.current } });
+      onChange(detailed.street || detailed.label);
+      onSelect?.(detailed);
+      sessionToken.current = crypto.randomUUID();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -125,7 +134,7 @@ export function AddressAutocomplete({
             ))}
           </ul>
           <div className="border-t px-3 py-1 text-[10px] text-muted-foreground">
-            Powered by Mapbox
+            Powered by Google
           </div>
         </div>
       )}
