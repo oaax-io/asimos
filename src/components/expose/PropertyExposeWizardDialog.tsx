@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Check, ChevronLeft, ChevronRight, FileDown, Image as ImageIcon, LayoutTemplate,
-  Loader2, ListChecks, Eye, Star, Sparkles, UserRound,
+  Loader2, ListChecks, Eye, Star, Sparkles, UserRound, Paperclip, FileText,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +62,7 @@ const STEPS = [
   { label: "Vorlage", icon: LayoutTemplate },
   { label: "Inhalte", icon: ListChecks },
   { label: "Galerie", icon: ImageIcon },
+  { label: "Anhänge", icon: Paperclip },
   { label: "Ansprechperson", icon: UserRound },
   { label: "Vorschau", icon: Eye },
   { label: "Generieren", icon: FileDown },
@@ -132,6 +133,7 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [galleryLayout, setGalleryLayout] = useState<GalerieLayout>("grid2");
   const [generating, setGenerating] = useState(false);
+  const [attachmentIds, setAttachmentIds] = useState<string[]>([]);
   const [contactMode, setContactMode] = useState<"employee" | "custom">("employee");
   const [contactUserId, setContactUserId] = useState<string | null>(null);
   const [customContact, setCustomContact] = useState({ name: "", email: "", phone: "", role: "" });
@@ -148,6 +150,20 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
         .select("id,file_url,file_type,is_cover,sort_order")
         .eq("property_id", propertyId)
         .order("sort_order", { ascending: true });
+      return data ?? [];
+    },
+  });
+
+  const { data: documents = [] } = useQuery({
+    queryKey: ["expose-wizard-documents", propertyId],
+    enabled: open && !!propertyId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("documents")
+        .select("id,file_name,document_type,mime_type,created_at")
+        .eq("related_type", "property")
+        .eq("related_id", propertyId)
+        .order("created_at", { ascending: false });
       return data ?? [];
     },
   });
@@ -216,6 +232,7 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
     if (!open) return;
     setStep(0);
     setGenerating(false);
+    setAttachmentIds([]);
     setTitle(property?.title ?? "");
     setDescription(property?.description ?? "");
   }, [open, property]);
@@ -266,6 +283,9 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
         facts,
         cover_url: cover,
         gallery_urls: gallery.filter((u) => u !== cover),
+        attachment_doc_names: (documents as any[])
+          .filter((d) => attachmentIds.includes(d.id))
+          .map((d) => d.file_name as string),
         gallery_cols: cols,
         agency_name: company?.name ?? "ASIMO",
         contact_name: contact.name,
@@ -287,9 +307,9 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   };
 
   const previewHtml = useMemo(
-    () => (step === 4 ? buildHtml(coverUrl, galleryUrls) : ""),
+    () => (step === 2 || step === 3 || step === 5 ? buildHtml(coverUrl, galleryUrls) : ""),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [step, coverUrl, galleryUrls, galleryLayout, template, title, description, withDescription, withFeatures, withContact, contact, facts, company, profile],
+    [step, coverUrl, galleryUrls, galleryLayout, template, title, description, withDescription, withFeatures, withContact, contact, facts, company, profile, attachmentIds, documents],
   );
 
   async function handleGenerate() {
@@ -485,7 +505,8 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
             )}
 
             {step === 2 && (
-              <div className="space-y-4">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="space-y-4">
                 {imagePool.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Keine Bilder vorhanden. Lade zuerst Medien zum Objekt hoch.</p>
                 ) : (
@@ -555,10 +576,85 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
                     </div>
                   </>
                 )}
+                </div>
+
+                {/* Live-Vorschau */}
+                <div className="space-y-2 lg:sticky lg:top-0 lg:self-start">
+                  <Label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Eye className="h-3.5 w-3.5" /> Live-Vorschau
+                  </Label>
+                  <div className="overflow-hidden rounded-lg border bg-white">
+                    <iframe
+                      title="Galerie-Vorschau"
+                      srcDoc={previewHtml}
+                      className="h-[420px] w-full"
+                    />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {galleryUrls.filter((u) => u !== coverUrl).length} Galeriebilder · Vorlage {template.label}
+                  </p>
+                </div>
               </div>
             )}
 
             {step === 3 && (
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="space-y-3">
+                  <div>
+                    <Label>Dokumente anhängen</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Wähle die Dokumente dieses Objekts, die als Anhang im Exposé aufgeführt werden.
+                    </p>
+                  </div>
+                  {(documents as any[]).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Zu diesem Objekt sind keine Dokumente hinterlegt.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {(documents as any[]).map((d) => {
+                        const checked = attachmentIds.includes(d.id);
+                        return (
+                          <label
+                            key={d.id}
+                            className={cn(
+                              "flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm transition",
+                              checked ? "border-primary bg-primary/5" : "hover:border-primary/40",
+                            )}
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={() =>
+                                setAttachmentIds((prev) =>
+                                  prev.includes(d.id) ? prev.filter((x) => x !== d.id) : [...prev, d.id],
+                                )
+                              }
+                            />
+                            <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <span className="min-w-0 flex-1 truncate">{d.file_name}</span>
+                            {d.document_type && (
+                              <Badge variant="outline" className="text-[10px]">{d.document_type}</Badge>
+                            )}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2 lg:sticky lg:top-0 lg:self-start">
+                  <Label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Eye className="h-3.5 w-3.5" /> Live-Vorschau
+                  </Label>
+                  <div className="overflow-hidden rounded-lg border bg-white">
+                    <iframe title="Anhänge-Vorschau" srcDoc={previewHtml} className="h-[420px] w-full" />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">{attachmentIds.length} Anhänge ausgewählt</p>
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
               <div className="space-y-4">
                 <label className="flex items-center gap-2 text-sm">
                   <Checkbox checked={withContact} onCheckedChange={() => setWithContact((v) => !v)} />
@@ -645,17 +741,18 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
               </div>
             )}
 
-            {step === 4 && (
+            {step === 5 && (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
                   Vorschau · Vorlage {template.label} · {galleryUrls.filter((u) => u !== coverUrl).length} Galeriebilder
+                  {attachmentIds.length ? ` · ${attachmentIds.length} Anhänge` : ""}
                   {contact.name ? ` · Ansprechperson ${contact.name}` : ""}
                 </p>
                 <iframe title="Exposé-Vorschau" srcDoc={previewHtml} className="h-[60vh] w-full rounded-lg border bg-white" />
               </div>
             )}
 
-            {step === 5 && (
+            {step === 6 && (
               <div className="space-y-4 py-6 text-center">
                 <FileDown className="mx-auto h-10 w-10 text-primary" />
                 <div>
