@@ -94,18 +94,41 @@ export const resolveGoogleAddress = createServerFn({ method: "POST" })
     };
   });
 
+async function geocodeSwissAddress(query: string): Promise<{ east: number; north: number }> {
+  const url = new URL("https://api3.geo.admin.ch/rest/services/api/SearchServer");
+  url.search = new URLSearchParams({ searchText: query, type: "locations", origins: "address,parcel", sr: "2056", limit: "1" }).toString();
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Die Adresse konnte nicht im Schweizer Kataster gefunden werden.");
+  const json = await res.json() as { results?: Array<{ attrs?: { y?: number; x?: number } }> };
+  const attrs = json.results?.[0]?.attrs;
+  const east = Number(attrs?.y);
+  const north = Number(attrs?.x);
+  if (!Number.isFinite(east) || !Number.isFinite(north)) throw new Error("Zu dieser Adresse wurde keine Katasterkoordinate gefunden.");
+  return { east, north };
+}
+
 export const lookupSwissParcel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((value: unknown) => z.object({ latitude: z.number().min(45).max(48), longitude: z.number().min(5).max(11) }).parse(value))
+  .inputValidator((value: unknown) => z.object({
+    latitude: z.number().min(45).max(48).nullish(),
+    longitude: z.number().min(5).max(11).nullish(),
+    address: z.string().trim().min(3).max(300).optional(),
+  }).parse(value))
   .handler(async ({ data }): Promise<{ parcel_no: string; e_grid: string; canton: string }> => {
-    const transform = new URL("https://geodesy.geo.admin.ch/reframe/wgs84tolv95");
-    transform.search = new URLSearchParams({ easting: String(data.longitude), northing: String(data.latitude), altitude: "0", format: "json" }).toString();
-    const transformed = await fetch(transform);
-    if (!transformed.ok) throw new Error("Die Koordinaten konnten nicht für den Kataster umgerechnet werden.");
-    const lv95 = await transformed.json() as { easting?: string; northing?: string };
-    const east = Number(lv95.easting);
-    const north = Number(lv95.northing);
-    if (!Number.isFinite(east) || !Number.isFinite(north)) throw new Error("Ungültige Katasterkoordinaten.");
+    let east = NaN;
+    let north = NaN;
+    if (typeof data.latitude === "number" && typeof data.longitude === "number") {
+      const transform = new URL("https://geodesy.geo.admin.ch/reframe/wgs84tolv95");
+      transform.search = new URLSearchParams({ easting: String(data.longitude), northing: String(data.latitude), altitude: "0", format: "json" }).toString();
+      const transformed = await fetch(transform);
+      if (!transformed.ok) throw new Error("Die Koordinaten konnten nicht für den Kataster umgerechnet werden.");
+      const lv95 = await transformed.json() as { easting?: string; northing?: string };
+      east = Number(lv95.easting);
+      north = Number(lv95.northing);
+    } else if (data.address) {
+      ({ east, north } = await geocodeSwissAddress(data.address));
+    }
+    if (!Number.isFinite(east) || !Number.isFinite(north)) throw new Error("Bitte zuerst eine gültige Adresse erfassen.");
 
     for (const tolerance of [2, 6, 10]) {
       const identify = new URL("https://api3.geo.admin.ch/rest/services/api/MapServer/identify");

@@ -868,6 +868,8 @@ function Step3Basics({ d, update, owners, employees }: { d: WizardData; update: 
   );
 }
 
+const FLOOR_OPTIONS = ["2. Untergeschoss", "1. Untergeschoss", "Erdgeschoss", "Hochparterre", "1. Obergeschoss", "2. Obergeschoss", "3. Obergeschoss", "4. Obergeschoss", "5. Obergeschoss", "6. Obergeschoss", "7. Obergeschoss", "8. Obergeschoss", "9. Obergeschoss", "10. Obergeschoss", "Attika", "Dachgeschoss"];
+
 function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
   const { t } = useTranslation();
   const lookupParcel = useServerFn(lookupSwissParcel);
@@ -875,11 +877,13 @@ function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<Wizard
   const [parcelLoading, setParcelLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
 
+  const fullAddress = [d.address, [d.postal_code, d.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+
   const handleParcelLookup = async () => {
-    if (d.latitude == null || d.longitude == null) return toast.error("Bitte zuerst eine Adresse aus der Vorschlagsliste auswählen.");
+    if (d.latitude == null && fullAddress.trim().length < 3) return toast.error("Bitte zuerst eine Adresse erfassen.");
     setParcelLoading(true);
     try {
-      const result = await lookupParcel({ data: { latitude: d.latitude, longitude: d.longitude } });
+      const result = await lookupParcel({ data: { latitude: d.latitude, longitude: d.longitude, address: fullAddress || undefined } });
       update({ parcel_no: result.parcel_no, e_grid: result.e_grid });
       toast.success("Amtliche Parzellendaten übernommen.");
     } catch (error) {
@@ -907,7 +911,15 @@ function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<Wizard
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="sm:col-span-2"><Label>{t("propertyWizard.step4.street")}</Label><AddressAutocomplete value={d.address} onChange={(address) => update({ address, latitude: null, longitude: null })} onSelect={(address) => update({ address: address.street || address.label, postal_code: address.postal_code, city: address.city, country: address.country_code || d.country, latitude: address.latitude, longitude: address.longitude, parcel_no: "", e_grid: "" })} country="ch,li,de,at" provider="google" /></div>
-        <div><Label>{t("propertyWizard.step4.floor")}</Label><Input value={d.floor} onChange={(e) => update({ floor: e.target.value })} placeholder={t("propertyWizard.step4.floorPlaceholder")} /></div>
+        <div>
+          <Label>Stockwerk</Label>
+          <Select value={d.floor || undefined} onValueChange={(value) => update({ floor: value })}>
+            <SelectTrigger><SelectValue placeholder="Stockwerk wählen" /></SelectTrigger>
+            <SelectContent>
+              {FLOOR_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div><Label>{t("propertyWizard.step4.postalCode")}</Label><Input value={d.postal_code} onChange={(e) => update({ postal_code: e.target.value })} /></div>
@@ -921,7 +933,7 @@ function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<Wizard
               <div className="flex items-center gap-2 font-medium"><MapPin className="h-4 w-4 text-primary" /> Amtliche Parzellendaten</div>
               <p className="mt-1 text-xs text-muted-foreground">Grundstücknummer und EGRID aus dem Schweizer Kataster.</p>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={handleParcelLookup} disabled={parcelLoading || d.latitude == null}>
+            <Button type="button" variant="outline" size="sm" onClick={handleParcelLookup} disabled={parcelLoading}>
               {parcelLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4" />} Parzelle abrufen
             </Button>
           </div>
