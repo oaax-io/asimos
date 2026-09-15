@@ -25,6 +25,8 @@ import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { useServerFn } from "@tanstack/react-start";
 import { lookupSwissParcel } from "@/lib/property-location.functions";
 import { generateLocationDescription } from "@/lib/property-ai.functions";
+import { FeaturePickerDialog } from "@/components/properties/FeaturePickerDialog";
+import { featureIcon } from "@/components/properties/feature-icons";
 
 /* -------------------- Typen -------------------- */
 
@@ -1054,30 +1056,87 @@ function Step6Price({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
   );
 }
 
+const BASE_FEATURE_LABELS = ["Balkon", "Terrasse", "Garten", "Lift", "Garage", "Parkplatz", "Keller"];
+
 function Step7Equipment({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
   const { t } = useTranslation();
-  const checks: { k: keyof WizardData; tk: string }[] = [
-    { k: "has_balcony", tk: "balcony" },
-    { k: "has_terrace", tk: "terrace" },
-    { k: "has_garden", tk: "garden" },
-    { k: "has_lift", tk: "lift" },
-    { k: "has_garage", tk: "garage" },
-    { k: "has_parking", tk: "parking" },
-    { k: "cellar_available", tk: "cellar" },
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const checks: { k: keyof WizardData; tk: string; key: string }[] = [
+    { k: "has_balcony", tk: "balcony", key: "balkon" },
+    { k: "has_terrace", tk: "terrace", key: "terrasse" },
+    { k: "has_garden", tk: "garden", key: "garten" },
+    { k: "has_lift", tk: "lift", key: "lift" },
+    { k: "has_garage", tk: "garage", key: "garage" },
+    { k: "has_parking", tk: "parking", key: "parkplatz" },
+    { k: "cellar_available", tk: "cellar", key: "keller" },
   ];
+  const extras = (d.features_extra || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const setExtras = (list: string[]) => update({ features_extra: list.join(", ") });
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {checks.map(c => (
-          <label key={c.k} className="flex cursor-pointer items-center gap-2 rounded-lg border p-3 hover:bg-accent">
-            <Checkbox
-              checked={d[c.k] as boolean}
-              onCheckedChange={(v) => update({ [c.k]: !!v } as any)}
-            />
-            <span className="text-sm font-medium">{t(`propertyWizard.step7.features.${c.tk}`)}</span>
-          </label>
-        ))}
+        {checks.map(c => {
+          const Icon = featureIcon(c.key);
+          const active = d[c.k] as boolean;
+          return (
+            <label
+              key={c.k}
+              className={cn(
+                "flex cursor-pointer items-center gap-2 rounded-lg border p-3 transition-colors hover:bg-accent",
+                active && "border-primary bg-primary/5",
+              )}
+            >
+              <Checkbox
+                checked={active}
+                onCheckedChange={(v) => update({ [c.k]: !!v } as any)}
+              />
+              <Icon className={cn("h-4 w-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} />
+              <span className="text-sm font-medium">{t(`propertyWizard.step7.features.${c.tk}`)}</span>
+            </label>
+          );
+        })}
       </div>
+
+      <div className="rounded-lg border p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label className="mb-0">Weitere Ausstattungen</Label>
+          <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" />Weitere Ausstattungen
+          </Button>
+        </div>
+        {extras.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">Noch keine weiteren Ausstattungen gewählt.</p>
+        ) : (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {extras.map((label) => {
+              const Icon = featureIcon(null, label);
+              return (
+                <Badge key={label} variant="secondary" className="gap-1.5 py-1 pl-2 pr-1.5">
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                  <button
+                    type="button"
+                    className="rounded-full p-0.5 hover:bg-background/60"
+                    onClick={() => setExtras(extras.filter((l) => l !== label))}
+                    aria-label={`${label} entfernen`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <FeaturePickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        selected={extras}
+        onSave={setExtras}
+        hiddenLabels={BASE_FEATURE_LABELS}
+      />
+
       <div className="grid grid-cols-3 gap-3">
         <div>
           <Label>{t("propertyWizard.step7.heating")}</Label>
@@ -1099,10 +1158,6 @@ function Step7Equipment({ d, update }: { d: WizardData; update: (p: Partial<Wiza
           <Input value={d.energy_source} onChange={(e) => update({ energy_source: e.target.value })} placeholder={t("propertyWizard.step7.energySourcePlaceholder")} />
         </div>
         <div><Label>{t("propertyWizard.step7.energyClass")}</Label><Input value={d.energy_class} onChange={(e) => update({ energy_class: e.target.value })} placeholder={t("propertyWizard.step7.energyClassPlaceholder")} /></div>
-      </div>
-      <div>
-        <Label>{t("propertyWizard.step7.extra")}</Label>
-        <Input value={d.features_extra} onChange={(e) => update({ features_extra: e.target.value })} placeholder={t("propertyWizard.step7.extraPlaceholder")} />
       </div>
     </div>
   );
