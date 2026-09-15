@@ -505,7 +505,7 @@ function PropertyDetail() {
           </CardContent></Card>
           <Card><CardContent className="p-4 text-sm">
             <p className="flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4" />Zuständig</p>
-            <div className="mt-1">
+            <div className="mt-1 flex items-center gap-2">
               <PropertyAssigneePicker
                 propertyId={id}
                 assignedIds={assignedIds}
@@ -513,6 +513,11 @@ function PropertyDetail() {
                 employeeMap={employeeMap as Map<string, EmployeeLite>}
                 size="sm"
               />
+              <span className="truncate text-sm">
+                {assignedIds.length === 0
+                  ? <span className="italic text-muted-foreground">Niemand zugewiesen</span>
+                  : assignedIds.map((uid: string) => (employeeMap.get(uid) as any)?.full_name || (employeeMap.get(uid) as any)?.email).filter(Boolean).join(", ")}
+              </span>
             </div>
           </CardContent></Card>
           <Card>
