@@ -49,7 +49,7 @@ export const searchGoogleAddress = createServerFn({ method: "POST" })
         sessionToken: data.sessionToken,
         includedRegionCodes: countryCodes,
         languageCode: "de",
-        locationBias: { circle: { center: { latitude: 46.8182, longitude: 8.2275 }, radius: 300000 } },
+        locationBias: { circle: { center: { latitude: 46.8182, longitude: 8.2275 }, radius: 50000 } },
       }),
     });
     if (!res.ok) return googleError(res);
