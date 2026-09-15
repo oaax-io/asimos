@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { matchClientToProperties, scoreMatch, type ScoreBreakdown, type FinancialCapacity } from "@/lib/matching";
 import { formatCurrency, clientTypeLabels, propertyTypeLabels } from "@/lib/format";
-import { Sparkles, ExternalLink, Users, Search, Target, Plus, Pencil, Bell, BellRing } from "lucide-react";
+import { Sparkles, ExternalLink, Users, Search, Target, Plus, Pencil, Bell, BellRing, ImageOff } from "lucide-react";
 import { SearchProfileDialog, type SearchProfile } from "@/components/matching/SearchProfileDialog";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
