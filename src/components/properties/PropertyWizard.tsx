@@ -242,7 +242,7 @@ export function buildSubmitPayload(d: WizardData): WizardSubmit {
     plot_area: num(d.plot_area),
     rooms: num(d.rooms),
     bathrooms: num(d.bathrooms),
-    total_floors: num(d.total_floors),
+    total_floors: showsTotalFloors(d) ? num(d.total_floors) : null,
     year_built: num(d.year_built),
     renovated_at: num(d.renovated_at),
     price: num(d.price),
