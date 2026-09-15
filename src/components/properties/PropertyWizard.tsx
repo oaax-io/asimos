@@ -909,7 +909,15 @@ function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<Wizard
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="sm:col-span-2"><Label>{t("propertyWizard.step4.street")}</Label><AddressAutocomplete value={d.address} onChange={(address) => update({ address, latitude: null, longitude: null })} onSelect={(address) => update({ address: address.street || address.label, postal_code: address.postal_code, city: address.city, country: address.country_code || d.country, latitude: address.latitude, longitude: address.longitude, parcel_no: "", e_grid: "" })} country="ch,li,de,at" provider="google" /></div>
-        <div><Label>{t("propertyWizard.step4.floor")}</Label><Input value={d.floor} onChange={(e) => update({ floor: e.target.value })} placeholder={t("propertyWizard.step4.floorPlaceholder")} /></div>
+        <div>
+          <Label>Stockwerk</Label>
+          <Select value={d.floor || undefined} onValueChange={(value) => update({ floor: value })}>
+            <SelectTrigger><SelectValue placeholder="Stockwerk wählen" /></SelectTrigger>
+            <SelectContent>
+              {FLOOR_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div><Label>{t("propertyWizard.step4.postalCode")}</Label><Input value={d.postal_code} onChange={(e) => update({ postal_code: e.target.value })} /></div>
