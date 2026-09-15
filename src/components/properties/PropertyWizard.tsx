@@ -360,20 +360,20 @@ export function PropertyWizard({
   mode?: "create" | "edit";
 }) {
   const { t } = useTranslation();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(mode === "edit" ? 2 : 0);
   const [d, setD] = useState<WizardData>(() => initial ? hydrateFromProperty(initial) : { ...empty });
 
   useEffect(() => {
-    if (open) { setStep(0); setD(initial ? hydrateFromProperty(initial) : { ...empty }); }
-  }, [open, initial]);
+    if (open) { setStep(mode === "edit" ? 2 : 0); setD(initial ? hydrateFromProperty(initial) : { ...empty }); }
+  }, [open, initial, mode]);
 
   const isMfh = d.property_type === "mixed_use" || d.structure === "building";
   const showUnitsStep = isMfh;
 
   const visibleSteps = useMemo(() => {
     return STEP_KEYS.map((key, idx) => ({ idx, key }))
-      .filter(s => showUnitsStep || s.idx !== 8);
-  }, [showUnitsStep]);
+      .filter(s => (mode !== "edit" || s.idx >= 2) && (showUnitsStep || s.idx !== 8));
+  }, [mode, showUnitsStep]);
 
   const employees = useQuery({
     queryKey: ["wizard_employees"],
@@ -473,7 +473,9 @@ export function PropertyWizard({
     switch (idx) {
       case 0: return <Step1Type d={d} update={update} />;
       case 1: return <Step2Structure d={d} update={update} buildings={buildings.data ?? []} />;
-      case 2: return <Step3Basics d={d} update={update} owners={owners.data ?? []} employees={employees.data ?? []} />;
+      case 2: return mode === "edit"
+        ? <EditBasics d={d} update={update} buildings={buildings.data ?? []} owners={owners.data ?? []} employees={employees.data ?? []} />
+        : <Step3Basics d={d} update={update} owners={owners.data ?? []} employees={employees.data ?? []} />;
       case 3: return <Step4Address d={d} update={update} />;
       case 4: return <Step5Areas d={d} update={update} />;
       case 5: return <Step6Price d={d} update={update} />;
@@ -604,6 +606,87 @@ export function PropertyWizard({
 
 /* -------------------- Schritte -------------------- */
 
+function EditBasics({
+  d,
+  update,
+  buildings,
+  owners,
+  employees,
+}: {
+  d: WizardData;
+  update: (p: Partial<WizardData>) => void;
+  buildings: any[];
+  owners: any[];
+  employees: any[];
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>{t("propertyWizard.steps.type")}</Label>
+          <Select value={d.property_type} onValueChange={(value) => update({ property_type: value })}>
+            <SelectTrigger className="h-11">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PROP_TYPES.map(({ v, icon: Icon }) => (
+                <SelectItem key={v} value={v}>
+                  <span className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    {t(`propertyWizard.types.${v}.label`)}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>{t("propertyWizard.steps.structure")}</Label>
+          <Select value={d.structure} onValueChange={(value: Structure) => update({ structure: value })}>
+            <SelectTrigger className="h-11">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STRUCTURES.map(({ v, icon: Icon }) => (
+                <SelectItem key={v} value={v}>
+                  <span className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-muted-foreground" />
+                    {t(`propertyWizard.structures.${v}.label`)}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {d.structure === "unit_in_building" && (
+        <div className="space-y-1.5 border-t pt-5">
+          <Label>{t("propertyWizard.step2.parentLabel")}</Label>
+          <Select value={d.parent_property_id ?? ""} onValueChange={(value) => update({ parent_property_id: value || null })}>
+            <SelectTrigger><SelectValue placeholder={t("propertyWizard.step2.parentPlaceholder")} /></SelectTrigger>
+            <SelectContent>
+              {buildings.length === 0 && <div className="px-3 py-2 text-xs text-muted-foreground">{t("propertyWizard.step2.noBuildings")}</div>}
+              {buildings.map((building: any) => (
+                <SelectItem key={building.id} value={building.id}>
+                  {building.title} {building.city ? `· ${building.city}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div className="border-t pt-5">
+        <Step3Basics d={d} update={update} owners={owners} employees={employees} />
+      </div>
+    </div>
+  );
+}
+
 function Step1Type({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
   const { t } = useTranslation();
   return (
@@ -716,7 +799,7 @@ function Step3Basics({ d, update, owners, employees }: { d: WizardData; update: 
         <Label>{t("propertyWizard.step3.titleField")}</Label>
         <Input value={d.title} onChange={(e) => update({ title: e.target.value })} placeholder={t("propertyWizard.step3.titlePlaceholder")} />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <Label>{t("propertyWizard.step3.marketing")}</Label>
           <Select value={d.marketing_type} onValueChange={(v: Marketing) => update({ marketing_type: v, listing_type: v === "rent" ? "rent" : "sale" })}>
@@ -738,7 +821,7 @@ function Step3Basics({ d, update, owners, employees }: { d: WizardData; update: 
           </Select>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <Label>{t("propertyWizard.step3.owner")}</Label>
           <Select value={d.owner_client_id ?? "none"} onValueChange={(v) => update({ owner_client_id: v === "none" ? null : v })}>
