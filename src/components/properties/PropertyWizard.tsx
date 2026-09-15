@@ -230,7 +230,7 @@ export function buildSubmitPayload(d: WizardData): WizardSubmit {
     postal_code: d.postal_code || null,
     city: d.city || null,
     country: d.country || null,
-    floor: num(d.floor),
+    floor: showsSingleFloor(d) ? num(d.floor) : null,
     location_description: d.location_description || null,
     latitude: d.latitude,
     longitude: d.longitude,
