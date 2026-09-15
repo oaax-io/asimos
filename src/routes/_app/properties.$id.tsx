@@ -1075,6 +1075,7 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
       return next;
     });
     setDragPath(null);
+    setDragOverPath(null);
   };
 
   const saveOrder = async () => {
