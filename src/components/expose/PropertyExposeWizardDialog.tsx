@@ -504,7 +504,8 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
             )}
 
             {step === 2 && (
-              <div className="space-y-4">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="space-y-4">
                 {imagePool.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Keine Bilder vorhanden. Lade zuerst Medien zum Objekt hoch.</p>
                 ) : (
