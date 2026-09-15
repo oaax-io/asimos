@@ -490,10 +490,10 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
   const galleryUrls = d.gallery_urls;
 
 
-  const pages: string[] = [];
+  const G = newGroups();
 
   // Page 1: full-bleed cover with overlay
-  pages.push(`
+  G.cover.push(`
   <div class="page cover-modern">
     ${d.cover_url ? `<img class="bleed-img" src="${esc(d.cover_url)}" alt=""/>` : `<div class="bleed-fallback"></div>`}
     <div class="bleed-shade"></div>
@@ -510,7 +510,7 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
   </div>`);
 
   // Page 2: KPI + description
-  pages.push(`
+  G.facts.push(`
   <div class="page">
     <header class="ph"><div>${esc(d.title)}</div><div class="muted">Übersicht</div></header>
     ${facts.length ? `<div class="kpis" style="grid-template-columns: repeat(${kpiCols}, 1fr);">
@@ -525,7 +525,7 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
     const perPage = galleryCols * (galleryCols >= 3 ? 3 : 2);
     for (let i = 0; i < galleryUrls.length; i += perPage) {
       const slice = galleryUrls.slice(i, i + perPage);
-      pages.push(`
+      G.gallery.push(`
       <div class="page">
         <header class="ph"><div>${esc(d.title)}</div><div class="muted">Galerie</div></header>
         <div class="m-gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
@@ -538,7 +538,7 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
 
   const locHtml = locationBlockHtml(d, t);
   if (locHtml) {
-    pages.push(`
+    G.location.push(`
     <div class="page">
       <header class="ph"><div>${esc(d.title)}</div><div class="muted">Lage</div></header>
       <h2 class="sec">Lage</h2>${locHtml}
@@ -546,14 +546,13 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
     </div>`);
   }
 
-  pages.push(...attachmentsPages(
-    d, t,
-    (label: string) => `<header class="ph"><div>${esc(d.title)}</div><div class="muted">${esc(label)}</div></header><h2 class="sec">${esc(label)}</h2>`,
-    pages.length + 1,
-  ));
+  const modernHeader = (label: string) =>
+    `<header class="ph"><div>${esc(d.title)}</div><div class="muted">${esc(label)}</div></header><h2 class="sec">${esc(label)}</h2>`;
+  G.extras.push(...extraSectionsPages(d, t, modernHeader, 0));
+  G.attachments.push(...attachmentsPages(d, t, modernHeader, 0));
 
   if (d.contact_name || d.contact_email || d.contact_phone || d.agency_name) {
-    pages.push(`
+    G.contact.push(`
     <div class="page">
       <header class="ph"><div>${esc(d.title)}</div><div class="muted">Kontakt</div></header>
       <h2 class="sec">Ihr Ansprechpartner</h2>
