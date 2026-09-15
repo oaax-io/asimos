@@ -1379,7 +1379,7 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
         Alle Bilder ({images.length})
       </button>
 
-      <Dialog open={allOpen} onOpenChange={(o) => { setAllOpen(o); if (!o) { setOrderDraft(null); resetDrag(); } }}>
+      <Dialog open={allOpen} onOpenChange={(o) => { setAllOpen(o); if (!o) setOrderDraft(null); }}>
         <DialogContent className="flex max-h-[90vh] max-w-5xl flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>Bilder ({images.length})</DialogTitle>
