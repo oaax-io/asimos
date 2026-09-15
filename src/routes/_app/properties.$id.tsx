@@ -1404,15 +1404,17 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
               {orderList.map((path, i) => {
                 const realIdx = images.indexOf(path);
+                const isDragging = dragPath === path;
+                const isDropTarget = dragOverPath === path && dragPath && dragPath !== path;
                 return (
                   <div
                     key={path}
                     draggable
                     onDragStart={(e) => { e.stopPropagation(); setDragPath(path); }}
-                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverPath(path); }}
                     onDrop={(e) => { e.preventDefault(); e.stopPropagation(); dropOnPath(path); }}
-                    onDragEnd={() => setDragPath(null)}
-                    className={`group/img relative aspect-[4/3] cursor-grab overflow-hidden rounded-lg border bg-muted transition ${dragPath === path ? "opacity-50 ring-2 ring-primary" : "hover:ring-2 hover:ring-primary/40"}`}
+                    onDragEnd={() => { setDragPath(null); setDragOverPath(null); }}
+                    className={`group/img relative aspect-[4/3] overflow-hidden rounded-lg border bg-muted transition-all ${isDragging ? "cursor-grabbing opacity-40 grayscale ring-2 ring-primary/60 scale-[0.96] shadow-lg" : "cursor-grab hover:ring-2 hover:ring-primary/40 hover:scale-[1.02]"} ${isDropTarget ? "ring-4 ring-primary scale-[1.03] shadow-xl z-10" : ""}`}
                   >
                     <img
                       src={getMediaPublicUrl(path)}
@@ -1421,6 +1423,14 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
                       draggable={false}
                       onClick={() => { if (!orderDraft) { setIdx(realIdx); setAllOpen(false); } }}
                     />
+                    {isDropTarget && (
+                      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-primary/20 p-2 text-center backdrop-blur-sm animate-in fade-in zoom-in duration-200">
+                        <div className="rounded-full bg-background/90 p-2 shadow">
+                          <ArrowLeft className="h-5 w-5 rotate-90 text-primary" />
+                        </div>
+                        <span className="rounded-md bg-background/90 px-2 py-1 text-[10px] font-semibold shadow text-primary">Hier einfügen</span>
+                      </div>
+                    )}
                     <div className="absolute left-2 top-2 flex items-center gap-1">
                       <span className="rounded bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold shadow">{i + 1}</span>
                       {i === 0 && <Badge className="text-[10px]">Cover</Badge>}
