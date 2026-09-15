@@ -702,14 +702,27 @@ function MatchCard({
   reasons: string[];
   onSave: () => void;
 }) {
-  const cover = coverUrl ?? p.images?.[0];
+  const cover = coverUrl ?? toPublicUrl(p.images?.[0]);
+  const [imgFailed, setImgFailed] = useState(false);
   return (
     <Card className="overflow-hidden transition hover:shadow-glow">
       <div className="aspect-[16/10] overflow-hidden bg-muted">
-        {cover
-          ? <img src={cover} alt={p.title} className="h-full w-full object-cover" loading="lazy" />
-          : <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">Kein Bild</div>}
+        {cover && !imgFailed ? (
+          <img
+            src={cover}
+            alt={p.title}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-soft text-muted-foreground">
+            <ImageOff className="h-6 w-6 opacity-60" />
+            <span className="text-xs">Kein Bild</span>
+          </div>
+        )}
       </div>
+
       <CardContent className="p-4">
         {client && (
           <p className="mb-1 truncate text-xs font-medium text-primary">
