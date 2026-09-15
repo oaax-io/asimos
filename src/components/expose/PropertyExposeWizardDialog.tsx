@@ -159,6 +159,8 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   const [galleryLayout, setGalleryLayout] = useState<GalerieLayout>("grid2");
   const [generating, setGenerating] = useState(false);
   const [attachmentIds, setAttachmentIds] = useState<string[]>([]);
+  const [withMacro, setWithMacro] = useState(false);
+  const [withMarket, setWithMarket] = useState(false);
   const [contactMode, setContactMode] = useState<"employee" | "custom">("employee");
   const [contactUserId, setContactUserId] = useState<string | null>(null);
   const [customContact, setCustomContact] = useState({ name: "", email: "", phone: "", role: "" });
@@ -190,6 +192,21 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
         .eq("related_id", propertyId)
         .order("created_at", { ascending: false });
       return data ?? [];
+    },
+  });
+
+  const { data: marketAnalysis } = useQuery({
+    queryKey: ["expose-wizard-market", propertyId],
+    enabled: open && !!propertyId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("property_market_analyses")
+        .select("id,sections,created_at")
+        .eq("property_id", propertyId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
     },
   });
 
