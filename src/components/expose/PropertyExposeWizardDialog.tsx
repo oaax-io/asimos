@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -608,13 +608,7 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
                   <Label className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Eye className="h-3.5 w-3.5" /> Live-Vorschau
                   </Label>
-                  <div className="overflow-hidden rounded-lg border bg-white">
-                    <iframe
-                      title="Galerie-Vorschau"
-                      srcDoc={previewHtml}
-                      className="h-[420px] w-full"
-                    />
-                  </div>
+                  <ScaledExposePreview html={previewHtml} title="Galerie-Vorschau" />
                   <p className="text-[11px] text-muted-foreground">
                     {galleryUrls.filter((u) => u !== coverUrl).length} Galeriebilder · Vorlage {template.label}
                   </p>
@@ -671,9 +665,7 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
                   <Label className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Eye className="h-3.5 w-3.5" /> Live-Vorschau
                   </Label>
-                  <div className="overflow-hidden rounded-lg border bg-white">
-                    <iframe title="Anhänge-Vorschau" srcDoc={previewHtml} className="h-[420px] w-full" />
-                  </div>
+                  <ScaledExposePreview html={previewHtml} title="Anhänge-Vorschau" />
                   <p className="text-[11px] text-muted-foreground">{attachmentIds.length} Anhänge ausgewählt</p>
                 </div>
               </div>
