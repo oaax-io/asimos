@@ -702,11 +702,59 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div className="space-y-3">
                   <div>
+                    <Label>Zusätzliche Abschnitte</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Analysen aus dem Objekt als eigene Seiten ins Exposé übernehmen.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg border p-3 text-sm transition",
+                        macro ? "cursor-pointer" : "opacity-60",
+                        withMacro ? "border-primary bg-primary/5" : "hover:border-primary/40",
+                      )}
+                    >
+                      <Checkbox
+                        checked={withMacro}
+                        disabled={!macro}
+                        onCheckedChange={() => setWithMacro((v) => !v)}
+                      />
+                      <span className="min-w-0 flex-1">
+                        Makrolage
+                        <span className="block text-xs text-muted-foreground">
+                          {macro ? "KI-Analyse zu Lage, Infrastruktur und Umfeld" : "Noch keine Makrolage generiert"}
+                        </span>
+                      </span>
+                    </label>
+                    <label
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg border p-3 text-sm transition",
+                        marketSections ? "cursor-pointer" : "opacity-60",
+                        withMarket ? "border-primary bg-primary/5" : "hover:border-primary/40",
+                      )}
+                    >
+                      <Checkbox
+                        checked={withMarket}
+                        disabled={!marketSections}
+                        onCheckedChange={() => setWithMarket((v) => !v)}
+                      />
+                      <span className="min-w-0 flex-1">
+                        Marktanalyse
+                        <span className="block text-xs text-muted-foreground">
+                          {marketSections ? "Neuste KI-Marktanalyse dieses Objekts" : "Noch keine Marktanalyse vorhanden"}
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+
+                  <div>
                     <Label>Dokumente anhängen</Label>
                     <p className="text-xs text-muted-foreground">
                       Wähle die Dokumente dieses Objekts, die als Anhang im Exposé aufgeführt werden.
                     </p>
                   </div>
+
                   {(documents as any[]).length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                       Zu diesem Objekt sind keine Dokumente hinterlegt.
