@@ -360,20 +360,20 @@ export function PropertyWizard({
   mode?: "create" | "edit";
 }) {
   const { t } = useTranslation();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(mode === "edit" ? 2 : 0);
   const [d, setD] = useState<WizardData>(() => initial ? hydrateFromProperty(initial) : { ...empty });
 
   useEffect(() => {
-    if (open) { setStep(0); setD(initial ? hydrateFromProperty(initial) : { ...empty }); }
-  }, [open, initial]);
+    if (open) { setStep(mode === "edit" ? 2 : 0); setD(initial ? hydrateFromProperty(initial) : { ...empty }); }
+  }, [open, initial, mode]);
 
   const isMfh = d.property_type === "mixed_use" || d.structure === "building";
   const showUnitsStep = isMfh;
 
   const visibleSteps = useMemo(() => {
     return STEP_KEYS.map((key, idx) => ({ idx, key }))
-      .filter(s => showUnitsStep || s.idx !== 8);
-  }, [showUnitsStep]);
+      .filter(s => (mode !== "edit" || s.idx >= 2) && (showUnitsStep || s.idx !== 8));
+  }, [mode, showUnitsStep]);
 
   const employees = useQuery({
     queryKey: ["wizard_employees"],
@@ -473,7 +473,9 @@ export function PropertyWizard({
     switch (idx) {
       case 0: return <Step1Type d={d} update={update} />;
       case 1: return <Step2Structure d={d} update={update} buildings={buildings.data ?? []} />;
-      case 2: return <Step3Basics d={d} update={update} owners={owners.data ?? []} employees={employees.data ?? []} />;
+      case 2: return mode === "edit"
+        ? <EditBasics d={d} update={update} buildings={buildings.data ?? []} owners={owners.data ?? []} employees={employees.data ?? []} />
+        : <Step3Basics d={d} update={update} owners={owners.data ?? []} employees={employees.data ?? []} />;
       case 3: return <Step4Address d={d} update={update} />;
       case 4: return <Step5Areas d={d} update={update} />;
       case 5: return <Step6Price d={d} update={update} />;
