@@ -644,22 +644,12 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
   }
 
   const locHtml = locationBlockHtml(d, t);
-  if (locHtml || d.contact_name || d.contact_email || d.contact_phone) {
+  if (locHtml) {
     pages.push(`
     <div class="page">
       <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
       <div class="lx-rule double"></div>
-      ${locHtml ? `<h2 class="lx-h2">Lage</h2>${locHtml}` : ""}
-      ${(d.contact_name || d.contact_email || d.contact_phone)
-        ? `<h2 class="lx-h2 mt">Kontakt</h2>
-           <div class="lx-contact">
-             ${d.agency_name ? `<div class="lx-c-ag">${esc(d.agency_name)}</div>` : ""}
-             ${d.contact_name ? `<div class="lx-c-name">${esc(d.contact_name)}</div>` : ""}
-             <div class="lx-c-meta">
-               ${d.contact_email ? `<div>${esc(d.contact_email)}</div>` : ""}
-               ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
-             </div>
-           </div>` : ""}
+      <h2 class="lx-h2">Lage</h2>${locHtml}
       ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
@@ -669,6 +659,25 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
     (label: string) => `<div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div><div class="lx-rule double"></div><h2 class="lx-h2">${esc(label)}</h2>`,
     pages.length + 1,
   ));
+
+  if (d.contact_name || d.contact_email || d.contact_phone || d.agency_name) {
+    pages.push(`
+    <div class="page">
+      <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
+      <div class="lx-rule double"></div>
+      <h2 class="lx-h2">Kontakt</h2>
+      <div class="lx-contact">
+        ${d.agency_name ? `<div class="lx-c-ag">${esc(d.agency_name)}</div>` : ""}
+        ${d.contact_name ? `<div class="lx-c-name">${esc(d.contact_name)}</div>` : ""}
+        <div class="lx-c-meta">
+          ${d.contact_email ? `<div>${esc(d.contact_email)}</div>` : ""}
+          ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
+        </div>
+      </div>
+      ${footer(d, t, pages.length + 1, 0)}
+    </div>`);
+  }
+
 
 
   const total = pages.length;
