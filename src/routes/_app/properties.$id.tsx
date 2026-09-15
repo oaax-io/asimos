@@ -1285,49 +1285,72 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
 
   return (
     <div {...dropHandlers} className={`group relative h-full w-full overflow-hidden rounded-2xl border bg-muted transition-all ${dragOver ? "ring-4 ring-primary/40 ring-offset-2" : ""}`}>
-      <button
-        type="button"
-        onClick={() => { setZoom(1); setLightboxOpen(true); }}
-        className="absolute inset-0 z-0 h-full w-full cursor-zoom-in"
-        aria-label="Bild vergrössern"
-      >
-        <img src={getMediaPublicUrl(current!)} alt={title} className="h-full w-full object-cover" />
-      </button>
+      {isMoreSlide ? (
+        <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-4 bg-gradient-soft px-6 text-center">
+          <ImageIcon className="h-10 w-10 text-primary" />
+          <div>
+            <p className="text-lg font-semibold">Sehe weitere Bilder unter «Alle Bilder»</p>
+            <p className="text-sm text-muted-foreground">
+              Noch {images.length - MAX_PREVIEW} weitere Bild(er) vorhanden.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button onClick={() => setAllOpen(true)}>
+              <ImageIcon className="mr-2 h-4 w-4" /> Alle Bilder ({images.length})
+            </Button>
+            <Button variant="outline" onClick={() => setIdx(0)}>
+              <ChevronLeft className="mr-2 h-4 w-4" /> Zurück zum Anfang
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => { setZoom(1); setLightboxOpen(true); }}
+          className="absolute inset-0 z-0 h-full w-full cursor-zoom-in"
+          aria-label="Bild vergrössern"
+        >
+          <img src={getMediaPublicUrl(current!)} alt={title} className="h-full w-full object-cover" />
+        </button>
+      )}
 
-      {idx === 0 && (
+      {!isMoreSlide && idx === 0 && (
         <Badge className="absolute left-3 top-3 shadow">Cover</Badge>
       )}
-      {idx !== 0 && (
+      {!isMoreSlide && idx !== 0 && (
         <button onClick={() => setAsCover(idx)} className="absolute left-3 top-3 rounded-md bg-background/85 px-2 py-1 text-xs font-medium shadow hover:bg-background">
           Als Cover setzen
         </button>
       )}
-      <div className="absolute right-3 top-3 rounded-md bg-background/85 px-2 py-1 text-xs font-medium shadow">
-        {idx + 1} / {images.length}
-      </div>
-      {images.length > 1 && (
+      {!isMoreSlide && (
+        <div className="absolute right-3 top-3 rounded-md bg-background/85 px-2 py-1 text-xs font-medium shadow">
+          {idx + 1} / {images.length}
+        </div>
+      )}
+      {slideCount > 1 && (
         <>
           <button
-            onClick={() => setIdx((i) => (i - 1 + images.length) % images.length)}
+            onClick={() => setIdx((i) => (i - 1 + slideCount) % slideCount)}
             className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-background/85 p-2 shadow opacity-0 transition group-hover:opacity-100 hover:bg-background"
             aria-label="Vorheriges Bild"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
-            onClick={() => setIdx((i) => (i + 1) % images.length)}
+            onClick={() => setIdx((i) => (i + 1) % slideCount)}
             className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-background/85 p-2 shadow opacity-0 transition group-hover:opacity-100 hover:bg-background"
             aria-label="Nächstes Bild"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
           <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-            {images.map((_, i) => (
+            {Array.from({ length: slideCount }).map((_, i) => (
               <button key={i} onClick={() => setIdx(i)} className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-white" : "w-1.5 bg-white/60 hover:bg-white/90"}`} aria-label={`Bild ${i + 1}`} />
             ))}
           </div>
         </>
       )}
+
 
       <label className={`absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-2 bg-primary/20 backdrop-blur-sm transition ${dragOver ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
         <div className="rounded-full bg-background/90 p-4 shadow-lg">
