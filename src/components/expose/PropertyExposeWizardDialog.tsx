@@ -934,13 +934,83 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
                 </p>
                 <iframe title="Exposé-Vorschau" srcDoc={previewHtml} className="h-[60vh] w-full rounded-lg border bg-muted" />
                 <p className="text-[11px] text-muted-foreground">
-                  Jede Seite wird als einzelnes Blatt dargestellt; die gestrichelte Linie markiert den Seitenumbruch. Die Kontaktseite mit Ansprechperson und Firma steht immer am Schluss.
+                  Jede Seite wird als einzelnes Blatt dargestellt; die gestrichelte Linie markiert den Seitenumbruch. Die Reihenfolge der Abschnitte passt du im nächsten Schritt an.
                 </p>
 
               </div>
             )}
 
             {step === 6 && (
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <Label>Reihenfolge der Abschnitte</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Ziehe die Abschnitte in die gewünschte Reihenfolge – oder nutze die Pfeile.
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSectionOrder([...EXPOSE_SECTION_KEYS])}
+                    >
+                      <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                      Standard
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {sectionOrder.map((key, i) => {
+                      const empty =
+                        (key === "extras" && extraSections.length === 0) ||
+                        (key === "attachments" && attachmentIds.length === 0) ||
+                        (key === "gallery" && galleryUrls.filter((u) => u !== coverUrl).length === 0);
+                      return (
+                        <div
+                          key={key}
+                          draggable
+                          onDragStart={() => setDragKey(key)}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={() => dropSection(key)}
+                          onDragEnd={() => setDragKey(null)}
+                          className={cn(
+                            "flex items-center gap-3 rounded-lg border bg-card p-3 text-sm transition",
+                            dragKey === key ? "border-primary opacity-60" : "hover:border-primary/40",
+                            empty && "opacity-60",
+                          )}
+                        >
+                          <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground" />
+                          <Badge variant="secondary" className="shrink-0">{i + 1}</Badge>
+                          <span className="min-w-0 flex-1">
+                            {EXPOSE_SECTION_LABELS[key]}
+                            {empty && (
+                              <span className="block text-xs text-muted-foreground">Keine Inhalte – wird nicht gedruckt</span>
+                            )}
+                          </span>
+                          <div className="flex shrink-0 gap-1">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={i === 0} onClick={() => moveSection(key, -1)}>
+                              <ArrowUp className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={i === sectionOrder.length - 1} onClick={() => moveSection(key, 1)}>
+                              <ArrowDown className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Vorschau</Label>
+                  <ScaledExposePreview html={previewHtml} title="Reihenfolge-Vorschau" />
+                </div>
+              </div>
+            )}
+
+            {step === 7 && (
+
               <div className="space-y-4 py-6 text-center">
                 <FileDown className="mx-auto h-10 w-10 text-primary" />
                 <div>
