@@ -1416,7 +1416,7 @@ function Step9Units({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>{t("propertyWizard.step9.floor")}</Label><Input value={u.unit_floor} onChange={(e) => patchUnit(i, { unit_floor: e.target.value })} placeholder={t("propertyWizard.step9.floorPlaceholder")} /></div>
+                <FloorSelect value={u.unit_floor} onChange={(v) => patchUnit(i, { unit_floor: v })} label={t("propertyWizard.step9.floor")} />
               </div>
               <div className="grid grid-cols-4 gap-3">
                 <div><Label>{t("propertyWizard.step9.rooms")}</Label><Input type="number" step="0.5" value={u.rooms} onChange={(e) => patchUnit(i, { rooms: e.target.value })} /></div>
