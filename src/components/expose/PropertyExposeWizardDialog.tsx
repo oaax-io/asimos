@@ -170,6 +170,8 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   const [galleryLayout, setGalleryLayout] = useState<GalerieLayout>("grid2");
   const [generating, setGenerating] = useState(false);
   const [attachmentIds, setAttachmentIds] = useState<string[]>([]);
+  const [sectionOrder, setSectionOrder] = useState<ExposeSectionKey[]>([...EXPOSE_SECTION_KEYS]);
+  const [dragKey, setDragKey] = useState<ExposeSectionKey | null>(null);
   const [withMacro, setWithMacro] = useState(false);
   const [withMarket, setWithMarket] = useState(false);
   const [contactMode, setContactMode] = useState<"employee" | "custom">("employee");
@@ -286,6 +288,7 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
     setStep(0);
     setGenerating(false);
     setAttachmentIds([]);
+    setSectionOrder([...EXPOSE_SECTION_KEYS]);
     setTitle(property?.title ?? "");
     setDescription(property?.description ?? "");
   }, [open, property]);
