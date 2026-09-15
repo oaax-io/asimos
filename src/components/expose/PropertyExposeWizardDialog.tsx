@@ -282,6 +282,9 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
         facts,
         cover_url: cover,
         gallery_urls: gallery.filter((u) => u !== cover),
+        attachment_doc_names: (documents as any[])
+          .filter((d) => attachmentIds.includes(d.id))
+          .map((d) => d.file_name as string),
         gallery_cols: cols,
         agency_name: company?.name ?? "ASIMO",
         contact_name: contact.name,
