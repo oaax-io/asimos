@@ -1388,52 +1388,80 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
         Alle Bilder ({images.length})
       </button>
 
-      <Dialog open={allOpen} onOpenChange={setAllOpen}>
+      <Dialog open={allOpen} onOpenChange={(o) => { setAllOpen(o); if (!o) setOrderDraft(null); }}>
         <DialogContent className="max-w-5xl">
           <DialogHeader>
             <DialogTitle>Bilder ({images.length})</DialogTitle>
-            <DialogDescription>Bilder ansehen, Cover festlegen, löschen oder neue hochladen.</DialogDescription>
+            <DialogDescription>
+              Bilder per Drag &amp; Drop sortieren, ansehen, Cover festlegen, löschen oder neue hochladen. Das erste Bild ist das Cover.
+            </DialogDescription>
           </DialogHeader>
           <div className="max-h-[65vh] overflow-y-auto">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {images.map((path, i) => (
-                <div key={path} className="group/img relative aspect-[4/3] overflow-hidden rounded-lg border bg-muted">
-                  <img
-                    src={getMediaPublicUrl(path)}
-                    alt={`${title} ${i + 1}`}
-                    className="h-full w-full cursor-pointer object-cover"
-                    onClick={() => { setIdx(i); setAllOpen(false); }}
-                  />
-                  {i === 0 && <Badge className="absolute left-2 top-2 text-[10px]">Cover</Badge>}
-                  <div className="absolute inset-x-1 bottom-1 flex justify-between gap-1 opacity-0 transition group-hover/img:opacity-100">
-                    {i !== 0 ? (
+              {orderList.map((path, i) => {
+                const realIdx = images.indexOf(path);
+                return (
+                  <div
+                    key={path}
+                    draggable
+                    onDragStart={(e) => { e.stopPropagation(); setDragPath(path); }}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onDrop={(e) => { e.preventDefault(); e.stopPropagation(); dropOnPath(path); }}
+                    onDragEnd={() => setDragPath(null)}
+                    className={`group/img relative aspect-[4/3] cursor-grab overflow-hidden rounded-lg border bg-muted transition ${dragPath === path ? "opacity-50 ring-2 ring-primary" : "hover:ring-2 hover:ring-primary/40"}`}
+                  >
+                    <img
+                      src={getMediaPublicUrl(path)}
+                      alt={`${title} ${i + 1}`}
+                      className="h-full w-full object-cover"
+                      draggable={false}
+                      onClick={() => { if (!orderDraft) { setIdx(realIdx); setAllOpen(false); } }}
+                    />
+                    <div className="absolute left-2 top-2 flex items-center gap-1">
+                      <span className="rounded bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold shadow">{i + 1}</span>
+                      {i === 0 && <Badge className="text-[10px]">Cover</Badge>}
+                    </div>
+                    <div className="absolute inset-x-1 bottom-1 flex justify-between gap-1 opacity-0 transition group-hover/img:opacity-100">
+                      {i !== 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => setAsCover(realIdx)}
+                          className="rounded bg-background/90 px-2 py-1 text-[10px] font-medium shadow hover:bg-background"
+                        >
+                          Als Cover
+                        </button>
+                      ) : <span />}
                       <button
                         type="button"
-                        onClick={() => setAsCover(i)}
-                        className="rounded bg-background/90 px-2 py-1 text-[10px] font-medium shadow hover:bg-background"
+                        onClick={() => setDeleteIdx(realIdx)}
+                        className="rounded bg-destructive/90 p-1 text-destructive-foreground shadow hover:bg-destructive"
+                        aria-label="Bild löschen"
                       >
-                        Als Cover
+                        <Trash2 className="h-3 w-3" />
                       </button>
-                    ) : <span />}
-                    <button
-                      type="button"
-                      onClick={() => setDeleteIdx(i)}
-                      className="rounded bg-destructive/90 p-1 text-destructive-foreground shadow hover:bg-destructive"
-                      aria-label="Bild löschen"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
-          <DialogFooter>
-            <Button onClick={() => setUploadOpen(true)}>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button variant="outline" onClick={() => setUploadOpen(true)}>
               <UploadCloud className="mr-2 h-4 w-4" /> Bilder hochladen
             </Button>
+            {orderDraft && (
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => setOrderDraft(null)} disabled={savingOrder}>
+                  Verwerfen
+                </Button>
+                <Button onClick={saveOrder} disabled={savingOrder}>
+                  {savingOrder ? "Speichert…" : "Reihenfolge speichern"}
+                </Button>
+              </div>
+            )}
           </DialogFooter>
         </DialogContent>
+
       </Dialog>
 
       <Dialog open={lightboxOpen} onOpenChange={(o) => { setLightboxOpen(o); if (!o) setZoom(1); }}>
