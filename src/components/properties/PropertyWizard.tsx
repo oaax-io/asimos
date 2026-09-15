@@ -875,11 +875,13 @@ function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<Wizard
   const [parcelLoading, setParcelLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
 
+  const fullAddress = [d.address, [d.postal_code, d.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+
   const handleParcelLookup = async () => {
-    if (d.latitude == null || d.longitude == null) return toast.error("Bitte zuerst eine Adresse aus der Vorschlagsliste auswählen.");
+    if (d.latitude == null && fullAddress.trim().length < 3) return toast.error("Bitte zuerst eine Adresse erfassen.");
     setParcelLoading(true);
     try {
-      const result = await lookupParcel({ data: { latitude: d.latitude, longitude: d.longitude } });
+      const result = await lookupParcel({ data: { latitude: d.latitude, longitude: d.longitude, address: fullAddress || undefined } });
       update({ parcel_no: result.parcel_no, e_grid: result.e_grid });
       toast.success("Amtliche Parzellendaten übernommen.");
     } catch (error) {
