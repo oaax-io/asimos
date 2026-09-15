@@ -627,10 +627,10 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
   const galleryUrls = d.gallery_urls;
 
 
-  const pages: string[] = [];
+  const G = newGroups();
 
   // Page 1: editorial cover
-  pages.push(`
+  G.cover.push(`
   <div class="page lx-cover">
     <div class="lx-top">
       <div class="lx-brand">${esc(d.agency_name ?? "ASIMO")}</div>
@@ -653,9 +653,9 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
   </div>`);
 
   // Page 2: description + facts (asymmetric)
-  pages.push(`
+  G.facts.push(`
   <div class="page">
-    <div class="lx-folio"><span>${esc(d.title)}</span><span>02</span></div>
+    <div class="lx-folio"><span>${esc(d.title)}</span><span>__PAGENOPAD__</span></div>
     <div class="lx-rule double"></div>
     <div class="lx-split">
       <div class="lx-split-l">
@@ -678,9 +678,9 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
     const perPage = galleryCols * (galleryCols >= 3 ? 3 : 2);
     for (let i = 0; i < galleryUrls.length; i += perPage) {
       const slice = galleryUrls.slice(i, i + perPage);
-      pages.push(`
+      G.gallery.push(`
       <div class="page">
-        <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
+        <div class="lx-folio"><span>${esc(d.title)}</span><span>__PAGENOPAD__</span></div>
         <div class="lx-rule double"></div>
         <h2 class="lx-h2">Impressionen</h2>
         <div class="lx-gal" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
@@ -693,25 +693,24 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
 
   const locHtml = locationBlockHtml(d, t);
   if (locHtml) {
-    pages.push(`
+    G.location.push(`
     <div class="page">
-      <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
+      <div class="lx-folio"><span>${esc(d.title)}</span><span>__PAGENOPAD__</span></div>
       <div class="lx-rule double"></div>
       <h2 class="lx-h2">Lage</h2>${locHtml}
       ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
 
-  pages.push(...attachmentsPages(
-    d, t,
-    (label: string) => `<div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div><div class="lx-rule double"></div><h2 class="lx-h2">${esc(label)}</h2>`,
-    pages.length + 1,
-  ));
+  const luxHeader = (label: string) =>
+    `<div class="lx-folio"><span>${esc(d.title)}</span><span>__PAGENOPAD__</span></div><div class="lx-rule double"></div><h2 class="lx-h2">${esc(label)}</h2>`;
+  G.extras.push(...extraSectionsPages(d, t, luxHeader, 0));
+  G.attachments.push(...attachmentsPages(d, t, luxHeader, 0));
 
   if (d.contact_name || d.contact_email || d.contact_phone || d.agency_name) {
-    pages.push(`
+    G.contact.push(`
     <div class="page">
-      <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
+      <div class="lx-folio"><span>${esc(d.title)}</span><span>__PAGENOPAD__</span></div>
       <div class="lx-rule double"></div>
       <h2 class="lx-h2">Kontakt</h2>
       <div class="lx-contact">
