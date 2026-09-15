@@ -575,10 +575,85 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
                     </div>
                   </>
                 )}
+                </div>
+
+                {/* Live-Vorschau */}
+                <div className="space-y-2 lg:sticky lg:top-0 lg:self-start">
+                  <Label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Eye className="h-3.5 w-3.5" /> Live-Vorschau
+                  </Label>
+                  <div className="overflow-hidden rounded-lg border bg-white">
+                    <iframe
+                      title="Galerie-Vorschau"
+                      srcDoc={previewHtml}
+                      className="h-[420px] w-full"
+                    />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {galleryUrls.filter((u) => u !== coverUrl).length} Galeriebilder · Vorlage {template.label}
+                  </p>
+                </div>
               </div>
             )}
 
             {step === 3 && (
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+                <div className="space-y-3">
+                  <div>
+                    <Label>Dokumente anhängen</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Wähle die Dokumente dieses Objekts, die als Anhang im Exposé aufgeführt werden.
+                    </p>
+                  </div>
+                  {(documents as any[]).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Zu diesem Objekt sind keine Dokumente hinterlegt.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {(documents as any[]).map((d) => {
+                        const checked = attachmentIds.includes(d.id);
+                        return (
+                          <label
+                            key={d.id}
+                            className={cn(
+                              "flex cursor-pointer items-center gap-3 rounded-lg border p-3 text-sm transition",
+                              checked ? "border-primary bg-primary/5" : "hover:border-primary/40",
+                            )}
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={() =>
+                                setAttachmentIds((prev) =>
+                                  prev.includes(d.id) ? prev.filter((x) => x !== d.id) : [...prev, d.id],
+                                )
+                              }
+                            />
+                            <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <span className="min-w-0 flex-1 truncate">{d.file_name}</span>
+                            {d.document_type && (
+                              <Badge variant="outline" className="text-[10px]">{d.document_type}</Badge>
+                            )}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2 lg:sticky lg:top-0 lg:self-start">
+                  <Label className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Eye className="h-3.5 w-3.5" /> Live-Vorschau
+                  </Label>
+                  <div className="overflow-hidden rounded-lg border bg-white">
+                    <iframe title="Anhänge-Vorschau" srcDoc={previewHtml} className="h-[420px] w-full" />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">{attachmentIds.length} Anhänge ausgewählt</p>
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
               <div className="space-y-4">
                 <label className="flex items-center gap-2 text-sm">
                   <Checkbox checked={withContact} onCheckedChange={() => setWithContact((v) => !v)} />
