@@ -114,17 +114,13 @@ function MatchingPage() {
   });
   const coverByProperty = useMemo(() => {
     const map = new Map<string, string>();
-    const toPublicUrl = (path: string) => {
-      if (!path) return path;
-      if (/^https?:\/\//i.test(path) || path.startsWith("data:")) return path;
-      return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
-    };
     for (const m of media as any[]) {
       if (!m.file_url) continue;
       if (!map.has(m.property_id)) map.set(m.property_id, toPublicUrl(m.file_url));
     }
     return map;
   }, [media]);
+
   const { data: disclosures = [] } = useQuery({
     queryKey: ["self_disclosures_all"],
     queryFn: async () =>
