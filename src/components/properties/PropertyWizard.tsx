@@ -812,6 +812,35 @@ function Step2Structure({ d, update, buildings }: { d: WizardData; update: (p: P
   );
 }
 
+const FLOOR_OPTIONS = ["2. Untergeschoss", "1. Untergeschoss", "Erdgeschoss", "Hochparterre", "1. Obergeschoss", "2. Obergeschoss", "3. Obergeschoss", "4. Obergeschoss", "5. Obergeschoss", "6. Obergeschoss", "7. Obergeschoss", "8. Obergeschoss", "9. Obergeschoss", "10. Obergeschoss", "Attika", "Dachgeschoss"];
+
+/** Eine einzelne Stockwerkangabe ergibt nur bei Einheiten in einem Gebäude Sinn. */
+export function showsSingleFloor(d: Pick<WizardData, "structure" | "property_type">) {
+  if (d.structure === "building" || d.property_type === "mixed_use") return false;
+  if (d.property_type === "land") return false;
+  return d.structure === "unit_in_building" || d.property_type === "apartment" || d.property_type === "commercial" || d.property_type === "parking";
+}
+
+/** Anzahl Stockwerke ist bei ganzen Gebäuden/Häusern relevant. */
+export function showsTotalFloors(d: Pick<WizardData, "structure" | "property_type">) {
+  if (d.property_type === "land" || d.property_type === "parking") return false;
+  return d.structure !== "unit_in_building";
+}
+
+function FloorSelect({ value, onChange, label = "Stockwerk" }: { value: string; onChange: (v: string) => void; label?: string }) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      <Select value={value || undefined} onValueChange={onChange}>
+        <SelectTrigger><SelectValue placeholder="Stockwerk wählen" /></SelectTrigger>
+        <SelectContent>
+          {FLOOR_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 function Step3Basics({ d, update, owners, employees }: { d: WizardData; update: (p: Partial<WizardData>) => void; owners: any[]; employees: any[] }) {
   const { t } = useTranslation();
   return (
