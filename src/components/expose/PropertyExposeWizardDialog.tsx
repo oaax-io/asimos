@@ -895,7 +895,11 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
                   {attachmentIds.length ? ` · ${attachmentIds.length} Anhänge` : ""}
                   {contact.name ? ` · Ansprechperson ${contact.name}` : ""}
                 </p>
-                <iframe title="Exposé-Vorschau" srcDoc={previewHtml} className="h-[60vh] w-full rounded-lg border bg-white" />
+                <iframe title="Exposé-Vorschau" srcDoc={previewHtml} className="h-[60vh] w-full rounded-lg border bg-muted" />
+                <p className="text-[11px] text-muted-foreground">
+                  Jede Seite wird als einzelnes Blatt dargestellt; die gestrichelte Linie markiert den Seitenumbruch. Die Kontaktseite mit Ansprechperson und Firma steht immer am Schluss.
+                </p>
+
               </div>
             )}
 
