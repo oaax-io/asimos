@@ -1072,7 +1072,9 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
       const base = prev ?? images;
       if (!dragPath || dragPath === target) return base;
       const next = base.filter((p) => p !== dragPath);
-      next.splice(next.indexOf(target), 0, dragPath);
+      const targetIdx = next.indexOf(target);
+      const insertIdx = dropSide === "after" ? targetIdx + 1 : targetIdx;
+      next.splice(insertIdx, 0, dragPath);
       return next;
     });
     setDragPath(null);
