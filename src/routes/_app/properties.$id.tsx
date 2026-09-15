@@ -1063,6 +1063,7 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
   const [orderDraft, setOrderDraft] = useState<string[] | null>(null);
   const [dragPath, setDragPath] = useState<string | null>(null);
   const [dragOverPath, setDragOverPath] = useState<string | null>(null);
+  const [dropSide, setDropSide] = useState<"before" | "after" | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
   const orderList = orderDraft ?? images;
 
