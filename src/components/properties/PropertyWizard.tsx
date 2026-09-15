@@ -468,6 +468,75 @@ export function PropertyWizard({
 
   const currentStepKey = STEP_KEYS[step];
 
+  const stepContent = (idx: number) => {
+    switch (idx) {
+      case 0: return <Step1Type d={d} update={update} />;
+      case 1: return <Step2Structure d={d} update={update} buildings={buildings.data ?? []} />;
+      case 2: return <Step3Basics d={d} update={update} owners={owners.data ?? []} employees={employees.data ?? []} />;
+      case 3: return <Step4Address d={d} update={update} />;
+      case 4: return <Step5Areas d={d} update={update} />;
+      case 5: return <Step6Price d={d} update={update} />;
+      case 6: return <Step7Equipment d={d} update={update} />;
+      case 7: return <Step8Media d={d} update={update} />;
+      case 8: return showUnitsStep ? <Step9Units d={d} update={update} /> : null;
+      default: return <Step10Summary d={d} owners={owners.data ?? []} employees={employees.data ?? []} />;
+    }
+  };
+
+  if (mode === "edit") {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          className="flex max-h-[95dvh] w-[95vw] max-w-5xl flex-col gap-0 overflow-hidden p-0"
+          style={{ display: "flex", flexDirection: "column" }}
+        >
+          <DialogHeader className="shrink-0 border-b p-6 pb-4">
+            <DialogTitle className="font-display text-xl">{t("propertyWizard.titleEdit")}</DialogTitle>
+            <DialogDescription>{d.title || t("propertyWizard.titleEdit")}</DialogDescription>
+          </DialogHeader>
+
+          <Tabs
+            value={String(step)}
+            onValueChange={(v) => setStep(Number(v))}
+            className="flex min-h-0 flex-1 flex-col gap-0"
+          >
+            <div className="shrink-0 overflow-x-auto border-b px-4 py-2">
+              <TabsList className="inline-flex h-auto w-max flex-nowrap gap-1 bg-transparent p-0">
+                {visibleSteps.map((s) => (
+                  <TabsTrigger
+                    key={s.idx}
+                    value={String(s.idx)}
+                    className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
+                  >
+                    {t(`propertyWizard.steps.${s.key}`)}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto p-6">
+              {stepContent(step)}
+            </div>
+          </Tabs>
+
+          <div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-between gap-2 border-t bg-background p-4">
+            <div className="hidden text-xs text-muted-foreground md:block">
+              {t("propertyWizard.mandatoryHint")}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
+                {t("common.cancel", { defaultValue: "Abbrechen" })}
+              </Button>
+              <Button onClick={finish} disabled={!d.title || submitting}>
+                <Check className="mr-1 h-4 w-4" /> {t("propertyWizard.nav.saveEdit")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
