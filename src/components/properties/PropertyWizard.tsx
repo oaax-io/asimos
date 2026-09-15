@@ -230,7 +230,7 @@ export function buildSubmitPayload(d: WizardData): WizardSubmit {
     postal_code: d.postal_code || null,
     city: d.city || null,
     country: d.country || null,
-    floor: num(d.floor),
+    floor: showsSingleFloor(d) ? num(d.floor) : null,
     location_description: d.location_description || null,
     latitude: d.latitude,
     longitude: d.longitude,
@@ -242,7 +242,7 @@ export function buildSubmitPayload(d: WizardData): WizardSubmit {
     plot_area: num(d.plot_area),
     rooms: num(d.rooms),
     bathrooms: num(d.bathrooms),
-    total_floors: num(d.total_floors),
+    total_floors: showsTotalFloors(d) ? num(d.total_floors) : null,
     year_built: num(d.year_built),
     renovated_at: num(d.renovated_at),
     price: num(d.price),
@@ -812,6 +812,42 @@ function Step2Structure({ d, update, buildings }: { d: WizardData; update: (p: P
   );
 }
 
+const FLOOR_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "-2", label: "2. Untergeschoss" },
+  { value: "-1", label: "1. Untergeschoss" },
+  { value: "0", label: "Erdgeschoss" },
+  ...Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: `${i + 1}. Obergeschoss` })),
+];
+
+/** Eine einzelne Stockwerkangabe ergibt nur bei Einheiten in einem Gebäude Sinn. */
+export function showsSingleFloor(d: Pick<WizardData, "structure" | "property_type">) {
+  if (d.structure === "building" || d.property_type === "mixed_use") return false;
+  if (d.property_type === "land") return false;
+  return d.structure === "unit_in_building" || d.property_type === "apartment" || d.property_type === "commercial" || d.property_type === "parking";
+}
+
+/** Anzahl Stockwerke ist bei ganzen Gebäuden/Häusern relevant. */
+export function showsTotalFloors(d: Pick<WizardData, "structure" | "property_type">) {
+  if (d.property_type === "land" || d.property_type === "parking") return false;
+  return d.structure !== "unit_in_building";
+}
+
+function FloorSelect({ value, onChange, label = "Stockwerk", store = "value" }: { value: string; onChange: (v: string) => void; label?: string; store?: "value" | "label" }) {
+  const options = FLOOR_OPTIONS.map((option) => ({ key: store === "label" ? option.label : option.value, label: option.label }));
+  const current = options.some((option) => option.key === value) ? value : undefined;
+  return (
+    <div>
+      <Label>{label}</Label>
+      <Select value={current} onValueChange={onChange}>
+        <SelectTrigger><SelectValue placeholder="Stockwerk wählen" /></SelectTrigger>
+        <SelectContent>
+          {options.map((option) => <SelectItem key={option.key} value={option.key}>{option.label}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 function Step3Basics({ d, update, owners, employees }: { d: WizardData; update: (p: Partial<WizardData>) => void; owners: any[]; employees: any[] }) {
   const { t } = useTranslation();
   return (
@@ -864,11 +900,25 @@ function Step3Basics({ d, update, owners, employees }: { d: WizardData; update: 
           </Select>
         </div>
       </div>
+      {(showsSingleFloor(d) || showsTotalFloors(d)) && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {showsSingleFloor(d) && <FloorSelect value={d.floor} onChange={(v) => update({ floor: v })} />}
+          {showsTotalFloors(d) && (
+            <div>
+              <Label>{t("propertyWizard.step5.totalFloors")}</Label>
+              <Input type="number" value={d.total_floors} onChange={(e) => update({ total_floors: e.target.value })} />
+            </div>
+          )}
+        </div>
+      )}
+      {(d.structure === "building" || d.property_type === "mixed_use") && (
+        <p className="rounded-md border border-dashed bg-muted/20 p-3 text-xs text-muted-foreground">
+          Bei Mehrfamilien- und Renditeobjekten werden die einzelnen Stockwerke pro Einheit im Schritt «Einheiten» erfasst.
+        </p>
+      )}
     </div>
   );
 }
-
-const FLOOR_OPTIONS = ["2. Untergeschoss", "1. Untergeschoss", "Erdgeschoss", "Hochparterre", "1. Obergeschoss", "2. Obergeschoss", "3. Obergeschoss", "4. Obergeschoss", "5. Obergeschoss", "6. Obergeschoss", "7. Obergeschoss", "8. Obergeschoss", "9. Obergeschoss", "10. Obergeschoss", "Attika", "Dachgeschoss"];
 
 function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
   const { t } = useTranslation();
@@ -909,17 +959,8 @@ function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<Wizard
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="sm:col-span-2"><Label>{t("propertyWizard.step4.street")}</Label><AddressAutocomplete value={d.address} onChange={(address) => update({ address, latitude: null, longitude: null })} onSelect={(address) => update({ address: address.street || address.label, postal_code: address.postal_code, city: address.city, country: address.country_code || d.country, latitude: address.latitude, longitude: address.longitude, parcel_no: "", e_grid: "" })} country="ch,li,de,at" provider="google" /></div>
-        <div>
-          <Label>Stockwerk</Label>
-          <Select value={d.floor || undefined} onValueChange={(value) => update({ floor: value })}>
-            <SelectTrigger><SelectValue placeholder="Stockwerk wählen" /></SelectTrigger>
-            <SelectContent>
-              {FLOOR_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="grid grid-cols-1 gap-3">
+        <div><Label>{t("propertyWizard.step4.street")}</Label><AddressAutocomplete value={d.address} onChange={(address) => update({ address, latitude: null, longitude: null })} onSelect={(address) => update({ address: address.street || address.label, postal_code: address.postal_code, city: address.city, country: address.country_code || d.country, latitude: address.latitude, longitude: address.longitude, parcel_no: "", e_grid: "" })} country="ch,li,de,at" provider="google" /></div>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div><Label>{t("propertyWizard.step4.postalCode")}</Label><Input value={d.postal_code} onChange={(e) => update({ postal_code: e.target.value })} /></div>
@@ -968,8 +1009,6 @@ function Step5Areas({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
       <div className="grid grid-cols-4 gap-3">
         <div><Label>{t("propertyWizard.step5.rooms")}</Label><Input type="number" step="0.5" value={d.rooms} onChange={(e) => update({ rooms: e.target.value })} /></div>
         <div><Label>{t("propertyWizard.step5.bathrooms")}</Label><Input type="number" step="0.5" value={d.bathrooms} onChange={(e) => update({ bathrooms: e.target.value })} /></div>
-        <div><Label>{t("propertyWizard.step5.floor")}</Label><Input value={d.floor} onChange={(e) => update({ floor: e.target.value })} /></div>
-        <div><Label>{t("propertyWizard.step5.totalFloors")}</Label><Input type="number" value={d.total_floors} onChange={(e) => update({ total_floors: e.target.value })} /></div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div><Label>{t("propertyWizard.step5.yearBuilt")}</Label><Input type="number" value={d.year_built} onChange={(e) => update({ year_built: e.target.value })} /></div>
@@ -1384,7 +1423,7 @@ function Step9Units({ d, update }: { d: WizardData; update: (p: Partial<WizardDa
                     </SelectContent>
                   </Select>
                 </div>
-                <div><Label>{t("propertyWizard.step9.floor")}</Label><Input value={u.unit_floor} onChange={(e) => patchUnit(i, { unit_floor: e.target.value })} placeholder={t("propertyWizard.step9.floorPlaceholder")} /></div>
+                <FloorSelect value={u.unit_floor} onChange={(v) => patchUnit(i, { unit_floor: v })} label={t("propertyWizard.step9.floor")} store="label" />
               </div>
               <div className="grid grid-cols-4 gap-3">
                 <div><Label>{t("propertyWizard.step9.rooms")}</Label><Input type="number" step="0.5" value={u.rooms} onChange={(e) => patchUnit(i, { rooms: e.target.value })} /></div>
