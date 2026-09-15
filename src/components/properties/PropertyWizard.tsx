@@ -812,7 +812,12 @@ function Step2Structure({ d, update, buildings }: { d: WizardData; update: (p: P
   );
 }
 
-const FLOOR_OPTIONS = ["2. Untergeschoss", "1. Untergeschoss", "Erdgeschoss", "Hochparterre", "1. Obergeschoss", "2. Obergeschoss", "3. Obergeschoss", "4. Obergeschoss", "5. Obergeschoss", "6. Obergeschoss", "7. Obergeschoss", "8. Obergeschoss", "9. Obergeschoss", "10. Obergeschoss", "Attika", "Dachgeschoss"];
+const FLOOR_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "-2", label: "2. Untergeschoss" },
+  { value: "-1", label: "1. Untergeschoss" },
+  { value: "0", label: "Erdgeschoss" },
+  ...Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: `${i + 1}. Obergeschoss` })),
+];
 
 /** Eine einzelne Stockwerkangabe ergibt nur bei Einheiten in einem Gebäude Sinn. */
 export function showsSingleFloor(d: Pick<WizardData, "structure" | "property_type">) {
@@ -827,14 +832,16 @@ export function showsTotalFloors(d: Pick<WizardData, "structure" | "property_typ
   return d.structure !== "unit_in_building";
 }
 
-function FloorSelect({ value, onChange, label = "Stockwerk" }: { value: string; onChange: (v: string) => void; label?: string }) {
+function FloorSelect({ value, onChange, label = "Stockwerk", store = "value" }: { value: string; onChange: (v: string) => void; label?: string; store?: "value" | "label" }) {
+  const options = FLOOR_OPTIONS.map((option) => ({ key: store === "label" ? option.label : option.value, label: option.label }));
+  const current = options.some((option) => option.key === value) ? value : undefined;
   return (
     <div>
       <Label>{label}</Label>
-      <Select value={value || undefined} onValueChange={onChange}>
+      <Select value={current} onValueChange={onChange}>
         <SelectTrigger><SelectValue placeholder="Stockwerk wählen" /></SelectTrigger>
         <SelectContent>
-          {FLOOR_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+          {options.map((option) => <SelectItem key={option.key} value={option.key}>{option.label}</SelectItem>)}
         </SelectContent>
       </Select>
     </div>
