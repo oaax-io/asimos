@@ -124,7 +124,7 @@ function MatchingPage() {
     const map = new Map<string, string>();
     for (const m of media as any[]) {
       if (!m.file_url) continue;
-      if (!map.has(m.property_id)) map.set(m.property_id, toPublicUrl(m.file_url));
+      if (!map.has(m.property_id)) map.set(m.property_id, toPublicUrl(m.file_url)!);
     }
     return map;
   }, [media]);
