@@ -11,12 +11,20 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { matchClientToProperties, scoreMatch, type ScoreBreakdown, type FinancialCapacity } from "@/lib/matching";
 import { formatCurrency, clientTypeLabels, propertyTypeLabels } from "@/lib/format";
-import { Sparkles, ExternalLink, Users, Search, Target, Plus, Pencil, Bell, BellRing } from "lucide-react";
+import { Sparkles, ExternalLink, Users, Search, Target, Plus, Pencil, Bell, BellRing, ImageOff } from "lucide-react";
 import { SearchProfileDialog, type SearchProfile } from "@/components/matching/SearchProfileDialog";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { EmptyState } from "@/components/EmptyState";
 import type { Tables } from "@/integrations/supabase/types";
+
+/** Wandelt einen Storage-Pfad in eine öffentliche URL um (URLs bleiben unverändert). */
+function toPublicUrl(path?: string | null): string | undefined {
+  if (!path) return undefined;
+  if (/^https?:\/\//i.test(path) || path.startsWith("data:") || path.startsWith("blob:")) return path;
+  return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+}
+
 
 type Client = Tables<"clients">;
 type Property = Tables<"properties">;
@@ -114,17 +122,13 @@ function MatchingPage() {
   });
   const coverByProperty = useMemo(() => {
     const map = new Map<string, string>();
-    const toPublicUrl = (path: string) => {
-      if (!path) return path;
-      if (/^https?:\/\//i.test(path) || path.startsWith("data:")) return path;
-      return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
-    };
     for (const m of media as any[]) {
       if (!m.file_url) continue;
-      if (!map.has(m.property_id)) map.set(m.property_id, toPublicUrl(m.file_url));
+      if (!map.has(m.property_id)) map.set(m.property_id, toPublicUrl(m.file_url)!);
     }
     return map;
   }, [media]);
+
   const { data: disclosures = [] } = useQuery({
     queryKey: ["self_disclosures_all"],
     queryFn: async () =>
@@ -698,14 +702,27 @@ function MatchCard({
   reasons: string[];
   onSave: () => void;
 }) {
-  const cover = coverUrl ?? p.images?.[0];
+  const cover = coverUrl ?? toPublicUrl(p.images?.[0]);
+  const [imgFailed, setImgFailed] = useState(false);
   return (
     <Card className="overflow-hidden transition hover:shadow-glow">
       <div className="aspect-[16/10] overflow-hidden bg-muted">
-        {cover
-          ? <img src={cover} alt={p.title} className="h-full w-full object-cover" loading="lazy" />
-          : <div className="flex h-full w-full items-center justify-center bg-gradient-soft text-muted-foreground">Kein Bild</div>}
+        {cover && !imgFailed ? (
+          <img
+            src={cover}
+            alt={p.title}
+            className="h-full w-full object-cover"
+            loading="lazy"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-soft text-muted-foreground">
+            <ImageOff className="h-6 w-6 opacity-60" />
+            <span className="text-xs">Kein Bild</span>
+          </div>
+        )}
       </div>
+
       <CardContent className="p-4">
         {client && (
           <p className="mb-1 truncate text-xs font-medium text-primary">
