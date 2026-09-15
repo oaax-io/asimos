@@ -740,17 +740,18 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
               </div>
             )}
 
-            {step === 4 && (
+            {step === 5 && (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
                   Vorschau · Vorlage {template.label} · {galleryUrls.filter((u) => u !== coverUrl).length} Galeriebilder
+                  {attachmentIds.length ? ` · ${attachmentIds.length} Anhänge` : ""}
                   {contact.name ? ` · Ansprechperson ${contact.name}` : ""}
                 </p>
                 <iframe title="Exposé-Vorschau" srcDoc={previewHtml} className="h-[60vh] w-full rounded-lg border bg-white" />
               </div>
             )}
 
-            {step === 5 && (
+            {step === 6 && (
               <div className="space-y-4 py-6 text-center">
                 <FileDown className="mx-auto h-10 w-10 text-primary" />
                 <div>
