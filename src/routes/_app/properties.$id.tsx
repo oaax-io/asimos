@@ -486,8 +486,11 @@ function PropertyDetail() {
             {statusFlags?.hasActiveMandate && <Badge className="bg-emerald-600 hover:bg-emerald-600">Aktives Mandat</Badge>}
             {statusFlags?.hasNda && <Badge variant="outline" className="border-primary/50 text-primary">NDA vorhanden</Badge>}
           </div>
-          {p.reference_no && (
-            <p className="font-mono text-xs font-semibold tracking-wide text-primary">{p.reference_no}</p>
+          {(p.reference_no || p.parcel_no) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-xs font-semibold tracking-wide text-primary">
+              {p.reference_no && <span>{p.reference_no}</span>}
+              {p.parcel_no && <span className="inline-flex items-center gap-1 text-muted-foreground"><MapPin className="h-3 w-3" />Parzelle {p.parcel_no}</span>}
+            </div>
           )}
           <h1 className="font-display text-2xl font-bold leading-tight">{p.title}</h1>
 
