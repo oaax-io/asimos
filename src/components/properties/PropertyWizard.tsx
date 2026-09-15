@@ -893,11 +893,25 @@ function Step3Basics({ d, update, owners, employees }: { d: WizardData; update: 
           </Select>
         </div>
       </div>
+      {(showsSingleFloor(d) || showsTotalFloors(d)) && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {showsSingleFloor(d) && <FloorSelect value={d.floor} onChange={(v) => update({ floor: v })} />}
+          {showsTotalFloors(d) && (
+            <div>
+              <Label>{t("propertyWizard.step5.totalFloors")}</Label>
+              <Input type="number" value={d.total_floors} onChange={(e) => update({ total_floors: e.target.value })} />
+            </div>
+          )}
+        </div>
+      )}
+      {(d.structure === "building" || d.property_type === "mixed_use") && (
+        <p className="rounded-md border border-dashed bg-muted/20 p-3 text-xs text-muted-foreground">
+          Bei Mehrfamilien- und Renditeobjekten werden die einzelnen Stockwerke pro Einheit im Schritt «Einheiten» erfasst.
+        </p>
+      )}
     </div>
   );
 }
-
-const FLOOR_OPTIONS = ["2. Untergeschoss", "1. Untergeschoss", "Erdgeschoss", "Hochparterre", "1. Obergeschoss", "2. Obergeschoss", "3. Obergeschoss", "4. Obergeschoss", "5. Obergeschoss", "6. Obergeschoss", "7. Obergeschoss", "8. Obergeschoss", "9. Obergeschoss", "10. Obergeschoss", "Attika", "Dachgeschoss"];
 
 function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<WizardData>) => void }) {
   const { t } = useTranslation();
