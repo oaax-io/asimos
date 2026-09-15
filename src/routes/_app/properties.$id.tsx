@@ -1061,31 +1061,8 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
   const current = hasImages && !isMoreSlide ? images[Math.min(idx, images.length - 1)] : null;
 
   const [orderDraft, setOrderDraft] = useState<string[] | null>(null);
-  const [dragPath, setDragPath] = useState<string | null>(null);
-  const [dragOverPath, setDragOverPath] = useState<string | null>(null);
-  const [dropSide, setDropSide] = useState<"before" | "after" | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
   const orderList = orderDraft ?? images;
-
-  const resetDrag = () => {
-    setDragPath(null);
-    setDragOverPath(null);
-    setDropSide(null);
-  };
-
-  const dropOnPath = (target: string, side = dropSide) => {
-    setOrderDraft((prev) => {
-      const base = prev ?? images;
-      if (!dragPath || dragPath === target) return base;
-      const next = base.filter((p) => p !== dragPath);
-      const targetIdx = next.indexOf(target);
-      if (targetIdx < 0) return base;
-      const insertIdx = side === "after" ? targetIdx + 1 : targetIdx;
-      next.splice(insertIdx, 0, dragPath);
-      return next;
-    });
-    resetDrag();
-  };
 
   const saveOrder = async () => {
     if (!orderDraft) return;
