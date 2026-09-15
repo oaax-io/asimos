@@ -721,14 +721,12 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
           ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
         </div>
       </div>
-      ${footer(d, t, pages.length + 1, 0)}
+      ${footer(d, t)}
     </div>`);
   }
 
+  const filled = orderedPages(d, G);
 
-
-  const total = pages.length;
-  const filled = pages.map((p, i) => p.replace(`${i + 1} / 0`, `${i + 1} / ${total}`));
 
   const css = `
     ${pageWrapStart(t)}
