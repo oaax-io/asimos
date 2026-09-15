@@ -159,6 +159,8 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   const [galleryLayout, setGalleryLayout] = useState<GalerieLayout>("grid2");
   const [generating, setGenerating] = useState(false);
   const [attachmentIds, setAttachmentIds] = useState<string[]>([]);
+  const [withMacro, setWithMacro] = useState(false);
+  const [withMarket, setWithMarket] = useState(false);
   const [contactMode, setContactMode] = useState<"employee" | "custom">("employee");
   const [contactUserId, setContactUserId] = useState<string | null>(null);
   const [customContact, setCustomContact] = useState({ name: "", email: "", phone: "", role: "" });
@@ -190,6 +192,21 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
         .eq("related_id", propertyId)
         .order("created_at", { ascending: false });
       return data ?? [];
+    },
+  });
+
+  const { data: marketAnalysis } = useQuery({
+    queryKey: ["expose-wizard-market", propertyId],
+    enabled: open && !!propertyId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("property_market_analyses")
+        .select("id,sections,created_at")
+        .eq("property_id", propertyId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
     },
   });
 
@@ -290,6 +307,70 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
       .map((f) => ({ label: f.label, value: map[f.key] }));
   }, [property, visibleFacts]);
 
+  const macro = (property as any)?.macro_location as any | null;
+  const marketSections = (marketAnalysis as any)?.sections as any | null;
+
+  const extraSections = useMemo(() => {
+    const out: any[] = [];
+    if (withMacro && macro) {
+      out.push({
+        title: "Makrolage",
+        summary: [macro.summary, [macro.municipality, macro.region].filter(Boolean).join(" · ")]
+          .filter(Boolean)
+          .join(" — "),
+        items: (Array.isArray(macro.categories) ? macro.categories : []).map((c: any) => ({
+          heading: c.title,
+          rating: typeof c.rating === "number" ? `${c.rating}/5` : null,
+          text: c.description,
+          bullets: Array.isArray(c.highlights) ? c.highlights : [],
+        })),
+      });
+    }
+    if (withMarket && marketSections) {
+      const s = marketSections;
+      const items: any[] = [];
+      if (s.location)
+        items.push({
+          heading: "Lageanalyse",
+          rating: s.location.score != null ? `${s.location.score}/10` : null,
+          text: s.location.summary,
+          bullets: Array.isArray(s.location.highlights) ? s.location.highlights : [],
+        });
+      if (s.trend) items.push({ heading: "Markttrend", text: s.trend.outlook });
+      if (s.purchase_price)
+        items.push({
+          heading: "Kaufpreis",
+          text: s.purchase_price.summary ?? null,
+          bullets: [
+            s.purchase_price.price_per_sqm_min && s.purchase_price.price_per_sqm_max
+              ? `Preis pro m²: ${s.purchase_price.price_per_sqm_min}–${s.purchase_price.price_per_sqm_max} ${s.purchase_price.currency ?? "CHF"}`
+              : null,
+            s.purchase_price.estimated_value_min && s.purchase_price.estimated_value_max
+              ? `Verkehrswert: ${s.purchase_price.estimated_value_min}–${s.purchase_price.estimated_value_max} ${s.purchase_price.currency ?? "CHF"}`
+              : null,
+          ].filter(Boolean) as string[],
+        });
+      if (s.rental_price)
+        items.push({
+          heading: "Mietpotenzial",
+          text: s.rental_price.summary ?? null,
+          bullets: [
+            s.rental_price.rent_per_sqm_min && s.rental_price.rent_per_sqm_max
+              ? `Miete pro m²: ${s.rental_price.rent_per_sqm_min}–${s.rental_price.rent_per_sqm_max} ${s.rental_price.currency ?? "CHF"}`
+              : null,
+          ].filter(Boolean) as string[],
+        });
+      if (s.risks?.length)
+        items.push({ heading: "Risiken", bullets: (s.risks as any[]).map((r: any) => (typeof r === "string" ? r : r?.text ?? "")) });
+      out.push({
+        title: "Marktanalyse",
+        summary: s.recommendation?.summary ?? null,
+        items,
+      });
+    }
+    return out;
+  }, [withMacro, withMarket, macro, marketSections]);
+
   const buildHtml = (cover: string | null, gallery: string[]) => {
     const p = property ?? {};
     const cols = GALLERY_OPTIONS.find((o) => o.id === galleryLayout)?.cols ?? 2;
@@ -311,6 +392,7 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
         attachment_doc_names: (documents as any[])
           .filter((d) => attachmentIds.includes(d.id))
           .map((d) => d.file_name as string),
+        extra_sections: extraSections,
         gallery_cols: cols,
         agency_name: company?.name ?? "ASIMO",
         contact_name: contact.name,
@@ -334,7 +416,7 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
   const previewHtml = useMemo(
     () => (step === 2 || step === 3 || step === 5 ? buildHtml(coverUrl, galleryUrls) : ""),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [step, coverUrl, galleryUrls, galleryLayout, template, title, description, withDescription, withFeatures, withContact, contact, facts, company, profile, attachmentIds, documents],
+    [step, coverUrl, galleryUrls, galleryLayout, template, title, description, withDescription, withFeatures, withContact, contact, facts, company, profile, attachmentIds, documents, extraSections],
   );
 
   async function handleGenerate() {
@@ -620,11 +702,59 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div className="space-y-3">
                   <div>
+                    <Label>Zusätzliche Abschnitte</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Analysen aus dem Objekt als eigene Seiten ins Exposé übernehmen.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg border p-3 text-sm transition",
+                        macro ? "cursor-pointer" : "opacity-60",
+                        withMacro ? "border-primary bg-primary/5" : "hover:border-primary/40",
+                      )}
+                    >
+                      <Checkbox
+                        checked={withMacro}
+                        disabled={!macro}
+                        onCheckedChange={() => setWithMacro((v) => !v)}
+                      />
+                      <span className="min-w-0 flex-1">
+                        Makrolage
+                        <span className="block text-xs text-muted-foreground">
+                          {macro ? "KI-Analyse zu Lage, Infrastruktur und Umfeld" : "Noch keine Makrolage generiert"}
+                        </span>
+                      </span>
+                    </label>
+                    <label
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg border p-3 text-sm transition",
+                        marketSections ? "cursor-pointer" : "opacity-60",
+                        withMarket ? "border-primary bg-primary/5" : "hover:border-primary/40",
+                      )}
+                    >
+                      <Checkbox
+                        checked={withMarket}
+                        disabled={!marketSections}
+                        onCheckedChange={() => setWithMarket((v) => !v)}
+                      />
+                      <span className="min-w-0 flex-1">
+                        Marktanalyse
+                        <span className="block text-xs text-muted-foreground">
+                          {marketSections ? "Neuste KI-Marktanalyse dieses Objekts" : "Noch keine Marktanalyse vorhanden"}
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+
+                  <div>
                     <Label>Dokumente anhängen</Label>
                     <p className="text-xs text-muted-foreground">
                       Wähle die Dokumente dieses Objekts, die als Anhang im Exposé aufgeführt werden.
                     </p>
                   </div>
+
                   {(documents as any[]).length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                       Zu diesem Objekt sind keine Dokumente hinterlegt.

@@ -34,6 +34,7 @@ export interface ExposeData {
   pois?: Array<{ name: string; category: string; distance_m: number }>;
   attachment_image_urls?: string[];
   attachment_doc_names?: string[];
+  extra_sections?: ExposeExtraSection[];
   agency_name?: string | null;
   contact_name?: string | null;
   contact_email?: string | null;
@@ -179,12 +180,61 @@ const LOCATION_CSS = (t: ExposeTheme) => `
   .attach-list { list-style: none; padding: 0; font-size: 11pt; }
   .attach-list li { padding: 6px 0; border-bottom: 1px solid ${t.primary}22; display: flex; gap: 8px; align-items: center; }
   .attach-list li::before { content: "📎"; }
+  .xs-summary { font-size: 11pt; line-height: 1.55; margin: 0 0 6mm; opacity: 0.9; }
+  .xs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5mm; }
+  .xs-item { border: 1px solid ${t.primary}22; border-radius: 3px; padding: 4mm; break-inside: avoid; }
+  .xs-item-head { display: flex; justify-content: space-between; align-items: baseline; gap: 4mm; margin-bottom: 2mm; }
+  .xs-item-title { font-family: ${t.titleFont}; font-weight: 700; font-size: 11pt; color: ${t.primary}; }
+  .xs-rating { font-size: 9pt; font-weight: 700; color: ${t.accent}; white-space: nowrap; }
+  .xs-text { font-size: 10pt; line-height: 1.5; margin: 0; opacity: 0.85; }
+  .xs-bullets { list-style: none; padding: 0; margin: 2mm 0 0; font-size: 9.5pt; }
+  .xs-bullets li { padding: 1mm 0 1mm 4mm; position: relative; opacity: 0.85; }
+  .xs-bullets li::before { content: "•"; position: absolute; left: 0; color: ${t.accent}; }
 `;
+
+export interface ExposeExtraSection {
+  title: string;
+  summary?: string | null;
+  items?: Array<{ heading?: string | null; rating?: string | null; text?: string | null; bullets?: string[] }>;
+}
+
+function extraSectionsPages(d: ExposeData, t: ExposeTheme, headerHtml: (label: string) => string, startPage: number): string[] {
+  const sections = d.extra_sections ?? [];
+  const out: string[] = [];
+  for (const s of sections) {
+    const items = (s.items ?? []).filter((i) => i.heading || i.text || (i.bullets ?? []).length);
+    const chunks: typeof items[] = [];
+    for (let i = 0; i < Math.max(items.length, 1); i += 6) chunks.push(items.slice(i, i + 6));
+    chunks.forEach((chunk, idx) => {
+      out.push(`
+    <div class="page">
+      ${headerHtml(s.title)}
+      ${idx === 0 && s.summary ? `<p class="xs-summary">${esc(s.summary)}</p>` : ""}
+      <div class="xs-grid">
+        ${chunk
+          .map(
+            (i) => `<div class="xs-item">
+              <div class="xs-item-head">
+                <span class="xs-item-title">${esc(i.heading ?? "")}</span>
+                ${i.rating ? `<span class="xs-rating">${esc(i.rating)}</span>` : ""}
+              </div>
+              ${i.text ? `<p class="xs-text">${esc(i.text)}</p>` : ""}
+              ${(i.bullets ?? []).length ? `<ul class="xs-bullets">${(i.bullets ?? []).map((b) => `<li>${esc(b)}</li>`).join("")}</ul>` : ""}
+            </div>`,
+          )
+          .join("")}
+      </div>
+      ${footer(d, t, startPage + out.length, 0)}
+    </div>`);
+    });
+  }
+  return out;
+}
 
 function attachmentsPages(d: ExposeData, t: ExposeTheme, headerHtml: (label: string) => string, startPage: number): string[] {
   const imgs = d.attachment_image_urls ?? [];
   const docs = d.attachment_doc_names ?? [];
-  const out: string[] = [];
+  const out: string[] = extraSectionsPages(d, t, headerHtml, startPage);
   for (let i = 0; i < imgs.length; i += 4) {
     const slice = imgs.slice(i, i + 4);
     out.push(`
@@ -208,6 +258,7 @@ function attachmentsPages(d: ExposeData, t: ExposeTheme, headerHtml: (label: str
   }
   return out;
 }
+
 
 
 
