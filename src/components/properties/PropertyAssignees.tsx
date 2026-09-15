@@ -67,7 +67,7 @@ export function PropertyAssigneePicker({
         <button
           type="button"
           className="flex items-center gap-1 rounded-full p-0.5 transition hover:bg-accent"
-          onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+          onClick={(e) => { e.stopPropagation(); }}
           title="Mitarbeitende zuweisen"
         >
           <AssigneeAvatars ids={assignedIds} employeeMap={employeeMap} size={size} />
