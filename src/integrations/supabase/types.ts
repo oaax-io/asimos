@@ -3116,9 +3116,12 @@ export type Database = {
           is_unit: boolean
           land_price: number | null
           land_register_no: string | null
+          latitude: number | null
           listing_type: Database["public"]["Enums"]["listing_type"]
           living_area: number | null
+          location_description: string | null
           loggia_area: number | null
+          longitude: number | null
           macro_location: Json | null
           marketing_type: string | null
           minergie_standard: string | null
@@ -3230,9 +3233,12 @@ export type Database = {
           is_unit?: boolean
           land_price?: number | null
           land_register_no?: string | null
+          latitude?: number | null
           listing_type?: Database["public"]["Enums"]["listing_type"]
           living_area?: number | null
+          location_description?: string | null
           loggia_area?: number | null
+          longitude?: number | null
           macro_location?: Json | null
           marketing_type?: string | null
           minergie_standard?: string | null
@@ -3344,9 +3350,12 @@ export type Database = {
           is_unit?: boolean
           land_price?: number | null
           land_register_no?: string | null
+          latitude?: number | null
           listing_type?: Database["public"]["Enums"]["listing_type"]
           living_area?: number | null
+          location_description?: string | null
           loggia_area?: number | null
+          longitude?: number | null
           macro_location?: Json | null
           marketing_type?: string | null
           minergie_standard?: string | null

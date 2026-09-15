@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const InputSchema = z.object({
   property: z.record(z.string(), z.any()),
@@ -81,5 +82,37 @@ ${data.extra ? `\nZusätzliche Hinweise des Maklers:\n${data.extra}` : ""}`;
     }
 
     if (!text.trim()) throw new Error("Die KI hat keinen Text zurückgegeben. Bitte erneut versuchen.");
+    return { text: text.trim() };
+  });
+
+const LocationInputSchema = z.object({
+  address: z.string().max(300).optional(),
+  postal_code: z.string().max(30).optional(),
+  city: z.string().max(120).optional(),
+  country: z.string().max(80).optional(),
+  property_type: z.string().max(80).optional(),
+  extra: z.string().max(1000).optional(),
+});
+
+export const generateLocationDescription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => LocationInputSchema.parse(data))
+  .handler(async ({ data }): Promise<{ text: string }> => {
+    const apiKey = process.env["LOVABLE_API_KEY"];
+    if (!apiKey) throw new Error("KI ist nicht konfiguriert.");
+    const prompt = `Du bist ein Schweizer Immobilienmakler. Formuliere eine prägnante Lagebeschreibung in Schweizer Hochdeutsch (kein ß) für ein Exposé.
+Adresse: ${[data.address, data.postal_code, data.city, data.country].filter(Boolean).join(", ")}
+Objektart: ${data.property_type ?? "nicht angegeben"}
+Hinweise: ${data.extra ?? "keine"}
+Schreibe 80–130 Wörter in zwei kurzen Absätzen. Beschreibe nur plausible allgemeine Lagequalitäten. Erfinde keine exakten Gehzeiten, Distanzen, Einrichtungen oder Verkehrslinien. Gib ausschliesslich den fertigen Text zurück.`;
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
+      body: JSON.stringify({ model: "openai/gpt-5-mini", input: prompt, store: false }),
+    });
+    if (!response.ok) throw new Error(response.status === 429 ? "KI-Limit erreicht – bitte später erneut versuchen." : `KI-Fehler (${response.status}).`);
+    const json = await response.json() as { output?: Array<{ content?: Array<{ type?: string; text?: string }> }>; output_text?: string };
+    const text = json.output_text ?? json.output?.flatMap((item) => item.content ?? []).find((item) => item.type === "output_text")?.text ?? "";
+    if (!text.trim()) throw new Error("Die KI hat keinen Text zurückgegeben.");
     return { text: text.trim() };
   });
