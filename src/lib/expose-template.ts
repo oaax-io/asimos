@@ -35,6 +35,8 @@ export interface ExposeData {
   attachment_image_urls?: string[];
   attachment_doc_names?: string[];
   extra_sections?: ExposeExtraSection[];
+  section_order?: string[];
+
   agency_name?: string | null;
   contact_name?: string | null;
   contact_email?: string | null;
@@ -132,13 +134,59 @@ function pageWrapStart(t: ExposeTheme): string {
 
 }
 
-function footer(d: ExposeData, t: ExposeTheme, page: number, total: number): string {
+function footer(d: ExposeData, t: ExposeTheme, _page?: number, _total?: number): string {
   return `<div class="footer">
     <span>${esc(d.agency_name ?? "ASIMO Real Estate")} · ${esc(t.templateLabel ?? "")}</span>
     <span>${esc(d.title)}</span>
-    <span>${page} / ${total}</span>
+    <span>__PAGENO__ / __PAGETOTAL__</span>
   </div>`;
 }
+
+export const EXPOSE_SECTION_KEYS = [
+  "cover",
+  "facts",
+  "gallery",
+  "location",
+  "extras",
+  "attachments",
+  "contact",
+] as const;
+export type ExposeSectionKey = (typeof EXPOSE_SECTION_KEYS)[number];
+
+export const EXPOSE_SECTION_LABELS: Record<ExposeSectionKey, string> = {
+  cover: "Titelseite",
+  facts: "Eckdaten & Beschreibung",
+  gallery: "Galerie",
+  location: "Lage",
+  extras: "Makrolage / Marktanalyse",
+  attachments: "Anhänge",
+  contact: "Ansprechperson & Firma",
+};
+
+type SectionGroups = Record<ExposeSectionKey, string[]>;
+
+function newGroups(): SectionGroups {
+  return { cover: [], facts: [], gallery: [], location: [], extras: [], attachments: [], contact: [] };
+}
+
+function orderedPages(d: ExposeData, groups: SectionGroups): string[] {
+  const order: ExposeSectionKey[] = [];
+  for (const k of d.section_order ?? []) {
+    if ((EXPOSE_SECTION_KEYS as readonly string[]).includes(k) && !order.includes(k as ExposeSectionKey)) {
+      order.push(k as ExposeSectionKey);
+    }
+  }
+  for (const k of EXPOSE_SECTION_KEYS) if (!order.includes(k)) order.push(k);
+  const pages = order.flatMap((k) => groups[k]);
+  const total = pages.length;
+  return pages.map((p, i) =>
+    p
+      .split("__PAGENOPAD__").join(String(i + 1).padStart(2, "0"))
+      .split("__PAGENO__").join(String(i + 1))
+      .split("__PAGETOTAL__").join(String(total)),
+  );
+}
+
 
 const POI_ICONS: Record<string, string> = {
   transit: "🚆", school: "🎓", shop: "🛒", restaurant: "🍽",
