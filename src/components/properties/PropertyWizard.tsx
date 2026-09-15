@@ -933,7 +933,7 @@ function Step4Address({ d, update }: { d: WizardData; update: (p: Partial<Wizard
               <div className="flex items-center gap-2 font-medium"><MapPin className="h-4 w-4 text-primary" /> Amtliche Parzellendaten</div>
               <p className="mt-1 text-xs text-muted-foreground">Grundstücknummer und EGRID aus dem Schweizer Kataster.</p>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={handleParcelLookup} disabled={parcelLoading || d.latitude == null}>
+            <Button type="button" variant="outline" size="sm" onClick={handleParcelLookup} disabled={parcelLoading}>
               {parcelLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4" />} Parzelle abrufen
             </Button>
           </div>
