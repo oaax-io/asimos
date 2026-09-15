@@ -25,7 +25,7 @@ import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { useServerFn } from "@tanstack/react-start";
 import { lookupSwissParcel } from "@/lib/property-location.functions";
 import { generateLocationDescription } from "@/lib/property-ai.functions";
-import { FeaturePickerDialog } from "@/components/properties/FeaturePickerDialog";
+import { FeaturePickerDialog, useFeatureOptions } from "@/components/properties/FeaturePickerDialog";
 import { featureIcon } from "@/components/properties/feature-icons";
 
 /* -------------------- Typen -------------------- */
