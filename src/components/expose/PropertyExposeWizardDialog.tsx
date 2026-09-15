@@ -307,6 +307,70 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
       .map((f) => ({ label: f.label, value: map[f.key] }));
   }, [property, visibleFacts]);
 
+  const macro = (property as any)?.macro_location as any | null;
+  const marketSections = (marketAnalysis as any)?.sections as any | null;
+
+  const extraSections = useMemo(() => {
+    const out: any[] = [];
+    if (withMacro && macro) {
+      out.push({
+        title: "Makrolage",
+        summary: [macro.summary, [macro.municipality, macro.region].filter(Boolean).join(" · ")]
+          .filter(Boolean)
+          .join(" — "),
+        items: (Array.isArray(macro.categories) ? macro.categories : []).map((c: any) => ({
+          heading: c.title,
+          rating: typeof c.rating === "number" ? `${c.rating}/5` : null,
+          text: c.description,
+          bullets: Array.isArray(c.highlights) ? c.highlights : [],
+        })),
+      });
+    }
+    if (withMarket && marketSections) {
+      const s = marketSections;
+      const items: any[] = [];
+      if (s.location)
+        items.push({
+          heading: "Lageanalyse",
+          rating: s.location.score != null ? `${s.location.score}/10` : null,
+          text: s.location.summary,
+          bullets: Array.isArray(s.location.highlights) ? s.location.highlights : [],
+        });
+      if (s.trend) items.push({ heading: "Markttrend", text: s.trend.outlook });
+      if (s.purchase_price)
+        items.push({
+          heading: "Kaufpreis",
+          text: s.purchase_price.summary ?? null,
+          bullets: [
+            s.purchase_price.price_per_sqm_min && s.purchase_price.price_per_sqm_max
+              ? `Preis pro m²: ${s.purchase_price.price_per_sqm_min}–${s.purchase_price.price_per_sqm_max} ${s.purchase_price.currency ?? "CHF"}`
+              : null,
+            s.purchase_price.estimated_value_min && s.purchase_price.estimated_value_max
+              ? `Verkehrswert: ${s.purchase_price.estimated_value_min}–${s.purchase_price.estimated_value_max} ${s.purchase_price.currency ?? "CHF"}`
+              : null,
+          ].filter(Boolean) as string[],
+        });
+      if (s.rental_price)
+        items.push({
+          heading: "Mietpotenzial",
+          text: s.rental_price.summary ?? null,
+          bullets: [
+            s.rental_price.rent_per_sqm_min && s.rental_price.rent_per_sqm_max
+              ? `Miete pro m²: ${s.rental_price.rent_per_sqm_min}–${s.rental_price.rent_per_sqm_max} ${s.rental_price.currency ?? "CHF"}`
+              : null,
+          ].filter(Boolean) as string[],
+        });
+      if (s.risks?.length)
+        items.push({ heading: "Risiken", bullets: (s.risks as any[]).map((r: any) => (typeof r === "string" ? r : r?.text ?? "")) });
+      out.push({
+        title: "Marktanalyse",
+        summary: s.recommendation?.summary ?? null,
+        items,
+      });
+    }
+    return out;
+  }, [withMacro, withMarket, macro, marketSections]);
+
   const buildHtml = (cover: string | null, gallery: string[]) => {
     const p = property ?? {};
     const cols = GALLERY_OPTIONS.find((o) => o.id === galleryLayout)?.cols ?? 2;
