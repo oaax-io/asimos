@@ -387,7 +387,7 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
         <div class="gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
           ${slice.map((u) => `<div class="g-cell">${imgOrPh(u, t)}</div>`).join("")}
         </div>
-        ${footer(d, t, pages.length + 1, 0)}
+        ${footer(d, t)}
       </div>`);
     }
   }
@@ -399,7 +399,7 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
     <div class="page">
       <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Lage</div></header>
       <h2 class="section-title">Lage</h2>${locHtml}
-      ${footer(d, t, pages.length + 1, 0)}
+      ${footer(d, t)}
     </div>`);
   }
 
@@ -531,7 +531,7 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
         <div class="m-gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
           ${slice.map((u) => `<div class="m-cell">${imgOrPh(u, t)}</div>`).join("")}
         </div>
-        ${footer(d, t, pages.length + 1, 0)}
+        ${footer(d, t)}
       </div>`);
     }
   }
@@ -542,7 +542,7 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
     <div class="page">
       <header class="ph"><div>${esc(d.title)}</div><div class="muted">Lage</div></header>
       <h2 class="sec">Lage</h2>${locHtml}
-      ${footer(d, t, pages.length + 1, 0)}
+      ${footer(d, t)}
     </div>`);
   }
 
@@ -686,7 +686,7 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
         <div class="lx-gal" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
           ${slice.map((u, idx) => `<figure class="lx-gc ${i === 0 && idx === 0 ? "feat" : ""}">${imgOrPh(u, t)}</figure>`).join("")}
         </div>
-        ${footer(d, t, pages.length + 1, 0)}
+        ${footer(d, t)}
       </div>`);
     }
   }
@@ -698,7 +698,7 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
       <div class="lx-folio"><span>${esc(d.title)}</span><span>__PAGENOPAD__</span></div>
       <div class="lx-rule double"></div>
       <h2 class="lx-h2">Lage</h2>${locHtml}
-      ${footer(d, t, pages.length + 1, 0)}
+      ${footer(d, t)}
     </div>`);
   }
 
