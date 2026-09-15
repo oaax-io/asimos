@@ -35,6 +35,8 @@ export interface ExposeData {
   attachment_image_urls?: string[];
   attachment_doc_names?: string[];
   extra_sections?: ExposeExtraSection[];
+  section_order?: string[];
+
   agency_name?: string | null;
   contact_name?: string | null;
   contact_email?: string | null;
@@ -132,13 +134,59 @@ function pageWrapStart(t: ExposeTheme): string {
 
 }
 
-function footer(d: ExposeData, t: ExposeTheme, page: number, total: number): string {
+function footer(d: ExposeData, t: ExposeTheme, _page?: number, _total?: number): string {
   return `<div class="footer">
     <span>${esc(d.agency_name ?? "ASIMO Real Estate")} · ${esc(t.templateLabel ?? "")}</span>
     <span>${esc(d.title)}</span>
-    <span>${page} / ${total}</span>
+    <span>__PAGENO__ / __PAGETOTAL__</span>
   </div>`;
 }
+
+export const EXPOSE_SECTION_KEYS = [
+  "cover",
+  "facts",
+  "gallery",
+  "location",
+  "extras",
+  "attachments",
+  "contact",
+] as const;
+export type ExposeSectionKey = (typeof EXPOSE_SECTION_KEYS)[number];
+
+export const EXPOSE_SECTION_LABELS: Record<ExposeSectionKey, string> = {
+  cover: "Titelseite",
+  facts: "Eckdaten & Beschreibung",
+  gallery: "Galerie",
+  location: "Lage",
+  extras: "Makrolage / Marktanalyse",
+  attachments: "Anhänge",
+  contact: "Ansprechperson & Firma",
+};
+
+type SectionGroups = Record<ExposeSectionKey, string[]>;
+
+function newGroups(): SectionGroups {
+  return { cover: [], facts: [], gallery: [], location: [], extras: [], attachments: [], contact: [] };
+}
+
+function orderedPages(d: ExposeData, groups: SectionGroups): string[] {
+  const order: ExposeSectionKey[] = [];
+  for (const k of d.section_order ?? []) {
+    if ((EXPOSE_SECTION_KEYS as readonly string[]).includes(k) && !order.includes(k as ExposeSectionKey)) {
+      order.push(k as ExposeSectionKey);
+    }
+  }
+  for (const k of EXPOSE_SECTION_KEYS) if (!order.includes(k)) order.push(k);
+  const pages = order.flatMap((k) => groups[k]);
+  const total = pages.length;
+  return pages.map((p, i) =>
+    p
+      .split("__PAGENOPAD__").join(String(i + 1).padStart(2, "0"))
+      .split("__PAGENO__").join(String(i + 1))
+      .split("__PAGETOTAL__").join(String(total)),
+  );
+}
+
 
 const POI_ICONS: Record<string, string> = {
   transit: "🚆", school: "🎓", shop: "🛒", restaurant: "🍽",
@@ -243,7 +291,7 @@ function extraSectionsPages(d: ExposeData, t: ExposeTheme, headerHtml: (label: s
 function attachmentsPages(d: ExposeData, t: ExposeTheme, headerHtml: (label: string) => string, startPage: number): string[] {
   const imgs = d.attachment_image_urls ?? [];
   const docs = d.attachment_doc_names ?? [];
-  const out: string[] = extraSectionsPages(d, t, headerHtml, startPage);
+  const out: string[] = [];
   for (let i = 0; i < imgs.length; i += 4) {
     const slice = imgs.slice(i, i + 4);
     out.push(`
@@ -284,10 +332,10 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
   const galleryUrls = d.gallery_urls;
 
 
-  const pages: string[] = [];
+  const G = newGroups();
 
   // Page 1: cover
-  pages.push(`
+  G.cover.push(`
   <div class="page cover">
     <div class="cover-hero">
       ${d.cover_url ? `<img src="${esc(d.cover_url)}" alt="" />` : `<div class="hero-fallback"></div>`}
@@ -310,7 +358,7 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
   </div>`);
 
   // Page 2: facts + description
-  pages.push(`
+  G.facts.push(`
   <div class="page">
     <header class="ph">
       <div class="ph-l">${esc(d.title)}</div>
@@ -332,14 +380,14 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
     const perPage = galleryCols * (galleryCols >= 3 ? 3 : 2);
     for (let i = 0; i < galleryUrls.length; i += perPage) {
       const slice = galleryUrls.slice(i, i + perPage);
-      pages.push(`
+      G.gallery.push(`
       <div class="page">
         <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Galerie</div></header>
         <h2 class="section-title">Bilder</h2>
         <div class="gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
           ${slice.map((u) => `<div class="g-cell">${imgOrPh(u, t)}</div>`).join("")}
         </div>
-        ${footer(d, t, pages.length + 1, 0)}
+        ${footer(d, t)}
       </div>`);
     }
   }
@@ -347,25 +395,23 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
   // Location
   const locHtml = locationBlockHtml(d, t);
   if (locHtml) {
-    pages.push(`
+    G.location.push(`
     <div class="page">
       <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Lage</div></header>
       <h2 class="section-title">Lage</h2>${locHtml}
-      ${footer(d, t, pages.length + 1, 0)}
+      ${footer(d, t)}
     </div>`);
   }
 
-  // Attachments
-  const attachPages = attachmentsPages(
-    d, t,
-    (label: string) => `<header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">${esc(label)}</div></header><h2 class="section-title">${esc(label)}</h2>`,
-    pages.length + 1,
-  );
-  pages.push(...attachPages);
+  // Extras + attachments
+  const classicHeader = (label: string) =>
+    `<header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">${esc(label)}</div></header><h2 class="section-title">${esc(label)}</h2>`;
+  G.extras.push(...extraSectionsPages(d, t, classicHeader, 0));
+  G.attachments.push(...attachmentsPages(d, t, classicHeader, 0));
 
-  // Contact — always the last page
+  // Contact
   if (d.contact_name || d.contact_email || d.contact_phone || d.agency_name) {
-    pages.push(`
+    G.contact.push(`
     <div class="page">
       <header class="ph"><div class="ph-l">${esc(d.title)}</div><div class="ph-r">Kontakt</div></header>
       <h2 class="section-title">Kontakt</h2>
@@ -377,16 +423,12 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
           ${d.contact_phone ? `<span>☎ ${esc(d.contact_phone)}</span>` : ""}
         </div>
       </div>
-      ${footer(d, t, pages.length + 1, 0)}
+      ${footer(d, t)}
     </div>`);
   }
 
+  const filled = orderedPages(d, G);
 
-  
-
-
-  const total = pages.length;
-  const filled = pages.map((p, i) => p.replace(`${i + 1} / 0`, `${i + 1} / ${total}`));
 
   const css = `
     ${pageWrapStart(t)}
@@ -448,10 +490,10 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
   const galleryUrls = d.gallery_urls;
 
 
-  const pages: string[] = [];
+  const G = newGroups();
 
   // Page 1: full-bleed cover with overlay
-  pages.push(`
+  G.cover.push(`
   <div class="page cover-modern">
     ${d.cover_url ? `<img class="bleed-img" src="${esc(d.cover_url)}" alt=""/>` : `<div class="bleed-fallback"></div>`}
     <div class="bleed-shade"></div>
@@ -468,7 +510,7 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
   </div>`);
 
   // Page 2: KPI + description
-  pages.push(`
+  G.facts.push(`
   <div class="page">
     <header class="ph"><div>${esc(d.title)}</div><div class="muted">Übersicht</div></header>
     ${facts.length ? `<div class="kpis" style="grid-template-columns: repeat(${kpiCols}, 1fr);">
@@ -483,35 +525,34 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
     const perPage = galleryCols * (galleryCols >= 3 ? 3 : 2);
     for (let i = 0; i < galleryUrls.length; i += perPage) {
       const slice = galleryUrls.slice(i, i + perPage);
-      pages.push(`
+      G.gallery.push(`
       <div class="page">
         <header class="ph"><div>${esc(d.title)}</div><div class="muted">Galerie</div></header>
         <div class="m-gallery" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
           ${slice.map((u) => `<div class="m-cell">${imgOrPh(u, t)}</div>`).join("")}
         </div>
-        ${footer(d, t, pages.length + 1, 0)}
+        ${footer(d, t)}
       </div>`);
     }
   }
 
   const locHtml = locationBlockHtml(d, t);
   if (locHtml) {
-    pages.push(`
+    G.location.push(`
     <div class="page">
       <header class="ph"><div>${esc(d.title)}</div><div class="muted">Lage</div></header>
       <h2 class="sec">Lage</h2>${locHtml}
-      ${footer(d, t, pages.length + 1, 0)}
+      ${footer(d, t)}
     </div>`);
   }
 
-  pages.push(...attachmentsPages(
-    d, t,
-    (label: string) => `<header class="ph"><div>${esc(d.title)}</div><div class="muted">${esc(label)}</div></header><h2 class="sec">${esc(label)}</h2>`,
-    pages.length + 1,
-  ));
+  const modernHeader = (label: string) =>
+    `<header class="ph"><div>${esc(d.title)}</div><div class="muted">${esc(label)}</div></header><h2 class="sec">${esc(label)}</h2>`;
+  G.extras.push(...extraSectionsPages(d, t, modernHeader, 0));
+  G.attachments.push(...attachmentsPages(d, t, modernHeader, 0));
 
   if (d.contact_name || d.contact_email || d.contact_phone || d.agency_name) {
-    pages.push(`
+    G.contact.push(`
     <div class="page">
       <header class="ph"><div>${esc(d.title)}</div><div class="muted">Kontakt</div></header>
       <h2 class="sec">Ihr Ansprechpartner</h2>
@@ -525,14 +566,12 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
           ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
         </div>
       </div>
-      ${footer(d, t, pages.length + 1, 0)}
+      ${footer(d, t)}
     </div>`);
   }
 
+  const filled = orderedPages(d, G);
 
-
-  const total = pages.length;
-  const filled = pages.map((p, i) => p.replace(`${i + 1} / 0`, `${i + 1} / ${total}`));
 
   const css = `
     ${pageWrapStart(t)}
@@ -588,10 +627,10 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
   const galleryUrls = d.gallery_urls;
 
 
-  const pages: string[] = [];
+  const G = newGroups();
 
   // Page 1: editorial cover
-  pages.push(`
+  G.cover.push(`
   <div class="page lx-cover">
     <div class="lx-top">
       <div class="lx-brand">${esc(d.agency_name ?? "ASIMO")}</div>
@@ -614,9 +653,9 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
   </div>`);
 
   // Page 2: description + facts (asymmetric)
-  pages.push(`
+  G.facts.push(`
   <div class="page">
-    <div class="lx-folio"><span>${esc(d.title)}</span><span>02</span></div>
+    <div class="lx-folio"><span>${esc(d.title)}</span><span>__PAGENOPAD__</span></div>
     <div class="lx-rule double"></div>
     <div class="lx-split">
       <div class="lx-split-l">
@@ -639,40 +678,39 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
     const perPage = galleryCols * (galleryCols >= 3 ? 3 : 2);
     for (let i = 0; i < galleryUrls.length; i += perPage) {
       const slice = galleryUrls.slice(i, i + perPage);
-      pages.push(`
+      G.gallery.push(`
       <div class="page">
-        <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
+        <div class="lx-folio"><span>${esc(d.title)}</span><span>__PAGENOPAD__</span></div>
         <div class="lx-rule double"></div>
         <h2 class="lx-h2">Impressionen</h2>
         <div class="lx-gal" style="grid-template-columns: repeat(${galleryCols}, 1fr);">
           ${slice.map((u, idx) => `<figure class="lx-gc ${i === 0 && idx === 0 ? "feat" : ""}">${imgOrPh(u, t)}</figure>`).join("")}
         </div>
-        ${footer(d, t, pages.length + 1, 0)}
+        ${footer(d, t)}
       </div>`);
     }
   }
 
   const locHtml = locationBlockHtml(d, t);
   if (locHtml) {
-    pages.push(`
+    G.location.push(`
     <div class="page">
-      <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
+      <div class="lx-folio"><span>${esc(d.title)}</span><span>__PAGENOPAD__</span></div>
       <div class="lx-rule double"></div>
       <h2 class="lx-h2">Lage</h2>${locHtml}
-      ${footer(d, t, pages.length + 1, 0)}
+      ${footer(d, t)}
     </div>`);
   }
 
-  pages.push(...attachmentsPages(
-    d, t,
-    (label: string) => `<div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div><div class="lx-rule double"></div><h2 class="lx-h2">${esc(label)}</h2>`,
-    pages.length + 1,
-  ));
+  const luxHeader = (label: string) =>
+    `<div class="lx-folio"><span>${esc(d.title)}</span><span>__PAGENOPAD__</span></div><div class="lx-rule double"></div><h2 class="lx-h2">${esc(label)}</h2>`;
+  G.extras.push(...extraSectionsPages(d, t, luxHeader, 0));
+  G.attachments.push(...attachmentsPages(d, t, luxHeader, 0));
 
   if (d.contact_name || d.contact_email || d.contact_phone || d.agency_name) {
-    pages.push(`
+    G.contact.push(`
     <div class="page">
-      <div class="lx-folio"><span>${esc(d.title)}</span><span>${String(pages.length + 1).padStart(2, "0")}</span></div>
+      <div class="lx-folio"><span>${esc(d.title)}</span><span>__PAGENOPAD__</span></div>
       <div class="lx-rule double"></div>
       <h2 class="lx-h2">Kontakt</h2>
       <div class="lx-contact">
@@ -683,14 +721,12 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
           ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
         </div>
       </div>
-      ${footer(d, t, pages.length + 1, 0)}
+      ${footer(d, t)}
     </div>`);
   }
 
+  const filled = orderedPages(d, G);
 
-
-  const total = pages.length;
-  const filled = pages.map((p, i) => p.replace(`${i + 1} / 0`, `${i + 1} / ${total}`));
 
   const css = `
     ${pageWrapStart(t)}
