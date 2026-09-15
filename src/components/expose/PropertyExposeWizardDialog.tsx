@@ -232,6 +232,7 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
     if (!open) return;
     setStep(0);
     setGenerating(false);
+    setAttachmentIds([]);
     setTitle(property?.title ?? "");
     setDescription(property?.description ?? "");
   }, [open, property]);
