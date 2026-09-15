@@ -486,24 +486,11 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
   }
 
   const locHtml = locationBlockHtml(d, t);
-  if (locHtml || d.contact_name || d.contact_email || d.contact_phone) {
+  if (locHtml) {
     pages.push(`
     <div class="page">
-      <header class="ph"><div>${esc(d.title)}</div><div class="muted">Lage & Kontakt</div></header>
-      ${locHtml ? `<h2 class="sec">Lage</h2>${locHtml}` : ""}
-      ${(d.contact_name || d.contact_email || d.contact_phone)
-        ? `<h2 class="sec">Ihr Ansprechpartner</h2>
-           <div class="m-contact">
-             <div class="m-contact-l">
-               ${d.contact_name ? `<div class="m-contact-name">${esc(d.contact_name)}</div>` : ""}
-               ${d.agency_name ? `<div class="m-contact-ag">${esc(d.agency_name)}</div>` : ""}
-             </div>
-             <div class="m-contact-r">
-               ${d.contact_email ? `<div>${esc(d.contact_email)}</div>` : ""}
-               ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
-             </div>
-           </div>`
-        : ""}
+      <header class="ph"><div>${esc(d.title)}</div><div class="muted">Lage</div></header>
+      <h2 class="sec">Lage</h2>${locHtml}
       ${footer(d, t, pages.length + 1, 0)}
     </div>`);
   }
@@ -513,6 +500,26 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
     (label: string) => `<header class="ph"><div>${esc(d.title)}</div><div class="muted">${esc(label)}</div></header><h2 class="sec">${esc(label)}</h2>`,
     pages.length + 1,
   ));
+
+  if (d.contact_name || d.contact_email || d.contact_phone || d.agency_name) {
+    pages.push(`
+    <div class="page">
+      <header class="ph"><div>${esc(d.title)}</div><div class="muted">Kontakt</div></header>
+      <h2 class="sec">Ihr Ansprechpartner</h2>
+      <div class="m-contact">
+        <div class="m-contact-l">
+          ${d.contact_name ? `<div class="m-contact-name">${esc(d.contact_name)}</div>` : ""}
+          ${d.agency_name ? `<div class="m-contact-ag">${esc(d.agency_name)}</div>` : ""}
+        </div>
+        <div class="m-contact-r">
+          ${d.contact_email ? `<div>${esc(d.contact_email)}</div>` : ""}
+          ${d.contact_phone ? `<div>${esc(d.contact_phone)}</div>` : ""}
+        </div>
+      </div>
+      ${footer(d, t, pages.length + 1, 0)}
+    </div>`);
+  }
+
 
 
   const total = pages.length;
