@@ -1336,13 +1336,15 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <button
-            onClick={() => setIdx((i) => (i + 1) % slideCount)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-background/85 p-2 shadow opacity-0 transition group-hover:opacity-100 hover:bg-background"
-            aria-label="Nächstes Bild"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+          {!isMoreSlide && (
+            <button
+              onClick={() => setIdx((i) => (i + 1) % slideCount)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-background/85 p-2 shadow opacity-0 transition group-hover:opacity-100 hover:bg-background"
+              aria-label="Nächstes Bild"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          )}
           <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
             {Array.from({ length: slideCount }).map((_, i) => (
               <button key={i} onClick={() => setIdx(i)} className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-white" : "w-1.5 bg-white/60 hover:bg-white/90"}`} aria-label={`Bild ${i + 1}`} />
