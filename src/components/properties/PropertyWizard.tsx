@@ -1157,10 +1157,6 @@ function Step7Equipment({ d, update }: { d: WizardData; update: (p: Partial<Wiza
         </div>
         <div><Label>{t("propertyWizard.step7.energyClass")}</Label><Input value={d.energy_class} onChange={(e) => update({ energy_class: e.target.value })} placeholder={t("propertyWizard.step7.energyClassPlaceholder")} /></div>
       </div>
-      <div>
-        <Label>{t("propertyWizard.step7.extra")}</Label>
-        <Input value={d.features_extra} onChange={(e) => update({ features_extra: e.target.value })} placeholder={t("propertyWizard.step7.extraPlaceholder")} />
-      </div>
     </div>
   );
 }
