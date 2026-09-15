@@ -4,7 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Check, ChevronLeft, ChevronRight, FileDown, Image as ImageIcon, LayoutTemplate,
-  Loader2, ListChecks, Eye, Star, Sparkles, UserRound, Paperclip, FileText,
+  Loader2, ListChecks, Eye, Star, Sparkles, UserRound, Paperclip, FileText, GripVertical,
+  ArrowUp, ArrowDown, RotateCcw,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +21,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 import { formatCurrency, formatArea, propertyTypeLabels, listingTypeLabels } from "@/lib/format";
-import { renderExposeHTML } from "@/lib/expose-template";
+import {
+  renderExposeHTML,
+  EXPOSE_SECTION_KEYS,
+  EXPOSE_SECTION_LABELS,
+  type ExposeSectionKey,
+} from "@/lib/expose-template";
 import { renderDocumentPdf, fetchDocumentPdfBytes } from "@/lib/documents.functions";
 import { TEMPLATES, type TemplateMeta, type GalerieLayout } from "@/components/expose/TemplatePreview";
 
@@ -94,6 +100,7 @@ const STEPS = [
   { label: "Anhänge", icon: Paperclip },
   { label: "Ansprechperson", icon: UserRound },
   { label: "Vorschau", icon: Eye },
+  { label: "Reihenfolge", icon: GripVertical },
   { label: "Generieren", icon: FileDown },
 ] as const;
 
