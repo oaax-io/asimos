@@ -291,7 +291,7 @@ function extraSectionsPages(d: ExposeData, t: ExposeTheme, headerHtml: (label: s
 function attachmentsPages(d: ExposeData, t: ExposeTheme, headerHtml: (label: string) => string, startPage: number): string[] {
   const imgs = d.attachment_image_urls ?? [];
   const docs = d.attachment_doc_names ?? [];
-  const out: string[] = extraSectionsPages(d, t, headerHtml, startPage);
+  const out: string[] = [];
   for (let i = 0; i < imgs.length; i += 4) {
     const slice = imgs.slice(i, i + 4);
     out.push(`
