@@ -1054,7 +1054,53 @@ function PropertyImageGallery({ propertyId, images: fallbackImages, title }: { p
   }, [mediaRows, fallbackImages]);
 
   const hasImages = images.length > 0;
-  const current = hasImages ? images[Math.min(idx, images.length - 1)] : null;
+  const MAX_PREVIEW = 12;
+  const hasMore = images.length > MAX_PREVIEW;
+  const slideCount = hasMore ? MAX_PREVIEW + 1 : images.length;
+  const isMoreSlide = hasMore && idx >= MAX_PREVIEW;
+  const current = hasImages && !isMoreSlide ? images[Math.min(idx, images.length - 1)] : null;
+
+  const [orderDraft, setOrderDraft] = useState<string[] | null>(null);
+  const [dragPath, setDragPath] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const orderList = orderDraft ?? images;
+
+  const dropOnPath = (target: string) => {
+    setOrderDraft((prev) => {
+      const base = prev ?? images;
+      if (!dragPath || dragPath === target) return base;
+      const next = base.filter((p) => p !== dragPath);
+      next.splice(next.indexOf(target), 0, dragPath);
+      return next;
+    });
+    setDragPath(null);
+  };
+
+  const saveOrder = async () => {
+    if (!orderDraft) return;
+    setSavingOrder(true);
+    try {
+      for (let i = 0; i < orderDraft.length; i++) {
+        const { error } = await supabase
+          .from("property_media")
+          .update({ sort_order: i + 1, is_cover: i === 0 })
+          .eq("property_id", propertyId)
+          .eq("file_url", orderDraft[i]);
+        if (error) throw error;
+      }
+      await syncPropertyImagesFromMedia(propertyId);
+      setOrderDraft(null);
+      setIdx(0);
+      toast.success("Reihenfolge gespeichert");
+      qc.invalidateQueries({ queryKey: ["property", propertyId] });
+      qc.invalidateQueries({ queryKey: ["property_media", propertyId] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Speichern fehlgeschlagen");
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
 
   const handleFiles = async (files: FileList | File[]): Promise<boolean> => {
     const MAX_BYTES = 25 * 1024 * 1024; // 25 MB pro Datei
