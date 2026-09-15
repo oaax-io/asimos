@@ -37,6 +37,7 @@ import { PropertyAssigneePicker, usePropertyAssignees } from "@/components/prope
 import type { EmployeeLite } from "@/components/clients/ClientAssignees";
 import { PropertyQuickActions } from "@/components/properties/PropertyQuickActions";
 import { deleteToTrash } from "@/lib/trash";
+import { PropertyImageSorter } from "@/components/properties/PropertyImageSorter";
 
 
 export const Route = createFileRoute("/_app/properties/$id")({ component: PropertyDetail });
