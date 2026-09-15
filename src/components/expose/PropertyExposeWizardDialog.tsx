@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Check, ChevronLeft, ChevronRight, FileDown, Image as ImageIcon, LayoutTemplate,
-  Loader2, ListChecks, Eye, Star, Sparkles, UserRound,
+  Loader2, ListChecks, Eye, Star, Sparkles, UserRound, Paperclip, FileText,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +62,7 @@ const STEPS = [
   { label: "Vorlage", icon: LayoutTemplate },
   { label: "Inhalte", icon: ListChecks },
   { label: "Galerie", icon: ImageIcon },
+  { label: "Anhänge", icon: Paperclip },
   { label: "Ansprechperson", icon: UserRound },
   { label: "Vorschau", icon: Eye },
   { label: "Generieren", icon: FileDown },
