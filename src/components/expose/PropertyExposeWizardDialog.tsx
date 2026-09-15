@@ -58,6 +58,31 @@ const GALLERY_OPTIONS: Array<{ id: GalerieLayout; label: string; cols: number; d
   { id: "fullpage", label: "Vollbild", cols: 1, desc: "Ein Bild pro Seite" },
 ];
 
+/** Rendert die erste Exposé-Seite (A4) komplett sichtbar, ohne Scrollen – wie ein Miniaturbild. */
+function ScaledExposePreview({ html, title }: { html: string; title: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.4);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setScale(el.clientWidth / 794);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className="w-full overflow-hidden rounded-lg border bg-white" style={{ aspectRatio: "210 / 297" }}>
+      <iframe
+        title={title}
+        srcDoc={html}
+        className="pointer-events-none border-0"
+        style={{ width: 794, height: 1123, transform: `scale(${scale})`, transformOrigin: "top left" }}
+      />
+    </div>
+  );
+}
+
 const STEPS = [
   { label: "Vorlage", icon: LayoutTemplate },
   { label: "Inhalte", icon: ListChecks },
