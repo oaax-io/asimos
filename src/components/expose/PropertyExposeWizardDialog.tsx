@@ -75,10 +75,14 @@ function ScaledExposePreview({ html, title }: { html: string; title: string }) {
     <div ref={ref} className="w-full overflow-hidden rounded-lg border bg-white" style={{ aspectRatio: "210 / 297" }}>
       <iframe
         title={title}
-        srcDoc={html}
+        srcDoc={
+          html +
+          "<style>@media screen{html,body{background:#fff}body{padding:0}.page{margin:0;box-shadow:none;border:0}.page::after{display:none}}</style>"
+        }
         className="pointer-events-none border-0"
         style={{ width: 794, height: 1123, transform: `scale(${scale})`, transformOrigin: "top left" }}
       />
+
     </div>
   );
 }
