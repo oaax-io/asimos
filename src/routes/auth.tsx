@@ -124,7 +124,7 @@ function AuthPage() {
 
   // Pro Szene ein eigenes Hintergrundbild (Haus, Pool, Himmel reagieren mit)
   const sceneImages: Record<Scene, string> = {
-    day: bgDay,
+    day: bgNewbuild,
     night: bgNight,
     rain: bgRain,
     snow: bgSnow,
