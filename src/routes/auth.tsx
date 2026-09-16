@@ -35,11 +35,8 @@ function AuthPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [stayLoggedIn, setStayLoggedIn] = useState(true);
 
-  // Auto: tag von 7-19 Uhr, sonst nacht
-  const initialScene: Scene = useMemo(() => {
-    const h = new Date().getHours();
-    return h >= 7 && h < 19 ? "day" : "night";
-  }, []);
+  // Start-Hintergrund: Neubauprojekt in der Schweizer Landschaft (Tag)
+  const initialScene: Scene = "day";
   const [scene, setScene] = useState<Scene>(initialScene);
   const [soundOn, setSoundOn] = useState(false);
 
