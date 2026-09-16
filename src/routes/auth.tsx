@@ -10,7 +10,7 @@ import { z } from "zod";
 import { Sun, Moon, CloudRain, Snowflake, Volume2, VolumeX } from "lucide-react";
 import logoAsset from "@/assets/logo-asimo-2027.png.asset.json";
 import bgNight from "@/assets/login-bg-night.jpg";
-import bgDay from "@/assets/login-bg-day.jpg";
+import bgNewbuild from "@/assets/login-bg-newbuild.jpg";
 import bgRain from "@/assets/login-bg-rain.jpg";
 import bgSnow from "@/assets/login-bg-snow.jpg";
 
@@ -35,11 +35,8 @@ function AuthPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [stayLoggedIn, setStayLoggedIn] = useState(true);
 
-  // Auto: tag von 7-19 Uhr, sonst nacht
-  const initialScene: Scene = useMemo(() => {
-    const h = new Date().getHours();
-    return h >= 7 && h < 19 ? "day" : "night";
-  }, []);
+  // Start-Hintergrund: Neubauprojekt in der Schweizer Landschaft (Tag)
+  const initialScene: Scene = "day";
   const [scene, setScene] = useState<Scene>(initialScene);
   const [soundOn, setSoundOn] = useState(false);
 
@@ -124,7 +121,7 @@ function AuthPage() {
 
   // Pro Szene ein eigenes Hintergrundbild (Haus, Pool, Himmel reagieren mit)
   const sceneImages: Record<Scene, string> = {
-    day: bgDay,
+    day: bgNewbuild,
     night: bgNight,
     rain: bgRain,
     snow: bgSnow,
