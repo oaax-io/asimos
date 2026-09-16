@@ -10,7 +10,7 @@ import { z } from "zod";
 import { Sun, Moon, CloudRain, Snowflake, Volume2, VolumeX } from "lucide-react";
 import logoAsset from "@/assets/logo-asimo-2027.png.asset.json";
 import bgNight from "@/assets/login-bg-night.jpg";
-import bgDay from "@/assets/login-bg-day.jpg";
+import bgNewbuild from "@/assets/login-bg-newbuild.jpg";
 import bgRain from "@/assets/login-bg-rain.jpg";
 import bgSnow from "@/assets/login-bg-snow.jpg";
 
