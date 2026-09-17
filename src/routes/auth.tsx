@@ -261,16 +261,7 @@ function AuthPage() {
 
           {!forgotMode && (
             <div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-primary-foreground">Passwort</Label>
-                <button
-                  type="button"
-                  onClick={() => setForgotMode(true)}
-                  className="text-xs text-primary-foreground/80 underline hover:text-primary-foreground"
-                >
-                  Passwort vergessen?
-                </button>
-              </div>
+              <Label htmlFor="password" className="text-primary-foreground">Passwort</Label>
               <Input
                 id="password"
                 type="password"
@@ -310,14 +301,23 @@ function AuthPage() {
           )}
 
           {!forgotMode && (
-            <label className="flex items-center gap-2 text-sm text-primary-foreground/90 cursor-pointer">
-              <Checkbox
-                checked={stayLoggedIn}
-                onCheckedChange={(v) => setStayLoggedIn(Boolean(v))}
-                className="border-white/50 data-[state=checked]:bg-brand-deep data-[state=checked]:text-brand-deep-foreground"
-              />
-              Angemeldet bleiben
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-sm text-primary-foreground/90 cursor-pointer">
+                <Checkbox
+                  checked={stayLoggedIn}
+                  onCheckedChange={(v) => setStayLoggedIn(Boolean(v))}
+                  className="border-white/50 data-[state=checked]:bg-brand-deep data-[state=checked]:text-brand-deep-foreground"
+                />
+                Angemeldet bleiben
+              </label>
+              <button
+                type="button"
+                onClick={() => setForgotMode(true)}
+                className="text-xs text-primary-foreground/80 underline hover:text-primary-foreground"
+              >
+                Passwort vergessen?
+              </button>
+            </div>
           )}
 
           {!forgotMode && (
