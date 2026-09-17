@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -34,6 +35,8 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const [stayLoggedIn, setStayLoggedIn] = useState(true);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   // Start-Hintergrund: Neubauprojekt in der Schweizer Landschaft (Tag)
   const initialScene: Scene = "day";
@@ -108,8 +111,30 @@ function AuthPage() {
     a.gain.gain.setTargetAtTime(cfg.gain, now, 1.2);
   }, [scene, soundOn]);
 
+  const sendReset = async () => {
+    if (!form.email) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(form.email, {
+        redirectTo: `${window.location.origin}/set-password`,
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      setResetSent(true);
+      toast.success("Reset-Link versendet");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (forgotMode) {
+      await sendReset();
+      return;
+    }
     setLoading(true);
     try {
       const r = signinSchema.safeParse(form);
@@ -233,35 +258,78 @@ function AuthPage() {
               className="mt-1 border-white bg-white text-foreground placeholder:text-muted-foreground focus-visible:ring-white"
             />
           </div>
-          <div>
-            <Label htmlFor="password" className="text-primary-foreground">Passwort</Label>
-            <Input
-              id="password"
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              placeholder="••••••••"
-              className="mt-1 border-white bg-white text-foreground placeholder:text-muted-foreground focus-visible:ring-white"
-            />
-          </div>
 
-          <label className="flex items-center gap-2 text-sm text-primary-foreground/90 cursor-pointer">
-            <Checkbox
-              checked={stayLoggedIn}
-              onCheckedChange={(v) => setStayLoggedIn(Boolean(v))}
-              className="border-white/50 data-[state=checked]:bg-brand-deep data-[state=checked]:text-brand-deep-foreground"
-            />
-            Angemeldet bleiben
-          </label>
+          {!forgotMode && (
+            <div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-primary-foreground">Passwort</Label>
+                <button
+                  type="button"
+                  onClick={() => setForgotMode(true)}
+                  className="text-xs text-primary-foreground/80 underline hover:text-primary-foreground"
+                >
+                  Passwort vergessen?
+                </button>
+              </div>
+              <Input
+                id="password"
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder="••••••••"
+                className="mt-1 border-white bg-white text-foreground placeholder:text-muted-foreground focus-visible:ring-white"
+              />
+            </div>
+          )}
 
-          <Button
-            type="submit"
-            size="lg"
-            disabled={loading}
-            className="w-full bg-brand-deep text-brand-deep-foreground hover:bg-brand-deep/90 shadow-lg"
-          >
-            {loading ? "Bitte warten…" : "Login"}
-          </Button>
+          {forgotMode && (
+            <div className="rounded-xl border border-white/20 bg-white/10 p-4 text-sm text-primary-foreground">
+              <p className="mb-3">
+                Gib deine E-Mail-Adresse ein. Wir senden dir einen Link, mit dem du ein neues Passwort setzen kannst.
+              </p>
+              {resetSent ? (
+                <p className="font-medium text-green-300">✓ Link versendet. Bitte prüfe dein Postfach.</p>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={sendReset}
+                  disabled={!form.email || loading}
+                  className="w-full bg-white text-black hover:bg-white/90"
+                >
+                  {loading ? "Bitte warten…" : "Reset-Link senden"}
+                </Button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setForgotMode(false); setResetSent(false); }}
+                className="mt-3 text-xs underline hover:text-white"
+              >
+                Zurück zum Login
+              </button>
+            </div>
+          )}
+
+          {!forgotMode && (
+            <label className="flex items-center gap-2 text-sm text-primary-foreground/90 cursor-pointer">
+              <Checkbox
+                checked={stayLoggedIn}
+                onCheckedChange={(v) => setStayLoggedIn(Boolean(v))}
+                className="border-white/50 data-[state=checked]:bg-brand-deep data-[state=checked]:text-brand-deep-foreground"
+              />
+              Angemeldet bleiben
+            </label>
+          )}
+
+          {!forgotMode && (
+            <Button
+              type="submit"
+              size="lg"
+              disabled={loading}
+              className="w-full bg-brand-deep text-brand-deep-foreground hover:bg-brand-deep/90 shadow-lg"
+            >
+              {loading ? "Bitte warten…" : "Login"}
+            </Button>
+          )}
         </form>
       </div>
 
