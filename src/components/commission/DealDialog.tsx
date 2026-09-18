@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Info, Percent, Banknote } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Info, Percent, Banknote, ChevronsUpDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/format";
 import { saveDeal } from "@/lib/commission.functions";
@@ -291,28 +293,64 @@ export function DealDialog({
           <div className="space-y-3">
             <div>
               <Label className="text-xs">Objekt</Label>
-              <Select
-                value={activeProperty}
-                onValueChange={(v) => {
-                  setActiveProperty(v);
-                  const p: any = propertyOptions.find((o: any) => o.id === v);
-                  const listPrice = p?.listing_type === "rent" ? p?.rent : p?.price;
-                  setSalePrice(listPrice != null ? String(listPrice) : "");
-                  setOverride("");
-                }}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Objekt auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {propertyOptions.map((p: any) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.reference_no ? `${p.reference_no} · ` : ""}
-                      {p.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    className="h-9 w-full justify-between px-3 font-normal"
+                  >
+                    <span className="truncate">
+                      {(() => {
+                        const p: any = propertyOptions.find((o: any) => o.id === activeProperty);
+                        if (!p) return "Objekt auswählen";
+                        return `${p.reference_no ? `${p.reference_no} · ` : ""}${p.title}`;
+                      })()}
+                    </span>
+                    <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command
+                    filter={(value, search) => {
+                      const term = search.toLowerCase();
+                      const p: any = propertyOptions.find((o: any) => o.id === value);
+                      if (!p) return 0;
+                      const hay = `${p.title ?? ""} ${p.reference_no ?? ""}`.toLowerCase();
+                      return hay.includes(term) ? 1 : 0;
+                    }}
+                  >
+                    <CommandInput placeholder="Objekt suchen…" />
+                    <CommandList>
+                      <CommandEmpty>Kein Objekt gefunden.</CommandEmpty>
+                      <CommandGroup>
+                        {propertyOptions.map((p: any) => (
+                          <CommandItem
+                            key={p.id}
+                            value={p.id}
+                            onSelect={(v) => {
+                              setActiveProperty(v);
+                              const selected: any = propertyOptions.find((o: any) => o.id === v);
+                              const listPrice =
+                                selected?.listing_type === "rent" ? selected?.rent : selected?.price;
+                              setSalePrice(listPrice != null ? String(listPrice) : "");
+                              setOverride("");
+                            }}
+                          >
+                            <Check
+                              className={`mr-2 size-4 ${activeProperty === p.id ? "opacity-100" : "opacity-0"}`}
+                            />
+                            <span className="truncate">
+                              {p.reference_no ? `${p.reference_no} · ` : ""}
+                              {p.title}
+                            </span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <p className="mt-1 text-xs text-muted-foreground">
                 Preis wird automatisch übernommen und kann angepasst werden.
               </p>
