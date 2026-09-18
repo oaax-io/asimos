@@ -37,10 +37,30 @@ export function DealDialog({
   const save = useServerFn(saveDeal);
   const { data: profiles = [] } = useTeamProfiles();
 
-  const { data } = useQuery({
-    queryKey: ["deal-basis", propertyId],
-    enabled: open && !!propertyId,
+  // Das Objekt kann im Dialog gewechselt werden (Preis wird dann übernommen).
+  const [activeProperty, setActiveProperty] = useState(propertyId);
+  useEffect(() => {
+    if (open) setActiveProperty(propertyId);
+  }, [open, propertyId]);
+
+  const { data: propertyOptions = [] } = useQuery({
+    queryKey: ["deal-property-options"],
+    enabled: open,
     queryFn: async () => {
+      const { data } = await supabase
+        .from("properties")
+        .select("id, title, price, rent, listing_type, status, reference")
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      return data ?? [];
+    },
+  });
+
+  const { data } = useQuery({
+    queryKey: ["deal-basis", activeProperty],
+    enabled: open && !!activeProperty,
+    queryFn: async () => {
+      const propertyId = activeProperty;
       const [
         { data: property },
         { data: mandates },
