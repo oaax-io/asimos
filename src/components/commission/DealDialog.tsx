@@ -209,7 +209,7 @@ export function DealDialog({
       const dossier = (data?.dossiers ?? []).find((d: any) => d.id === dossierId);
       return save({
         data: {
-          propertyId,
+          propertyId: activeProperty,
           clientId: clientId || null,
           salePrice: Number(salePrice) || 0,
           commissionModel: model,
@@ -290,19 +290,32 @@ export function DealDialog({
           {/* Spalte 1: Eckdaten */}
           <div className="space-y-3">
             <div>
-              <Label className="text-xs">Käufer / Mieter</Label>
-              <Select value={clientId} onValueChange={setClientId}>
+              <Label className="text-xs">Objekt</Label>
+              <Select
+                value={activeProperty}
+                onValueChange={(v) => {
+                  setActiveProperty(v);
+                  const p: any = propertyOptions.find((o: any) => o.id === v);
+                  const listPrice = p?.listing_type === "rent" ? p?.rent : p?.price;
+                  setSalePrice(listPrice != null ? String(listPrice) : "");
+                  setOverride("");
+                }}
+              >
                 <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Kunde auswählen" />
+                  <SelectValue placeholder="Objekt auswählen" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(data?.clients ?? []).map((c: any) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.full_name}
+                  {propertyOptions.map((p: any) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.reference ? `${p.reference} · ` : ""}
+                      {p.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Preis wird automatisch übernommen und kann angepasst werden.
+              </p>
             </div>
 
             <div>
