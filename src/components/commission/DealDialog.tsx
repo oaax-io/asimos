@@ -49,7 +49,7 @@ export function DealDialog({
     queryFn: async () => {
       const { data } = await supabase
         .from("properties")
-        .select("id, title, price, rent, listing_type, status, reference")
+        .select("id, title, price, rent, listing_type, status, reference_no")
         .order("created_at", { ascending: false })
         .limit(1000);
       return data ?? [];
@@ -307,7 +307,7 @@ export function DealDialog({
                 <SelectContent>
                   {propertyOptions.map((p: any) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.reference ? `${p.reference} · ` : ""}
+                      {p.reference_no ? `${p.reference_no} · ` : ""}
                       {p.title}
                     </SelectItem>
                   ))}
