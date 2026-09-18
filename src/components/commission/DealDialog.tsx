@@ -228,131 +228,205 @@ export function DealDialog({
 
   const gross = Number(override) > 0 ? Number(override) : computed;
 
+  // Live-Aufteilung: was bekommt wer bei der aktuellen Eingabe?
+  const breakdown = useMemo(() => {
+    const rows = splits.filter((s) => s.user_id);
+    const totalPct = rows.reduce((s, r) => s + (Number(r.split_percent) || 0), 0);
+    return {
+      totalPct,
+      rows: rows.map((r) => {
+        const prof: any = profiles.find((p: any) => p.id === r.user_id);
+        const pct = Number(r.split_percent) || 0;
+        const share = Math.round(((gross * pct) / 100) * 100) / 100;
+        const rate = prof?.commission_payout_rate == null ? 50 : Number(prof.commission_payout_rate);
+        return {
+          key: r.user_id,
+          name: prof?.full_name || prof?.email || "Unbekannt",
+          pct,
+          share,
+          rate,
+          payout: Math.round(((share * rate) / 100) * 100) / 100,
+        };
+      }),
+    };
+  }, [splits, profiles, gross]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Deal bearbeiten" : "Deal erfassen"}</DialogTitle>
+      <DialogContent className="flex max-h-[92vh] w-[min(96vw,1100px)] max-w-none flex-col gap-3 overflow-hidden p-5">
+        <DialogHeader className="space-y-0">
+          <DialogTitle className="flex items-center gap-2 text-base">
+            {isEdit ? "Deal bearbeiten" : "Deal erfassen"}
+            {isEdit && (data?.deal as any)?.updated_at ? (
+              <span className="text-xs font-normal text-muted-foreground">
+                · zuletzt aktualisiert{" "}
+                {new Date((data!.deal as any).updated_at).toLocaleDateString("de-CH")}
+              </span>
+            ) : null}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 text-sm">
-          {isEdit && (data?.deal as any)?.updated_at ? (
-            <p className="text-xs text-muted-foreground">
-              Zuletzt aktualisiert am{" "}
-              {new Date((data!.deal as any).updated_at).toLocaleDateString("de-CH")}
-            </p>
-          ) : null}
+        <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto text-sm lg:grid-cols-3 lg:overflow-visible">
+          {/* Spalte 1: Eckdaten */}
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Käufer / Mieter</Label>
+              <Select value={clientId} onValueChange={setClientId}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Kunde auswählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(data?.clients ?? []).map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div>
-            <Label>Käufer / Mieter</Label>
-            <Select value={clientId} onValueChange={setClientId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Kunde auswählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {(data?.clients ?? []).map((c: any) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            <div>
+              <Label className="text-xs">Verkaufs-/Mietpreis (CHF)</Label>
+              <Input
+                className="h-9"
+                type="number"
+                step="1000"
+                value={salePrice}
+                onChange={(e) => setSalePrice(e.target.value)}
+              />
+            </div>
 
-          <div>
-            <Label>Effektiver Verkaufs-/Mietpreis (CHF)</Label>
-            <Input
-              type="number"
-              step="1000"
-              value={salePrice}
-              onChange={(e) => setSalePrice(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Provisionsmodell</Label>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2">
               <TypeCard
-                icon={<Percent className="size-6" />}
+                icon={<Percent className="size-5" />}
                 title="Prozent"
-                description="Provision als prozentualer Anteil vom Verkaufspreis."
+                description="Anteil vom Preis"
                 selected={model === "percent"}
                 onClick={() => setModel("percent")}
                 compact
               />
               <TypeCard
-                icon={<Banknote />}
+                icon={<Banknote className="size-5" />}
                 title="Pauschal"
-                description="Fester Betrag in CHF, unabhängig vom Verkaufspreis."
+                description="Fixer Betrag"
                 selected={model === "fixed"}
                 onClick={() => setModel("fixed")}
                 compact
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">{model === "percent" ? "Provision (%)" : "Provision (CHF)"}</Label>
+                <Input
+                  className="h-9"
+                  type="number"
+                  step={model === "percent" ? "0.1" : "100"}
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Endbetrag (optional)</Label>
+                <Input
+                  className="h-9"
+                  type="number"
+                  step="100"
+                  placeholder={String(computed || "")}
+                  value={override}
+                  onChange={(e) => setOverride(e.target.value)}
+                />
+              </div>
+            </div>
+
             <div>
-              <Label>{model === "percent" ? "Provision (%)" : "Provision (CHF)"}</Label>
-              <Input
-                type="number"
-                step={model === "percent" ? "0.1" : "100"}
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-              />
+              <Label className="text-xs">Abgeschlossen von</Label>
+              <Select value={closedBy} onValueChange={setClosedBy}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Mitarbeiter auswählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.full_name || p.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
-          <div className="rounded-lg border bg-muted/20 p-3">
-            <p className="text-muted-foreground">Berechnete Bruttoprovision</p>
-            <p className="text-lg font-semibold">{formatCurrency(computed)}</p>
-            <div className="mt-2">
-              <Label>Abweichender Endbetrag (optional)</Label>
-              <Input
-                type="number"
-                step="100"
-                value={override}
-                onChange={(e) => setOverride(e.target.value)}
-              />
+          {/* Spalte 2: Beteiligte */}
+          <div className="min-w-0 space-y-3">
+            <CommissionSplitEditor rows={splits} onChange={setSplits} />
+          </div>
+
+          {/* Spalte 3: Ergebnis + Zusatzangaben */}
+          <div className="space-y-3">
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Bruttoprovision</p>
+              <p className="text-2xl font-bold tabular-nums text-primary">{formatCurrency(gross)}</p>
+              {Number(override) > 0 && Number(override) !== computed ? (
+                <p className="text-xs text-muted-foreground">
+                  berechnet wären {formatCurrency(computed)}
+                </p>
+              ) : null}
+
+              <div className="mt-3 space-y-1.5 border-t pt-2">
+                {breakdown.rows.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Noch keine Beteiligten erfasst.</p>
+                ) : (
+                  breakdown.rows.map((r) => (
+                    <div key={r.key} className="flex items-baseline justify-between gap-2 text-xs">
+                      <span className="truncate">
+                        {r.name} <span className="text-muted-foreground">· {r.pct} %</span>
+                      </span>
+                      <span className="shrink-0 text-right tabular-nums">
+                        <span className="font-semibold">{formatCurrency(r.share)}</span>
+                        <span className="ml-1 text-muted-foreground">
+                          (Auszahlung {formatCurrency(r.payout)})
+                        </span>
+                      </span>
+                    </div>
+                  ))
+                )}
+                {breakdown.rows.length > 0 && Math.abs(breakdown.totalPct - 100) > 0.01 && (
+                  <p className="text-xs text-amber-600">
+                    Summe der Anteile: {breakdown.totalPct.toFixed(1)} % statt 100 %.
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div>
-            <Label>Wer hat den Deal abgeschlossen?</Label>
-            <Select value={closedBy} onValueChange={setClosedBy}>
-              <SelectTrigger>
-                <SelectValue placeholder="Mitarbeiter auswählen" />
-              </SelectTrigger>
-              <SelectContent>
-                {profiles.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.full_name || p.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Abschlussdatum</Label>
+                <Input className="h-9" type="date" value={bookedAt} onChange={(e) => setBookedAt(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Finanzierung</Label>
+                <Select value={finMode} onValueChange={(v) => setFinMode(v as any)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Keine Angabe</SelectItem>
+                    <SelectItem value="dossier">Dossier verknüpfen</SelectItem>
+                    <SelectItem value="manual">Manueller Betrag</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-          <CommissionSplitEditor rows={splits} onChange={setSplits} />
-
-          <div className="space-y-2">
-            <Label>Finanzierung</Label>
-            <Select value={finMode} onValueChange={(v) => setFinMode(v as any)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Keine Angabe</SelectItem>
-                <SelectItem value="dossier">Bestehendes Dossier verknüpfen</SelectItem>
-                <SelectItem value="manual">Manueller Betrag</SelectItem>
-              </SelectContent>
-            </Select>
             {finMode === "dossier" && (
               <Select value={dossierId} onValueChange={setDossierId}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder="Dossier auswählen" />
                 </SelectTrigger>
                 <SelectContent>
                   {(data?.dossiers ?? []).map((d: any) => (
                     <SelectItem key={d.id} value={d.id}>
-                      {formatCurrency(dossierAmount(d))} Hypothek — Status: {d.dossier_status ?? "—"}
+                      {formatCurrency(dossierAmount(d))} Hypothek — {d.dossier_status ?? "—"}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -360,6 +434,7 @@ export function DealDialog({
             )}
             {finMode === "manual" && (
               <Input
+                className="h-9"
                 type="number"
                 step="1000"
                 placeholder="Finanzierungsbetrag (CHF)"
@@ -367,31 +442,23 @@ export function DealDialog({
                 onChange={(e) => setFinAmount(e.target.value)}
               />
             )}
-          </div>
 
-          <div>
-            <Label>Abschlussdatum</Label>
-            <Input type="date" value={bookedAt} onChange={(e) => setBookedAt(e.target.value)} />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Für rückwirkende Erfassung älterer Abschlüsse anpassbar.
-            </p>
-          </div>
+            <div>
+              <Label className="text-xs">Notizen</Label>
+              <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            </div>
 
-          <div>
-            <Label>Notizen</Label>
-            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            {data?.reservationFee ? (
+              <p className="flex items-start gap-2 rounded-md bg-primary/10 p-2 text-xs text-primary">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                Reservationsgebühr von {formatCurrency(data.reservationFee)} bereits gebucht – wird
+                angerechnet.
+              </p>
+            ) : null}
           </div>
-
-          {data?.reservationFee ? (
-            <p className="flex items-start gap-2 rounded-md bg-primary/10 p-2 text-xs text-primary">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              Für dieses Objekt wurde bereits eine Reservationsgebühr von{" "}
-              {formatCurrency(data.reservationFee)} gebucht – sie wird angerechnet.
-            </p>
-          ) : null}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t pt-3">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Abbrechen
           </Button>
