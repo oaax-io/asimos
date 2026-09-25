@@ -11,6 +11,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type PublicDomainBranding = {
   company_name: string | null;
@@ -40,3 +41,36 @@ export const resolvePublicDomainBranding = createServerFn({ method: "GET" }).han
 
 /** Query-Key berücksichtigt den Hostname → keine Vermischung verschiedener Domains. */
 export const publicDomainBrandingKey = (hostname: string) => ["public-domain-branding", hostname] as const;
+
+function requestHostname(): string {
+  const raw = getRequestHeader("x-forwarded-host") || getRequestHeader("host") || "";
+  return raw.split(",")[0].trim().toLowerCase().replace(/:\d+$/, "").replace(/\.$/, "");
+}
+
+/**
+ * Phase 3C.2 – Passt die angemeldete Person zur Firma der aufgerufenen Domain?
+ * Nur Darstellung/Hinweis: gewährt NIE Zugriff, erzeugt keine Mitgliedschaft,
+ * setzt keine Firma. Datenzugriff entscheiden weiterhin Mitgliedschaft + RLS.
+ */
+export const checkDomainAccess = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ domainBranded: boolean; allowed: boolean }> => {
+    const hostname = requestHostname();
+    if (!hostname) return { domainBranded: false, allowed: true };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: pub } = await supabaseAdmin.rpc(
+      "resolve_public_tenant_branding" as never,
+      { _hostname: hostname } as never,
+    );
+    if (!pub) return { domainBranded: false, allowed: true }; // generische Domain
+    // Als angemeldete Person (RLS): Domain-Eintrag nur sichtbar bei aktiver Mitgliedschaft.
+    const { data: rows } = await context.supabase
+      .from("tenant_domains")
+      .select("agency_id, domain")
+      .eq("verification_status", "verified");
+    const row = (rows ?? []).find((r) => r.domain.toLowerCase() === hostname);
+    if (!row) return { domainBranded: true, allowed: false };
+    const { data: current } = await context.supabase.rpc("current_agency_id");
+    // Kein stilles Wechseln der Firma: nur wenn die aktive Firma genau diese ist.
+    return { domainBranded: true, allowed: current === row.agency_id };
+  });
