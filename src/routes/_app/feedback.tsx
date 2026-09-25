@@ -18,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   MessageSquarePlus, Bug, Lightbulb, HelpCircle, Paperclip, X, Image as ImageIcon,
-  Send, Loader2, Filter, ChevronUp,
+  Send, Loader2, Filter, ChevronUp, ChevronLeft, ChevronRight,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/feedback")({
@@ -574,18 +574,72 @@ function FeedbackDetailDialog({ id, onClose }: { id: string | null; onClose: () 
 }
 
 function AttachmentGrid({ attachments }: { attachments: Attachment[] }) {
+  const images = attachments.filter(a => a.mime?.startsWith("image/"));
+  const [viewerIdx, setViewerIdx] = useState<number | null>(null);
+  const [broken, setBroken] = useState<Set<number>>(new Set());
+
   return (
-    <div className="mt-2 flex flex-wrap gap-2">
-      {attachments.map((a, i) => a.mime?.startsWith("image/") ? (
-        <a key={i} href={a.url} target="_blank" rel="noreferrer" className="block">
-          <img src={a.url} alt={a.name} className="h-24 w-24 rounded-md border object-cover" />
-        </a>
-      ) : (
-        <a key={i} href={a.url} target="_blank" rel="noreferrer"
-          className="flex items-center gap-2 rounded-md border bg-muted/30 px-2 py-1 text-xs hover:bg-muted">
-          <Paperclip className="h-3 w-3" /> {a.name}
-        </a>
-      ))}
-    </div>
+    <>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {attachments.map((a, i) => a.mime?.startsWith("image/") ? (
+          <button key={i} type="button" className="block cursor-zoom-in"
+            onClick={(e) => { e.stopPropagation(); setViewerIdx(images.indexOf(a)); }}>
+            {broken.has(i) ? (
+              <span className="flex h-24 w-24 items-center justify-center rounded-md border bg-muted/30 text-[10px] text-muted-foreground">
+                Bild nicht ladbar
+              </span>
+            ) : (
+              <img src={a.url} alt={a.name}
+                onError={() => setBroken(prev => new Set(prev).add(i))}
+                className="h-24 w-24 rounded-md border object-cover transition hover:opacity-80" />
+            )}
+          </button>
+        ) : (
+          <a key={i} href={a.url} target="_blank" rel="noreferrer"
+            className="flex items-center gap-2 rounded-md border bg-muted/30 px-2 py-1 text-xs hover:bg-muted">
+            <Paperclip className="h-3 w-3" /> {a.name}
+          </a>
+        ))}
+      </div>
+
+      <Dialog open={viewerIdx !== null} onOpenChange={(o) => !o && setViewerIdx(null)}>
+        <DialogContent className="max-w-4xl" onClick={(e) => e.stopPropagation()}>
+          {viewerIdx !== null && images[viewerIdx] && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="truncate text-sm font-medium">
+                  {images[viewerIdx].name} · Bild {viewerIdx + 1} von {images.length}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="relative flex h-[70vh] w-full items-center justify-center overflow-hidden rounded-md border bg-muted">
+                <img src={images[viewerIdx].url} alt={images[viewerIdx].name}
+                  className="max-h-full max-w-full object-contain" />
+                {images.length > 1 && (
+                  <>
+                    <Button size="icon" variant="secondary"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 shadow-md"
+                      disabled={viewerIdx === 0}
+                      onClick={() => setViewerIdx(Math.max(0, viewerIdx - 1))}>
+                      <ChevronLeft className="h-5 w-5" />
+                    </Button>
+                    <Button size="icon" variant="secondary"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 shadow-md"
+                      disabled={viewerIdx === images.length - 1}
+                      onClick={() => setViewerIdx(Math.min(images.length - 1, viewerIdx + 1))}>
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
+                  </>
+                )}
+              </div>
+              <div className="flex justify-end">
+                <Button size="sm" variant="outline" asChild>
+                  <a href={images[viewerIdx].url} target="_blank" rel="noreferrer">In neuem Tab öffnen</a>
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
