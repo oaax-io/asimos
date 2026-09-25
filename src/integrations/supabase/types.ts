@@ -370,6 +370,8 @@ export type Database = {
           footer_html: string | null
           header_html: string | null
           id: string
+          login_subtitle: string | null
+          login_title: string | null
           logo_alt_url: string | null
           logo_url: string | null
           primary_color: string | null
@@ -392,6 +394,8 @@ export type Database = {
           footer_html?: string | null
           header_html?: string | null
           id?: string
+          login_subtitle?: string | null
+          login_title?: string | null
           logo_alt_url?: string | null
           logo_url?: string | null
           primary_color?: string | null
@@ -414,6 +418,8 @@ export type Database = {
           footer_html?: string | null
           header_html?: string | null
           id?: string
+          login_subtitle?: string | null
+          login_title?: string | null
           logo_alt_url?: string | null
           logo_url?: string | null
           primary_color?: string | null
@@ -4335,6 +4341,7 @@ export type Database = {
       }
       tenant_domains: {
         Row: {
+          activated_at: string | null
           agency_id: string
           created_at: string
           domain: string
@@ -4346,6 +4353,7 @@ export type Database = {
           verified_at: string | null
         }
         Insert: {
+          activated_at?: string | null
           agency_id: string
           created_at?: string
           domain: string
@@ -4357,6 +4365,7 @@ export type Database = {
           verified_at?: string | null
         }
         Update: {
+          activated_at?: string | null
           agency_id?: string
           created_at?: string
           domain?: string
@@ -4652,6 +4661,12 @@ export type Database = {
         Returns: string
       }
       tenant_branding_of: { Args: { _agency: string }; Returns: Json }
+      tenant_custom_domain_activate: { Args: never; Returns: undefined }
+      tenant_custom_domain_remove: { Args: never; Returns: undefined }
+      tenant_custom_domain_request: {
+        Args: { _domain: string }
+        Returns: undefined
+      }
       tenant_parent_agencies: { Args: { j: Json }; Returns: string[] }
       tenant_subdomain_available: { Args: { _slug: string }; Returns: boolean }
       tenant_subdomain_root: { Args: never; Returns: string }
