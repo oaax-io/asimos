@@ -82,6 +82,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   domain_added: "Domain hinzugefügt", domain_verified: "Domain bestätigt", domain_activated: "Domain aktiviert",
   domain_deactivated: "Domain deaktiviert", domain_primary_changed: "Bevorzugte Domain geändert", domain_removed: "Domain entfernt",
   module_entitled: "Modul freigeschaltet", module_revoked: "Modul gesperrt",
+  platform_role_granted: "Plattformrolle vergeben", platform_role_changed: "Plattformrolle geändert", platform_role_removed: "Plattformzugang entfernt",
 };
 /** Erlaubte Statuswechsel (archived → suspended nicht vorgesehen). */
 export const STATUS_TRANSITIONS: Record<string, Array<"active" | "suspended" | "archived">> = {
@@ -157,3 +158,16 @@ export const domainErrorText = (e: unknown) => {
 // ---- Phase 4.5: Modul-Freischaltung (nur über platform_set_module_entitlement) ----
 export const setModuleEntitlement = (agencyId: string, module: string, entitled: boolean) =>
   rpc<void>("platform_set_module_entitlement", { _agency_id: agencyId, _module: module, _entitled: entitled });
+
+// ---- Phase 4.6B: Plattformzugänge (Mutationen nur System Owner, serverseitig geprüft) ----
+export type PlatformUser = {
+  user_id: string; full_name: string | null; email: string | null; platform_role: string;
+  created_at: string; updated_at: string | null; has_membership: boolean;
+};
+export type FoundUser = { exists: boolean; user_id?: string; name?: string | null; email: string; platform_role?: string | null };
+export const PLATFORM_ROLES = ["platform_admin", "platform_support", "system_owner"] as const;
+export const usePlatformUsers = () => useQuery({ queryKey: ["platform", "platform-users"], queryFn: () => rpc<PlatformUser[]>("platform_list_platform_users") });
+export const useMyPlatformRole = () => useQuery({ queryKey: ["platform", "my-role"], queryFn: () => rpc<string | null>("platform_role") });
+export const findPlatformUserByEmail = (email: string) => rpc<FoundUser>("platform_find_user_by_email", { _email: email });
+export const setPlatformUserRole = (userId: string, role: string) => rpc<string>("platform_set_user_role", { _user_id: userId, _role: role });
+export const removePlatformUserAccess = (userId: string) => rpc<void>("platform_remove_user_access", { _user_id: userId });
