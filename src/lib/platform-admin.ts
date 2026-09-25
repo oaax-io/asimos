@@ -96,7 +96,7 @@ export const CORE_MODULES = DEFAULT_MODULES; // Vorauswahl Assistent (Legacy-Nam
 export type SubdomainCheck = "available" | "taken" | "reserved" | "invalid";
 export const checkSubdomain = (slug: string) => rpc<SubdomainCheck>("platform_check_subdomain", { _slug: slug });
 export const checkOwnerEmail = (email: string) => rpc<boolean>("platform_check_owner_email", { _email: email });
-export type CreateTenantResult = { agency_id: string; name: string; domain: string; owner_status: string; owner_user_exists: boolean; modules: string[] };
+export type CreateTenantResult = { agency_id: string; name: string; domain: string; owner_status: string; owner_user_exists: boolean; modules: string[]; invitation_token?: string | null };
 export const createTenant = (a: { name: string; slug: string; firstName: string; lastName: string; email: string; modules: string[] }) =>
   rpc<CreateTenantResult>("platform_create_tenant", {
     _name: a.name, _slug: a.slug, _owner_first_name: a.firstName, _owner_last_name: a.lastName, _owner_email: a.email, _modules: a.modules,
@@ -108,7 +108,7 @@ export const useOwnerInvitations = (agencyId: string) => useQuery({
 });
 export const OWNER_STATUS_LABEL: Record<string, string> = {
   active: "Aktiv (Konto vorhanden)", pending_invitation: "Einladung ausstehend – noch kein Konto",
-  pending: "Einladung ausstehend – noch kein Konto", invited: "Eingeladen", accepted: "Angenommen", cancelled: "Abgebrochen",
+  pending: "Einladung ausstehend – noch kein Konto", invited: "Eingeladen", accepted: "Angenommen", cancelled: "Abgebrochen", expired: "Einladung abgelaufen", revoked: "Einladung widerrufen",
 };
 export function slugify(s: string) {
   return s.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
