@@ -59,7 +59,7 @@ export function WhiteLabelSettings() {
     enabled: !!agencyId,
     queryFn: async () => {
       const { data } = await supabase.from("tenant_domains" as any)
-        .select("id, domain, domain_type, verification_status, activated_at").eq("agency_id", agencyId!);
+        .select("id, domain, domain_type, verification_status, activated_at, verification_token, verification_error").eq("agency_id", agencyId!);
       return ((data as any[]) ?? []) as Domain[];
     },
   });
@@ -94,6 +94,16 @@ export function WhiteLabelSettings() {
       if (error) throw error;
     },
     onSuccess: () => { setNewDomain(""); qc.invalidateQueries({ queryKey: ["tenant-domains"] }); toast.success("Domain aktualisiert"); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const verifyFn = useServerFn(verifyCustomDomain);
+  const verify = useMutation({
+    mutationFn: () => verifyFn(),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["tenant-domains"] });
+      if (r.status === "verified") toast.success(r.message); else toast.error(r.message);
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -188,13 +198,27 @@ export function WhiteLabelSettings() {
 
         <Card>
           <CardHeader><CardTitle>Eigene Domain</CardTitle>
-            <CardDescription>Zum Beispiel crm.ihrefirma.ch. Nach dem Erfassen prüft unser Support die Domain. Aktivieren können Sie sie erst nach der Verifikation.</CardDescription>
+            <CardDescription>Zum Beispiel crm.ihrefirma.ch. Nach dem Erfassen setzen Sie einen DNS-Eintrag, damit wir prüfen können, dass die Domain Ihnen gehört. Aktivieren können Sie sie erst nach der Verifikation. Die technische Verbindung der Domain richtet unser Support ein.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <span className="font-mono text-sm">{custom?.domain ?? "—"}</span>
               <Badge variant={cs.variant}>{cs.label}</Badge>
             </div>
+            {custom && custom.verification_status !== "verified" && custom.verification_token && (
+              <div className="space-y-2 rounded-md border bg-muted/40 p-3 text-sm">
+                <p>Legen Sie bei Ihrem Domain-Anbieter diesen TXT-Eintrag an:</p>
+                <div className="grid grid-cols-[80px_1fr] gap-1 font-mono text-xs">
+                  <span className="text-muted-foreground">Typ</span><span>TXT</span>
+                  <span className="text-muted-foreground">Name</span><span className="break-all">_immolia-verify.{custom.domain}</span>
+                  <span className="text-muted-foreground">Wert</span><span className="break-all">{custom.verification_token}</span>
+                </div>
+                {custom.verification_error && <p className="text-destructive">Letzte Prüfung: {custom.verification_error}</p>}
+                <Button size="sm" onClick={() => verify.mutate()} disabled={verify.isPending}>
+                  {verify.isPending ? "Wird geprüft …" : "Jetzt prüfen"}
+                </Button>
+              </div>
+            )}
             {custom?.verification_status === "verified" && !custom.activated_at && (
               <Button onClick={() => domainAction.mutate({ fn: "tenant_custom_domain_activate" })} disabled={domainAction.isPending}>Domain aktivieren</Button>
             )}
