@@ -40,7 +40,8 @@ export function CompanyProfileForm() {
   const { data } = useQuery({
     queryKey: ["company-full"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("company").select("*").limit(1).single();
+      // Firmenprofil der aktuellen Firma (Zugriffsregeln liefern nur die eigene Firma)
+      const { data, error } = await supabase.from("company").select("*").limit(1).maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -70,7 +71,9 @@ export function CompanyProfileForm() {
 
   const save = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("company").update(form as any).eq("id", true);
+      const { error } = data
+        ? await supabase.from("company").update(form as any).eq("id", true)
+        : await supabase.from("company").insert(form as any);
       if (error) throw error;
     },
     onSuccess: () => {

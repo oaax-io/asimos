@@ -1,15 +1,15 @@
 // ---------------------------------------------------------------------------
 // Rollenprüfung für die Stammlisten-Verwaltung (Einstellungen → Kategorien).
-// Bearbeiten dürfen nur Inhaber/Admin (profiles.role) oder Superadmin.
-// Serverseitig wird dasselbe über die RLS-Policies auf
-// public.master_list_values und public.property_feature_options erzwungen.
+// Bearbeiten dürfen nur Inhaber/Admin der aktuellen Firma (Mitgliedschaft).
+// Plattformrechte verleihen bewusst KEIN Bearbeitungsrecht für Firmen-Stammdaten.
+// Serverseitig wird dasselbe über die Zugriffsregeln erzwungen.
 // ---------------------------------------------------------------------------
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
 export function useIsMasterDataAdmin() {
-  const { user, isSuperadmin } = useAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? null;
 
   const query = useQuery({
@@ -17,18 +17,11 @@ export function useIsMasterDataAdmin() {
     enabled: !!userId,
     staleTime: 60_000,
     queryFn: async () => {
-      const [{ data: profile }, { data: roles }] = await Promise.all([
-        supabase.from("profiles").select("role").eq("id", userId!).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", userId!),
-      ]);
-      const role = (profile as any)?.role;
-      const isAdmin = role === "admin" || role === "owner";
-      const hasAdminRole = (roles ?? []).some(
-        (r: any) => r.role === "admin" || r.role === "owner",
-      );
-      return isAdmin || hasAdminRole;
+      const { data, error } = await supabase.rpc("is_owner_or_admin");
+      if (error) return false;
+      return !!data;
     },
   });
 
-  return { canEdit: isSuperadmin || query.data === true, loading: query.isLoading };
+  return { canEdit: query.data === true, loading: query.isLoading };
 }

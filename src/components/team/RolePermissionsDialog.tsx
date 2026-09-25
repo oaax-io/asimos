@@ -102,6 +102,7 @@ export function RolePermissionsDialog({ open, onOpenChange }: { open: boolean; o
     mutationFn: async ({ role, module, value }: { role: Role; module: string; value: boolean }) => {
       const existing = map.get(`${role}:${module}`);
       const payload = {
+        agency_id: await currentAgencyId(),
         role,
         module,
         can_view: value,
@@ -112,7 +113,7 @@ export function RolePermissionsDialog({ open, onOpenChange }: { open: boolean; o
       };
       const { error } = await supabase
         .from("module_permissions")
-        .upsert(payload, { onConflict: "module,role" });
+        .upsert(payload, { onConflict: "agency_id,module,role" });
       if (error) throw error;
     },
     onMutate: ({ role, module }) => {
@@ -131,9 +132,11 @@ export function RolePermissionsDialog({ open, onOpenChange }: { open: boolean; o
 
   const setAllForRole = useMutation({
     mutationFn: async ({ role, value }: { role: Role; value: boolean }) => {
+      const agency_id = await currentAgencyId();
       const rows = ALL_MODULES.map((module) => {
         const existing = map.get(`${role}:${module}`);
         return {
+          agency_id,
           role,
           module,
           can_view: value,
@@ -145,7 +148,7 @@ export function RolePermissionsDialog({ open, onOpenChange }: { open: boolean; o
       });
       const { error } = await supabase
         .from("module_permissions")
-        .upsert(rows, { onConflict: "module,role" });
+        .upsert(rows, { onConflict: "agency_id,module,role" });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -250,4 +253,10 @@ export function RolePermissionsDialog({ open, onOpenChange }: { open: boolean; o
       </DialogContent>
     </Dialog>
   );
+}
+
+async function currentAgencyId(): Promise<string> {
+  const { data } = await supabase.rpc("current_agency_id");
+  if (!data) throw new Error("Keine aktive Firma");
+  return data as string;
 }
