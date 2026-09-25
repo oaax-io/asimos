@@ -4,7 +4,8 @@
  * brand_settings/company. Branding ist Darstellung, keine Autorisierung.
  */
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useDomainAccess } from "@/components/DomainAccessGate";
 import { useRouterState, useLoaderData } from "@tanstack/react-router";
 import type { PublicDomainBranding } from "@/lib/public-domain-branding.functions";
 import { useAuth } from "@/lib/auth";
@@ -77,12 +78,7 @@ export function TenantBrandingProvider({ children }: { children: ReactNode }) {
   // Öffentliches Branding der aufgerufenen Domain (serverseitig über den Hostname ermittelt).
   const domainBrand = useLoaderData({ strict: false, from: "__root__" as never, select: (d: any) => d?.branding ?? null }) as PublicDomainBranding | null;
   // Ergebnis der Domain-Prüfung aus dem Cache (DomainAccessGate lädt es). Nur Darstellung.
-  const host = typeof window !== "undefined" ? window.location.hostname : "";
-  const access = useQuery<{ domainBranded: boolean; allowed: boolean } | null>({
-    queryKey: ["domain-access", host, user?.id],
-    queryFn: () => null,
-    enabled: false,
-  });
+  const access = useDomainAccess(false);
   const accessAllowed = access.data?.allowed === true;
 
   // Bei Benutzerwechsel/Logout keine fremde Konfiguration im Cache behalten.
