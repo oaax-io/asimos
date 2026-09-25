@@ -63,12 +63,13 @@ export async function assertDocumentPathAccess(sb: UserClient, rawPath: string) 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   // 2) Legacy: über Dokumentdatensatz auflösen
-  const [{ data: gen }, { data: docs }, { data: sot }] = await Promise.all([
-    supabaseAdmin.from("generated_documents").select("agency_id").or(`pdf_url.eq.${JSON.stringify(path)},file_url.eq.${JSON.stringify(path)}`).limit(5),
+  const [{ data: genPdf }, { data: genFile }, { data: docs }, { data: sot }] = await Promise.all([
+    supabaseAdmin.from("generated_documents").select("agency_id").eq("pdf_url", path).limit(5),
+    supabaseAdmin.from("generated_documents").select("agency_id").eq("file_url", path).limit(5),
     supabaseAdmin.from("documents").select("agency_id").eq("file_url", path).limit(5),
     supabaseAdmin.from("storage_object_tenants").select("agency_id").eq("bucket_id", BUCKET).eq("object_name", path).limit(5),
   ]);
-  const owners = [...(gen ?? []), ...(docs ?? []), ...(sot ?? [])].map((r: { agency_id: string | null }) => r.agency_id);
+  const owners = [...(genPdf ?? []), ...(genFile ?? []), ...(docs ?? []), ...(sot ?? [])].map((r: { agency_id: string | null }) => r.agency_id);
   if (owners.length === 0) deny();
   // Jede Zuordnung muss zur aktuellen Firma passen (keine Mischzuordnung).
   if (owners.some((a) => a !== agencyId)) deny();
