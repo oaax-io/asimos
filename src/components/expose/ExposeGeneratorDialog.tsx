@@ -311,7 +311,7 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
           attachment_doc_names: docMedia
             .filter((m) => selectedDocIds.has(m.id))
             .map((m) => m.title || m.file_name || m.file_url.split("/").pop() || "Dokument"),
-          agency_name: companyData?.name ?? "ASIMO",
+          agency_name: companyData?.name ?? _tb.companyName,
           contact_name: sections.kontakt ? profileData?.full_name ?? null : null,
           contact_email: sections.kontakt ? profileData?.email ?? null : null,
           contact_phone: sections.kontakt ? profileData?.phone ?? null : null,

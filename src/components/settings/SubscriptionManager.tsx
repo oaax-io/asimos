@@ -162,8 +162,8 @@ export function SubscriptionManager() {
 
       <Card>
         <CardHeader>
-          <CardTitle>ASIMOS Abonnement</CardTitle>
-          <CardDescription>Vollzugriff auf ASIMOS für CHF 89.90 pro Monat.</CardDescription>
+          <CardTitle>Immolia Abonnement</CardTitle>
+          <CardDescription>Vollzugriff auf Immolia für CHF 89.90 pro Monat.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {sub && isActive ? (
@@ -189,7 +189,7 @@ export function SubscriptionManager() {
             <div className="space-y-4">
               <div className="rounded-lg border p-4">
                 <div className="flex items-baseline justify-between mb-2">
-                  <span className="font-semibold">ASIMOS Pro</span>
+                  <span className="font-semibold">Immolia Pro</span>
                   <span className="text-2xl font-bold">{PRICE_LABEL}</span>
                 </div>
                 <ul className="text-sm text-muted-foreground space-y-1 mt-3">

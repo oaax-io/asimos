@@ -198,7 +198,7 @@ export function DocumentTemplatesManager() {
       },
       mandate: { commission_model: "Prozent", commission_value: 3, valid_from: "2026-05-01", valid_until: "2026-11-01" },
       reservation: { reservation_fee: 25000, valid_until: "2026-06-15" },
-      company: { name: "ASIMOS Immobilien AG" },
+      company: { name: "Muster Immobilien AG" },
     };
     setPreviewHtml(wrapHtmlDocument(t.name || "Vorschau", renderTemplate(t.content, sampleCtx)));
     setPreviewOpen(true);
@@ -242,7 +242,7 @@ export function DocumentTemplatesManager() {
       },
       mandate: { commission_model: "Prozent", commission_value: 3, valid_from: "2026-05-01", valid_until: "2026-11-01" },
       reservation: { reservation_fee: 25000, valid_until: "2026-06-15" },
-      company: { name: "ASIMOS Immobilien AG" },
+      company: { name: "Muster Immobilien AG" },
     };
     setPreviewHtml(wrapHtmlDocument(form.name || "Vorschau", renderTemplate(form.content, sampleCtx)));
     setPreviewOpen(true);

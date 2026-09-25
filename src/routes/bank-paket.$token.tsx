@@ -209,7 +209,7 @@ function BankPackageDownloadPage() {
 function Shell({
   children,
   primary = "#324642",
-  companyName = "ASIMO",
+  companyName = "",
   logoUrl = "",
 }: {
   children: React.ReactNode;

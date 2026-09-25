@@ -132,7 +132,7 @@ export function BrandkitForm() {
               <Input
                 value={form.company_name}
                 onChange={(e) => setForm({ ...form, company_name: e.target.value })}
-                placeholder="ASIMO"
+                placeholder="Muster Immobilien AG"
               />
             </Field>
             <Field label="E-Mail">
@@ -140,7 +140,7 @@ export function BrandkitForm() {
                 type="email"
                 value={form.company_email}
                 onChange={(e) => setForm({ ...form, company_email: e.target.value })}
-                placeholder="kontakt@asimo.ch"
+                placeholder="kontakt@firma.ch"
               />
             </Field>
             <Field label="Adresse" full>
@@ -154,7 +154,7 @@ export function BrandkitForm() {
               <Input
                 value={form.company_website}
                 onChange={(e) => setForm({ ...form, company_website: e.target.value })}
-                placeholder="https://asimo.ch"
+                placeholder="https://firma.ch"
               />
             </Field>
           </div>
@@ -343,7 +343,7 @@ function BrandPreview({ brand }: { brand: BrandForm }) {
         className="px-4 py-2 text-center text-[10px] text-gray-500"
         style={{ borderTop: `1px solid ${secondary}66` }}
       >
-        {brand.company_name || "ASIMO"}
+        {brand.company_name || "Firmenname"}
         {brand.company_address ? ` · ${brand.company_address}` : ""}
       </div>
     </div>

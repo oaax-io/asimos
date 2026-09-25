@@ -304,7 +304,7 @@ function DocsPage() {
       <div>
         <h1 className="font-display text-3xl font-semibold tracking-tight">Dokumentation</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Changelog, Roadmap, FAQ und Hilfe rund um ASIMO.
+          Changelog, Roadmap, FAQ und Hilfe rund um Immolia.
         </p>
       </div>
 
@@ -391,7 +391,7 @@ function DocsPage() {
               <section>
                 <h3 className="mb-2 font-display text-base font-semibold">Dokumente</h3>
                 <p className="text-muted-foreground">
-                  Im Kunden-Tab <strong>Dokumente</strong> per Drag-and-Drop hochladen. ASIMO erkennt
+                  Im Kunden-Tab <strong>Dokumente</strong> per Drag-and-Drop hochladen. Immolia erkennt
                   den Dokumententyp automatisch. Dateien lassen sich umbenennen, in einer Vorschau
                   ansehen und herunterladen.
                 </p>

@@ -21,9 +21,9 @@ export const Route = createFileRoute("/_app/settings/trash")({
   component: TrashPage,
   head: () => ({
     meta: [
-      { title: "Papierkorb – Einstellungen | ASIMO CRM" },
+      { title: "Papierkorb – Einstellungen | Immolia" },
       { name: "description", content: "Gelöschte Immobilien, Kunden, Aufgaben und Dokumente ansehen und wiederherstellen." },
-      { property: "og:title", content: "Papierkorb – Einstellungen | ASIMO CRM" },
+      { property: "og:title", content: "Papierkorb – Einstellungen | Immolia" },
       { property: "og:description", content: "Gelöschte Einträge ansehen und wiederherstellen." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

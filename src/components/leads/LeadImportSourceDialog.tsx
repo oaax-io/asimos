@@ -39,7 +39,7 @@ export function LeadImportSourceDialog({ open, onOpenChange, onPick }: Props) {
             </div>
             <h3 className="font-semibold">Import aus CasaOne</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              CasaOne Exportdatei hochladen. ASIMOS erkennt Felder, Personen, Firmen und Kontaktpersonen automatisch.
+              CasaOne Exportdatei hochladen. Immolia erkennt Felder, Personen, Firmen und Kontaktpersonen automatisch.
             </p>
           </button>
         </div>
