@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CreateTenantWizard } from "@/components/platform/CreateTenantWizard";
 import { PlatformPage, QueryState } from "@/components/platform/PlatformLayout";
 import { usePlatformTenants, TENANT_STATUS_LABEL, domainStatusLabel, fmtDate } from "@/lib/platform-admin";
 
@@ -21,7 +22,7 @@ function Tenants() {
       (!s || [t.name, t.subdomain, t.custom_domain].some((v) => v?.toLowerCase().includes(s))));
   }, [q.data, search, status]);
   return (
-    <PlatformPage title="Unternehmen">
+    <PlatformPage title="Unternehmen" actions={<CreateTenantWizard />}>
       <div className="flex gap-3">
         <Input placeholder="Firmenname oder Domain suchen …" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
         <Select value={status} onValueChange={setStatus}>

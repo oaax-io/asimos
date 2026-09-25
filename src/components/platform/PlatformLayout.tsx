@@ -66,12 +66,15 @@ export function PlatformLayout() {
   );
 }
 
-export function PlatformPage({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+export function PlatformPage({ title, description, actions, children }: { title: string; description?: string; actions?: ReactNode; children: ReactNode }) {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-semibold">{title}</h1>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-semibold">{title}</h1>
+          {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+        </div>
+        {actions}
       </div>
       {children}
     </div>
