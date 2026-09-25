@@ -1,3 +1,4 @@
+import { tenantStoragePath } from "@/lib/tenant-storage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo, useRef } from "react";
@@ -129,7 +130,7 @@ function DocumentsPage() {
       if (!form.related_id) throw new Error(t("documents.toasts.linkRequired"));
       setUploading(true);
       const ext = file.name.split(".").pop() ?? "bin";
-      const path = `${form.related_type}/${form.related_id}/${crypto.randomUUID()}.${ext}`;
+      const path = await tenantStoragePath(`${form.related_type}/${form.related_id}/${crypto.randomUUID()}.${ext}`);
       const { error: upErr } = await supabase.storage.from("documents").upload(path, file, {
         contentType: file.type || "application/octet-stream",
         upsert: false,

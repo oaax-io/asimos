@@ -1,3 +1,4 @@
+import { tenantStoragePath } from "@/lib/tenant-storage";
 import {
   createContext,
   useCallback,
@@ -310,7 +311,7 @@ function ChatWindow({
     try {
       const uploaded: ChatAttachment[] = [];
       for (const file of Array.from(files)) {
-        const path = `${user.id}/${crypto.randomUUID()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
+        const path = await tenantStoragePath(`${user.id}/${crypto.randomUUID()}-${file.name.replace(/[^\w.\-]/g, "_")}`);
         const { error } = await supabase.storage.from("chat-attachments").upload(path, file);
         if (error) throw error;
         uploaded.push({ path, name: file.name, type: file.type, size: file.size });

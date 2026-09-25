@@ -62,8 +62,9 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
       };
     },
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: tenantAgency } = await context.supabase.rpc("current_agency_id");
     const serviceUrl = process.env.PDF_SERVICE_URL;
     const serviceToken = process.env.PDF_SERVICE_TOKEN;
     const startedAt = Date.now();
@@ -167,7 +168,10 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
         propertyTitle,
         documentId: id,
       });
-    const storagePath = `generated/${filename}`;
+    // Neue Uploads tenantbezogen ablegen (agency/{id}/...); Legacy-Pfade bleiben gültig.
+    const storagePath = tenantAgency
+      ? `agency/${tenantAgency}/generated/${filename}`
+      : `generated/${filename}`;
 
     // 1) Render via microservice (10s timeout)
     let pdfBytes: ArrayBuffer;
