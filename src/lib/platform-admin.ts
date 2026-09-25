@@ -45,7 +45,7 @@ export const usePlatformActivity = (agencyId?: string, limit = 30) => useQuery({
 export const usePlatformBranding = (agencyId: string) => useQuery({ queryKey: ["platform", "branding", agencyId], queryFn: () => rpc<Record<string, string | null> | null>("platform_tenant_branding", { _agency_id: agencyId }) });
 export const usePlatformAdmins = () => useQuery({ queryKey: ["platform", "admins"], queryFn: () => rpc<PlatformAdmin[]>("platform_list_admins") });
 
-export const TENANT_STATUS_LABEL: Record<string, string> = { active: "Aktiv", suspended: "Deaktiviert", archived: "Archiviert" };
+export const TENANT_STATUS_LABEL: Record<string, string> = { active: "Aktiv", suspended: "Gesperrt", archived: "Archiviert" };
 export const ACTIVITY_LABEL: Record<string, string> = {
   tenant_created: "Unternehmen angelegt", domain_added: "Domain erfasst", domain_verified: "Domain verifiziert",
   domain_activated: "Domain aktiviert", member_added: "Mitglied hinzugefügt",
@@ -61,3 +61,25 @@ export function domainStatusLabel(d: { verification_status: string | null; activ
 }
 export const fmtDate = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString("de-CH") : "–");
 export const fmtDateTime = (s: string | null | undefined) => (s ? new Date(s).toLocaleString("de-CH", { dateStyle: "short", timeStyle: "short" }) : "–");
+
+// ---- Phase 4.2: Verwaltung (nur über begrenzte platform_* RPCs) ----
+export type PlatformAuditLog = {
+  id: string; created_at: string; action: string; target_type: string; target_id: string | null;
+  target_label: string | null; metadata: Record<string, unknown>; actor_name: string | null;
+};
+export const usePlatformAuditLogs = (agencyId?: string, limit = 100) => useQuery({
+  queryKey: ["platform", "audit", agencyId ?? null, limit],
+  queryFn: () => rpc<PlatformAuditLog[]>("platform_list_audit_logs", { _agency_id: agencyId ?? null, _limit: limit }),
+});
+export const setTenantStatus = (agencyId: string, status: "active" | "suspended" | "archived") =>
+  rpc<string>("platform_set_tenant_status", { _agency_id: agencyId, _status: status });
+export const updateTenantName = (agencyId: string, name: string) =>
+  rpc<void>("platform_update_tenant", { _agency_id: agencyId, _name: name });
+export const AUDIT_LABEL: Record<string, string> = {
+  tenant_suspended: "Unternehmen gesperrt", tenant_reactivated: "Unternehmen reaktiviert",
+  tenant_archived: "Unternehmen archiviert", tenant_updated: "Unternehmen geändert",
+};
+/** Erlaubte Statuswechsel (archived → suspended nicht vorgesehen). */
+export const STATUS_TRANSITIONS: Record<string, Array<"active" | "suspended" | "archived">> = {
+  active: ["suspended", "archived"], suspended: ["active", "archived"], archived: ["active"],
+};
