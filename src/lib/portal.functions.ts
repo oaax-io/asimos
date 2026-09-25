@@ -10,13 +10,14 @@ const InputSchema = z.object({
 export const publishPropertyToPortal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => InputSchema.parse(data))
-  .handler(async ({ data }): Promise<{ ok: true; published: boolean; portalPropertyId: string | null }> => {
+  .handler(async ({ data, context }): Promise<{ ok: true; published: boolean; portalPropertyId: string | null }> => {
     const baseUrl = process.env["PORTAL_API_BASE_URL"];
     const inboundKey = process.env["PORTAL_INBOUND_API_KEY"];
     if (!baseUrl || !inboundKey) throw new Error("Portal-Anbindung ist nicht konfiguriert.");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const sb = supabaseAdmin as any;
+    // Tenant-safe: runs as the signed-in user; RLS only returns/updates
+    // properties of agencies with an active membership.
+    const sb = context.supabase as any;
 
     const { data: property, error } = await sb
       .from("properties")
