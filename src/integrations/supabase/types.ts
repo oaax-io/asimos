@@ -4606,6 +4606,10 @@ export type Database = {
       }
       agency_is_active: { Args: { _agency_id: string }; Returns: boolean }
       agency_module_enabled: { Args: { _module: string }; Returns: boolean }
+      agency_module_enabled_for: {
+        Args: { _agency_id: string; _module: string }
+        Returns: boolean
+      }
       bank_package_share_resolve: {
         Args: { _token: string }
         Returns: {
