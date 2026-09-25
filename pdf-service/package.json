@@ -1,7 +1,7 @@
 {
   "name": "asimos-pdf-service",
   "version": "1.0.0",
-  "description": "Self-hosted Puppeteer PDF microservice for ASIMOS",
+  "description": "Self-hosted Puppeteer PDF microservice for Immolia",
   "main": "server.js",
   "type": "module",
   "scripts": {
