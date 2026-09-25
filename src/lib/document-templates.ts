@@ -117,9 +117,9 @@ export type TemplateContext = {
   place?: string;
 };
 
-// Default brand fallback (ASIMO)
+// Neutraler Fallback ohne Tenant-Branding (keine ASIMO-Werte)
 export const DEFAULT_BRAND = {
-  company_name: "ASIMO",
+  company_name: "",
   company_address: "",
   company_email: "",
   company_website: "",
@@ -981,7 +981,7 @@ function wrapAsimoSkin(args: {
   const { title, bodyHtml, brand, font, customCss } = args;
   const accent = "#C8932E"; // ASIMO ocker/bronze
   const accentSoft = "#F8F1E3";
-  const companyName = escapeAttr(brand.company_name || "ASIMO");
+  const companyName = escapeAttr(brand.company_name || "");
   const logoUrl = brand.logo_url ? escapeAttr(brand.logo_url) : "";
   const website = brand.company_website
     ? escapeAttr(brand.company_website.replace(/^https?:\/\//, ""))

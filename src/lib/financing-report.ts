@@ -204,7 +204,7 @@ export function buildReportHtml(input: ReportInput, recs: Recommendation[]): str
   const primary = (brand.primary_color || "#324642").trim();
   const secondary = (brand.secondary_color || "#8a9a96").trim();
   const fontFamily = (brand.font_family || `-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`).trim();
-  const companyName = (brand.company_name || "ASIMO").trim();
+  const companyName = (brand.company_name || "").trim();
   const companyAddress = brand.company_address ?? "";
   const companyEmail = brand.company_email ?? "";
   const companyWebsite = brand.company_website ?? "";

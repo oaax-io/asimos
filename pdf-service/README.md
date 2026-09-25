@@ -1,6 +1,6 @@
-# ASIMOS PDF Microservice
+# Immolia PDF Microservice
 
-Self-hosted Puppeteer service. ASIMOS' server function `renderDocumentPdf`
+Self-hosted Puppeteer service. Immolia's server function `renderDocumentPdf`
 posts HTML here and gets back a PDF.
 
 **This service is NOT deployed by Lovable.** Host it on Render, Fly.io,
@@ -38,7 +38,7 @@ docker build -t asimos-pdf .
 docker run -e PDF_SERVICE_TOKEN=<your-secret> -p 8080:8080 asimos-pdf
 ```
 
-## Configure in ASIMOS
+## Configure in Immolia
 
 Set these secrets in Lovable Cloud (Settings → Backend → Secrets):
 

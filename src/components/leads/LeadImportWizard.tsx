@@ -286,7 +286,7 @@ export function LeadImportWizard({ open, onOpenChange, variant }: Props) {
           <div className="space-y-4 py-4">
             <p className="text-sm text-muted-foreground">
               {variant === "casaone"
-                ? "Lade deine CasaOne-Exportdatei (.csv) hoch. ASIMOS erkennt Felder, Personen, Firmen und Kontaktpersonen automatisch."
+                ? "Lade deine CasaOne-Exportdatei (.csv) hoch. Immolia erkennt Felder, Personen, Firmen und Kontaktpersonen automatisch."
                 : "Lade deine CSV-Datei hoch. Im nächsten Schritt kannst du die Spalten manuell zuordnen."}
             </p>
             <div

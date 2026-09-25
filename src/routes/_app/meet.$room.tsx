@@ -12,15 +12,15 @@ export const Route = createFileRoute("/_app/meet/$room")({
   component: MeetPage,
   head: () => ({
     meta: [
-      { title: "Videoanruf – ASIMO CRM" },
+      { title: "Videoanruf – Immolia" },
       {
         name: "description",
-        content: "Sicherer Videoanruf mit Kunden und Team direkt im ASIMO CRM.",
+        content: "Sicherer Videoanruf mit Kunden und Team direkt in Immolia.",
       },
-      { property: "og:title", content: "Videoanruf – ASIMO CRM" },
+      { property: "og:title", content: "Videoanruf – Immolia" },
       {
         property: "og:description",
-        content: "Sicherer Videoanruf mit Kunden und Team direkt im ASIMO CRM.",
+        content: "Sicherer Videoanruf mit Kunden und Team direkt in Immolia.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

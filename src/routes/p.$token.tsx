@@ -289,7 +289,7 @@ function PublicProperty() {
         )}
 
         <footer className="pt-8 border-t text-center text-xs text-muted-foreground">
-          Dieses Exposé wurde über ASIMO Real Estate geteilt.
+          Dieses Exposé wurde über Immolia geteilt.
         </footer>
       </div>
     </div>

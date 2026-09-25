@@ -1,6 +1,6 @@
 // Builds personalized filenames for generated documents.
 // Format: YYYY-MM-DD_COMPANY_DOCUMENT_CLIENT.pdf
-// Example: 2026-04-30_ASIMO_Maklermandat_BilelChagra.pdf
+// Example: 2026-04-30_Firma_Maklermandat_BilelChagra.pdf
 
 export type DocumentTypeKey =
   | "mandate"
@@ -96,7 +96,7 @@ export type BuildDocumentFileNameInput = {
 
 /**
  * Build a personalized filename like
- *   2026-04-30_ASIMO_Maklermandat_BilelChagra.pdf
+ *   2026-04-30_Firma_Maklermandat_BilelChagra.pdf
  *
  * Falls back gracefully when individual parts are missing.
  */

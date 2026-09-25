@@ -136,7 +136,7 @@ function pageWrapStart(t: ExposeTheme): string {
 
 function footer(d: ExposeData, t: ExposeTheme, _page?: number, _total?: number): string {
   return `<div class="footer">
-    <span>${esc(d.agency_name ?? "ASIMO Real Estate")} · ${esc(t.templateLabel ?? "")}</span>
+    <span>${esc(d.agency_name ?? "")} · ${esc(t.templateLabel ?? "")}</span>
     <span>${esc(d.title)}</span>
     <span>__PAGENO__ / __PAGETOTAL__</span>
   </div>`;
@@ -341,7 +341,7 @@ function renderClassic(d: ExposeData, t: ExposeTheme): string {
       ${d.cover_url ? `<img src="${esc(d.cover_url)}" alt="" />` : `<div class="hero-fallback"></div>`}
       <div class="hero-tint"></div>
       <div class="hero-meta">
-        <div class="brand-mark">${esc(d.agency_name ?? "ASIMO")}</div>
+        <div class="brand-mark">${esc(d.agency_name ?? "")}</div>
         <div class="kicker">${esc(t.templateLabel ?? "Exposé")}</div>
       </div>
     </div>
@@ -498,7 +498,7 @@ function renderModern(d: ExposeData, t: ExposeTheme): string {
     ${d.cover_url ? `<img class="bleed-img" src="${esc(d.cover_url)}" alt=""/>` : `<div class="bleed-fallback"></div>`}
     <div class="bleed-shade"></div>
     <div class="cover-top">
-      <div class="brand-pill">${esc(d.agency_name ?? "ASIMO")}</div>
+      <div class="brand-pill">${esc(d.agency_name ?? "")}</div>
       <div class="cover-meta">${esc(d.generated_on ?? "")} · ${esc(t.templateLabel ?? "")}</div>
     </div>
     <div class="cover-bottom">
@@ -633,7 +633,7 @@ function renderLuxury(d: ExposeData, t: ExposeTheme): string {
   G.cover.push(`
   <div class="page lx-cover">
     <div class="lx-top">
-      <div class="lx-brand">${esc(d.agency_name ?? "ASIMO")}</div>
+      <div class="lx-brand">${esc(d.agency_name ?? "")}</div>
       <div class="lx-edition">EDITION · ${esc(d.generated_on ?? "")}</div>
     </div>
     <div class="lx-rule double"></div>

@@ -639,7 +639,7 @@ export function buildBankPackageHtml(input: BankPackageInput): string {
   const fontFamily = (
     brand.font_family || `-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`
   ).trim();
-  const companyName = (brand.company_name || "ASIMO").trim();
+  const companyName = (brand.company_name || "").trim();
   const logoUrl = brand.logo_url ?? "";
   const today = new Date().toLocaleDateString("de-CH");
   const d = input.dossier;

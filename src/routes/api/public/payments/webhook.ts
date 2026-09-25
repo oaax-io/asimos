@@ -147,7 +147,7 @@ async function notifyPaymentFailed(agencyId: string | null, ownerUserId: string 
     await sb.rpc("create_notification", {
       _user_id: uid,
       _type: "task",
-      _title: "ASIMOS-Zahlung fehlgeschlagen",
+      _title: "Immolia-Zahlung fehlgeschlagen",
       _message: "Die monatliche Abrechnung konnte nicht eingezogen werden. Bitte Zahlungsmethode aktualisieren.",
       _link: "/settings?tab=subscription",
       _related_type: "subscription",
@@ -159,13 +159,13 @@ async function notifyPaymentFailed(agencyId: string | null, ownerUserId: string 
 async function notifyPaymentRecovered(agencyId: string | null, ownerUserId: string | null) {
   await notifyOwners(agencyId, ownerUserId, false, {
     title: "Zahlung erfolgreich",
-    message: "Deine ASIMOS-Zahlung wurde erfolgreich eingezogen. Vielen Dank.",
+    message: "Deine Immolia-Zahlung wurde erfolgreich eingezogen. Vielen Dank.",
   });
 }
 
 async function notifySubscriptionActivated(agencyId: string | null, ownerUserId: string | null) {
   await notifyOwners(agencyId, ownerUserId, true, {
-    title: "ASIMOS-Abonnement aktiviert",
+    title: "Immolia-Abonnement aktiviert",
     message: "Willkommen! Dein Abonnement ist jetzt aktiv und wird monatlich automatisch verlängert.",
   });
 }
@@ -173,7 +173,7 @@ async function notifySubscriptionActivated(agencyId: string | null, ownerUserId:
 async function notifySubscriptionCanceled(agencyId: string | null, ownerUserId: string | null) {
   await notifyOwners(agencyId, ownerUserId, true, {
     title: "Abonnement gekündigt",
-    message: "Dein ASIMOS-Abonnement wurde gekündigt. Du kannst jederzeit ein neues Abo abschliessen.",
+    message: "Dein Immolia-Abonnement wurde gekündigt. Du kannst jederzeit ein neues Abo abschliessen.",
   });
 }
 

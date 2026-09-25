@@ -100,7 +100,7 @@ function AuthPage() {
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="mail@asimo.ch"
+              placeholder="name@firma.ch"
               autoComplete="email"
               autoCapitalize="none"
               autoCorrect="off"
