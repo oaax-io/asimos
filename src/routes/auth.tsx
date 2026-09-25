@@ -11,6 +11,7 @@ import { z } from "zod";
 import bgNewbuild from "@/assets/login-bg-newbuild.jpg";
 import { resolvePublicDomainBranding, type PublicDomainBranding } from "@/lib/public-domain-branding.functions";
 import { useDomainAccess, NoAccessMessage } from "@/components/DomainAccessGate";
+import { readPendingInvite } from "@/lib/invitations";
 
 const IMMOLIA = { name: "Immolia", primary: "#334155", favicon: "/favicon.png" };
 
@@ -83,6 +84,9 @@ function AuthPage() {
   useEffect(() => {
     // Nur eine bereits bestehende, gültige Session leitet weiter – nie Eingaben im Formular.
     // Auf einer Firmen-Domain erst, wenn die Person zu dieser Firma gehört.
+    // Offene Einladung hat Vorrang (auch ohne Firmenzugang auf dieser Domain).
+    const pendingInvite = !authLoading && user ? readPendingInvite() : null;
+    if (pendingInvite) { navigate({ to: "/invite/$token", params: { token: pendingInvite } }); return; }
     if (branding && (access.isLoading || access.data?.allowed === false)) return;
     if (!authLoading && user && superadminStatus !== "unknown") {
       navigate({ to: isSuperadmin && superadminStatus === "granted" ? "/oaax" : "/dashboard" });
