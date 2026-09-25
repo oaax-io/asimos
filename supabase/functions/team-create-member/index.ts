@@ -25,28 +25,13 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
 
-    // Zielfirma serverseitig bestimmen: aktuelle Firma des Aufrufers.
-    // Plattform-Admins ohne Mitgliedschaft dürfen eine Firma explizit angeben.
-    const { data: superRow } = await admin
-      .from("platform_admins")
-      .select("user_id")
-      .eq("user_id", userData.user.id)
-      .maybeSingle();
-    const isPlatformAdmin = !!superRow;
-
+    // Zielfirma serverseitig bestimmen: aktuelle Firma des Aufrufers (nie aus dem Request).
+    // Plattformrechte gewähren keine Tenantrechte – nur Inhaber/Admin der Firma.
     const { data: currentAgency } = await userClient.rpc("current_agency_id");
-    let agencyId: string | null = (currentAgency as string | null) ?? null;
-    if (!agencyId && isPlatformAdmin && typeof body.agency_id === "string") {
-      const { data: ag } = await admin.from("agencies").select("id").eq("id", body.agency_id).maybeSingle();
-      agencyId = (ag?.id as string | undefined) ?? null;
-    }
-    if (!agencyId) return json({ error: "Keine Firma ermittelbar" }, 403);
+    const agencyId: string | null = (currentAgency as string | null) ?? null;
+    if (!agencyId) return json({ error: "Keine aktive Firmen-Mitgliedschaft" }, 403);
 
-    let allowed = isPlatformAdmin && !currentAgency;
-    if (!allowed) {
-      const { data: ok } = await userClient.rpc("is_agency_owner_or_admin", { _agency_id: agencyId });
-      allowed = !!ok;
-    }
+    const { data: allowed } = await userClient.rpc("is_agency_owner_or_admin", { _agency_id: agencyId });
     if (!allowed) {
       return json({ error: "Nur Inhaber/Admin dürfen Mitarbeiter anlegen" }, 403);
     }
