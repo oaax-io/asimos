@@ -4349,7 +4349,10 @@ export type Database = {
           id: string
           is_primary: boolean
           updated_at: string
+          verification_checked_at: string | null
+          verification_error: string | null
           verification_status: string
+          verification_token: string | null
           verified_at: string | null
         }
         Insert: {
@@ -4361,7 +4364,10 @@ export type Database = {
           id?: string
           is_primary?: boolean
           updated_at?: string
+          verification_checked_at?: string | null
+          verification_error?: string | null
           verification_status?: string
+          verification_token?: string | null
           verified_at?: string | null
         }
         Update: {
@@ -4373,7 +4379,10 @@ export type Database = {
           id?: string
           is_primary?: boolean
           updated_at?: string
+          verification_checked_at?: string | null
+          verification_error?: string | null
           verification_status?: string
+          verification_token?: string | null
           verified_at?: string | null
         }
         Relationships: [
@@ -4665,6 +4674,10 @@ export type Database = {
       tenant_custom_domain_remove: { Args: never; Returns: undefined }
       tenant_custom_domain_request: {
         Args: { _domain: string }
+        Returns: undefined
+      }
+      tenant_domain_record_check: {
+        Args: { _error: string; _id: string; _ok: boolean }
         Returns: undefined
       }
       tenant_parent_agencies: { Args: { j: Json }; Returns: string[] }
