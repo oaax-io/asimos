@@ -320,6 +320,7 @@ export const buildBankPackage = createServerFn({ method: "POST" })
     const { data: brand } = await supabaseAdmin
       .from("brand_settings")
       .select("*")
+      .eq("agency_id", (dossier as { agency_id?: string | null }).agency_id ?? "00000000-0000-0000-0000-000000000000")
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();

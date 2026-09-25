@@ -16,6 +16,8 @@ export const seedAsimoTemplates = createServerFn({ method: "POST" })
   // Systemvorlagen sind heute global: nur Inhaber/Admin der eigenen Firma darf synchronisieren.
   const { data: allowed } = await (context as any).supabase.rpc("is_owner_or_admin");
   if (!allowed) throw new Error("Keine Berechtigung");
+  const { data: agencyId } = await (context as any).supabase.rpc("current_agency_id");
+  if (!agencyId) throw new Error("Keine aktive Firma");
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const results: Array<{ name: string; type: string; action: "inserted" | "updated" | "unchanged" }> = [];
 
@@ -23,13 +25,14 @@ export const seedAsimoTemplates = createServerFn({ method: "POST" })
     const { data: existing } = await supabaseAdmin
       .from("document_templates")
       .select("id, content, is_default")
-      .eq("name", tpl.name)
+      .eq("agency_id", agencyId).eq("name", tpl.name)
       .maybeSingle();
 
     if (!existing) {
       const { data: inserted, error } = await supabaseAdmin
         .from("document_templates")
         .insert({
+          agency_id: agencyId,
           name: tpl.name,
           type: tpl.type as never,
           category: tpl.category,
@@ -50,7 +53,7 @@ export const seedAsimoTemplates = createServerFn({ method: "POST" })
       const { data: anyDefault } = await supabaseAdmin
         .from("document_templates")
         .select("id")
-        .eq("type", tpl.type as never)
+        .eq("agency_id", agencyId).eq("type", tpl.type as never)
         .eq("is_default", true)
         .maybeSingle();
       if (!anyDefault && inserted) {

@@ -144,13 +144,14 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
         const { data: brand } = await supabaseAdmin
           .from("brand_settings" as never)
           .select("company_name")
+          .eq("agency_id" as never, (tenantAgency ?? "00000000-0000-0000-0000-000000000000") as never)
           .order("updated_at", { ascending: false })
           .limit(1)
           .maybeSingle();
         const brandRow = brand as { company_name?: string } | null;
         if (brandRow?.company_name) companyName = brandRow.company_name;
         if (!companyName) {
-          const { data: company } = await supabaseAdmin.from("company").select("name").maybeSingle();
+          const { data: company } = await supabaseAdmin.from("company").select("name").eq("agency_id", tenantAgency ?? "00000000-0000-0000-0000-000000000000").maybeSingle();
           if (company?.name) companyName = company.name;
         }
       } catch (e) {
