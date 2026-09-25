@@ -1,4 +1,4 @@
-import { Outlet, createRootRoute, HeadContent, Scripts, Link } from "@tanstack/react-router";
+import { Outlet, createRootRoute, HeadContent, Scripts, Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import appCss from "../styles.css?url";
@@ -39,7 +39,11 @@ export const Route = createRootRoute({
   loader: () => loadDomainBranding(),
   staleTime: Infinity,
   shouldReload: false,
-  head: ({ loaderData }) => ({
+  head: ({ loaderData, matches }) => {
+    // Platform Admin Center: immer Immolia, nie Domain-Branding.
+    const isPlatform = matches.some((m) => m.routeId === "/platform" || m.routeId.startsWith("/platform/"));
+    const favicon = (!isPlatform && loaderData?.branding?.favicon_url) || "/favicon.png";
+    return {
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -56,7 +60,7 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: loaderData?.branding?.favicon_url || "/favicon.png" },
+      { rel: "icon", href: favicon },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" },
