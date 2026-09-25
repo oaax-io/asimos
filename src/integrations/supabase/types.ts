@@ -73,6 +73,44 @@ export type Database = {
         }
         Relationships: []
       }
+      agency_memberships: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_memberships_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           agency_id: string | null
@@ -2954,6 +2992,24 @@ export type Database = {
           related_type?: string | null
           title?: string
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      platform_admins: {
+        Row: {
+          created_at: string
+          is_system_owner: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          is_system_owner?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          is_system_owner?: boolean
           user_id?: string
         }
         Relationships: []
