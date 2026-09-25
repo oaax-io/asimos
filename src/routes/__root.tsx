@@ -41,7 +41,7 @@ export const Route = createRootRoute({
   shouldReload: false,
   head: ({ loaderData, matches }) => {
     // Platform Admin Center: immer Immolia, nie Domain-Branding.
-    const isPlatform = matches.some((m) => m.routeId === "/platform" || m.routeId.startsWith("/platform/"));
+    const isPlatform = matches.some((m) => /^\/platform(\/|$)/.test(String(m.routeId)));
     const favicon = (!isPlatform && loaderData?.branding?.favicon_url) || "/favicon.png";
     return {
     meta: [
