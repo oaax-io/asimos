@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,8 @@ const signinSchema = z.object({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { signIn, user, isSuperadmin, superadminStatus } = useAuth();
+  const { signIn, user, loading: authLoading, isSuperadmin, superadminStatus } = useAuth();
+  const submittingRef = useRef(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const [stayLoggedIn, setStayLoggedIn] = useState(true);
@@ -32,10 +33,11 @@ function AuthPage() {
   const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
-    if (user && superadminStatus !== "unknown") {
+    // Nur eine bereits bestehende, gültige Session leitet weiter – nie Eingaben im Formular.
+    if (!authLoading && user && superadminStatus !== "unknown") {
       navigate({ to: isSuperadmin && superadminStatus === "granted" ? "/oaax" : "/dashboard" });
     }
-  }, [user, isSuperadmin, superadminStatus, navigate]);
+  }, [authLoading, user, isSuperadmin, superadminStatus, navigate]);
 
   const sendReset = async () => {
     if (!form.email) return;
@@ -61,13 +63,18 @@ function AuthPage() {
       await sendReset();
       return;
     }
+    if (submittingRef.current) return;
+    const r = signinSchema.safeParse(form);
+    if (!r.success) { toast.error(r.error.issues[0].message); return; }
+    submittingRef.current = true;
     setLoading(true);
     try {
-      const r = signinSchema.safeParse(form);
-      if (!r.success) { toast.error(r.error.issues[0].message); return; }
       const { error } = await signIn(r.data.email, form.password);
-      if (error) { toast.error(error); return; }
-    } finally { setLoading(false); }
+      if (error) {
+        toast.error(/invalid login credentials/i.test(error) ? "E-Mail oder Passwort ist falsch." : error);
+        return;
+      }
+    } finally { submittingRef.current = false; setLoading(false); }
   };
 
   return (
@@ -92,7 +99,10 @@ function AuthPage() {
           <span className="font-display text-3xl font-bold tracking-tight">Immolia</span>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        {authLoading ? (
+          <p className="text-center text-sm text-primary-foreground/80">Sitzung wird geprüft…</p>
+        ) : (
+        <form onSubmit={onSubmit} className="space-y-4" noValidate>
           <div>
             <Label htmlFor="email" className="text-primary-foreground">E-Mail</Label>
             <Input
@@ -115,6 +125,7 @@ function AuthPage() {
               <Input
                 id="password"
                 type="password"
+                autoComplete="current-password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="••••••••"
@@ -177,10 +188,11 @@ function AuthPage() {
               disabled={loading}
               className="w-full bg-brand-deep text-brand-deep-foreground hover:bg-brand-deep/90 shadow-lg"
             >
-              {loading ? "Bitte warten…" : "Login"}
+              {loading ? "Anmeldung läuft…" : "Anmelden"}
             </Button>
           )}
         </form>
+        )}
       </div>
 
       <p className="absolute z-10 bottom-6 left-0 right-0 text-center text-xs text-white/70">
