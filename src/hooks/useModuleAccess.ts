@@ -14,8 +14,8 @@ export const moduleForPath = (p: string) => PATH_MODULE.find(([pre]) => p === pr
 
 /**
  * Nur Anzeige: Die eigentliche Sperre liegt serverseitig (RESTRICTIVE-Policies
- * module_gate_* + agency_module_enabled). Fehlt ein Eintrag, gilt das Modul als offen
- * (gleiche Regel wie agency_module_enabled).
+ * module_gate_* + agency_module_enabled). Fehlt ein Eintrag, gilt das Modul als gesperrt
+ * (gleiche Regel wie agency_module_enabled, Phase 4.5).
  */
 export function useModuleAccess() {
   const { user } = useAuth();
@@ -32,7 +32,7 @@ export function useModuleAccess() {
   const isEnabled = (module: string | null) => {
     if (!module || !q.data) return true;
     const row = q.data.find((r) => r.module === module);
-    return row ? row.is_entitled && row.is_enabled : true;
+    return row ? row.is_entitled && row.is_enabled : false;
   };
   return { isEnabled, loaded: q.isSuccess };
 }
