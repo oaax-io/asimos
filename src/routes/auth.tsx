@@ -9,11 +9,41 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { z } from "zod";
 import bgNewbuild from "@/assets/login-bg-newbuild.jpg";
+import { resolvePublicDomainBranding, type PublicDomainBranding } from "@/lib/public-domain-branding.functions";
+import { useDomainAccess, NoAccessMessage } from "@/components/DomainAccessGate";
+
+const IMMOLIA = { name: "Immolia", primary: "#334155", favicon: "/favicon.png" };
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>) => ({
     mode: (s.mode === "signup" ? "signup" : "signin") as "signin" | "signup",
   }),
+  // Domain → verifizierte Firma → öffentliches Branding. Nur Darstellung, nie Zugriff.
+  loader: async (): Promise<{ branding: PublicDomainBranding | null }> => {
+    try {
+      const r = await resolvePublicDomainBranding();
+      return { branding: r.branding };
+    } catch {
+      return { branding: null };
+    }
+  },
+  head: ({ loaderData }) => {
+    const b = loaderData?.branding;
+    const name = b?.company_name || IMMOLIA.name;
+    return {
+      meta: [
+        { title: `Anmelden – ${name}` },
+        { name: "description", content: `Anmeldung bei ${name}.` },
+        { property: "og:title", content: `Anmelden – ${name}` },
+        { property: "og:description", content: `Anmeldung bei ${name}.` },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary" },
+      ],
+      links: [{ rel: "icon", href: b?.favicon_url || IMMOLIA.favicon }],
+    };
+  },
+  errorComponent: () => <div className="p-8 text-center text-sm">Die Anmeldeseite konnte nicht geladen werden.</div>,
+  notFoundComponent: () => <div className="p-8 text-center text-sm">Nicht gefunden.</div>,
   component: AuthPage,
 });
 
@@ -31,13 +61,33 @@ function AuthPage() {
   const [stayLoggedIn, setStayLoggedIn] = useState(true);
   const [forgotMode, setForgotMode] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const { branding } = Route.useLoaderData();
+  const brandName = branding?.company_name || IMMOLIA.name;
+  const brandPrimary = branding?.primary_color || IMMOLIA.primary;
+  const brandAccent = branding?.accent_color || branding?.secondary_color || null;
+  const brandLogo = branding?.logo_alt_url || branding?.logo_url || null;
+  const access = useDomainAccess(!!branding && !authLoading);
+  const blocked = !!branding && access.data?.allowed === false;
+  const accessPending = !!branding && !!user && access.isLoading;
+
+  // Tab-Icon der Domain setzen (läuft vor dem zentralen Branding-Effekt; dieser überspringt dann).
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.domainBranding = branding ? "1" : "";
+    let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
+    link.href = branding?.favicon_url || IMMOLIA.favicon;
+    return () => { root.dataset.domainBranding = ""; };
+  }, [branding]);
 
   useEffect(() => {
     // Nur eine bereits bestehende, gültige Session leitet weiter – nie Eingaben im Formular.
+    // Auf einer Firmen-Domain erst, wenn die Person zu dieser Firma gehört.
+    if (branding && (access.isLoading || access.data?.allowed === false)) return;
     if (!authLoading && user && superadminStatus !== "unknown") {
       navigate({ to: isSuperadmin && superadminStatus === "granted" ? "/oaax" : "/dashboard" });
     }
-  }, [authLoading, user, isSuperadmin, superadminStatus, navigate]);
+  }, [authLoading, user, isSuperadmin, superadminStatus, navigate, branding, access.isLoading, access.data]);
 
   const sendReset = async () => {
     if (!form.email) return;
@@ -77,6 +127,11 @@ function AuthPage() {
     } finally { submittingRef.current = false; setLoading(false); }
   };
 
+  if (blocked) return <NoAccessMessage />;
+
+  const cardStyle = { backgroundColor: `color-mix(in srgb, ${brandPrimary} 82%, transparent)`, borderColor: `color-mix(in srgb, ${brandPrimary} 45%, transparent)` };
+  const buttonStyle = brandAccent ? { backgroundColor: brandAccent, color: "#fff" } : undefined;
+
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-black p-6 overflow-hidden">
       {/* Hintergrund */}
@@ -94,13 +149,17 @@ function AuthPage() {
       />
 
       {/* Login Karte */}
-      <div className="relative z-10 w-full max-w-md rounded-3xl border border-primary/40 bg-primary/80 backdrop-blur-md p-8 text-primary-foreground shadow-2xl">
+      <div className="relative z-10 w-full max-w-md rounded-3xl border backdrop-blur-md p-8 text-white shadow-2xl" style={cardStyle}>
         <div className="mb-8 flex justify-center">
-          <span className="font-display text-3xl font-bold tracking-tight">Immolia</span>
+          {brandLogo ? (
+            <img src={brandLogo} alt={brandName} className="h-14 max-w-[240px] object-contain" />
+          ) : (
+            <span className="font-display text-3xl font-bold tracking-tight">{brandName}</span>
+          )}
         </div>
 
-        {authLoading ? (
-          <p className="text-center text-sm text-primary-foreground/80">Sitzung wird geprüft…</p>
+        {authLoading || accessPending ? (
+          <p className="text-center text-sm text-white/80">Einen Moment …</p>
         ) : (
         <form onSubmit={onSubmit} className="space-y-4" noValidate>
           <div>
@@ -186,7 +245,8 @@ function AuthPage() {
               type="submit"
               size="lg"
               disabled={loading}
-              className="w-full bg-brand-deep text-brand-deep-foreground hover:bg-brand-deep/90 shadow-lg"
+              style={buttonStyle}
+              className="w-full bg-brand-deep text-brand-deep-foreground hover:opacity-90 shadow-lg"
             >
               {loading ? "Anmeldung läuft…" : "Anmelden"}
             </Button>
@@ -195,9 +255,11 @@ function AuthPage() {
         )}
       </div>
 
-      <p className="absolute z-10 bottom-6 left-0 right-0 text-center text-xs text-white/70">
-        Immolia — Powered by OAASE
-      </p>
+      {!branding && (
+        <p className="absolute z-10 bottom-6 left-0 right-0 text-center text-xs text-white/70">
+          Immolia — Powered by OAASE
+        </p>
+      )}
     </div>
   );
 }
