@@ -3272,6 +3272,39 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_audit_logs: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          target_id: string | null
+          target_label: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_id?: string | null
+          target_label?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_id?: string | null
+          target_label?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       portal_event_log: {
         Row: {
           action: string | null
@@ -4527,6 +4560,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      agency_is_active: { Args: { _agency_id: string }; Returns: boolean }
       agency_module_enabled: { Args: { _module: string }; Returns: boolean }
       bank_package_share_resolve: {
         Args: { _token: string }
@@ -4630,6 +4664,7 @@ export type Database = {
         Args: { _agency_id: string; _user_id: string }
         Returns: boolean
       }
+      my_workspace_status: { Args: never; Returns: string }
       platform_activity: {
         Args: { _agency_id?: string; _limit?: number }
         Returns: {
@@ -4649,6 +4684,19 @@ export type Database = {
           full_name: string
           platform_role: string
           user_id: string
+        }[]
+      }
+      platform_list_audit_logs: {
+        Args: { _agency_id?: string; _limit?: number }
+        Returns: {
+          action: string
+          actor_name: string
+          created_at: string
+          id: string
+          metadata: Json
+          target_id: string
+          target_label: string
+          target_type: string
         }[]
       }
       platform_list_domains: {
@@ -4707,7 +4755,15 @@ export type Database = {
       }
       platform_overview: { Args: never; Returns: Json }
       platform_role: { Args: never; Returns: string }
+      platform_set_tenant_status: {
+        Args: { _agency_id: string; _status: string }
+        Returns: string
+      }
       platform_tenant_branding: { Args: { _agency_id: string }; Returns: Json }
+      platform_update_tenant: {
+        Args: { _agency_id: string; _name: string }
+        Returns: undefined
+      }
       property_set_public: {
         Args: { _enabled: boolean; _id: string }
         Returns: string

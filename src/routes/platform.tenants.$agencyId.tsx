@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlatformPage, QueryState } from "@/components/platform/PlatformLayout";
 import { ActivityList } from "@/components/platform/ActivityList";
+import { AuditLogList } from "@/components/platform/AuditLogList";
+import { TenantAdministration } from "@/components/platform/TenantAdministration";
 import { MembersTable, DomainsTable, ModulesTable } from "@/components/platform/tables";
 import {
-  usePlatformTenants, usePlatformMembers, usePlatformDomains, usePlatformModules, usePlatformActivity, usePlatformBranding,
+  usePlatformTenants, usePlatformMembers, usePlatformDomains, usePlatformModules, usePlatformActivity, usePlatformBranding, usePlatformAuditLogs,
   TENANT_STATUS_LABEL, domainStatusLabel, fmtDate,
 } from "@/lib/platform-admin";
 
@@ -25,6 +27,7 @@ function TenantDetail() {
   const modules = usePlatformModules(agencyId);
   const activity = usePlatformActivity(agencyId, 50);
   const branding = usePlatformBranding(agencyId);
+  const audit = usePlatformAuditLogs(agencyId, 50);
   const t = tenants.data?.find((x) => x.id === agencyId);
 
   return (
@@ -49,6 +52,7 @@ function TenantDetail() {
             <Row k="Custom Domain" v={t.custom_domain ? `${t.custom_domain} (${domainStatusLabel({ verification_status: t.custom_domain_status, activated_at: t.custom_domain_active ? "x" : null, domain_type: "custom" })})` : "–"} />
             <Row k="Branding vorhanden" v={t.has_branding ? "Ja" : "Nein"} />
             <Row k="Aktivierte Module" v={t.modules_active} />
+            <div className="mt-6 border-t pt-5"><TenantAdministration key={t.id + t.name + t.status} tenant={t} /></div>
           </CardContent></Card></TabsContent>
           <TabsContent value="users"><Card><QueryState isLoading={members.isLoading} error={members.error} /><MembersTable rows={members.data ?? []} /></Card></TabsContent>
           <TabsContent value="domains"><Card><QueryState isLoading={domains.isLoading} error={domains.error} /><DomainsTable rows={domains.data ?? []} /></Card></TabsContent>
@@ -72,7 +76,7 @@ function TenantDetail() {
               </div>
             ) : !branding.isLoading && <div className="text-sm text-muted-foreground">Kein Branding hinterlegt.</div>}
           </CardContent></Card></TabsContent>
-          <TabsContent value="activity"><Card><CardContent className="p-5"><QueryState isLoading={activity.isLoading} error={activity.error} /><ActivityList items={activity.data ?? []} hideTenant /></CardContent></Card></TabsContent>
+          <TabsContent value="activity"><Card><CardContent className="space-y-6 p-5"><div className="text-sm font-semibold">Audit-Aktionen</div><QueryState isLoading={audit.isLoading} error={audit.error} /><AuditLogList items={audit.data ?? []} hideTenant /><div className="text-sm font-semibold">Systemereignisse</div><QueryState isLoading={activity.isLoading} error={activity.error} /><ActivityList items={activity.data ?? []} hideTenant /></CardContent></Card></TabsContent>
         </Tabs>
       )}
     </PlatformPage>

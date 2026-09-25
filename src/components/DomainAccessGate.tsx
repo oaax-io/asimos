@@ -5,6 +5,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { checkDomainAccess } from "@/lib/public-domain-branding.functions";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useDomainAccess(enabled: boolean) {
   const { user } = useAuth();
@@ -18,16 +19,31 @@ export function useDomainAccess(enabled: boolean) {
   });
 }
 
-export function NoAccessMessage() {
+/** 'active' | 'unavailable' | 'none' – zentral aus der Datenbank (Mitgliedschaft + Firmenstatus). */
+export function useWorkspaceStatus() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["workspace-status", user?.id],
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)("my_workspace_status");
+      if (error) throw error;
+      return data as "active" | "unavailable" | "none";
+    },
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+}
+
+export function NoAccessMessage({ title = "Kein Zugriff", text = "Dein Benutzerkonto hat keinen Zugriff auf diesen Bereich." }: { title?: string; text?: string } = {}) {
   const { signOut } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-6">
       <div className="max-w-md rounded-2xl border bg-card p-8 text-center shadow-soft">
-        <h1 className="text-lg font-semibold">Kein Zugriff</h1>
+        <h1 className="text-lg font-semibold">{title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Dein Benutzerkonto hat keinen Zugriff auf diesen Bereich.
+          {text}
         </p>
         <Button
           className="mt-6"
@@ -48,7 +64,10 @@ export function NoAccessMessage() {
 /** Zeigt die App nur, wenn die Domain keine andere Firma darstellt als die eigene. */
 export function DomainAccessGate({ children }: { children: ReactNode }) {
   const q = useDomainAccess(true);
-  if (q.isLoading) return null;
+  const ws = useWorkspaceStatus();
+  if (q.isLoading || ws.isLoading) return null;
+  if (ws.data === "unavailable")
+    return <NoAccessMessage title="Unternehmen nicht verfügbar" text="Der Zugang zu diesem Unternehmen ist derzeit nicht verfügbar. Bitte wenden Sie sich an Ihre Administration." />;
   if (q.data && !q.data.allowed) return <NoAccessMessage />;
   return <>{children}</>;
 }
