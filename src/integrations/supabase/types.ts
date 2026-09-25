@@ -3349,6 +3349,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_agency_id: string | null
           agency_id: string | null
           avatar_url: string | null
           commission_payout_rate: number | null
@@ -3367,6 +3368,7 @@ export type Database = {
           user_role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
+          active_agency_id?: string | null
           agency_id?: string | null
           avatar_url?: string | null
           commission_payout_rate?: number | null
@@ -3385,6 +3387,7 @@ export type Database = {
           user_role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
+          active_agency_id?: string | null
           agency_id?: string | null
           avatar_url?: string | null
           commission_payout_rate?: number | null
@@ -4713,6 +4716,19 @@ export type Database = {
         Returns: boolean
       }
       my_workspace_status: { Args: never; Returns: string }
+      my_workspaces: {
+        Args: never
+        Returns: {
+          agency_id: string
+          custom_domain: string
+          favicon_url: string
+          is_current: boolean
+          logo_url: string
+          name: string
+          role: string
+          subdomain: string
+        }[]
+      }
       platform_activity: {
         Args: { _agency_id?: string; _limit?: number }
         Returns: {
@@ -4915,6 +4931,7 @@ export type Database = {
         Returns: undefined
       }
       send_self_disclosure_reminders: { Args: never; Returns: number }
+      set_current_agency: { Args: { _agency_id: string }; Returns: string }
       set_default_template: {
         Args: { _template_id: string }
         Returns: undefined

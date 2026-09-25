@@ -56,23 +56,29 @@ function requestHostname(): string {
  */
 export const checkDomainAccess = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ domainBranded: boolean; allowed: boolean }> => {
+  .handler(async ({ context }): Promise<{ domainBranded: boolean; allowed: boolean; hostAgencyId: string | null }> => {
     const hostname = requestHostname();
-    if (!hostname) return { domainBranded: false, allowed: true };
+    if (!hostname) return { domainBranded: false, allowed: true, hostAgencyId: null };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: pub } = await supabaseAdmin.rpc(
       "resolve_public_tenant_branding" as never,
       { _hostname: hostname } as never,
     );
-    if (!pub) return { domainBranded: false, allowed: true }; // generische Domain
-    // Als angemeldete Person (RLS): Domain-Eintrag nur sichtbar bei aktiver Mitgliedschaft.
-    const { data: rows } = await context.supabase
+    if (!pub) return { domainBranded: false, allowed: true, hostAgencyId: null }; // generische Domain
+    // Firma der Adresse (gleiche Regel wie resolve_public_tenant_branding).
+    const { data: rows } = await supabaseAdmin
       .from("tenant_domains")
-      .select("agency_id, domain")
-      .eq("verification_status", "verified");
-    const row = (rows ?? []).find((r) => r.domain.toLowerCase() === hostname);
-    if (!row) return { domainBranded: true, allowed: false };
+      .select("agency_id, domain, domain_type, activated_at")
+      .eq("verification_status", "verified")
+      .ilike("domain", hostname);
+    const row = (rows ?? []).find(
+      (r: any) => r.domain.toLowerCase() === hostname && (r.domain_type === "subdomain" || r.activated_at),
+    ) as { agency_id: string } | undefined;
+    if (!row) return { domainBranded: true, allowed: false, hostAgencyId: null };
+    // Firmen-ID nur zurückgeben, wenn die Person dort selbst aktives Mitglied ist.
+    const { data: ws } = await context.supabase.rpc("my_workspaces" as never);
+    const isMember = ((ws ?? []) as { agency_id: string }[]).some((w) => w.agency_id === row.agency_id);
     const { data: current } = await context.supabase.rpc("current_agency_id");
     // Kein stilles Wechseln der Firma: nur wenn die aktive Firma genau diese ist.
-    return { domainBranded: true, allowed: current === row.agency_id };
+    return { domainBranded: true, allowed: current === row.agency_id, hostAgencyId: isMember ? row.agency_id : null };
   });
