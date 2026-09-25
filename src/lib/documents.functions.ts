@@ -63,8 +63,11 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
     },
   )
   .handler(async ({ data, context }) => {
+    // Phase 3A.1: Tenant-Prüfung VOR jedem Service-Role-Zugriff.
+    const { requireCurrentAgency, assertGeneratedDocumentAccess } = await import("@/lib/document-access.server");
+    const tenantAgency = await requireCurrentAgency(context.supabase);
+    if (data.documentId) await assertGeneratedDocumentAccess(context.supabase, data.documentId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: tenantAgency } = await context.supabase.rpc("current_agency_id");
     const serviceUrl = process.env.PDF_SERVICE_URL;
     const serviceToken = process.env.PDF_SERVICE_TOKEN;
     const startedAt = Date.now();
@@ -170,9 +173,8 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
         documentId: id,
       });
     // Neue Uploads tenantbezogen ablegen (agency/{id}/...); Legacy-Pfade bleiben gültig.
-    const storagePath = tenantAgency
-      ? `agency/${tenantAgency}/generated/${filename}`
-      : `generated/${filename}`;
+    const safeName = filename.replace(/[\\/]+/g, "-").replace(/\.\.+/g, ".");
+    const storagePath = `agency/${tenantAgency}/generated/${safeName}`;
 
     // 1) Render via microservice (10s timeout)
     let pdfBytes: ArrayBuffer;
@@ -281,6 +283,7 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
 
       if (generatedDoc?.related_type && generatedDoc.related_id) {
         const documentsPayload: StoredDocumentInsert = {
+          agency_id: tenantAgency,
           file_name: filename,
           file_url: storagePath,
           document_type: mapGeneratedDocumentTypeToStoredType(generatedDoc.document_type),
@@ -339,16 +342,15 @@ export const getDocumentPdfUrl = createServerFn({ method: "POST" })
     if (!input?.documentId) throw new Error("documentId is required");
     return { documentId: input.documentId };
   })
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
-      .from("generated_documents")
-      .select("pdf_url, file_url")
-      .eq("id", data.documentId)
-      .maybeSingle();
-    if (error || !row) {
+  .handler(async ({ data, context }) => {
+    const { assertGeneratedDocumentAccess } = await import("@/lib/document-access.server");
+    let row: { pdf_url: string | null; file_url: string | null };
+    try {
+      row = (await assertGeneratedDocumentAccess(context.supabase, data.documentId)).doc;
+    } catch {
       return { ok: false as const, fileUrl: null as string | null };
     }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const path = row.pdf_url ?? row.file_url;
     if (!path) return { ok: false as const, fileUrl: null as string | null };
     const { data: signed } = await supabaseAdmin.storage.from(BUCKET).createSignedUrl(path, 60 * 60);
@@ -366,9 +368,16 @@ export const fetchDocumentPdfBytes = createServerFn({ method: "POST" })
     if (!input?.path || typeof input.path !== "string") throw new Error("path is required");
     return { path: input.path };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { assertDocumentPathAccess, DOCUMENT_ACCESS_DENIED } = await import("@/lib/document-access.server");
+    let path: string;
+    try {
+      path = (await assertDocumentPathAccess(context.supabase, data.path)).path;
+    } catch {
+      return { ok: false as const, base64: null as string | null, message: DOCUMENT_ACCESS_DENIED };
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: file, error } = await supabaseAdmin.storage.from(BUCKET).download(data.path);
+    const { data: file, error } = await supabaseAdmin.storage.from(BUCKET).download(path);
     if (error || !file) {
       return { ok: false as const, base64: null as string | null, message: error?.message ?? "not_found" };
     }

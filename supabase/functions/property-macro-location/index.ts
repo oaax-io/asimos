@@ -71,6 +71,16 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Phase 3A.1: nur angemeldete Benutzer mit Zugriff auf das Objekt (RLS als Benutzer).
+    const __auth = req.headers.get("Authorization") ?? "";
+    if (!__auth.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const __userClient = createClient(Deno.env.get("SUPABASE_URL")!, (Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY"))!, { global: { headers: { Authorization: __auth } }, auth: { persistSession: false } });
+    const { data: __u } = await __userClient.auth.getUser(__auth.slice(7));
+    if (!__u?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -79,6 +89,10 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "property required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+    const { data: __prop } = await __userClient.from("properties").select("id").eq("id", property.id).maybeSingle();
+    if (!__prop) {
+      return new Response(JSON.stringify({ error: "Objekt nicht gefunden oder kein Zugriff" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const facts = {

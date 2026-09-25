@@ -10,6 +10,7 @@
 //   3) Fallback to pure vision if the PDF has no AcroForm.
 
 import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -408,6 +409,16 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // Phase 3A.1: nur angemeldete Benutzer mit aktiver Firma (kein anonymer KI-Missbrauch).
+    const __auth = req.headers.get("Authorization") ?? "";
+    const __deny = (status: number, error: string) =>
+      new Response(JSON.stringify({ error }), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!__auth.startsWith("Bearer ")) return __deny(401, "Unauthorized");
+    const __userClient = createClient(Deno.env.get("SUPABASE_URL")!, (Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY"))!, { global: { headers: { Authorization: __auth } }, auth: { persistSession: false } });
+    const { data: __u } = await __userClient.auth.getUser(__auth.slice(7));
+    if (!__u?.user) return __deny(401, "Unauthorized");
+    const { data: __ag } = await __userClient.rpc("current_agency_id");
+    if (!__ag) return __deny(403, "Keine aktive Firma");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
