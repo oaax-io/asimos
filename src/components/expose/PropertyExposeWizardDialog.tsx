@@ -1,3 +1,4 @@
+import { useTenantBranding } from "@/lib/tenant-branding";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -223,11 +224,8 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
     },
   });
 
-  const { data: company } = useQuery({
-    queryKey: ["expose-wizard-company"],
-    enabled: open,
-    queryFn: async () => (await supabase.from("company").select("name").maybeSingle()).data,
-  });
+  const _tb = useTenantBranding();
+  const company = _tb.company ? { name: _tb.company.name } : null;
 
   const { data: profile } = useQuery({
     queryKey: ["expose-wizard-profile"],
@@ -409,7 +407,7 @@ export function PropertyExposeWizardDialog({ propertyId, property, open, onOpenC
         extra_sections: extraSections,
         section_order: sectionOrder,
         gallery_cols: cols,
-        agency_name: company?.name ?? "ASIMO",
+        agency_name: company?.name ?? _tb.companyName,
         contact_name: contact.name,
         contact_email: contact.email,
         contact_phone: contact.phone,

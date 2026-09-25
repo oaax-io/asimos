@@ -20,8 +20,7 @@ import {
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
   SidebarProvider, SidebarTrigger, SidebarInset, useSidebar,
 } from "@/components/ui/sidebar";
-import logoAsimoAsset from "@/assets/logo-asimo-2027.png.asset.json";
-import logoAsimoIconAsset from "@/assets/logo-asimo-icon.png.asset.json";
+import { useTenantBranding } from "@/lib/tenant-branding";
 
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { NotificationCenter } from "@/components/NotificationCenter";
@@ -78,6 +77,9 @@ function AppSidebar() {
   const { state } = useSidebar();
   const { t } = useTranslation();
   const collapsed = state === "collapsed";
+  const brand = useTenantBranding();
+  const fullLogo = brand.alternativeLogoUrl ?? brand.logoUrl;
+  const iconLogo = brand.faviconUrl && brand.hasTenantContext ? brand.faviconUrl : null;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -87,15 +89,17 @@ function AppSidebar() {
           className={`flex h-16 items-center isolate ${collapsed ? "justify-center px-0" : "justify-start pl-4"}`}
         >
           {collapsed ? (
-            <img src={logoAsimoIconAsset.url} alt="ASIMO" className="h-7 w-7 shrink-0 object-contain" />
-
-
+            iconLogo ? (
+              <img src={iconLogo} alt={brand.companyName} className="h-7 w-7 shrink-0 object-contain" />
+            ) : (
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-sidebar-primary text-xs font-bold text-sidebar-primary-foreground">
+                {brand.companyName.charAt(0)}
+              </span>
+            )
+          ) : fullLogo ? (
+            <img src={fullLogo} alt={brand.companyName} className="h-6 w-auto" />
           ) : (
-            <img
-              src={logoAsimoAsset.url}
-              alt="ASIMO"
-              className="h-6 w-auto"
-            />
+            <span className="font-display text-base font-semibold text-sidebar-foreground">{brand.companyName}</span>
           )}
         </Link>
       </SidebarHeader>
@@ -142,7 +146,7 @@ function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-1">
         {!collapsed && (
           <p className="px-2 text-[9px] uppercase tracking-wider text-sidebar-foreground/40">
-            ASIMO CRM
+            {brand.hasTenantContext ? brand.companyName : "Immolia"}
           </p>
         )}
       </SidebarFooter>

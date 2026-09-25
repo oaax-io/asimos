@@ -5,6 +5,7 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth";
 import { makeQueryClient } from "@/lib/queryClient";
 import { Toaster } from "@/components/ui/sonner";
+import { TenantBrandingProvider } from "@/lib/tenant-branding";
 import { ConfirmProvider } from "@/components/confirm/ConfirmProvider";
 import "@/i18n";
 
@@ -28,10 +29,10 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ASIMO Property Hub" },
+      { title: "Immolia" },
       { name: "description", content: "Leads, Kunden, Immobilien, Finanzierung, Matching, Termine und Exposés in einem modernen, benutzerfreundlichen CRM." },
-      { property: "og:title", content: "ASIMO Property Hub" },
-      { name: "twitter:title", content: "ASIMO Property Hub" },
+      { property: "og:title", content: "Immolia" },
+      { name: "twitter:title", content: "Immolia" },
       { property: "og:description", content: "Leads, Kunden, Immobilien, Finanzierung, Matching, Termine und Exposés in einem modernen, benutzerfreundlichen CRM." },
       { name: "twitter:description", content: "Leads, Kunden, Immobilien, Finanzierung, Matching, Termine und Exposés in einem modernen, benutzerfreundlichen CRM." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/73a4c230-8589-4ad4-af23-38cce2cf105b/id-preview-ca4066a3--4e795f2c-5909-4255-a6b0-36cc8098ec55.lovable.app-1777392627602.png" },
@@ -67,10 +68,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={qc}>
       <AuthProvider>
-        <ConfirmProvider>
-          <Outlet />
-          <Toaster richColors position="bottom-right" />
-        </ConfirmProvider>
+        <TenantBrandingProvider>
+          <ConfirmProvider>
+            <Outlet />
+            <Toaster richColors position="bottom-right" />
+          </ConfirmProvider>
+        </TenantBrandingProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

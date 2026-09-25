@@ -36,6 +36,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-tenant-primary: var(--tenant-primary);
+  --color-tenant-secondary: var(--tenant-secondary);
+  --color-tenant-accent: var(--tenant-accent);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -50,6 +53,11 @@
 
 :root {
   --radius: 0.875rem;
+
+  /* White-Label: zur Laufzeit vom TenantBrandingProvider gesetzt; Fallback = neutrales Immolia */
+  --tenant-primary: #334155;
+  --tenant-secondary: #64748b;
+  --tenant-accent: #0ea5e9;
 
   /* Brand: warmes Gold (#CE9659) primär, Anthrazit (#434242) sekundär */
   --background: oklch(0.99 0.003 60);

@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { z } from "zod";
-import logoAsset from "@/assets/logo-asimo-2027.png.asset.json";
 import bgNewbuild from "@/assets/login-bg-newbuild.jpg";
 
 export const Route = createFileRoute("/auth")({
@@ -90,7 +89,7 @@ function AuthPage() {
       {/* Login Karte */}
       <div className="relative z-10 w-full max-w-md rounded-3xl border border-primary/40 bg-primary/80 backdrop-blur-md p-8 text-primary-foreground shadow-2xl">
         <div className="mb-8 flex justify-center">
-          <img src={logoAsset.url} alt="ASIMO" className="h-12 w-auto" />
+          <span className="font-display text-3xl font-bold tracking-tight">Immolia</span>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
@@ -185,7 +184,7 @@ function AuthPage() {
       </div>
 
       <p className="absolute z-10 bottom-6 left-0 right-0 text-center text-xs text-white/70">
-        ASIMO Treuhand AG — SaaS Powered by OAASE
+        Immolia — Powered by OAASE
       </p>
     </div>
   );
