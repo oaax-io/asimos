@@ -10,11 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SetPasswordRouteImport } from './routes/set-password'
+import { Route as PlatformRouteImport } from './routes/platform'
 import { Route as OaaxRouteImport } from './routes/oaax'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlatformIndexRouteImport } from './routes/platform.index'
 import { Route as SelbstauskunftTokenRouteImport } from './routes/selbstauskunft.$token'
+import { Route as PlatformUsersRouteImport } from './routes/platform.users'
+import { Route as PlatformSettingsRouteImport } from './routes/platform.settings'
+import { Route as PlatformSecurityRouteImport } from './routes/platform.security'
+import { Route as PlatformModulesRouteImport } from './routes/platform.modules'
+import { Route as PlatformDomainsRouteImport } from './routes/platform.domains'
+import { Route as PlatformActivityRouteImport } from './routes/platform.activity'
 import { Route as PTokenRouteImport } from './routes/p.$token'
 import { Route as FinanzierungTokenRouteImport } from './routes/finanzierung.$token'
 import { Route as BankPaketTokenRouteImport } from './routes/bank-paket.$token'
@@ -40,11 +48,13 @@ import { Route as AppClientsRouteImport } from './routes/_app/clients'
 import { Route as AppChecklistsRouteImport } from './routes/_app/checklists'
 import { Route as AppAppointmentsRouteImport } from './routes/_app/appointments'
 import { Route as AppAnalyticsRouteImport } from './routes/_app/analytics'
+import { Route as PlatformTenantsIndexRouteImport } from './routes/platform.tenants.index'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings.index'
 import { Route as AppPropertiesIndexRouteImport } from './routes/_app/properties.index'
 import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads.index'
 import { Route as AppFinancingIndexRouteImport } from './routes/_app/financing.index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
+import { Route as PlatformTenantsAgencyIdRouteImport } from './routes/platform.tenants.$agencyId'
 import { Route as ApiPublicPortalWebhookRouteImport } from './routes/api/public/portal-webhook'
 import { Route as AppSettingsWhiteLabelRouteImport } from './routes/_app/settings.white-label'
 import { Route as AppSettingsVideoRouteImport } from './routes/_app/settings.video'
@@ -71,6 +81,11 @@ const SetPasswordRoute = SetPasswordRouteImport.update({
   path: '/set-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformRoute = PlatformRouteImport.update({
+  id: '/platform',
+  path: '/platform',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OaaxRoute = OaaxRouteImport.update({
   id: '/oaax',
   path: '/oaax',
@@ -90,10 +105,45 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlatformIndexRoute = PlatformIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PlatformRoute,
+} as any)
 const SelbstauskunftTokenRoute = SelbstauskunftTokenRouteImport.update({
   id: '/selbstauskunft/$token',
   path: '/selbstauskunft/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PlatformUsersRoute = PlatformUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformSettingsRoute = PlatformSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformSecurityRoute = PlatformSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformModulesRoute = PlatformModulesRouteImport.update({
+  id: '/modules',
+  path: '/modules',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformDomainsRoute = PlatformDomainsRouteImport.update({
+  id: '/domains',
+  path: '/domains',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformActivityRoute = PlatformActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => PlatformRoute,
 } as any)
 const PTokenRoute = PTokenRouteImport.update({
   id: '/p/$token',
@@ -220,6 +270,11 @@ const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AppRoute,
 } as any)
+const PlatformTenantsIndexRoute = PlatformTenantsIndexRouteImport.update({
+  id: '/tenants/',
+  path: '/tenants/',
+  getParentRoute: () => PlatformRoute,
+} as any)
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -244,6 +299,11 @@ const AppClientsIndexRoute = AppClientsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppClientsRoute,
+} as any)
+const PlatformTenantsAgencyIdRoute = PlatformTenantsAgencyIdRouteImport.update({
+  id: '/tenants/$agencyId',
+  path: '/tenants/$agencyId',
+  getParentRoute: () => PlatformRoute,
 } as any)
 const ApiPublicPortalWebhookRoute = ApiPublicPortalWebhookRouteImport.update({
   id: '/api/public/portal-webhook',
@@ -353,6 +413,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/oaax': typeof OaaxRoute
+  '/platform': typeof PlatformRouteWithChildren
   '/set-password': typeof SetPasswordRoute
   '/analytics': typeof AppAnalyticsRoute
   '/appointments': typeof AppAppointmentsRoute
@@ -379,7 +440,14 @@ export interface FileRoutesByFullPath {
   '/bank-paket/$token': typeof BankPaketTokenRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/p/$token': typeof PTokenRoute
+  '/platform/activity': typeof PlatformActivityRoute
+  '/platform/domains': typeof PlatformDomainsRoute
+  '/platform/modules': typeof PlatformModulesRoute
+  '/platform/security': typeof PlatformSecurityRoute
+  '/platform/settings': typeof PlatformSettingsRoute
+  '/platform/users': typeof PlatformUsersRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
+  '/platform/': typeof PlatformIndexRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/financing/$id': typeof AppFinancingIdRouteWithChildren
   '/leads/$id': typeof AppLeadsIdRoute
@@ -396,11 +464,13 @@ export interface FileRoutesByFullPath {
   '/settings/video': typeof AppSettingsVideoRoute
   '/settings/white-label': typeof AppSettingsWhiteLabelRoute
   '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
+  '/platform/tenants/$agencyId': typeof PlatformTenantsAgencyIdRoute
   '/clients/': typeof AppClientsIndexRoute
   '/financing/': typeof AppFinancingIndexRoute
   '/leads/': typeof AppLeadsIndexRoute
   '/properties/': typeof AppPropertiesIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
+  '/platform/tenants/': typeof PlatformTenantsIndexRoute
   '/financing/$id/quick-check-result': typeof AppFinancingIdQuickCheckResultRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
   '/api/public/bank-paket/$token': typeof ApiPublicBankPaketTokenRoute
@@ -433,7 +503,14 @@ export interface FileRoutesByTo {
   '/bank-paket/$token': typeof BankPaketTokenRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/p/$token': typeof PTokenRoute
+  '/platform/activity': typeof PlatformActivityRoute
+  '/platform/domains': typeof PlatformDomainsRoute
+  '/platform/modules': typeof PlatformModulesRoute
+  '/platform/security': typeof PlatformSecurityRoute
+  '/platform/settings': typeof PlatformSettingsRoute
+  '/platform/users': typeof PlatformUsersRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
+  '/platform': typeof PlatformIndexRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/financing/$id': typeof AppFinancingIdRouteWithChildren
   '/leads/$id': typeof AppLeadsIdRoute
@@ -450,11 +527,13 @@ export interface FileRoutesByTo {
   '/settings/video': typeof AppSettingsVideoRoute
   '/settings/white-label': typeof AppSettingsWhiteLabelRoute
   '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
+  '/platform/tenants/$agencyId': typeof PlatformTenantsAgencyIdRoute
   '/clients': typeof AppClientsIndexRoute
   '/financing': typeof AppFinancingIndexRoute
   '/leads': typeof AppLeadsIndexRoute
   '/properties': typeof AppPropertiesIndexRoute
   '/settings': typeof AppSettingsIndexRoute
+  '/platform/tenants': typeof PlatformTenantsIndexRoute
   '/financing/$id/quick-check-result': typeof AppFinancingIdQuickCheckResultRoute
   '/properties/$id/expose': typeof AppPropertiesIdExposeRoute
   '/api/public/bank-paket/$token': typeof ApiPublicBankPaketTokenRoute
@@ -466,6 +545,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/oaax': typeof OaaxRoute
+  '/platform': typeof PlatformRouteWithChildren
   '/set-password': typeof SetPasswordRoute
   '/_app/analytics': typeof AppAnalyticsRoute
   '/_app/appointments': typeof AppAppointmentsRoute
@@ -492,7 +572,14 @@ export interface FileRoutesById {
   '/bank-paket/$token': typeof BankPaketTokenRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
   '/p/$token': typeof PTokenRoute
+  '/platform/activity': typeof PlatformActivityRoute
+  '/platform/domains': typeof PlatformDomainsRoute
+  '/platform/modules': typeof PlatformModulesRoute
+  '/platform/security': typeof PlatformSecurityRoute
+  '/platform/settings': typeof PlatformSettingsRoute
+  '/platform/users': typeof PlatformUsersRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
+  '/platform/': typeof PlatformIndexRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
   '/_app/financing/$id': typeof AppFinancingIdRouteWithChildren
   '/_app/leads/$id': typeof AppLeadsIdRoute
@@ -509,11 +596,13 @@ export interface FileRoutesById {
   '/_app/settings/video': typeof AppSettingsVideoRoute
   '/_app/settings/white-label': typeof AppSettingsWhiteLabelRoute
   '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
+  '/platform/tenants/$agencyId': typeof PlatformTenantsAgencyIdRoute
   '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/financing/': typeof AppFinancingIndexRoute
   '/_app/leads/': typeof AppLeadsIndexRoute
   '/_app/properties/': typeof AppPropertiesIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
+  '/platform/tenants/': typeof PlatformTenantsIndexRoute
   '/_app/financing/$id/quick-check-result': typeof AppFinancingIdQuickCheckResultRoute
   '/_app/properties/$id/expose': typeof AppPropertiesIdExposeRoute
   '/api/public/bank-paket/$token': typeof ApiPublicBankPaketTokenRoute
@@ -525,6 +614,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/oaax'
+    | '/platform'
     | '/set-password'
     | '/analytics'
     | '/appointments'
@@ -551,7 +641,14 @@ export interface FileRouteTypes {
     | '/bank-paket/$token'
     | '/finanzierung/$token'
     | '/p/$token'
+    | '/platform/activity'
+    | '/platform/domains'
+    | '/platform/modules'
+    | '/platform/security'
+    | '/platform/settings'
+    | '/platform/users'
     | '/selbstauskunft/$token'
+    | '/platform/'
     | '/clients/$id'
     | '/financing/$id'
     | '/leads/$id'
@@ -568,11 +665,13 @@ export interface FileRouteTypes {
     | '/settings/video'
     | '/settings/white-label'
     | '/api/public/portal-webhook'
+    | '/platform/tenants/$agencyId'
     | '/clients/'
     | '/financing/'
     | '/leads/'
     | '/properties/'
     | '/settings/'
+    | '/platform/tenants/'
     | '/financing/$id/quick-check-result'
     | '/properties/$id/expose'
     | '/api/public/bank-paket/$token'
@@ -605,7 +704,14 @@ export interface FileRouteTypes {
     | '/bank-paket/$token'
     | '/finanzierung/$token'
     | '/p/$token'
+    | '/platform/activity'
+    | '/platform/domains'
+    | '/platform/modules'
+    | '/platform/security'
+    | '/platform/settings'
+    | '/platform/users'
     | '/selbstauskunft/$token'
+    | '/platform'
     | '/clients/$id'
     | '/financing/$id'
     | '/leads/$id'
@@ -622,11 +728,13 @@ export interface FileRouteTypes {
     | '/settings/video'
     | '/settings/white-label'
     | '/api/public/portal-webhook'
+    | '/platform/tenants/$agencyId'
     | '/clients'
     | '/financing'
     | '/leads'
     | '/properties'
     | '/settings'
+    | '/platform/tenants'
     | '/financing/$id/quick-check-result'
     | '/properties/$id/expose'
     | '/api/public/bank-paket/$token'
@@ -637,6 +745,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/auth'
     | '/oaax'
+    | '/platform'
     | '/set-password'
     | '/_app/analytics'
     | '/_app/appointments'
@@ -663,7 +772,14 @@ export interface FileRouteTypes {
     | '/bank-paket/$token'
     | '/finanzierung/$token'
     | '/p/$token'
+    | '/platform/activity'
+    | '/platform/domains'
+    | '/platform/modules'
+    | '/platform/security'
+    | '/platform/settings'
+    | '/platform/users'
     | '/selbstauskunft/$token'
+    | '/platform/'
     | '/_app/clients/$id'
     | '/_app/financing/$id'
     | '/_app/leads/$id'
@@ -680,11 +796,13 @@ export interface FileRouteTypes {
     | '/_app/settings/video'
     | '/_app/settings/white-label'
     | '/api/public/portal-webhook'
+    | '/platform/tenants/$agencyId'
     | '/_app/clients/'
     | '/_app/financing/'
     | '/_app/leads/'
     | '/_app/properties/'
     | '/_app/settings/'
+    | '/platform/tenants/'
     | '/_app/financing/$id/quick-check-result'
     | '/_app/properties/$id/expose'
     | '/api/public/bank-paket/$token'
@@ -696,6 +814,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   OaaxRoute: typeof OaaxRoute
+  PlatformRoute: typeof PlatformRouteWithChildren
   SetPasswordRoute: typeof SetPasswordRoute
   BankPaketTokenRoute: typeof BankPaketTokenRoute
   FinanzierungTokenRoute: typeof FinanzierungTokenRoute
@@ -713,6 +832,13 @@ declare module '@tanstack/react-router' {
       path: '/set-password'
       fullPath: '/set-password'
       preLoaderRoute: typeof SetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/platform': {
+      id: '/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof PlatformRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/oaax': {
@@ -743,12 +869,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/platform/': {
+      id: '/platform/'
+      path: '/'
+      fullPath: '/platform/'
+      preLoaderRoute: typeof PlatformIndexRouteImport
+      parentRoute: typeof PlatformRoute
+    }
     '/selbstauskunft/$token': {
       id: '/selbstauskunft/$token'
       path: '/selbstauskunft/$token'
       fullPath: '/selbstauskunft/$token'
       preLoaderRoute: typeof SelbstauskunftTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/platform/users': {
+      id: '/platform/users'
+      path: '/users'
+      fullPath: '/platform/users'
+      preLoaderRoute: typeof PlatformUsersRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/settings': {
+      id: '/platform/settings'
+      path: '/settings'
+      fullPath: '/platform/settings'
+      preLoaderRoute: typeof PlatformSettingsRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/security': {
+      id: '/platform/security'
+      path: '/security'
+      fullPath: '/platform/security'
+      preLoaderRoute: typeof PlatformSecurityRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/modules': {
+      id: '/platform/modules'
+      path: '/modules'
+      fullPath: '/platform/modules'
+      preLoaderRoute: typeof PlatformModulesRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/domains': {
+      id: '/platform/domains'
+      path: '/domains'
+      fullPath: '/platform/domains'
+      preLoaderRoute: typeof PlatformDomainsRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/activity': {
+      id: '/platform/activity'
+      path: '/activity'
+      fullPath: '/platform/activity'
+      preLoaderRoute: typeof PlatformActivityRouteImport
+      parentRoute: typeof PlatformRoute
     }
     '/p/$token': {
       id: '/p/$token'
@@ -925,6 +1100,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAnalyticsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/platform/tenants/': {
+      id: '/platform/tenants/'
+      path: '/tenants'
+      fullPath: '/platform/tenants/'
+      preLoaderRoute: typeof PlatformTenantsIndexRouteImport
+      parentRoute: typeof PlatformRoute
+    }
     '/_app/settings/': {
       id: '/_app/settings/'
       path: '/'
@@ -959,6 +1141,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/clients/'
       preLoaderRoute: typeof AppClientsIndexRouteImport
       parentRoute: typeof AppClientsRoute
+    }
+    '/platform/tenants/$agencyId': {
+      id: '/platform/tenants/$agencyId'
+      path: '/tenants/$agencyId'
+      fullPath: '/platform/tenants/$agencyId'
+      preLoaderRoute: typeof PlatformTenantsAgencyIdRouteImport
+      parentRoute: typeof PlatformRoute
     }
     '/api/public/portal-webhook': {
       id: '/api/public/portal-webhook'
@@ -1249,11 +1438,40 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface PlatformRouteChildren {
+  PlatformActivityRoute: typeof PlatformActivityRoute
+  PlatformDomainsRoute: typeof PlatformDomainsRoute
+  PlatformModulesRoute: typeof PlatformModulesRoute
+  PlatformSecurityRoute: typeof PlatformSecurityRoute
+  PlatformSettingsRoute: typeof PlatformSettingsRoute
+  PlatformUsersRoute: typeof PlatformUsersRoute
+  PlatformIndexRoute: typeof PlatformIndexRoute
+  PlatformTenantsAgencyIdRoute: typeof PlatformTenantsAgencyIdRoute
+  PlatformTenantsIndexRoute: typeof PlatformTenantsIndexRoute
+}
+
+const PlatformRouteChildren: PlatformRouteChildren = {
+  PlatformActivityRoute: PlatformActivityRoute,
+  PlatformDomainsRoute: PlatformDomainsRoute,
+  PlatformModulesRoute: PlatformModulesRoute,
+  PlatformSecurityRoute: PlatformSecurityRoute,
+  PlatformSettingsRoute: PlatformSettingsRoute,
+  PlatformUsersRoute: PlatformUsersRoute,
+  PlatformIndexRoute: PlatformIndexRoute,
+  PlatformTenantsAgencyIdRoute: PlatformTenantsAgencyIdRoute,
+  PlatformTenantsIndexRoute: PlatformTenantsIndexRoute,
+}
+
+const PlatformRouteWithChildren = PlatformRoute._addFileChildren(
+  PlatformRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   OaaxRoute: OaaxRoute,
+  PlatformRoute: PlatformRouteWithChildren,
   SetPasswordRoute: SetPasswordRoute,
   BankPaketTokenRoute: BankPaketTokenRoute,
   FinanzierungTokenRoute: FinanzierungTokenRoute,

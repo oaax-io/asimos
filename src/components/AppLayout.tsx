@@ -7,6 +7,8 @@ import {
   Banknote, BarChart3, MessageSquarePlus, BookOpen, Percent,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -160,6 +162,11 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const { avatarUrl, fullName, initials } = useMyProfile();
+  const { data: isPlatformAdmin } = useQuery({
+    queryKey: ["is_platform_admin", user?.id],
+    enabled: !!user,
+    queryFn: async () => (await supabase.rpc("is_platform_admin")).data === true,
+  });
 
   useAutoPresence();
 
@@ -261,6 +268,14 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                         </span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
+                    </>
+                  )}
+                  {isPlatformAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigate({ to: "/platform" })}>
+                        <Shield className="mr-2 h-4 w-4" />Immolia Platform Admin
+                      </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuSeparator />
