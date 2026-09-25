@@ -46,6 +46,7 @@ import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads.index'
 import { Route as AppFinancingIndexRouteImport } from './routes/_app/financing.index'
 import { Route as AppClientsIndexRouteImport } from './routes/_app/clients.index'
 import { Route as ApiPublicPortalWebhookRouteImport } from './routes/api/public/portal-webhook'
+import { Route as AppSettingsWhiteLabelRouteImport } from './routes/_app/settings.white-label'
 import { Route as AppSettingsVideoRouteImport } from './routes/_app/settings.video'
 import { Route as AppSettingsTrashRouteImport } from './routes/_app/settings.trash'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings.profile'
@@ -249,6 +250,11 @@ const ApiPublicPortalWebhookRoute = ApiPublicPortalWebhookRouteImport.update({
   path: '/api/public/portal-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppSettingsWhiteLabelRoute = AppSettingsWhiteLabelRouteImport.update({
+  id: '/white-label',
+  path: '/white-label',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsVideoRoute = AppSettingsVideoRouteImport.update({
   id: '/video',
   path: '/video',
@@ -388,6 +394,7 @@ export interface FileRoutesByFullPath {
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/trash': typeof AppSettingsTrashRoute
   '/settings/video': typeof AppSettingsVideoRoute
+  '/settings/white-label': typeof AppSettingsWhiteLabelRoute
   '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
   '/clients/': typeof AppClientsIndexRoute
   '/financing/': typeof AppFinancingIndexRoute
@@ -441,6 +448,7 @@ export interface FileRoutesByTo {
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/trash': typeof AppSettingsTrashRoute
   '/settings/video': typeof AppSettingsVideoRoute
+  '/settings/white-label': typeof AppSettingsWhiteLabelRoute
   '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
   '/clients': typeof AppClientsIndexRoute
   '/financing': typeof AppFinancingIndexRoute
@@ -499,6 +507,7 @@ export interface FileRoutesById {
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/trash': typeof AppSettingsTrashRoute
   '/_app/settings/video': typeof AppSettingsVideoRoute
+  '/_app/settings/white-label': typeof AppSettingsWhiteLabelRoute
   '/api/public/portal-webhook': typeof ApiPublicPortalWebhookRoute
   '/_app/clients/': typeof AppClientsIndexRoute
   '/_app/financing/': typeof AppFinancingIndexRoute
@@ -557,6 +566,7 @@ export interface FileRouteTypes {
     | '/settings/profile'
     | '/settings/trash'
     | '/settings/video'
+    | '/settings/white-label'
     | '/api/public/portal-webhook'
     | '/clients/'
     | '/financing/'
@@ -610,6 +620,7 @@ export interface FileRouteTypes {
     | '/settings/profile'
     | '/settings/trash'
     | '/settings/video'
+    | '/settings/white-label'
     | '/api/public/portal-webhook'
     | '/clients'
     | '/financing'
@@ -667,6 +678,7 @@ export interface FileRouteTypes {
     | '/_app/settings/profile'
     | '/_app/settings/trash'
     | '/_app/settings/video'
+    | '/_app/settings/white-label'
     | '/api/public/portal-webhook'
     | '/_app/clients/'
     | '/_app/financing/'
@@ -955,6 +967,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/settings/white-label': {
+      id: '/_app/settings/white-label'
+      path: '/white-label'
+      fullPath: '/settings/white-label'
+      preLoaderRoute: typeof AppSettingsWhiteLabelRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/video': {
       id: '/_app/settings/video'
       path: '/video'
@@ -1122,6 +1141,7 @@ interface AppSettingsRouteChildren {
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppSettingsTrashRoute: typeof AppSettingsTrashRoute
   AppSettingsVideoRoute: typeof AppSettingsVideoRoute
+  AppSettingsWhiteLabelRoute: typeof AppSettingsWhiteLabelRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
@@ -1135,6 +1155,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppSettingsTrashRoute: AppSettingsTrashRoute,
   AppSettingsVideoRoute: AppSettingsVideoRoute,
+  AppSettingsWhiteLabelRoute: AppSettingsWhiteLabelRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
 
