@@ -4598,6 +4598,10 @@ export type Database = {
       }
       public_property_view: { Args: { _token: string }; Returns: Json }
       purge_expired_search_profiles: { Args: never; Returns: number }
+      resolve_public_tenant_branding: {
+        Args: { _hostname: string }
+        Returns: Json
+      }
       self_disclosure_link_resolve: {
         Args: { _token: string }
         Returns: {
