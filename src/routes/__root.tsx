@@ -66,14 +66,18 @@ export const Route = createRootRoute({
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" },
     ],
-  }),
+  };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFound,
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
-  const b = Route.useLoaderData({ select: (d) => d?.branding ?? null }) as PublicDomainBranding | null;
+  const domainB = Route.useLoaderData({ select: (d) => d?.branding ?? null }) as PublicDomainBranding | null;
+  const pathname = useRouterState({ select: (st) => st.location.pathname });
+  // /platform: Immolia-Plattform-Branding schon im ersten Bild, auch auf Firmen-Domains.
+  const b = /^\/platform(\/|$)/.test(pathname) ? null : domainB;
   // Auf Firmen-Domains Farben und Tab-Titel schon im ersten Bild setzen (kein Immolia-Flash).
   const style = b
     ? ({
