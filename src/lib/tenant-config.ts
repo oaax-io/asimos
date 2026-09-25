@@ -33,6 +33,9 @@ export type TenantBranding = {
   primary_color: string | null;
   secondary_color: string | null;
   accent_color: string | null;
+  app_primary_color?: string | null;
+  app_secondary_color?: string | null;
+  app_accent_color?: string | null;
   favicon_url: string | null;
   font_family: string | null;
   company_email: string | null;

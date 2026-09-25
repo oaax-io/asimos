@@ -127,7 +127,7 @@ function AppSidebar() {
                         isActive={active}
                         tooltip={label}
                         size="sm"
-                        className="h-8 text-sm text-sidebar-foreground/90 hover:bg-[#4C487A] hover:text-white data-[active=true]:bg-[#4C487A] data-[active=true]:text-white"
+                        className="h-8 text-sm text-sidebar-foreground/90 hover:bg-brand-deep hover:text-brand-deep-foreground data-[active=true]:bg-brand-deep data-[active=true]:text-brand-deep-foreground"
                       >
                         <Link to={item.to}>
                           <item.icon className="h-[18px] w-[18px]" />
