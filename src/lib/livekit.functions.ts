@@ -2,6 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+
+/** Aktuelle Firma des Aufrufers (serverseitig, aus Mitgliedschaft). */
+async function callerAgency(context: any): Promise<string> {
+  const { data, error } = await context.supabase.rpc("current_agency_id");
+  if (error || !data) throw new Error("Keine aktive Firmen-Mitgliedschaft");
+  return data as string;
+}
+
 const saveSchema = z.object({
   ws_url: z.string().trim().min(1),
   api_key: z.string().trim().min(1),
@@ -17,11 +25,13 @@ const tokenSchema = z.object({
 /** Status (ohne Geheimnisse) – für alle angemeldeten Nutzer. */
 export const getLivekitStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    const agencyId = await callerAgency(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
       .from("livekit_settings")
       .select("ws_url, api_key, api_secret, enabled, updated_at")
+      .eq("agency_id", agencyId)
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -48,16 +58,19 @@ export const saveLivekitSettings = createServerFn({ method: "POST" })
     );
     if (roleError) throw new Error(roleError.message);
     if (!allowed) throw new Error("Keine Berechtigung");
+    const agencyId = await callerAgency(context);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existing } = await supabaseAdmin
       .from("livekit_settings")
       .select("id, api_secret")
+      .eq("agency_id", agencyId)
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
     const payload: Record<string, unknown> = {
+      agency_id: agencyId,
       ws_url: normalizeWsUrl(data.ws_url),
       api_key: data.api_key,
       enabled: data.enabled,
@@ -82,12 +95,14 @@ export const saveLivekitSettings = createServerFn({ method: "POST" })
 /** Verbindungstest – prüft, ob ein Token erzeugt werden kann. */
 export const testLivekitConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    const agencyId = await callerAgency(context);
     const { createAccessToken } = await import("@/lib/livekit.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
       .from("livekit_settings")
       .select("ws_url, api_key, api_secret")
+      .eq("agency_id", agencyId)
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -125,11 +140,13 @@ export const createLivekitToken = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => tokenSchema.parse(data))
   .handler(async ({ data, context }) => {
+    const agencyId = await callerAgency(context);
     const { createAccessToken } = await import("@/lib/livekit.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
       .from("livekit_settings")
       .select("ws_url, api_key, api_secret, enabled")
+      .eq("agency_id", agencyId)
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();

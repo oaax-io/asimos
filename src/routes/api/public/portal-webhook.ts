@@ -164,6 +164,7 @@ async function handleSelfDisclosure(sb: any, agencyId: string, body: Body) {
 
   const price = typeof d.price === "number" ? d.price : d.price ? Number(d.price) : null;
   const leadId = await createLead(sb, {
+    agencyId,
     data: d,
     internalNotes: summary,
     extra: {
