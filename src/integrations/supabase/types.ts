@@ -357,6 +357,9 @@ export type Database = {
         Row: {
           accent_color: string | null
           agency_id: string | null
+          app_accent_color: string | null
+          app_primary_color: string | null
+          app_secondary_color: string | null
           company_address: string | null
           company_email: string | null
           company_name: string | null
@@ -376,6 +379,9 @@ export type Database = {
         Insert: {
           accent_color?: string | null
           agency_id?: string | null
+          app_accent_color?: string | null
+          app_primary_color?: string | null
+          app_secondary_color?: string | null
           company_address?: string | null
           company_email?: string | null
           company_name?: string | null
@@ -395,6 +401,9 @@ export type Database = {
         Update: {
           accent_color?: string | null
           agency_id?: string | null
+          app_accent_color?: string | null
+          app_primary_color?: string | null
+          app_secondary_color?: string | null
           company_address?: string | null
           company_email?: string | null
           company_name?: string | null
