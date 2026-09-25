@@ -113,7 +113,8 @@ export function TenantBrandingProvider({ children }: { children: ReactNode }) {
     root.style.setProperty("--tenant-secondary", value.secondaryColor);
     root.style.setProperty("--tenant-accent", value.accentColor);
     root.dataset.tenantContext = value.hasTenantContext ? "tenant" : "platform";
-    if (value.faviconUrl) {
+    // Login auf einer Firmen-Domain setzt sein Tab-Icon selbst.
+    if (value.faviconUrl && root.dataset.domainBranding !== "1") {
       let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
       if (!link) {
         link = document.createElement("link");
