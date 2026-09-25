@@ -23,6 +23,8 @@ import {
   findPlatformUserByEmail, setPlatformUserRole, removePlatformUserAccess,
   type PlatformUser, type FoundUser,
 } from "@/lib/platform-admin";
+import { usePlatformInvitations, invitePlatformUser } from "@/lib/invitations";
+import { InvitationTable, InviteLinkBox } from "@/components/invitations/InvitationUI";
 
 type Pending =
   | { kind: "role"; user: PlatformUser; role: string }
@@ -45,6 +47,7 @@ function PlatformUsersPage() {
   const [pending, setPending] = useState<Pending>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const invites = usePlatformInvitations();
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["platform", "platform-users"] });
@@ -164,7 +167,19 @@ function PlatformUsersPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {isOwner && <AddPlatformUserDialog open={addOpen} onOpenChange={setAddOpen} onDone={refresh} />}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">C) Einladungen</CardTitle>
+          <CardDescription>Plattform-Einladungen und Inhaber-Einladungen neuer Unternehmen. Einladungslinks werden nie gespeichert oder erneut angezeigt.</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <InvitationTable rows={invites.data ?? []} showCompany
+            canManage={(r) => r.invitation_type === "platform_user" ? isOwner : true}
+            onChanged={() => { invites.refetch(); refresh(); }} />
+        </CardContent>
+      </Card>
+
+      {isOwner && <AddPlatformUserDialog open={addOpen} onOpenChange={setAddOpen} onDone={() => { refresh(); invites.refetch(); }} />}
     </PlatformPage>
   );
 }
@@ -174,7 +189,14 @@ function AddPlatformUserDialog({ open, onOpenChange, onDone }: { open: boolean; 
   const [found, setFound] = useState<FoundUser | null>(null);
   const [role, setRole] = useState("platform_admin");
   const [busy, setBusy] = useState(false);
-  const reset = () => { setEmail(""); setFound(null); setRole("platform_admin"); };
+  const [link, setLink] = useState<string | null>(null);
+  const reset = () => { setEmail(""); setFound(null); setRole("platform_admin"); setLink(null); };
+  const invite = async () => {
+    setBusy(true);
+    try { const r = await invitePlatformUser(email, role); setLink(r.token); toast.success("Einladung erstellt"); onDone(); }
+    catch (e: any) { toast.error(e?.message ?? "Aktion nicht möglich"); }
+    finally { setBusy(false); }
+  };
 
   const search = async () => {
     setBusy(true);
@@ -198,7 +220,7 @@ function AddPlatformUserDialog({ open, onOpenChange, onDone }: { open: boolean; 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Plattformzugang hinzufügen</DialogTitle>
-          <DialogDescription>Nur für bestehende Benutzerkonten. Es wird kein Zugriff auf Unternehmen erteilt.</DialogDescription>
+          <DialogDescription>Bestehende Konten erhalten die Rolle direkt, neue Personen eine Einladung. Es wird kein Zugriff auf Unternehmen erteilt.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex gap-2">
@@ -206,9 +228,16 @@ function AddPlatformUserDialog({ open, onOpenChange, onDone }: { open: boolean; 
               onKeyDown={(e) => e.key === "Enter" && email && search()} />
             <Button variant="outline" disabled={!email || busy} onClick={search}>Suchen</Button>
           </div>
-          {found && !found.exists && (
-            <p className="rounded-md border bg-muted/40 p-3 text-sm">Für diese E-Mail besteht noch kein Benutzerkonto.</p>
-          )}
+          {found && !found.exists && (link ? <InviteLinkBox token={link} /> : (
+            <div className="space-y-3 rounded-md border bg-muted/40 p-3 text-sm">
+              <p>Für diese E-Mail besteht noch kein Benutzerkonto. Sie können die Person einladen.</p>
+              <Select value={role} onValueChange={setRole}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{PLATFORM_ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABEL[r]}</SelectItem>)}</SelectContent>
+              </Select>
+              <Button disabled={busy} onClick={invite}>Einladung erstellen</Button>
+            </div>
+          ))}
           {found?.exists && (
             <div className="space-y-3 rounded-md border p-3 text-sm">
               <div><span className="font-medium">{found.name ?? "–"}</span> · {found.email}</div>

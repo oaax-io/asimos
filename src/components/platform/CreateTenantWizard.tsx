@@ -94,6 +94,7 @@ export function CreateTenantWizard() {
                 ["Owner-Status", OWNER_STATUS_LABEL[result.owner_status] ?? result.owner_status],
                 ["Module", result.modules.map((m) => MODULE_LABEL[m] ?? m).join(", ") || "–"],
               ]} />
+              {result.invitation_token && <InviteLinkBox token={result.invitation_token} />}
               <DomainNote />
               <DialogFooter className="gap-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>Zur Unternehmensliste</Button>
