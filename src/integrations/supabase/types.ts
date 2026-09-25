@@ -3975,6 +3975,50 @@ export type Database = {
           },
         ]
       }
+      tenant_domains: {
+        Row: {
+          agency_id: string
+          created_at: string
+          domain: string
+          domain_type: string
+          id: string
+          is_primary: boolean
+          updated_at: string
+          verification_status: string
+          verified_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          domain: string
+          domain_type: string
+          id?: string
+          is_primary?: boolean
+          updated_at?: string
+          verification_status?: string
+          verified_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          domain?: string
+          domain_type?: string
+          id?: string
+          is_primary?: boolean
+          updated_at?: string
+          verification_status?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_domains_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trash_items: {
         Row: {
           agency_id: string | null
@@ -4171,6 +4215,11 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_agency_member: { Args: { _agency_id: string }; Returns: boolean }
+      is_agency_owner_or_admin: {
+        Args: { _agency_id: string }
+        Returns: boolean
+      }
       is_agent: { Args: never; Returns: boolean }
       is_client_assignee: { Args: { _client_id: string }; Returns: boolean }
       is_commission_admin: { Args: never; Returns: boolean }
