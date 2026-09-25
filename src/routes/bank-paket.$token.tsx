@@ -42,7 +42,7 @@ function BankPackageDownloadPage() {
     },
   });
 
-  const companyName = data?.company_name ?? "ASIMO";
+  const companyName = data?.company_name ?? "Dokumentenfreigabe";
   const primary = data?.primary_color ?? "#324642";
   const logoUrl = data?.logo_url ?? "";
 
