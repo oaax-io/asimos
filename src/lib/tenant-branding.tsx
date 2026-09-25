@@ -5,6 +5,7 @@
  */
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { useTenantConfig, TENANT_CONFIG_QUERY_KEY, type TenantCompany, type TenantBranding } from "@/lib/tenant-config";
 
@@ -64,6 +65,9 @@ export function TenantBrandingProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
   const q = useTenantConfig(!!user);
+  const pathname = useRouterState({ select: (st) => st.location.pathname });
+  // Plattform-Bereiche verwenden nie Tenant-Branding.
+  const isPlatformArea = /^\/(oaax|platform|admin)(\/|$)/.test(pathname);
 
   // Bei Benutzerwechsel/Logout keine fremde Konfiguration im Cache behalten.
   useEffect(() => {
@@ -71,7 +75,7 @@ export function TenantBrandingProvider({ children }: { children: ReactNode }) {
   }, [user?.id, qc]);
 
   const value = useMemo<TenantBrandingValue>(() => {
-    const cfg = user ? q.data : null;
+    const cfg = user && !isPlatformArea ? q.data : null;
     const b = cfg?.branding ?? null;
     if (!cfg || !b) {
       return { ...FALLBACK, isLoading: authLoading || (!!user && q.isLoading) };
@@ -83,9 +87,9 @@ export function TenantBrandingProvider({ children }: { children: ReactNode }) {
       logoUrl: b.logo_url,
       alternativeLogoUrl: b.logo_alt_url,
       faviconUrl: b.favicon_url || PLATFORM_BRANDING.faviconUrl,
-      primaryColor: b.primary_color || PLATFORM_BRANDING.primaryColor,
-      secondaryColor: b.secondary_color || PLATFORM_BRANDING.secondaryColor,
-      accentColor: b.accent_color || b.primary_color || PLATFORM_BRANDING.accentColor,
+      primaryColor: b.app_primary_color || b.primary_color || PLATFORM_BRANDING.primaryColor,
+      secondaryColor: b.app_secondary_color || b.secondary_color || PLATFORM_BRANDING.secondaryColor,
+      accentColor: b.app_accent_color || b.accent_color || b.app_primary_color || b.primary_color || PLATFORM_BRANDING.accentColor,
       fontFamily: b.font_family,
       companyEmail: b.company_email,
       companyWebsite: b.company_website,
@@ -95,7 +99,7 @@ export function TenantBrandingProvider({ children }: { children: ReactNode }) {
       isLoading: false,
       hasTenantContext: true,
     };
-  }, [user, q.data, q.isLoading, authLoading]);
+  }, [user, q.data, q.isLoading, authLoading, isPlatformArea]);
 
   // Zentrale CSS-Variablen + Favicon
   useEffect(() => {
@@ -114,7 +118,27 @@ export function TenantBrandingProvider({ children }: { children: ReactNode }) {
       }
       if (link.getAttribute("href") !== value.faviconUrl) link.href = value.faviconUrl;
     }
-  }, [value.primaryColor, value.secondaryColor, value.accentColor, value.faviconUrl, value.hasTenantContext]);
+  }, [value.primaryColor, value.secondaryColor, value.accentColor, value.faviconUrl, value.hasTenantContext, pathname]);
+
+  // Browser-Titel: Plattformname in Seitentiteln durch den Tenant-Namen ersetzen.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const name = value.hasTenantContext ? value.companyName : PLATFORM_BRANDING.productName;
+    const apply = () => {
+      const t = document.title;
+      if (!t) return;
+      const next = value.hasTenantContext
+        ? t.replace(/Immolia/g, name)
+        : t;
+      if (next !== t) document.title = next;
+    };
+    apply();
+    const el = document.querySelector("title");
+    if (!el) return;
+    const obs = new MutationObserver(apply);
+    obs.observe(el, { childList: true, characterData: true, subtree: true });
+    return () => obs.disconnect();
+  }, [value.hasTenantContext, value.companyName, pathname]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
