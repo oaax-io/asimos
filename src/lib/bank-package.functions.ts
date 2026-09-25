@@ -102,12 +102,17 @@ async function assertDossierAccess(sb: UserClient, dossierId: string) {
   if (!data) throw new Error("Kein Zugriff auf dieses Finanzierungsdossier");
 }
 async function assertPackageAccess(sb: UserClient, id: string) {
-  const { data } = await sb.from("generated_documents").select("id").eq("id", id).eq("document_type", "bank_package").maybeSingle();
-  if (!data) throw new Error("Kein Zugriff auf dieses Bank-Paket");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.from("generated_documents").select("related_id").eq("id", id).eq("document_type", "bank_package").maybeSingle();
+  if (!data?.related_id) throw new Error("Kein Zugriff auf dieses Bank-Paket");
+  await assertDossierAccess(sb, data.related_id);
 }
 async function assertPackagePathAccess(sb: UserClient, path: string) {
-  const { data } = await sb.from("generated_documents").select("id").eq("file_url", path).eq("document_type", "bank_package").limit(1);
-  if (!data || data.length === 0) throw new Error("Kein Zugriff auf dieses Bank-Paket");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.from("generated_documents").select("related_id").eq("file_url", path).eq("document_type", "bank_package").limit(1);
+  const rel = data?.[0]?.related_id;
+  if (!rel) throw new Error("Kein Zugriff auf dieses Bank-Paket");
+  await assertDossierAccess(sb, rel);
 }
 
 // ---------- buildBankPackage ----------
