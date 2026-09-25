@@ -34,6 +34,7 @@ import { PresenceDot } from "@/components/presence/PresenceDot";
 import { useAutoPresence } from "@/hooks/useAutoPresence";
 
 import { useTranslation } from "react-i18next";
+import { useModuleAccess, moduleForPath } from "@/hooks/useModuleAccess";
 
 function MyPresenceDot() {
   const { data: presence } = useMyPresence();
@@ -80,6 +81,7 @@ function AppSidebar() {
   const { t } = useTranslation();
   const collapsed = state === "collapsed";
   const brand = useTenantBranding();
+  const modules = useModuleAccess();
   const fullLogo = brand.alternativeLogoUrl ?? brand.logoUrl;
   const iconLogo = brand.faviconUrl && brand.hasTenantContext ? brand.faviconUrl : null;
 
@@ -116,7 +118,7 @@ function AppSidebar() {
             )}
             <SidebarGroupContent>
               <SidebarMenu className="gap-1">
-                {group.items.map((item) => {
+                {group.items.filter((item) => modules.isEnabled(moduleForPath(item.to))).map((item) => {
                   const active =
                     item.to === "/dashboard"
                       ? pathname === "/dashboard"
@@ -154,6 +156,22 @@ function AppSidebar() {
       </SidebarFooter>
     </Sidebar>
   );
+}
+
+function ModuleGate({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation();
+  const { isEnabled, loaded } = useModuleAccess();
+  const mod = moduleForPath(pathname);
+  if (mod && loaded && !isEnabled(mod)) {
+    return (
+      <div className="mx-auto mt-16 max-w-md text-center">
+        <h1 className="font-display text-xl font-semibold">Modul nicht freigeschaltet</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Dieser Bereich ist für Ihr Unternehmen nicht verfügbar.</p>
+        <Button asChild className="mt-6"><Link to="/dashboard">Zum Dashboard</Link></Button>
+      </div>
+    );
+  }
+  return <>{children}</>;
 }
 
 export default function AppLayout({ children }: { children?: ReactNode }) {
@@ -300,7 +318,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
             </div>
           </header>
 
-          <main className="flex-1 p-4 lg:p-8">{children ?? <Outlet />}</main>
+          <main className="flex-1 p-4 lg:p-8"><ModuleGate>{children ?? <Outlet />}</ModuleGate></main>
         </SidebarInset>
       </div>
     </SidebarProvider>
