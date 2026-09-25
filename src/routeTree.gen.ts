@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlatformIndexRouteImport } from './routes/platform.index'
+import { Route as InviteIndexRouteImport } from './routes/invite.index'
 import { Route as SelbstauskunftTokenRouteImport } from './routes/selbstauskunft.$token'
 import { Route as PlatformUsersRouteImport } from './routes/platform.users'
 import { Route as PlatformSettingsRouteImport } from './routes/platform.settings'
@@ -24,6 +25,7 @@ import { Route as PlatformModulesRouteImport } from './routes/platform.modules'
 import { Route as PlatformDomainsRouteImport } from './routes/platform.domains'
 import { Route as PlatformActivityRouteImport } from './routes/platform.activity'
 import { Route as PTokenRouteImport } from './routes/p.$token'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as FinanzierungTokenRouteImport } from './routes/finanzierung.$token'
 import { Route as BankPaketTokenRouteImport } from './routes/bank-paket.$token'
 import { Route as AppTemplatesRouteImport } from './routes/_app/templates'
@@ -111,6 +113,11 @@ const PlatformIndexRoute = PlatformIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PlatformRoute,
 } as any)
+const InviteIndexRoute = InviteIndexRouteImport.update({
+  id: '/invite/',
+  path: '/invite/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SelbstauskunftTokenRoute = SelbstauskunftTokenRouteImport.update({
   id: '/selbstauskunft/$token',
   path: '/selbstauskunft/$token',
@@ -149,6 +156,11 @@ const PlatformActivityRoute = PlatformActivityRouteImport.update({
 const PTokenRoute = PTokenRouteImport.update({
   id: '/p/$token',
   path: '/p/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FinanzierungTokenRoute = FinanzierungTokenRouteImport.update({
@@ -445,6 +457,7 @@ export interface FileRoutesByFullPath {
   '/templates': typeof AppTemplatesRoute
   '/bank-paket/$token': typeof BankPaketTokenRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/p/$token': typeof PTokenRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/domains': typeof PlatformDomainsRoute
@@ -453,6 +466,7 @@ export interface FileRoutesByFullPath {
   '/platform/settings': typeof PlatformSettingsRoute
   '/platform/users': typeof PlatformUsersRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
+  '/invite/': typeof InviteIndexRoute
   '/platform/': typeof PlatformIndexRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/financing/$id': typeof AppFinancingIdRouteWithChildren
@@ -509,6 +523,7 @@ export interface FileRoutesByTo {
   '/templates': typeof AppTemplatesRoute
   '/bank-paket/$token': typeof BankPaketTokenRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/p/$token': typeof PTokenRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/domains': typeof PlatformDomainsRoute
@@ -517,6 +532,7 @@ export interface FileRoutesByTo {
   '/platform/settings': typeof PlatformSettingsRoute
   '/platform/users': typeof PlatformUsersRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
+  '/invite': typeof InviteIndexRoute
   '/platform': typeof PlatformIndexRoute
   '/clients/$id': typeof AppClientsIdRoute
   '/financing/$id': typeof AppFinancingIdRouteWithChildren
@@ -579,6 +595,7 @@ export interface FileRoutesById {
   '/_app/templates': typeof AppTemplatesRoute
   '/bank-paket/$token': typeof BankPaketTokenRoute
   '/finanzierung/$token': typeof FinanzierungTokenRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/p/$token': typeof PTokenRoute
   '/platform/activity': typeof PlatformActivityRoute
   '/platform/domains': typeof PlatformDomainsRoute
@@ -587,6 +604,7 @@ export interface FileRoutesById {
   '/platform/settings': typeof PlatformSettingsRoute
   '/platform/users': typeof PlatformUsersRoute
   '/selbstauskunft/$token': typeof SelbstauskunftTokenRoute
+  '/invite/': typeof InviteIndexRoute
   '/platform/': typeof PlatformIndexRoute
   '/_app/clients/$id': typeof AppClientsIdRoute
   '/_app/financing/$id': typeof AppFinancingIdRouteWithChildren
@@ -649,6 +667,7 @@ export interface FileRouteTypes {
     | '/templates'
     | '/bank-paket/$token'
     | '/finanzierung/$token'
+    | '/invite/$token'
     | '/p/$token'
     | '/platform/activity'
     | '/platform/domains'
@@ -657,6 +676,7 @@ export interface FileRouteTypes {
     | '/platform/settings'
     | '/platform/users'
     | '/selbstauskunft/$token'
+    | '/invite/'
     | '/platform/'
     | '/clients/$id'
     | '/financing/$id'
@@ -713,6 +733,7 @@ export interface FileRouteTypes {
     | '/templates'
     | '/bank-paket/$token'
     | '/finanzierung/$token'
+    | '/invite/$token'
     | '/p/$token'
     | '/platform/activity'
     | '/platform/domains'
@@ -721,6 +742,7 @@ export interface FileRouteTypes {
     | '/platform/settings'
     | '/platform/users'
     | '/selbstauskunft/$token'
+    | '/invite'
     | '/platform'
     | '/clients/$id'
     | '/financing/$id'
@@ -782,6 +804,7 @@ export interface FileRouteTypes {
     | '/_app/templates'
     | '/bank-paket/$token'
     | '/finanzierung/$token'
+    | '/invite/$token'
     | '/p/$token'
     | '/platform/activity'
     | '/platform/domains'
@@ -790,6 +813,7 @@ export interface FileRouteTypes {
     | '/platform/settings'
     | '/platform/users'
     | '/selbstauskunft/$token'
+    | '/invite/'
     | '/platform/'
     | '/_app/clients/$id'
     | '/_app/financing/$id'
@@ -830,8 +854,10 @@ export interface RootRouteChildren {
   SetPasswordRoute: typeof SetPasswordRoute
   BankPaketTokenRoute: typeof BankPaketTokenRoute
   FinanzierungTokenRoute: typeof FinanzierungTokenRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   PTokenRoute: typeof PTokenRoute
   SelbstauskunftTokenRoute: typeof SelbstauskunftTokenRoute
+  InviteIndexRoute: typeof InviteIndexRoute
   ApiPublicPortalWebhookRoute: typeof ApiPublicPortalWebhookRoute
   ApiPublicBankPaketTokenRoute: typeof ApiPublicBankPaketTokenRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -888,6 +914,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlatformIndexRouteImport
       parentRoute: typeof PlatformRoute
     }
+    '/invite/': {
+      id: '/invite/'
+      path: '/invite'
+      fullPath: '/invite/'
+      preLoaderRoute: typeof InviteIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/selbstauskunft/$token': {
       id: '/selbstauskunft/$token'
       path: '/selbstauskunft/$token'
@@ -942,6 +975,13 @@ declare module '@tanstack/react-router' {
       path: '/p/$token'
       fullPath: '/p/$token'
       preLoaderRoute: typeof PTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/finanzierung/$token': {
@@ -1496,8 +1536,10 @@ const rootRouteChildren: RootRouteChildren = {
   SetPasswordRoute: SetPasswordRoute,
   BankPaketTokenRoute: BankPaketTokenRoute,
   FinanzierungTokenRoute: FinanzierungTokenRoute,
+  InviteTokenRoute: InviteTokenRoute,
   PTokenRoute: PTokenRoute,
   SelbstauskunftTokenRoute: SelbstauskunftTokenRoute,
+  InviteIndexRoute: InviteIndexRoute,
   ApiPublicPortalWebhookRoute: ApiPublicPortalWebhookRoute,
   ApiPublicBankPaketTokenRoute: ApiPublicBankPaketTokenRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,

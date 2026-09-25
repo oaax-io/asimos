@@ -16,6 +16,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { useTenantInvitations, createTenantInvitation, TENANT_INVITE_ROLES, INVITE_ROLE_LABEL } from "@/lib/invitations";
+import { InviteLinkBox, InvitationTable } from "@/components/invitations/InvitationUI";
 
 export const Route = createFileRoute("/_app/team")({ component: TeamPage });
 
@@ -35,14 +37,12 @@ function TeamPage() {
   const { user, isSuperadmin } = useAuth();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    full_name: "",
+    first_name: "",
+    last_name: "",
     email: "",
-    phone: "",
-    role: "agent" as (typeof ROLES)[number],
-    mode: "direct" as "direct" | "invite",
-    password: "",
+    role: "agent" as string,
   });
-  const [createdPassword, setCreatedPassword] = useState<string | null>(null);
+  const [createdLink, setCreatedLink] = useState<string | null>(null);
   const [permsOpen, setPermsOpen] = useState(false);
 
   const meQuery = useQuery({
@@ -78,38 +78,18 @@ function TeamPage() {
 
 
 
+  // Neue Mitarbeitende nur noch über die zentrale Einladung (kein Passwort, kein Direkt-Konto).
+  const invitations = useTenantInvitations(canManage);
   const create = useMutation({
     mutationFn: async () => {
-      if (!form.full_name.trim() || !form.email.trim()) {
-        throw new Error("Name und E-Mail sind erforderlich");
-      }
-      const redirectTo = `${window.location.origin}/set-password`;
-      const { data, error } = await supabase.functions.invoke("team-create-member", {
-        body: {
-          full_name: form.full_name.trim(),
-          email: form.email.trim(),
-          phone: form.phone.trim(),
-          role: form.role,
-          mode: form.mode,
-          password: form.mode === "direct" ? form.password : "",
-          redirect_to: redirectTo,
-        },
-      });
-      if (error) throw error;
-      if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
-      return data as { mode: string; password: string | null };
+      if (!form.email.trim()) throw new Error("E-Mail ist erforderlich");
+      return createTenantInvitation({ email: form.email.trim(), role: form.role, firstName: form.first_name, lastName: form.last_name });
     },
     onSuccess: (data) => {
-      if (data.mode === "direct") {
-        toast.success("Mitarbeiter angelegt");
-        if (data.password) setCreatedPassword(data.password);
-        else setOpen(false);
-      } else {
-        toast.success("Einladung per E-Mail gesendet");
-        setOpen(false);
-      }
-      setForm({ full_name: "", email: "", phone: "", role: "agent", mode: "direct", password: "" });
-      qc.invalidateQueries({ queryKey: ["team"] });
+      toast.success("Einladung erstellt");
+      setCreatedLink(data.token);
+      setForm({ first_name: "", last_name: "", email: "", role: "agent" });
+      qc.invalidateQueries({ queryKey: ["invitations", "tenant"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -131,59 +111,45 @@ function TeamPage() {
               <Button variant="outline" onClick={() => setPermsOpen(true)}>
                 <ShieldCheck className="mr-1 h-4 w-4" />Rollen & Module
               </Button>
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Mitarbeiter hinzufügen</Button></DialogTrigger>
+              <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setCreatedLink(null); }}>
+                <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Mitarbeiter einladen</Button></DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>Neuer Mitarbeiter</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>Mitarbeiter einladen</DialogTitle></DialogHeader>
+                {createdLink ? (
+                  <InviteLinkBox token={createdLink} />
+                ) : (
                 <div className="space-y-3">
-                  <div><Label>Name</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-                    <div><Label>Telefon</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+                    <div><Label>Vorname (optional)</Label><Input value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} /></div>
+                    <div><Label>Nachname (optional)</Label><Input value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} /></div>
                   </div>
+                  <div><Label>E-Mail</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
                   <div>
                     <Label>Rolle</Label>
-                    <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as (typeof ROLES)[number] })}>
+                    <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}
+                        {TENANT_INVITE_ROLES.map((r) => <SelectItem key={r} value={r}>{INVITE_ROLE_LABEL[r]}</SelectItem>)}
+                        {meQuery.data?.role === "owner" && <SelectItem value="owner">{INVITE_ROLE_LABEL.owner}</SelectItem>}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label>Anlage-Modus</Label>
-                    <Select value={form.mode} onValueChange={(v) => setForm({ ...form, mode: v as "direct" | "invite" })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="direct">Direkt anlegen (Passwort vergeben)</SelectItem>
-                        <SelectItem value="invite">Einladung per E-Mail</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {form.mode === "direct" ? (
-                    <div>
-                      <Label>Passwort (optional)</Label>
-                      <Input
-                        type="text"
-                        placeholder="Leer lassen für automatisch generiert"
-                        value={form.password}
-                        onChange={(e) => setForm({ ...form, password: e.target.value })}
-                      />
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Mind. 8 Zeichen. Bei leerem Feld wird ein sicheres Passwort generiert und einmalig angezeigt.
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Der Mitarbeiter erhält eine Einladungs-E-Mail mit einem Link, über den er sein Passwort selbst festlegt.
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Die Person erhält einen Einladungslink, erstellt damit selbst ihr Konto (oder meldet sich mit einem bestehenden an) und nimmt die Einladung an. Es wird kein Passwort vergeben.
+                  </p>
                 </div>
+                )}
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
-                  <Button onClick={() => create.mutate()} disabled={create.isPending}>
-                    {create.isPending ? "Speichern…" : "Anlegen"}
-                  </Button>
+                  {createdLink ? (
+                    <Button onClick={() => { setOpen(false); setCreatedLink(null); }}>Fertig</Button>
+                  ) : (
+                    <>
+                      <Button variant="outline" onClick={() => setOpen(false)}>Abbrechen</Button>
+                      <Button onClick={() => create.mutate()} disabled={create.isPending}>
+                        {create.isPending ? "Wird erstellt…" : "Einladung erstellen"}
+                      </Button>
+                    </>
+                  )}
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -269,34 +235,18 @@ function TeamPage() {
 
       <RolePermissionsDialog open={permsOpen} onOpenChange={setPermsOpen} />
 
-      <Dialog open={!!createdPassword} onOpenChange={(o) => { if (!o) { setCreatedPassword(null); setOpen(false); } }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Mitarbeiter angelegt</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Generiertes Passwort — bitte jetzt notieren oder kopieren. Es wird nicht erneut angezeigt.
-            </p>
-            <div className="flex items-center gap-2">
-              <Input readOnly value={createdPassword ?? ""} className="font-mono" />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => {
-                  if (createdPassword) {
-                    navigator.clipboard.writeText(createdPassword);
-                    toast.success("Passwort kopiert");
-                  }
-                }}
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => { setCreatedPassword(null); setOpen(false); }}>Fertig</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {canManage && (
+        <Card className="mt-6">
+          <CardContent className="p-0">
+            <div className="border-b p-4"><h2 className="text-base font-semibold">Einladungen</h2>
+              <p className="text-sm text-muted-foreground">Offene und frühere Einladungen dieses Unternehmens.</p></div>
+            {invitations.isLoading ? <p className="p-4 text-sm text-muted-foreground">Wird geladen…</p> : (
+              <InvitationTable rows={invitations.data ?? []} canManage={() => true}
+                onChanged={() => qc.invalidateQueries({ queryKey: ["invitations", "tenant"] })} />
+            )}
+          </CardContent>
+        </Card>
+      )}
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { InviteLinkBox } from "@/components/invitations/InvitationUI";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,7 @@ export function CreateTenantWizard() {
                 ["Owner-Status", OWNER_STATUS_LABEL[result.owner_status] ?? result.owner_status],
                 ["Module", result.modules.map((m) => MODULE_LABEL[m] ?? m).join(", ") || "–"],
               ]} />
+              {result.invitation_token && <InviteLinkBox token={result.invitation_token} />}
               <DomainNote />
               <DialogFooter className="gap-2">
                 <Button variant="outline" onClick={() => setOpen(false)}>Zur Unternehmensliste</Button>

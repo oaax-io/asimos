@@ -1,0 +1,1 @@
+REVOKE ALL ON public.invitations FROM anon, authenticated;

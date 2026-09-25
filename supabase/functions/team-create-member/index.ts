@@ -36,6 +36,8 @@ Deno.serve(async (req) => {
       return json({ error: "Nur Inhaber/Admin dürfen Mitarbeiter anlegen" }, 403);
     }
 
+    // Phase 4.7: Neue Mitarbeitende nur noch über die zentrale Einladung (kein Passwort, keine Direkt-Konten).
+    if (body) return json({ error: "Neue Mitarbeitende bitte über «Mitarbeiter einladen» hinzufügen." }, 410);
     const email = String(body.email ?? "").trim().toLowerCase();
     const fullName = String(body.full_name ?? "").trim();
     const phone = String(body.phone ?? "").trim();

@@ -17,3 +17,7 @@
 ## Plattformzugänge (4.6B)
 - Plattformrollen nur in platform_admins; Mutationen ausschliesslich über platform_set_user_role/platform_remove_user_access (nur System Owner, letzter System Owner geschützt, ein Audit-Eintrag), Browser hat keine Schreibrechte auf die Tabelle; why: Plattform- und Tenantrollen bleiben getrennt und nachvollziehbar.
 - platform_support öffnet /platform weiterhin nicht (is_platform_admin nur system_owner/platform_admin); why: Support-Funktionen kommen erst mit einer eigenen Phase.
+## Einladungen (4.7)
+- Eine zentrale Tabelle invitations (tenant_owner/tenant_member/platform_user), nur token_hash (sha256) gespeichert, Zugriff ausschliesslich über invitation_*/platform_invite_user/platform_list_invitations RPCs; tenant_owner_invitations ist stillgelegt; why: ein Einladungssystem, kein Klartext-Token, keine Browser-Tabellenzugriffe.
+- Neue Mitarbeitende nur per Einladung (team-create-member liefert 410, keine Passwörter); Annahme atomar in invitation_accept mit E-Mail-Bindung, ändert nie active_agency_id/Module/Branding; why: kein Parallel-Onboarding, keine temporären Passwörter.
+- E-Mail-Versand ist nicht eingerichtet (email_delivery_status='not_configured'); der Link wird nur bei Erstellung/Neu senden einmalig angezeigt; why: kein vorgetäuschter Versand.
