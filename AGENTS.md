@@ -14,3 +14,6 @@
 - Genau ein aktives Unternehmen pro Sitzung: profiles.active_agency_id (nur via set_current_agency, Trigger blockiert Browser-Schreibzugriffe); current_agency_id() = gültige Auswahl, sonst einzige aktive Mitgliedschaft, sonst NULL (Auswahl nötig); why: mehrere Mitgliedschaften dürfen nie Daten mehrerer Firmen zugleich zeigen.
 - is_agency_member/has_agency_role/is_agency_owner_or_admin verlangen _agency_id = current_agency_id(); why: ein zentraler Punkt härtet alle RLS-Policies ohne Policy-Umbau.
 - Firmenwechsel auf fremder Firmen-Adresse leitet auf deren aktive eigene Domain bzw. GENERIC_APP_HOST (src/lib/workspaces.ts) um; why: nie Daten von Firma B unter Branding von Firma A.
+## Plattformzugänge (4.6B)
+- Plattformrollen nur in platform_admins; Mutationen ausschliesslich über platform_set_user_role/platform_remove_user_access (nur System Owner, letzter System Owner geschützt, ein Audit-Eintrag), Browser hat keine Schreibrechte auf die Tabelle; why: Plattform- und Tenantrollen bleiben getrennt und nachvollziehbar.
+- platform_support öffnet /platform weiterhin nicht (is_platform_admin nur system_owner/platform_admin); why: Support-Funktionen kommen erst mit einer eigenen Phase.
