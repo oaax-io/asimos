@@ -1,3 +1,4 @@
+import { useTenantBranding } from "@/lib/tenant-branding";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useMemo, useEffect } from "react";
@@ -84,13 +85,8 @@ function ExposeWizard() {
     },
   });
 
-  const company = useQuery({
-    queryKey: ["expose-company"],
-    queryFn: async () => {
-      const { data } = await supabase.from("company").select("name").limit(1).single();
-      return data;
-    },
-  });
+  const _tb = useTenantBranding();
+  const company = { data: _tb.company ? { name: _tb.company.name } : null };
 
   // Build pool of available images: media bucket urls + property.images legacy
   const imagePool = useMemo(() => {
@@ -166,7 +162,7 @@ function ExposeWizard() {
       facts,
       cover_url: coverUrl,
       gallery_urls: galleryUrls.filter((u) => u !== coverUrl),
-      agency_name: company.data?.name ?? "ASIMO Real Estate",
+      agency_name: company.data?.name ?? _tb.companyName,
       contact_name: profile.data?.full_name ?? null,
       contact_email: profile.data?.email ?? null,
       contact_phone: profile.data?.phone ?? null,

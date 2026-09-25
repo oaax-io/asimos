@@ -80,6 +80,7 @@ export function CompanyProfileForm() {
       toast.success("Firmenprofil gespeichert");
       qc.invalidateQueries({ queryKey: ["company-full"] });
       qc.invalidateQueries({ queryKey: ["company"] });
+      qc.invalidateQueries({ queryKey: ["tenant-config"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -99,6 +100,7 @@ export function CompanyProfileForm() {
     qc.invalidateQueries({ queryKey: ["company-full"] });
     qc.invalidateQueries({ queryKey: ["company"] });
     qc.invalidateQueries({ queryKey: ["doc-ctx"] });
+    qc.invalidateQueries({ queryKey: ["tenant-config"] });
     toast.success(url ? "Logo gespeichert" : "Logo entfernt");
     return true;
   };

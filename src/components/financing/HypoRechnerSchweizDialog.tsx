@@ -1,3 +1,4 @@
+import { useTenantBranding } from "@/lib/tenant-branding";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +24,7 @@ import autoTable from "jspdf-autotable";
 type Props = { open: boolean; onOpenChange: (o: boolean) => void };
 
 export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
+  const tenantCompany = useTenantBranding().company ?? undefined;
   const [clientId, setClientId] = useState<string>("");
   const [purchasePrice, setPurchasePrice] = useState<number>(1000000);
   const [equity, setEquity] = useState<number>(200000);
@@ -189,11 +191,7 @@ export function HypoRechnerSchweizDialog({ open, onOpenChange }: Props) {
   const exportPdf = async () => {
     try {
       const client = clients.find((c: any) => c.id === clientId);
-      const { data: companyRows } = await supabase
-        .from("company")
-        .select("name, address, postal_code, city, phone, email, logo_url")
-        .limit(1);
-      const company = companyRows?.[0] as any | undefined;
+      const company = tenantCompany as any | undefined;
 
       const doc = new jsPDF({ unit: "mm", format: "a4" });
       const pageW = doc.internal.pageSize.getWidth();

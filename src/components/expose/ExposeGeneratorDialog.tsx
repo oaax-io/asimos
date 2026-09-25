@@ -1,3 +1,4 @@
+import { useTenantBranding } from "@/lib/tenant-branding";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -138,11 +139,8 @@ export function ExposeGeneratorDialog({ open, template, onOpenChange }: Props) {
     enabled: open,
   });
 
-  const { data: companyData } = useQuery({
-    queryKey: ["expose-gen-company"],
-    queryFn: async () => (await supabase.from("company").select("name").maybeSingle()).data,
-    enabled: open,
-  });
+  const _tb = useTenantBranding();
+  const companyData = _tb.company ? { name: _tb.company.name } : null;
   const { data: profileData } = useQuery({
     queryKey: ["expose-gen-profile"],
     queryFn: async () => {

@@ -1,3 +1,4 @@
+import { useTenantBranding } from "@/lib/tenant-branding";
 import { useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,7 @@ type Props = { open: boolean; onOpenChange: (o: boolean) => void; calculationId?
 const TERMS = [10, 15, 20, 25] as const;
 
 export function HypoRechnerKosovoDialog({ open, onOpenChange, calculationId }: Props) {
+  const tenantCompany = useTenantBranding().company ?? undefined;
   const qc = useQueryClient();
   const [clientId, setClientId] = useState<string>("");
   const [purchasePrice, setPurchasePrice] = useState<number>(270000);
@@ -221,11 +223,7 @@ export function HypoRechnerKosovoDialog({ open, onOpenChange, calculationId }: P
 
   const exportPdf = async () => {
     const client = clients.find((c: any) => c.id === clientId);
-    const { data: companyRows } = await supabase
-      .from("company")
-      .select("name, address, postal_code, city, country, phone, email, website, logo_url")
-      .limit(1);
-    const company = companyRows?.[0] as any | undefined;
+    const company = tenantCompany as any | undefined;
 
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     const pageW = doc.internal.pageSize.getWidth();
