@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import { buildDocumentFileName } from "@/lib/document-filename";
 
@@ -29,6 +30,7 @@ const PDF_PROVIDER = "railway-puppeteer";
 type StoredDocumentInsert = Database["public"]["Tables"]["documents"]["Insert"];
 
 export const renderDocumentPdf = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(
     (input: {
       html: string;
@@ -327,6 +329,7 @@ export const renderDocumentPdf = createServerFn({ method: "POST" })
  * Refresh a signed URL for an existing PDF (path stored in pdf_url/file_url).
  */
 export const getDocumentPdfUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { documentId: string }) => {
     if (!input?.documentId) throw new Error("documentId is required");
     return { documentId: input.documentId };
@@ -353,6 +356,7 @@ export const getDocumentPdfUrl = createServerFn({ method: "POST" })
  * blocked by adblockers / ERR_BLOCKED_BY_CLIENT).
  */
 export const fetchDocumentPdfBytes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { path: string }) => {
     if (!input?.path || typeof input.path !== "string") throw new Error("path is required");
     return { path: input.path };

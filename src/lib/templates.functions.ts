@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { ASIMO_TEMPLATES } from "@/lib/document-templates";
 
@@ -10,7 +11,8 @@ import { ASIMO_TEMPLATES } from "@/lib/document-templates";
  * - Inserts missing rows; updates existing rows so design changes propagate.
  * - When no default exists for a given type, marks the ASIMO template as default.
  */
-export const seedAsimoTemplates = createServerFn({ method: "POST" }).handler(async () => {
+export const seedAsimoTemplates = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth]).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const results: Array<{ name: string; type: string; action: "inserted" | "updated" | "unchanged" }> = [];
 
@@ -75,6 +77,7 @@ export const seedAsimoTemplates = createServerFn({ method: "POST" }).handler(asy
  * previous default via the SQL helper `set_default_template`.
  */
 export const setDefaultTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ templateId: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
