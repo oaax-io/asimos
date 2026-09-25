@@ -1,15 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
-import { BrandkitForm } from "@/components/settings/BrandkitForm";
-import { SettingsPageShell } from "@/components/settings/SettingsPageShell";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_app/settings/brandkit")({ component: BrandkitSettings });
-
-function BrandkitSettings() {
-  const { t } = useTranslation();
-  return (
-    <SettingsPageShell title={t("settings.tabs.brand")}>
-      <BrandkitForm />
-    </SettingsPageShell>
-  );
-}
+// Brandkit ist in «White Label» aufgegangen – alte Links weiterleiten.
+export const Route = createFileRoute("/_app/settings/brandkit")({
+  beforeLoad: () => { throw redirect({ to: "/settings/white-label", replace: true }); },
+});

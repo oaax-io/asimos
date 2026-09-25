@@ -23,10 +23,17 @@ type Form = {
   app_accent_color: string;
   login_title: string;
   login_subtitle: string;
+  primary_color: string;
+  secondary_color: string;
+  font_family: string;
+  company_address: string;
+  company_email: string;
+  company_website: string;
 };
 const KEYS: (keyof Form)[] = [
   "company_name", "logo_url", "logo_alt_url", "favicon_url",
   "app_primary_color", "app_secondary_color", "app_accent_color", "login_title", "login_subtitle",
+  "primary_color", "secondary_color", "font_family", "company_address", "company_email", "company_website",
 ];
 const empty = Object.fromEntries(KEYS.map((k) => [k, ""])) as Form;
 
@@ -177,11 +184,27 @@ export function WhiteLabelSettings() {
               {colorField("app_secondary_color", "App Sekundärfarbe")}
               {colorField("app_accent_color", "Akzentfarbe")}
             </div>
+            <details className="rounded-md border p-3">
+              <summary className="cursor-pointer text-sm font-medium">Angaben für Dokumente (PDF)</summary>
+              <div className="mt-4 space-y-4">
+                <p className="text-xs text-muted-foreground">Briefkopf und Farben in erstellten Dokumenten. Die eigentlichen Firmendaten pflegen Sie im Firmenprofil.</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div><Label>E-Mail im Briefkopf</Label><Input value={form.company_email} onChange={(e) => setForm({ ...form, company_email: e.target.value })} /></div>
+                  <div><Label>Website im Briefkopf</Label><Input value={form.company_website} onChange={(e) => setForm({ ...form, company_website: e.target.value })} /></div>
+                </div>
+                <div><Label>Adresse im Briefkopf</Label><Input value={form.company_address} onChange={(e) => setForm({ ...form, company_address: e.target.value })} /></div>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {colorField("primary_color", "Dokument Primärfarbe")}
+                  {colorField("secondary_color", "Dokument Sekundärfarbe")}
+                  <div><Label>Schrift</Label><Input value={form.font_family} placeholder="z. B. Inter" onChange={(e) => setForm({ ...form, font_family: e.target.value })} /></div>
+                </div>
+              </div>
+            </details>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Anmeldeseite</CardTitle><CardDescription>Wird auf Ihrer verifizierten Domain angezeigt. Logo und Farben stammen aus dem Branding.</CardDescription></CardHeader>
+          <CardHeader><CardTitle>Anmeldeseite</CardTitle><CardDescription>Login-Branding auf Ihrer verifizierten Domain. Logo und Farben stammen aus dem Branding.</CardDescription></CardHeader>
           <CardContent className="space-y-4">
             <div><Label>Titel (optional)</Label><Input value={form.login_title} placeholder="z. B. Willkommen zurück" onChange={(e) => setForm({ ...form, login_title: e.target.value })} /></div>
             <div><Label>Untertitel (optional)</Label><Input value={form.login_subtitle} onChange={(e) => setForm({ ...form, login_subtitle: e.target.value })} /></div>
@@ -190,6 +213,7 @@ export function WhiteLabelSettings() {
 
         <div className="flex justify-end"><Button onClick={() => save.mutate()} disabled={disabled}>{disabled ? "Speichern …" : "Speichern"}</Button></div>
 
+        <h2 className="pt-2 text-lg font-semibold">Domains</h2>
         <Card>
           <CardHeader><CardTitle>Immolia-Adresse</CardTitle></CardHeader>
           <CardContent className="flex items-center justify-between gap-3">
