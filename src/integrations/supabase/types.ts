@@ -121,6 +121,44 @@ export type Database = {
           },
         ]
       }
+      agency_modules: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          is_enabled: boolean
+          is_entitled: boolean
+          module: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          is_entitled?: boolean
+          module: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          is_entitled?: boolean
+          module?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_modules_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           agency_id: string | null
@@ -317,51 +355,71 @@ export type Database = {
       }
       brand_settings: {
         Row: {
+          accent_color: string | null
+          agency_id: string | null
           company_address: string | null
           company_email: string | null
           company_name: string | null
           company_website: string | null
           created_at: string
+          favicon_url: string | null
           font_family: string | null
           footer_html: string | null
           header_html: string | null
           id: string
+          logo_alt_url: string | null
           logo_url: string | null
           primary_color: string | null
           secondary_color: string | null
           updated_at: string
         }
         Insert: {
+          accent_color?: string | null
+          agency_id?: string | null
           company_address?: string | null
           company_email?: string | null
           company_name?: string | null
           company_website?: string | null
           created_at?: string
+          favicon_url?: string | null
           font_family?: string | null
           footer_html?: string | null
           header_html?: string | null
           id?: string
+          logo_alt_url?: string | null
           logo_url?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           updated_at?: string
         }
         Update: {
+          accent_color?: string | null
+          agency_id?: string | null
           company_address?: string | null
           company_email?: string | null
           company_name?: string | null
           company_website?: string | null
           created_at?: string
+          favicon_url?: string | null
           font_family?: string | null
           footer_html?: string | null
           header_html?: string | null
           id?: string
+          logo_alt_url?: string | null
           logo_url?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "brand_settings_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_pins: {
         Row: {
@@ -437,6 +495,7 @@ export type Database = {
       }
       checklist_templates: {
         Row: {
+          agency_id: string | null
           created_at: string
           default_related_type: string | null
           description: string | null
@@ -447,6 +506,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           created_at?: string
           default_related_type?: string | null
           description?: string | null
@@ -457,6 +517,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           created_at?: string
           default_related_type?: string | null
           description?: string | null
@@ -466,7 +527,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "checklist_templates_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       checklists: {
         Row: {
@@ -1465,6 +1534,7 @@ export type Database = {
           name: string
           phone: string | null
           postal_code: string | null
+          row_id: string
           uid_number: string | null
           updated_at: string
           website: string | null
@@ -1486,6 +1556,7 @@ export type Database = {
           name?: string
           phone?: string | null
           postal_code?: string | null
+          row_id?: string
           uid_number?: string | null
           updated_at?: string
           website?: string | null
@@ -1507,6 +1578,7 @@ export type Database = {
           name?: string
           phone?: string | null
           postal_code?: string | null
+          row_id?: string
           uid_number?: string | null
           updated_at?: string
           website?: string | null
@@ -1563,6 +1635,7 @@ export type Database = {
       }
       document_templates: {
         Row: {
+          agency_id: string | null
           allow_custom_css: boolean
           category: string | null
           content: string
@@ -1576,11 +1649,13 @@ export type Database = {
           is_system: boolean
           layout_type: string
           name: string
+          source_template_id: string | null
           type: Database["public"]["Enums"]["document_type"]
           updated_at: string
           variables: Json
         }
         Insert: {
+          agency_id?: string | null
           allow_custom_css?: boolean
           category?: string | null
           content: string
@@ -1594,11 +1669,13 @@ export type Database = {
           is_system?: boolean
           layout_type?: string
           name: string
+          source_template_id?: string | null
           type?: Database["public"]["Enums"]["document_type"]
           updated_at?: string
           variables?: Json
         }
         Update: {
+          agency_id?: string | null
           allow_custom_css?: boolean
           category?: string | null
           content?: string
@@ -1612,11 +1689,27 @@ export type Database = {
           is_system?: boolean
           layout_type?: string
           name?: string
+          source_template_id?: string | null
           type?: Database["public"]["Enums"]["document_type"]
           updated_at?: string
           variables?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "document_templates_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_templates_source_template_id_fkey"
+            columns: ["source_template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       documents: {
         Row: {
@@ -2824,6 +2917,7 @@ export type Database = {
       }
       master_list_values: {
         Row: {
+          agency_id: string | null
           created_at: string
           id: string
           is_active: boolean
@@ -2834,6 +2928,7 @@ export type Database = {
           value: string
         }
         Insert: {
+          agency_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -2844,6 +2939,7 @@ export type Database = {
           value: string
         }
         Update: {
+          agency_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -2853,7 +2949,15 @@ export type Database = {
           updated_at?: string
           value?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "master_list_values_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       matches: {
         Row: {
@@ -2915,6 +3019,7 @@ export type Database = {
       }
       module_permissions: {
         Row: {
+          agency_id: string | null
           can_create: boolean
           can_delete: boolean
           can_edit_all: boolean
@@ -2926,6 +3031,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           can_create?: boolean
           can_delete?: boolean
           can_edit_all?: boolean
@@ -2937,6 +3043,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           can_create?: boolean
           can_delete?: boolean
           can_edit_all?: boolean
@@ -2947,7 +3054,15 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "module_permissions_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       nda_agreements: {
         Row: {
@@ -3667,6 +3782,7 @@ export type Database = {
       }
       property_feature_options: {
         Row: {
+          agency_id: string | null
           category: string | null
           created_at: string
           id: string
@@ -3677,6 +3793,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agency_id?: string | null
           category?: string | null
           created_at?: string
           id?: string
@@ -3687,6 +3804,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agency_id?: string | null
           category?: string | null
           created_at?: string
           id?: string
@@ -3696,7 +3814,15 @@ export type Database = {
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "property_feature_options_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       property_market_analyses: {
         Row: {
@@ -4353,6 +4479,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      agency_module_enabled: { Args: { _module: string }; Returns: boolean }
       bank_package_share_resolve: {
         Args: { _token: string }
         Returns: {
@@ -4408,6 +4535,7 @@ export type Database = {
       }
       financing_link_submit: { Args: { _token: string }; Returns: undefined }
       format_property_reference: { Args: { _n: number }; Returns: string }
+      get_tenant_config: { Args: never; Returns: Json }
       has_active_subscription: {
         Args: { agency_uuid: string; check_env?: string }
         Returns: boolean
@@ -4492,6 +4620,7 @@ export type Database = {
         Args: { _bucket: string; _name: string; _owner: string }
         Returns: string
       }
+      tenant_branding_of: { Args: { _agency: string }; Returns: Json }
       tenant_parent_agencies: { Args: { j: Json }; Returns: string[] }
       trash_restore: { Args: { _id: string }; Returns: undefined }
       user_can: { Args: { _action: string; _module: string }; Returns: boolean }
