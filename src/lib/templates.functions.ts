@@ -11,9 +11,12 @@ import { ASIMO_TEMPLATES } from "@/lib/document-templates";
  * - Inserts missing rows; updates existing rows so design changes propagate.
  * - When no default exists for a given type, marks the ASIMO template as default.
  */
+// PHASE_3B_REQUIRED: ASIMO_TEMPLATES enthalten ASIMO-spezifische Vertrags- und
+// Geschäftstexte. Sie dürfen NICHT als generische Vorlage für neue Immolia-Tenants
+// verwendet werden. In Phase 3B werden neutrale Plattformvorlagen daraus abgeleitet.
 export const seedAsimoTemplates = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth]).handler(async ({ context }) => {
-  // Systemvorlagen sind heute global: nur Inhaber/Admin der eigenen Firma darf synchronisieren.
+  // Nur Inhaber/Admin der aktuellen Firma (is_owner_or_admin prüft current_agency_id()).
   const { data: allowed } = await (context as any).supabase.rpc("is_owner_or_admin");
   if (!allowed) throw new Error("Keine Berechtigung");
   const { data: agencyId } = await (context as any).supabase.rpc("current_agency_id");

@@ -7,13 +7,13 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.property-market-analysis]
-verify_jwt = false
+verify_jwt = true
 
 [functions.team-update-member]
 verify_jwt = true
 
 [functions.parse-self-disclosure]
-verify_jwt = false
+verify_jwt = true
 
 [functions.property-macro-location]
-verify_jwt = false
+verify_jwt = true
