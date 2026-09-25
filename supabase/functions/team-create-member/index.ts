@@ -81,6 +81,7 @@ Deno.serve(async (req) => {
       .from("profiles")
       .update({
         role,
+        agency_id: agencyId,
         full_name: fullName || email,
         phone: phone || null,
       })
@@ -94,6 +95,12 @@ Deno.serve(async (req) => {
       .from("user_roles")
       .insert({ user_id: newUserId, role });
     if (roleErr) return json({ error: roleErr.message }, 400);
+
+    // Mitgliedschaft in der Firma des Aufrufers (Tenantrolle)
+    const { error: memErr } = await admin
+      .from("agency_memberships")
+      .upsert({ agency_id: agencyId, user_id: newUserId, role, is_active: true }, { onConflict: "agency_id,user_id" });
+    if (memErr) return json({ error: memErr.message }, 400);
 
     return json({ ok: true, user_id: newUserId, password: generatedPassword, mode });
   } catch (e) {
