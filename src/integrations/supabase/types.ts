@@ -3256,18 +3256,21 @@ export type Database = {
           created_at: string
           is_system_owner: boolean
           platform_role: string | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           is_system_owner?: boolean
           platform_role?: string | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           is_system_owner?: boolean
           platform_role?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -4744,6 +4747,7 @@ export type Database = {
         Returns: string
       }
       platform_assert_admin: { Args: never; Returns: undefined }
+      platform_assert_system_owner: { Args: never; Returns: undefined }
       platform_check_owner_email: { Args: { _email: string }; Returns: boolean }
       platform_check_subdomain: { Args: { _slug: string }; Returns: string }
       platform_core_module_keys: { Args: never; Returns: string[] }
@@ -4790,6 +4794,7 @@ export type Database = {
         Args: { _actor: string; _error: string; _id: string; _ok: boolean }
         Returns: string
       }
+      platform_find_user_by_email: { Args: { _email: string }; Returns: Json }
       platform_list_admins: {
         Args: never
         Returns: {
@@ -4861,6 +4866,18 @@ export type Database = {
           status: string
         }[]
       }
+      platform_list_platform_users: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          has_membership: boolean
+          platform_role: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       platform_list_tenants: {
         Args: never
         Returns: {
@@ -4880,6 +4897,10 @@ export type Database = {
       platform_module_keys: { Args: never; Returns: string[] }
       platform_overview: { Args: never; Returns: Json }
       platform_remove_domain: { Args: { _id: string }; Returns: undefined }
+      platform_remove_user_access: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       platform_role: { Args: never; Returns: string }
       platform_set_domain_active: {
         Args: { _active: boolean; _id: string }
@@ -4892,6 +4913,10 @@ export type Database = {
       platform_set_primary_domain: { Args: { _id: string }; Returns: undefined }
       platform_set_tenant_status: {
         Args: { _agency_id: string; _status: string }
+        Returns: string
+      }
+      platform_set_user_role: {
+        Args: { _role: string; _user_id: string }
         Returns: string
       }
       platform_tenant_branding: { Args: { _agency_id: string }; Returns: Json }
