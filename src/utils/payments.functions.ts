@@ -153,6 +153,18 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     if (!prices.data.length) throw new Error("Price not found");
     const stripePrice = prices.data[0];
 
+    // Firma nie ungeprüft vom Client übernehmen: nur wenn der Aufrufer dort Inhaber/Admin ist,
+    // sonst die aktuelle Firma des Aufrufers (serverseitig ermittelt).
+    let agencyId: string | null = null;
+    if (data.agencyId) {
+      const { data: ok } = await (supabase as any).rpc("is_agency_owner_or_admin", { _agency_id: data.agencyId });
+      if (!ok) throw new Error("Keine Berechtigung für diese Firma");
+      agencyId = data.agencyId;
+    } else {
+      const { data: cur } = await (supabase as any).rpc("current_agency_id");
+      agencyId = (cur as string | null) ?? null;
+    }
+
     const billing = await loadCompanyBilling(supabase, userId);
     const customerId = await resolveOrCreateCustomer(stripe, { email, userId, billing });
 
@@ -163,9 +175,9 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       return_url: data.returnUrl,
       customer: customerId,
       customer_update: { name: "auto", address: "auto" },
-      metadata: { userId, ...(data.agencyId && { agencyId: data.agencyId }) },
+      metadata: { userId, ...(agencyId && { agencyId }) },
       subscription_data: {
-        metadata: { userId, ...(data.agencyId && { agencyId: data.agencyId }) },
+        metadata: { userId, ...(agencyId && { agencyId }) },
       },
     });
 
