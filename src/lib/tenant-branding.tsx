@@ -67,7 +67,11 @@ export function TenantBrandingProvider({ children }: { children: ReactNode }) {
   const q = useTenantConfig(!!user);
   const pathname = useRouterState({ select: (st) => st.location.pathname });
   // Plattform-Bereiche verwenden nie Tenant-Branding.
-  const isPlatformArea = /^\/(oaax|platform|admin)(\/|$)/.test(pathname);
+  // Öffentliche Seiten (Login, Token-Links) nie mit dem Branding der Session:
+  // dort gilt Immolia bzw. das serverseitig über Token → Agency ermittelte Branding.
+  const isPlatformArea =
+    /^\/(oaax|platform|admin)(\/|$)/.test(pathname) ||
+    /^\/(auth|set-password|p|bank-paket|finanzierung|selbstauskunft)(\/|$)/.test(pathname);
 
   // Bei Benutzerwechsel/Logout keine fremde Konfiguration im Cache behalten.
   useEffect(() => {
