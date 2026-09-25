@@ -10,3 +10,7 @@
 ## Modules (4.5)
 - Single module registry src/lib/modules.ts (MODULE_REGISTRY), mirrored in DB by platform_module_keys()/platform_core_module_keys(); why: one list, server validates keys.
 - is_entitled only via platform_set_module_entitlement (platform admins, one audit row); tenants change is_enabled only (guard trigger blocks browser roles from is_entitled/core-disable); missing agency_modules row = denied; why: default-deny for SaaS tenants.
+## Workspace-Kontext (4.6A)
+- Genau ein aktives Unternehmen pro Sitzung: profiles.active_agency_id (nur via set_current_agency, Trigger blockiert Browser-Schreibzugriffe); current_agency_id() = gültige Auswahl, sonst einzige aktive Mitgliedschaft, sonst NULL (Auswahl nötig); why: mehrere Mitgliedschaften dürfen nie Daten mehrerer Firmen zugleich zeigen.
+- is_agency_member/has_agency_role/is_agency_owner_or_admin verlangen _agency_id = current_agency_id(); why: ein zentraler Punkt härtet alle RLS-Policies ohne Policy-Umbau.
+- Firmenwechsel auf fremder Firmen-Adresse leitet auf deren aktive eigene Domain bzw. GENERIC_APP_HOST (src/lib/workspaces.ts) um; why: nie Daten von Firma B unter Branding von Firma A.
