@@ -13,6 +13,7 @@ const TILES = [
   { to: "/settings/notifications", icon: Bell, labelKey: "settings.tabs.notifications", desc: "Benachrichtigungen und Kanäle" },
   { to: "/settings/company", icon: Building2, labelKey: "settings.tabs.company", desc: "Firmendaten und Adresse" },
   { to: "/settings/brandkit", icon: Palette, labelKey: "settings.tabs.brand", desc: "Logo, Farben und Dokumentdesign" },
+  { to: "/settings/white-label", icon: Palette, labelKey: "", label: "White Label", desc: "Branding, Anmeldeseite und Domain" },
   { to: "/settings/banks", icon: Banknote, labelKey: "settings.tabs.banks", desc: "Bankkonten und Zahlungsangaben" },
   { to: "/settings/categories", icon: Tags, labelKey: "settings.tabs.categories", desc: "Kategorien im Dokumentencenter" },
   { to: "/settings/video", icon: Video, labelKey: "", label: "Video", desc: "LiveKit für Video-Meetings" },

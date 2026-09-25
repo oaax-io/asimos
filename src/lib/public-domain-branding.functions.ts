@@ -21,6 +21,8 @@ export type PublicDomainBranding = {
   primary_color: string | null;
   secondary_color: string | null;
   accent_color: string | null;
+  login_title?: string | null;
+  login_subtitle?: string | null;
 };
 
 export const resolvePublicDomainBranding = createServerFn({ method: "GET" }).handler(

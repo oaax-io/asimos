@@ -157,6 +157,12 @@ function AuthPage() {
             <span className="font-display text-3xl font-bold tracking-tight">{brandName}</span>
           )}
         </div>
+        {(branding?.login_title || branding?.login_subtitle) && (
+          <div className="-mt-4 mb-6 text-center">
+            {branding?.login_title && <h1 className="font-display text-xl font-semibold">{branding.login_title}</h1>}
+            {branding?.login_subtitle && <p className="mt-1 text-sm text-white/80">{branding.login_subtitle}</p>}
+          </div>
+        )}
 
         {authLoading || accessPending ? (
           <p className="text-center text-sm text-white/80">Einen Moment …</p>
