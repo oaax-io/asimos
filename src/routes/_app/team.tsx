@@ -235,34 +235,18 @@ function TeamPage() {
 
       <RolePermissionsDialog open={permsOpen} onOpenChange={setPermsOpen} />
 
-      <Dialog open={!!createdPassword} onOpenChange={(o) => { if (!o) { setCreatedPassword(null); setOpen(false); } }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Mitarbeiter angelegt</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Generiertes Passwort — bitte jetzt notieren oder kopieren. Es wird nicht erneut angezeigt.
-            </p>
-            <div className="flex items-center gap-2">
-              <Input readOnly value={createdPassword ?? ""} className="font-mono" />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => {
-                  if (createdPassword) {
-                    navigator.clipboard.writeText(createdPassword);
-                    toast.success("Passwort kopiert");
-                  }
-                }}
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => { setCreatedPassword(null); setOpen(false); }}>Fertig</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {canManage && (
+        <Card className="mt-6">
+          <CardContent className="p-0">
+            <div className="border-b p-4"><h2 className="text-base font-semibold">Einladungen</h2>
+              <p className="text-sm text-muted-foreground">Offene und frühere Einladungen dieses Unternehmens.</p></div>
+            {invitations.isLoading ? <p className="p-4 text-sm text-muted-foreground">Wird geladen…</p> : (
+              <InvitationTable rows={invitations.data ?? []} canManage={() => true}
+                onChanged={() => qc.invalidateQueries({ queryKey: ["invitations", "tenant"] })} />
+            )}
+          </CardContent>
+        </Card>
+      )}
     </>
   );
 }
