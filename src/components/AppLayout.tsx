@@ -35,6 +35,7 @@ import { useAutoPresence } from "@/hooks/useAutoPresence";
 
 import { useTranslation } from "react-i18next";
 import { useModuleAccess, moduleForPath } from "@/hooks/useModuleAccess";
+import { WorkspaceMenuItems } from "@/components/WorkspaceSwitcher";
 
 function MyPresenceDot() {
   const { data: presence } = useMyPresence();
@@ -273,6 +274,7 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                   )}
                   <DropdownMenuSeparator />
                   <PresenceSubMenu />
+                  <WorkspaceMenuItems />
                   {isSuperadmin && (
                     <>
                       <DropdownMenuSeparator />

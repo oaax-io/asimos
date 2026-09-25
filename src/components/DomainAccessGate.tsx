@@ -6,6 +6,8 @@ import { useAuth } from "@/lib/auth";
 import { checkDomainAccess } from "@/lib/public-domain-branding.functions";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { WorkspacePicker } from "@/components/WorkspaceSwitcher";
+import { useMyWorkspaces } from "@/lib/workspaces";
 
 export function useDomainAccess(enabled: boolean) {
   const { user } = useAuth();
@@ -19,7 +21,7 @@ export function useDomainAccess(enabled: boolean) {
   });
 }
 
-/** 'active' | 'unavailable' | 'none' – zentral aus der Datenbank (Mitgliedschaft + Firmenstatus). */
+/** 'active' | 'select' | 'unavailable' | 'none' – zentral aus der Datenbank (Mitgliedschaft + Firmenstatus). */
 export function useWorkspaceStatus() {
   const { user } = useAuth();
   return useQuery({
@@ -27,7 +29,7 @@ export function useWorkspaceStatus() {
     queryFn: async () => {
       const { data, error } = await (supabase.rpc as any)("my_workspace_status");
       if (error) throw error;
-      return data as "active" | "unavailable" | "none";
+      return data as "active" | "select" | "unavailable" | "none";
     },
     enabled: !!user,
     staleTime: 60_000,
@@ -65,9 +67,17 @@ export function NoAccessMessage({ title = "Kein Zugriff", text = "Dein Benutzerk
 export function DomainAccessGate({ children }: { children: ReactNode }) {
   const q = useDomainAccess(true);
   const ws = useWorkspaceStatus();
+  const list = useMyWorkspaces();
+  // Nichts rendern, bevor Adresse und aktives Unternehmen geprüft sind (kein Daten-Flicker).
   if (q.isLoading || ws.isLoading) return null;
+  if (ws.data === "select") return <WorkspacePicker />;
   if (ws.data === "unavailable")
     return <NoAccessMessage title="Unternehmen nicht verfügbar" text="Der Zugang zu diesem Unternehmen ist derzeit nicht verfügbar. Bitte wenden Sie sich an Ihre Administration." />;
-  if (q.data && !q.data.allowed) return <NoAccessMessage />;
+  if (q.data && !q.data.allowed) {
+    if (list.isLoading) return null;
+    if ((list.data ?? []).length > 0)
+      return <WorkspacePicker title="Unter dieser Adresse nicht verfügbar" text="Ihr aktives Unternehmen ist unter dieser Adresse nicht verfügbar. Wählen Sie ein Unternehmen." />;
+    return <NoAccessMessage />;
+  }
   return <>{children}</>;
 }
