@@ -2591,6 +2591,80 @@ export type Database = {
           },
         ]
       }
+      invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          agency_id: string | null
+          created_at: string
+          created_by: string | null
+          email: string
+          email_delivery_status: string
+          expires_at: string
+          first_name: string | null
+          id: string
+          invitation_type: string
+          last_name: string | null
+          platform_role: string | null
+          replaces_invitation_id: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          status: string
+          tenant_role: Database["public"]["Enums"]["app_role"] | null
+          token_hash: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          agency_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          email: string
+          email_delivery_status?: string
+          expires_at: string
+          first_name?: string | null
+          id?: string
+          invitation_type: string
+          last_name?: string | null
+          platform_role?: string | null
+          replaces_invitation_id?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: string
+          tenant_role?: Database["public"]["Enums"]["app_role"] | null
+          token_hash: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          agency_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          email_delivery_status?: string
+          expires_at?: string
+          first_name?: string | null
+          id?: string
+          invitation_type?: string
+          last_name?: string | null
+          platform_role?: string | null
+          replaces_invitation_id?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: string
+          tenant_role?: Database["public"]["Enums"]["app_role"] | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           address: string | null
@@ -4591,6 +4665,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _invitation_audit: {
+        Args: {
+          _action: string
+          _extra?: Json
+          _inv: Database["public"]["Tables"]["invitations"]["Row"]
+        }
+        Returns: undefined
+      }
+      _invitation_can_manage: {
+        Args: { _inv: Database["public"]["Tables"]["invitations"]["Row"] }
+        Returns: boolean
+      }
+      _invitation_issue: {
+        Args: {
+          _agency: string
+          _email: string
+          _first: string
+          _last: string
+          _prole: string
+          _replaces?: string
+          _trole: Database["public"]["Enums"]["app_role"]
+          _type: string
+        }
+        Returns: {
+          invitation_id: string
+          token: string
+        }[]
+      }
       admin_get_stats: {
         Args: never
         Returns: {
@@ -4689,6 +4791,43 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      invitation_accept: { Args: { _token: string }; Returns: Json }
+      invitation_create_tenant_member: {
+        Args: {
+          _email: string
+          _first_name?: string
+          _last_name?: string
+          _role: string
+        }
+        Returns: Json
+      }
+      invitation_effective_status: {
+        Args: { _expires: string; _status: string }
+        Returns: string
+      }
+      invitation_hash: { Args: { _token: string }; Returns: string }
+      invitation_list_tenant: {
+        Args: never
+        Returns: {
+          accepted_at: string
+          created_at: string
+          email: string
+          email_delivery_status: string
+          expires_at: string
+          first_name: string
+          id: string
+          invitation_type: string
+          last_name: string
+          status: string
+          tenant_role: string
+        }[]
+      }
+      invitation_preview: { Args: { _token: string }; Returns: Json }
+      invitation_resend: { Args: { _invitation_id: string }; Returns: Json }
+      invitation_revoke: {
+        Args: { _invitation_id: string }
+        Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
       is_agency_commission_admin: {
@@ -4795,6 +4934,10 @@ export type Database = {
         Returns: string
       }
       platform_find_user_by_email: { Args: { _email: string }; Returns: Json }
+      platform_invite_user: {
+        Args: { _email: string; _role: string }
+        Returns: Json
+      }
       platform_list_admins: {
         Args: never
         Returns: {
@@ -4830,6 +4973,24 @@ export type Database = {
           id: string
           verification_status: string
           verified_at: string
+        }[]
+      }
+      platform_list_invitations: {
+        Args: { _agency_id?: string; _type?: string }
+        Returns: {
+          accepted_at: string
+          agency_id: string
+          agency_name: string
+          created_at: string
+          email: string
+          email_delivery_status: string
+          expires_at: string
+          first_name: string
+          id: string
+          invitation_type: string
+          last_name: string
+          role: string
+          status: string
         }[]
       }
       platform_list_members: {
