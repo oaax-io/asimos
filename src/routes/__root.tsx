@@ -8,6 +8,17 @@ import { Toaster } from "@/components/ui/sonner";
 import { TenantBrandingProvider } from "@/lib/tenant-branding";
 import { ConfirmProvider } from "@/components/confirm/ConfirmProvider";
 import "@/i18n";
+import { resolvePublicDomainBranding, type PublicDomainBranding } from "@/lib/public-domain-branding.functions";
+
+/** Öffentliches Branding der aufgerufenen Domain (nur Darstellung, keine Rechte). */
+async function loadDomainBranding(): Promise<{ branding: PublicDomainBranding | null }> {
+  try {
+    const r = await resolvePublicDomainBranding();
+    return { branding: r.branding };
+  } catch {
+    return { branding: null };
+  }
+}
 
 function NotFound() {
   return (
@@ -25,7 +36,10 @@ function NotFound() {
 }
 
 export const Route = createRootRoute({
-  head: () => ({
+  loader: () => loadDomainBranding(),
+  staleTime: Infinity,
+  shouldReload: false,
+  head: ({ loaderData }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -42,7 +56,7 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "icon", href: loaderData?.branding?.favicon_url || "/favicon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" },
@@ -55,9 +69,24 @@ export const Route = createRootRoute({
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  const b = Route.useLoaderData({ select: (d) => d?.branding ?? null }) as PublicDomainBranding | null;
+  // Auf Firmen-Domains Farben und Tab-Titel schon im ersten Bild setzen (kein Immolia-Flash).
+  const style = b
+    ? ({
+        ...(b.primary_color ? { "--tenant-primary": b.primary_color } : {}),
+        ...(b.secondary_color ? { "--tenant-secondary": b.secondary_color } : {}),
+        ...((b.accent_color || b.primary_color) ? { "--tenant-accent": b.accent_color || b.primary_color } : {}),
+      } as React.CSSProperties)
+    : undefined;
+  const titleScript = b?.company_name
+    ? `(function(){var n=${JSON.stringify(b.company_name).replace(/</g, "\\u003c")};document.title=document.title.replace(/Immolia/g,n);})();`
+    : null;
   return (
-    <html lang="de">
-      <head><HeadContent /></head>
+    <html lang="de" style={style} data-domain-branded={b ? "1" : undefined} suppressHydrationWarning>
+      <head>
+        <HeadContent />
+        {titleScript && <script dangerouslySetInnerHTML={{ __html: titleScript }} />}
+      </head>
       <body>{children}<Scripts /></body>
     </html>
   );

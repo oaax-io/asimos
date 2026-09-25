@@ -4,8 +4,9 @@
  * brand_settings/company. Branding ist Darstellung, keine Autorisierung.
  */
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useRouterState } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouterState, useLoaderData } from "@tanstack/react-router";
+import type { PublicDomainBranding } from "@/lib/public-domain-branding.functions";
 import { useAuth } from "@/lib/auth";
 import { useTenantConfig, TENANT_CONFIG_QUERY_KEY, type TenantCompany, type TenantBranding } from "@/lib/tenant-config";
 
@@ -73,12 +74,44 @@ export function TenantBrandingProvider({ children }: { children: ReactNode }) {
     /^\/(oaax|platform|admin)(\/|$)/.test(pathname) ||
     /^\/(auth|set-password|p|bank-paket|finanzierung|selbstauskunft)(\/|$)/.test(pathname);
 
+  // Öffentliches Branding der aufgerufenen Domain (serverseitig über den Hostname ermittelt).
+  const domainBrand = useLoaderData({ strict: false, from: "__root__" as never, select: (d: any) => d?.branding ?? null }) as PublicDomainBranding | null;
+  // Ergebnis der Domain-Prüfung aus dem Cache (DomainAccessGate lädt es). Nur Darstellung.
+  const host = typeof window !== "undefined" ? window.location.hostname : "";
+  const access = useQuery<{ domainBranded: boolean; allowed: boolean } | null>({
+    queryKey: ["domain-access", host, user?.id],
+    queryFn: () => null,
+    enabled: false,
+  });
+  const accessAllowed = access.data?.allowed === true;
+
   // Bei Benutzerwechsel/Logout keine fremde Konfiguration im Cache behalten.
   useEffect(() => {
     qc.removeQueries({ queryKey: TENANT_CONFIG_QUERY_KEY });
   }, [user?.id, qc]);
 
   const value = useMemo<TenantBrandingValue>(() => {
+    const base = computeValue();
+    // Auf einer Firmen-Domain: solange nicht bestätigt ist, dass die Session zu dieser
+    // Firma gehört (Laden, Kein Zugriff), nur das öffentliche Domain-Branding zeigen –
+    // weder Immolia noch das Branding der eigenen Firma.
+    if (domainBrand && !isPlatformArea && !(accessAllowed && base.hasTenantContext)) {
+      return {
+        ...FALLBACK,
+        isLoading: base.isLoading,
+        companyName: domainBrand.company_name || PLATFORM_BRANDING.productName,
+        logoUrl: domainBrand.logo_url,
+        alternativeLogoUrl: domainBrand.logo_alt_url,
+        faviconUrl: domainBrand.favicon_url || PLATFORM_BRANDING.faviconUrl,
+        primaryColor: domainBrand.primary_color || PLATFORM_BRANDING.primaryColor,
+        secondaryColor: domainBrand.secondary_color || PLATFORM_BRANDING.secondaryColor,
+        accentColor: domainBrand.accent_color || domainBrand.primary_color || PLATFORM_BRANDING.accentColor,
+        hasTenantContext: true,
+      };
+    }
+    return base;
+
+    function computeValue(): TenantBrandingValue {
     const cfg = user && !isPlatformArea ? q.data : null;
     const b = cfg?.branding ?? null;
     if (!cfg || !b) {
@@ -103,7 +136,8 @@ export function TenantBrandingProvider({ children }: { children: ReactNode }) {
       isLoading: false,
       hasTenantContext: true,
     };
-  }, [user, q.data, q.isLoading, authLoading, isPlatformArea]);
+    }
+  }, [user, q.data, q.isLoading, authLoading, isPlatformArea, domainBrand, accessAllowed]);
 
   // Zentrale CSS-Variablen + Favicon
   useEffect(() => {

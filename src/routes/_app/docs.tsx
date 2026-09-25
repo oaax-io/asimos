@@ -366,7 +366,7 @@ function DocsPage() {
               <section>
                 <h3 className="mb-2 font-display text-base font-semibold">Erste Schritte</h3>
                 <ol className="ml-5 list-decimal space-y-1 text-muted-foreground">
-                  <li>Firmenprofil und Brandkit unter <strong>Einstellungen</strong> hinterlegen.</li>
+                  <li>Firmenprofil und White Label unter <strong>Einstellungen</strong> hinterlegen.</li>
                   <li>Mitarbeiter unter <strong>Administration → Mitarbeiter</strong> anlegen.</li>
                   <li>Bankkonten und Dokumentvorlagen konfigurieren.</li>
                   <li>Erste Leads / Kunden erfassen und Suchprofile pflegen.</li>
