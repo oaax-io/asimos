@@ -9,7 +9,7 @@ import { AuditLogList } from "@/components/platform/AuditLogList";
 import { TenantAdministration } from "@/components/platform/TenantAdministration";
 import { MembersTable, DomainsTable, ModulesTable } from "@/components/platform/tables";
 import {
-  usePlatformTenants, usePlatformMembers, usePlatformDomains, usePlatformModules, usePlatformActivity, usePlatformBranding, usePlatformAuditLogs,
+  usePlatformTenants, usePlatformMembers, usePlatformDomains, usePlatformModules, usePlatformActivity, usePlatformBranding, usePlatformAuditLogs, useOwnerInvitations, OWNER_STATUS_LABEL,
   TENANT_STATUS_LABEL, domainStatusLabel, fmtDate,
 } from "@/lib/platform-admin";
 
@@ -17,6 +17,21 @@ export const Route = createFileRoute("/platform/tenants/$agencyId")({ component:
 
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
   return <div className="flex gap-4 border-b py-2 text-sm last:border-0"><span className="w-48 shrink-0 text-muted-foreground">{k}</span><span className="min-w-0 break-all">{v}</span></div>;
+}
+
+function OwnerInfo({ agencyId }: { agencyId: string }) {
+  const members = usePlatformMembers(agencyId);
+  const inv = useOwnerInvitations(agencyId);
+  const owners = (members.data ?? []).filter((m) => m.tenant_role === "owner");
+  const pending = (inv.data ?? []).filter((i) => i.status !== "accepted" && i.status !== "cancelled");
+  if (members.isLoading || inv.isLoading) return <>…</>;
+  if (!owners.length && !pending.length) return <>–</>;
+  return (
+    <div className="space-y-1">
+      {owners.map((o) => <div key={o.user_id}>{o.full_name ?? "–"} · {o.email} <Badge variant={o.is_active ? "default" : "secondary"} className="ml-1">{o.is_active ? "Aktiv" : "Inaktiv"}</Badge></div>)}
+      {pending.map((i) => <div key={i.email}>{i.first_name} {i.last_name} · {i.email} <Badge variant="secondary" className="ml-1">{OWNER_STATUS_LABEL[i.status] ?? i.status}</Badge></div>)}
+    </div>
+  );
 }
 
 function TenantDetail() {
