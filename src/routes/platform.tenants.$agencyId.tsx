@@ -48,7 +48,8 @@ function TenantDetail() {
             <Row k="Status" v={<Badge variant={t.status === "active" ? "default" : "secondary"}>{TENANT_STATUS_LABEL[t.status]}</Badge>} />
             <Row k="Erstellt am" v={fmtDate(t.created_at)} />
             <Row k="Aktive Mitglieder" v={t.members} />
-            <Row k="Immolia-Adresse" v={t.subdomain ?? "–"} />
+            <Row k="Owner" v={<OwnerInfo agencyId={t.id} />} />
+            <Row k="Immolia-Adresse" v={t.subdomain ? <span>{t.subdomain}{t.subdomain.endsWith(".immolia.ch") && <span className="block text-xs text-muted-foreground">Domain technisch noch nicht verbunden (*.immolia.ch nicht eingerichtet)</span>}</span> : "–"} />
             <Row k="Custom Domain" v={t.custom_domain ? `${t.custom_domain} (${domainStatusLabel({ verification_status: t.custom_domain_status, activated_at: t.custom_domain_active ? "x" : null, domain_type: "custom" })})` : "–"} />
             <Row k="Branding vorhanden" v={t.has_branding ? "Ja" : "Nein"} />
             <Row k="Aktivierte Module" v={t.modules_active} />
