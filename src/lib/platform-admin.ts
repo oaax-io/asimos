@@ -78,6 +78,8 @@ export const updateTenantName = (agencyId: string, name: string) =>
 export const AUDIT_LABEL: Record<string, string> = {
   tenant_suspended: "Unternehmen gesperrt", tenant_reactivated: "Unternehmen reaktiviert",
   tenant_archived: "Unternehmen archiviert", tenant_updated: "Unternehmen geändert", tenant_created: "Unternehmen erstellt",
+  domain_added: "Domain hinzugefügt", domain_verified: "Domain bestätigt", domain_activated: "Domain aktiviert",
+  domain_deactivated: "Domain deaktiviert", domain_primary_changed: "Bevorzugte Domain geändert", domain_removed: "Domain entfernt",
 };
 /** Erlaubte Statuswechsel (archived → suspended nicht vorgesehen). */
 export const STATUS_TRANSITIONS: Record<string, Array<"active" | "suspended" | "archived">> = {
@@ -115,3 +117,42 @@ export function slugify(s: string) {
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/\b(ag|gmbh|sa|sarl|sàrl|kg|ug)\b/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40).replace(/-+$/, "");
 }
+
+// ---- Phase 4.4: Domain Center (nur über platform_* RPCs) ----
+/**
+ * Zentraler Schalter: Ist *.immolia.ch technisch (Wildcard-DNS + Hosting) eingerichtet?
+ * Solange false, gilt eine Immolia-Adresse nur als «registriert», nicht als erreichbar.
+ */
+export const IMMOLIA_WILDCARD_READY = false;
+export type DomainCenterRow = {
+  id: string; agency_id: string; agency_name: string; agency_status: string; domain: string; domain_type: "subdomain" | "custom";
+  is_primary: boolean; verification_status: string; verified_at: string | null; activated_at: string | null; created_at: string;
+  verification_checked_at: string | null; verification_error: string | null; has_branding: boolean;
+};
+export const useDomainCenter = (agencyId?: string) => useQuery({
+  queryKey: ["platform", "domain-center", agencyId ?? null],
+  queryFn: () => rpc<DomainCenterRow[]>("platform_domain_center", { _agency_id: agencyId ?? null }),
+});
+export const useDomainDnsRecord = (id: string | null) => useQuery({
+  queryKey: ["platform", "domain-dns", id], enabled: !!id,
+  queryFn: () => rpc<{ type: string; name: string; value: string } | null>("platform_domain_dns_record", { _id: id }),
+});
+export const addCustomDomain = (agencyId: string, domain: string) => rpc<string>("platform_add_custom_domain", { _agency_id: agencyId, _domain: domain });
+export const setDomainActive = (id: string, active: boolean) => rpc<void>("platform_set_domain_active", { _id: id, _active: active });
+export const setPrimaryDomain = (id: string) => rpc<void>("platform_set_primary_domain", { _id: id });
+export const removeDomain = (id: string) => rpc<void>("platform_remove_domain", { _id: id });
+export const VERIFICATION_LABEL: Record<string, string> = { pending: "Ausstehend", verified: "Bestätigt", failed: "Fehler" };
+export function domainActive(d: Pick<DomainCenterRow, "domain_type" | "verification_status" | "activated_at">) {
+  return d.verification_status === "verified" && (d.domain_type === "subdomain" || !!d.activated_at);
+}
+export const DOMAIN_ERROR_LABEL: Record<string, string> = {
+  invalid_domain: "Ungültige Domain.", blocked_domain: "Diese Domain kann nicht verwendet werden.",
+  duplicate_domain: "Diese Domain ist bereits vergeben.", custom_exists: "Dieses Unternehmen hat bereits eine Custom Domain.",
+  not_verified: "Erst nach bestätigter DNS-Prüfung möglich.", is_primary: "Zuerst eine andere bevorzugte Domain wählen.",
+  only_custom: "Immolia-Adressen können hier nicht geändert oder entfernt werden.", not_usable: "Nur bestätigte und aktive Domains können bevorzugt werden.",
+  forbidden: "Keine Berechtigung.",
+};
+export const domainErrorText = (e: unknown) => {
+  const m = (e as { message?: string })?.message ?? "";
+  return DOMAIN_ERROR_LABEL[m] ?? "Aktion fehlgeschlagen.";
+};

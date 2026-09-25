@@ -1,15 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Card } from "@/components/ui/card";
-import { PlatformPage, QueryState } from "@/components/platform/PlatformLayout";
-import { DomainsTable } from "@/components/platform/tables";
-import { usePlatformDomains } from "@/lib/platform-admin";
+import { PlatformPage } from "@/components/platform/PlatformLayout";
+import { DomainCenter } from "@/components/platform/DomainCenter";
 
-export const Route = createFileRoute("/platform/domains")({ component: () => {
-  const q = usePlatformDomains();
-  return (
-    <PlatformPage title="Domains" description="Immolia-Subdomains und Custom Domains aller Unternehmen.">
-      <QueryState isLoading={q.isLoading} error={q.error} />
-      <Card><DomainsTable rows={q.data ?? []} showTenant /></Card>
-    </PlatformPage>
-  );
-} });
+export const Route = createFileRoute("/platform/domains")({ component: () => (
+  <PlatformPage title="Domain Center" description="Immolia-Adressen und Custom Domains aller Unternehmen. Keine CRM-Daten.">
+    <DomainCenter />
+  </PlatformPage>
+) });

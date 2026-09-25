@@ -4723,6 +4723,10 @@ export type Database = {
           label: string
         }[]
       }
+      platform_add_custom_domain: {
+        Args: { _agency_id: string; _domain: string }
+        Returns: string
+      }
       platform_assert_admin: { Args: never; Returns: undefined }
       platform_check_owner_email: { Args: { _email: string }; Returns: boolean }
       platform_check_subdomain: { Args: { _slug: string }; Returns: string }
@@ -4736,6 +4740,38 @@ export type Database = {
           _slug: string
         }
         Returns: Json
+      }
+      platform_domain_audit: {
+        Args: {
+          _action: string
+          _actor: string
+          _d: Database["public"]["Tables"]["tenant_domains"]["Row"]
+        }
+        Returns: undefined
+      }
+      platform_domain_center: {
+        Args: { _agency_id?: string }
+        Returns: {
+          activated_at: string
+          agency_id: string
+          agency_name: string
+          agency_status: string
+          created_at: string
+          domain: string
+          domain_type: string
+          has_branding: boolean
+          id: string
+          is_primary: boolean
+          verification_checked_at: string
+          verification_error: string
+          verification_status: string
+          verified_at: string
+        }[]
+      }
+      platform_domain_dns_record: { Args: { _id: string }; Returns: Json }
+      platform_domain_record_check: {
+        Args: { _actor: string; _error: string; _id: string; _ok: boolean }
+        Returns: string
       }
       platform_list_admins: {
         Args: never
@@ -4825,7 +4861,13 @@ export type Database = {
         }[]
       }
       platform_overview: { Args: never; Returns: Json }
+      platform_remove_domain: { Args: { _id: string }; Returns: undefined }
       platform_role: { Args: never; Returns: string }
+      platform_set_domain_active: {
+        Args: { _active: boolean; _id: string }
+        Returns: undefined
+      }
+      platform_set_primary_domain: { Args: { _id: string }; Returns: undefined }
       platform_set_tenant_status: {
         Args: { _agency_id: string; _status: string }
         Returns: string

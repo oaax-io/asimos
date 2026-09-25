@@ -4,3 +4,6 @@
 - Platform admin mutations go only through platform_* RPCs that write exactly one platform_audit_logs row; why: auditable, no direct table writes from the browser.
 - Tenant provisioning runs only through the atomic platform_create_tenant RPC (platform admins), pending owners without an account go to tenant_owner_invitations; why: no half-built tenants, no browser inserts, no temp passwords.
 - Module access = agency_modules (product access, enforced server-side by RESTRICTIVE module_gate_* policies via agency_module_enabled_for(row agency_id)); module_permissions = role rights inside an available module; owner has full rights in enabled modules without rows; why: a role permission can never open a locked module.
+## Domain Center (4.4)
+- Platform domain mutations only via platform_* RPCs (platform_add_custom_domain/set_domain_active/set_primary_domain/remove_domain) writing one audit row; DNS result stored only by server via platform_domain_record_check (service_role); why: no browser writes, no fake verification.
+- Wildcard reachability of *.immolia.ch is one flag IMMOLIA_WILDCARD_READY in platform-admin.ts; why: registered ≠ reachable, remove hint centrally later.
