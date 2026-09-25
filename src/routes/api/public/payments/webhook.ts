@@ -127,9 +127,8 @@ async function notifyPaymentFailed(agencyId: string | null, ownerUserId: string 
 
   // Superadmins (Systemowner)
   const { data: sas } = await sb
-    .from("user_roles")
-    .select("user_id")
-    .eq("role", "superadmin");
+    .from("platform_admins")
+    .select("user_id");
   for (const s of sas ?? []) recipients.add(s.user_id);
 
   for (const uid of recipients) {
@@ -180,7 +179,7 @@ async function notifyOwners(
   }
   if (ownerUserId) recipients.add(ownerUserId);
   if (includeSuperadmins) {
-    const { data: sas } = await sb.from("user_roles").select("user_id").eq("role", "superadmin");
+    const { data: sas } = await sb.from("platform_admins").select("user_id");
     for (const s of sas ?? []) recipients.add(s.user_id);
   }
   for (const uid of recipients) {

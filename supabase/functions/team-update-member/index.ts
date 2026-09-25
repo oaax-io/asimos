@@ -49,10 +49,9 @@ Deno.serve(async (req) => {
       .single();
 
     const { data: superRow } = await admin
-      .from("user_roles")
-      .select("role")
+      .from("platform_admins")
+      .select("user_id")
       .eq("user_id", userData.user.id)
-      .eq("role", "superadmin")
       .maybeSingle();
 
     const isSuper = !!superRow;
@@ -70,10 +69,9 @@ Deno.serve(async (req) => {
 
     // Ziel-User Superadmin? Dann nur Superadmin darf editieren.
     const { data: targetSuperRow } = await admin
-      .from("user_roles")
-      .select("role")
+      .from("platform_admins")
+      .select("user_id")
       .eq("user_id", userId)
-      .eq("role", "superadmin")
       .maybeSingle();
     if (targetSuperRow && !isSuper) {
       return json({ error: "Der Systemowner kann nur vom Systemowner selbst geändert werden" }, 403);
