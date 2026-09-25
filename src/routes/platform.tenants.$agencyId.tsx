@@ -7,9 +7,10 @@ import { PlatformPage, QueryState } from "@/components/platform/PlatformLayout";
 import { ActivityList } from "@/components/platform/ActivityList";
 import { AuditLogList } from "@/components/platform/AuditLogList";
 import { TenantAdministration } from "@/components/platform/TenantAdministration";
-import { MembersTable, DomainsTable, ModulesTable } from "@/components/platform/tables";
+import { DomainCenter, WhiteLabelSummary } from "@/components/platform/DomainCenter";
+import { MembersTable, ModulesTable } from "@/components/platform/tables";
 import {
-  usePlatformTenants, usePlatformMembers, usePlatformDomains, usePlatformModules, usePlatformActivity, usePlatformBranding, usePlatformAuditLogs, useOwnerInvitations, OWNER_STATUS_LABEL,
+  usePlatformTenants, usePlatformMembers, usePlatformModules, usePlatformActivity, usePlatformBranding, usePlatformAuditLogs, useOwnerInvitations, OWNER_STATUS_LABEL,
   TENANT_STATUS_LABEL, domainStatusLabel, fmtDate,
 } from "@/lib/platform-admin";
 
@@ -38,7 +39,6 @@ function TenantDetail() {
   const { agencyId } = Route.useParams();
   const tenants = usePlatformTenants();
   const members = usePlatformMembers(agencyId);
-  const domains = usePlatformDomains(agencyId);
   const modules = usePlatformModules(agencyId);
   const activity = usePlatformActivity(agencyId, 50);
   const branding = usePlatformBranding(agencyId);
@@ -71,9 +71,10 @@ function TenantDetail() {
             <div className="mt-6 border-t pt-5"><TenantAdministration key={t.id + t.name + t.status} tenant={t} /></div>
           </CardContent></Card></TabsContent>
           <TabsContent value="users"><Card><QueryState isLoading={members.isLoading} error={members.error} /><MembersTable rows={members.data ?? []} /></Card></TabsContent>
-          <TabsContent value="domains"><Card><QueryState isLoading={domains.isLoading} error={domains.error} /><DomainsTable rows={domains.data ?? []} /></Card></TabsContent>
+          <TabsContent value="domains"><DomainCenter agencyId={agencyId} /></TabsContent>
           <TabsContent value="modules"><Card><QueryState isLoading={modules.isLoading} error={modules.error} /><ModulesTable rows={modules.data ?? []} /></Card></TabsContent>
           <TabsContent value="branding"><Card><CardContent className="p-5">
+            <div className="mb-3 text-sm font-semibold">White Label</div><WhiteLabelSummary agencyId={agencyId} /><div className="my-5 border-t" />
             <QueryState isLoading={branding.isLoading} error={branding.error} />
             {branding.data ? (
               <div className="space-y-4">
