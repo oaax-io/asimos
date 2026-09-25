@@ -4125,6 +4125,24 @@ export type Database = {
           },
         ]
       }
+      reserved_subdomains: {
+        Row: {
+          created_at: string
+          name: string
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          name: string
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       search_profile_subscriptions: {
         Row: {
           created_at: string
@@ -4635,6 +4653,8 @@ export type Database = {
       }
       tenant_branding_of: { Args: { _agency: string }; Returns: Json }
       tenant_parent_agencies: { Args: { j: Json }; Returns: string[] }
+      tenant_subdomain_available: { Args: { _slug: string }; Returns: boolean }
+      tenant_subdomain_root: { Args: never; Returns: string }
       trash_restore: { Args: { _id: string }; Returns: undefined }
       user_can: { Args: { _action: string; _module: string }; Returns: boolean }
     }
