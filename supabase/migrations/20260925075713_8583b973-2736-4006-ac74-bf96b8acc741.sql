@@ -1,0 +1,1 @@
+UPDATE public.agencies SET name = 'ASIMO' WHERE id = '69eb3646-8b0e-4f96-b3c9-143e5739d224' AND name = 'OAASE';
