@@ -28,7 +28,7 @@ const KEYS: (keyof Form)[] = [
 ];
 const empty = Object.fromEntries(KEYS.map((k) => [k, ""])) as Form;
 
-type Domain = { id: string; domain: string; domain_type: string; verification_status: string; activated_at: string | null };
+type Domain = { id: string; domain: string; domain_type: string; verification_status: string; activated_at: string | null; verification_token: string | null; verification_error: string | null };
 
 function statusOf(d?: Domain | null): { label: string; variant: "default" | "secondary" | "destructive" | "outline" } {
   if (!d) return { label: "Nicht eingerichtet", variant: "outline" };
