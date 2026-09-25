@@ -77,9 +77,41 @@ export const updateTenantName = (agencyId: string, name: string) =>
   rpc<void>("platform_update_tenant", { _agency_id: agencyId, _name: name });
 export const AUDIT_LABEL: Record<string, string> = {
   tenant_suspended: "Unternehmen gesperrt", tenant_reactivated: "Unternehmen reaktiviert",
-  tenant_archived: "Unternehmen archiviert", tenant_updated: "Unternehmen geändert",
+  tenant_archived: "Unternehmen archiviert", tenant_updated: "Unternehmen geändert", tenant_created: "Unternehmen erstellt",
 };
 /** Erlaubte Statuswechsel (archived → suspended nicht vorgesehen). */
 export const STATUS_TRANSITIONS: Record<string, Array<"active" | "suspended" | "archived">> = {
   active: ["suspended", "archived"], suspended: ["active", "archived"], archived: ["active"],
 };
+
+// ---- Phase 4.3: Unternehmen anlegen (nur über platform_create_tenant) ----
+export const MODULE_LABEL: Record<string, string> = {
+  dashboard: "Dashboard", leads: "Leads", clients: "Kunden", properties: "Immobilien", appointments: "Termine",
+  tasks: "Aufgaben", documents: "Dokumente", employees: "Mitarbeitende", company_settings: "Firmeneinstellungen",
+  matching: "Matching", exposes: "Exposés", reservations: "Reservationen", mandates: "Mandate", ndas: "Vertraulichkeitsvereinbarungen",
+  financing: "Finanzierung", checklists: "Checklisten", media: "Medien", docs: "Hilfe", analytics: "Auswertungen", feedback: "Feedback",
+};
+export const ALL_MODULES = Object.keys(MODULE_LABEL);
+export const CORE_MODULES = ["dashboard", "leads", "clients", "properties", "appointments", "tasks", "documents", "employees", "company_settings"];
+export type SubdomainCheck = "available" | "taken" | "reserved" | "invalid";
+export const checkSubdomain = (slug: string) => rpc<SubdomainCheck>("platform_check_subdomain", { _slug: slug });
+export const checkOwnerEmail = (email: string) => rpc<boolean>("platform_check_owner_email", { _email: email });
+export type CreateTenantResult = { agency_id: string; name: string; domain: string; owner_status: string; owner_user_exists: boolean; modules: string[] };
+export const createTenant = (a: { name: string; slug: string; firstName: string; lastName: string; email: string; modules: string[] }) =>
+  rpc<CreateTenantResult>("platform_create_tenant", {
+    _name: a.name, _slug: a.slug, _owner_first_name: a.firstName, _owner_last_name: a.lastName, _owner_email: a.email, _modules: a.modules,
+  });
+export type OwnerInvitation = { first_name: string; last_name: string; email: string; status: string; created_at: string };
+export const useOwnerInvitations = (agencyId: string) => useQuery({
+  queryKey: ["platform", "owner-invitations", agencyId],
+  queryFn: () => rpc<OwnerInvitation[]>("platform_list_owner_invitations", { _agency_id: agencyId }),
+});
+export const OWNER_STATUS_LABEL: Record<string, string> = {
+  active: "Aktiv (Konto vorhanden)", pending_invitation: "Einladung ausstehend – noch kein Konto",
+  pending: "Einladung ausstehend – noch kein Konto", invited: "Eingeladen", accepted: "Angenommen", cancelled: "Abgebrochen",
+};
+export function slugify(s: string) {
+  return s.toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(ag|gmbh|sa|sarl|sàrl|kg|ug)\b/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40).replace(/-+$/, "");
+}
