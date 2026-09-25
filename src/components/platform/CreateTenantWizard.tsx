@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { InviteLinkBox } from "@/components/invitations/InvitationUI";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
