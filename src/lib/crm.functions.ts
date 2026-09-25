@@ -10,7 +10,8 @@ type ServerResult<T> = {
   unavailable: boolean;
 };
 
-// Single-company mode: no agency scoping. Authenticated users access all CRM data.
+// Tenant-safe: all reads/writes run as the signed-in user, so RLS enforces
+// active agency membership. agency_id is set by DB trigger (current agency).
 
 const leadInputSchema = z.object({
   full_name: z.string().min(1),
@@ -47,9 +48,8 @@ function toServerError<T>(fallbackData: T, error: unknown): ServerResult<T> {
 
 export const getLeads = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<ServerResult<Database["public"]["Tables"]["leads"]["Row"][]>> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+  .handler(async ({ context }): Promise<ServerResult<Database["public"]["Tables"]["leads"]["Row"][]>> => {
+    const { data, error } = await context.supabase
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
@@ -62,7 +62,6 @@ export const addLead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => leadInputSchema.parse(data))
   .handler(async ({ data, context }): Promise<ServerResult<Database["public"]["Tables"]["leads"]["Row"] | null>> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const payload: Database["public"]["Tables"]["leads"]["Insert"] = {
       owner_id: context.userId,
       full_name: data.full_name,
@@ -72,7 +71,7 @@ export const addLead = createServerFn({ method: "POST" })
       notes: data.notes,
     };
 
-    const { data: createdLead, error } = await supabaseAdmin
+    const { data: createdLead, error } = await context.supabase
       .from("leads")
       .insert(payload)
       .select("*")
@@ -84,9 +83,8 @@ export const addLead = createServerFn({ method: "POST" })
 
 export const getClients = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<ServerResult<Database["public"]["Tables"]["clients"]["Row"][]>> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+  .handler(async ({ context }): Promise<ServerResult<Database["public"]["Tables"]["clients"]["Row"][]>> => {
+    const { data, error } = await context.supabase
       .from("clients")
       .select("*")
       .order("created_at", { ascending: false });
@@ -99,7 +97,6 @@ export const addClient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => clientInputSchema.parse(data))
   .handler(async ({ data, context }): Promise<ServerResult<Database["public"]["Tables"]["clients"]["Row"] | null>> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const payload: Database["public"]["Tables"]["clients"]["Insert"] = {
       owner_id: context.userId,
       full_name: data.full_name,
@@ -116,7 +113,7 @@ export const addClient = createServerFn({ method: "POST" })
       preferred_listing: data.preferred_listing,
     };
 
-    const { data: createdClient, error } = await supabaseAdmin
+    const { data: createdClient, error } = await context.supabase
       .from("clients")
       .insert(payload)
       .select("*")

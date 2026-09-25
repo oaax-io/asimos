@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.tg_set_default_agency() FROM PUBLIC, anon, authenticated;
