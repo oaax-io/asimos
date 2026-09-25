@@ -31,10 +31,9 @@ Deno.serve(async (req) => {
     if (cpErr || !callerProfile) return json({ error: "Profil nicht gefunden" }, 400);
 
     const { data: superRow } = await admin
-      .from("user_roles")
-      .select("role")
+      .from("platform_admins")
+      .select("user_id")
       .eq("user_id", userData.user.id)
-      .eq("role", "superadmin")
       .maybeSingle();
     const isSuper = !!superRow;
     const isOwnerOrAdmin = callerProfile.role === "owner" || callerProfile.role === "admin";

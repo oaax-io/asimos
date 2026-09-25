@@ -24,7 +24,7 @@ export function useIsMasterDataAdmin() {
       const role = (profile as any)?.role;
       const isAdmin = role === "admin" || role === "owner";
       const hasAdminRole = (roles ?? []).some(
-        (r: any) => r.role === "superadmin" || r.role === "admin" || r.role === "owner",
+        (r: any) => r.role === "admin" || r.role === "owner",
       );
       return isAdmin || hasAdminRole;
     },

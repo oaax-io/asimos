@@ -64,8 +64,9 @@ function TeamPage() {
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      const { data: roles } = await supabase.from("user_roles").select("user_id, role");
-      const superadminIds = new Set((roles ?? []).filter((r) => r.role === "superadmin").map((r) => r.user_id));
+      // Plattform-Systemowner (getrennt von Tenantrollen)
+      const { data: pas } = await supabase.from("platform_admins").select("user_id");
+      const superadminIds = new Set((pas ?? []).map((r) => r.user_id));
       return (data ?? []).map((m) => ({ ...m, isSystemowner: superadminIds.has(m.id) }));
     },
     enabled: !!meQuery.data,
