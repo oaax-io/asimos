@@ -4431,6 +4431,50 @@ export type Database = {
           },
         ]
       }
+      tenant_owner_invitations: {
+        Row: {
+          agency_id: string
+          created_at: string
+          created_by: string | null
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          created_by?: string | null
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_owner_invitations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trash_items: {
         Row: {
           agency_id: string | null
@@ -4676,6 +4720,19 @@ export type Database = {
         }[]
       }
       platform_assert_admin: { Args: never; Returns: undefined }
+      platform_check_owner_email: { Args: { _email: string }; Returns: boolean }
+      platform_check_subdomain: { Args: { _slug: string }; Returns: string }
+      platform_create_tenant: {
+        Args: {
+          _modules: string[]
+          _name: string
+          _owner_email: string
+          _owner_first_name: string
+          _owner_last_name: string
+          _slug: string
+        }
+        Returns: Json
+      }
       platform_list_admins: {
         Args: never
         Returns: {
@@ -4735,6 +4792,16 @@ export type Database = {
           is_enabled: boolean
           is_entitled: boolean
           module: string
+        }[]
+      }
+      platform_list_owner_invitations: {
+        Args: { _agency_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          first_name: string
+          last_name: string
+          status: string
         }[]
       }
       platform_list_tenants: {
