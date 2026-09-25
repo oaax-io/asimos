@@ -1,3 +1,4 @@
+import { tenantStoragePath } from "@/lib/tenant-storage";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo, useRef } from "react";
@@ -395,7 +396,7 @@ function MediaPage() {
           continue;
         }
         const safeName = (item.file_name ?? item.file_url.split("/").pop() ?? "dokument").replace(/[^a-zA-Z0-9._-]/g, "_");
-        const newPath = `properties/${item.property_id}/${Date.now()}-${safeName}`;
+        const newPath = await tenantStoragePath(`properties/${item.property_id}/${Date.now()}-${safeName}`);
         const lowerName = (item.file_name ?? item.file_url).toLowerCase();
         const mime = lowerName.endsWith(".pdf")
           ? "application/pdf"

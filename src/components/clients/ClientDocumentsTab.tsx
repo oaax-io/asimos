@@ -1,3 +1,4 @@
+import { tenantStoragePath } from "@/lib/tenant-storage";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,7 +93,7 @@ export function ClientDocumentsTab({ clientId, userId }: { clientId: string; use
     try {
       for (const f of files) {
         const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const path = `clients/${clientId}/${Date.now()}-${safe}`;
+        const path = await tenantStoragePath(`clients/${clientId}/${Date.now()}-${safe}`);
         const { error: upErr } = await supabase.storage.from("documents").upload(path, f, {
           contentType: f.type || undefined, upsert: false,
         });

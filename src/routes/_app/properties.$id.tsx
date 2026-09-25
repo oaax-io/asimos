@@ -1,3 +1,4 @@
+import { tenantStoragePath } from "@/lib/tenant-storage";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useMemo } from "react";
@@ -1846,7 +1847,7 @@ function DocumentsTab({ propertyId }: { propertyId: string }) {
     mutationFn: async () => {
       if (!file) throw new Error("Bitte Datei auswählen");
       const ext = file.name.split(".").pop() ?? "bin";
-      const path = `property/${propertyId}/${crypto.randomUUID()}.${ext}`;
+      const path = await tenantStoragePath(`property/${propertyId}/${crypto.randomUUID()}.${ext}`);
       const { error: upErr } = await supabase.storage.from("documents").upload(path, file, {
         contentType: file.type || "application/octet-stream",
         upsert: false,
