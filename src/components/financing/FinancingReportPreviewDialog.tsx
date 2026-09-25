@@ -1,3 +1,4 @@
+import { useTenantBranding, reportBrandFrom } from "@/lib/tenant-branding";
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -28,18 +29,8 @@ export function FinancingReportPreviewDialog({ open, onOpenChange, dossierId, do
   const qc = useQueryClient();
   const [sendOpen, setSendOpen] = useState(false);
 
-  const brandQuery = useQuery({
-    queryKey: ["brand-settings"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("brand_settings" as any)
-        .select("*")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      return (data as any) ?? null;
-    },
-  });
+  // Branding zentral aus der White-Label-Runtime
+  const branding = useTenantBranding();
 
   const agentQuery = useQuery({
     queryKey: ["current-agent-name"],
@@ -73,17 +64,7 @@ export function FinancingReportPreviewDialog({ open, onOpenChange, dossierId, do
     const propLabel = dossier.properties?.title
       || (dossier.property_snapshot && (dossier.property_snapshot as any).title)
       || null;
-    const b = brandQuery.data;
-    const brand: ReportBrand | null = b ? {
-      company_name: b.company_name,
-      company_address: b.company_address,
-      company_email: b.company_email,
-      company_website: b.company_website,
-      logo_url: b.logo_url,
-      primary_color: b.primary_color,
-      secondary_color: b.secondary_color,
-      font_family: b.font_family,
-    } : null;
+    const brand: ReportBrand | null = reportBrandFrom(branding);
     return {
       client_name: dossier.clients?.full_name ?? null,
       client_email: dossier.clients?.email ?? null,
@@ -108,7 +89,7 @@ export function FinancingReportPreviewDialog({ open, onOpenChange, dossierId, do
   const liveHtml = useMemo(
     () => buildReportHtml(liveInput, buildRecommendations(liveInput)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dossier, brandQuery.data, agentQuery.data],
+    [dossier, branding.raw, agentQuery.data],
   );
   const reportTitle = t("financing.actions.reportTitle", { name: dossier.clients?.full_name ?? "" }).trim();
 
@@ -231,7 +212,7 @@ export function FinancingReportPreviewDialog({ open, onOpenChange, dossierId, do
                 title={reportTitle}
                 documentType="financing_quick_check"
                 clientName={dossier.clients?.full_name ?? null}
-                companyName={brandQuery.data?.company_name ?? null}
+                companyName={branding.raw?.company_name ?? null}
                 variant="default"
                 size="sm"
               />
