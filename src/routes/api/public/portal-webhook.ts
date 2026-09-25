@@ -1,7 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "crypto";
 
-const AGENCY_ID = "69eb3646-8b0e-4f96-b3c9-143e5739d224";
+/**
+ * Tenant-Bestimmung: Der Mandant ergibt sich ausschliesslich aus dem
+ * serverseitig konfigurierten Portal-Zugang (API-Key + Signatur-Secret),
+ * nie aus dem Payload. Heute existiert genau ein Zugang (ASIMO-Portal).
+ * PORTAL_TARGET_AGENCY_ID kann den Mandanten serverseitig überschreiben.
+ */
+const ASIMO_PORTAL_AGENCY_ID = "69eb3646-8b0e-4f96-b3c9-143e5739d224";
+
+async function resolvePortalTenant(sb: any): Promise<string | null> {
+  const agencyId = process.env["PORTAL_TARGET_AGENCY_ID"] || ASIMO_PORTAL_AGENCY_ID;
+  const { data } = await sb.from("agencies").select("id").eq("id", agencyId).maybeSingle();
+  return (data?.id as string | undefined) ?? null;
+}
 
 type Body = {
   id: string;
@@ -45,13 +57,14 @@ function fmt(label: string, value: unknown): string {
 
 async function createLead(
   sb: any,
-  args: { data: Record<string, any>; internalNotes: string; extra?: Record<string, any> },
+  args: { agencyId: string; data: Record<string, any>; internalNotes: string; extra?: Record<string, any> },
 ): Promise<string> {
   const d = args.data;
   const { data: lead, error } = await sb
     .from("leads")
     .insert({
-      agency_id: AGENCY_ID,
+      ...(args.extra ?? {}),
+      agency_id: args.agencyId,
       full_name: d.name ?? "Unbekannt",
       email: d.email ?? null,
       phone: d.phone ?? null,
@@ -59,7 +72,6 @@ async function createLead(
       status: "new",
       entity_type: "person",
       internal_notes: args.internalNotes,
-      ...(args.extra ?? {}),
     })
     .select("id")
     .single();
@@ -67,17 +79,17 @@ async function createLead(
   return lead.id as string;
 }
 
-async function handleLead(sb: any, body: Body) {
+async function handleLead(sb: any, agencyId: string, body: Body) {
   const d = body.data;
   const notes =
     `Betreff: ${d.subject ?? "-"}\n\n${d.message ?? ""}` +
     (d.property_id ? `\n\nPortal-Objekt-ID: ${d.property_id}` : "") +
     (d.internal_note ? `\n\nPortal-Notiz: ${d.internal_note}` : "");
-  const leadId = await createLead(sb, { data: d, internalNotes: notes });
+  const leadId = await createLead(sb, { agencyId, data: d, internalNotes: notes });
   return { lead_id: leadId };
 }
 
-async function handleAppointment(sb: any, body: Body) {
+async function handleAppointment(sb: any, agencyId: string, body: Body) {
   const d = body.data;
   const slots: string[] = Array.isArray(d.slots) ? d.slots.filter(Boolean) : [];
   const channel = String(d.channel ?? "");
@@ -87,7 +99,7 @@ async function handleAppointment(sb: any, body: Body) {
     `\nWunschtermine: ${slots.join(", ")}` +
     (d.internal_note ? `\n\nPortal-Notiz: ${d.internal_note}` : "");
 
-  const leadId = await createLead(sb, { data: d, internalNotes: notes });
+  const leadId = await createLead(sb, { agencyId, data: d, internalNotes: notes });
 
   const startsAt = slots[0] ? new Date(slots[0]) : new Date();
   const endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
@@ -96,7 +108,7 @@ async function handleAppointment(sb: any, body: Body) {
   const { data: appt, error } = await sb
     .from("appointments")
     .insert({
-      agency_id: AGENCY_ID,
+      agency_id: agencyId,
       lead_id: leadId,
       title: `Terminanfrage (Portal): ${d.topic ?? ""}`.trim(),
       appointment_type: type,
@@ -113,7 +125,7 @@ async function handleAppointment(sb: any, body: Body) {
   return { lead_id: leadId, appointment_id: appt.id as string };
 }
 
-async function handleSelfDisclosure(sb: any, body: Body) {
+async function handleSelfDisclosure(sb: any, agencyId: string, body: Body) {
   const d = body.data;
   const summary =
     "Betreff: Selbstauskunft / Finanzierungsanfrage\n\n" +
@@ -152,6 +164,7 @@ async function handleSelfDisclosure(sb: any, body: Body) {
 
   const price = typeof d.price === "number" ? d.price : d.price ? Number(d.price) : null;
   const leadId = await createLead(sb, {
+    agencyId,
     data: d,
     internalNotes: summary,
     extra: {
@@ -193,6 +206,12 @@ export const Route = createFileRoute("/api/public/portal-webhook")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const sb = supabaseAdmin as any;
 
+        const agencyId = await resolvePortalTenant(sb);
+        if (!agencyId) {
+          console.error("Portal webhook: tenant not resolvable");
+          return new Response("Not configured", { status: 500 });
+        }
+
         const { error: logError } = await sb
           .from("portal_event_log")
           .insert({ portal_event_id: body.id, entity: body.entity, action: body.action });
@@ -206,9 +225,9 @@ export const Route = createFileRoute("/api/public/portal-webhook")({
 
         try {
           let created: Record<string, string> = {};
-          if (body.entity === "lead") created = await handleLead(sb, body);
-          else if (body.entity === "appointment") created = await handleAppointment(sb, body);
-          else created = await handleSelfDisclosure(sb, body);
+          if (body.entity === "lead") created = await handleLead(sb, agencyId, body);
+          else if (body.entity === "appointment") created = await handleAppointment(sb, agencyId, body);
+          else created = await handleSelfDisclosure(sb, agencyId, body);
 
           await sb
             .from("portal_event_log")

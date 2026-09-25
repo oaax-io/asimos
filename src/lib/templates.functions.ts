@@ -12,7 +12,10 @@ import { ASIMO_TEMPLATES } from "@/lib/document-templates";
  * - When no default exists for a given type, marks the ASIMO template as default.
  */
 export const seedAsimoTemplates = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth]).handler(async () => {
+  .middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  // Systemvorlagen sind heute global: nur Inhaber/Admin der eigenen Firma darf synchronisieren.
+  const { data: allowed } = await (context as any).supabase.rpc("is_owner_or_admin");
+  if (!allowed) throw new Error("Keine Berechtigung");
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const results: Array<{ name: string; type: string; action: "inserted" | "updated" | "unchanged" }> = [];
 
@@ -79,9 +82,10 @@ export const seedAsimoTemplates = createServerFn({ method: "POST" })
 export const setDefaultTemplate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ templateId: z.string().uuid() }).parse(data))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.rpc("set_default_template", { _template_id: data.templateId });
+  .handler(async ({ data, context }) => {
+    // Als Benutzer aufrufen, damit die Rollenprüfung in set_default_template greift
+    // (mit Vollzugriff wäre auth.uid() leer und die Prüfung wirkungslos).
+    const { error } = await (context as any).supabase.rpc("set_default_template", { _template_id: data.templateId });
     if (error) throw new Error(error.message);
     return { ok: true };
   });

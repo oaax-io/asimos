@@ -14,14 +14,25 @@ function resolvePriceId(item: any): string {
   return item?.price?.lookup_key || item?.price?.metadata?.lovable_external_id || item?.price?.id;
 }
 
-async function resolveAgencyId(userId: string | undefined): Promise<string | null> {
+/**
+ * Serverseitige, vertrauenswürdige Firmen-Zuordnung eines Stripe-Events.
+ * Metadaten-agencyId wird nur akzeptiert, wenn der zahlende Benutzer dort
+ * aktiver Inhaber/Admin ist. Sonst: seine einzige aktive Mitgliedschaft.
+ */
+async function resolveAgencyId(userId: string | undefined, claimedAgencyId?: string): Promise<string | null> {
   if (!userId) return null;
   const { data } = await (getSupabase() as any)
-    .from("profiles")
-    .select("agency_id")
-    .eq("id", userId)
-    .maybeSingle();
-  return (data?.agency_id as string | null) ?? null;
+    .from("agency_memberships")
+    .select("agency_id, role")
+    .eq("user_id", userId)
+    .eq("is_active", true);
+  const rows = (data ?? []) as Array<{ agency_id: string; role: string }>;
+  if (claimedAgencyId) {
+    const ok = rows.some((r) => r.agency_id === claimedAgencyId && (r.role === "owner" || r.role === "admin"));
+    if (ok) return claimedAgencyId;
+    console.error("Stripe metadata agencyId rejected (no owner/admin membership)");
+  }
+  return rows.length === 1 ? rows[0].agency_id : null;
 }
 
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
@@ -30,7 +41,7 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
     console.error("No userId in subscription metadata");
     return;
   }
-  const agencyId = subscription.metadata?.agencyId ?? (await resolveAgencyId(userId));
+  const agencyId = await resolveAgencyId(userId, subscription.metadata?.agencyId);
   const item = subscription.items?.data?.[0];
   const priceId = resolvePriceId(item);
   const productId = item?.price?.product;
@@ -117,11 +128,12 @@ async function notifyPaymentFailed(agencyId: string | null, ownerUserId: string 
   // Inhaber der Agentur
   if (agencyId) {
     const { data: owners } = await sb
-      .from("profiles")
-      .select("id")
+      .from("agency_memberships")
+      .select("user_id")
       .eq("agency_id", agencyId)
+      .eq("is_active", true)
       .eq("role", "owner");
-    for (const o of owners ?? []) recipients.add(o.id);
+    for (const o of owners ?? []) recipients.add(o.user_id);
   }
   if (ownerUserId) recipients.add(ownerUserId);
 
@@ -174,8 +186,13 @@ async function notifyOwners(
   const sb = getSupabase() as any;
   const recipients = new Set<string>();
   if (agencyId) {
-    const { data: owners } = await sb.from("profiles").select("id").eq("agency_id", agencyId).eq("role", "owner");
-    for (const o of owners ?? []) recipients.add(o.id);
+    const { data: owners } = await sb
+      .from("agency_memberships")
+      .select("user_id")
+      .eq("agency_id", agencyId)
+      .eq("is_active", true)
+      .eq("role", "owner");
+    for (const o of owners ?? []) recipients.add(o.user_id);
   }
   if (ownerUserId) recipients.add(ownerUserId);
   if (includeSuperadmins) {

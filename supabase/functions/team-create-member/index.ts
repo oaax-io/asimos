@@ -23,26 +23,19 @@ Deno.serve(async (req) => {
 
     const admin = createClient(url, service);
 
-    const { data: callerProfile, error: cpErr } = await admin
-      .from("profiles")
-      .select("role")
-      .eq("id", userData.user.id)
-      .single();
-    if (cpErr || !callerProfile) return json({ error: "Profil nicht gefunden" }, 400);
+    const body = await req.json();
 
-    const { data: superRow } = await admin
-      .from("platform_admins")
-      .select("user_id")
-      .eq("user_id", userData.user.id)
-      .maybeSingle();
-    const isSuper = !!superRow;
-    const isOwnerOrAdmin = callerProfile.role === "owner" || callerProfile.role === "admin";
+    // Zielfirma serverseitig bestimmen: aktuelle Firma des Aufrufers (nie aus dem Request).
+    // Plattformrechte gewähren keine Tenantrechte – nur Inhaber/Admin der Firma.
+    const { data: currentAgency } = await userClient.rpc("current_agency_id");
+    const agencyId: string | null = (currentAgency as string | null) ?? null;
+    if (!agencyId) return json({ error: "Keine aktive Firmen-Mitgliedschaft" }, 403);
 
-    if (!isSuper && !isOwnerOrAdmin) {
+    const { data: allowed } = await userClient.rpc("is_agency_owner_or_admin", { _agency_id: agencyId });
+    if (!allowed) {
       return json({ error: "Nur Inhaber/Admin dürfen Mitarbeiter anlegen" }, 403);
     }
 
-    const body = await req.json();
     const email = String(body.email ?? "").trim().toLowerCase();
     const fullName = String(body.full_name ?? "").trim();
     const phone = String(body.phone ?? "").trim();
@@ -88,6 +81,7 @@ Deno.serve(async (req) => {
       .from("profiles")
       .update({
         role,
+        agency_id: agencyId,
         full_name: fullName || email,
         phone: phone || null,
       })
@@ -101,6 +95,12 @@ Deno.serve(async (req) => {
       .from("user_roles")
       .insert({ user_id: newUserId, role });
     if (roleErr) return json({ error: roleErr.message }, 400);
+
+    // Mitgliedschaft in der Firma des Aufrufers (Tenantrolle)
+    const { error: memErr } = await admin
+      .from("agency_memberships")
+      .upsert({ agency_id: agencyId, user_id: newUserId, role, is_active: true }, { onConflict: "agency_id,user_id" });
+    if (memErr) return json({ error: memErr.message }, 400);
 
     return json({ ok: true, user_id: newUserId, password: generatedPassword, mode });
   } catch (e) {

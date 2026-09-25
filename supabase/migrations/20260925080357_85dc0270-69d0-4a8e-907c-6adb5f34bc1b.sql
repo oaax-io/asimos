@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.single_agency_of(uuid) FROM authenticated;
