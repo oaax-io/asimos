@@ -90,6 +90,7 @@ export function BrandkitForm() {
     onSuccess: () => {
       toast.success("Brandkit gespeichert");
       qc.invalidateQueries({ queryKey: ["brand-settings"] });
+      qc.invalidateQueries({ queryKey: ["tenant-config"] });
       qc.invalidateQueries({ queryKey: ["doc-ctx"] });
     },
     onError: (e: Error) => toast.error(e.message),
