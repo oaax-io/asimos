@@ -3000,16 +3000,19 @@ export type Database = {
         Row: {
           created_at: string
           is_system_owner: boolean
+          platform_role: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           is_system_owner?: boolean
+          platform_role?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           is_system_owner?: boolean
+          platform_role?: string | null
           user_id?: string
         }
         Relationships: []
@@ -4173,8 +4176,11 @@ export type Database = {
       is_commission_admin: { Args: never; Returns: boolean }
       is_manager_or_above: { Args: never; Returns: boolean }
       is_owner_or_admin: { Args: never; Returns: boolean }
+      is_platform_admin: { Args: never; Returns: boolean }
       is_property_assignee: { Args: { _property_id: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
+      is_system_owner: { Args: never; Returns: boolean }
+      platform_role: { Args: never; Returns: string }
       property_set_public: {
         Args: { _enabled: boolean; _id: string }
         Returns: string
