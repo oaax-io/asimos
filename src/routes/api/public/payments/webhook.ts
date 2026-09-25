@@ -128,11 +128,12 @@ async function notifyPaymentFailed(agencyId: string | null, ownerUserId: string 
   // Inhaber der Agentur
   if (agencyId) {
     const { data: owners } = await sb
-      .from("profiles")
-      .select("id")
+      .from("agency_memberships")
+      .select("user_id")
       .eq("agency_id", agencyId)
+      .eq("is_active", true)
       .eq("role", "owner");
-    for (const o of owners ?? []) recipients.add(o.id);
+    for (const o of owners ?? []) recipients.add(o.user_id);
   }
   if (ownerUserId) recipients.add(ownerUserId);
 
@@ -185,8 +186,13 @@ async function notifyOwners(
   const sb = getSupabase() as any;
   const recipients = new Set<string>();
   if (agencyId) {
-    const { data: owners } = await sb.from("profiles").select("id").eq("agency_id", agencyId).eq("role", "owner");
-    for (const o of owners ?? []) recipients.add(o.id);
+    const { data: owners } = await sb
+      .from("agency_memberships")
+      .select("user_id")
+      .eq("agency_id", agencyId)
+      .eq("is_active", true)
+      .eq("role", "owner");
+    for (const o of owners ?? []) recipients.add(o.user_id);
   }
   if (ownerUserId) recipients.add(ownerUserId);
   if (includeSuperadmins) {
