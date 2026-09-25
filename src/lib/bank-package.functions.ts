@@ -608,7 +608,10 @@ export const buildBankPackage = createServerFn({ method: "POST" })
     // 11) Upload
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const zipFileName = `Bank-Paket_${clientSlug}_${timestamp.slice(0, 19)}.zip`;
-    const storagePath = `${data.dossierId}/${zipFileName}`;
+    const dossierAgency = (dossier as { agency_id?: string | null }).agency_id ?? null;
+    const storagePath = dossierAgency
+      ? `agency/${dossierAgency}/${data.dossierId}/${zipFileName}`
+      : `${data.dossierId}/${zipFileName}`;
 
     const { error: upErr } = await supabaseAdmin.storage
       .from(BANK_PACKAGES_BUCKET)
