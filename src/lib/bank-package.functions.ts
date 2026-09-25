@@ -94,6 +94,22 @@ async function fetchAttachment(
   return null;
 }
 
+// ---------- Zugriffsprüfung (RLS als angemeldeter Benutzer) ----------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type UserClient = any;
+async function assertDossierAccess(sb: UserClient, dossierId: string) {
+  const { data } = await sb.from("financing_dossiers").select("id").eq("id", dossierId).maybeSingle();
+  if (!data) throw new Error("Kein Zugriff auf dieses Finanzierungsdossier");
+}
+async function assertPackageAccess(sb: UserClient, id: string) {
+  const { data } = await sb.from("generated_documents").select("id").eq("id", id).eq("document_type", "bank_package").maybeSingle();
+  if (!data) throw new Error("Kein Zugriff auf dieses Bank-Paket");
+}
+async function assertPackagePathAccess(sb: UserClient, path: string) {
+  const { data } = await sb.from("generated_documents").select("id").eq("file_url", path).eq("document_type", "bank_package").limit(1);
+  if (!data || data.length === 0) throw new Error("Kein Zugriff auf dieses Bank-Paket");
+}
+
 // ---------- buildBankPackage ----------
 
 export const buildBankPackage = createServerFn({ method: "POST" })
@@ -107,7 +123,8 @@ export const buildBankPackage = createServerFn({ method: "POST" })
       locale: (input.locale ?? "de") as PackageLocale,
     };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertDossierAccess(context.supabase, data.dossierId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const serviceUrl = process.env.PDF_SERVICE_URL;
     const serviceToken = process.env.PDF_SERVICE_TOKEN;
@@ -668,7 +685,8 @@ export const listBankPackages = createServerFn({ method: "GET" })
     if (!input?.dossierId) throw new Error("dossierId is required");
     return { dossierId: input.dossierId };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertDossierAccess(context.supabase, data.dossierId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin
       .from("generated_documents")
@@ -703,7 +721,8 @@ export const getBankPackageSignedUrl = createServerFn({ method: "POST" })
     if (!input?.path) throw new Error("path is required");
     return { path: input.path };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertPackagePathAccess(context.supabase, data.path);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: signed, error } = await supabaseAdmin.storage
       .from(BANK_PACKAGES_BUCKET)
@@ -722,7 +741,8 @@ export const fetchBankPackageBytes = createServerFn({ method: "POST" })
     if (!input?.path) throw new Error("path is required");
     return { path: input.path };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertPackagePathAccess(context.supabase, data.path);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: file, error } = await supabaseAdmin.storage
       .from(BANK_PACKAGES_BUCKET)
@@ -756,7 +776,8 @@ export const createBankPackageShare = createServerFn({ method: "POST" })
     if (!input?.generatedDocumentId) throw new Error("generatedDocumentId is required");
     return { generatedDocumentId: input.generatedDocumentId };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertPackageAccess(context.supabase, data.generatedDocumentId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Lade Paket
@@ -819,7 +840,8 @@ export const deleteBankPackage = createServerFn({ method: "POST" })
     if (!input?.generatedDocumentId) throw new Error("generatedDocumentId is required");
     return { generatedDocumentId: input.generatedDocumentId };
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertPackageAccess(context.supabase, data.generatedDocumentId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: pkg, error: pkgErr } = await supabaseAdmin
       .from("generated_documents")
