@@ -68,18 +68,21 @@ export type Database = {
           id: string
           name: string
           slug: string | null
+          status: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
           slug?: string | null
+          status?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
           slug?: string | null
+          status?: string | null
         }
         Relationships: []
       }
@@ -4627,7 +4630,84 @@ export type Database = {
         Args: { _agency_id: string; _user_id: string }
         Returns: boolean
       }
+      platform_activity: {
+        Args: { _agency_id?: string; _limit?: number }
+        Returns: {
+          agency_id: string
+          agency_name: string
+          at: string
+          kind: string
+          label: string
+        }[]
+      }
+      platform_assert_admin: { Args: never; Returns: undefined }
+      platform_list_admins: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          platform_role: string
+          user_id: string
+        }[]
+      }
+      platform_list_domains: {
+        Args: { _agency_id?: string }
+        Returns: {
+          activated_at: string
+          agency_id: string
+          agency_name: string
+          created_at: string
+          domain: string
+          domain_type: string
+          id: string
+          verification_status: string
+          verified_at: string
+        }[]
+      }
+      platform_list_members: {
+        Args: { _agency_id?: string }
+        Returns: {
+          agency_id: string
+          agency_name: string
+          created_at: string
+          email: string
+          full_name: string
+          is_active: boolean
+          platform_role: string
+          tenant_role: string
+          user_id: string
+        }[]
+      }
+      platform_list_modules: {
+        Args: { _agency_id?: string }
+        Returns: {
+          agency_id: string
+          agency_name: string
+          is_enabled: boolean
+          is_entitled: boolean
+          module: string
+        }[]
+      }
+      platform_list_tenants: {
+        Args: never
+        Returns: {
+          created_at: string
+          custom_domain: string
+          custom_domain_active: boolean
+          custom_domain_status: string
+          has_branding: boolean
+          id: string
+          members: number
+          modules_active: number
+          name: string
+          status: string
+          subdomain: string
+        }[]
+      }
+      platform_overview: { Args: never; Returns: Json }
       platform_role: { Args: never; Returns: string }
+      platform_tenant_branding: { Args: { _agency_id: string }; Returns: Json }
       property_set_public: {
         Args: { _enabled: boolean; _id: string }
         Returns: string
