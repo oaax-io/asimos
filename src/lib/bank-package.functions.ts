@@ -5,6 +5,7 @@
 // - fetchBankPackageBytes: proxy für adblocker-blockierte Domains
 
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { zipSync, strToU8, type Zippable } from "fflate";
 import { buildBankPackageHtml, type BankPackageInput, type PackageLocale } from "./bank-package-report";
 
@@ -96,6 +97,7 @@ async function fetchAttachment(
 // ---------- buildBankPackage ----------
 
 export const buildBankPackage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { dossierId: string; locale?: PackageLocale }) => {
     if (!input?.dossierId || typeof input.dossierId !== "string") {
       throw new Error("dossierId is required");
@@ -661,6 +663,7 @@ export const buildBankPackage = createServerFn({ method: "POST" })
 // ---------- listBankPackages ----------
 
 export const listBankPackages = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { dossierId: string }) => {
     if (!input?.dossierId) throw new Error("dossierId is required");
     return { dossierId: input.dossierId };
@@ -695,6 +698,7 @@ export const listBankPackages = createServerFn({ method: "GET" })
 // ---------- getBankPackageSignedUrl ----------
 
 export const getBankPackageSignedUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { path: string }) => {
     if (!input?.path) throw new Error("path is required");
     return { path: input.path };
@@ -713,6 +717,7 @@ export const getBankPackageSignedUrl = createServerFn({ method: "POST" })
 // ---------- fetchBankPackageBytes (proxy für adblocker) ----------
 
 export const fetchBankPackageBytes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { path: string }) => {
     if (!input?.path) throw new Error("path is required");
     return { path: input.path };
@@ -746,6 +751,7 @@ function randomToken(len = 40): string {
 }
 
 export const createBankPackageShare = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { generatedDocumentId: string }) => {
     if (!input?.generatedDocumentId) throw new Error("generatedDocumentId is required");
     return { generatedDocumentId: input.generatedDocumentId };
@@ -808,6 +814,7 @@ export const createBankPackageShare = createServerFn({ method: "POST" })
 // ---------- deleteBankPackage ----------
 
 export const deleteBankPackage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: { generatedDocumentId: string }) => {
     if (!input?.generatedDocumentId) throw new Error("generatedDocumentId is required");
     return { generatedDocumentId: input.generatedDocumentId };
