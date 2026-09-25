@@ -142,8 +142,8 @@ export function CreateTenantWizard() {
                     <div className="grid max-h-56 grid-cols-2 gap-2 overflow-y-auto">
                       {ALL_MODULES.map((m) => (
                         <label key={m} className="flex items-center gap-2 text-sm">
-                          <Checkbox checked={modules.includes(m)} onCheckedChange={(c) => setModules((x) => c ? [...x, m] : x.filter((y) => y !== m))} />
-                          {MODULE_LABEL[m]}
+                          <Checkbox checked={m === "dashboard" || modules.includes(m)} disabled={m === "dashboard"} onCheckedChange={(c) => setModules((x) => c ? [...x, m] : x.filter((y) => y !== m))} />
+                          {MODULE_LABEL[m]}{m === "dashboard" && <span className="text-xs text-muted-foreground">(Kernmodul)</span>}
                         </label>
                       ))}
                     </div>

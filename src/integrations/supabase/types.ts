@@ -4730,6 +4730,7 @@ export type Database = {
       platform_assert_admin: { Args: never; Returns: undefined }
       platform_check_owner_email: { Args: { _email: string }; Returns: boolean }
       platform_check_subdomain: { Args: { _slug: string }; Returns: string }
+      platform_core_module_keys: { Args: never; Returns: string[] }
       platform_create_tenant: {
         Args: {
           _modules: string[]
@@ -4860,11 +4861,16 @@ export type Database = {
           subdomain: string
         }[]
       }
+      platform_module_keys: { Args: never; Returns: string[] }
       platform_overview: { Args: never; Returns: Json }
       platform_remove_domain: { Args: { _id: string }; Returns: undefined }
       platform_role: { Args: never; Returns: string }
       platform_set_domain_active: {
         Args: { _active: boolean; _id: string }
+        Returns: undefined
+      }
+      platform_set_module_entitlement: {
+        Args: { _agency_id: string; _entitled: boolean; _module: string }
         Returns: undefined
       }
       platform_set_primary_domain: { Args: { _id: string }; Returns: undefined }

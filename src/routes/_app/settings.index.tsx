@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
-  User, Bell, Building2, Palette, Banknote, Tags, Video, FileSignature, ChevronRight, Trash2,
-} from "lucide-react";
+  User, Bell, Building2, Palette, Banknote, Tags, Video, FileSignature, ChevronRight, Trash2, LayoutGrid } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -13,6 +12,7 @@ const TILES = [
   { to: "/settings/notifications", icon: Bell, labelKey: "settings.tabs.notifications", desc: "Benachrichtigungen und Kanäle" },
   { to: "/settings/company", icon: Building2, labelKey: "settings.tabs.company", desc: "Firmendaten und Adresse" },
   { to: "/settings/white-label", icon: Palette, labelKey: "", label: "White Label", desc: "Marke, Anmeldeseite und Domains" },
+  { to: "/settings/modules", icon: LayoutGrid, labelKey: "", label: "Module", desc: "Verfügbare Bereiche ein- und ausschalten" },
   { to: "/settings/banks", icon: Banknote, labelKey: "settings.tabs.banks", desc: "Bankkonten und Zahlungsangaben" },
   { to: "/settings/categories", icon: Tags, labelKey: "settings.tabs.categories", desc: "Kategorien im Dokumentencenter" },
   { to: "/settings/video", icon: Video, labelKey: "", label: "Video", desc: "LiveKit für Video-Meetings" },

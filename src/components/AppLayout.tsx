@@ -162,6 +162,7 @@ function ModuleGate({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { isEnabled, loaded } = useModuleAccess();
   const mod = moduleForPath(pathname);
+  if (mod && !loaded) return null; // keine Daten laden, bevor Freischaltung bekannt ist
   if (mod && loaded && !isEnabled(mod)) {
     return (
       <div className="mx-auto mt-16 max-w-md text-center">

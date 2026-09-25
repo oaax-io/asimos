@@ -5,6 +5,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { MODULE_LABEL, MODULE_KEYS, DEFAULT_MODULES } from "@/lib/modules";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
@@ -80,6 +81,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   tenant_archived: "Unternehmen archiviert", tenant_updated: "Unternehmen geändert", tenant_created: "Unternehmen erstellt",
   domain_added: "Domain hinzugefügt", domain_verified: "Domain bestätigt", domain_activated: "Domain aktiviert",
   domain_deactivated: "Domain deaktiviert", domain_primary_changed: "Bevorzugte Domain geändert", domain_removed: "Domain entfernt",
+  module_entitled: "Modul freigeschaltet", module_revoked: "Modul gesperrt",
 };
 /** Erlaubte Statuswechsel (archived → suspended nicht vorgesehen). */
 export const STATUS_TRANSITIONS: Record<string, Array<"active" | "suspended" | "archived">> = {
@@ -87,14 +89,9 @@ export const STATUS_TRANSITIONS: Record<string, Array<"active" | "suspended" | "
 };
 
 // ---- Phase 4.3: Unternehmen anlegen (nur über platform_create_tenant) ----
-export const MODULE_LABEL: Record<string, string> = {
-  dashboard: "Dashboard", leads: "Leads", clients: "Kunden", properties: "Immobilien", appointments: "Termine",
-  tasks: "Aufgaben", documents: "Dokumente", employees: "Mitarbeitende", company_settings: "Firmeneinstellungen",
-  matching: "Matching", exposes: "Exposés", reservations: "Reservationen", mandates: "Mandate", ndas: "Vertraulichkeitsvereinbarungen",
-  financing: "Finanzierung", checklists: "Checklisten", media: "Medien", docs: "Hilfe", analytics: "Auswertungen", feedback: "Feedback",
-};
-export const ALL_MODULES = Object.keys(MODULE_LABEL);
-export const CORE_MODULES = ["dashboard", "leads", "clients", "properties", "appointments", "tasks", "documents", "employees", "company_settings"];
+export { MODULE_LABEL };
+export const ALL_MODULES = MODULE_KEYS;
+export const CORE_MODULES = DEFAULT_MODULES; // Vorauswahl Assistent (Legacy-Name)
 export type SubdomainCheck = "available" | "taken" | "reserved" | "invalid";
 export const checkSubdomain = (slug: string) => rpc<SubdomainCheck>("platform_check_subdomain", { _slug: slug });
 export const checkOwnerEmail = (email: string) => rpc<boolean>("platform_check_owner_email", { _email: email });
@@ -156,3 +153,7 @@ export const domainErrorText = (e: unknown) => {
   const m = (e as { message?: string })?.message ?? "";
   return DOMAIN_ERROR_LABEL[m] ?? "Aktion fehlgeschlagen.";
 };
+
+// ---- Phase 4.5: Modul-Freischaltung (nur über platform_set_module_entitlement) ----
+export const setModuleEntitlement = (agencyId: string, module: string, entitled: boolean) =>
+  rpc<void>("platform_set_module_entitlement", { _agency_id: agencyId, _module: module, _entitled: entitled });

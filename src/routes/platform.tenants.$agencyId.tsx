@@ -8,9 +8,10 @@ import { ActivityList } from "@/components/platform/ActivityList";
 import { AuditLogList } from "@/components/platform/AuditLogList";
 import { TenantAdministration } from "@/components/platform/TenantAdministration";
 import { DomainCenter, WhiteLabelSummary } from "@/components/platform/DomainCenter";
-import { MembersTable, ModulesTable } from "@/components/platform/tables";
+import { TenantModules } from "@/components/platform/ModuleCenter";
+import { MembersTable } from "@/components/platform/tables";
 import {
-  usePlatformTenants, usePlatformMembers, usePlatformModules, usePlatformActivity, usePlatformBranding, usePlatformAuditLogs, useOwnerInvitations, OWNER_STATUS_LABEL,
+  usePlatformTenants, usePlatformMembers, usePlatformActivity, usePlatformBranding, usePlatformAuditLogs, useOwnerInvitations, OWNER_STATUS_LABEL,
   TENANT_STATUS_LABEL, domainStatusLabel, fmtDate,
 } from "@/lib/platform-admin";
 
@@ -39,7 +40,6 @@ function TenantDetail() {
   const { agencyId } = Route.useParams();
   const tenants = usePlatformTenants();
   const members = usePlatformMembers(agencyId);
-  const modules = usePlatformModules(agencyId);
   const activity = usePlatformActivity(agencyId, 50);
   const branding = usePlatformBranding(agencyId);
   const audit = usePlatformAuditLogs(agencyId, 50);
@@ -72,7 +72,7 @@ function TenantDetail() {
           </CardContent></Card></TabsContent>
           <TabsContent value="users"><Card><QueryState isLoading={members.isLoading} error={members.error} /><MembersTable rows={members.data ?? []} /></Card></TabsContent>
           <TabsContent value="domains"><DomainCenter agencyId={agencyId} /></TabsContent>
-          <TabsContent value="modules"><Card><QueryState isLoading={modules.isLoading} error={modules.error} /><ModulesTable rows={modules.data ?? []} /></Card></TabsContent>
+          <TabsContent value="modules"><TenantModules agencyId={agencyId} /></TabsContent>
           <TabsContent value="branding"><Card><CardContent className="p-5">
             <div className="mb-3 text-sm font-semibold">White Label</div><WhiteLabelSummary agencyId={agencyId} /><div className="my-5 border-t" />
             <QueryState isLoading={branding.isLoading} error={branding.error} />

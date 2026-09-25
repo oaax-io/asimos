@@ -61,6 +61,7 @@ import { Route as AppSettingsVideoRouteImport } from './routes/_app/settings.vid
 import { Route as AppSettingsTrashRouteImport } from './routes/_app/settings.trash'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings.profile'
 import { Route as AppSettingsNotificationsRouteImport } from './routes/_app/settings.notifications'
+import { Route as AppSettingsModulesRouteImport } from './routes/_app/settings.modules'
 import { Route as AppSettingsEsignRouteImport } from './routes/_app/settings.esign'
 import { Route as AppSettingsCompanyRouteImport } from './routes/_app/settings.company'
 import { Route as AppSettingsCategoriesRouteImport } from './routes/_app/settings.categories'
@@ -336,6 +337,11 @@ const AppSettingsNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AppSettingsRoute,
   } as any)
+const AppSettingsModulesRoute = AppSettingsModulesRouteImport.update({
+  id: '/modules',
+  path: '/modules',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsEsignRoute = AppSettingsEsignRouteImport.update({
   id: '/esign',
   path: '/esign',
@@ -458,6 +464,7 @@ export interface FileRoutesByFullPath {
   '/settings/categories': typeof AppSettingsCategoriesRoute
   '/settings/company': typeof AppSettingsCompanyRoute
   '/settings/esign': typeof AppSettingsEsignRoute
+  '/settings/modules': typeof AppSettingsModulesRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/trash': typeof AppSettingsTrashRoute
@@ -521,6 +528,7 @@ export interface FileRoutesByTo {
   '/settings/categories': typeof AppSettingsCategoriesRoute
   '/settings/company': typeof AppSettingsCompanyRoute
   '/settings/esign': typeof AppSettingsEsignRoute
+  '/settings/modules': typeof AppSettingsModulesRoute
   '/settings/notifications': typeof AppSettingsNotificationsRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/trash': typeof AppSettingsTrashRoute
@@ -590,6 +598,7 @@ export interface FileRoutesById {
   '/_app/settings/categories': typeof AppSettingsCategoriesRoute
   '/_app/settings/company': typeof AppSettingsCompanyRoute
   '/_app/settings/esign': typeof AppSettingsEsignRoute
+  '/_app/settings/modules': typeof AppSettingsModulesRoute
   '/_app/settings/notifications': typeof AppSettingsNotificationsRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/trash': typeof AppSettingsTrashRoute
@@ -659,6 +668,7 @@ export interface FileRouteTypes {
     | '/settings/categories'
     | '/settings/company'
     | '/settings/esign'
+    | '/settings/modules'
     | '/settings/notifications'
     | '/settings/profile'
     | '/settings/trash'
@@ -722,6 +732,7 @@ export interface FileRouteTypes {
     | '/settings/categories'
     | '/settings/company'
     | '/settings/esign'
+    | '/settings/modules'
     | '/settings/notifications'
     | '/settings/profile'
     | '/settings/trash'
@@ -790,6 +801,7 @@ export interface FileRouteTypes {
     | '/_app/settings/categories'
     | '/_app/settings/company'
     | '/_app/settings/esign'
+    | '/_app/settings/modules'
     | '/_app/settings/notifications'
     | '/_app/settings/profile'
     | '/_app/settings/trash'
@@ -1191,6 +1203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsNotificationsRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/modules': {
+      id: '/_app/settings/modules'
+      path: '/modules'
+      fullPath: '/settings/modules'
+      preLoaderRoute: typeof AppSettingsModulesRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/esign': {
       id: '/_app/settings/esign'
       path: '/esign'
@@ -1326,6 +1345,7 @@ interface AppSettingsRouteChildren {
   AppSettingsCategoriesRoute: typeof AppSettingsCategoriesRoute
   AppSettingsCompanyRoute: typeof AppSettingsCompanyRoute
   AppSettingsEsignRoute: typeof AppSettingsEsignRoute
+  AppSettingsModulesRoute: typeof AppSettingsModulesRoute
   AppSettingsNotificationsRoute: typeof AppSettingsNotificationsRoute
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppSettingsTrashRoute: typeof AppSettingsTrashRoute
@@ -1340,6 +1360,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsCategoriesRoute: AppSettingsCategoriesRoute,
   AppSettingsCompanyRoute: AppSettingsCompanyRoute,
   AppSettingsEsignRoute: AppSettingsEsignRoute,
+  AppSettingsModulesRoute: AppSettingsModulesRoute,
   AppSettingsNotificationsRoute: AppSettingsNotificationsRoute,
   AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppSettingsTrashRoute: AppSettingsTrashRoute,
