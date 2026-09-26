@@ -1,4 +1,4 @@
-import { createFileRoute, useLocation, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,7 +16,11 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useConfirm } from "@/components/confirm/ConfirmProvider";
 
+// Phase 4.8: Legacy-Admin stillgelegt. Einziges Plattform-Admin-Center ist /platform.
 export const Route = createFileRoute("/oaax")({
+  beforeLoad: () => {
+    throw redirect({ to: "/platform" });
+  },
   component: SuperadminPage,
 });
 

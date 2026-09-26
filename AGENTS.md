@@ -21,3 +21,6 @@
 - Eine zentrale Tabelle invitations (tenant_owner/tenant_member/platform_user), nur token_hash (sha256) gespeichert, Zugriff ausschliesslich über invitation_*/platform_invite_user/platform_list_invitations RPCs; tenant_owner_invitations ist stillgelegt; why: ein Einladungssystem, kein Klartext-Token, keine Browser-Tabellenzugriffe.
 - Neue Mitarbeitende nur per Einladung (team-create-member liefert 410, keine Passwörter); Annahme atomar in invitation_accept mit E-Mail-Bindung, ändert nie active_agency_id/Module/Branding; why: kein Parallel-Onboarding, keine temporären Passwörter.
 - E-Mail-Versand ist nicht eingerichtet (email_delivery_status='not_configured'); der Link wird nur bei Erstellung/Neu senden einmalig angezeigt; why: kein vorgetäuschter Versand.
+## Sicherheits-Audit (4.8)
+- Plattformrolle hat keinen direkten Schreibzugriff auf agencies/agency_memberships/profiles/user_roles (RESTRICTIVE sec48_* Policies); Plattform-Mutationen nur über platform_* RPCs; why: alte is_superadmin()-Policies waren ein Backdoor in fremde Firmen.
+- /oaax ist stillgelegt (Redirect auf /platform); why: einziges Plattform-Admin-Center ist /platform.

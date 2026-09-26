@@ -4737,6 +4737,10 @@ export type Database = {
       }
       can_access_client: { Args: { _client_id: string }; Returns: boolean }
       can_access_property: { Args: { _property_id: string }; Returns: boolean }
+      can_see_profile: {
+        Args: { _profile_agency: string; _profile_id: string }
+        Returns: boolean
+      }
       create_notification: {
         Args: {
           _link: string

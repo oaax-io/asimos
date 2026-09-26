@@ -89,7 +89,7 @@ function AuthPage() {
     if (pendingInvite) { navigate({ to: "/invite/$token", params: { token: pendingInvite } }); return; }
     if (branding && (access.isLoading || access.data?.allowed === false)) return;
     if (!authLoading && user && superadminStatus !== "unknown") {
-      navigate({ to: isSuperadmin && superadminStatus === "granted" ? "/oaax" : "/dashboard" });
+      navigate({ to: "/dashboard" });
     }
   }, [authLoading, user, isSuperadmin, superadminStatus, navigate, branding, access.isLoading, access.data]);
 
