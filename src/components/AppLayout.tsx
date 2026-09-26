@@ -275,7 +275,8 @@ export default function AppLayout({ children }: { children?: ReactNode }) {
                   <DropdownMenuSeparator />
                   <PresenceSubMenu />
                   <WorkspaceMenuItems />
-                  {isSuperadmin && (
+                  {/* Phase 4.8: altes OAAX-Center stillgelegt – Plattform-Admin nur über /platform */}
+                  {false && isSuperadmin && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">

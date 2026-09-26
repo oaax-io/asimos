@@ -6,11 +6,9 @@ export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     const { data } = await supabase.auth.getSession();
     if (data.session) {
-      const { data: isSuper, error } = await supabase.rpc("is_superadmin");
-      if (error && !isBackendUnavailableError(error)) {
-        throw error;
-      }
-      throw redirect({ to: isSuper ? "/oaax" : "/dashboard" });
+      // Phase 4.8: kein Legacy-Superadmin-Ziel mehr; Plattform-Admin über das Kontomenü (/platform).
+      void isBackendUnavailableError;
+      throw redirect({ to: "/dashboard" });
     }
     throw redirect({ to: "/auth", search: { mode: "signin" } });
   },
