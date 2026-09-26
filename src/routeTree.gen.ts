@@ -23,6 +23,7 @@ import { Route as PlatformSettingsRouteImport } from './routes/platform.settings
 import { Route as PlatformSecurityRouteImport } from './routes/platform.security'
 import { Route as PlatformModulesRouteImport } from './routes/platform.modules'
 import { Route as PlatformDomainsRouteImport } from './routes/platform.domains'
+import { Route as PlatformCommercialRouteImport } from './routes/platform.commercial'
 import { Route as PlatformActivityRouteImport } from './routes/platform.activity'
 import { Route as PTokenRouteImport } from './routes/p.$token'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -146,6 +147,11 @@ const PlatformModulesRoute = PlatformModulesRouteImport.update({
 const PlatformDomainsRoute = PlatformDomainsRouteImport.update({
   id: '/domains',
   path: '/domains',
+  getParentRoute: () => PlatformRoute,
+} as any)
+const PlatformCommercialRoute = PlatformCommercialRouteImport.update({
+  id: '/commercial',
+  path: '/commercial',
   getParentRoute: () => PlatformRoute,
 } as any)
 const PlatformActivityRoute = PlatformActivityRouteImport.update({
@@ -460,6 +466,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/p/$token': typeof PTokenRoute
   '/platform/activity': typeof PlatformActivityRoute
+  '/platform/commercial': typeof PlatformCommercialRoute
   '/platform/domains': typeof PlatformDomainsRoute
   '/platform/modules': typeof PlatformModulesRoute
   '/platform/security': typeof PlatformSecurityRoute
@@ -526,6 +533,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/p/$token': typeof PTokenRoute
   '/platform/activity': typeof PlatformActivityRoute
+  '/platform/commercial': typeof PlatformCommercialRoute
   '/platform/domains': typeof PlatformDomainsRoute
   '/platform/modules': typeof PlatformModulesRoute
   '/platform/security': typeof PlatformSecurityRoute
@@ -598,6 +606,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/p/$token': typeof PTokenRoute
   '/platform/activity': typeof PlatformActivityRoute
+  '/platform/commercial': typeof PlatformCommercialRoute
   '/platform/domains': typeof PlatformDomainsRoute
   '/platform/modules': typeof PlatformModulesRoute
   '/platform/security': typeof PlatformSecurityRoute
@@ -670,6 +679,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/p/$token'
     | '/platform/activity'
+    | '/platform/commercial'
     | '/platform/domains'
     | '/platform/modules'
     | '/platform/security'
@@ -736,6 +746,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/p/$token'
     | '/platform/activity'
+    | '/platform/commercial'
     | '/platform/domains'
     | '/platform/modules'
     | '/platform/security'
@@ -807,6 +818,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/p/$token'
     | '/platform/activity'
+    | '/platform/commercial'
     | '/platform/domains'
     | '/platform/modules'
     | '/platform/security'
@@ -961,6 +973,13 @@ declare module '@tanstack/react-router' {
       path: '/domains'
       fullPath: '/platform/domains'
       preLoaderRoute: typeof PlatformDomainsRouteImport
+      parentRoute: typeof PlatformRoute
+    }
+    '/platform/commercial': {
+      id: '/platform/commercial'
+      path: '/commercial'
+      fullPath: '/platform/commercial'
+      preLoaderRoute: typeof PlatformCommercialRouteImport
       parentRoute: typeof PlatformRoute
     }
     '/platform/activity': {
@@ -1501,6 +1520,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface PlatformRouteChildren {
   PlatformActivityRoute: typeof PlatformActivityRoute
+  PlatformCommercialRoute: typeof PlatformCommercialRoute
   PlatformDomainsRoute: typeof PlatformDomainsRoute
   PlatformModulesRoute: typeof PlatformModulesRoute
   PlatformSecurityRoute: typeof PlatformSecurityRoute
@@ -1513,6 +1533,7 @@ interface PlatformRouteChildren {
 
 const PlatformRouteChildren: PlatformRouteChildren = {
   PlatformActivityRoute: PlatformActivityRoute,
+  PlatformCommercialRoute: PlatformCommercialRoute,
   PlatformDomainsRoute: PlatformDomainsRoute,
   PlatformModulesRoute: PlatformModulesRoute,
   PlatformSecurityRoute: PlatformSecurityRoute,
