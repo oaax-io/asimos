@@ -62,6 +62,103 @@ export type Database = {
           },
         ]
       }
+      addon_entitlements: {
+        Row: {
+          addon_id: string
+          created_at: string
+          entitlement_key: string
+        }
+        Insert: {
+          addon_id: string
+          created_at?: string
+          entitlement_key: string
+        }
+        Update: {
+          addon_id?: string
+          created_at?: string
+          entitlement_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addon_entitlements_addon_id_fkey"
+            columns: ["addon_id"]
+            isOneToOne: false
+            referencedRelation: "addons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      addon_limit_increments: {
+        Row: {
+          addon_id: string
+          created_at: string
+          increment_per_unit: number | null
+          is_unlimited: boolean
+          limit_key: string
+        }
+        Insert: {
+          addon_id: string
+          created_at?: string
+          increment_per_unit?: number | null
+          is_unlimited?: boolean
+          limit_key: string
+        }
+        Update: {
+          addon_id?: string
+          created_at?: string
+          increment_per_unit?: number | null
+          is_unlimited?: boolean
+          limit_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addon_limit_increments_addon_id_fkey"
+            columns: ["addon_id"]
+            isOneToOne: false
+            referencedRelation: "addons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      addons: {
+        Row: {
+          billing_type: string
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          name: string
+          sort_order: number
+          status: string
+          stripe_price_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          name: string
+          sort_order?: number
+          status?: string
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          name?: string
+          sort_order?: number
+          status?: string
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agencies: {
         Row: {
           created_at: string
@@ -85,6 +182,57 @@ export type Database = {
           status?: string | null
         }
         Relationships: []
+      }
+      agency_addons: {
+        Row: {
+          addon_id: string
+          agency_id: string
+          created_at: string
+          ends_at: string | null
+          id: string
+          quantity: number
+          starts_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          addon_id: string
+          agency_id: string
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          quantity?: number
+          starts_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          addon_id?: string
+          agency_id?: string
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          quantity?: number
+          starts_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_addons_addon_id_fkey"
+            columns: ["addon_id"]
+            isOneToOne: false
+            referencedRelation: "addons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_addons_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       agency_memberships: {
         Row: {
@@ -1602,6 +1750,179 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      credit_action_costs: {
+        Row: {
+          action_key: string
+          active: boolean
+          category: string
+          created_at: string
+          credit_cost: number | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          action_key: string
+          active?: boolean
+          category: string
+          created_at?: string
+          credit_cost?: number | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          action_key?: string
+          active?: boolean
+          category?: string
+          created_at?: string
+          credit_cost?: number | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      credit_ledger: {
+        Row: {
+          action_key: string | null
+          agency_id: string
+          bucket: string
+          created_at: string
+          created_by: string | null
+          delta: number
+          expires_at: string | null
+          id: string
+          metadata: Json
+          reference_id: string | null
+          reference_type: string | null
+          source: string
+          wallet_id: string
+        }
+        Insert: {
+          action_key?: string | null
+          agency_id: string
+          bucket: string
+          created_at?: string
+          created_by?: string | null
+          delta: number
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          reference_id?: string | null
+          reference_type?: string | null
+          source: string
+          wallet_id: string
+        }
+        Update: {
+          action_key?: string | null
+          agency_id?: string
+          bucket?: string
+          created_at?: string
+          created_by?: string | null
+          delta?: number
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          reference_id?: string | null
+          reference_type?: string | null
+          source?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_ledger_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_ledger_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "credit_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_packages: {
+        Row: {
+          created_at: string
+          credits: number | null
+          currency: string
+          id: string
+          key: string
+          name: string
+          price_amount: number | null
+          sort_order: number
+          status: string
+          stripe_price_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits?: number | null
+          currency?: string
+          id?: string
+          key: string
+          name: string
+          price_amount?: number | null
+          sort_order?: number
+          status?: string
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number | null
+          currency?: string
+          id?: string
+          key?: string
+          name?: string
+          price_amount?: number | null
+          sort_order?: number
+          status?: string
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      credit_wallets: {
+        Row: {
+          agency_id: string
+          consumption_order: string[] | null
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          consumption_order?: string[] | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          consumption_order?: string[] | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_wallets_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: true
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       direct_messages: {
         Row: {
@@ -3325,6 +3646,109 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_entitlements: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          entitlement_key: string
+          plan_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          entitlement_key: string
+          plan_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          entitlement_key?: string
+          plan_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_entitlements_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_limits: {
+        Row: {
+          created_at: string
+          is_unlimited: boolean
+          limit_key: string
+          limit_value: number | null
+          plan_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          is_unlimited?: boolean
+          limit_key: string
+          limit_value?: number | null
+          plan_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          is_unlimited?: boolean
+          limit_key?: string
+          limit_value?: number | null
+          plan_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_limits_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean
+          key: string
+          name: string
+          sort_order: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          key: string
+          name: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          key?: string
+          name?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       platform_admins: {
         Row: {
           created_at: string
@@ -4329,49 +4753,61 @@ export type Database = {
       subscriptions: {
         Row: {
           agency_id: string | null
+          billing_period: string | null
           cancel_at_period_end: boolean | null
           created_at: string | null
           current_period_end: string | null
           current_period_start: string | null
           environment: string
           id: string
+          plan_id: string | null
           price_id: string
           product_id: string
           status: string
           stripe_customer_id: string
           stripe_subscription_id: string
+          trial_end: string | null
+          trial_start: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           agency_id?: string | null
+          billing_period?: string | null
           cancel_at_period_end?: boolean | null
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
           environment?: string
           id?: string
+          plan_id?: string | null
           price_id: string
           product_id: string
           status?: string
           stripe_customer_id: string
           stripe_subscription_id: string
+          trial_end?: string | null
+          trial_start?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           agency_id?: string | null
+          billing_period?: string | null
           cancel_at_period_end?: boolean | null
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
           environment?: string
           id?: string
+          plan_id?: string | null
           price_id?: string
           product_id?: string
           status?: string
           stripe_customer_id?: string
           stripe_subscription_id?: string
+          trial_end?: string | null
+          trial_start?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -4381,6 +4817,13 @@ export type Database = {
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
             referencedColumns: ["id"]
           },
         ]
@@ -4712,6 +5155,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      agency_active_plan_id: { Args: { _agency_id: string }; Returns: string }
+      agency_commercial_state: { Args: { _agency_id: string }; Returns: Json }
+      agency_effective_limit: {
+        Args: { _agency_id: string; _key: string }
+        Returns: Json
+      }
+      agency_has_entitlement: {
+        Args: { _agency_id: string; _key: string }
+        Returns: boolean
+      }
       agency_is_active: { Args: { _agency_id: string }; Returns: boolean }
       agency_module_enabled: { Args: { _module: string }; Returns: boolean }
       agency_module_enabled_for: {
@@ -4742,6 +5195,11 @@ export type Database = {
         Args: { _profile_agency: string; _profile_id: string }
         Returns: boolean
       }
+      commercial_can_read: { Args: { _agency_id: string }; Returns: boolean }
+      commercial_valid_entitlement_key: {
+        Args: { _key: string }
+        Returns: boolean
+      }
       create_notification: {
         Args: {
           _link: string
@@ -4753,6 +5211,10 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      credit_action_effective_cost: {
+        Args: { _action_key: string }
+        Returns: number
       }
       current_agency_id: { Args: never; Returns: string }
       financing_link_resolve: {
@@ -5068,12 +5530,35 @@ export type Database = {
         Returns: undefined
       }
       platform_role: { Args: never; Returns: string }
+      platform_set_agency_addon: {
+        Args: {
+          _active: boolean
+          _addon_id: string
+          _agency_id: string
+          _ends_at?: string
+          _quantity?: number
+        }
+        Returns: undefined
+      }
       platform_set_domain_active: {
         Args: { _active: boolean; _id: string }
         Returns: undefined
       }
       platform_set_module_entitlement: {
         Args: { _agency_id: string; _entitled: boolean; _module: string }
+        Returns: undefined
+      }
+      platform_set_plan_entitlement: {
+        Args: { _enabled: boolean; _key: string; _plan_id: string }
+        Returns: undefined
+      }
+      platform_set_plan_limit: {
+        Args: {
+          _limit_key: string
+          _plan_id: string
+          _unlimited: boolean
+          _value: number
+        }
         Returns: undefined
       }
       platform_set_primary_domain: { Args: { _id: string }; Returns: undefined }
@@ -5089,6 +5574,52 @@ export type Database = {
       platform_update_tenant: {
         Args: { _agency_id: string; _name: string }
         Returns: undefined
+      }
+      platform_upsert_addon: {
+        Args: {
+          _billing_type: string
+          _description: string
+          _entitlements: string[]
+          _key: string
+          _limit_increments: Json
+          _name: string
+          _status: string
+        }
+        Returns: string
+      }
+      platform_upsert_credit_action: {
+        Args: {
+          _action_key: string
+          _active: boolean
+          _category: string
+          _credit_cost: number
+          _description: string
+          _name: string
+        }
+        Returns: string
+      }
+      platform_upsert_credit_package: {
+        Args: {
+          _credits: number
+          _currency: string
+          _key: string
+          _name: string
+          _price_amount: number
+          _sort_order: number
+          _status: string
+        }
+        Returns: string
+      }
+      platform_upsert_plan: {
+        Args: {
+          _description: string
+          _is_public: boolean
+          _key: string
+          _name: string
+          _sort_order: number
+          _status: string
+        }
+        Returns: string
       }
       property_set_public: {
         Args: { _enabled: boolean; _id: string }
