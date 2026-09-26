@@ -4718,6 +4718,7 @@ export type Database = {
         Args: { _agency_id: string; _module: string }
         Returns: boolean
       }
+      bank_package_share_active: { Args: { _token: string }; Returns: boolean }
       bank_package_share_resolve: {
         Args: { _token: string }
         Returns: {
