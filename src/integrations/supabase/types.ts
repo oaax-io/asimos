@@ -4718,6 +4718,7 @@ export type Database = {
         Args: { _agency_id: string; _module: string }
         Returns: boolean
       }
+      bank_package_share_active: { Args: { _token: string }; Returns: boolean }
       bank_package_share_resolve: {
         Args: { _token: string }
         Returns: {
@@ -5098,6 +5099,16 @@ export type Database = {
       resolve_public_tenant_branding: {
         Args: { _hostname: string }
         Returns: Json
+      }
+      role_can: {
+        Args: {
+          _action: string
+          _agency_id: string
+          _module: string
+          _other?: string
+          _owner?: string
+        }
+        Returns: boolean
       }
       self_disclosure_link_resolve: {
         Args: { _token: string }

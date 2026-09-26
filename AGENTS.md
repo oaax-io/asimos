@@ -24,3 +24,6 @@
 ## Sicherheits-Audit (4.8)
 - Plattformrolle hat keinen direkten Schreibzugriff auf agencies/agency_memberships/profiles/user_roles (RESTRICTIVE sec48_* Policies); Plattform-Mutationen nur über platform_* RPCs; why: alte is_superadmin()-Policies waren ein Backdoor in fremde Firmen.
 - /oaax ist stillgelegt (Redirect auf /platform); why: einziges Plattform-Admin-Center ist /platform.
+- Rollenrechte Erstellen/Bearbeiten serverseitig über einen Helper role_can(agency, module, action, owner, other) in RESTRICTIVE sec481_* Policies; Inhaber/Admin voll; why: module_permissions darf nicht nur UI sein.
+- Öffentliche Token-Links (financing_links, bank_package_shares, public_property_view) prüfen agency_is_active; why: gesperrte Firmen haben keine operativen öffentlichen Zugänge.
+- Profile-Sichtbarkeit (can_see_profile) ohne Plattform-Ausnahme; Plattform liest Benutzerdaten nur über platform_* RPCs.

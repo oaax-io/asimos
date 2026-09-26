@@ -16,6 +16,9 @@ export const Route = createFileRoute("/api/public/bank-paket/$token")({
           .eq("token", token)
           .maybeSingle();
         if (error || !share) return new Response("Not found", { status: 404 });
+        // Phase 4.8.1: gesperrte/archivierte Firma → neutral «nicht gefunden»
+        const { data: active } = await (supabaseAdmin.rpc as any)("bank_package_share_active", { _token: token });
+        if (active !== true) return new Response("Not found", { status: 404 });
         if (new Date(share.expires_at).getTime() < Date.now()) {
           return new Response("Link expired", { status: 410 });
         }
