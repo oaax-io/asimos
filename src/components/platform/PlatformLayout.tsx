@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Building2, Users, Globe, Blocks, Activity, ShieldCheck, Settings, LogOut, ArrowLeft,
+  LayoutDashboard, Building2, Users, Globe, Blocks, Activity, ShieldCheck, Settings, LogOut, ArrowLeft, CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ const NAV = [
   { section: "Zugriff", items: [
     { to: "/platform/domains", label: "Domains", icon: Globe },
     { to: "/platform/modules", label: "Module", icon: Blocks },
+    { to: "/platform/commercial", label: "Commercial", icon: CreditCard },
   ] },
   { section: "System", items: [
     { to: "/platform/activity", label: "Aktivität", icon: Activity },
