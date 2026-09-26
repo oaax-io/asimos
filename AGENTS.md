@@ -27,3 +27,8 @@
 - Rollenrechte Erstellen/Bearbeiten serverseitig über einen Helper role_can(agency, module, action, owner, other) in RESTRICTIVE sec481_* Policies; Inhaber/Admin voll; why: module_permissions darf nicht nur UI sein.
 - Öffentliche Token-Links (financing_links, bank_package_shares, public_property_view) prüfen agency_is_active; why: gesperrte Firmen haben keine operativen öffentlichen Zugänge.
 - Profile-Sichtbarkeit (can_see_profile) ohne Plattform-Ausnahme; Plattform liest Benutzerdaten nur über platform_* RPCs.
+## Commercial Foundation (5.1)
+- Kommerzielle Ebenen getrennt: plans/plan_entitlements (Freischaltung), plan_limits (Menge, Zahl oder unbegrenzt), addons/addon_entitlements/addon_limit_increments/agency_addons, credit_packages, credit_action_costs, credit_wallets/credit_ledger (unveränderliches Journal, Saldo nur daraus); subscriptions erweitert (plan_id, billing_period, trial_*) statt zweiter Tabelle; why: Entitlement ≠ Limit ≠ Credit Cost.
+- Auswertung nur serverseitig: agency_has_entitlement / agency_effective_limit (Plan + Add-ons) / agency_commercial_state / credit_action_effective_cost (NULL, 0 oder inaktiv = kostenlos); why: Frontend rechnet nie selbst.
+- Definitionen nur über platform_* RPCs (is_platform_admin, ein Audit-Eintrag); Tenants lesen nur eigene agency_addons/credits (Inhaber/Admin), schreiben nie; why: keine Browser-Mutationen, Plattformrolle verleiht keine Commercial-Rechte.
+- commercial_enforced=false: agency_modules bleibt massgeblich, bis die Plan-Migration ausdrücklich aktiviert wird; Stripe darf später nie agency_modules.is_enabled setzen; why: ASIMO verliert keine Funktionen.
