@@ -5100,6 +5100,16 @@ export type Database = {
         Args: { _hostname: string }
         Returns: Json
       }
+      role_can: {
+        Args: {
+          _action: string
+          _agency_id: string
+          _module: string
+          _other?: string
+          _owner?: string
+        }
+        Returns: boolean
+      }
       self_disclosure_link_resolve: {
         Args: { _token: string }
         Returns: {
